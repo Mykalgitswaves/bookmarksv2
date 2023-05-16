@@ -1,0 +1,42 @@
+<template>
+    <div class="pt-5">  
+        <ul 
+            v-for="range in ranges"
+            :key="range.pk"
+        >
+            <li 
+                @click="isActive"
+                :class="`flex flex-row gap-5 py-4 px-4
+                place-content-start bg-gray-100
+                rounded-md my-1 hover:bg-gray-200 ${isActive()}`
+            ">
+                <img class="h-24" src="../../assets/InfiniteJest.png"/>
+                <div class="flex flex-col justify-center">
+                    <p class="text-xl font-semibold text-gray-800">Infinite Jest</p>
+                    <p class="text-sm text-gray-800">David Foster Wallace</p>
+                    <span class="text-sm text-gray-500">February 1, 1996</span>
+                </div>
+            </li>  
+        </ul>
+    </div>
+</template>
+
+<script>
+    export default {
+        data() {
+            return {
+                dataRanges: [{},{},{},{},{}],
+            }
+        },
+        methods: {
+            isActive() {
+              return 'border-solid border-2 border-indigo-500'
+            }
+        },
+        computed: {
+            ranges() {
+                return this.dataRanges.slice(0,3)
+        }
+    }
+}
+</script>

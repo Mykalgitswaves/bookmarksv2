@@ -1,0 +1,15 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+.grid-pills {
+  gap: 1ch;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(12ch, 1fr));
+  justify-items: center;
+  align-items: center;
+}
+
+.grid-pills > * {
+  line-height: 2ch;
+}
