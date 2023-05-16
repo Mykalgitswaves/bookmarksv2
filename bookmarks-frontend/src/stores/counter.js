@@ -4,9 +4,10 @@ export const useStore = defineStore('formState', {
   state: () => ({ page: 1}),
   actions: {
     getNextPage(){
-      this.page++
+      
+        this.page++
     },
-    goPrevPage(){
+    getPrevPage(){
       this.page--
     }
   }

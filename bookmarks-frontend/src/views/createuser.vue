@@ -1,4 +1,18 @@
 <template>
+    <div class="container w-screen
+        flex flex-row py-3 mx-auto
+        justify-start"
+    >
+        <p class="text-indigo-700 underline underline-offset-2 px-2"
+            @click="getPrevPage">
+            Prev
+        </p>
+        {{ page }}
+        <p class="text-indigo-700 underline underline-offset-2 px-2"
+            @click="getNextPage">
+            Next
+        </p>
+    </div>
     <div class="h-screen w-screen grid place-content-center relative">
         <component :is="createFormState" />
     </div>
@@ -24,11 +38,29 @@ export default {
     data() {
         return {
             createFormState: null,
+            state: null
+        }
+    },
+    methods: {
+        getNextPage() {
+            const state = useStore();
+            state.getNextPage();
+        },
+        getPrevPage() {
+            const state = useStore();
+            state.getPrevPage();
+        }
+    },
+    computed: {
+        page() {
+            const state = useStore();;
+            return state.page
         }
     },
     mounted(){
         const state = useStore();
-        this.createFormState = computed(() => userFormMapping[state.page])
+        this.state = state;
+        this.createFormState = computed(() => userFormMapping[state.page]);
     }
 }
 
