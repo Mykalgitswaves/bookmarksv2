@@ -45,7 +45,25 @@
       Username or password invalid <br>please try a different login
     </span>  
 
-    <RouterLink to="/create-user">or create an account</RouterLink>
+    
+      <p class="my-2 text-center">
+        <RouterLink to="/create-user">
+        <span 
+          class="text-md
+          text-indigo-600
+          font-semibold underline 
+          underline-offset-2
+        ">For readers</span>
+        </RouterLink> create an account</p>
+
+      <p class="my-2 text-center">
+        <RouterLink to="/create-user-writer">
+          <span class="text-md
+            text-indigo-500
+            font-semibold underline 
+            underline-offset-2
+          ">For writers</span>
+      </RouterLink>, create an account</p>
 </template>
 
 <script>

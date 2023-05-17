@@ -1,7 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import SignUpView from '@/views/signup.vue';
 import CreateUserBooksView from '@/views/createuser.vue';
-
+import BookShelfView from '@/views/bookshelf.vue';
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -15,19 +15,13 @@ const router = createRouter({
       path: '/create-user',
       name: 'CreateUser',
       component: CreateUserBooksView,
-        children: [
-          { 
-            path: '',
-            name: 'createformbooksearch',
-            component: () => import('../components/create/createuserformbooks.vue')
-          },
-          {
-            path: '',
-            name: 'createformgenres',
-            component: () => import('../components/create/createusergenre.vue')
-          }
-        ]
     },
+    {
+      // We need router here.
+      path: '/home/:user',
+      name: 'BookShelf',
+      component: BookShelfView,
+    }
   ]
 })
 

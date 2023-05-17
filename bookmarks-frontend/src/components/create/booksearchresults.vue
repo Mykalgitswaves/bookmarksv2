@@ -2,13 +2,14 @@
     <div class="pt-5">  
         <ul 
             v-for="range in ranges"
-            :key="range.pk"
+            :key="range"
         >
             <li 
-                @click="isActive"
-                :class="`flex flex-row gap-5 py-4 px-4
+                @click="addBook(1)"
+                class="flex flex-row gap-5 py-4 px-4
                 place-content-start bg-gray-100
-                rounded-md my-1 hover:bg-gray-200 ${isActive()}`
+                rounded-md my-1 hover:bg-gray-200
+                max-w-[700px]
             ">
                 <img class="h-24" src="../../assets/InfiniteJest.png"/>
                 <div class="flex flex-col justify-center">
@@ -22,15 +23,36 @@
 </template>
 
 <script>
+    import { useBookStore } from '../../stores/books'
+
+
     export default {
         data() {
             return {
-                dataRanges: [{},{},{},{},{}],
+                dataRanges: [
+                    {
+                      pk: 1
+                    },
+                    {
+                      pk: 2
+                    },
+                    {
+                      pk: 3
+                    },
+                    {
+                      pk: 4
+                    },
+                    {
+                      pk: 5
+                    }
+                ],
             }
         },
         methods: {
-            isActive() {
-              return 'border-solid border-2 border-indigo-500'
+            addBook(book) {
+                const state = useBookStore()
+                state.addBook(book)
+                console.log(state)
             }
         },
         computed: {

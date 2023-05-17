@@ -3,13 +3,14 @@
         <h2 class="text-3xl font-medium mb-4">What kind of reader<br> are you?</h2>
         <p class="text-gray-500">Search for some of your favorite books</p>
 
-        <form class="grid grid-cols-1 gap-2 mt-10"
+        <form class="grid grid-cols-1 gap-2"
             action="submitForm"
             method="POST"
         >
             <input
-                class="w-[80vw] py-2 px-4 rounded-md
-                border-2 border-indigo-200" 
+                class="py-2 px-4 rounded-md
+                border-2 border-indigo-200 mt-20 
+                w-62 max-w-[600px]" 
                 @change="searchBooks($event)"
                 placeholder="Search for books"
                 name="searchForBooks"
@@ -38,7 +39,7 @@
 
 <script>
     import BookSearchResults from './booksearchresults.vue';
-    import { useStore } from '../../stores/counter.js';
+    import { useStore } from '../../stores/page.js';
 
 
 

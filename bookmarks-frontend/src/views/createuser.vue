@@ -1,18 +1,4 @@
 <template>
-    <div class="container w-screen
-        flex flex-row py-3 mx-auto
-        justify-start"
-    >
-        <p class="text-indigo-700 underline underline-offset-2 px-2"
-            @click="getPrevPage">
-            Prev
-        </p>
-        {{ page }}
-        <p class="text-indigo-700 underline underline-offset-2 px-2"
-            @click="getNextPage">
-            Next
-        </p>
-    </div>
     <div class="h-screen w-screen grid place-content-center relative">
         <component :is="createFormState" />
     </div>
@@ -25,7 +11,7 @@ import CreateUserFormGenre from '@/components/create/createusergenre.vue'
 import CreateUserFormFinal from '@/components/create/createuserfinal.vue'
 
 import { computed } from 'vue';
-import { useStore } from '../stores/counter.js';
+import { useStore } from '../stores/page.js';
 
 // Map to components keep the view the same
 const userFormMapping = {
@@ -47,7 +33,7 @@ export default {
             state.getNextPage();
         },
         getPrevPage() {
-            const state = useStore();
+            const state = useStore(); 
             state.getPrevPage();
         }
     },
