@@ -2,7 +2,7 @@
     <h2 class="text-3xl font-medium mb-4">What are some of your favorite genres?</h2>
     <p class="text-gray-500">Tap on your favorite genres</p>
 
-    <div class="container mt-20">
+    <div class="container mt-20 mb-36">
         <ul  class="grid-pills justify-content-center">
             <li @click="addGenre(genre)"
                 v-for="genre in genres" 
@@ -17,7 +17,7 @@
         </ul>  
     </div> 
     <button
-        class="mt-20 px-36 py-3 bg-indigo-600
+        class="px-36 py-3 bg-indigo-600
         rounded-md text-indigo-100" 
         type="submit"
         @click="navigate"

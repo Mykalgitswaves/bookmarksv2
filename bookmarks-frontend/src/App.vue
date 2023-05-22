@@ -1,5 +1,5 @@
 <template>
-  <main class="w-100 h-100 bg-gray-100">
+  <main class="w-screen h-100 bg-gray-100">
     <RouterView />
   </main>
 </template>
@@ -13,3 +13,10 @@
     }
   }
 </script>
+
+<style>
+    html {
+    --tw-bg-opacity: 1;
+    background-color: rgb(243 244 246 / var(--tw-bg-opacity));
+    }
+</style>

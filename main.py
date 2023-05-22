@@ -2,7 +2,7 @@ from typing import ClassVar, Optional, List
 
 from fastapi import FastAPI, HTTPException
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ClassList
 
 """
 ModelsModelsModelsModels for Neo4j
@@ -14,9 +14,10 @@ ModelsModelsModelsModels for Request Bodies of Neo4J models (we might not need t
 """
 
 class UserRequest(BaseModel):
-    def __init__(self, fullname:str, name:str):
+    def __init__(self, **kargs):
         self.fullname = fullname
         self.name = name
+        self.genre = ClassList[str]
     
     
 
@@ -33,8 +34,9 @@ async def get_data():
     data = {"cashmoney": "cashmoeny"}
     return data
 
-@app.post("/users/")
-async def create_user(user: UserRequest, request):
+@app.post("/users/{user}")
+async def create_user(user: UserRequest, params):
+    user = params
     user = UserRequest(fullname=str(request.body.fullname), name=str(request.body.name))
     return user
 

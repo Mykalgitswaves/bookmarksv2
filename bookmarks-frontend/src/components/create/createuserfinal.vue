@@ -9,7 +9,7 @@
 
         <input
             class="py-2 px-4 rounded-md
-            border-2 border-indigo-200 mt-10 w-80 max-w-[600px]" 
+            border-2 border-indigo-200 mt-10 w-80 max-w-[600px] mb-28" 
             @change="searchBooks($event)"
             placeholder="Search for authors"
             name="searchForAuthor"
@@ -18,7 +18,7 @@
 
         <RouterLink to="/home/1">
             <button class="
-                mt-20 px-28 py-3
+                px-28 py-3
                 bg-indigo-600 rounded-md
                 text-indigo-100" 
                 type="submit"

@@ -5,7 +5,7 @@ export const useBookStore = defineStore("addBooks", {
         books: [],
         genres: [],
         authors: []
-     }),
+    }),
     actions: {
         addBook(book) {
             this.books.push(book);
