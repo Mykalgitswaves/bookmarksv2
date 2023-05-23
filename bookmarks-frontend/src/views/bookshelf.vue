@@ -1,14 +1,30 @@
 <template>
-    <div class="grid place-content-center relative">    
-        <component :is="homeComponentMap" />
-        
-        <div class="mt-10 md:mt-20">
+    <div class="grid md_lg:grid-cols-5 sm:place-content-center
+        relative mt-10">    
+        <div class="mx-10 mb-20 md:mt-20 col-span-3">
+            <h1 class="text-2xl mb-2 text-slate-500 font-light">
+                Review Feed
+            </h1>
+
             <div 
                 class="flex overscroll-auto overflow-y-hidden"
                 v-for="review in reviews" 
                 :key="review"
             > 
                 <Review :review="review"/>
+            </div>
+        </div>
+
+        <div class="mb-20 mx-10 md:mt-40 col-span-2">
+            <h1 class="text-2xl mb-2 text-slate-500 font-light">
+                Recommended books
+            </h1>
+
+            <div 
+                v-for="(recommendation, index) in recommendations" :key="index"
+                class="grid grid-cols-1"
+            >
+                <Recommendations :recommendations="recommendations"/>
             </div>
         </div>
 
@@ -20,13 +36,29 @@
 <script>
 import MainNav from '../components/bookshelf__reader/navbar.vue' 
 import Review from '../components/bookshelf__reader/reviews/review.vue'
+import Recommendations from '../components/bookshelf__reader/Recommendation.vue'
     export default {
         components: {
             MainNav,
-            Review
+            Review,
+            Recommendations
         },
         data() {
             return {
+                recommendations: [
+                    {
+
+                    },
+                    {
+
+                    },
+                    {
+
+                    },
+                    {
+
+                    }
+                ],
                 reviews: [
                     {
                         stars: 4,

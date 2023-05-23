@@ -1,21 +1,25 @@
 <template>
     <div class="rounded-md w-100 mx-12 my-3 px-3 py-3 relative max-w-[500px]">
         <div class="review">
-            <div 
-                :class="'w-10 absolute top-2' + `left-[${index + 1}px]`" 
-                v-for="(index) in review.stars" :key="index">
-                
-                <span :class="'icon-star'">{{ index }}</span>
-            </div>
-
             <img 
-                class="h-24 hover:h-20 duration-300" 
+                class="h-24 hover:h-20 duration-300 min-w-[80px]" 
                 src="../../../assets/losingmymindreview.png" 
                 alt="image preview of book"
             >
             
             <div> 
-                <p class="text-xl font-semibold text-gray-800">{{ review.title }}</p>
+                <p class="flex flex-row
+                    text-xl font-semibold
+                    text-gray-800 align-center justify-start"
+                >
+                    {{ review.title }}
+                    
+                    <Stars 
+                        class="ml-2"
+                        :stars="review.stars"
+                    />
+                </p>
+
                 <p class="text-gray-600 text-sm">{{ truncatedDescription }}
                     
                     <span 
@@ -58,10 +62,12 @@
 
 <script>
     import Comments from './comments.vue'
+    import Stars from './stars.vue'
 
     export default {
         components: {
-            Comments
+            Comments,
+            Stars
         },
         data() {
             return {
@@ -116,5 +122,4 @@
         justify-content: space-between;
         align-items: center;
     }
-
 </style>
