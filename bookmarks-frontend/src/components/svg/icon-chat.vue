@@ -2,7 +2,7 @@
     <svg 
         v-bind="$attrs"
         xmlns="http://www.w3.org/2000/svg" 
-        height="24" width="24" 
+        height="30" width="30" 
         viewBox="0 96 960 960"
         data-icon="icon-chat"
         class="icon-chat"

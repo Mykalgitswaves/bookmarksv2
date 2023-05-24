@@ -1,22 +1,10 @@
 <template>
-    <div class="fixed bottom-0 md:bottom-auto w-screen 
-        flex flex-row justify-center align-items-end pb-8 pt-4
-        px-14 bg-slate-900 md:justify-start
-        space-x-8 opacity-[98%] scroll:opacity-[94%]"
-        @scroll="scrollEvent()" ref="navbar"
+    <nav class="min-h-[100vh] w-12 
+        bg-indigo-100 shadow-sm flex
+        flex-col align-middle py-4 px-2"
     >
-            <RouterLink to="/review">
-                <p class="inline-block hover:text-indigo-200">
-                    <Comment class="inline text-indigo-100"/>
-
-                    <span class="text-indigo-100">
-                    Add Review
-                    </span>
-                </p>
-            </RouterLink>
-            <RouterLink to="/book-club"><p class="text-indigo-100 hover:text-indigo-200 hover:underline">Book Club</p></RouterLink>
-            <RouterLink to="/shelf"><p class="text-indigo-100 hover:text-indigo-200 hover:underline">View Shelf</p></RouterLink>   
-    </div>
+        <Comment/>
+    </nav>
 </template>
 
 <script>
@@ -33,16 +21,7 @@ import Comment from '../svg/icon-chat.vue'
             }
         },
         methods: {
-            scrollEvent() {
-               let navbar = this.$refs.navbar;
-               setInterval(decreaseOpacity, 50);
-                function decreaseOpacity() {
-                   let opacity = .98
-                   navbar.style.opacity = opacity
-                   navbar.style.opacity -= .05
-                }
-                        
-                   }
+        
         },
         created() {
             window.addEventListener('scroll', this.scrollEvent)

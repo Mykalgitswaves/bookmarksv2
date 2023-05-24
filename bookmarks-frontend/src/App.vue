@@ -8,9 +8,7 @@
   import SignUp from '@/views/signup.vue'
   
   export default {
-    components: {
-      SignUp
-    }
+    
   }
 </script>
 

@@ -1,5 +1,5 @@
 <template>
-    <div class="rounded-md w-100 mx-12 my-3 px-3 py-3 relative max-w-[500px]">
+    <div class="rounded-md w-[100%] mx-12 my-3 px-3 py-3 relative ">
         <div class="review">
             <img 
                 class="h-24 hover:h-20 duration-300 min-w-[80px]" 
@@ -112,7 +112,7 @@
         grid-gap: 2ch;
         justify-content: center;
         align-items: center;
-        max-width: 500px;
+        max-width: 700px;
     }
 
     .review-controls {

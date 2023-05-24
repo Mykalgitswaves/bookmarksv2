@@ -1,47 +1,27 @@
 <template>
-    <div class="grid md_lg:grid-cols-5 sm:place-content-center
-        relative mt-10">    
-        <div class="mx-10 mb-20 md:mt-20 col-span-3">
-            <h1 class="text-2xl mb-2 text-slate-500 font-light">
-                Review Feed
-            </h1>
-
-            <div 
-                class="flex overscroll-auto overflow-y-hidden"
-                v-for="review in reviews" 
-                :key="review"
-            > 
-                <Review :review="review"/>
-            </div>
+    <nav class="py-6 w-100 bg-indigo-50 shadow-md"></nav>
+    <div class="grid grid-cols-9 
+        place-content-start
+        relative"
+    >    
+        <MainNav class="col-span-1"/>
+        <div class="col-span-8 mt-10">
+            <BookReviews :reviews="reviews"/>
+            <RecommendedBooks :recommendations="recommendations" />
         </div>
-
-        <div class="mb-20 mx-10 md:mt-40 col-span-2">
-            <h1 class="text-2xl mb-2 text-slate-500 font-light">
-                Recommended books
-            </h1>
-
-            <div 
-                v-for="(recommendation, index) in recommendations" :key="index"
-                class="grid grid-cols-1"
-            >
-                <Recommendations :recommendations="recommendations"/>
-            </div>
-        </div>
-
-        <MainNav />
     </div>
-    
 </template>
 
 <script>
 import MainNav from '../components/bookshelf__reader/navbar.vue' 
-import Review from '../components/bookshelf__reader/reviews/review.vue'
-import Recommendations from '../components/bookshelf__reader/Recommendation.vue'
+import RecommendedBooks from '../components/bookshelf__reader/RecommendedBooks.vue'
+import BookReviews from '../components/bookshelf__reader/BookReviews.vue'
+
     export default {
         components: {
             MainNav,
-            Review,
-            Recommendations
+            RecommendedBooks,
+            BookReviews
         },
         data() {
             return {
@@ -102,3 +82,10 @@ import Recommendations from '../components/bookshelf__reader/Recommendation.vue'
         }
     }
 </script>
+
+<style scoped>
+    .main-dash {
+        display: grid;
+        grid-template-columns: 2;
+    }
+</style>
