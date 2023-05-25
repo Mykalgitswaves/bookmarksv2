@@ -9,7 +9,7 @@
             col-span-2 md:col-span-1 col-start-1 col-end-1
             border-solid border-b-2 border-indigo-100"
         >
-            <h2 class="text-2xl my-5 text-slate-500 font-light ml-10">
+            <h2 class="text-2xl my-5 text-slate-500 font-light">
                 Reviews  
             </h2>
                 <div 
