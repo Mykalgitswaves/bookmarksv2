@@ -1,11 +1,8 @@
 <template>
-    <nav class="py-6 w-100 bg-indigo-50 shadow-md"></nav>
-    <div class="grid grid-cols-9 
-        place-content-start
-        relative"
+    <div class="grid 
+        place-content-center relative"
     >    
-        <MainNav class="col-span-1"/>
-        <div class="col-span-8 mt-10">
+        <div class="mt-10">
             <BookReviews :reviews="reviews"/>
             <RecommendedBooks :recommendations="recommendations" />
         </div>
@@ -69,6 +66,16 @@ import BookReviews from '../components/bookshelf__reader/BookReviews.vue'
                     },
                     {
                         stars: 2,
+                        title: "Infinite bragging rights",
+                        description: "Read this one book, you probably dont even need to finish it. Just pop this baby down on a coffee table somewhere in plain view and watch how much undeserved attention you get from people that believe YOU actually had the discipline to read this bad boy"
+                    },
+                    {
+                        stars: 4,
+                        title: "Infinite bragging rights",
+                        description: "Read this one book, you probably dont even need to finish it. Just pop this baby down on a coffee table somewhere in plain view and watch how much undeserved attention you get from people that believe YOU actually had the discipline to read this bad boy"
+                    },
+                    {
+                        stars: 4,
                         title: "Infinite bragging rights",
                         description: "Read this one book, you probably dont even need to finish it. Just pop this baby down on a coffee table somewhere in plain view and watch how much undeserved attention you get from people that believe YOU actually had the discipline to read this bad boy"
                     },

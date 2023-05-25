@@ -1,43 +1,36 @@
 <template>
+     <div class="bg-indigo-100 rounded-lg py-4 px-4 mx-auto">
+        <textarea label="addpost" class="w-[100%]"></textarea>
+        <div class="flex flex-row justify-end mt-2">
+            <button class="bg-indigo-600 text-indigo-100 px-6 py-2 rounded-md">Add Review</button>
+        </div>
+     </div>
      <div class="mb-10 md:mt-20
             col-span-2 md:col-span-1 col-start-1 col-end-1
             border-solid border-b-2 border-indigo-100"
         >
-            <h1 class="text-2xl mb-10 text-slate-500 font-light ml-10">
-                Review Feed  
-                <span 
-                    class="ml-5 text-sm text-gray-800 cursor-pointer" 
-                    @click="isReviewsHidden = !isReviewsHidden"
-                >[hide]</span>
-            </h1>
-
-            <div v-if="!isReviewsHidden">
+            <h2 class="text-2xl my-5 text-slate-500 font-light ml-10">
+                Reviews  
+            </h2>
                 <div 
                     class="flex justify-center md:justify-end"
-                    v-for="review in reviews.slice(0,3)" 
+                    v-for="review in pageItems" 
                     :key="review"
                 > 
                     <Review :review="review"/>
                 </div>
-
-                <button 
-                    class="ml-10 px-4 py-2 bg-indigo-600 
-                    rounded-md text-gray-200 mb-10 
-                    hover:bg-indigo-800 duration-200"
-                    @click="showMoreReviews"
-                >
-                    more reviews
-                </button>
+                <Pagination :pages="pages" @selected-page="handlePageSelection"/>
             </div>
-            <div v-if="isReviewsHidden" class="w-[50vw]"></div>
-        </div>
 </template>
 
 <script>
 import Review from './reviews/review.vue'
+import Pagination from '../pagination.vue'
+
     export default {
         components: {
-            Review
+            Review,
+            Pagination
         },
         props: {
             reviews: {
@@ -47,8 +40,23 @@ import Review from './reviews/review.vue'
         },
         data() {
             return {
-                isReviewsHidden: false,
+                itemsPerPage: 3,
+                pageItems: []
             }
+        },
+        methods: {
+            handlePageSelection(page) {
+               let startIndex = this.itemsPerPage * (page - 1)
+               this.pageItems = this.reviews.slice(startIndex, startIndex + this.itemsPerPage)
+            }
+        },
+        computed: {
+            pages() {
+                return Math.ceil(this.reviews.length / this.itemsPerPage)
+            },
+        },
+        mounted() {
+            this.handlePageSelection(1)
         }
     }
 </script>

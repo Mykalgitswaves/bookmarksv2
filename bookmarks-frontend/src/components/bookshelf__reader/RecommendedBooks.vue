@@ -27,6 +27,7 @@
             />
   
             <div 
+                
                 v-for="(recommendation, index) in recommendations" :key="index"
                 class="grid grid-cols-1"
             >

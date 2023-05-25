@@ -2,7 +2,7 @@
     <div class="rounded-md w-[100%] mx-12 my-3 px-3 py-3 relative ">
         <div class="review">
             <img 
-                class="h-24 hover:h-20 duration-300 min-w-[80px]" 
+                class="h-24 min-w-[80px]" 
                 src="../../../assets/losingmymindreview.png" 
                 alt="image preview of book"
             >
