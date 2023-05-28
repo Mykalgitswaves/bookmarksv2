@@ -5,6 +5,7 @@
 
       <div class="flex flex-row gap-2 justify-start mt-5 mx-4">
         <button
+          @click="reviewShow = !reviewShow"
           class="justify-self-end w-40 bg-indigo-600 text-indigo-100 px-6 py-2 rounded-md hover:bg-indigo-700 duration-300"
         >
           Write a review
@@ -16,7 +17,7 @@
         </button>
       </div>
 
-      <BookReviewForm :ratings="ratings" />
+      <BookReviewForm v-if="reviewShow" :ratings="ratings" />
       <BookReviews :reviews="reviews" />
       <RecommendedBooks :recommendations="recommendations" />
     </div>
@@ -49,6 +50,7 @@ export default {
     let componentState = headerMapping[0]
     let ratings = [1, 2, 3, 4, 5]
     return {
+      reviewShow: false,
       ratings,
       recommendations: [{}, {}, {}, {}],
       reviews: [
