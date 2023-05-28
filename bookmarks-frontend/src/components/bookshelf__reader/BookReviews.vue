@@ -1,21 +1,12 @@
 <template>
-     <div class="bg-indigo-100 rounded-lg py-4 px-4 mx-auto">
-        <textarea label="addpost" class="w-[100%]"></textarea>
-        <div class="flex flex-row justify-end mt-2">
-            <button class="bg-indigo-600 text-indigo-100 px-6 py-2 rounded-md">Add Review</button>
-        </div>
-     </div>
      <div class="mb-10 md:mt-20
             col-span-2 md:col-span-1 col-start-1 col-end-1
             border-solid border-b-2 border-indigo-100"
         >
-            <h2 class="text-2xl my-5 text-slate-500 font-light">
-                Reviews  
-            </h2>
                 <div 
                     class="flex justify-center md:justify-end"
-                    v-for="review in pageItems" 
-                    :key="review"
+                    v-for="(review, index) in pageItems" 
+                    :key="index"
                 > 
                     <Review :review="review"/>
                 </div>

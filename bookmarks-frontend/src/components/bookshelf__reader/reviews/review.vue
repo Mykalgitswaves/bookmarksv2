@@ -20,7 +20,7 @@
                     />
                 </p>
 
-                <p class="text-gray-600 text-sm">{{ truncatedDescription }}
+                <p class="text-gray-600">{{ truncatedDescription }}
                     
                     <span 
                         v-if="!fullDescShown"
