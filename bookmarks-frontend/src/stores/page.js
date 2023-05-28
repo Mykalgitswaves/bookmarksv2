@@ -1,13 +1,12 @@
-import { defineStore } from 'pinia';
+import { defineStore } from 'pinia'
 
 export const useStore = defineStore('formState', {
-  state: () => ({ page: 1}),
+  state: () => ({ page: 1 }),
   actions: {
-    getNextPage(){
-      
-        this.page++
+    getNextPage() {
+      this.page++
     },
-    getPrevPage(){
+    getPrevPage() {
       this.page--
     }
   }

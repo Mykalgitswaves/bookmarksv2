@@ -5,16 +5,14 @@
 </template>
 
 <script>
-  import SignUp from '@/views/signup.vue'
-  
-  export default {
-    
-  }
+import SignUp from '@/views/signup.vue'
+
+export default {}
 </script>
 
 <style>
-    html {
-    --tw-bg-opacity: 1;
-    background-color: rgb(243 244 246 / var(--tw-bg-opacity));
-    }
+html {
+  --tw-bg-opacity: 1;
+  background-color: rgb(243 244 246 / var(--tw-bg-opacity));
+}
 </style>
