@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import SignUpView from '@/views/signup.vue'
 import CreateUserBooksView from '@/views/createuser.vue'
+import CreateUserWriterView from '@/views/createwriter.vue'
 import BookShelfView from '@/views/bookshelf.vue'
 
 const router = createRouter({
@@ -21,6 +22,11 @@ const router = createRouter({
       path: '/home/:user',
       name: 'BookShelf',
       component: BookShelfView
+    },
+    {
+      path: '/create-user-writer',
+      name: 'CreateWriter',
+      component: CreateUserWriterView
     }
   ]
 })
