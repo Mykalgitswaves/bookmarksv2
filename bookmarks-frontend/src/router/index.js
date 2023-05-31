@@ -18,15 +18,19 @@ const router = createRouter({
       component: CreateUserBooksView
     },
     {
+      path: '/create-user-writer',
+      name: 'CreateWriter',
+      component: CreateUserWriterView
+    },
+    {
       // We need router here.
       path: '/home/:user',
       name: 'BookShelf',
       component: BookShelfView
     },
     {
-      path: '/create-user-writer',
-      name: 'CreateWriter',
-      component: CreateUserWriterView
+      path: '/home/:writer',
+      name: 'writersDesk'
     }
   ]
 })

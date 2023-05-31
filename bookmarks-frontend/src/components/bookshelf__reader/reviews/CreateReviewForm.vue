@@ -48,12 +48,13 @@
         </button>
       </span>
     </span>
-</form>
+  </form>
 
-<button class="block h-4 mx-4 mt-10 bg-indigo-600 text-indigo-100 px-6 py-3 rounded-md hover:bg-indigo-700 duration-300">
+  <button
+    class="block h-4 mx-4 mt-10 bg-indigo-600 text-indigo-100 px-6 py-3 rounded-md hover:bg-indigo-700 duration-300"
+  >
     Post review
-</button>
-
+  </button>
 </template>
 
 <script>
