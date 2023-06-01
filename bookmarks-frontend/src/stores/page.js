@@ -16,7 +16,11 @@ export const useStore = defineStore('formState', {
       //   }
     },
     getPrevPage() {
-      this.page--
+      if(this.page > 1){
+        this.page--
+      } else {
+        return;
+      }
     }
   }
 })

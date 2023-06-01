@@ -1,5 +1,11 @@
 <template>
   <div class="h-screen w-screen grid place-content-center relative">
+    <button
+      class="mb-10 text-indigo-500 hover:text-indigo-800 duration-300"
+      @click="getPrevPage"
+    >
+      back
+    </button>
     <component :is="createFormState" />
   </div>
 </template>

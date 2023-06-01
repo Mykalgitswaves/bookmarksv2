@@ -3,6 +3,7 @@ import SignUpView from '@/views/signup.vue'
 import CreateUserBooksView from '@/views/createuser.vue'
 import CreateUserWriterView from '@/views/createwriter.vue'
 import BookShelfView from '@/views/bookshelf.vue'
+import NotFound from '@/views/NotFound.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -31,6 +32,10 @@ const router = createRouter({
     {
       path: '/home/:writer',
       name: 'writersDesk'
+    },
+    {
+      path: '/:pathMatch(.*)',
+      component: NotFound
     }
   ]
 })
