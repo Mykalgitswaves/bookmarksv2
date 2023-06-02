@@ -1,9 +1,5 @@
-<template>
-    last one.
-</template>
+<template>last one.</template>
 
 <script>
-    export default {
-        
-    }
+export default {}
 </script>
