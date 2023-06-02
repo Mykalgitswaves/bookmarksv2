@@ -1,4 +1,5 @@
 from neo4j import GraphDatabase
+import json
 
 class User():
     def __init__(self, user_id: int, username="", created_date="", book_ids=[], review_ids=[],to_read_ids=[],liked_authors=[], liked_genres=[], currently_reading=[],friends=[],liked_reviews=[]):
@@ -177,8 +178,10 @@ class Tag():
 
 class Neo4jDriver():
     def __init__(self):
-        uri = "bolt://localhost:7687"
-        self.driver = GraphDatabase.driver(uri, auth = ("neo4j","password"))
+        with open("config.json","r") as f:
+            CONFIG = json.load(f)
+        uri = CONFIG["uri"]
+        self.driver = GraphDatabase.driver(uri, auth = (CONFIG["username"],CONFIG["password"]))
 
     def pull_user_node(self,user_id:int):
         """
@@ -694,3 +697,10 @@ class Neo4jDriver():
     
     def close(self):
         self.driver.close()
+
+if __name__ == "__main__":
+    driver = Neo4jDriver()
+    author = driver.pull_author_node(1)
+    print(author.full_name)
+    print(author.books)
+    driver.close()
