@@ -3,4 +3,5 @@ dotenv
 env
 .dotenv
 config.json
-.json
+*.json
+*.pyc
