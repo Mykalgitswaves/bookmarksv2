@@ -10,6 +10,7 @@ from database.db_helpers import (
 from fastapi import FastAPI, HTTPException
 
 """
+
 Connect to database
 
 Steps for starting uvicorn server: 
