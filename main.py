@@ -1,26 +1,6 @@
 from typing import ClassVar, Optional, List
-
 from fastapi import FastAPI, HTTPException
-
 from pydantic import BaseModel, ClassList
-
-"""
-ModelsModelsModelsModels for Neo4j
-"""
-
-
-"""
-ModelsModelsModelsModels for Request Bodies of Neo4J models (we might not need this)
-"""
-
-class UserRequest(BaseModel):
-    def __init__(self, **kargs):
-        self.fullname = fullname
-        self.name = name
-        self.genre = ClassList[str]
-    
-    
-
 
 
 """
