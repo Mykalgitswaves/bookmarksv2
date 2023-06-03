@@ -11,6 +11,29 @@ from fastapi import FastAPI, HTTPException
 
 """
 Connect to database
+
+Steps for starting uvicorn server: 
+    1) Activate venv with command from base dir(Bookmarks3/) of project:
+        'source app/bin/activate'
+    
+        #NOTE: if you ever need to deactivate just type deactivate 
+        
+    2) Once, inside your venv run this command inside the same shell: 
+        'uvicorn main:app --reload'
+
+    This command ^ will automatically reload after any changes made to main.py, which for our purposes has the endpoints to our app for now. 
+    
+    We might want to at somepoint, move the business logic outside of the main.py file like you we have in /database directory.
+    
+    3) Once running to see the actual endpoints go into the server that is printed in your terminal and enter this param into the url:
+        'http://127.0.0.1:8000/docs#/'
+
+    The /docs#/ page/feature of fastapi lets you test your endpoints locally, really great for seeing where things are fucked up and why. 
+
+    4) Click on the endpoint you have created, in the browser and select try it out, as we start building up endpoints we can start to get into the jazz of FastApi library, there is a lot of cool shit in here.
+
+    5) The only other thing i can think of rn is that we will need to set up our backend cors policies to allow for our spa frontend to request to api. We can work on that together.
+
 """
 
 app = FastAPI()
