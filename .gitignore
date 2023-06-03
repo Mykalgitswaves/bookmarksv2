@@ -5,3 +5,7 @@ env
 config.json
 *.json
 *.pyc
+*.cpython
+__pycache__
+
+
