@@ -127,7 +127,7 @@ class Review():
         else:
             print("New rating is same as old rating")
 class Book():
-    def __init__(self, book_id, gr_id, img_url, small_img_url, pages, publication_year, lang, title, description, isbn24 ,genres=[], authors=[], tags=[], reviews=[]):
+    def __init__(self, book_id, gr_id=None, img_url="", small_img_url="", pages=None, publication_year=None, lang="", title="", description="", isbn24="" ,genres=[], authors=[], tags=[], reviews=[]):
         self.id = book_id
         self.gr_id = gr_id
         self.img_url = img_url
@@ -694,13 +694,31 @@ class Neo4jDriver():
             tag.books.append(response["b.id"])
         tag.name = response["t.name"]
         return(tag)
-    
+    def pull_book_titles(self):
+        """
+        Query returns the titles of all the books in the db
+        Args:
+            None
+        Returns:
+            Dict: All book titles
+        """
+        with self.driver.session() as session:
+            books = session.execute_write(self.pull_book_titles_query)
+        return(books)
+    @staticmethod
+    def pull_book_titles_query(tx):
+        query = """
+                match (b:Book) return b.title, b.id
+                """
+        result = tx.run(query)
+        books = [Book(book_id=response['b.id'],title=response["b.title"]) for response in result]
+        return(books)
     def close(self):
         self.driver.close()
 
 if __name__ == "__main__":
     driver = Neo4jDriver()
-    author = driver.pull_author_node(1)
-    print(author.full_name)
-    print(author.books)
+    books = driver.pull_book_titles()
+    for book in books:
+        print(book.id,book.title,book.pages)
     driver.close()
