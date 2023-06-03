@@ -42,5 +42,9 @@ app = FastAPI()
 @app.get("/")
 async def get_test_user_data():
     driver = Neo4jDriver()
-    result = driver.pull_user_node(user_id=int(1010015))
+    result = driver.pull_user_node(user_id=1)
     return result
+
+@app.put("/{user}")
+async def test_put_user_data(user_id: int, user):
+    print(user)
