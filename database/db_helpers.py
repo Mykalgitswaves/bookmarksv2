@@ -762,7 +762,7 @@ class Neo4jDriver():
         return(books)
     @staticmethod
     def pull_search2_books_query(tx, skip, limit, text):
-        text = f".*{text}.*"
+        text = f"(?i).*{text}.*"
         query = """
                 match (b:Book) where b.title =~ $text return b.title, b.id,b.small_img_url, b.originalPublicationYear
                 SKIP $skip
@@ -810,7 +810,7 @@ class Neo4jDriver():
 
 if __name__ == "__main__":
     driver = Neo4jDriver()
-    books = driver.pull_search2_books(skip=0,limit=3,text='Harry')
+    books = driver.pull_search2_books(skip=0,limit=3,text='harry')
     for book in books:
         print(book.id,book.title, book.genre_names, book.author_names)
     driver.close()
