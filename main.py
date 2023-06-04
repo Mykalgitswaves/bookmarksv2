@@ -16,7 +16,7 @@ Connect to database
 
 Steps for starting uvicorn server: 
     1) Activate venv with command from base dir(Bookmarks3/) of project:
-        'source app/bin/activate'
+        'conda activate bookmarks '
     
         #NOTE: if you ever need to deactivate just type deactivate 
         
@@ -35,6 +35,8 @@ Steps for starting uvicorn server:
     4) Click on the endpoint you have created, in the browser and select try it out, as we start building up endpoints we can start to get into the jazz of FastApi library, there is a lot of cool shit in here.
 
     5) The only other thing i can think of rn is that we will need to set up our backend cors policies to allow for our spa frontend to request to api. We can work on that together.
+
+    6) Install dependencies with pip inside conda. For more cash money chix.
 
 """
 
@@ -64,3 +66,5 @@ async def get_test_user_data():
 @app.get("/books")
 async def get_books():
     driver = Neo4jDriver()
+    result = driver.pull_book_titles()
+    return result
