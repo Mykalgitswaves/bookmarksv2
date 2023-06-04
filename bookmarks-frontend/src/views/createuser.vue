@@ -1,5 +1,5 @@
 <template>
-  <div class="h-screen w-screen grid place-content-center relative">
+  <div class="h-100 grid place-content-center relative mt-10">
     <component :is="createFormState" />
   </div>
 </template>

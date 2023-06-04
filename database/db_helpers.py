@@ -713,12 +713,44 @@ class Neo4jDriver():
         result = tx.run(query)
         books = [Book(book_id=response['b.id'],title=response["b.title"]) for response in result]
         return(books)
+    def pull_n_books(self, skip=int, limit=int):
+        """
+        Query returns entire books for a selected range(index's between skip and limit) in db in order to give faster responses
+        Args:
+            skip: index to start at
+            limit: index to end at
+        Returns:
+            Dict: All book titles
+        """
+        with self.driver.session() as session:
+            books = session.execute_write(self.pull_n_books_query, skip, limit)
+            return(books)
+    @staticmethod
+    def pull_n_books_query(tx, skip, limit):
+        query = """
+                match (b:Book) return b.title, b.id, b.small_img_url, b.genres, b.authors, b.publication_year 
+                SKIP $skip
+                LIMIT $limit
+                """
+        result = tx.run(query, skip=skip, limit=limit)
+        books = [
+            Book(
+                book_id=response['b.id'],
+                title=response['b.title'],
+                small_img_url=response['b.small_img_url'],
+                genres=response['b.genres'],
+                authors=response['b.authors'],
+                publication_year=response['b.publication_year']
+            )
+            for response in result
+        ]
+        return(books)
     def close(self):
         self.driver.close()
 
 if __name__ == "__main__":
     driver = Neo4jDriver()
-    books = driver.pull_book_titles()
+    books = driver.pull_n_books()
     for book in books:
         print(book.id,book.title,book.pages)
     driver.close()

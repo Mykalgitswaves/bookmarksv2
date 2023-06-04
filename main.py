@@ -64,7 +64,11 @@ async def get_test_user_data():
     return result
 
 @app.get("/books")
-async def get_books():
+async def get_books(skip: int = 0, limit: int = 3):
+    """
+    Used for initial fetch 
+    """
     driver = Neo4jDriver()
-    result = driver.pull_book_titles()
+    result = driver.pull_n_books(skip, limit)
     return result
+
