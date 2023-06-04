@@ -8,7 +8,8 @@ from database.db_helpers import (
     Neo4jDriver
 )
 from fastapi import FastAPI, HTTPException
-
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.encoders import jsonable_encoder
 """
 
 Connect to database
@@ -39,12 +40,27 @@ Steps for starting uvicorn server:
 
 app = FastAPI()
 
-@app.get("/")
+origins = [
+    "http://localhost:5174",
+    "http://localhost:5173",
+    "http://localhost",
+    "http://localhost:8080",
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+@app.get("/user-test")
 async def get_test_user_data():
     driver = Neo4jDriver()
     result = driver.pull_user_node(user_id=1)
     return result
 
-@app.put("/{user}")
-async def test_put_user_data(user_id: int, user):
-    print(user)
+@app.get("/books")
+async def get_books():
+    driver = Neo4jDriver()

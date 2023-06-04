@@ -38,7 +38,8 @@ export default {
         {
           pk: 5
         }
-      ]
+      ],
+      Books: null,
     }
   },
   methods: {
@@ -46,7 +47,19 @@ export default {
       const state = useBookStore()
       state.addBook(book)
       console.log(state)
+    },
+    async fetchBooks() {
+      try {
+        const response = await fetch('http://127.0.0.1:8000/books').then((data) => JSON.stringify(data));
+        console.log(response)
+        return response
+      } catch(err) {
+        console.log(err);
+      }
     }
+  },
+  mounted(){
+    this.fetchBooks()
   },
   computed: {
     ranges() {
