@@ -1,15 +1,15 @@
 <template>
-  <div class="pt-5">
-    <ul v-for="range in ranges" :key="range">
+  <div class="px-4 pt-5">
+    <ul v-for="(book, index) in ranges" :key="index">
       <li
         @click="addBook(1)"
         class="flex flex-row gap-5 py-4 px-4 place-content-start bg-gray-100 rounded-md my-1 hover:bg-gray-200 max-w-[700px]"
       >
-        <img class="h-24" src="../../assets/InfiniteJest.png" />
+        <img class="h-24" :src="book.small_img_url" />
         <div class="flex flex-col justify-center">
-          <p class="text-xl font-semibold text-gray-800">Infinite Jest</p>
-          <p class="text-sm text-gray-800">David Foster Wallace</p>
-          <span class="text-sm text-gray-500">February 1, 1996</span>
+          <p class="text-xl font-semibold text-gray-800">{{ book.title }}</p>
+          <p class="text-sm text-gray-800">{{ book.authors }}</p>
+          <span class="text-sm text-gray-500">{{ book.publication_year }}</span>
         </div>
       </li>
     </ul>
@@ -38,7 +38,18 @@ export default {
         {
           pk: 5
         }
-      ]
+      ],
+      promiseBooks: null,
+      fulfilledBooks: []
+    }
+  },
+  watch: {
+    promiseBooks: {
+      deep: true,
+      handler: function (newValue) {
+        this.fulfilledBooks = newValue
+        console.log(newValue)
+      }
     }
   },
   methods: {
@@ -46,11 +57,25 @@ export default {
       const state = useBookStore()
       state.addBook(book)
       console.log(state)
+    },
+    async fetchBooks() {
+      try {
+        const response = await fetch('http://127.0.0.1:8000/books')
+        this.promiseBooks = await response.json()
+      } catch(err) {
+        console.log(err);
+      }
     }
+  },
+  mounted(){
+    this.fetchBooks()
   },
   computed: {
     ranges() {
-      return this.dataRanges.slice(0, 3)
+      return this.fulfilledBooks
+    },
+    bookAuthor() {
+      return book.small_img_url
     }
   }
 }

@@ -8,13 +8,15 @@ from database.db_helpers import (
     Neo4jDriver
 )
 from fastapi import FastAPI, HTTPException
-
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.encoders import jsonable_encoder
 """
+
 Connect to database
 
 Steps for starting uvicorn server: 
     1) Activate venv with command from base dir(Bookmarks3/) of project:
-        'source app/bin/activate'
+        'conda activate bookmarks '
     
         #NOTE: if you ever need to deactivate just type deactivate 
         
@@ -34,12 +36,39 @@ Steps for starting uvicorn server:
 
     5) The only other thing i can think of rn is that we will need to set up our backend cors policies to allow for our spa frontend to request to api. We can work on that together.
 
+    6) Install dependencies with pip inside conda. For more cash money chix.
+
 """
 
 app = FastAPI()
 
-@app.get("/")
+origins = [
+    "http://localhost:5174",
+    "http://localhost:5173",
+    "http://localhost",
+    "http://localhost:8080",
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+@app.get("/user-test")
 async def get_test_user_data():
     driver = Neo4jDriver()
-    result = driver.pull_user_node(user_id=int(1010015))
+    result = driver.pull_user_node(user_id=1)
     return result
+
+@app.get("/books")
+async def get_books(skip: int = 0, limit: int = 3):
+    """
+    Used for initial fetch 
+    """
+    driver = Neo4jDriver()
+    result = driver.pull_n_books(skip, limit)
+    return result
+

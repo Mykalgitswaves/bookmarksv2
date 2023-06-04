@@ -1,5 +1,5 @@
 <template>
-  <div class="container grid grid-cols-1">
+  <div class="container grid grid-cols-1 relative">
     <h2 class="text-3xl font-medium mb-4">
       What kind of reader<br />
       are you?
@@ -8,7 +8,7 @@
 
     <form class="grid grid-cols-1 gap-2" action="submitForm" method="POST">
       <input
-        class="py-2 px-4 rounded-md border-2 border-indigo-200 mt-20 w-62 max-w-[600px]"
+        class="py-2 px-4 rounded-md border-2 border-indigo-200 mt-5 w-62 max-w-[600px]"
         @change="searchBooks($event)"
         placeholder="Search for books"
         name="searchForBooks"
@@ -20,9 +20,10 @@
       </label>
     </form>
 
-    <BookSearchResults :data="data" />
+    <BookSearchResults class="max-w-[600px]" :data="data" />
+
     <button
-      class="mt-5 px-36 py-3 bg-indigo-600 rounded-md text-indigo-100"
+      class="mt-5 px-20 py-3 bg-indigo-600 rounded-md text-indigo-100 max-w-[600px]"
       type="submit"
       @click="navigate"
     >
@@ -47,14 +48,14 @@ export default {
     }
   },
   methods: {
-    async getBooks(event) {
-      await fetch()
-        .then((response) => response.json())
-        .then((data) => {
-          data.filter((d) => {
-            d.includes(event.target.value) ? (this.data = d) : null
-          })
-        })
+    async searchBooks(event) {
+      try {
+        const response = await fetch(`http://127.0.0.1:8000/books/?title=${event.target.value}/`)
+        this.data = await response.json()
+        console.log(this.data)
+      } catch(err) {
+        console.log(err)
+      }
     },
     navigate() {
       this.state.getNextPage()
