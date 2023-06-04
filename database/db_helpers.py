@@ -127,7 +127,7 @@ class Review():
         else:
             print("New rating is same as old rating")
 class Book():
-    def __init__(self, book_id, gr_id=None, img_url="", small_img_url="", pages=None, publication_year=None, lang="", title="", description="", isbn24="" ,genres=[], authors=[], tags=[], reviews=[]):
+    def __init__(self, book_id, gr_id=None, img_url="", small_img_url="", pages=None, publication_year=None, lang="", title="", description="", isbn24="" ,genres=[], authors=[], tags=[], reviews=[], genre_names=[], author_names=[]):
         self.id = book_id
         self.gr_id = gr_id
         self.img_url = img_url
@@ -138,7 +138,9 @@ class Book():
         self.title = title
         self.description = description 
         self.genres = genres
+        self.genre_names = genre_names
         self.authors = authors
+        self.author_names = author_names
         self.tags = tags
         self.reviews = reviews
         self.isbn24 = isbn24
@@ -716,6 +718,7 @@ class Neo4jDriver():
     def pull_n_books(self, skip=int, limit=int):
         """
         Query returns entire books for a selected range(index's between skip and limit) in db in order to give faster responses
+        
         Args:
             skip: index to start at
             limit: index to end at
@@ -728,7 +731,7 @@ class Neo4jDriver():
     @staticmethod
     def pull_n_books_query(tx, skip, limit):
         query = """
-                match (b:Book) return b.title, b.id, b.small_img_url, b.genres, b.authors, b.publication_year 
+                match (b:Book) return b.title, b.id, b.small_img_url, b.publication_year 
                 SKIP $skip
                 LIMIT $limit
                 """
@@ -738,11 +741,68 @@ class Neo4jDriver():
                 book_id=response['b.id'],
                 title=response['b.title'],
                 small_img_url=response['b.small_img_url'],
-                genres=response['b.genres'],
-                authors=response['b.authors'],
                 publication_year=response['b.publication_year']
             )
             for response in result
+        ]
+        return(books)
+    def pull_search2_books(self, skip, limit, text):
+        """
+        Returns a partial book object for a small about of book using a text search term
+        
+        Args:
+            skip: index to start at
+            limit: index to end at
+            text: text to search within the title
+        Returns:
+            Book: Partial book object with title, id, small_img_url,publicationYear, genre_names, and author_names
+        """
+        with self.driver.session() as session:
+            books = session.execute_write(self.pull_search2_books_query, skip, limit, text)
+        return(books)
+    @staticmethod
+    def pull_search2_books_query(tx, skip, limit, text):
+        text = f".*{text}.*"
+        query = """
+                match (b:Book) where b.title =~ $text return b.title, b.id,b.small_img_url, b.originalPublicationYear
+                SKIP $skip
+                LIMIT $limit
+                """
+        result = tx.run(query, skip=skip, limit=limit, text=text)
+        books = [
+            {
+                "book_id":response['b.id'],
+                "title":response['b.title'],
+                "small_img_url":response['b.small_img_url'],
+                "publication_year":response['b.originalPublicationYear']
+            }
+            for response in result
+        ]
+        book_ids = [book['book_id']for book in books]
+        books_zip = dict(zip(book_ids,books))
+        query = """
+                match (b:Book)-[r:HAS_GENRE|WROTE]-(g:Genre|Author) where b.id IN $book_ids return b.id, g.name, TYPE(r)
+                """
+        result = tx.run(query, book_ids=book_ids)
+        for response in result:
+            book_id = response['b.id']
+            if response["TYPE(r)"] == "HAS_GENRE":
+                if 'genre_names' not in books_zip[book_id].keys():
+                    books_zip[book_id].update({"genre_names":[]}) 
+                books_zip[book_id]['genre_names'].append(response["g.name"])
+            elif response["TYPE(r)"] == "WROTE":
+                if 'author_names' not in books_zip[book_id].keys():
+                    books_zip[book_id].update({"author_names":[]}) 
+                books_zip[book_id]['author_names'].append(response["g.name"])
+        books = [
+            Book(
+                book_id=response['book_id'],
+                title=response['title'],
+                small_img_url=response['small_img_url'],
+                publication_year=response['publication_year'],
+                genre_names=response["genre_names"],
+                author_names=response["author_names"])
+            for response in books_zip.values()
         ]
         return(books)
     def close(self):
@@ -750,7 +810,7 @@ class Neo4jDriver():
 
 if __name__ == "__main__":
     driver = Neo4jDriver()
-    books = driver.pull_n_books()
+    books = driver.pull_search2_books(skip=0,limit=3,text='Harry')
     for book in books:
-        print(book.id,book.title,book.pages)
+        print(book.id,book.title, book.genre_names, book.author_names)
     driver.close()
