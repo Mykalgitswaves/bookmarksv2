@@ -72,11 +72,11 @@ async def get_books(skip: int = 0, limit: int = 3):
     result = driver.pull_n_books(skip, limit)
     return result
 
-@app.get("/books/?search={title}")
-async def get_books_by_title(skip: int = 0, limit: int = 3, text: str=''):
+@app.get("/books/{text}")
+async def get_books_by_title(text: str, skip: int = 0, limit: int=3):
     """
     Search a damn book
     """
     driver = Neo4jDriver()
-    result = driver.pull_search2_books(skip, limit, text)
+    result = driver.pull_search2_books(text=text, skip=0, limit=3)
     return result
