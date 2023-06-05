@@ -50,15 +50,6 @@ export default {
       required: true
     }
   },
-  watch: {
-    promiseBooks: {
-      deep: true,
-      handler: function (newValue) {
-        this.fulfilledBooks = newValue
-        console.log(newValue)
-      }
-    }
-  },
   methods: {
     addBook(book) {
       const state = useBookStore()
@@ -75,15 +66,9 @@ export default {
     }
   },
   mounted(){
-    this.fetchBooks()
+    // this.fetchBooks()
   },
   computed: {
-    ranges() {
-      return this.fulfilledBooks
-    },
-    bookAuthor() {
-      return book.small_img_url
-    }
   }
 }
 </script>
