@@ -80,3 +80,12 @@ async def get_books_by_title(text: str, skip: int=0, limit: int=3):
     driver = Neo4jDriver()
     result = driver.pull_search2_books(text=text, skip=0, limit=5)
     return result
+
+@app.get("/genres/{text}")
+async def get_genres_by_title(text: str, skip: int=0, limit: int=3):
+    """
+    Search for a genre by text
+    """
+    driver = Neo4jDriver()
+    result = driver.pull_search2_genre(text=text, skip=0, limit=5)
+    return result

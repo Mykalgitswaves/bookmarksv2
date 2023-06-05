@@ -805,6 +805,37 @@ class Neo4jDriver():
             for response in books_zip.values()
         ]
         return(books)
+    def pull_search2_genre(self, skip, limit, text):
+        """
+        Returns a partial book object for a small about of book using a text search term
+        
+        Args:
+            skip: index to start at
+            limit: index to end at
+            text: text to search within the title
+        Returns:
+            Book: Partial book object with title, id, small_img_url,publicationYear, genre_names, and author_names
+        """
+        with self.driver.session() as session:
+            books = session.execute_write(self.pull_search2_genre_query, skip, limit, text)
+        return(books)
+    @staticmethod
+    def pull_search2_genre_query(tx, skip, limit, text):
+        text = "(?i)" + "".join([f".*{word}.*" for word in text.split(" ")])
+        query = """
+                match (g:Genre) where g.name =~ $text return g.name, g.id
+                SKIP $skip
+                LIMIT $limit
+                """
+        result = tx.run(query, skip=skip, limit=limit, text=text)
+        genres = [
+                Genre(
+                    genre_id=response['g.id'],
+                    name=response['g.name'],
+                )
+                for response in result
+            ]
+        return(genres)
     def close(self):
         self.driver.close()
 
