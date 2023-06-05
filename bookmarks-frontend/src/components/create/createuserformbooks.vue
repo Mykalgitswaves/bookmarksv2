@@ -1,8 +1,7 @@
 <template>
   <div class="container grid grid-cols-1 relative">
     <h2 class="text-3xl font-medium mb-4">
-      What kind of reader<br />
-      are you?
+      What kind of reader are you?
     </h2>
     <p class="text-gray-500">Search for some of your favorite books</p>
 
@@ -14,7 +13,6 @@
         name="searchForBooks"
         type="text"
       />
-
       <label class="text-gray-600 text-sm" for="searchForBooks">
         Search for a book and tap to add it to your books
       </label>

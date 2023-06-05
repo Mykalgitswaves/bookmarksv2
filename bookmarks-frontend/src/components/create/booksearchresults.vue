@@ -1,9 +1,10 @@
 <template>
   <div class="px-4 pt-5">
-    <ul v-for="(book, index) in data" :key="index">
+    <ul v-for="book in data" :key="book.id">
       <li
-        @click="addBook(book.id)"
-        class="flex flex-row gap-5 py-4 px-4 place-content-start bg-gray-100 rounded-md my-1 hover:bg-gray-200 max-w-[700px]"
+        @click="addBook(book.id); isToggled[book.id] = true;"
+        :class="'flex flex-row gap-5 py-4 px-4 place-content-start bg-gray-100 rounded-md my-1 hover:bg-gray-200 max-w-[700px]'
+         + (isToggled[book.id] === true ? 'border-solid border-indigo-200 border-2 bg-indigo-50' : '')"
       >
         <img class="h-24" :src="book.small_img_url" />
         <div class="flex flex-col justify-center">
@@ -19,12 +20,14 @@
 
 <script>
 import { useBookStore } from '../../stores/books'
+import {toRaw} from 'vue'
 
 export default {
   data() {
     return {
       promiseBooks: null,
-      fulfilledBooks: []
+      fulfilledBooks: [],
+      isToggled: {}
     }
   },
   props: {
@@ -37,21 +40,14 @@ export default {
     addBook(book) {
       const state = useBookStore()
       state.addBook(book)
-      console.log(state)
+      console.log(toRaw(state))
+      console.log(this.isToggled)
     },
-    async fetchBooks() {
-      try {
-        const response = await fetch('http://127.0.0.1:8000/books')
-        this.promiseBooks = await response.json()
-      } catch(err) {
-        console.log(err);
-      }
-    }
   },
   mounted(){
-    // this.fetchBooks()
   },
   computed: {
+    
   }
 }
 </script>
