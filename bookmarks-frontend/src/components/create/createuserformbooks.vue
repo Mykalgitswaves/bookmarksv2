@@ -50,9 +50,10 @@ export default {
   methods: {
     async searchBooks(event) {
       try {
-        const response = await fetch(`http://127.0.0.1:8000/books/?title=${event.target.value}/`)
-        this.data = await response.json()
-        console.log(this.data)
+        const response = await fetch(`http://127.0.0.1:8000/books/${event.target.value}/`)
+        const data = await response.json()
+        this.data = data
+        console.log(data)
       } catch(err) {
         console.log(err)
       }
