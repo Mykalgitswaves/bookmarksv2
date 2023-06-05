@@ -18,10 +18,22 @@
         :key="genre"
         class="bg-gray-100 px-2 text-center py-2 rounded-lg border-2 border-solid border-gray-300 hover:border-indigo-500 text-lg"
       >
-        <span>{{ genre }}</span>
+        <span>{{ genre.name }}</span>
       </li>
     </ul>
   </div>
+  <div class="container mt-20 mb-36">
+    <ul class="grid-pills justify-content-center">
+      <li
+        v-for="genre in addedGenre"
+        :key="genre"
+        class="bg-gray-100 px-2 text-center py-2 rounded-lg border-2 border-solid border-gray-300 hover:border-indigo-500 text-lg"
+      >
+        <span>{{ genre.name }}</span>
+      </li>
+    </ul>
+  </div>
+
   <button
     class="px-36 py-3 bg-indigo-600 rounded-md text-indigo-100"
     type="submit"
@@ -34,11 +46,13 @@
 <script>
 import { useStore } from '../../stores/page'
 import { useBookStore } from '../../stores/books'
+import { toRaw } from 'vue';
 
 export default {
   data() {
     return {
       genres: ['English', 'Romance', 'Mystery', 'Horror', 'Cooking', 'Graphic Novels'],
+      addedGenre: [],
       state: null
     }
   },
@@ -50,12 +64,14 @@ export default {
     addGenre(genre) {
       const state = useBookStore()
       state.addGenre(genre)
-      console.log(state)
+      this.addedGenre.push(genre)
+      console.log(toRaw(state))
     },
     async searchGenres(event){
       try {
         const response = await fetch(`http://127.0.0.1:8000/genres/${event.target.value}`);
         const data = await response.json()
+        this.genres = data
         console.log(data)
       } catch(err) {
         console.log(err)
