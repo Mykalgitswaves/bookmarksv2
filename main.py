@@ -78,7 +78,7 @@ async def get_books_by_title(text: str, skip: int=0, limit: int=3):
     Search a damn book
     """
     driver = Neo4jDriver()
-    result = driver.pull_search2_books(text=text, skip=0, limit=5)
+    result = driver.pull_search2_books(text=text, skip=skip, limit=limit)
     return result
 
 @app.get("/genres/{text}")
@@ -87,5 +87,14 @@ async def get_genres_by_title(text: str, skip: int=0, limit: int=3):
     Search for a genre by text
     """
     driver = Neo4jDriver()
-    result = driver.pull_search2_genre(text=text, skip=0, limit=5)
+    result = driver.pull_search2_genre(text=text, skip=skip, limit=limit)
+    return result
+
+@app.get("/authors/{text}")
+async def get_authors_by_title(text: str, skip: int=0, limit: int=3):
+    """
+    Search for an author by text
+    """
+    driver = Neo4jDriver()
+    result = driver.pull_search2_author(text=text, skip=skip, limit=limit)
     return result

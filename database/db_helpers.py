@@ -807,14 +807,14 @@ class Neo4jDriver():
         return(books)
     def pull_search2_genre(self, skip, limit, text):
         """
-        Returns a partial book object for a small about of book using a text search term
+        Returns a  genre object for a small about of genre using a text search term
         
         Args:
             skip: index to start at
             limit: index to end at
             text: text to search within the title
         Returns:
-            Book: Partial book object with title, id, small_img_url,publicationYear, genre_names, and author_names
+            Genre: genre object with name and id
         """
         with self.driver.session() as session:
             books = session.execute_write(self.pull_search2_genre_query, skip, limit, text)
@@ -836,12 +836,43 @@ class Neo4jDriver():
                 for response in result
             ]
         return(genres)
+    def pull_search2_author(self, skip, limit, text):
+        """
+        Returns a  author object for a small about of author using a text search term
+        
+        Args:
+            skip: index to start at
+            limit: index to end at
+            text: text to search within the title
+        Returns:
+            Author: author object with name and id
+        """
+        with self.driver.session() as session:
+            books = session.execute_write(self.pull_search2_author_query, skip, limit, text)
+        return(books)
+    @staticmethod
+    def pull_search2_author_query(tx, skip, limit, text):
+        text = "(?i)" + "".join([f".*{word}.*" for word in text.split(" ")])
+        query = """
+                match (a:Author) where a.name =~ $text return a.name, a.id
+                SKIP $skip
+                LIMIT $limit
+                """
+        result = tx.run(query, skip=skip, limit=limit, text=text)
+        authors = [
+                Author(
+                    author_id=response['a.id'],
+                    full_name=response['a.name'],
+                )
+                for response in result
+            ]
+        return(authors)
     def close(self):
         self.driver.close()
 
 if __name__ == "__main__":
     driver = Neo4jDriver()
-    books = driver.pull_search2_books(skip=0,limit=3,text='harr potter')
-    for book in books:
-        print(book.id,book.title, book.genre_names, book.author_names)
+    authors = driver.pull_search2_author(skip=0,limit=3,text='hea')
+    for author in authors:
+        print(author.id,author.full_name)
     driver.close()
