@@ -2,14 +2,14 @@
   <div class="px-4 pt-5">
     <ul v-for="(book, index) in data" :key="index">
       <li
-        @click="addBook(1)"
+        @click="addBook(book.id)"
         class="flex flex-row gap-5 py-4 px-4 place-content-start bg-gray-100 rounded-md my-1 hover:bg-gray-200 max-w-[700px]"
       >
         <img class="h-24" :src="book.small_img_url" />
         <div class="flex flex-col justify-center">
           <p class="text-xl font-semibold text-gray-800">{{ book.title }}</p>
           <p v-for="name in book.author_names" :key="name"
-            class="text-sm text-gray-800">{{ name }}</p>
+            class="inline text-sm text-gray-800">{{ name }}</p>
           <span class="text-sm text-gray-500">{{ book.publication_year }}</span>
         </div>
       </li>
@@ -23,23 +23,6 @@ import { useBookStore } from '../../stores/books'
 export default {
   data() {
     return {
-      dataRanges: [
-        {
-          pk: 1
-        },
-        {
-          pk: 2
-        },
-        {
-          pk: 3
-        },
-        {
-          pk: 4
-        },
-        {
-          pk: 5
-        }
-      ],
       promiseBooks: null,
       fulfilledBooks: []
     }
