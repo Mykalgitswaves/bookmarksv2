@@ -1,3 +1,4 @@
+<!-- eslint-disable vue/no-parsing-error -->
 <template>
   <h1 class="text-center text-4xl font-medium mb-16">Log in</h1>
 
@@ -45,23 +46,22 @@
   >
     Username or password invalid <br />please try a different login
   </span>
+  <RouterLink to="/create-user">
+    <button type="button" class="my-2 text-center">
+        For readers
+        <span class="text-md text-indigo-600 font-semibold underline underline-offset-2">
+        create an account
+        </span>
+    </button>
+  </RouterLink>
 
-  <p class="my-2 text-center">
-    <RouterLink to="/create-user">
-      <span class="text-md text-indigo-600 font-semibold underline underline-offset-2"
-        >For readers</span
-      >
-    </RouterLink>
-    create an account
-  </p>
-
-  <p class="my-2 text-center">
-    <RouterLink to="/create-user-writer">
-      <span class="text-md text-indigo-500 font-semibold underline underline-offset-2"
-        >For writers</span
-      > </RouterLink
-    >, create an account
-  </p>
+  <RouterLink to="/create-user-writer">
+    <button type="button" class="my-2 text-center">
+      
+        For writers<span class="text-md text-indigo-500 font-semibold underline underline-offset-2">
+        create an account</span>
+    </button>
+  </RouterLink>
 </template>
 
 <script>

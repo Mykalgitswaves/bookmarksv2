@@ -5,12 +5,8 @@
 </template>
 
 <script>
-  
-
 export default {
-  watch: {
-
-  }
+  watch: {}
 }
 </script>
 

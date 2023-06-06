@@ -14,12 +14,12 @@
       type="text"
     />
 
-    <AuthorSearch :authors="data" @author-data-updated="getAuthorData"/>
+    <AuthorSearch :authors="data" @author-data-updated="getAuthorData" />
 
     <RouterLink to="/home/">
-      <button 
-        class="mt-5 px-28 py-3 bg-indigo-600 rounded-md text-indigo-100" 
-        type="submit" 
+      <button
+        class="mt-5 px-28 py-3 bg-indigo-600 rounded-md text-indigo-100"
+        type="submit"
         @click="createUser"
       >
         Go to bookshelf
@@ -31,51 +31,46 @@
 <script>
 import { useBookStore } from '../../stores/books'
 
-import AuthorSearch from './authorSearch.vue';
-import { createUserController } from '../../controllers/createuser';
-import { toRaw } from 'vue';
+import AuthorSearch from './authorSearch.vue'
+import { createUserController } from '../../controllers/createuser'
+import { toRaw } from 'vue'
 
 export default {
   components: {
     AuthorSearch
   },
   data() {
-    const store = useBookStore();
-      return {
-        data: null,
-        authors: [],
-        store
-      }
-    },
-    methods: {
-      async searchAuthors(event) {
-        try {
-          const response = await fetch(`http://127.0.0.1:8000/authors/${event.target.value}/`);
-          const data = await response.json();
-          this.data = data;
-          console.log(data);
-        } catch(err) {
-          console.log(err);
-          this.data = null;
-        }
-      },
-      getAuthorData(data) {
-        this.authors.push(data)
-        console.log(data)
-      },
-      async createUser() {
-        const data = toRaw(this.store);
-        // remember to take this out
-        console.log(data);
-        const response = await createUserController.createUser(data);
-        return response;
-      }
-    },
-    mounted(){
-      
-      
+    const store = useBookStore()
+    return {
+      data: null,
+      authors: [],
+      store
     }
+  },
+  methods: {
+    async searchAuthors(event) {
+      try {
+        const response = await fetch(`http://127.0.0.1:8000/authors/${event.target.value}/`)
+        const data = await response.json()
+        this.data = data
+        console.log(data)
+      } catch (err) {
+        console.log(err)
+        this.data = null
+      }
+    },
+    getAuthorData(data) {
+      this.authors.push(data)
+      console.log(data)
+    },
+    async createUser() {
+      const data = toRaw(this.store)
+      // remember to take this out
+      console.log(data)
+      const response = await createUserController.createUser(data)
+      return response
+    }
+  },
+  mounted() {}
 }
 </script>
-  
-

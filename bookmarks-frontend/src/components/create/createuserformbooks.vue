@@ -1,8 +1,6 @@
 <template>
   <div class="container grid grid-cols-1 relative px-5">
-    <h2 class="text-3xl font-medium mb-4">
-      What kind of reader are you?
-    </h2>
+    <h2 class="text-3xl font-medium mb-4">What kind of reader are you?</h2>
     <p class="text-gray-500">Search for some of your favorite books</p>
 
     <form class="grid grid-cols-1 gap-2" action="submitForm" method="POST">
@@ -52,7 +50,7 @@ export default {
         const data = await response.json()
         this.data = data
         console.log(data)
-      } catch(err) {
+      } catch (err) {
         console.log(err)
         this.data = null
       }
