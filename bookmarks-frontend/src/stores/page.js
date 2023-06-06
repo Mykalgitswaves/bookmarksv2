@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia'
 // Todo persist state with local storage so people can leave page/refresh and not start over
 export const useStore = defineStore('formState', {
-  state: () => ({ page: 1 }),
+  state: () => ({ page: 0 }),
   actions: {
     getNextPage() {
       
