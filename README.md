@@ -1,6 +1,10 @@
 # bookmarksv2
 CASHMONEYKYLE
 
+DEPENDENCIES: 
+  
+    $ pip install "python-jose[cryptography]"
+    $ pip install "passlib[bcrypt]"
 RUNNING A LOCAL PROTOTYPE OF APP:
   1) For backend, you need to activate your local env with conda.
      from project root dir 
