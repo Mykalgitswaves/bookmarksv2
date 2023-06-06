@@ -10,6 +10,7 @@ from database.db_helpers import (
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.encoders import jsonable_encoder
+from typing import Dict, List
 """
 
 Connect to database
@@ -98,3 +99,10 @@ async def get_authors_by_title(text: str, skip: int=0, limit: int=3):
     driver = Neo4jDriver()
     result = driver.pull_search2_author(text=text, skip=skip, limit=limit)
     return result
+
+@app.post("/post-create-reader/")
+async def post_create_user(user_data: Dict):
+    print(user_data.items())
+    
+            # Perform any necessary operations with each user data
+            

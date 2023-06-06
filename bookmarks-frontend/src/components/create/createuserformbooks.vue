@@ -1,5 +1,5 @@
 <template>
-  <div class="container grid grid-cols-1 relative">
+  <div class="container grid grid-cols-1 relative px-5">
     <h2 class="text-3xl font-medium mb-4">
       What kind of reader are you?
     </h2>
@@ -54,6 +54,7 @@ export default {
         console.log(data)
       } catch(err) {
         console.log(err)
+        this.data = null
       }
     },
     navigate() {
