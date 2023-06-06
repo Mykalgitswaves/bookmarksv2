@@ -1,5 +1,13 @@
 <template>
   <div class="h-100 grid place-content-center relative mt-10">
+    <div class="flex flex-row gap-5 w-100 justify-center my-5">
+      <button type="button" @click="getPrevPage">Prev</button>
+      <button 
+        class="text-indigo-500 mx-2 hover:text-indigo-800 underline underline-offset-2" 
+        type="button" 
+      >{{ page }}</button>
+      <button type="button" @click="getNextPage">Next</button>
+    </div> 
     <component :is="createFormState" />
   </div>
 </template>
