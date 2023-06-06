@@ -2,7 +2,21 @@ from neo4j import GraphDatabase
 import json
 
 class User():
-    def __init__(self, user_id: int, username="", created_date="", book_ids=[], review_ids=[],to_read_ids=[],liked_authors=[], liked_genres=[], currently_reading=[],friends=[],liked_reviews=[]):
+    def __init__(self, user_id: int, 
+                 username="", 
+                 created_date="", 
+                 book_ids=[], 
+                 review_ids=[],
+                 to_read_ids=[],
+                 liked_authors=[],
+                 liked_genres=[],
+                 currently_reading=[],
+                 friends=[],
+                 liked_reviews=[],
+                 email="",
+                 full_name="",
+                 hashed_password="",
+                 disabled=False):
         self.user_id = user_id
         self.books = book_ids
         self.reviews = review_ids
@@ -14,6 +28,10 @@ class User():
         self.liked_reviews = liked_reviews
         self.username = username
         self.created_date = created_date
+        self.email = email
+        self.full_name = full_name
+        self.hashed_password = hashed_password
+        self.disabled=disabled
     def add_friend(self, friend_id:int):
         """
         Adds a friendship relationship to the database
@@ -201,7 +219,7 @@ class Neo4jDriver():
     @staticmethod
     def pull_user_node_query(tx,user_id):
         query = """
-                match (u:User {id: $user_id})-[r]-(b) return TYPE(r),Labels(b),b.id,u.username,u.created_date
+                match (u:User {id: $user_id})-[r]-(b) return TYPE(r),Labels(b),b.id,u.username,u.created_date,u.email,u.disabled
                 """
         result = tx.run(query, user_id=user_id)
         user = User(user_id=user_id)
@@ -223,6 +241,8 @@ class Neo4jDriver():
                 user.friends.append(response["b.id"])
         user.username = response["u.username"]
         user.created_date = response["u.created_date"]
+        user.disabled = response["u.disabled"]
+        user.email = response["u.email"]
         query = """
                 match (uu:User {id: $user_id})-[rr:WROTE_REVIEW]-()-[ro:IS_REVIEW_OF]-(bb) return bb.id
                 """
@@ -848,8 +868,8 @@ class Neo4jDriver():
             Author: author object with name and id
         """
         with self.driver.session() as session:
-            books = session.execute_write(self.pull_search2_author_query, skip, limit, text)
-        return(books)
+            authors = session.execute_write(self.pull_search2_author_query, skip, limit, text)
+        return(authors)
     @staticmethod
     def pull_search2_author_query(tx, skip, limit, text):
         text = "(?i)" + "".join([f".*{word}.*" for word in text.split(" ")])
@@ -867,12 +887,39 @@ class Neo4jDriver():
                 for response in result
             ]
         return(authors)
+    def pull_user_by_username(self, username):
+        """
+        Returns a partial user object for password verification
+
+        Args:
+            username: username of the user to find
+        Returns:
+            User: Partial user object with username, id, password, and disabled
+        """
+        with self.driver.session() as session:
+            user = session.execute_read(self.pull_user_by_username_query, username)
+        return(user)
+    @staticmethod
+    def pull_user_by_username_query(tx, username):
+        query = """
+                match (u:User {username:$username}) return u.id, u.password, u.disabled
+                """
+        result = tx.run(query, username=username)
+        response = result.single()
+        if not response:
+            return None
+        user = User(
+            username=username,
+            user_id=response["u.id"],
+            hashed_password=response["u.password"],
+            disabled=response["u.disabled"]
+        )
+        return(user)
     def close(self):
         self.driver.close()
 
 if __name__ == "__main__":
     driver = Neo4jDriver()
-    authors = driver.pull_search2_author(skip=0,limit=3,text='hea')
-    for author in authors:
-        print(author.id,author.full_name)
+    user = driver.pull_user_by_username(username="ooudo")
+    print(user)
     driver.close()
