@@ -8,7 +8,7 @@ from database.db_helpers import (
     Tag,
     Neo4jDriver
 )
-from fastapi import FastAPI, HTTPException, Depends, status
+from fastapi import FastAPI, HTTPException, Depends, status, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from fastapi.encoders import jsonable_encoder
@@ -199,6 +199,18 @@ async def post_create_user(user_data: Dict):
     
             # Perform any necessary operations with each user data
             
-@app.post("/create-login")
-async def post_create_login_user(user_data: Dict):
-    
+@app.post("/create-login", response_model=Token)
+async def post_create_login_user(request: Request):
+        """
+        create user and then login as user with authenticated session
+        """
+        form_data = await request.json()
+        
+        full_name = form_data.get("full_name")
+        username = form_data.get("username")
+        password = get_password_hash(form_data.get("password"))
+
+        driver = Neo4jDriver()
+        user = driver.create_user(username=username, password=password)
+        authenticate_user(username, password)
+        
