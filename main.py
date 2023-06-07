@@ -61,6 +61,7 @@ pwd_context = CryptContext(schemes=CONFIG['schemes'], deprecated="auto")
 origins = [
     "http://localhost:5174",
     "http://localhost:5173",
+    "http://localhost:5173/",
     "http://localhost",
     "http://localhost:8080",
 ]
