@@ -196,25 +196,22 @@ async def get_authors_by_title(text: str, skip: int=0, limit: int=3):
     return result
             
 @app.post("/create-login", response_model=Token)
-async def post_create_login_user(request: Request = Annotated[OAuth2PasswordRequestForm, Depends()]):
+async def post_create_login_user(form_data:Annotated[OAuth2PasswordRequestForm, Depends()]):
         """
         create user and then login as user with authenticated session
         """
-        form_data = await request.json()
-
-        full_name = form_data.get("full_name")
-        username = form_data.get("username")
-        password = get_password_hash(form_data.get("password"))
+        # form_data = await request.json()
+        password = get_password_hash(form_data.password)
         
         driver = Neo4jDriver()
-        user = driver.create_user(username=username, password=password)
+        user = driver.create_user(username=form_data.username, password=password)
 
-        authenticate_user(username, password)
+        authenticate_user(form_data.username, password)
         access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
         access_token = create_access_token(
             data={"sub": user.username}, expires_delta=access_token_expires
         )
-        return {"access_token": access_token, "token_type": "bearer"}, RedirectResponse(url="/setup-reader/me", status_code=301)
+        return {"access_token": access_token, "token_type": "bearer"} #, RedirectResponse(url="/setup-reader/me", status_code=301)
 
 @app.get("/setup-reader/me")
 async def read_users_me(current_user: Annotated[User, Depends(get_current_active_user)]):

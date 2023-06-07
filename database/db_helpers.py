@@ -390,16 +390,16 @@ class Neo4jDriver():
         """
         user_id = self.get_unique_pk("User")
         with self.driver.session() as session:
-            result = session.execute_write(self.create_user_query, username, user_id, password)
-        return(result)
+            user = session.execute_write(self.create_user_query, username, user_id, password)
+        return(user)
     @staticmethod
     def create_user_query(tx, username, user_id, password):
         query = """
-                create (u:User {id:$user_id,username:$username,password:$password,created_date:datetime()}) return u.created_date
+                create (u:User {id:$user_id,username:$username,password:$password,created_date:datetime(),disabled:False}) return u.created_date
                 """
-        result = tx.run(query, user_id=user_id, username=username)
+        result = tx.run(query, user_id=user_id, username=username, password=password)
         response = result.single()
-        user = User(user_id=user_id,username=username, password=password)
+        user = User(user_id=user_id,username=username, hashed_password=password, disabled=False)
         user.created_date = response['u.created_date']
         return(user)
     def pull_review_node(self,review_id):
@@ -920,6 +920,6 @@ class Neo4jDriver():
 
 if __name__ == "__main__":
     driver = Neo4jDriver()
-    user = driver.pull_user_by_username(username="ooudo")
+    user = driver.create_user(username="test_user",password="bigcrab")
     print(user)
     driver.close()
