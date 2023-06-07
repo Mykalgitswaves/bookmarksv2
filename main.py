@@ -9,6 +9,7 @@ from database.db_helpers import (
     Neo4jDriver
 )
 from fastapi import FastAPI, HTTPException, Depends, status, Request
+from fastapi.responses import RedirectResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from fastapi.encoders import jsonable_encoder
@@ -192,25 +193,34 @@ async def get_authors_by_title(text: str, skip: int=0, limit: int=3):
     driver = Neo4jDriver()
     result = driver.pull_search2_author(text=text, skip=skip, limit=limit)
     return result
-
-@app.post("/post-create-reader/")
-async def post_create_user(user_data: Dict):
-    print(user_data.items())
-    
-            # Perform any necessary operations with each user data
             
 @app.post("/create-login", response_model=Token)
-async def post_create_login_user(request: Request):
+async def post_create_login_user(request: Request = Annotated[OAuth2PasswordRequestForm, Depends()]):
         """
         create user and then login as user with authenticated session
         """
         form_data = await request.json()
-        
+
         full_name = form_data.get("full_name")
         username = form_data.get("username")
         password = get_password_hash(form_data.get("password"))
-
+        
         driver = Neo4jDriver()
         user = driver.create_user(username=username, password=password)
+
         authenticate_user(username, password)
-        
+        access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+        access_token = create_access_token(
+            data={"sub": user.username}, expires_delta=access_token_expires
+        )
+        return {"access_token": access_token, "token_type": "bearer"}, RedirectResponse(url="/setup-reader/me", status_code=301)
+
+@app.get("/setup-reader/me")
+async def read_users_me(current_user: Annotated[User, Depends(get_current_active_user)]):
+    """
+    Redirected endpoint for decorate reader views, provides with correct context/maybe we want to store uuid in the params of url instead
+    might be less secure.
+    """
+    driver = Neo4jDriver()
+    current_user = driver.pull_user_node(current_user.user_id)
+    return current_user
