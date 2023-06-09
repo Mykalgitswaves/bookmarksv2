@@ -230,6 +230,13 @@ async def read_users_me(current_user: Annotated[User, Depends(get_current_active
     current_user = driver.pull_user_node(current_user.user_id)
     return current_user
 
+
+def verify_access_token_2(access_token: str):
+        decoded_token = jwt.decode(access_token, CONFIG['SECRET_KEY'], algorithms=[CONFIG['ALGORITHM']], options={"verify_sub": False})
+        return decoded_token
+ 
+
+
 @app.put("/setup-reader/books")
 async def put_users_me_books(request: Request, credentials: HTTPAuthorizationCredentials = Depends(security)):
     access_token = credentials.credentials
@@ -238,12 +245,13 @@ async def put_users_me_books(request: Request, credentials: HTTPAuthorizationCre
         raise HTTPException(status_code=401, detail="Missing session cookie")
 
     # Verify the access token
-    decoded_token = verify_access_token(access_token)
-    cookies = request.body
-    session_token = cookies.get("session_token")
+    if access_token.startswith('session_token='):
+        access_token = access_token[len('session_token='):]
+    decoded_token = verify_access_token_2(access_token)
 
-    import pdb
-    pdb.set_trace()
+    user_id = decoded_token['sub']
+    book_array = await request.json()
+
     # Continue with your logic to process the books endpoint
     # ...
 

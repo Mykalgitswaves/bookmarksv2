@@ -32,6 +32,7 @@
 import { createUserController } from '../../controllers/createuser';
 import BookSearchResults from './booksearchresults.vue'
 import { useStore } from '../../stores/page.js';
+import { useBookStore } from '../../stores/books';
 import { toRaw } from 'vue'
 
 export default {
@@ -59,9 +60,9 @@ export default {
     },
     async updateUser() {
       const token = document.cookie;
-      console.log(token);
-
-      if(token) {
+      const books = toRaw(this.bookState.books)
+      console.log(books)
+      if(token && books) {
       try {
         await fetch('http://127.0.0.1:8000/setup-reader/books', {
           method: 'PUT',
@@ -69,7 +70,7 @@ export default {
             'Content-Type': 'application/json',
             Authorization: `Bearer ${token}`
           },
-          body: JSON.stringify(toRaw(this.state.books))
+          body: JSON.stringify(books)
         })
         } catch(err) {
         console.log(err)
@@ -83,6 +84,7 @@ export default {
   },
   mounted() {
     this.state = useStore()
+    this.bookState = useBookStore()
   }
 }
 </script>
