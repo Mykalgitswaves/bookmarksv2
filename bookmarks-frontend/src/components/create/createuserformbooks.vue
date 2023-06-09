@@ -21,7 +21,7 @@
     <button
       class="mt-5 px-20 py-3 bg-indigo-600 rounded-md text-indigo-100 max-w-[600px]"
       type="submit"
-      @click="navigate"
+      @click.prevent="updateUser()"
     >
       Continue
     </button>
@@ -29,8 +29,10 @@
 </template>
 
 <script>
+import { createUserController } from '../../controllers/createuser';
 import BookSearchResults from './booksearchresults.vue'
-import { useStore } from '../../stores/page.js'
+import { useStore } from '../../stores/page.js';
+import { toRaw } from 'vue'
 
 export default {
   components: {
@@ -53,6 +55,21 @@ export default {
       } catch (err) {
         console.log(err)
         this.data = null
+      }
+    },
+    async updateUser() {
+      const token = createUserController.getSessionTokenId();
+      console.log(document.cookie, token);
+
+      if(token) {
+        await fetch('http://127.0.0.1:8000/setup-reader/books', {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`
+          },
+          body: JSON.stringify(toRaw(this.state.books))
+        })
       }
     },
     navigate() {

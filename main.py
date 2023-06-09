@@ -8,16 +8,19 @@ from database.db_helpers import (
     Tag,
     Neo4jDriver
 )
+from database.auth import verify_access_token
+
 from fastapi import FastAPI, HTTPException, Depends, status, Request
 from fastapi.responses import RedirectResponse
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm, HTTPAuthorizationCredentials, HTTPBearer
 from fastapi.encoders import jsonable_encoder
 from jose import JWTError, jwt
 from passlib.context import CryptContext
 from typing import Dict, List, Annotated
 from pydantic import BaseModel
 from datetime import datetime, timedelta
+
 """
 
 Connect to database
@@ -49,6 +52,7 @@ Steps for starting uvicorn server:
 """
 
 app = FastAPI()
+security = HTTPBearer()
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 with open("config.json","r") as f:
@@ -200,18 +204,21 @@ async def post_create_login_user(form_data:Annotated[OAuth2PasswordRequestForm, 
         """
         create user and then login as user with authenticated session
         """
-        # form_data = await request.json()
+        print(form_data)
         password = get_password_hash(form_data.password)
-        
-        driver = Neo4jDriver()
-        user = driver.create_user(username=form_data.username, password=password)
+        username = form_data.username
+        print(username, password, form_data)
 
-        authenticate_user(form_data.username, password)
-        access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
-        access_token = create_access_token(
-            data={"sub": user.username}, expires_delta=access_token_expires
-        )
-        return {"access_token": access_token, "token_type": "bearer"} #, RedirectResponse(url="/setup-reader/me", status_code=301)
+        if username and password:
+            driver = Neo4jDriver()
+            user = driver.create_user(username=username, password=password)
+
+            authenticate_user(form_data.username, password)
+            access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+            access_token = create_access_token(
+                data={"sub": user.user_id}, expires_delta=access_token_expires
+            )
+            return {"access_token": access_token, "token_type": "bearer"} #, RedirectResponse(url="/setup-reader/me", status_code=301)
 
 @app.get("/setup-reader/me")
 async def read_users_me(current_user: Annotated[User, Depends(get_current_active_user)]):
@@ -222,3 +229,11 @@ async def read_users_me(current_user: Annotated[User, Depends(get_current_active
     driver = Neo4jDriver()
     current_user = driver.pull_user_node(current_user.user_id)
     return current_user
+
+@app.get("/setup-reader/books")
+async def put_users_me_books(credentials: HTTPAuthorizationCredentials = Depends(security)):
+    access_token = credentials.credentials
+    verify_access_token(access_token)
+    # if not verify_access_token(access_token):
+    #     raise HTTPException(status_code=401, detail="Invalid access token")
+

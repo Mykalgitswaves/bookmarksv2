@@ -39,7 +39,7 @@
     <button
       class="mt-5 px-30 py-3 bg-indigo-600 rounded-md text-indigo-100"
       type="submit"
-      @click.prevent="sendData()"
+      @click.prevent="sendData();"
     >
       Continue
     </button>
@@ -47,33 +47,60 @@
 </template>
 
 <script>
+import { useStore } from '../../stores/page'
 import {toRaw} from 'vue';
+
 export default {
   data() {
     return {
       formBlob: {
         full_name: '',
         username: '',
-        password: ''
+        password: '',
+        state: null,
       }
     }
   },
   methods: {
+    navigate() {
+      this.state.getNextPage()
+    },
     async sendData() {
-      const formData = toRaw(this.formBlob);
-      console.log(formData)
-      const response = await fetch('http://127.0.0.1:8000/create-login/', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify(formData)
-      })
-      if(response.ok) {
-        console.log('success');
-      } else {
-        console.log('bigtimeproblem');
-      }
-      return response;
+      try {
+        const formData = toRaw(this.formBlob);
+
+        const response = await fetch('http://127.0.0.1:8000/create-login', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+          body:  new URLSearchParams({
+            username: formData['username'],
+            password: formData['password']
+            })
+          })
+          const data = await response.json();
+
+          // Check if the response is successful
+          if (response.ok) {
+            document.cookie = ''
+            console.log(data)
+            const token = data.access_token;
+
+            // Use the token as needed (e.g., store it in local storage, set it as a cookie, etc.)
+            document.cookie = `session_token=${token}; path=/; SameSite=Strict`;
+            console.log('Token:', document.cookie);
+            this.navigate()
+          } else {
+            // Handle the case when the response is not successful
+            console.log('Error:', data.detail);
+            }
+          } catch (error) {
+            // Handle any errors
+            console.error('Error:', error);
+          }
+        }
+    },
+    mounted() {
+      this.state = useStore()
     }
-  }
 }
 </script>
