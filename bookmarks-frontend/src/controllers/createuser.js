@@ -24,42 +24,5 @@ export const createUserController = {
         console.error('Error:', error)
         throw error
       })
-  },
-  decodeToken: function(token) {
-    // Implement your token decoding logic here
-    // Replace the logic below with your actual token decoding logic
-    // For example, if you're using JWT, you can use a library like `jsonwebtoken` to decode the token
-    try {
-      // #TODO: Replacewith other way to decode
-      const decoded = jwt.verify(token, import.meta.env.MY_SECRET_KEY);
-      return decoded;
-    } catch (error) {
-      console.error('Error decoding token:', error);
-      return null;
-    }
-  },
-  extractIdFromToken: function(token) {
-    // Perform the necessary extraction logic specific to your token structure
-    // For example, if your token is a JWT, you can decode it and extract the ID
-    // Replace the logic below with your actual extraction logic
-    const decodedToken = this.decodeToken(token);
-    if (decodedToken) {
-      return decodedToken.id;
-    }
-    return null;
-  },
-  getSessionTokenId: function() {
-    const cookies = document.cookie.split(';');
-    for (let i = 0; i < cookies.length; i++) {
-      const cookie = cookies[i].trim();
-      if (cookie.startsWith('session_token=')) {
-        const token = cookie.split('=')[1];
-        // Extract the ID from the token
-        const id = this.extractIdFromToken(token);
-        return id;
-      }
-    }
-    return null;
-  },
-  
+  }
 }

@@ -58,10 +58,11 @@ export default {
       }
     },
     async updateUser() {
-      const token = createUserController.getSessionTokenId();
-      console.log(document.cookie, token);
+      const token = document.cookie;
+      console.log(token);
 
       if(token) {
+      try {
         await fetch('http://127.0.0.1:8000/setup-reader/books', {
           method: 'PUT',
           headers: {
@@ -70,6 +71,9 @@ export default {
           },
           body: JSON.stringify(toRaw(this.state.books))
         })
+        } catch(err) {
+        console.log(err)
+        }
       }
     },
     navigate() {
