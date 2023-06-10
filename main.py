@@ -74,8 +74,8 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
     allow_credentials=True,
-    allow_methods=["*"],
     allow_headers=["*"],
+    allow_methods=["PUT", "GET", "POST", "DELETE"],
 )
 
 class Token(BaseModel):
@@ -252,8 +252,8 @@ async def put_users_me_books(request: Request, credentials: HTTPAuthorizationCre
     user_id = decoded_token['sub']
     book_array = await request.json()
 
-    # Continue with your logic to process the books endpoint
-    # ...
-
-    return {"message": "Books endpoint accessed successfully"}
-
+    driver = Neo4jDriver()
+    
+    driver.add_user_book(user_id=user_id, book_ids=book_array)
+    user =  driver.pull_user_node(user_id=user_id)
+    return {"user": user}

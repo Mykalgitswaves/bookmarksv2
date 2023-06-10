@@ -21,7 +21,7 @@
     <button
       class="mt-5 px-20 py-3 bg-indigo-600 rounded-md text-indigo-100 max-w-[600px]"
       type="submit"
-      @click.prevent="updateUser()"
+      @click.prevent="updateUser(); navigate()"
     >
       Continue
     </button>
