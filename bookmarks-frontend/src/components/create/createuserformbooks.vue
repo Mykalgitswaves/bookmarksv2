@@ -12,7 +12,7 @@
         type="text"
       />
       <label class="text-gray-600 text-sm" for="searchForBooks">
-        Search for a book and tap to add it to your books
+        Tap a book and review it to add it to your shelf
       </label>
     </form>
 
