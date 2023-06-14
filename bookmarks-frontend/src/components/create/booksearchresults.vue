@@ -1,5 +1,5 @@
 <template>
-  <div class="px-4 pt-5">
+  <div class="px-4 pt-5 ">
     <ul v-for="book in data" :key="book.id">
       <li
         @click="
@@ -7,7 +7,7 @@
           isToggled[book.id] = !isToggled[book.id];
         "
         :class="
-          'flex flex-row gap-5 py-4 px-4 place-content-start bg-gray-100 rounded-md my-1 hover:bg-gray-200 max-w-[700px]' +
+          'flex flex-row gap-5 py-4 px-4 place-content-start bg-gray-100 rounded-md my-3 hover:bg-gray-200 max-w-[700px]' +
           (isToggled[book.id] === true
             ? 'border-solid border-indigo-200 border-2 bg-indigo-50'
             : '')
@@ -22,20 +22,22 @@
           <span class="text-sm text-gray-500">{{ book.publication_year }}</span>
         </div>
       </li>
-      <div class="inline-block my-3" v-if="isToggled[book.id]">
-        <p class="text-sm mb-3">review this book from worst to best (1 -> 5)</p>
-        <ul>
+      <div class="inline-block my-1" v-if="isToggled[book.id]">
+        <p class="ml-5 text-indigo-600 text-sm">Honest Rating (1-5):</p> 
+        <ul class="">
           <li 
             v-for="index in reviewRange" 
             :key="index" 
             class="inline-block"
             @click="addScore({'score': index, 'book': book.id})"
           >
-            
-            <button :class="['px-3 py-2 mx-2 h-auto w-auto rounded-md border-solid border-2 border-indigo-600 text-indigo-500', 
-              (getScore(book.id) >= index ? 'bg-indigo-600 text-base text-gray-100' : 'border-indigo-600' )]
-            ">
-              {{ index }}
+          
+            <button>
+              <Star
+                v-bind="$attrs"
+                :isFilled="(getScore(book.id) >= index ? true : false)"
+                class="mx-2 text-indigo-600 fill-indigo-600"
+              />
             </button>
           </li>
         </ul>
@@ -47,8 +49,11 @@
 <script>
 import { useBookStore } from '../../stores/books'
 import { toRaw } from 'vue'
-
+import Star from '../svg/icon-star.vue'
 export default {
+  components: {
+    Star
+  },
   data() {
     return {
       promiseBooks: null,
