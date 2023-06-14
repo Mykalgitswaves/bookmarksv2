@@ -1,15 +1,21 @@
 <template>
   <div class="h-100 grid place-content-center relative mt-10">
+    
+    
     <teleport to="body">  
+      
       <nav class="fixed top-0 left-0 flex flex-row justify-between w-[100%] px-5 pt-5 pop-out-element">
         <router-link to="/">
           <Logo/>
         </router-link>
 
-        <NavIcon v-bind="$attrs" class="text-indigo-600 hover:text-indigo-300 duration-300 cursor-pointer" 
-        :books="books.length" 
-        @click="isMenuHidden = !isMenuHidden"/>
+        <NavIcon v-bind="$attrs" 
+          @click="isMenuHidden = !isMenuHidden"
+          :books="books.length" 
+          class="text-indigo-600 hover:text-indigo-300 duration-300 cursor-pointer" 
+        />
       </nav> 
+      
       <div id="mobilemenu" 
         v-if="!isMenuHidden" 
         class="fixed top-0 left-0 h-screen w-screen z-20 grid place-content-center bg-indigo-100 "
