@@ -3,7 +3,6 @@
     
     
     <teleport to="body">  
-      
       <nav class="fixed top-0 left-0 flex flex-row justify-between w-[100%] px-5 pt-5 pop-out-element">
         <router-link to="/">
           <Logo/>
@@ -15,11 +14,36 @@
           class="text-indigo-600 hover:text-indigo-300 duration-300 cursor-pointer" 
         />
       </nav> 
-      
+
       <div id="mobilemenu" 
         v-if="!isMenuHidden" 
-        class="fixed top-0 left-0 h-screen w-screen z-20 grid place-content-center bg-indigo-100 "
+        class="fixed top-0 left-0 h-screen w-screen z-20 grid place-content-center bg_opacity"
       >
+        <h2 class="text-2xl font-semibold text-slate-800 text-center">Your bookshelf</h2>
+        
+        <div class="mt-10  max-w-[700px] w-90">
+          <h4 class="text-xl text-indigo-800">Books</h4>
+          
+          <div class="flex flex-col align-start max-w-[700px] w-100 border-indigo-600 border-solid border-2">
+            <ul>
+              <li v-for="(book, index) in books" :key="index"
+                class="flex flex-row gap-5 py-4 px-4 place-content-start rounded-md my-3 w-[100%]"
+              >
+                <img class="h-24" :src="book.img_url" />
+                <div class="flex flex-col justify-center">
+                  <p class="text-xl font-semibold text-gray-800">
+                    {{ book.title }}
+                  </p>
+                  
+                  <p v-for="(name, index) in book.author_names" :key="index" class="inline text-sm text-gray-800">
+                    {{ name }}
+                  </p>
+                  <button class="underline underline-offset-2">remove</button>
+                </div>
+              </li>
+            </ul> 
+          </div> 
+        </div>
 
       </div>
     </teleport>
@@ -106,5 +130,9 @@ export default {
   top: 0;
   left: 0;
   z-index: 9999; 
+}
+
+.bg_opacity {
+  background-color: rgba(224, 231, 255, 0.96);
 }
 </style>

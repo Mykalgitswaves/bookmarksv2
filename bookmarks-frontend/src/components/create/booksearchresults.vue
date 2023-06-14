@@ -3,7 +3,7 @@
     <ul v-for="book in data" :key="book.id">
       <li
         @click="
-          addBook(book.id);
+          
           isToggled[book.id] = !isToggled[book.id];
         "
         :class="
@@ -28,7 +28,7 @@
             v-for="index in reviewRange" 
             :key="index" 
             class="inline-block"
-            @click="addScore({'score': index, 'book': book.id})"
+            @click="addScore({'score': index, 'book': book.id, 'book_title': book.title, 'book_authors': book.author_names, 'book_small_img_url': book.small_img_url})"
           >
           
             <button>
@@ -69,18 +69,18 @@ export default {
     }
   },
   methods: {
-    addBook(book) {
-      const state = useBookStore()
-      state.addBook(book)
-      console.log(toRaw(state))
-      console.log(this.isToggled)
-    },
     addScore(object){
       // set to map obj cause its better ds for this.
       this.bookScore.set(object['book'], object['score'])
       // add raw object to state
       const state = useBookStore()
-      state.addBook({'book': object['book'], 'review': object['score']})
+      state.addBook({
+        'book': object['book'], 
+        'review': object['score'],
+        'title': object['book_title'],
+        'authors': object['book_authors'],
+        'img_url': object['book_small_img_url']
+      })
       console.log(toRaw(state))
     },
     getScore(book) {
