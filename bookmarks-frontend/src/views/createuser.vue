@@ -1,12 +1,32 @@
 <template>
   <div class="h-100 grid place-content-center relative mt-10">
-    <div class="flex flex-row gap-5 w-100 justify-center my-5">
+    <teleport to="body">  
+      <nav class="fixed top-0 left-0 flex flex-row justify-between w-[100%] px-5 pt-5 pop-out-element">
+        <router-link to="/">
+          <Logo/>
+        </router-link>
+
+        <NavIcon v-bind="$attrs" class="text-indigo-600 hover:text-indigo-300 duration-300 cursor-pointer" 
+        :books="books.length" 
+        @click="isMenuHidden = !isMenuHidden"/>
+      </nav> 
+      <div id="mobilemenu" 
+        v-if="!isMenuHidden" 
+        class="fixed top-0 left-0 h-screen w-screen z-20 grid place-content-center bg-indigo-100 "
+      >
+
+      </div>
+    </teleport>
+
+    <div id="subnavcreate" class="flex flex-row gap-5 w-100 justify-center mt-10 mb-20">
       <button type="button" @click="getPrevPage">Prev</button>
       <p class="text-indigo-500 mx-2">
         <span class="text-indigo-800 underline underline-offset-2">{{ page + 1 }}</span> / 4
       </p>
       <button type="button" @click="getNextPage">Next</button>
     </div>
+
+
     <component :is="createFormState" />
   </div>
 </template>
@@ -17,9 +37,12 @@ import CreateUser from '@/components/create/createuserstart.vue'
 import CreateUserFormBooks from '@/components/create/createuserformbooks.vue'
 import CreateUserFormGenre from '@/components/create/createusergenre.vue'
 import CreateUserFormFinal from '@/components/create/createuserfinal.vue'
+import NavIcon from '@/components/svg/icon-menu.vue'
+import Logo from '@/components/svg/icon-logo.vue'
 
 import { computed } from 'vue'
 import { useStore } from '../stores/page.js'
+import { useBookStore } from '../stores/books.js'
 
 // Map to components keep the view the same
 const userFormMapping = {
@@ -30,10 +53,15 @@ const userFormMapping = {
 }
 
 export default {
+  components: {
+    NavIcon,
+    Logo
+  },
   data() {
     return {
       createFormState: null,
-      state: null
+      state: null,
+      isMenuHidden: true
     }
   },
   methods: {
@@ -50,12 +78,27 @@ export default {
     page() {
       const state = useStore()
       return state.page
+    },
+    books() {
+      const state = useBookStore()
+      return state.books
     }
   },
   mounted() {
     const state = useStore()
     this.state = state
     this.createFormState = computed(() => userFormMapping[state.page])
+    console.log(this.books)
   }
 }
 </script>
+
+
+<style>
+.pop-out-element {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 9999; 
+}
+</style>

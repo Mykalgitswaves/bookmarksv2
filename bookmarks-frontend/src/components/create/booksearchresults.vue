@@ -23,8 +23,7 @@
         </div>
       </li>
       <div class="inline-block my-1" v-if="isToggled[book.id]">
-        <p class="ml-5 text-indigo-600 text-sm">Honest Rating (1-5):</p> 
-        <ul class="">
+        <ul>
           <li 
             v-for="index in reviewRange" 
             :key="index" 
