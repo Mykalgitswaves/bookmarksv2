@@ -11,6 +11,10 @@ export const useBookStore = defineStore('addBooks', {
       this.books.push(book)
       this.saveStateToLocalStorage()
     },
+    loadBooks() {
+      const state = localStorage.getItem('bookStore')
+      this.books = state.books
+    },
     removeBook(book) {
       const index = this.books.findIndex((b) => b.pk === book.pk)
       if (index !== -1) {
@@ -34,9 +38,7 @@ export const useBookStore = defineStore('addBooks', {
     },
     loadStateFromLocalStorage() {
       const state = localStorage.getItem('bookStore')
-      if (state) {
-        this.$reset(JSON.parse(state))
-      }
+      return state
     }
   },
   created() {

@@ -60,7 +60,13 @@ export default {
       }
     },
     getAuthorData(data) {
+      const store = useBookStore();
       this.authors.push(data)
+      const authors = toRaw(this.authors)
+      
+      authors.forEach(author => {
+        store.authors.addAuthor(author);
+      })
       console.log(data)
     },
     async createUser() {

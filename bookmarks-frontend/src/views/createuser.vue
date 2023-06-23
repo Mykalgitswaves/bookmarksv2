@@ -2,49 +2,9 @@
   <div class="h-100 grid place-content-center relative mt-10">
     
     
-    <teleport to="body">  
-      <nav class="fixed top-0 left-0 flex flex-row justify-between w-[100%] px-5 pt-5 pop-out-element">
-        <router-link to="/">
-          <Logo/>
-        </router-link>
-
-        <NavIcon v-bind="$attrs" 
-          @click="isMenuHidden = !isMenuHidden"
-          :books="books.length" 
-          class="text-indigo-600 hover:text-indigo-300 duration-300 cursor-pointer" 
-        />
-      </nav> 
-
-      <div id="mobilemenu" 
-        v-if="!isMenuHidden" 
-        class="fixed top-0 left-0 h-screen w-screen z-20 grid place-content-center bg_opacity"
-      >
-        <h2 class="text-2xl font-semibold text-slate-800 text-center">Your bookshelf</h2>
-        
-        <div class="mt-10  max-w-[700px] w-90">
-          <h4 class="text-xl text-indigo-800">Books</h4>
-          
-          <div class="flex flex-col align-start max-w-[700px] w-100 border-indigo-600 border-solid border-2">
-            <ul>
-              <li v-for="(book, index) in books" :key="index"
-                class="flex flex-row gap-5 py-4 px-4 place-content-start rounded-md my-3 w-[100%]"
-              >
-                <img class="h-24" :src="book.img_url" />
-                <div class="flex flex-col justify-center">
-                  <p class="text-xl font-semibold text-gray-800">
-                    {{ book.title }}
-                  </p>
-                  
-                  <p v-for="(name, index) in book.author_names" :key="index" class="inline text-sm text-gray-800">
-                    {{ name }}
-                  </p>
-                  <button class="underline underline-offset-2">remove</button>
-                </div>
-              </li>
-            </ul> 
-          </div> 
-        </div>
-
+    <teleport to="body">
+      <div class="fixed top-0 left-0"> 
+        <MobileMenu @iisMenuHidden="isMenuHidden" />
       </div>
     </teleport>
 
@@ -68,7 +28,9 @@ import CreateUserFormBooks from '@/components/create/createuserformbooks.vue'
 import CreateUserFormGenre from '@/components/create/createusergenre.vue'
 import CreateUserFormFinal from '@/components/create/createuserfinal.vue'
 import NavIcon from '@/components/svg/icon-menu.vue'
+import PlaceholderIcon from '@/components/svg/icon-placeholder.vue';
 import Logo from '@/components/svg/icon-logo.vue'
+import MobileMenu from '@/components/create/menu.vue'
 
 import { computed } from 'vue'
 import { useStore } from '../stores/page.js'
@@ -85,13 +47,19 @@ const userFormMapping = {
 export default {
   components: {
     NavIcon,
-    Logo
+    Logo,
+    PlaceholderIcon,
+    MobileMenu
   },
   data() {
     return {
       createFormState: null,
       state: null,
-      isMenuHidden: true
+      isMenuHidden: true,
+      isBookInMenu: {
+        type: Boolean,
+        default: false
+      }
     }
   },
   methods: {
@@ -112,6 +80,23 @@ export default {
     books() {
       const state = useBookStore()
       return state.books
+    },
+    genres() {
+      const state = useBookStore()
+      if(state.genres.length === 0) {
+        return this.genrePlaceholder
+      } else {
+        return state.genres
+      }
+    },
+    authors() {
+      const state = useBookStore()
+      const authors = state.authors
+      if(authors.length === 0) {
+        return this.authorPlaceholder
+      } else {
+        return authors
+      }
     }
   },
   mounted() {
@@ -133,6 +118,10 @@ export default {
 }
 
 .bg_opacity {
-  background-color: rgba(224, 231, 255, 0.96);
+  background-color: rgba(244, 246, 255, 0.96);
+}
+
+.centered {
+  align-items: center;
 }
 </style>

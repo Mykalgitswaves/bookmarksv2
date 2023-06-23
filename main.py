@@ -27,12 +27,12 @@ Connect to database
 
 Steps for starting uvicorn server: 
     1) Activate venv with command from base dir(Bookmarks3/) of project:
-        'conda activate bookmarks '
+        '$ conda activate bookmarks'
     
         #NOTE: if you ever need to deactivate just type deactivate 
         
     2) Once, inside your venv run this command inside the same shell: 
-        'uvicorn main:app --reload'
+        '$ uvicorn main:app --reload'
 
     This command ^ will automatically reload after any changes made to main.py, which for our purposes has the endpoints to our app for now. 
     
@@ -58,7 +58,7 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 with open("config.json","r") as f:
     CONFIG = json.load(f)
 
-ACCESS_TOKEN_EXPIRE_MINUTES = 30
+ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24 # expire in one day
 
 pwd_context = CryptContext(schemes=CONFIG['schemes'], deprecated="auto")
 
