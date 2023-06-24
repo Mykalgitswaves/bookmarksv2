@@ -74,7 +74,7 @@ export default {
     async finalizeUser() {
       const state = useBookStore();
       console.log("this is a store", toRaw(state))
-      const data = toRaw(this.$store)
+      const data = toRaw({books: state.books, genres: state.genres, authors: state.authors})
       // remember to take this out
       console.log(data)
       const response = await finalizeUserController.decorateUser(data)
