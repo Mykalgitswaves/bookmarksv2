@@ -29,7 +29,6 @@
 </template>
 
 <script>
-import { createUserController } from '../../controllers/createuser';
 import BookSearchResults from './booksearchresults.vue'
 import { useStore } from '../../stores/page.js';
 import { useBookStore } from '../../stores/books';

@@ -1,5 +1,5 @@
 <template>
-    <nav class=" w-[100%] flex flex-row justify-between px-5 pt-5 pop-out-element">
+    <nav class="px-5 pt-5 pop-out-element">
           <router-link to="/">
               <Logo/>
           </router-link>
@@ -12,7 +12,7 @@
     </nav>
     <div id="mobilemenu" 
         class="fixed top-0 left-0 h-screen w-screen z-20 grid place-content-center bg_opacity gap-5"
-        v-if="!isMenuHidden" 
+        v-if="!isMenuHidden"
     >
         <h2 class="mt-20 text-2xl font-semibold text-slate-800 text-center">Your favorite</h2>
 
@@ -20,13 +20,13 @@
             <h4 class="px-5 text-xl text-slate-700">Books</h4>
             
             <div class="flex flex-col align-start max-w-[700px] w-100 ">
-            <KeepAlive>
+           
                 <ul>
                     <li v-for="(book, index) in books" :key="index"
                     class="flex flex-row gap-5 px-4 place-content-start rounded-md my-3 w-[100%] min-w-[280px]"
                     >
-                        <div class="flex flex-col justify-start">
-                            <p class="text-xl font-semibold text-gray-800">
+                        <div class="flex flex-col justify- align-start">
+                            <p class="font-semibold text-gray-800">
                             {{ book.title }}
                             </p>
                             
@@ -42,7 +42,7 @@
                         </div>
                     </li>
                 </ul> 
-            </KeepAlive>
+       
             </div> 
         </div>
         <div class="px-5">
@@ -58,7 +58,7 @@
             <h4 class="text-xl text-slate-700 mb-5">Authors</h4>
             <ul>
             <li v-for="author in authors" :key="author" class="flex flex-row centered gap-5">
-                <p class="text-gray-800">{{ author.full_name }}</p>
+                <p class="text-gray-800">{{ author.name }}</p>
             </li>
             </ul>
         </div>
@@ -66,6 +66,8 @@
 </template>
 
 <script>
+    import {toRaw} from "vue" 
+    import Logo from '@/components/svg/icon-logo.vue' 
     import NavIcon from '@/components/svg/icon-menu.vue' 
     import { useBookStore } from '@/stores/books.js'
 
@@ -75,7 +77,8 @@
 
     export default {
         components: {
-            NavIcon
+            NavIcon,
+            Logo
         },
         props: {
             
@@ -103,20 +106,13 @@
                 authorPlaceholder: [{
                     img_url: authorPlaceholder,
                     full_name: 'Anyone come to mind?'
-                }]
+                }],
+                dataBooks: null
             }
         },
         computed: {
             books() {
-                let state = useBookStore()
-                state.loadBooks()
-                if(state.books.length === 0) {
-                this.isBookInMenu = false;
-                return this.booksPlaceholder 
-                } else {
-                this.isBookInMenu = true;
-                return state.books
-                }
+                return this.dataBooks === null ? 0 : this.dataBooks
             },
             genres() {
                 const state = useBookStore()
@@ -128,7 +124,7 @@
             },
             authors() {
                 const state = useBookStore()
-                const authors = state.authors
+                const authors = state.getAuthors()
                 if(authors.length === 0) {
                     return this.authorPlaceholder
                 } else {
@@ -138,12 +134,40 @@
         },
         methods: {
             emitMenuToggle(){
-                this.$emits("menuToggled", this.isMenuHidden = !this.isMenuHidden)
+                this.$emits("isMenuHidden")
+            },
+            removeBook(book){
+                const state = useBookStore();
+                this.dataBooks = state.removeBook(book)
             }
         },
         mounted(){
-            const state = useBookStore()
-            state.loadStateFromLocalStorage();
+            let state = useBookStore()
+            this.dataBooks = state.getBooks();
         }
 }
 </script>
+
+
+<style>
+.pop-out-element {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 5; 
+  display: flex;
+  width: 30vw;
+  flex-direction: row;
+  justify-content: start;
+  align-items: center;
+  gap: 2ch;
+}
+
+.bg_opacity {
+  background-color: rgba(244, 246, 255, 0.96);
+}
+
+.centered {
+  align-items: center;
+}
+</style>

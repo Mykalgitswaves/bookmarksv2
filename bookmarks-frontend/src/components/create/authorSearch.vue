@@ -5,9 +5,8 @@
         v-for="author in authors"
         :key="author.id"
         @click="
-          data.push(author.full_name);
           isToggled[author.id] = true;
-          sendDataToParent();
+          sendDataToParent([`${author.id}`, `${author.full_name}`]);
         "
         :class="
           'flex flex-row gap-5 py-4 px-4 place-content-start bg-gray-100 rounded-md my-1 hover:bg-gray-200 max-w-[700px]' +
@@ -39,8 +38,8 @@ export default {
     }
   },
   methods: {
-    sendDataToParent() {
-      this.$emit('author-data-updated', { authors: this.data })
+    sendDataToParent(data1, data2) {
+      this.$emit('author-data-updated', data1, data2)
     }
   }
 }

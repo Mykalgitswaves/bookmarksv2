@@ -1,13 +1,6 @@
 <template>
   <div class="h-100 grid place-content-center relative mt-10">
     
-    
-    <teleport to="body">
-      <div class="fixed top-0 left-0"> 
-        <MobileMenu @iisMenuHidden="isMenuHidden" />
-      </div>
-    </teleport>
-
     <div id="subnavcreate" class="flex flex-row gap-5 w-100 justify-center mt-10 mb-20">
       <button type="button" @click="getPrevPage">Prev</button>
       <p class="text-indigo-500 mx-2">
@@ -15,6 +8,12 @@
       </p>
       <button type="button" @click="getNextPage">Next</button>
     </div>
+    
+    <teleport to="body">
+          <MobileMenu/>
+    </teleport>
+
+    
 
 
     <component :is="createFormState" />
@@ -103,25 +102,7 @@ export default {
     const state = useStore()
     this.state = state
     this.createFormState = computed(() => userFormMapping[state.page])
-    console.log(this.books)
+    
   }
 }
 </script>
-
-
-<style>
-.pop-out-element {
-  position: fixed;
-  top: 0;
-  left: 0;
-  z-index: 9999; 
-}
-
-.bg_opacity {
-  background-color: rgba(244, 246, 255, 0.96);
-}
-
-.centered {
-  align-items: center;
-}
-</style>

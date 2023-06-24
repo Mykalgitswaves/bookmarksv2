@@ -257,3 +257,10 @@ async def put_users_me_books(request: Request, credentials: HTTPAuthorizationCre
     driver.add_user_book(user_id=user_id, book_ids=book_array)
     user =  driver.pull_user_node(user_id=user_id)
     return {"user": user}
+
+
+@app.put("put-decorate-reader-preferences")
+async def put_decorate_reader_create(request: Request, credentials: HTTPAuthorizationCredentials = Depends(security)):
+    """
+    This endpoint is sent an authentication token and a dictionary containing a created users stringified selections made throughout the create profile flow for readers. Kyle I think we should send a user a response of their id/maybe they already have that as a result of creating the profile and we can add that as a dynamic param to the url string for a signed in users profile page. SO Jerry user-id: XXXX is going to recieve a uuid from the server when he sends a put request completing this endpoint and then we can await that string and redirect to the profile view. This was probably way to much rambling / might be a little off but I think the idea is there.   
+    """
