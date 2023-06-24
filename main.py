@@ -259,8 +259,22 @@ async def put_users_me_books(request: Request, credentials: HTTPAuthorizationCre
     return {"user": user}
 
 
-@app.put("put-decorate-reader-preferences")
+@app.put("/put-decorate-reader-preferences")
 async def put_decorate_reader_create(request: Request, credentials: HTTPAuthorizationCredentials = Depends(security)):
     """
     This endpoint is sent an authentication token and a dictionary containing a created users stringified selections made throughout the create profile flow for readers. Kyle I think we should send a user a response of their id/maybe they already have that as a result of creating the profile and we can add that as a dynamic param to the url string for a signed in users profile page. SO Jerry user-id: XXXX is going to recieve a uuid from the server when he sends a put request completing this endpoint and then we can await that string and redirect to the profile view. This was probably way to much rambling / might be a little off but I think the idea is there.   
     """
+    access_token = credentials.credentials
+
+    if not access_token:
+        raise HTTPException(status_code=401, detail="Missing session cookie")
+
+    # Verify the access token
+    if access_token.startswith('session_token='):
+        access_token = access_token[len('session_token='):]
+    decoded_token = verify_access_token_2(access_token)
+
+    user_id = decoded_token['sub']
+    book_array = await request.json()
+
+    driver = Neo4jDriver()
