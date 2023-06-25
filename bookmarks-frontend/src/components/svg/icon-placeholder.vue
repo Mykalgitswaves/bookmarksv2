@@ -1,0 +1,3 @@
+<template>
+    <svg xmlns="http://www.w3.org/2000/svg" width="96" height="96" fill="none" viewBox="0 0 96 96" id="placeholder"><g clip-path="url(#clip0_659_1149)"><path stroke="currentColor" stroke-width="5" d="M26.8057 18.853L25.8924 19.7663C15.9585 29.7001 14.8262 45.4214 23.2339 56.6764L45.2643 85.3804C46.4696 86.9507 48.8385 86.9438 50.0346 85.3666L71.8503 56.5988C80.3012 45.301 79.1689 29.5106 69.1925 19.5342L68.5114 18.853C56.9947 7.33631 38.3224 7.33631 26.8057 18.853Z"></path><circle cx="47.5" cy="39.5" r="12" stroke="#12182B" stroke-width="5"></circle></g><defs><clipPath id="clip0_659_1149"><rect width="96" height="96" fill=None></rect></clipPath></defs></svg>
+</template>

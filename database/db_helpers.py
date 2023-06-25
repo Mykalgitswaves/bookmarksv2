@@ -237,12 +237,17 @@ class Neo4jDriver():
                     user.genres.append(response["b.id"])
                 elif response["Labels(b)"] == ["Review"]:
                     user.liked_reviews.append(response["b.id"])
+            # Kyle i added this because i was getting error referencing before assignments on my put request.
             elif response["TYPE(r)"] == "HAS_FRIEND":
                 user.friends.append(response["b.id"])
-        user.username = response["u.username"]
-        user.created_date = response["u.created_date"]
-        user.disabled = response["u.disabled"]
-        user.email = response["u.email"]
+            elif response["u.username"]:
+                user.username = response["u.username"]
+            elif response["u.created_date"]:
+                user.created_date = response["u.created_date"]
+            elif response["u.disabled"]:
+                user.disabled = response["u.disabled"]
+            elif response["u.email"]:
+                user.email = response["u.email"]
         query = """
                 match (uu:User {id: $user_id})-[rr:WROTE_REVIEW]-()-[ro:IS_REVIEW_OF]-(bb) return bb.id
                 """
@@ -597,6 +602,24 @@ class Neo4jDriver():
                     authors=authors)
 
         return(book)
+    def add_user_book(self, book_ids, user_id):
+        """
+        Adds an array of book_ids to a user 
+        Args: 
+            book_id: Array containing pk's of the book
+            user_id: Pk of the user
+        Returns:
+            None
+        """
+        with self.driver.session() as session:
+            books = session.execute_write(self.add_user_books_query, book_ids, user_id)
+    @staticmethod
+    def add_user_books_query(tx, book_ids, user_id):
+        get_unset_property_query = """
+                match (u:User {id: $user_id})
+                set u.book_ids = coalesce(u.book_ids, []) + $book_ids
+                """
+        tx.run(get_unset_property_query, user_id=user_id, book_ids=book_ids)
     def add_book_tag(self, book_id, tag_id):
         """
         Add a tag to an existing book

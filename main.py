@@ -8,28 +8,31 @@ from database.db_helpers import (
     Tag,
     Neo4jDriver
 )
+from database.auth import verify_access_token
+
 from fastapi import FastAPI, HTTPException, Depends, status, Request
 from fastapi.responses import RedirectResponse
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm, HTTPAuthorizationCredentials, HTTPBearer
 from fastapi.encoders import jsonable_encoder
 from jose import JWTError, jwt
 from passlib.context import CryptContext
 from typing import Dict, List, Annotated
 from pydantic import BaseModel
 from datetime import datetime, timedelta
+
 """
 
 Connect to database
 
 Steps for starting uvicorn server: 
     1) Activate venv with command from base dir(Bookmarks3/) of project:
-        'conda activate bookmarks '
+        '$ conda activate bookmarks'
     
         #NOTE: if you ever need to deactivate just type deactivate 
         
     2) Once, inside your venv run this command inside the same shell: 
-        'uvicorn main:app --reload'
+        '$ uvicorn main:app --reload'
 
     This command ^ will automatically reload after any changes made to main.py, which for our purposes has the endpoints to our app for now. 
     
@@ -49,12 +52,13 @@ Steps for starting uvicorn server:
 """
 
 app = FastAPI()
+security = HTTPBearer()
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 with open("config.json","r") as f:
     CONFIG = json.load(f)
 
-ACCESS_TOKEN_EXPIRE_MINUTES = 30
+ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24 # expire in one day
 
 pwd_context = CryptContext(schemes=CONFIG['schemes'], deprecated="auto")
 
@@ -70,8 +74,8 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
     allow_credentials=True,
-    allow_methods=["*"],
     allow_headers=["*"],
+    allow_methods=["PUT", "GET", "POST", "DELETE"],
 )
 
 class Token(BaseModel):
@@ -200,18 +204,21 @@ async def post_create_login_user(form_data:Annotated[OAuth2PasswordRequestForm, 
         """
         create user and then login as user with authenticated session
         """
-        # form_data = await request.json()
+        print(form_data)
         password = get_password_hash(form_data.password)
-        
-        driver = Neo4jDriver()
-        user = driver.create_user(username=form_data.username, password=password)
+        username = form_data.username
+        print(username, password, form_data)
 
-        authenticate_user(form_data.username, password)
-        access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
-        access_token = create_access_token(
-            data={"sub": user.username}, expires_delta=access_token_expires
-        )
-        return {"access_token": access_token, "token_type": "bearer"} #, RedirectResponse(url="/setup-reader/me", status_code=301)
+        if username and password:
+            driver = Neo4jDriver()
+            user = driver.create_user(username=username, password=password)
+
+            authenticate_user(form_data.username, password)
+            access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+            access_token = create_access_token(
+                data={"sub": user.user_id}, expires_delta=access_token_expires
+            )
+            return {"access_token": access_token, "token_type": "bearer"} #, RedirectResponse(url="/setup-reader/me", status_code=301)
 
 @app.get("/setup-reader/me")
 async def read_users_me(current_user: Annotated[User, Depends(get_current_active_user)]):
@@ -222,3 +229,52 @@ async def read_users_me(current_user: Annotated[User, Depends(get_current_active
     driver = Neo4jDriver()
     current_user = driver.pull_user_node(current_user.user_id)
     return current_user
+
+
+def verify_access_token_2(access_token: str):
+        decoded_token = jwt.decode(access_token, CONFIG['SECRET_KEY'], algorithms=[CONFIG['ALGORITHM']], options={"verify_sub": False})
+        return decoded_token
+ 
+
+
+@app.put("/setup-reader/books")
+async def put_users_me_books(request: Request, credentials: HTTPAuthorizationCredentials = Depends(security)):
+    access_token = credentials.credentials
+
+    if not access_token:
+        raise HTTPException(status_code=401, detail="Missing session cookie")
+
+    # Verify the access token
+    if access_token.startswith('session_token='):
+        access_token = access_token[len('session_token='):]
+    decoded_token = verify_access_token_2(access_token)
+
+    user_id = decoded_token['sub']
+    book_array = await request.json()
+
+    driver = Neo4jDriver()
+    
+    driver.add_user_book(user_id=user_id, book_ids=book_array)
+    user =  driver.pull_user_node(user_id=user_id)
+    return {"user": user}
+
+
+@app.put("/put-decorate-reader-preferences")
+async def put_decorate_reader_create(request: Request, credentials: HTTPAuthorizationCredentials = Depends(security)):
+    """
+    This endpoint is sent an authentication token and a dictionary containing a created users stringified selections made throughout the create profile flow for readers. Kyle I think we should send a user a response of their id/maybe they already have that as a result of creating the profile and we can add that as a dynamic param to the url string for a signed in users profile page. SO Jerry user-id: XXXX is going to recieve a uuid from the server when he sends a put request completing this endpoint and then we can await that string and redirect to the profile view. This was probably way to much rambling / might be a little off but I think the idea is there.   
+    """
+    access_token = credentials.credentials
+
+    if not access_token:
+        raise HTTPException(status_code=401, detail="Missing session cookie")
+
+    # Verify the access token
+    if access_token.startswith('session_token='):
+        access_token = access_token[len('session_token='):]
+    decoded_token = verify_access_token_2(access_token)
+
+    user_id = decoded_token['sub']
+    book_array = await request.json()
+
+    driver = Neo4jDriver()

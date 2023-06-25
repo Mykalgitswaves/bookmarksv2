@@ -20,7 +20,7 @@
       <button
         class="mt-5 px-28 py-3 bg-indigo-600 rounded-md text-indigo-100"
         type="submit"
-        @click="createUser"
+        @click="finalizeUser"
       >
         Go to bookshelf
       </button>
@@ -32,7 +32,7 @@
 import { useBookStore } from '../../stores/books'
 
 import AuthorSearch from './authorSearch.vue'
-import { createUserController } from '../../controllers/createuser'
+import { finalizeUserController } from '../../controllers/createuser'
 import { toRaw } from 'vue'
 
 export default {
@@ -60,14 +60,24 @@ export default {
       }
     },
     getAuthorData(data) {
-      this.authors.push(data)
       console.log(data)
+      const state = useBookStore();
+      const id = parseInt(data[0])
+      const name = data[1]
+      const author = {
+        id: id, 
+        name: name
+      }
+      console.log(author)
+      state.addAuthor(author)
     },
-    async createUser() {
-      const data = toRaw(this.store)
+    async finalizeUser() {
+      const state = useBookStore();
+      console.log("this is a store", toRaw(state))
+      const data = toRaw(this.$store)
       // remember to take this out
       console.log(data)
-      const response = await createUserController.createUser(data)
+      const response = await finalizeUserController.decorateUser(data)
       return response
     }
   },

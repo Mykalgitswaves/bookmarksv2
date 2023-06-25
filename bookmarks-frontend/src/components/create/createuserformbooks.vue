@@ -12,16 +12,16 @@
         type="text"
       />
       <label class="text-gray-600 text-sm" for="searchForBooks">
-        Search for a book and tap to add it to your books
+        Tap a book and review it to add it to your shelf
       </label>
     </form>
 
     <BookSearchResults class="max-w-[600px]" :data="data" />
-
+    
     <button
-      class="mt-5 px-20 py-3 bg-indigo-600 rounded-md text-indigo-100 max-w-[600px]"
+      class=" mt-5 px-20 py-3 bg-indigo-600 rounded-md text-indigo-100 w-88 max-w-[600px]"
       type="submit"
-      @click="navigate"
+      @click.prevent="updateUser(); navigate()"
     >
       Continue
     </button>
@@ -30,7 +30,9 @@
 
 <script>
 import BookSearchResults from './booksearchresults.vue'
-import { useStore } from '../../stores/page.js'
+import { useStore } from '../../stores/page.js';
+import { useBookStore } from '../../stores/books';
+import { toRaw } from 'vue'
 
 export default {
   components: {
@@ -55,6 +57,25 @@ export default {
         this.data = null
       }
     },
+    async updateUser() {
+      const token = document.cookie;
+      const books = toRaw(this.bookState.books)
+      console.log(books)
+      if(token && books) {
+      try {
+        await fetch('http://127.0.0.1:8000/setup-reader/books', {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`
+          },
+          body: JSON.stringify(books)
+        })
+        } catch(err) {
+        console.log(err)
+        }
+      }
+    },
     navigate() {
       this.state.getNextPage()
       console.log(this.state.page)
@@ -62,6 +83,7 @@ export default {
   },
   mounted() {
     this.state = useStore()
+    this.bookState = useBookStore()
   }
 }
 </script>

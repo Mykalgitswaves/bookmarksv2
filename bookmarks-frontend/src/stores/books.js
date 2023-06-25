@@ -11,11 +11,35 @@ export const useBookStore = defineStore('addBooks', {
       this.books.push(book)
       this.saveStateToLocalStorage()
     },
+    loadStateFromLocalStorage() {
+      const state = JSON.parse(localStorage.getItem('bookStore'))
+      if(state) {
+      console.log(state)
+      this.books = state.books
+      this.genres = state.genres
+      this.authors = state.authors
+      } else {
+        return;
+      }
+    },
+    getBooks(){
+      this.loadStateFromLocalStorage()
+      return this.books
+    },
+    getGenres() {
+      this.loadStateFromLocalStorage()
+      return this.genres
+    },
+    getAuthors() {
+      this.loadStateFromLocalStorage()
+      return this.authors
+    },
     removeBook(book) {
       const index = this.books.findIndex((b) => b.pk === book.pk)
       if (index !== -1) {
-        this.books.splice(index, 1)
+        this.books.splice(index, index + 1)
         this.saveStateToLocalStorage()
+        return this.books
       }
     },
     addGenre(genre) {
@@ -32,14 +56,8 @@ export const useBookStore = defineStore('addBooks', {
       const state = JSON.stringify(this.$state)
       localStorage.setItem('bookStore', state)
     },
-    loadStateFromLocalStorage() {
-      const state = localStorage.getItem('bookStore')
-      if (state) {
-        this.$reset(JSON.parse(state))
-      }
-    }
   },
   created() {
-    this.loadStateFromLocalStorage()
+    this.loadState()
   }
 })

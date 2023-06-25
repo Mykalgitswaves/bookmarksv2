@@ -97,6 +97,25 @@ export default {
         console.log(err)
         this.isEmpty = true
       }
+    },
+    async updateGenres() {
+      const token = document.cookie;
+      const genres = toRaw(this.bookState.genres)
+      console.log(genres)
+      if(token && genres) {
+      try {
+        await fetch('http://127.0.0.1:8000/setup-reader/books', {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`
+          },
+          body: JSON.stringify(genres)
+        })
+        } catch(err) {
+        console.log(err)
+        }
+      }
     }
   },
   mounted() {
