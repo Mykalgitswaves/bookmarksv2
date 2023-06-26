@@ -1,4 +1,5 @@
 from neo4j import GraphDatabase
+import uuid
 import json
 
 class User():
@@ -393,7 +394,7 @@ class Neo4jDriver():
         Returns:
             User: user object for the created user
         """
-        user_id = self.get_unique_pk("User")
+        user_id = str(uuid.uuid4())
         with self.driver.session() as session:
             user = session.execute_write(self.create_user_query, username, user_id, password)
         return(user)

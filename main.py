@@ -11,7 +11,7 @@ from database.db_helpers import (
 from database.auth import verify_access_token
 
 from fastapi import FastAPI, HTTPException, Depends, status, Request
-from fastapi.responses import RedirectResponse
+from fastapi.responses import RedirectResponse, JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm, HTTPAuthorizationCredentials, HTTPBearer
 from fastapi.encoders import jsonable_encoder
@@ -275,6 +275,24 @@ async def put_decorate_reader_create(request: Request, credentials: HTTPAuthoriz
     decoded_token = verify_access_token_2(access_token)
 
     user_id = decoded_token['sub']
-    book_array = await request.json()
+    user_blob = await request.json()
 
+    authors = [author for author in user_blob['authors']]
+    genres = [genre for genre in user_blob['genres']]
+    books = [book for book in user_blob['books']]
+    
     driver = Neo4jDriver()
+    user =  driver.pull_user_node(user_id=user_id)
+    
+    '''
+    We need a function that can take a user_id and generate a uuid with it or we need to add a uuid as a property on the user class. 
+    '''
+
+    response = JSONResponse(status_code=200, content={"user_id": user_id})
+    return response
+
+@app.get("/feed/{user_id}")
+async def get_user_home_feed(credentials: HTTPAuthorizationCredentials = Depends(security)):
+    """
+    After a user submits to put_decorate_reader_create endpoint they are redirected to their home feed which is a profile page containing information gathered from the set up of their profile. It should return information about the User. Also, they need to have a cookie to access this endpoint so even if someone guesses the correct uuid unless they have a cookie they wont be able to access any sensitive information. In the case they dont have cookie we redirect to sign in / sign up page.
+    """

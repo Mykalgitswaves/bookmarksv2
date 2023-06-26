@@ -16,7 +16,7 @@
 
     <AuthorSearch :authors="data" @author-data-updated="getAuthorData" />
 
-    <RouterLink to="/home/">
+    
       <button
         class="mt-5 px-28 py-3 bg-indigo-600 rounded-md text-indigo-100"
         type="submit"
@@ -24,7 +24,6 @@
       >
         Go to bookshelf
       </button>
-    </RouterLink>
   </div>
 </template>
 
@@ -73,10 +72,8 @@ export default {
     },
     async finalizeUser() {
       const state = useBookStore();
-      console.log("this is a store", toRaw(state))
-      const data = toRaw(this.$store)
-      // remember to take this out
-      console.log(data)
+      const data = toRaw({books: state.books, genres: state.genres, authors: state.authors})
+      // finalizeUserController handles pushing the router.
       const response = await finalizeUserController.decorateUser(data)
       return response
     }
