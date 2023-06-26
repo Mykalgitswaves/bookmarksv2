@@ -1,27 +1,5 @@
 <template>
-  <div class="grid place-content-center relative">
-    <div class="mt-10">
-      <UserModal />
-
-      <div class="flex flex-row gap-2 justify-start mt-5 mx-4">
-        <button
-          @click="reviewShow = !reviewShow"
-          class="justify-self-end w-40 bg-indigo-600 text-indigo-100 px-6 py-2 rounded-md hover:bg-indigo-700 duration-300"
-        >
-          Write a review
-        </button>
-        <button
-          class="justify-self-end w-40 bg-slate-600 text-indigo-100 px-6 py-2 rounded-md hover:bg-slate-700 duration-300"
-        >
-          Update status
-        </button>
-      </div>
-
-      <BookReviewForm v-if="reviewShow" :ratings="ratings" />
-      <BookReviews :reviews="reviews" />
-      <RecommendedBooks :recommendations="recommendations" />
-    </div>
-  </div>
+  <h1>We are starting over baby.. Figure out tomorrow what we want to keep and what we need to throw out.</h1>
 </template>
 
 <script>
