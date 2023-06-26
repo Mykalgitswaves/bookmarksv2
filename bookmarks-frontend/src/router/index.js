@@ -2,7 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 import SignUpView from '@/views/signup.vue'
 import CreateUserBooksView from '@/views/createuser.vue'
 import CreateUserWriterView from '@/views/createwriter.vue'
-import BookShelfView from '@/views/bookshelf.vue'
+import LoggedInView from '@/views/LoggedInReader.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -26,7 +26,7 @@ const router = createRouter({
       // We need router here.
       path: '/feed/:user',
       name: 'feed',
-      component: BookShelfView
+      component: LoggedInView
     },
     {
       path: '/home/:writer',
