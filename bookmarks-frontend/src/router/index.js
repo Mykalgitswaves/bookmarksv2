@@ -24,8 +24,8 @@ const router = createRouter({
     },
     {
       // We need router here.
-      path: '/home/:user',
-      name: 'BookShelf',
+      path: '/feed/:user',
+      name: 'feed',
       component: BookShelfView
     },
     {

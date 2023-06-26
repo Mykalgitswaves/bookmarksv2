@@ -1,5 +1,5 @@
+import {app_router} from '../main.js'
 const token = document.cookie;
-
 
 export const finalizeUserController = {
   decorateUser: async function (object) {
@@ -19,9 +19,7 @@ export const finalizeUserController = {
         return response.json()
       })
       .then((data) => {
-        // Handle the response data
-        console.log('POST request successful:', data)
-        return data
+        app_router.push(`/feed/${data.user_id}`)
       })
       .catch((error) => {
         // Handle any errors

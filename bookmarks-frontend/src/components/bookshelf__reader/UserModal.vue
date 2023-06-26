@@ -1,5 +1,5 @@
 <template>
-  <div class="bg-slate-50 rounded-md h-40 py-4 px-4 relative overflow-clip">
+  <div class="bg-slate-50 rounded-md h-auto py-4 px-4 relative overflow-clip">
     <img
       class="border-solid border-indigo-300 border-2 absolute top-2 left-2 rounded-[50%] h-28 w-28"
       src="../../assets/profileimage.jpg"
