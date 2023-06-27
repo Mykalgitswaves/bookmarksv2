@@ -1,110 +1,70 @@
 <template>
-  <h1>We are starting over baby.. Figure out tomorrow what we want to keep and what we need to throw out.</h1>
+  <TopNav :profilePicture="profilePicture"/>
+  <div class="bg-gray-200 main-layout">
+    <h2 class="pt-4 text-2xl font-medium text-slate-600">Recommended Works</h2>  
+    
+    <KeepAlive>
+      <ReviewCard 
+        v-for="(c, index) in cards" 
+        :key="index" 
+        :placeholderBookImg="placeholderBookImg" 
+      />
+    </KeepAlive>
+  </div>
+  <FooterNav/>
 </template>
 
 <script>
-import MainNav from '../components/bookshelf__reader/navbar.vue'
-import RecommendedBooks from '../components/bookshelf__reader/RecommendedBooks.vue'
-import BookReviews from '../components/bookshelf__reader/BookReviews.vue'
-import UserModal from '../components/bookshelf__reader/UserModal.vue'
-import BookReviewForm from '../components/bookshelf__reader/reviews/CreateReviewForm.vue'
-import IconBook from '../components/svg/icon-book.vue'
+  import TopNav from '@/components/feed/topnav.vue';
+  import ReviewCard from '@/components/feed/ReviewCard.vue';
+  import FooterNav from '@/components/feed/footernav.vue'
+  import profilePicture from '@/assets/profileimage.jpg'
+  import placeholderBookImg from '@/assets/infiniteJest.png'
 
-const headerMapping = {
-  0: BookReviews,
-  1: RecommendedBooks
-}
+// const headerMapping = {
+//   0: BookReviews,
+//   1: RecommendedBooks
+// }
 
 export default {
   components: {
-    MainNav,
-    RecommendedBooks,
-    BookReviews,
-    UserModal,
-    IconBook,
-    BookReviewForm
+    TopNav,
+    ReviewCard,
+    FooterNav
   },
   data() {
-    let componentState = headerMapping[0]
-    let ratings = [1, 2, 3, 4, 5]
+    // let componentState = headerMapping[0]
+    let cards = [1, 2, 3, 4, 5]
     return {
-      reviewShow: false,
-      ratings,
-      recommendations: [{}, {}, {}, {}],
-      reviews: [
-        {
-          stars: 4,
-          title: 'Infinite bragging rights',
-          description:
-            'Read this one book, you probably dont even need to finish it. Just pop this baby down on a coffee table somewhere in plain view and watch how much undeserved attention you get from people that believe YOU actually had the discipline to read this bad boy',
-          comments: [
-            {
-              comment:
-                "This thing was pretty meaty, i read like 20 pages before i updated my hinge to talk about a niche reference about Don Gately. So far it hasn't taken me anywhere",
-              stars: 4.2,
-              likes: 23,
-              replies: [
-                {
-                  comment:
-                    'this is soooo dumb, like literally you are the problem here. This book was made to be read over a long period of time, not to',
-                  likes: 4,
-                  replies: []
-                }
-              ]
-            }
-          ]
-        },
-        {
-          stars: 3,
-          title: 'Infinite bragging rights',
-          description:
-            'Read this one book, you probably dont even need to finish it. Just pop this baby down on a coffee table somewhere in plain view and watch how much undeserved attention you get from people that believe YOU actually had the discipline to read this bad boy',
-          comments: []
-        },
-        {
-          stars: 2,
-          title: 'Infinite bragging rights',
-          description:
-            'Read this one book, you probably dont even need to finish it. Just pop this baby down on a coffee table somewhere in plain view and watch how much undeserved attention you get from people that believe YOU actually had the discipline to read this bad boy'
-        },
-        {
-          stars: 4,
-          title: 'Infinite bragging rights',
-          description:
-            'Read this one book, you probably dont even need to finish it. Just pop this baby down on a coffee table somewhere in plain view and watch how much undeserved attention you get from people that believe YOU actually had the discipline to read this bad boy'
-        },
-        {
-          stars: 4,
-          title: 'Infinite bragging rights',
-          description:
-            'Read this one book, you probably dont even need to finish it. Just pop this baby down on a coffee table somewhere in plain view and watch how much undeserved attention you get from people that believe YOU actually had the discipline to read this bad boy'
-        },
-        {
-          stars: 4,
-          title: 'Infinite bragging rights',
-          description:
-            'Read this one book, you probably dont even need to finish it. Just pop this baby down on a coffee table somewhere in plain view and watch how much undeserved attention you get from people that believe YOU actually had the discipline to read this bad boy'
-        }
-      ],
-      componentState
+      profilePicture,
+      placeholderBookImg,
+      cards
     }
   },
   methods: {
-    dynamicComponentState(index) {
-      this.componentState = headerMapping[index]
-    }
+    // dynamicComponentState(index) {
+    //   this.componentState = headerMapping[index]
+    // }
   },
   computed: {
-    currentState() {
-      return this.componentState
-    }
+    // currentState() {
+    //   return this.componentState
+    // }
   }
 }
 </script>
-
 <style scoped>
-.main-dash {
+
+.main-layout {
+  min-height: 80vh;
+  padding: 1.25rem;
   display: grid;
-  grid-template-columns: 2;
+  grid-template-columns: 1;
+  grid-auto-rows: minmax(min-content, max-content);
+  gap: 2ch;
 }
+
+
+
 </style>
+
