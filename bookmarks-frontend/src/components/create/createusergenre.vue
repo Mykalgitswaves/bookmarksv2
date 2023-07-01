@@ -27,22 +27,11 @@
           {{ genre.name }}
         </div>
       </div>
-      <div class="container mb-5 border-t-[1px] border-solid border-indigo-300">
-        <ul class="grid-pills justify-content-center">
-          <li
-            v-for="genre in addedGenre"
-            :key="genre"
-            class="bg-indigo-100 px-2 text-center py-2 rounded-lg border-2 border-solid border-indigo-300 hover:border-indigo-500 text-lg"
-          >
-            <span>{{ genre.name }}</span>
-          </li>
-        </ul>
-      </div>
     </div>
     <button
       class="block mt-5 px-20 py-3 bg-indigo-600 rounded-md text-indigo-100 w-[100%]"
       type="submit"
-      @click="navigate"
+      @click.prevent="navigate(); updateGenres()"
     >
       Continue
     </button>
@@ -100,11 +89,12 @@ export default {
     },
     async updateGenres() {
       const token = document.cookie;
-      const genres = toRaw(this.bookState.genres)
+      const genreStore = useBookStore()
+      const genres = toRaw(genreStore.genres)
       console.log(genres)
       if(token && genres) {
       try {
-        await fetch('http://127.0.0.1:8000/setup-reader/books', {
+        await fetch('http://127.0.0.1:8000/setup-reader/genres', {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',

@@ -123,11 +123,11 @@ class User():
             self.reading.append(book_id)
         else:
             raise Exception("This relationship already exists")
-    def add_reviewed_setup(self, book_id:int):
+    def add_reviewed_setup(self, book_id:int, rating:int):
         driver = Neo4jDriver()
-        driver.add_reviewed_book_setup(user_id=self.user_id, book_id=book_id)
+        driver.add_reviewed_book_setup(user_id=self.user_id, book_id=book_id, rating=rating)
         self.books.append(book_id)
-
+    
 
 class Review():
     def __init__(self, review_id, rating, user, book):
@@ -209,7 +209,7 @@ class Neo4jDriver():
         uri = CONFIG["uri"]
         self.driver = GraphDatabase.driver(uri, auth = (CONFIG["username"],CONFIG["password"]))
 
-    def pull_user_node(self,user_id:int):
+    def pull_user_node(self,user_id:int) -> User:
         """
         Pulls all records for a user from their ID
         

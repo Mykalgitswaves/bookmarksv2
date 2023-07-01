@@ -1,4 +1,6 @@
 import { defineStore } from 'pinia'
+import { authTokenStore } from './isAuthenticated';
+import { toRaw } from 'vue'
 
 export const useBookStore = defineStore('addBooks', {
   state: () => ({
@@ -12,15 +14,13 @@ export const useBookStore = defineStore('addBooks', {
       this.saveStateToLocalStorage()
     },
     loadStateFromLocalStorage() {
-      const state = JSON.parse(localStorage.getItem('bookStore'))
-      if(state) {
-      console.log(state)
-      this.books = state.books
-      this.genres = state.genres
-      this.authors = state.authors
-      } else {
-        return;
-      }
+        const state = JSON.parse(localStorage.getItem('bookStore'))
+        if(state) {
+        console.log(state)
+        this.books = state.books
+        this.genres = state.genres
+        this.authors = state.authors
+        }
     },
     getBooks(){
       this.loadStateFromLocalStorage()
