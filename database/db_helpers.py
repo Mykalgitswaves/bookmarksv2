@@ -123,6 +123,11 @@ class User():
             self.reading.append(book_id)
         else:
             raise Exception("This relationship already exists")
+    def add_reviewed_setup(self, book_ids:int):
+        driver = Neo4jDriver()
+        driver.add_reviewed_book_setup(self.user_id, book_ids)
+        self.books.append(book_ids)
+        
 
 class Review():
     def __init__(self, review_id, rating, user, book):
@@ -939,11 +944,27 @@ class Neo4jDriver():
             disabled=response["u.disabled"]
         )
         return(user)
+    def add_reviewed_book_setup(self, book_ids, user_id):
+        """
+        
+        """
+        with self.driver.session() as session:
+            user = session.execute_write(self.add_reviewed_book_setup_query, book_ids, user_id)
+        
+    @staticmethod
+    def add_reviewed_book_setup_query(tx, book_ids, user_id):
+        query = """
+                match (u:User {id:$user_id})
+                match (b:Book) where b.id IN $book_ids
+                merge (u)-[rr:REVIEWED]-(b)
+                """
+        result = tx.run(query, user_id=user_id,book_ids=book_ids)
+        
     def close(self):
         self.driver.close()
 
 if __name__ == "__main__":
     driver = Neo4jDriver()
-    user = driver.create_user(username="test_user",password="bigcrab")
+    user = driver.add_reviewed_book_setup(user_id="ee3aea1d-ef50-4439-bcc1-a7f3cd7bd34d",book_ids=[1815,1])
     print(user)
     driver.close()
