@@ -209,7 +209,7 @@ class Neo4jDriver():
         uri = CONFIG["uri"]
         self.driver = GraphDatabase.driver(uri, auth = (CONFIG["username"],CONFIG["password"]))
 
-    def pull_user_node(self,user_id:int):
+    def pull_user_node(self,user_id:int) -> User:
         """
         Pulls all records for a user from their ID
         

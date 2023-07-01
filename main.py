@@ -253,11 +253,14 @@ async def put_users_me_books(request: Request, credentials: HTTPAuthorizationCre
     decoded_token = verify_access_token_2(access_token)
 
     user_id = decoded_token['sub']
+    
     book_array = await request.json()
+    books_id_list = [int(book['id']) for book in book_array]
+    book_reviews_list = [int(book['review']) for book in book_array]
 
     driver = Neo4jDriver()
     user =  driver.pull_user_node(user_id=user_id)
-
+    user.add_reviewed_setup(book_ids=books_id_list, book_reviews=book_reviews_list)
     
     return {"user": user}
 
