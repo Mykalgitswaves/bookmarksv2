@@ -91,6 +91,7 @@ class TokenData(BaseModel):
 def get_user(username: str):
     driver = Neo4jDriver()
     user = driver.pull_user_by_username(username=username)
+    driver.close()
     return(user)
 
 def verify_password(plain_password, hashed_password):
@@ -158,12 +159,14 @@ async def login_for_access_token(
     access_token = create_access_token(
         data={"sub": user.username}, expires_delta=access_token_expires
     )
+    driver.close()
     return {"access_token": access_token, "token_type": "bearer"}
 
 @app.get("/users/me")
 async def read_users_me(current_user: Annotated[User, Depends(get_current_active_user)]):
     driver = Neo4jDriver()
     current_user = driver.pull_user_node(current_user.user_id)
+    driver.close()
     return current_user
 
 @app.get("/books")
@@ -173,6 +176,7 @@ async def get_books(skip: int = 0, limit: int = 3):
     """
     driver = Neo4jDriver()
     result = driver.pull_n_books(skip, limit)
+    driver.close()
     return result
 
 @app.get("/books/{text}")
@@ -182,6 +186,7 @@ async def get_books_by_title(text: str, skip: int=0, limit: int=3):
     """
     driver = Neo4jDriver()
     result = driver.pull_search2_books(text=text, skip=skip, limit=limit)
+    driver.close()
     return result
 
 @app.get("/genres/{text}")
@@ -191,6 +196,7 @@ async def get_genres_by_title(text: str, skip: int=0, limit: int=3):
     """
     driver = Neo4jDriver()
     result = driver.pull_search2_genre(text=text, skip=skip, limit=limit)
+    driver.close()
     return result
 
 @app.get("/authors/{text}")
@@ -200,6 +206,7 @@ async def get_authors_by_title(text: str, skip: int=0, limit: int=3):
     """
     driver = Neo4jDriver()
     result = driver.pull_search2_author(text=text, skip=skip, limit=limit)
+    driver.close()
     return result
             
 @app.post("/create-login", response_model=Token)
@@ -221,6 +228,7 @@ async def post_create_login_user(form_data:Annotated[OAuth2PasswordRequestForm, 
             access_token = create_access_token(
                 data={"sub": user.user_id}, expires_delta=access_token_expires
             )
+            driver.close()
             return {"access_token": access_token, "token_type": "bearer"} #, RedirectResponse(url="/setup-reader/me", status_code=301)
 
 @app.get("/setup-reader/me")
@@ -231,6 +239,7 @@ async def read_users_me(current_user: Annotated[User, Depends(get_current_active
     """
     driver = Neo4jDriver()
     current_user = driver.pull_user_node(current_user.user_id)
+    driver.close()
     return current_user
 
 
@@ -255,21 +264,16 @@ async def put_users_me_books(request: Request, credentials: HTTPAuthorizationCre
     user_id = decoded_token['sub']
     
     book_array = await request.json()
-    books_id_list = [int(book['id']) for book in book_array]
-    book_reviews_list = [int(book['review']) for book in book_array]
 
     driver = Neo4jDriver()
     user =  driver.pull_user_node(user_id=user_id)
-    user.add_reviewed_setup(book_ids=books_id_list, book_reviews=book_reviews_list)
-    
+    for book in book_array:
+        user.add_reviewed_setup(book_id=int(book['id']), rating=int(book['review']))
+    driver.close()
     return {"user": user}
 
-
-@app.put("/put-decorate-reader-preferences")
-async def put_decorate_reader_create(request: Request, credentials: HTTPAuthorizationCredentials = Depends(security)):
-    """
-    This endpoint is sent an authentication token and a dictionary containing a created users stringified selections made throughout the create profile flow for readers. Kyle I think we should send a user a response of their id/maybe they already have that as a result of creating the profile and we can add that as a dynamic param to the url string for a signed in users profile page. SO Jerry user-id: XXXX is going to recieve a uuid from the server when he sends a put request completing this endpoint and then we can await that string and redirect to the profile view. This was probably way to much rambling / might be a little off but I think the idea is there.   
-    """
+@app.put("/setup-reader/genres")
+async def put_users_me_genres(request: Request, credentials: HTTPAuthorizationCredentials = Depends(security)):
     access_token = credentials.credentials
 
     if not access_token:
@@ -281,21 +285,39 @@ async def put_decorate_reader_create(request: Request, credentials: HTTPAuthoriz
     decoded_token = verify_access_token_2(access_token)
 
     user_id = decoded_token['sub']
-    user_blob = await request.json()
-
-    authors = [author for author in user_blob['authors']]
-    genres = [genre for genre in user_blob['genres']]
-    books = [book for book in user_blob['books']]
     
+    genres = await request.json()
+
     driver = Neo4jDriver()
     user =  driver.pull_user_node(user_id=user_id)
-    
-    '''
-    We need a function that can take a user_id and generate a uuid with it or we need to add a uuid as a property on the user class. 
-    '''
+    for genre in genres:
+        user.add_favorite_genre(genre_id=int(genre['id']))
+    driver.close()
+    return {"user": user}
 
-    response = JSONResponse(status_code=200, content={"user_id": user_id})
-    return response
+@app.put("/setup-reader/authors")
+async def put_users_me_authors(request: Request, credentials: HTTPAuthorizationCredentials = Depends(security)):
+    access_token = credentials.credentials
+
+    if not access_token:
+        raise HTTPException(status_code=401, detail="Missing session cookie")
+
+    # Verify the access token
+    if access_token.startswith('session_token='):
+        access_token = access_token[len('session_token='):]
+    decoded_token = verify_access_token_2(access_token)
+
+    user_id = decoded_token['sub']
+    
+    authors = await request.json()
+
+    driver = Neo4jDriver()
+    user =  driver.pull_user_node(user_id=user_id)
+    for author in authors:
+        user.add_favorite_author(author_id=int(author['id']))
+    driver.close()
+    
+    return JSONResponse(content={"user_id": jsonable_encoder(user.user_id)})
 
 @app.get("/feed/{user_id}")
 async def get_user_home_feed(credentials: HTTPAuthorizationCredentials = Depends(security)):

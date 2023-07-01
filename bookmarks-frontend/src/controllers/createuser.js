@@ -1,4 +1,4 @@
-import {app_router} from '../main.js'
+
 const token = document.cookie;
 
 export const finalizeUserController = {
@@ -12,15 +12,7 @@ export const finalizeUserController = {
       },
       body: JSON.stringify(object)
     })
-      .then((response) => {
-        if (!response.ok) {
-          throw new Error('Network response was not ok')
-        }
-        return response.json()
-      })
-      .then((data) => {
-        app_router.push(`/feed/${data.user_id}`)
-      })
+      
       .catch((error) => {
         // Handle any errors
         console.error('Error:', error)

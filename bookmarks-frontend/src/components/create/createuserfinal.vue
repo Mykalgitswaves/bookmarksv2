@@ -20,7 +20,7 @@
       <button
         class="mt-5 px-28 py-3 bg-indigo-600 rounded-md text-indigo-100"
         type="submit"
-        @click="finalizeUser"
+        @click.prevent="updateAuthors()"
       >
         Go to bookshelf
       </button>
@@ -31,7 +31,7 @@
 import { useBookStore } from '../../stores/books'
 
 import AuthorSearch from './authorSearch.vue'
-import { finalizeUserController } from '../../controllers/createuser'
+import { app_router } from '@/main.js'
 import { toRaw } from 'vue'
 
 export default {
@@ -70,12 +70,33 @@ export default {
       console.log(author)
       state.addAuthor(author)
     },
-    async finalizeUser() {
-      const state = useBookStore();
-      const data = toRaw({books: state.books, genres: state.genres, authors: state.authors})
-      // finalizeUserController handles pushing the router.
-      const response = await finalizeUserController.decorateUser(data)
-      return response
+    async updateAuthors() {
+      const token = document.cookie;
+      const authorStore = useBookStore()
+      const authors = toRaw(authorStore.authors)
+      console.log(authors)
+      console.log(authors)
+      if(token && authors) {
+      try {
+        await fetch('http://127.0.0.1:8000/setup-reader/authors', {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`
+          },
+          body: JSON.stringify(authors)
+        }).then((response) => {
+          if (!response.ok) {
+            throw new Error('Network response was not ok')
+            }
+          return response.json()
+        }).then((data) => {
+            app_router.push(`/feed/${data.user_id}`)
+          })
+        } catch(err) {
+          console.log(err)
+        }
+      }
     }
   },
   mounted() {}
