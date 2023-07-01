@@ -123,11 +123,11 @@ class User():
             self.reading.append(book_id)
         else:
             raise Exception("This relationship already exists")
-    def add_reviewed_setup(self, book_ids:int):
+    def add_reviewed_setup(self, book_ids:list):
         driver = Neo4jDriver()
-        driver.add_reviewed_book_setup(self.user_id, book_ids)
+        driver.add_reviewed_book_setup(user_id=int(self.user_id), book_ids=book_ids)
         self.books.append(book_ids)
-        
+
 
 class Review():
     def __init__(self, review_id, rating, user, book):
