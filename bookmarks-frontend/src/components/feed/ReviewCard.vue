@@ -16,14 +16,11 @@
         <button class="text-indigo-600 font-medium text-lg">
           Bookmark
         </button>
-        
-        <button class="text-indigo-600 font-medium text-lg">
-          14 reviews
-        </button>
-
-        <button class="text-indigo-600 font-medium text-lg">
-          4.84 / 5.00
-        </button>
+        <router-link :to="`/feed/${props.user}/review/${props.card}`">
+          <button class="text-indigo-600 font-medium text-lg">
+            14 reviews
+          </button>
+        </router-link>
       </div>
     </div> 
 </template>
@@ -32,12 +29,11 @@
     import {defineProps, toRef, onMounted} from 'vue' 
   const props = defineProps({
     placeholderBookImg: String,
+    card: Number,
+    user: Number
   })
   const { placeholderBookImg } = toRef(props)
   
-  onMounted(() => {
-    console.log(props)
-  })
 </script>
 
 <style scoped>

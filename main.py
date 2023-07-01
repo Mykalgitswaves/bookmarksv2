@@ -26,6 +26,9 @@ from datetime import datetime, timedelta
 Connect to database
 
 Steps for starting uvicorn server: 
+
+    0) SSH Into Kyles server with secret saucy pw
+
     1) Activate venv with command from base dir(Bookmarks3/) of project:
         '$ conda activate bookmarks'
     
@@ -253,9 +256,9 @@ async def put_users_me_books(request: Request, credentials: HTTPAuthorizationCre
     book_array = await request.json()
 
     driver = Neo4jDriver()
-    
-    driver.add_user_book(user_id=user_id, book_ids=book_array)
     user =  driver.pull_user_node(user_id=user_id)
+
+    
     return {"user": user}
 
 

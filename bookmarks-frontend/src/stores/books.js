@@ -1,4 +1,5 @@
 import { defineStore } from 'pinia'
+import { authTokenStore } from './isAuthenticated';
 
 export const useBookStore = defineStore('addBooks', {
   state: () => ({
@@ -12,14 +13,20 @@ export const useBookStore = defineStore('addBooks', {
       this.saveStateToLocalStorage()
     },
     loadStateFromLocalStorage() {
-      const state = JSON.parse(localStorage.getItem('bookStore'))
-      if(state) {
-      console.log(state)
-      this.books = state.books
-      this.genres = state.genres
-      this.authors = state.authors
+      const authStore = authTokenStore();
+      if(document.cookie === authStore.token){
+        const state = JSON.parse(localStorage.getItem('bookStore'))
+        if(state) {
+        console.log(state)
+        this.books = state.books
+        this.genres = state.genres
+        this.authors = state.authors
+        } else {
+          return;
+        }
       } else {
-        return;
+        localStorage.setItem('bookStore', null)
+        console.log('storage is clear')
       }
     },
     getBooks(){

@@ -16,13 +16,13 @@
     />
     <div class="tab-group">
         <button
-            class="tab-btn text-xl" 
+            class="tab-btn text-xl font-semibold" 
             :class="isFeedTabActive === true ? 'active' : ''"
             @click="isFeedTabActive = !isFeedTabActive" 
         >Feed</button>
 
         <button 
-            class="tab-btn text-xl"
+            class="tab-btn text-xl font-semibold"
             :class="isBookshelfTabActive === true ? 'active' : ''"
             @click="isBookshelfTabActive = !isBookshelfTabActive" 
         >Bookshelf</button>
@@ -85,6 +85,8 @@
 
 .tab-btn {
     color: #718096;
+    border-bottom: solid .25rem #dbdada;
+    padding-bottom: .5rem;
 }
 
 .active {
