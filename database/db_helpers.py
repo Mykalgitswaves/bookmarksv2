@@ -123,10 +123,10 @@ class User():
             self.reading.append(book_id)
         else:
             raise Exception("This relationship already exists")
-    def add_reviewed_setup(self, book_ids:list):
+    def add_reviewed_setup(self, book_id:int):
         driver = Neo4jDriver()
-        driver.add_reviewed_book_setup(user_id=self.user_id, book_ids=book_ids)
-        self.books.append(book_ids)
+        driver.add_reviewed_book_setup(user_id=self.user_id, book_id=book_id)
+        self.books.append(book_id)
 
 
 class Review():
@@ -224,6 +224,7 @@ class Neo4jDriver():
         return(user)
     @staticmethod
     def pull_user_node_query(tx,user_id):
+        # TODO: 
         query = """
                 match (u:User {id: $user_id})-[r]-(b) return TYPE(r),Labels(b),b.id,u.username,u.created_date,u.email,u.disabled
                 """
@@ -944,27 +945,27 @@ class Neo4jDriver():
             disabled=response["u.disabled"]
         )
         return(user)
-    def add_reviewed_book_setup(self, book_ids, user_id):
+    def add_reviewed_book_setup(self, book_id, user_id, rating):
         """
         
         """
         with self.driver.session() as session:
-            user = session.execute_write(self.add_reviewed_book_setup_query, book_ids, user_id)
+            user = session.execute_write(self.add_reviewed_book_setup_query, book_id, user_id, rating)
         
     @staticmethod
-    def add_reviewed_book_setup_query(tx, book_ids, user_id):
+    def add_reviewed_book_setup_query(tx, book_id, user_id, rating):
         query = """
                 match (u:User {id:$user_id})
-                match (b:Book) where b.id IN $book_ids
-                merge (u)-[rr:REVIEWED]-(b)
+                match (b:Book {id:$book_id}) 
+                merge (u)-[rr:REVIEWED {rating:$rating}]->(b)
                 """
-        result = tx.run(query, user_id=user_id,book_ids=book_ids)
+        result = tx.run(query, user_id=user_id,book_id=book_id, rating=rating)
         
     def close(self):
         self.driver.close()
 
 if __name__ == "__main__":
     driver = Neo4jDriver()
-    user = driver.add_reviewed_book_setup(user_id="ee3aea1d-ef50-4439-bcc1-a7f3cd7bd34d",book_ids=[1815,1])
+    user = driver.add_reviewed_book_setup(user_id="13b3a431-498f-4145-a144-e8b24b7d2a39",book_id=1815, rating=2)
     print(user)
     driver.close()
