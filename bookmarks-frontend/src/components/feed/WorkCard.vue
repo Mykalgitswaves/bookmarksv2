@@ -26,11 +26,14 @@
 </template>
 
 <script setup>
-    import {defineProps, toRef, onMounted} from 'vue' 
+  import {defineProps, toRef, onMounted} from 'vue' 
   const props = defineProps({
     placeholderBookImg: String,
     card: Number,
-    user: Number
+    user: {
+      type: Number,
+      required: false,
+    }
   })
   const { placeholderBookImg } = toRef(props)
   

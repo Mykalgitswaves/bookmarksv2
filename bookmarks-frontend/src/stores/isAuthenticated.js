@@ -5,7 +5,7 @@ export const authTokenStore = defineStore('authToken', () => {
     const token = ref("")
 
     function saveAuthToken(token) {
-    if(!localStorage.getItem('authToken')){
+    if(localStorage.getItem('authToken') === undefined){
         this.token = token;
         localStorage.setItem('authToken', token);
         } else {

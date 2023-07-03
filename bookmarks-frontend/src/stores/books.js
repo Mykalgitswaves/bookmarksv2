@@ -14,13 +14,19 @@ export const useBookStore = defineStore('addBooks', {
       this.saveStateToLocalStorage()
     },
     loadStateFromLocalStorage() {
-        const state = JSON.parse(localStorage.getItem('bookStore'))
-        if(state) {
-        console.log(state)
-        this.books = state.books
-        this.genres = state.genres
-        this.authors = state.authors
-        }
+        // const authState = authTokenStore()
+        const token = localStorage.getItem('authToken')
+        console.log(token, 'auth state', document.cookie)
+
+        if(token === document.cookie){
+          const state = JSON.parse(localStorage.getItem('bookStore'))
+          if(state) {
+            console.log(state)
+            this.books = state.books
+            this.genres = state.genres
+            this.authors = state.authors
+          }
+      } 
     },
     getBooks(){
       this.loadStateFromLocalStorage()
