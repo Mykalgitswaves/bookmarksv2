@@ -74,8 +74,6 @@ export default {
       const token = document.cookie;
       const authorStore = useBookStore()
       const authors = toRaw(authorStore.authors)
-      console.log(authors)
-      console.log(authors)
       if(token && authors) {
       try {
         await fetch('http://127.0.0.1:8000/setup-reader/authors', {
@@ -91,7 +89,7 @@ export default {
             }
           return response.json()
         }).then((data) => {
-            app_router.push(`/feed/${data.user_id}`)
+            app_router.push(`/feed/${data.user_id}/review/all`)
           })
         } catch(err) {
           console.log(err)

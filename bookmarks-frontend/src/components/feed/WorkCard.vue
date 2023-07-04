@@ -44,6 +44,7 @@
   padding: 15px 20px;
   background-color: #F7FAFC;
   border-radius: .25rem;
+  margin-inline: auto;
 }
 
 .review-card-top {

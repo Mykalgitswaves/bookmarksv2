@@ -1,5 +1,5 @@
 <template>
-  <nav>
+  <nav class="shadow-sm">
     <div class="navbar-p border-solid border-indigo-500 border-b-2">
       <Logo />
       <div> 
