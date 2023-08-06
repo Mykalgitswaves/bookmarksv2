@@ -961,8 +961,37 @@ class Neo4jDriver():
                 """
         result = tx.run(query, user_id=user_id,book_id=book_id, rating=rating)
         
+    def search_for_param(self, param):
+        """
+        Adds a query to search for nodes with titles that match a given request
+        """
+        with self.driver.session() as session:
+            results = session.execute_read(self.search_for_param_query, param)
+        return results
+    
+    @staticmethod
+    def search_for_param_query(tx, param):
+        
+        query = """
+                OPTIONAL MATCH (u:User) WHERE u.full_name =~ $param 
+                OPTIONAL MATCH (a:Author) WHERE a.full_name =~ $param 
+                OPTIONAL MATCH (b:Book) WHERE b.title =~ $param 
+                OPTIONAL MATCH (bb:Book)-[r:HAS_GENRE]-(g:Genre) WHERE g.name =~ $param
+                RETURN COLLECT(u) + COLLECT(a) + COLLECT(b) + COLLECT(bb) AS results
+                """
+        
+        result = tx.run(query, param=param)
+        response = result.single()
+        if not result:
+            return None
+        else:
+            print(response, 'cashmoney')
+        return response
+    
     def close(self):
         self.driver.close()
+
+
 
 if __name__ == "__main__":
     driver = Neo4jDriver()

@@ -1,6 +1,6 @@
 <template>
     <div class="review-card">
-      <div class="review-card-top">
+      <div class="review-card-top" v-if="!showBookMarkOptions[props.card]">
         <img class="review-card-top-img" :src="props.placeholderBookImg" alt=""/> 
         <div class="review-card-top-text"> 
           <p class="text-xl font-medium text-slate-800">Kitchen Confidential</p>
@@ -8,16 +8,20 @@
           <p class="text-slate-600">Genres: Non-fiction, Short stories & Anthologies</p>
         </div>
       </div> 
-      <div class="review-card-body">
+      <div class="review-card-body" v-if="!showBookMarkOptions[props.card]">
         <p class="text-lg text-slate-800 font-medium">Summary</p>
         <p class="text-slate-700">Bourdain spares no one's appetite when he told all about what happens behind the kitchen door. Bourdain uses the same "take-no-prisoners" attitude in his deliciously funny and shockingly delectable book, sure to delight gourmand</p>
       </div> 
       <div class="review-card-bottom-toolbar pt-2">
-        <button class="text-indigo-600 font-medium text-lg">
+        <button :class="'font-medium text-lg' + showBookMarkOptions[props.card] ? 'text-indigo-400' : 'text-indigo-600'"
+          type="button" @click="showBookMarkOptions[props.card] = !showBookMarkOptions[props.card]"
+        >
           Bookmark
         </button>
         <router-link :to="`/feed/${props.user}/review/${props.card}`">
-          <button class="text-indigo-600 font-medium text-lg">
+          <button class="text-indigo-600 font-medium text-lg"
+            type="button"
+          >
             14 reviews
           </button>
         </router-link>
@@ -26,7 +30,7 @@
 </template>
 
 <script setup>
-  import {defineProps, toRef, onMounted} from 'vue' 
+  import { defineProps } from 'vue' 
   const props = defineProps({
     placeholderBookImg: String,
     card: Number,
@@ -35,7 +39,8 @@
       required: false,
     }
   })
-  const { placeholderBookImg } = toRef(props)
+
+  const showBookMarkOptions = {}
   
 </script>
 

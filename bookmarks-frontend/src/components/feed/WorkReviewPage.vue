@@ -37,7 +37,7 @@
             id: 4, user_id: 1, book_name: 'Kitchen Confidential', rating: 4, review_dislikes: 1, review_likes: 10, name: 'CashMoneyReviewData', review_text: 'This book was crazy, I really liked it alot.'
         },
         {
-            id: 2, user_id: 2, book_name: 'Kitchen Confidential', name: 'Ala Wai Spa Experience', review_text: 'This book was crazy, I really liked it alot.'
+            id: 2, user_id: 2, book_name: 'Kitchen Confidential', rating: 4, review_dislikes: 1, review_likes: 10, name: 'Ala Wai Spa Experience', review_text: 'This book was crazy, I really liked it alot.'
         }
     ]
 
