@@ -25,6 +25,10 @@
 
     let isSearchActive = ref(Boolean);
 
+    
+
+
+
     function toggleSearchBar() {
         isSearchActive.value = !isSearchActive.value
         const toggleSearchBarEvent = new Event('toggleSearchBar', {
@@ -36,19 +40,25 @@
         window.dispatchEvent(toggleSearchBarEvent);
     }
 
-    
-    const searchData = ref('')
+    const responseBlob = ref(null);
+    const searchData = ref('');
 
     watch(searchData, (oldValue) => {
         console.log(oldValue);
     })
+
+
+    const emit = defineEmits()
 
     async function searchRequest(searchData) {
         if (searchData.length > 1) {
             try {
                 return await fetch(`http://127.0.0.1:8000/api/search/${searchData}`) 
                     .then((data) => data.json())
-                    .then(res => console.log(res));
+                    .then((res) => {
+                        emit('search-results', res);
+                        responseBlob.value = res.data;
+                    });
             } catch(err) {
                     return console.error(err)
             }

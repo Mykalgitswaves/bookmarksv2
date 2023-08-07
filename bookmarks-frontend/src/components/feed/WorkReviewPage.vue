@@ -17,12 +17,16 @@
         :key="index"
         :review="review"
     />
+
+    <SearchResults @search-results="handleData" :data="data"/>
 </template>
 
 <script setup>
     import WorkCard from '@/components/feed/WorkCard.vue';
     import ReviewCard from '@/components/feed/ReviewCard.vue';
+    import SearchResults from '@/components/feed/navigation/SearchResults.vue'
     import { useRouter } from 'vue-router';
+    import { ref } from 'vue';
 
     const router = useRouter()
     function navigateBack() {
@@ -40,6 +44,13 @@
             id: 2, user_id: 2, book_name: 'Kitchen Confidential', rating: 4, review_dislikes: 1, review_likes: 10, name: 'Ala Wai Spa Experience', review_text: 'This book was crazy, I really liked it alot.'
         }
     ]
+
+    const data = ref([]);
+
+    function handleData(event) {
+        console.log(event, 'testing')
+        data.value = event;
+    }
 
 </script>
 

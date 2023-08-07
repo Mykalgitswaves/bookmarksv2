@@ -961,27 +961,30 @@ class Neo4jDriver():
                 """
         result = tx.run(query, user_id=user_id,book_id=book_id, rating=rating)
         
-    def search_for_param(self, param):
+    def search_for_param(self, param, skip, limit):
         """
         Adds a query to search for nodes with titles that match a given request
+        we need to figure out how to put a  limit on these
         """
         with self.driver.session() as session:
-            results = session.execute_read(self.search_for_param_query, param)
+            results = session.execute_read(self.search_for_param_query, param, skip, limit)
         return results
     
     @staticmethod
-    def search_for_param_query(tx, param):
-        
+    def search_for_param_query(tx, param, skip, limit):
+        param = "(?i)" + "".join([f".*{word}.*" for word in param.split(" ")])
         query = """
                 OPTIONAL MATCH (u:User) WHERE u.full_name =~ $param 
                 OPTIONAL MATCH (a:Author) WHERE a.full_name =~ $param 
                 OPTIONAL MATCH (b:Book) WHERE b.title =~ $param 
                 OPTIONAL MATCH (bb:Book)-[r:HAS_GENRE]-(g:Genre) WHERE g.name =~ $param
                 RETURN COLLECT(u) + COLLECT(a) + COLLECT(b) + COLLECT(bb) AS results
+                SKIP $skip
+                LIMIT $limit
                 """
         
-        result = tx.run(query, param=param)
-        response = result.single()
+        result = tx.run(query, param=param, skip=skip, limit=limit)
+        response = result.single()['results']
         if not result:
             return None
         else:
