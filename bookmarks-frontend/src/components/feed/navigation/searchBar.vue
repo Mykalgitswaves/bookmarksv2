@@ -25,9 +25,6 @@
 
     let isSearchActive = ref(Boolean);
 
-    
-
-
 
     function toggleSearchBar() {
         isSearchActive.value = !isSearchActive.value
@@ -48,15 +45,13 @@
     })
 
 
-    const emit = defineEmits()
-
     async function searchRequest(searchData) {
         if (searchData.length > 1) {
             try {
                 return await fetch(`http://127.0.0.1:8000/api/search/${searchData}`) 
                     .then((data) => data.json())
-                    .then((res) => {
-                        emit('search-results', res);
+                    .then(res => {
+                        console.log('all my friends are', res)
                         responseBlob.value = res.data;
                     });
             } catch(err) {

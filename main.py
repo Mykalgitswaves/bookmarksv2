@@ -327,15 +327,13 @@ async def get_user_home_feed(credentials: HTTPAuthorizationCredentials = Depends
     """
 
 @app.get("/api/search/{param}")
-async def search_for_param(param: str, skip: int=0, limit: int=10):
+async def search_for_param(param: str, skip: int=0, limit: int=5):
     """
     Endpoint used for searching for users, todo add in credentials for searching
     """
     print(param)
     driver = Neo4jDriver()
-    search_result = driver.search_for_param(param=param, skip=skip, limit=10)
+    search_result = driver.search_for_param(param=param, skip=skip, limit=limit)
     driver.close()
-    
-    print(search_result)
 
     return JSONResponse(content={"data": jsonable_encoder(search_result)})

@@ -2,6 +2,11 @@
     <footer class="bg-white">
         <searchBar/>
         
+        <SearchResults 
+            v-show="isSearchBarActive"
+            @search-results="handleData"
+            :data="data"
+        />
         
         <div 
             :class="'nav-button-group hover:bg-gray-200' + isFeedActive" 
@@ -41,6 +46,8 @@ import IconBook from '@/components/svg/icon-book.vue'
 import IconSocial from '@/components/svg/icon-social.vue';
 import IconExplore from '@/components/svg/icon-explore.vue';
 import searchBar from './navigation/searchBar.vue'
+import SearchResults from '@/components/feed/navigation/SearchResults.vue'
+
 import { useRoute }  from 'vue-router'
 import { computed, ref } from 'vue'
 
@@ -67,6 +74,13 @@ window.addEventListener('toggleSearchBar', () => {
     isSearchBarActive.value = !isSearchBarActive.value
     console.log('fired event ', isSearchBarActive.value)
 })
+
+const data = ref([]);
+
+function handleData(event) {
+    console.log(event, 'testing')
+    data.value = event;
+}
 
 </script>
 

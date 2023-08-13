@@ -18,13 +18,12 @@
         :review="review"
     />
 
-    <SearchResults @search-results="handleData" :data="data"/>
+    
 </template>
 
 <script setup>
     import WorkCard from '@/components/feed/WorkCard.vue';
     import ReviewCard from '@/components/feed/ReviewCard.vue';
-    import SearchResults from '@/components/feed/navigation/SearchResults.vue'
     import { useRouter } from 'vue-router';
     import { ref } from 'vue';
 
@@ -45,12 +44,7 @@
         }
     ]
 
-    const data = ref([]);
-
-    function handleData(event) {
-        console.log(event, 'testing')
-        data.value = event;
-    }
+   
 
 </script>
 
