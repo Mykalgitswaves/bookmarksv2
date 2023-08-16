@@ -960,6 +960,17 @@ class Neo4jDriver():
                 merge (u)-[rr:REVIEWED {rating:$rating}]->(b)
                 """
         result = tx.run(query, user_id=user_id,book_id=book_id, rating=rating)
+
+    def pull_all_reviews_by_user(self):
+        with self.driver.session() as session:
+            result = session.execute_read(self.pull_all_reviews_by_user_query)
+        return(result)
+    @staticmethod
+    def pull_all_reviews_by_user_query(tx):
+        query = "match (u:User)-[rr:REVIEWED]-(b:Book) return u.id,rr.rating,b.id"
+        result = tx.run(query)
+        result = [{"user":response["u.id"],"book":response["b.id"],"rating":response["rr.rating"]} for response in result]
+        return(result)
         
     def close(self):
         self.driver.close()
