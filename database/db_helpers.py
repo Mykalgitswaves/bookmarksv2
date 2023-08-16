@@ -1060,8 +1060,8 @@ class Neo4jDriver():
         return(result)
     @staticmethod
     def pull_similar_books_query(tx, book_id):
-        query = "match (b:Book)-[rr:SIMILAR_TO]->(bb:Book) return bb.id,bb.title,bb.img_url"
-        result = tx.run(query)
+        query = "match (b:Book {id:$book_id})-[rr:SIMILAR_TO]->(bb:Book) return bb.id,bb.title,bb.img_url"
+        result = tx.run(query,book_id=book_id)
         result = [{"id":response["bb.id"],"title":response["bb.title"],"img_url":response["img_url"]} for response in result]
         return(result)
 
