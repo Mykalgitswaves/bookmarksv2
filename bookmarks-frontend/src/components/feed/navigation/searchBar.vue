@@ -21,6 +21,7 @@
 </template>
 <script setup>
     import { ref, watch } from 'vue'
+    import { useStore } from '@/stores/searchBar.js'
     import IconSearch from '@/components/svg/icon-search.vue';
 
     let isSearchActive = ref(Boolean);
@@ -40,10 +41,9 @@
     const responseBlob = ref(null);
     const searchData = ref('');
 
-    watch(searchData, (oldValue) => {
-        console.log(oldValue);
-    })
 
+    const searchResultStore = useStore();
+    
 
     async function searchRequest(searchData) {
         if (searchData.length > 1) {
@@ -51,8 +51,8 @@
                 return await fetch(`http://127.0.0.1:8000/api/search/${searchData}`) 
                     .then((data) => data.json())
                     .then(res => {
-                        console.log('all my friends are', res)
                         responseBlob.value = res.data;
+                        searchResultStore.saveAndLoadSearchResults(res.data)
                     });
             } catch(err) {
                     return console.error(err)

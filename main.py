@@ -331,9 +331,20 @@ async def search_for_param(param: str, skip: int=0, limit: int=5):
     """
     Endpoint used for searching for users, todo add in credentials for searching
     """
-    print(param)
+    
     driver = Neo4jDriver()
     search_result = driver.search_for_param(param=param, skip=skip, limit=limit)
     driver.close()
-
+   
     return JSONResponse(content={"data": jsonable_encoder(search_result)})
+
+@app.get("/api/books/{book_id}")
+async def get_book_page(book_id: int):
+    """
+    Endpoint for book page
+    """
+    driver = Neo4jDriver()
+    book = driver.pull_book_node(book_id=book_id)
+    driver.close()
+
+    return JSONResponse(content={"data": jsonable_encoder(book)})
