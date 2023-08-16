@@ -69,6 +69,7 @@ origins = [
     "http://localhost:5174",
     "http://localhost:5173",
     "http://localhost:5173/",
+    "http://localhost:5173/*",
     "http://localhost",
     "http://localhost:8080",
 ]
@@ -324,3 +325,15 @@ async def get_user_home_feed(credentials: HTTPAuthorizationCredentials = Depends
     """
     After a user submits to put_decorate_reader_create endpoint they are redirected to their home feed which is a profile page containing information gathered from the set up of their profile. It should return information about the User. Also, they need to have a cookie to access this endpoint so even if someone guesses the correct uuid unless they have a cookie they wont be able to access any sensitive information. In the case they dont have cookie we redirect to sign in / sign up page.
     """
+
+@app.get("/api/search/{param}")
+async def search_for_param(param: str, skip: int=0, limit: int=5):
+    """
+    Endpoint used for searching for users, todo add in credentials for searching
+    """
+    print(param)
+    driver = Neo4jDriver()
+    search_result = driver.search_for_param(param=param, skip=skip, limit=limit)
+    driver.close()
+
+    return JSONResponse(content={"data": jsonable_encoder(search_result)})

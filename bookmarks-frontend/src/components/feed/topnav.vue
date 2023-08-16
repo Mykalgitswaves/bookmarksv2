@@ -16,13 +16,13 @@
     />
     <div class="tab-group">
         <button
-            class="tab-btn text-xl font-semibold" 
+            class="tab-btn text-xl font-medium" 
             :class="isFeedTabActive === true ? 'active' : ''"
             @click="isFeedTabActive = !isFeedTabActive" 
         >Feed</button>
 
         <button 
-            class="tab-btn text-xl font-semibold"
+            class="tab-btn text-xl font-medium"
             :class="isBookshelfTabActive === true ? 'active' : ''"
             @click="isBookshelfTabActive = !isBookshelfTabActive" 
         >Bookshelf</button>

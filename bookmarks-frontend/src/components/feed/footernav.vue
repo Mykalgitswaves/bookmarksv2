@@ -1,7 +1,16 @@
 <template>
     <footer class="bg-white">
-        <div class="nav-button-group hover:bg-gray-200"
-            :class="isFeedActive ? 'border-solid border-2 border-indigo-300' : ''"
+        <searchBar/>
+        
+        <SearchResults 
+            v-show="isSearchBarActive"
+            @search-results="handleData"
+            :data="data"
+        />
+        
+        <div 
+            :class="'nav-button-group hover:bg-gray-200' + isFeedActive" 
+            v-show="!isSearchBarActive"
         >
             <button class="footer-nav-button" alt="feed">
                 <IconBook/>
@@ -10,8 +19,8 @@
         </div>
 
         <div 
-            class="nav-button-group hover:bg-gray-200"
-            :class="isSocialActive ? 'border-solid border-2 border-indigo-300' : ''"
+            :class="'nav-button-group hover:bg-gray-200' + isSocialActive"
+            v-show="!isSearchBarActive"
         >
             <button class="footer-nav-button" alt="feed">
                 <IconSocial/>
@@ -20,22 +29,13 @@
         </div>
 
         <div 
-            class="nav-button-group hover:bg-gray-200"
-            :class="isExploreActive ? 'border-solid border-2 border-indigo-300' : ''"
+            :class="'nav-button-group hover:bg-gray-200' + isExploreActive"
+            v-show="!isSearchBarActive"    
         >
             <button class="footer-nav-button" alt="feed">
                 <IconExplore/>
             </button>
             <p>Explore</p>
-        </div>
-        <div 
-            class="nav-button-group hover:bg-gray-200"
-            :class="isSearchActive ? 'border-solid border-2 border-indigo-300' : ''"
-        >
-            <button class="footer-nav-button" alt="feed">
-                <IconSearch/>
-            </button>
-            <p>Search</p>
         </div>
     </footer>
 </template>
@@ -45,39 +45,69 @@
 import IconBook from '@/components/svg/icon-book.vue'
 import IconSocial from '@/components/svg/icon-social.vue';
 import IconExplore from '@/components/svg/icon-explore.vue';
-import IconSearch from '@/components/svg/icon-search.vue'
+import searchBar from './navigation/searchBar.vue'
+import SearchResults from '@/components/feed/navigation/SearchResults.vue'
+
 import { useRoute }  from 'vue-router'
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
+
+
+const isSearchBarActive = ref(false);
 
 const route = useRoute()
 
+const activeBorderClasses = 'border-solid border-2 border-indigo-300'
+
 const isFeedActive = computed(() => {
-    return route.path.includes('feed') ? true : false
+    return route.path.includes('feed') ? activeBorderClasses : ''
 })
 
 const isSocialActive = computed(() => {
-    return route.path.includes('social') ? true : false
+    return route.path.includes('social') ? activeBorderClasses : ''
 })
 
 const isExploreActive = computed(() => {
-    return route.path.includes('explore') ? true : false
+    return route.path.includes('explore') ? activeBorderClasses : ''
 })
 
-const isSearchActive = computed(() => {
-    return route.path.includes('search') ? true : false
+window.addEventListener('toggleSearchBar', () => {
+    isSearchBarActive.value = !isSearchBarActive.value
+    console.log('fired event ', isSearchBarActive.value)
 })
+
+const data = ref([]);
+
+function handleData(event) {
+    console.log(event, 'testing')
+    data.value = event;
+}
+
 </script>
 
 <style scoped>
+.hidden {
+    display: none !important;
+}
+
 footer {
     position: fixed;   
     bottom: 0;
     left: 0;
     width: 100%;
+    min-width: 10ch;
     display: flex;
     justify-content: space-around;
     padding: 1rem;
     background: rgba(243, 244, 246, 98%);
+}
+
+.searchbar {
+    display: flex;
+    flex-direction: column;
+    flex-basis: 1;
+    justify-content: space-around;
+    color: #5A67D8;
+    font-weight: 500;
 }
 
 .nav-button-group {
@@ -117,6 +147,14 @@ footer {
         border-radius: .5rem;
         padding-block: .5rem;
     }
+
+    /* #Todo: Make the search bar responsive so it looks better on mobile and desktop */
+    .searchbar {
+        display: flex;
+        flex-direction: column;
+        flex-basis: 1;
+        justify-content: space-around;
+    }
 }
 .footer-nav-button {
     border-radius: 50%;
@@ -134,6 +172,4 @@ footer {
     color: #343fa9;
     transform: scale(1.02);
 }
-
-
 </style>

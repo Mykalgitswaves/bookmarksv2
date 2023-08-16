@@ -27,7 +27,8 @@
         review: {
             user_id: Number,
             name: String,
-            review_text: String
+            review_text: String,
+            
         }
     })
     const { review } = toRefs(props)
