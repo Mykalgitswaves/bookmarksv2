@@ -1056,13 +1056,13 @@ class Neo4jDriver():
         Find similar books in the database using book id
         """
         with self.driver.session() as session:
-            result = session.execute_read(self.pull_all_reviews_by_user_query, book_id)
+            result = session.execute_read(self.pull_similar_books_query, book_id)
         return(result)
     @staticmethod
     def pull_similar_books_query(tx, book_id):
         query = "match (b:Book {id:$book_id})-[rr:SIMILAR_TO]->(bb:Book) return bb.id,bb.title,bb.img_url"
         result = tx.run(query,book_id=book_id)
-        result = [{"id":response["bb.id"],"title":response["bb.title"],"img_url":response["img_url"]} for response in result]
+        result = [{"id":response["bb.id"],"title":response["bb.title"],"img_url":response["bb.img_url"]} for response in result]
         return(result)
 
     def close(self):

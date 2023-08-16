@@ -1,8 +1,10 @@
 <template>
-   CashMoneyLoaded {{ data }}    
+   CashMoneyLoaded {{ data }}
+   <SimilarBooks/>
 </template>
 
 <script setup>
+import SimilarBooks from '@/components/feed/SimilarBooks.vue';
 import {ref } from 'vue';
 import { useRoute } from 'vue-router'
 
@@ -21,6 +23,4 @@ async function getWorkPage(){
 }
 
 getWorkPage()
-
-
 </script>

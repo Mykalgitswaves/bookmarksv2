@@ -348,3 +348,14 @@ async def get_book_page(book_id: int):
     driver.close()
 
     return JSONResponse(content={"data": jsonable_encoder(book)})
+
+@app.get("/api/books/{book_id}/similar")
+async def get_book_page(book_id: int):
+    """
+    Endpoint for similar book=
+    """
+    driver = Neo4jDriver()
+    books = driver.pull_similar_books(book_id=book_id)
+    driver.close()
+
+    return JSONResponse(content={"data": jsonable_encoder(books)})
