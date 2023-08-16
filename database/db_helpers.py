@@ -1,6 +1,9 @@
 from neo4j import GraphDatabase
 import uuid
 import json
+import sys
+sys.path.append('./')
+from helpers import timing_decorator 
 
 class User():
     def __init__(self, user_id: int, 
@@ -499,7 +502,9 @@ class Neo4jDriver():
     @staticmethod
     def pull_book_node_query(tx,book_id):
         query = """
-                match (b:Book {id:$book_id}) return b.gr_id, 
+                match (b:Book {id:$book_id}) 
+                match (b)-[r]-(g)
+                return b.gr_id, 
                 b.img_url, 
                 b.isbn24, 
                 b.lang, 
@@ -507,7 +512,9 @@ class Neo4jDriver():
                 b.pages, 
                 b.small_img_url, 
                 b.description, 
-                b.title
+                b.title,
+                TYPE(r),
+                g.id
                 """
         result = tx.run(query, book_id=book_id)
         response = result.single()
@@ -521,25 +528,17 @@ class Neo4jDriver():
                     title=response["b.title"],
                     description=response["b.description"],
                     isbn24 = response["b.isbn24"])
-        query = """
-                match (b:Book {id:$book_id}) match (b)-[r]->(g) return TYPE(r), g.id
-                """
-        result = tx.run(query, book_id=book_id)
         for response in result:
             if response['TYPE(r)'] == 'HAS_TAG':
                 book.tags.append(response["g.id"])
             elif response['TYPE(r)'] == 'HAS_GENRE':
                 book.genres.append(response["g.id"])
-        query = """
-                match (b:Book {id:$book_id}) match (g)-[r]->(b) return TYPE(r), g.id
-                """
-        result = tx.run(query, book_id=book_id)
-        for response in result:
-            if response['TYPE(r)'] == 'IS_REVIEW_OF':
+            elif response['TYPE(r)'] == 'IS_REVIEW_OF':
                 book.reviews.append(response["g.id"])
             elif response['TYPE(r)'] == 'WROTE':
                 book.authors.append(response["g.id"])
         return(book)
+    
     def create_book(self, title, img_url, pages, publication_year, lang, description='', genres=[], authors=[], isbn24=''):
         """
         Creates a book node in the database
@@ -1073,6 +1072,6 @@ class Neo4jDriver():
 
 if __name__ == "__main__":
     driver = Neo4jDriver()
-    user = driver.add_reviewed_book_setup(user_id="13b3a431-498f-4145-a144-e8b24b7d2a39",book_id=1815, rating=2)
-    print(user)
+    book = driver.pull_book_node(book_id=1)
+    print(book)
     driver.close()
