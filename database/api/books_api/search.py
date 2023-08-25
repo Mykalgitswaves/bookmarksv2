@@ -20,17 +20,17 @@ class BookSearch():
         response = r.json()
         for result in response['items']:
             isbn_13 = next((item for item in result['volumeInfo']['industryIdentifiers'] if item["type"] == "ISBN_13"), None)
-            book = driver.find_book_by_isnb13(int(isbn_13))
+            book = driver.find_book_by_isnb13(int(isbn_13['identifier']))
             if not book:
                 book = Book(result['id'], 
                             small_img_url=result['volumeInfo']['imageLinks']['smallThumbnail'],
                             title=result['volumeInfo']['title'],
                             description=result['volumeInfo']['description'],
-                            isbn24=isbn_13,
+                            isbn24=isbn_13['identifier'],
                             author_names=result['volumeInfo']['authors']) 
             search_results.append(book)
         return(search_results)
 if __name__ == "__main__":
     search = BookSearch()
     response = search.search("Foundation Asimov")
-    print(response['items'][0]['volumeInfo']['industryIdentifiers'])
+    print(response)

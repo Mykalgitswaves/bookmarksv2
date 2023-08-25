@@ -1104,10 +1104,10 @@ class Neo4jDriver():
         return(result)
     @staticmethod
     def find_book_by_isnb13_query(tx,isbn13):
-        query = "match (b:Book {isbn24:$isnb13})-[WROTE]-(a:Author) return bb.id,bb.title,bb.small_img_url,bb.description,a.name"
+        query = "match (bb:Book {isbn24:$isnb13})-[WROTE]-(a:Author) return bb.id,bb.title,bb.small_img_url,bb.description,a.name"
         result = tx.run(query,isnb13=isbn13)
-        if result:
-            response = result.single()
+        response = result.single()
+        if response:
             book = Book(response['bb.id'],
                  small_img_url=response['bb.small_image_url'],
                  title=response['bb.title'],
