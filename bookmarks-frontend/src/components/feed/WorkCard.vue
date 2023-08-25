@@ -1,50 +1,50 @@
 <template>
     <div class="review-card">
-      <div class="review-card-top" v-if="!showBookMarkOptions[props.card]">
-        <img class="review-card-top-img" :src="props.placeholderBookImg" alt=""/> 
+      <div class="review-card-top">
+        <img class="review-card-top-img" :src="work.img_url" alt=""/> 
         <div class="review-card-top-text"> 
-          <p class="text-xl font-medium text-slate-800">Kitchen Confidential</p>
+          <button type="button" class="text-xl font-medium text-slate-800">{{ work.title }}</button>
           <p>Written by <span class="text-indigo-600 underline text-medium">Anthony Bourdain</span><br/> published 2004</p>
           <p class="text-slate-600">Genres: Non-fiction, Short stories & Anthologies</p>
         </div>
       </div> 
-      <div class="review-card-body" v-if="!showBookMarkOptions[props.card]">
+      <div class="review-card-body" >
         <p class="text-lg text-slate-800 font-medium">Summary</p>
         <p class="text-slate-700">Bourdain spares no one's appetite when he told all about what happens behind the kitchen door. Bourdain uses the same "take-no-prisoners" attitude in his deliciously funny and shockingly delectable book, sure to delight gourmand</p>
       </div> 
       <div class="review-card-bottom-toolbar pt-2">
-        <button :class="'font-medium text-lg' + showBookMarkOptions[props.card] ? 'text-indigo-400' : 'text-indigo-600'"
-          type="button" @click="showBookMarkOptions[props.card] = !showBookMarkOptions[props.card]"
+        <button class="'font-medium text-lg'"
+          type="button"
         >
           Bookmark
         </button>
-        <router-link :to="`/feed/${props.user}/review/${props.card}`">
+
           <button class="text-indigo-600 font-medium text-lg"
             type="button"
-          >
-            14 reviews
-          </button>
-        </router-link>
+            @click="router.replace(workPage)"
+          >14 reviews</button>
       </div>
     </div> 
 </template>
 
 <script setup>
-  import { defineProps } from 'vue' 
+  import { defineProps } from 'vue'
+  import { useRoute, useRouter } from 'vue-router'; 
+
   const props = defineProps({
-    placeholderBookImg: String,
-    card: Number,
-    user: {
-      type: Number,
-      required: false,
-    }
+    work: Object,
+    user: Number
   })
 
   const showBookMarkOptions = {}
+  const route = useRoute();
+  const router = useRouter()
+  const workPage = `/feed/${route.params.user}/works/${props.work.id}`;
+
   
 </script>
 
-<style scoped>
+<style>
 .review-card {
   padding: 15px 20px;
   background-color: #F7FAFC;

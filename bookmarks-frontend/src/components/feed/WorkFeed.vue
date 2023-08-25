@@ -1,22 +1,54 @@
 <template>
-    <h2 class="pt-4 text-2xl font-medium text-slate-600">Recommended Works</h2>
-    <KeepAlive>
-      <WorkCard 
-        v-for="(c, index) in cards" 
-        :key="index" 
-        :placeholderBookImg="placeholderBookImg"
-        :card="c"
-        :user="user"
-      />
-    </KeepAlive>
+  <div>
+      <h2 class="pt-4 text-2xl font-medium text-slate-600 mb-5">Recommended Works</h2>
+      <div class="card-grids">
+      <WorkCard v-for="(work, index) in books" :key="index" :work="work" :user="user"/>
+      </div>
+  </div>
 </template>
 <script setup>
-      import placeholderBookImg from '@/assets/infiniteJest.png'
-      import WorkCard from '@/components/feed/WorkCard.vue';
-      import { useRoute } from "vue-router"
+      import { ref, toRaw, computed, defineAsyncComponent, onBeforeMount } from 'vue';
+      import { useRoute } from "vue-router";
+      import { db } from '@/services/db.js';
+      import { urls } from '@/services/urls.js';
+      import LoadingWorkCard from '../loading/WorkCard.vue';
+      import ErrorWorkCard from '../error/WorkCard.vue';
+
       const route = useRoute();
     // let componentState = headerMapping[0]
-      let cards = [1, 2, 3, 4, 5]
-  
       const user = route.params.user
+      const loading = [{
+        title: 'Loading',
+        genres: ['good', 'comes', 'to', 'those', 'who', 'wait']
+      }]
+
+      const bookData = ref([]);
+
+      async function getWorks() {
+        bookData.value = await db.get(urls.booksByN, {'limit': 25}, true)
+      }
+
+      onBeforeMount(() => {
+        return getWorks()
+      })
+
+      const books = computed(() => bookData.value.length ? toRaw(bookData.value) : loading)
+      // const loaded = computed(() => bookData.value.length ? true : false)
+
+      const WorkCard = defineAsyncComponent({
+        loader: () => import('./WorkCard.vue'),
+        loadingComponent: LoadingWorkCard,
+        errorComponent: ErrorWorkCard,
+        delay: 200,
+        timeout: 3000
+      })
 </script>
+
+<style scoped>
+  .card-grids {
+    display: grid;
+    grid-template-columns: 1;
+    row-gap: 1.5rem;
+  }
+
+</style>
