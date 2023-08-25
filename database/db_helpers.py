@@ -764,7 +764,7 @@ class Neo4jDriver():
         result = tx.run(query)
         books = [Book(book_id=response['b.id'],title=response["b.title"]) for response in result]
         return(books)
-    def pull_n_books(self, skip=int, limit=int):
+    def pull_n_books(self, skip=int, limit=int, by_n=None):
         """
         Query returns entire books for a selected range(index's between skip and limit) in db in order to give faster responses
         
@@ -775,25 +775,56 @@ class Neo4jDriver():
             Dict: All book titles
         """
         with self.driver.session() as session:
-            books = session.execute_write(self.pull_n_books_query, skip, limit)
+            if by_n != None:
+                books = session.execute_write(self.pull_n_books_query, skip, limit, by_n)
+            else: 
+                books = session.execute_write(self.pull_n_books_query, skip, limit)
             return(books)
     @staticmethod
-    def pull_n_books_query(tx, skip, limit):
-        query = """
-                match (b:Book) return b.title, b.id, b.small_img_url, b.publication_year 
-                SKIP $skip
-                LIMIT $limit
-                """
-        result = tx.run(query, skip=skip, limit=limit)
-        books = [
-            Book(
-                book_id=response['b.id'],
-                title=response['b.title'],
-                small_img_url=response['b.small_img_url'],
-                publication_year=response['b.publication_year']
-            )
-            for response in result
-        ]
+    def pull_n_books_query(tx, skip, limit, by_n=None):
+        if by_n == None:
+            query = """
+                    match (b:Book) return b.title, b.id, b.small_img_url, b.publication_year 
+                    SKIP $skip
+                    LIMIT $limit
+                    """
+            result = tx.run(query, skip=skip, limit=limit)
+            books = [
+                Book(
+                    book_id=response['b.id'],
+                    title=response['b.title'],
+                    small_img_url=response['b.small_img_url'],
+                    publication_year=response['b.publication_year']
+                )
+                for response in result
+            ]
+            
+        if by_n == True: 
+            query = """
+                    match (b:Book) WHERE b.id  
+                    OPTIONAL MATCH (r:Review)-[h:IS_REVIEW_OF]->(b)
+                    match (a:Author)-[w:WROTE]->(b)
+                    RETURN r, b.title, b.id, b.description, b.img_url, b.publication_year, b.isbn24, a
+                    SKIP $skip
+                    LIMIT $limit
+                    """
+            result = tx.run(query, skip=skip, limit=limit, by_n=by_n)
+            # need to find a way to get count of reviews of books maybe like this: OPTIONAL MATCH (r:Review)-[h:IS_REVIEW_OF]->(b) return r 
+            books = [
+                Book(
+                    book_id=response['b.id'],
+                    title=response['b.title'],
+                    img_url=response['b.img_url'],
+                    publication_year=response['b.publication_year'],
+                    description=response['b.description'],
+                    isbn24=response['b.isbn24'],
+                    author_names=response['a'],
+                    reviews=response['r']
+                )
+                for response in result
+            ]
+
+
         return(books)
     def pull_search2_books(self, skip, limit, text):
         """

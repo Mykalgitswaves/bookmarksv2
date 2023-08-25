@@ -2,30 +2,17 @@
   <nav class="shadow-sm">
     <div class="navbar-p border-solid border-indigo-500 border-b-2">
       <Logo />
-      <div> 
+      <div class="flex reverse"> 
         <img class="profile-image border-solid 
-        border-indigo-600 border-2"
+        border-indigo-600 border-2 ml-5"
           :src="profilePicture"
           alt="profileImage"/>
+          
+        <div>
+            <p class="text-slate-800 font-semibold text-xl">{{ user.fullName }} Bookmarks</p>
+            <p><span v-for="(genre, index) in user.genres" :key="index">{{ genre + helpersCtrl.commanator(index, user.genres.length)}}</span></p>
+        </div>
       </div>
-    </div>
-
-    <Component 
-        :is="navigationMapping.component"
-        v-bind="navigationMapping.props"
-    />
-    <div class="tab-group">
-        <button
-            class="tab-btn text-xl font-medium" 
-            :class="isFeedTabActive === true ? 'active' : ''"
-            @click="isFeedTabActive = !isFeedTabActive" 
-        >Feed</button>
-
-        <button 
-            class="tab-btn text-xl font-medium"
-            :class="isBookshelfTabActive === true ? 'active' : ''"
-            @click="isBookshelfTabActive = !isBookshelfTabActive" 
-        >Bookshelf</button>
     </div>
   </nav>
 </template>
@@ -33,32 +20,22 @@
 <script setup>
     import { defineProps, toRefs, computed, ref } from 'vue'
     import { useNavigationStore } from '@/stores/navigation.js';
+    import { helpersCtrl } from '@/services/helpers.js' 
 
     import Logo from '@/components/svg/icon-logo.vue';
-    import feedSubNav from '@/components/feed/navigation/feedSubNav.vue'
 
     const store = useNavigationStore();
     const props = defineProps({
         profilePicture: String,
     })
 
-    let isFeedTabActive = ref(true);
-    let isBookshelfTabActive = ref(false);
-
-    const dynamicSubNav = {
-        0: {
-            component: feedSubNav,
-            props: {
-                profilePicture: props.profilePicture
-            }
-        } 
-    }
 
     const { profilePicture } = toRefs(props)
 
-    const navigationMapping = computed(() => {
-       return dynamicSubNav[store.navState]
-    })
+    const user = {
+        fullName: 'Aaron Wordnerd III\'s ',
+        genres: ['Fiction', 'Poetry', 'contemporary']
+    };
 </script>
 
 <style scoped>
@@ -92,6 +69,10 @@
 .active {
     border-bottom: solid .25rem #5A67D8;
     color: #5A67D8;
+}
+
+.reverse {
+    flex-direction: row-reverse;
 }
 
 </style>

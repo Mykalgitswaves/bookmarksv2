@@ -8,7 +8,7 @@
             <p class="font-medium text-slate-600">{{ review.name }}</p>
         </div>
         <div>
-            <p class="text-lg font-semibold text-slate-800">Kitchen Confidential</p>
+            <p class="text-lg font-semibold text-slate-800 cursor-pointer"><RouterLink :to="workPage">Kitchen Confidential</RouterLink></p>
         </div>
         <div class="review-card-body">
             <p>{{ review.review_text }}</p>
@@ -20,7 +20,8 @@
 </template>
 
 <script setup>
-    import { defineProps, toRefs, onMounted } from 'vue'
+    import { defineProps, toRefs, computed } from 'vue';
+    import { useRoute } from 'vue-router';
     import placeholderProfile from '@/assets/placeholder_user_1.jpg';
 
     const props = defineProps({
@@ -31,7 +32,12 @@
             
         }
     })
-    const { review } = toRefs(props)
+    const { review } = toRefs(props);
+
+    // change this to be a value passed in as a prop later on. 
+    const reviewID = 1;
+    const route = useRoute();
+    const workPage = computed(() => `/feed/${route.path.user}/works/${reviewID}`);
 </script>
 
 <style scoped>

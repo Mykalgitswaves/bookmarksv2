@@ -1,23 +1,24 @@
 <template>
-    <h1>Search Results</h1>  
-    
+    <div class="container">
+        <h1>Search Results</h1>  
+        <ul>
+            <li>
+                
+            </li>
+        </ul>
+    </div>
 </template>
 
 <script setup>
-import { onMounted } from "vue"
+import { onMounted, watch, toRaw } from "vue"
+import { useStore } from '@/stores/searchBar.js';
 
-
-const props = defineProps({
-    data: {
-        type: Array,
-        default: null
-    }
-})
-
-
+const searchResultStore = useStore()
+const rawData = searchResultStore.data
+const data = toRaw(rawData);
 
 onMounted(() => {
-    console.log(props.data)
+    console.log(data)
 })
 
 </script>

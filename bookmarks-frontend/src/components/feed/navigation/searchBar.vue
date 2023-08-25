@@ -53,6 +53,7 @@
                     .then(res => {
                         responseBlob.value = res.data;
                         searchResultStore.saveAndLoadSearchResults(res.data)
+                        console.log(searchResultStore.data)
                     });
             } catch(err) {
                     return console.error(err)

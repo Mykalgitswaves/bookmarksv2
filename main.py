@@ -180,6 +180,17 @@ async def get_books(skip: int = 0, limit: int = 3):
     driver.close()
     return result
 
+@app.get("/books/n/")
+async def get_books_by_n(request: Request, skip: int=0, limit=int, by_n=True):
+    """
+    Used to grab a certain amount of books
+    """
+    request_limit = int(request.query_params['limit'])
+    driver = Neo4jDriver()
+    result = driver.pull_n_books(skip, limit=request_limit, by_n=by_n)
+    driver.close()
+    return result
+
 @app.get("/books/{text}")
 async def get_books_by_title(text: str, skip: int=0, limit: int=3):
     """

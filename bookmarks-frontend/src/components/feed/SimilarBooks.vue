@@ -1,6 +1,5 @@
 <template>
-    the money
-    {{ data }}
+    <h1>Similar Books</h1>
 </template>
 <script setup>
     import { ref } from 'vue';
