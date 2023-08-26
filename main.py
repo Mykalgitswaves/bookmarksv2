@@ -370,3 +370,40 @@ async def get_book_page(book_id: int):
     driver.close()
 
     return JSONResponse(content={"data": jsonable_encoder(books)})
+
+@app.post("/api/login")
+async def login_user(request: Request):
+    """
+    Endpoint for logging in users. Covers incorrect usernames incorrect passwords. 
+    On success returns user_id which is used to route to home page.
+    """
+    req = await request.json()
+    email = req.get('email')
+    password = req.get('password')
+
+    no_user_error = HTTPException(
+            status_code=404,
+            detail="username does not match a valid user",
+            headers={"WWW-Authenticate": "Bearer"},
+    )
+
+    # Unlikely but i guess we need this?
+    if email and password is not None:
+        driver = Neo4jDriver()
+        user = driver.pull_user_by_username(email)
+
+        if user:
+            hashed_password = user.hashed_password
+
+            password_error = HTTPException(
+                status_code=401,
+                detail="incorrect password",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+
+            if verify_password(password, hashed_password) == True:
+                return JSONResponse(content={"data": jsonable_encoder(user.user_id)})
+            
+            return password_error
+
+        return no_user_error

@@ -776,9 +776,9 @@ class Neo4jDriver():
         """
         with self.driver.session() as session:
             if by_n != None:
-                books = session.execute_write(self.pull_n_books_query, skip, limit, by_n)
+                books = session.execute_read(self.pull_n_books_query, skip, limit, by_n)
             else: 
-                books = session.execute_write(self.pull_n_books_query, skip, limit)
+                books = session.execute_read(self.pull_n_books_query, skip, limit)
             return(books)
     @staticmethod
     def pull_n_books_query(tx, skip, limit, by_n=None):
@@ -801,10 +801,9 @@ class Neo4jDriver():
             
         if by_n == True: 
             query = """
-                    match (b:Book) WHERE b.id  
-                    OPTIONAL MATCH (r:Review)-[h:IS_REVIEW_OF]->(b)
-                    match (a:Author)-[w:WROTE]->(b)
-                    RETURN r, b.title, b.id, b.description, b.img_url, b.publication_year, b.isbn24, a
+                    match (b:Book) with b
+                    match (a:Author)-[WROTE]->(b)
+                    RETURN b.title, b.id, b.description, b.img_url, b.publication_year, b.isbn24, a
                     SKIP $skip
                     LIMIT $limit
                     """
@@ -819,12 +818,9 @@ class Neo4jDriver():
                     description=response['b.description'],
                     isbn24=response['b.isbn24'],
                     author_names=response['a'],
-                    reviews=response['r']
                 )
                 for response in result
             ]
-
-
         return(books)
     def pull_search2_books(self, skip, limit, text):
         """
