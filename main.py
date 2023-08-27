@@ -415,10 +415,11 @@ async def get_author_page(request: Request):
     Get an author from the db for their page. Load related books with this that the author wrote.
     """
     print(request)
-    req = int(request.query_params['book'])
+    author_id = int(request.query_params['book'])
 
 
     driver = Neo4jDriver()
-    response = driver.pull_author_node
-    import pdb
-    pdb.set_trace()
+    response = driver.pull_author_page_nodes(author_id=author_id)
+    driver.close()
+
+    return JSONResponse(content={"author": jsonable_encoder(response)})

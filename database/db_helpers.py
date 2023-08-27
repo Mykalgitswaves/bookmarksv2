@@ -683,16 +683,30 @@ class Neo4jDriver():
         query = """
                 match (a:Author {id: $author_id})
                 match (a)-[w:WROTE]->(b:Book)
-                return a, b
+                return a.id, a.name, b.id, b.description, b.title, b.publication_year, b.authors, b.img_url
                 """
         result = tx.run(query, author_id=author_id)
-        books = [
+        result_list = list(result)
+
+        authors_books = [
             Book(
-            
-            ) 
-        for response in result]
+                author_names=response["a.name"],
+                book_id=response["b.id"],
+                title=response["b.title"],
+                description=response["b.description"],
+                publication_year=response["b.publication_year"],
+                img_url=response["b.img_url"],
+            )
+        for response in result_list]
 
-
+        
+        author = Author(
+                author_id=result_list[0]["a.id"],
+                full_name=result_list[0]["a.name"],
+                books=authors_books,
+            )
+        
+        return(author)
     def create_author(self, full_name, books=[]):
         """
         Creates an author node in the DB
