@@ -1058,7 +1058,7 @@ class Neo4jDriver():
         query = """
                 OPTIONAL MATCH (u:User)
                 WHERE toLower(u.username) =~ $param
-                WITH u AS user, null AS author, null AS book, null AS book_genre, null AS book_author
+                WITH u.username AS user, null AS author, null AS book, null AS book_genre, null AS book_author
                 WHERE u IS NOT NULL
                 RETURN book_genre, user, author, book, book_author
                 LIMIT $limit
