@@ -17,7 +17,7 @@ class BookSearch():
         """  
         search_results = []
         driver = Neo4jDriver()
-        path = f"https://www.googleapis.com/books/v1/volumes?q={text}&key={self.api_key}"
+        path = f"https://www.googleapis.com/books/v1/volumes?q={text}&startIndex=0&printType=books&key={self.api_key}"
         r = requests.get(path)
         response = r.json()
         if response["totalItems"] > 0:
@@ -40,8 +40,9 @@ class BookSearch():
                         else:
                             small_img_url=None
                             thumbnail=None
-                        if "title" in result['volumeInfo']: 
+                        if "title" in result['volumeInfo']:
                             title=result['volumeInfo']['title']
+                            print(title)
                         else:
                             title=None
                         if 'description' in result['volumeInfo']: 
