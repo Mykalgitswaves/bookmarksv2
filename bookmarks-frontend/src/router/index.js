@@ -6,6 +6,7 @@ import LoggedInView from '@/views/LoggedInReader.vue'
 import WorkReviewPage from '@/components/feed/WorkReviewPage.vue'
 import WorkFeed from '@/components/feed/WorkFeed.vue'
 import WorkPage from '@/components/feed/WorkPage.vue'
+import AuthorPage from '@/components/feed/authors/AuthorPage.vue';
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -42,6 +43,10 @@ const router = createRouter({
         {
           path: 'works/:work',
           component: WorkPage
+        },
+        {
+          path: 'authors/:author',
+          component: AuthorPage
         }
       ]
     },

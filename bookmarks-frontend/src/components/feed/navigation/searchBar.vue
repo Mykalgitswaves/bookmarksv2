@@ -20,13 +20,11 @@
     </div>
 </template>
 <script setup>
-    import { ref, watch } from 'vue'
-    import { useStore } from '@/stores/searchBar.js'
+    import { ref } from 'vue';
+    import { searchResultStore } from '@/stores/searchBar.js';
     import IconSearch from '@/components/svg/icon-search.vue';
 
     let isSearchActive = ref(Boolean);
-
-
     function toggleSearchBar() {
         isSearchActive.value = !isSearchActive.value
         const toggleSearchBarEvent = new Event('toggleSearchBar', {
@@ -40,10 +38,7 @@
 
     const responseBlob = ref(null);
     const searchData = ref('');
-
-
-    const searchResultStore = useStore();
-    
+    const store = searchResultStore();
 
     async function searchRequest(searchData) {
         if (searchData.length > 1) {
@@ -52,30 +47,27 @@
                     .then((data) => data.json())
                     .then(res => {
                         responseBlob.value = res.data;
-                        searchResultStore.saveAndLoadSearchResults(res.data)
-                        console.log(searchResultStore.data)
+                        store.saveAndLoadSearchResults(res.data);
+                        console.log(store.data);
                     });
             } catch(err) {
-                    return console.error(err)
+                    return console.error(err);
             }
-        }
-    }
+    }}
 </script>
 
 <style scoped>
-
 .searchbar {
     display: flex;
-    flex-direction: column;
-    flex-basis: 1;
+    flex-direction: row;
     justify-content: space-around;
     color: #5A67D8;
     font-weight: 500;
 }
 
 .nav-button-group {
-    display: grid;
-    grid-template-columns: 1;
+    display: flex;
+    flex-direction: row;
     justify-items: center;
     align-items: center;
     gap: .25rem;
@@ -114,9 +106,7 @@
     /* #Todo: Make the search bar responsive so it looks better on mobile and desktop */
     .searchbar {
         display: flex;
-        flex-direction: column;
-        flex-basis: 1;
-        justify-content: space-around;
+        flex-direction: row;
     }
 }
 .footer-nav-button {
