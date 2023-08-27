@@ -24,12 +24,13 @@
 <script setup>
     import WorkCard from '@/components/feed/WorkCard.vue';
     import ReviewCard from '@/components/feed/ReviewCard.vue';
-    import { useRouter } from 'vue-router';
+    import { useRouter, useRoute } from 'vue-router';
     import { ref } from 'vue';
+    const route = useRoute();
+    const router = useRouter();
 
-    const router = useRouter()
     function navigateBack() {
-        return router.back()
+        return router.go(`/feed/${route.params.user}/reviews/all`)
     }
 
     const reviews = [
