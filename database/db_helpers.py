@@ -1084,7 +1084,7 @@ class Neo4jDriver():
                 if response['book_author'] != None:
                     res_obj['books_by_author'].append(response[4])
                 if response['user'] != None:
-                    res_obj['users'].append(response)
+                    res_obj['users'].append(response[1])
 
         return res_obj
 
