@@ -8,6 +8,7 @@ from database.db_helpers import (
     Tag,
     Neo4jDriver
 )
+from database.api.books_api.search import BookSearch
 from database.auth import verify_access_token
 
 from fastapi import FastAPI, HTTPException, Depends, status, Request
@@ -258,7 +259,6 @@ async def read_users_me(current_user: Annotated[User, Depends(get_current_active
 def verify_access_token_2(access_token: str):
         decoded_token = jwt.decode(access_token, CONFIG['SECRET_KEY'], algorithms=[CONFIG['ALGORITHM']], options={"verify_sub": False})
         return decoded_token
- 
 
 
 @app.put("/setup-reader/books")
@@ -344,7 +344,10 @@ async def search_for_param(param: str, skip: int=0, limit: int=5):
     """
     
     driver = Neo4jDriver()
+    book_search = BookSearch()
+    books_result = book_search.search(param)
     search_result = driver.search_for_param(param=param, skip=skip, limit=limit)
+    search_result['books'] = books_result
     driver.close()
    
     return JSONResponse(content={"data": jsonable_encoder(search_result)})

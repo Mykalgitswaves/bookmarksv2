@@ -154,7 +154,12 @@ class Review():
         else:
             print("New rating is same as old rating")
 class Book():
-    def __init__(self, book_id, gr_id=None, img_url="", small_img_url="", pages=None, publication_year=None, lang="", title="", description="", isbn24="" ,genres=[], authors=[], tags=[], reviews=[], genre_names=[], author_names=[]):
+    def __init__(self, book_id, gr_id=None, 
+                 img_url="", small_img_url="", pages=None, 
+                 publication_year=None, lang="", title="", 
+                 description="", isbn24="" ,genres=[], 
+                 authors=[], tags=[], reviews=[], 
+                 genre_names=[], author_names=[], in_database=True):
         self.id = book_id
         self.gr_id = gr_id
         self.img_url = img_url
@@ -170,7 +175,8 @@ class Book():
         self.author_names = author_names
         self.tags = tags
         self.reviews = reviews
-        self.isbn24 = isbn24
+        self.isbn24 = isbn24,
+        self.in_database = in_database
     def add_tag(self,tag_id):
         """
         Adds a tag to the book
@@ -1051,7 +1057,7 @@ class Neo4jDriver():
         param = "(?i)" + "".join([f".*{word.lower()}.*" for word in param.split(" ")])
         query = """
                 OPTIONAL MATCH (u:User)
-                WHERE toLower(u.name) =~ $param
+                WHERE toLower(u.username) =~ $param
                 WITH u AS user, null AS author, null AS book, null AS book_genre, null AS book_author
                 WHERE u IS NOT NULL
                 RETURN book_genre, user, author, book, book_author
@@ -1066,14 +1072,14 @@ class Neo4jDriver():
                 RETURN book_genre, user, author , book, book_author
                 LIMIT $limit
 
-                UNION
+                // UNION
 
-                OPTIONAL MATCH (b:Book)
-                WHERE toLower(b.title) =~ $param
-                WITH null AS user, null AS author, b AS book, null AS book_genre, null AS book_author
-                WHERE b IS NOT NULL
-                RETURN book_genre, user, author, book, book_author
-                LIMIT $limit
+                // OPTIONAL MATCH (b:Book)
+                // WHERE toLower(b.title) =~ $param
+                // WITH null AS user, null AS author, b AS book, null AS book_genre, null AS book_author
+                // WHERE b IS NOT NULL
+                // RETURN book_genre, user, author, book, book_author
+                // LIMIT $limit
 
                 UNION
 
