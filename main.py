@@ -391,6 +391,7 @@ async def login_user(request: Request):
     if email and password is not None:
         driver = Neo4jDriver()
         user = driver.pull_user_by_username(email)
+        driver.close()
 
         if user:
             hashed_password = user.hashed_password
@@ -407,3 +408,17 @@ async def login_user(request: Request):
             return password_error
 
         return no_user_error
+    
+@app.get("/api/author/")
+async def get_author_page(request: Request):
+    """
+    Get an author from the db for their page. Load related books with this that the author wrote.
+    """
+    print(request)
+    req = int(request.query_params['book'])
+
+
+    driver = Neo4jDriver()
+    response = driver.pull_author_node
+    import pdb
+    pdb.set_trace()

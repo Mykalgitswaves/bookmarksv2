@@ -668,6 +668,31 @@ class Neo4jDriver():
             author.books.append(response["b.id"])
         author.full_name = response["a.name"]
         return(author)
+    def pull_author_page_nodes(self, author_id):
+        """
+        Pulls all data about an author INCLUDING book info for cards, author info, and friends/influences
+        Args:
+            author_id
+        Returns: Author object, Books corresponding to author
+        """
+        with self.driver.session() as session:
+            author = session.execute_read(self.pull_author_page_nodes_query, author_id)
+        return(author) 
+    @staticmethod
+    def pull_author_page_nodes_query(tx, author_id):
+        query = """
+                match (a:Author {id: $author_id})
+                match (a)-[w:WROTE]->(b:Book)
+                return a, b
+                """
+        result = tx.run(query, author_id=author_id)
+        books = [
+            Book(
+            
+            ) 
+        for response in result]
+
+
     def create_author(self, full_name, books=[]):
         """
         Creates an author node in the DB
