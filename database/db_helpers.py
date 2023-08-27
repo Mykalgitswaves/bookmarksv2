@@ -1130,7 +1130,28 @@ class Neo4jDriver():
         result = tx.run(query,book_id=book_id)
         result = [{"id":response["bb.id"],"title":response["bb.title"],"img_url":response["bb.img_url"]} for response in result]
         return(result)
-
+    def find_book_by_isnb13(self,isbn13:int):
+        """
+        Finds a book by its isbn number
+        """
+        with self.driver.session() as session:
+            result = session.execute_read(self.find_book_by_isnb13_query, isbn13)
+        return(result)
+    @staticmethod
+    def find_book_by_isnb13_query(tx,isbn13):
+        query = "match (bb:Book {isbn24:$isnb13})-[WROTE]-(a:Author) return bb.id,bb.title,bb.small_img_url,bb.description,a.name"
+        result = tx.run(query,isnb13=isbn13)
+        response = result.single()
+        if response:
+            book = Book(response['bb.id'],
+                 small_img_url=response['bb.small_image_url'],
+                 title=response['bb.title'],
+                 description=response['bb.description']
+                 )
+            [book.author_names.append(response['a.name']) for response in result]
+            return(book)
+        else:
+            return(None)
     def close(self):
         self.driver.close()
 
