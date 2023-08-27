@@ -28,10 +28,18 @@ class BookSearch():
                         continue
                     book = driver.find_book_by_isnb13(int(isbn_13['identifier']))
                     if not book:
-                        if "smallThumbnail" in result['volumeInfo']['imageLinks']:
-                            small_img_url=result['volumeInfo']['imageLinks']['smallThumbnail']
+                        if 'imageLinks' in result['volumeInfo']:
+                            if "smallThumbnail" in result['volumeInfo']['imageLinks']:
+                                small_img_url=result['volumeInfo']['imageLinks']['smallThumbnail']
+                            else:
+                                small_img_url=None
+                            if "thumbnail" in result['volumeInfo']['imageLinks']:
+                                thumbnail=result['volumeInfo']['imageLinks']['thumbnail']
+                            else:
+                                thumbnail=None
                         else:
                             small_img_url=None
+                            thumbnail=None
                         if "title" in result['volumeInfo']: 
                             title=result['volumeInfo']['title']
                         else:
@@ -51,15 +59,11 @@ class BookSearch():
                         if 'publishedDate' in result["volumeInfo"]:
                             publishedDate = result["volumeInfo"]['publishedDate']
                         else:
-                            publishedDate = []
+                            publishedDate = None
                         if 'pageCount' in result["volumeInfo"]:
                             pageCount = result["volumeInfo"]['pageCount']
                         else:
-                            pageCount = []
-                        if "thumbnail" in result['volumeInfo']['imageLinks']:
-                            thumbnail=result['volumeInfo']['imageLinks']['thumbnail']
-                        else:
-                            thumbnail=None
+                            pageCount = None
                         
 
 
