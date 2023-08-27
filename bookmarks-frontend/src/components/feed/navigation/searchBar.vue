@@ -21,7 +21,7 @@
 </template>
 <script setup>
     import { ref } from 'vue';
-    import { searchResultStore } from '@/stores/searchBar.js';
+    import { searchResultStore } from '@/stores/searchBar.js'; 
     import IconSearch from '@/components/svg/icon-search.vue';
 
     let isSearchActive = ref(Boolean);
