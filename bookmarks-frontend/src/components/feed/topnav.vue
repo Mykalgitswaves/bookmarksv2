@@ -8,7 +8,7 @@
           :src="profilePicture"
           alt="profileImage"/>
           
-        <div>
+        <div class="navbar-text">
             <p class="text-slate-800 font-semibold text-xl">{{ user.fullName }} Bookmarks</p>
             <p><span v-for="(genre, index) in user.genres" :key="index">{{ genre + helpersCtrl.commanator(index, user.genres.length)}}</span></p>
         </div>
@@ -73,6 +73,12 @@
 
 .reverse {
     flex-direction: row-reverse;
+}
+
+@media only screen and (max-width: 768px)  {
+  .navbar-text {
+      display: none;
+  }
 }
 
 </style>
