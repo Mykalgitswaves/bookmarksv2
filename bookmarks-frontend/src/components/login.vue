@@ -4,24 +4,25 @@
 
   <form
     class="grid grid-cols-1 w-80 h-80 gap-2 place-content-center"
-    action="submitForm"
+    @submit.prevent="submitForm()"
     method="POST"
   >
+    <p class="text-center text-xl text-indigo-600 mb-5">Already have an account?</p>
     <label class="gray-700">Enter your email</label>
     <input
       class="py-2 px-4 rounded-md border-2 border-indigo-200"
-      :v-model="formBlob.name"
-      name="fullname"
-      type="text"
+      v-model="formBlob.email"
+      name="email"
+      type="email"
       placeholder="Email"
     />
 
     <label class="gray-700">Password</label>
     <input
       class="py-2 px-4 rounded-md border-2 border-indigo-200"
-      :v-model="formBlob.password"
+      v-model="formBlob.password"
       name="password"
-      type="text"
+      type="password"
       placeholder="Password"
     />
 
@@ -34,20 +35,20 @@
     <button
       class="mt-5 px-30 py-3 bg-indigo-600 rounded-md text-indigo-100"
       type="submit"
-      @click.prevent="submitForm"
     >
       Submit
     </button>
   </form>
 
   <span
-    class="text-xs text-center mt-2 px-5 py-2 rounded-md bg-red-600 text-red-100"
+    class="text-xs text-center mt-5 px-5 py-2 rounded-md bg-red-600 text-red-100"
     v-if="errorMessage"
   >
     Username or password invalid <br />please try a different login
   </span>
+  <div class="grid mt-10 text-center">
   <RouterLink to="/create-user">
-    <button type="button" class="my-2 text-center">
+    <button type="button" class="my-2">
         For readers
         <span class="text-md text-indigo-600 font-semibold underline underline-offset-2">
         create an account
@@ -56,52 +57,56 @@
   </RouterLink>
 
   <RouterLink to="/create-user-writer">
-    <button type="button" class="my-2 text-center">
+    <button type="button" class="my-2">
       
         For writers<span class="text-md text-indigo-500 font-semibold underline underline-offset-2">
         create an account</span>
     </button>
   </RouterLink>
+</div>
 </template>
 
-<script>
-export default {
-  data() {
-    return {
-      message: null,
-      token: null,
-      formBlob: {},
-      errorMessage: false
+<script setup>
+import {ref, toRaw } from 'vue';
+import { useRouter } from 'vue-router';
+
+const message = ref('');
+const formBlob = ref({
+  email: '',
+  password: ''
+});
+const errorMessage = ref(false);
+  
+const router = useRouter();
+
+async function submitForm() {
+  try {
+    const response = await fetch('http://127.0.0.1:8000/api/login', {
+      method: 'POST',
+      headers: {
+        Accept: 'application.json',
+        'Content-Type': 'application/json',
+      },
+      // convert this from proxy toRaw
+      body: JSON.stringify(toRaw(formBlob.value)),
+      cache: 'default'
+    })
+    const data = await response.json()
+    if(!data.statusCode) {
+      console.log(data)
+      errorMessage.value = false;
+      return router.push(`/feed/${data.data}/review/all`);
+    } else {
+      console.log(data)
+      message.value = data.detail;
+      errorMessage.value = true
+      
+      setTimeout(() => {
+        return (errorMessage.value = false)
+      }, 2000)
     }
-  },
-  methods: {
-    async submitForm() {
-      await fetch('http://http://127.0.0.1:8000/api/login', {
-        method: 'POST',
-        headers: {
-          Accept: 'application.json',
-          'Content-Type': 'application/json',
-          'X-CSRFToken': this.token
-        },
-        // convert this from proxy toRaw
-        body: JSON.stringify(this.formBlob),
-        cache: 'default'
-      })
-        .then((response) => {
-          // Handle the response
-          this.errorMessage = false
-          console.log(response)
-          return response
-        })
-        .catch((error) => {
-          console.log(error)
-          this.errorMessage = true
-          // hide error message after
-          setTimeout(() => {
-            return (this.errorMessage = false)
-          }, 2000)
-        })
-    }
+  } catch(error) {
+    console.error(error);
   }
 }
 </script>

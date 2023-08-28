@@ -1,5 +1,5 @@
 import { defineStore } from "pinia";
-import { ref } from "vue"
+import { ref, toRaw } from "vue"
 
 export const authTokenStore = defineStore('authToken', () => {
     const token = ref("")
@@ -11,6 +11,11 @@ export const authTokenStore = defineStore('authToken', () => {
         } else {
             return localStorage.getItem('authToken');
         }
+    }
+    function getAuthToken() {
+        this.token = localStorage.getItem('authToken')
+        console.log(toRaw(JSON.parse(this.token)))
+        return toRaw(JSON.parse(this.token));
     }
 
     return { token, saveAuthToken }

@@ -1,24 +1,118 @@
 <template>
-    <div class="container">
-        <h1>Search Results</h1>  
-        <ul>
-            <li>
+    <div class="container w-[100%] h-auto flex gap-5" v-if="store.data">
+        <div class="flex flex-col justify-between items-center w-100 ">
+            <div class="mb-2 flex flex-col">
+                <p class="text-indigo-500 mb-2">
+                    Authors {{ authors.length }}
+                </p>
                 
-            </li>
-        </ul>
+                <button
+                    v-for="(author, index) in authors"
+                    :key="index"
+                    class="searchbar-item"
+                    @click="toAuthorPage(author)"
+                >
+                    {{ author.name }}
+                </button>
+            </div>
+        </div>
+        
+        <div>
+            <p class="text-indigo-500 mb-2">
+                Books {{ books.length }}
+            </p>
+
+            <button 
+                v-for="(book, index) in books" 
+                :key="index"
+                class="searchbar-item"
+                @click="toBookPage(book)"
+            >
+                {{ book.title }}
+            </button>            
+        </div>
+
+        <div>
+            <p class="text-indigo-500 mb-2">
+                Books by genre {{ books_by_genre.length }}
+            </p>
+
+            <button 
+                v-for="(book, index) in books_by_genre" 
+                :key="index"
+                class="searchbar-item"
+                @click="toBookPage(book)"
+            >
+                {{ book.title }}
+            </button>            
+        </div>
+
+        <div>
+            <p class="text-indigo-500 mb-2">
+                users {{ users.length }}
+            </p>
+
+            <button 
+                v-for="(user, index) in users" 
+                :key="index"
+                class="searchbar-item"
+                @click="toUserPage(user)"
+            >
+                {{ user }}
+            </button>            
+        </div>
     </div>
 </template>
 
 <script setup>
-import { onMounted, watch, toRaw } from "vue"
-import { useStore } from '@/stores/searchBar.js';
+import { toRaw, computed, ref } from "vue"
+import { useRouter, useRoute } from 'vue-router';
+import { searchResultStore } from '@/stores/searchBar.js';
+import { helpersCtrl } from '@/services/helpers.js'
 
-const searchResultStore = useStore()
-const rawData = searchResultStore.data
-const data = toRaw(rawData);
+const store = searchResultStore()
+const data = ref(null)
+data.value = store.data
 
-onMounted(() => {
-    console.log(data)
-})
+const authors = computed(() => (store.data.authors ? store.data.authors : ['No authors for you']));
+const books = computed(() => (store.data.books ? store.data.books : ['No books for you']));
+const books_by_genre = computed(() => (store.data.books_by_genre ? store.data.books_by_genre : ['No books with that genre for you']));
+const books_by_author = computed(() => (store.data.books_by_author ? store.data.books_by_author : ['No books by that author for you']));
+const users = computed(() => (store.data.users ? store.data.users : ['No users for you']));
+
+// stuff for routing
+const router = useRouter();
+const route = useRoute();
+const user = route.params.user
+
+function toAuthorPage(author){
+    return router.push(`/feed/${user}/authors/${author.id}`);
+}
+
+function toBookPage(book){
+    return router.push(`/feed/${user}/works/${book.id}`)
+}
+
+function toUserPage(user){
+    return router.push(`/feed/${user}/users/${user}`);
+}
 
 </script>
+
+<style scoped>
+.searchbar-item {
+    text-align: start;
+    display: flex;
+    margin: .25rem 0;
+    padding: .25rem 1rem;
+    background-color: #fcf8ff;
+    border-radius: 4px;
+    width: 100%;
+    transition: background 100ms ease-in;
+    font-weight: 500;
+}
+.searchbar-item:hover {
+    background-color: #f4e7fd;
+    transition: background 100ms ease-in;
+}
+</style>

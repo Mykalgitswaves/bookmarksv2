@@ -674,6 +674,45 @@ class Neo4jDriver():
             author.books.append(response["b.id"])
         author.full_name = response["a.name"]
         return(author)
+    def pull_author_page_nodes(self, author_id):
+        """
+        Pulls all data about an author INCLUDING book info for cards, author info, and friends/influences
+        Args:
+            author_id
+        Returns: Author object, Books corresponding to author
+        """
+        with self.driver.session() as session:
+            author = session.execute_read(self.pull_author_page_nodes_query, author_id)
+        return(author) 
+    @staticmethod
+    def pull_author_page_nodes_query(tx, author_id):
+        query = """
+                match (a:Author {id: $author_id})
+                match (a)-[w:WROTE]->(b:Book)
+                return a.id, a.name, b.id, b.description, b.title, b.publication_year, b.authors, b.img_url
+                """
+        result = tx.run(query, author_id=author_id)
+        result_list = list(result)
+
+        authors_books = [
+            Book(
+                author_names=response["a.name"],
+                book_id=response["b.id"],
+                title=response["b.title"],
+                description=response["b.description"],
+                publication_year=response["b.publication_year"],
+                img_url=response["b.img_url"],
+            )
+        for response in result_list]
+
+        
+        author = Author(
+                author_id=result_list[0]["a.id"],
+                full_name=result_list[0]["a.name"],
+                books=authors_books,
+            )
+        
+        return(author)
     def create_author(self, full_name, books=[]):
         """
         Creates an author node in the DB
@@ -782,9 +821,9 @@ class Neo4jDriver():
         """
         with self.driver.session() as session:
             if by_n != None:
-                books = session.execute_write(self.pull_n_books_query, skip, limit, by_n)
+                books = session.execute_read(self.pull_n_books_query, skip, limit, by_n)
             else: 
-                books = session.execute_write(self.pull_n_books_query, skip, limit)
+                books = session.execute_read(self.pull_n_books_query, skip, limit)
             return(books)
     @staticmethod
     def pull_n_books_query(tx, skip, limit, by_n=None):
@@ -807,10 +846,9 @@ class Neo4jDriver():
             
         if by_n == True: 
             query = """
-                    match (b:Book) WHERE b.id  
-                    OPTIONAL MATCH (r:Review)-[h:IS_REVIEW_OF]->(b)
-                    match (a:Author)-[w:WROTE]->(b)
-                    RETURN r, b.title, b.id, b.description, b.img_url, b.publication_year, b.isbn24, a
+                    match (b:Book) with b
+                    match (a:Author)-[WROTE]->(b)
+                    RETURN b.title, b.id, b.description, b.img_url, b.publication_year, b.isbn24, a
                     SKIP $skip
                     LIMIT $limit
                     """
@@ -825,12 +863,9 @@ class Neo4jDriver():
                     description=response['b.description'],
                     isbn24=response['b.isbn24'],
                     author_names=response['a'],
-                    reviews=response['r']
                 )
                 for response in result
             ]
-
-
         return(books)
     def pull_search2_books(self, skip, limit, text):
         """
@@ -1023,7 +1058,7 @@ class Neo4jDriver():
         query = """
                 OPTIONAL MATCH (u:User)
                 WHERE toLower(u.username) =~ $param
-                WITH u AS user, null AS author, null AS book, null AS book_genre, null AS book_author
+                WITH u.username AS user, null AS author, null AS book, null AS book_genre, null AS book_author
                 WHERE u IS NOT NULL
                 RETURN book_genre, user, author, book, book_author
                 LIMIT $limit

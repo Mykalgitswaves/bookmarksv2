@@ -1,35 +1,50 @@
 <template>
-  <div>
+  <div class="relative">
       <h2 class="pt-4 text-2xl font-medium text-slate-600 mb-5">Recommended Works</h2>
       <div class="card-grids">
-      <WorkCard v-for="(work, index) in books" :key="index" :work="work" :user="user"/>
+        <WorkCard 
+          v-for="(work, index) in books" 
+          :key="index" 
+          :work="work"
+          :user="user"
+        />
       </div>
   </div>
 </template>
 <script setup>
-      import { ref, toRaw, computed, defineAsyncComponent, onBeforeMount } from 'vue';
+      import { ref, toRaw, computed, defineAsyncComponent, onBeforeMount, watch } from 'vue';
       import { useRoute } from "vue-router";
       import { db } from '@/services/db.js';
       import { urls } from '@/services/urls.js';
+      import { searchResultStore } from '@/stores/searchBar.js'
       import LoadingWorkCard from '../loading/WorkCard.vue';
       import ErrorWorkCard from '../error/WorkCard.vue';
 
       const route = useRoute();
     // let componentState = headerMapping[0]
-      const user = route.params.user
+      const user = route.params.user;
+
       const loading = [{
         title: 'Loading',
         genres: ['good', 'comes', 'to', 'those', 'who', 'wait']
-      }]
+      }];
 
       const bookData = ref([]);
 
       async function getWorks() {
-        bookData.value = await db.get(urls.booksByN, {'limit': 25}, true)
+        bookData.value = await db.get(urls.booksByN, {'limit': 25})
       }
 
       onBeforeMount(() => {
         return getWorks()
+      });
+
+      const store = searchResultStore();
+
+      watch(bookData.value, (oldValue, newValue) => {
+        if(oldValue, newValue) {
+          store.saveAndLoadSearchResults(newValue);
+        }
       })
 
       const books = computed(() => bookData.value.length ? toRaw(bookData.value) : loading)
@@ -50,5 +65,4 @@
     grid-template-columns: 1;
     row-gap: 1.5rem;
   }
-
 </style>

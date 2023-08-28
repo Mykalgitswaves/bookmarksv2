@@ -1,8 +1,8 @@
 <template>
     <section class="works-page-wrapper-margin">
     <TransitionGroup name="work-page">
-            <p class="text-xl font-semibold lh-fix"><button type="button" @click="backToFeed()" v-if="loaded">works page</button><span v-if="!loaded">Good things come to those who wait...</span></p>
-            <RouterLink :to="backURL">back</RouterLink>
+            <p class="text-xl font-semibold lh-fix"><button type="button" v-if="loaded">works page</button><span v-if="!loaded">Good things come to those who wait...</span></p>
+            <button type="button" @click="backToFeed">Back</button>
             <div :class="'works-wrapper shadow-lg mt-5 ' + activeWork">
                 <div class="">
                     <img :src="image" :alt="title + 'image'" v-if="loaded">
@@ -53,9 +53,10 @@ const route = useRoute();
 const book_id = route.params.work;
 const data = ref(null); 
 const isActiveWork = ref(false);
-const backURL = `/feed/1/review/all`;
 
-function backToFeed() {router.currentRoute.value.path.replace(backURL)};
+function backToFeed() {
+    return router.push(`/feed/${route.params.user}/review/all`)
+};
 
 async function getWorkPage() {
     
