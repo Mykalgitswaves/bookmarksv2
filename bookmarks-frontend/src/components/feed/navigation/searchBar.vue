@@ -13,40 +13,46 @@
     </div>
     <div class="filter-grid">
         <button
-            class="my-2 px-4 py-2 bg-indigo-900 text-indigo-100 rounded-lg"
+            :class="'my-2 px-4 py-2 bg-indigo-900 text-indigo-100 rounded-lg ' + hoverStyles"
             type="button"
-            name="authorsfilter"
+            name="resetFilters"
             @click="resetFilters"
         >
             All
         </button>
 
         <button 
-            class="my-2 px-4 py-2 bg-indigo-900 text-indigo-100 rounded-lg"
+            :class="'my-2 px-4 py-2 bg-indigo-900 text-indigo-100 rounded-lg ' + hoverStyles"
             type="button"
-            name="authorsfilter"
+            name="authorsFilter"
             @click="toggleAuthorFilter"
         >
             Authors
+        </button>
+
+        <button 
+            :class="'my-2 px-4 py-2 bg-indigo-900 text-indigo-100 rounded-lg ' + hoverStyles"
+            type="button"
+            name="booksFilters"
+            @click="toggleBooksFilter"
+        >
+            Books
+        </button>
+
+        <button 
+            :class="'my-2 px-4 py-2 bg-indigo-900 text-indigo-100 rounded-lg ' + hoverStyles"
+            type="button"
+            name="usersFilters"
+            @click="toggleUsersFilter"
+        >
+            Users
         </button>
     </div>
 </template>
 <script setup>
     import { ref } from 'vue';
     import { searchResultStore } from '@/stores/searchBar.js'; 
-
-
-    let isSearchActive = ref(Boolean);
-    function toggleSearchBar() {
-        isSearchActive.value = !isSearchActive.value
-        const toggleSearchBarEvent = new Event('toggleSearchBar', {
-            detail: isSearchActive.value,
-            bubbles: true, 
-            composed: true
-        });
-        
-        window.dispatchEvent(toggleSearchBarEvent);
-    }
+    const hoverStyles = 'hover:bg-indigo-100 hover:text-indigo-900'
 
     const responseBlob = ref(null);
     const searchData = ref('');
