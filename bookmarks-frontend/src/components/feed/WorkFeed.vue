@@ -1,19 +1,13 @@
 <template>
   <div class="relative">
-      <SearchResults/>
-
       <h2 class="pt-4 text-2xl font-medium text-slate-600 mb-5">Recommended Works</h2>
       <div class="card-grids">
-      
-
-
-      <WorkCard 
-        v-for="(work, index) in books" 
-        :key="index" 
-        :work="work"
-        :user="user"
-      />
-
+        <WorkCard 
+          v-for="(work, index) in books" 
+          :key="index" 
+          :work="work"
+          :user="user"
+        />
       </div>
   </div>
 </template>
@@ -25,7 +19,6 @@
       import { searchResultStore } from '@/stores/searchBar.js'
       import LoadingWorkCard from '../loading/WorkCard.vue';
       import ErrorWorkCard from '../error/WorkCard.vue';
-      import SearchResults from '@/components/feed/navigation/SearchResults.vue';
 
       const route = useRoute();
     // let componentState = headerMapping[0]

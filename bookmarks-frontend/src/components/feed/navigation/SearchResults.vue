@@ -1,5 +1,5 @@
 <template>
-    <div class="container w-[100%] h-auto" v-if="store.data">
+    <div class="container w-[100%] h-auto flex gap-5" v-if="store.data">
         <div class="flex flex-col justify-between items-center w-100 ">
             <div class="mb-2 flex flex-col">
                 <p class="text-indigo-500 mb-2">
@@ -18,20 +18,48 @@
         </div>
         
         <div>
-            <button
-                class="text-slate-500"
-                @click="ivFn(books, isViewBooks)"
-            >
-                <span :class="isInactiveClass(books)">
-                    Books {{ books.length }}
-                </span>
-            </button>
+            <p class="text-indigo-500 mb-2">
+                Books {{ books.length }}
+            </p>
 
-            <ul v-if="isViewBooks && books.length">
-                <li v-for="(book, index) in books" :key="index">
-                    {{ book.name }}
-                </li>
-            </ul>
+            <button 
+                v-for="(book, index) in books" 
+                :key="index"
+                class="searchbar-item"
+                @click="toBookPage(book)"
+            >
+                {{ book.title }}
+            </button>            
+        </div>
+
+        <div>
+            <p class="text-indigo-500 mb-2">
+                Books by genre {{ books_by_genre.length }}
+            </p>
+
+            <button 
+                v-for="(book, index) in books_by_genre" 
+                :key="index"
+                class="searchbar-item"
+                @click="toBookPage(book)"
+            >
+                {{ book.title }}
+            </button>            
+        </div>
+
+        <div>
+            <p class="text-indigo-500 mb-2">
+                users {{ users.length }}
+            </p>
+
+            <button 
+                v-for="(user, index) in users" 
+                :key="index"
+                class="searchbar-item"
+                @click="toUserPage(user)"
+            >
+                {{ user }}
+            </button>            
         </div>
     </div>
 </template>
@@ -57,12 +85,16 @@ const router = useRouter();
 const route = useRoute();
 const user = route.params.user
 
-function isInactiveClass(computedArray) {
-    return 'font-medium ' + (computedArray.length ? 'text-indigo-500' : 'text-slate-500');
-}
-
 function toAuthorPage(author){
     return router.push(`/feed/${user}/authors/${author.id}`);
+}
+
+function toBookPage(book){
+    return router.push(`/feed/${user}/works/${book.id}`)
+}
+
+function toUserPage(user){
+    return router.push(`/feed/${user}/users/${user}`);
 }
 
 </script>

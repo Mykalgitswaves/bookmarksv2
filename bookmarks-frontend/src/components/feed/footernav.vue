@@ -23,7 +23,7 @@
             </button>
             <p>Search</p>
         </div>
-        
+
         <div 
             class="nav-button-group hover:bg-gray-200" 
             @click="goToFeedPage()"
@@ -126,9 +126,6 @@ footer .nav-button-group {
     padding: 0;
 }
 
-.hidden-on-mobile { 
-    display: none !important;
-}
 
 footer.minimized .nav-button-group p { display: none;}
 
@@ -156,6 +153,19 @@ footer.minimized .nav-button-group p { display: none;}
 
 .nav-button-group p {
     display: none;
+}
+
+@media only screen and (max-width: 1000px) {
+    .nav-button-group p {
+        display: none;
+        visibility: hidden;
+    }
+
+
+    .hidden-on-mobile { 
+        display: none !important;
+        visibility: hidden;
+    }
 }
 
 @media only screen and (min-width: 768px) {
@@ -191,11 +201,6 @@ footer.minimized .nav-button-group p { display: none;}
         border-radius: .5rem;
     }
 
-    .nav-button-group p {
-        display: block;
-        visibility: visible;
-        padding: 0 1ch;
-    }
     /* #Todo: Make the search bar responsive so it looks better on mobile and desktop */
     .searchbar {
         display: flex;
@@ -204,6 +209,17 @@ footer.minimized .nav-button-group p { display: none;}
         justify-content: space-around;
     }
 }
+
+
+@media only screen and (min-width: 1130px) {
+    .nav-button-group p {
+            display: block;
+            visibility: visible;
+            padding: 0 1ch;
+    }    
+}
+
+
 .footer-nav-button {
     border-radius: 50%;
     padding: .5rem;

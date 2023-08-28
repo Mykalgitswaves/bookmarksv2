@@ -11,6 +11,25 @@
             />
             </label>
     </div>
+    <div class="filter-grid">
+        <button
+            class="my-2 px-4 py-2 bg-indigo-900 text-indigo-100 rounded-lg"
+            type="button"
+            name="authorsfilter"
+            @click="resetFilters"
+        >
+            All
+        </button>
+
+        <button 
+            class="my-2 px-4 py-2 bg-indigo-900 text-indigo-100 rounded-lg"
+            type="button"
+            name="authorsfilter"
+            @click="toggleAuthorFilter"
+        >
+            Authors
+        </button>
+    </div>
 </template>
 <script setup>
     import { ref } from 'vue';
@@ -56,11 +75,13 @@
     color: #5A67D8;
     font-weight: 400;
 }
-
-
-
 .searchbar input {
     width: 280px;
+}
+
+.filter-grid {
+    display: flex;
+    gap: 10px;
 }
 
 </style>
