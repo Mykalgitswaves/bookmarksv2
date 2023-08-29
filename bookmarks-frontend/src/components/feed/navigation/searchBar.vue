@@ -1,14 +1,14 @@
 <template>
     <div class="container searchbar ">
             <label for="searchbar"><span class="hidden">Search</span>
-            <input 
-                name="searchbar"
-                v-model="searchData"
-                @keydown="searchRequest(searchData)"
-                class="border-solid border-2
-                border-indigo-300 py-2 pl-2 rounded-md" 
-                type="text" placeholder=" What are you looking for?"
-            />
+                <input 
+                    name="searchbar"
+                    v-model="searchData"
+                    @keydown="searchRequest(searchData)"
+                    class="border-solid border-2
+                    border-indigo-300 py-2 pl-2 rounded-md" 
+                    type="text" placeholder=" What are you looking for?"
+                />
             </label>
     </div>
     <div class="filter-grid">
@@ -52,7 +52,7 @@
 <script setup>
     import { ref } from 'vue';
     import { searchResultStore } from '@/stores/searchBar.js'; 
-    const hoverStyles = 'hover:bg-indigo-100 hover:text-indigo-900'
+    const hoverStyles = 'hover:bg-indigo-100'
 
     const responseBlob = ref(null);
     const searchData = ref('');
@@ -89,5 +89,6 @@
     display: flex;
     gap: 10px;
 }
+.filter-grid button:hover { color: #26318b;} 
 
 </style>
