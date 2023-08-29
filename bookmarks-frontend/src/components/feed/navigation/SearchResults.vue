@@ -1,38 +1,66 @@
 <template>
-    <div class="container w-[100%] h-auto flex gap-5" v-if="store.data">
-        <div class="flex flex-col justify-between items-center w-100 ">
+    <div class="h-auto flex-col gap-5 ml-5" v-if="store.data">
+        <div>
             <div class="mb-2 flex flex-col">
-                <p class="text-indigo-500 mb-2">
-                    Authors {{ authors.length }}
+                <p class="text-slate-600 text-lg mb-2">
+                    <span class="text-indigo-500 text-2xl mr-2">{{ authors.length }}</span> Authors
                 </p>
-                
-                <button
-                    v-for="(author, index) in authors"
+                <div class="author-row">
+                    <button
+                        v-for="(author, index) in authors"
+                        :key="index"
+                        class="searchbar-item"
+                        @click="toAuthorPage(author)"
+                    >
+                        {{ author.name }}
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="my-5">
+            <p class="text-slate-600 text-lg mb-2">
+                <span class="text-indigo-500 text-2xl mr-2 ">{{ users.length }}</span> Users
+            </p>
+            <div class="author-row">
+                <button 
+                    v-for="(user, index) in users" 
                     :key="index"
                     class="searchbar-item"
-                    @click="toAuthorPage(author)"
+                    @click="toUserPage(user)"
                 >
-                    {{ author.name }}
-                </button>
+                    {{ user }}
+                </button>            
             </div>
         </div>
         
         <div>
-            <p class="text-indigo-500 mb-2">
-                Books {{ books.length }}
+            <p class="text-slate-600 text-lg mb-2">
+                <span class="text-indigo-500 text-2xl mr-2">{{ books.length }}</span>
+                Books
             </p>
 
-            <button 
-                v-for="(book, index) in books" 
-                :key="index"
-                class="searchbar-item"
-                @click="toBookPage(book)"
-            >
-                {{ book.title }}
-            </button>            
+            <div class="searchbar-row">
+                <button 
+                    v-for="(book, index) in books" 
+                    :key="index"
+                    class="searchbar-item"
+                    @click="toBookPage(book)"
+                >   
+                    <span>
+                        <div>
+                            <img
+                                class="px-2 py-2 rounded-md hover:bg-slate-400" 
+                                :src="book.img_url" 
+                                :alt="book.title + ' image'"/>
+                            <span class="ml-2 searchbar-title text-indigo-900">{{ book.title }}</span>
+                        </div>
+                    </span>
+                </button>            
+            </div>
         </div>
 
-        <div>
+        <div v-if="booksByGenreFilter">
             <p class="text-indigo-500 mb-2">
                 Books by genre {{ books_by_genre.length }}
             </p>
@@ -44,21 +72,6 @@
                 @click="toBookPage(book)"
             >
                 {{ book.title }}
-            </button>            
-        </div>
-
-        <div>
-            <p class="text-indigo-500 mb-2">
-                users {{ users.length }}
-            </p>
-
-            <button 
-                v-for="(user, index) in users" 
-                :key="index"
-                class="searchbar-item"
-                @click="toUserPage(user)"
-            >
-                {{ user }}
             </button>            
         </div>
     </div>
@@ -97,22 +110,47 @@ function toUserPage(user){
     return router.push(`/feed/${user}/users/${user}`);
 }
 
+// Figure out what to do with these fitlers.
+const booksByGenreFilter = false
+
 </script>
 
 <style scoped>
+
+.author-row {
+    display: flex;
+    gap: 1rem;
+    border-top: solid 2px #f4e7fd;
+    padding-top: 1ch;
+}
+
+.searchbar-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 1rem;
+    border-top: solid 2px #f4e7fd;
+    padding-top: 1ch;
+}
 .searchbar-item {
     text-align: start;
     display: flex;
+    flex-direction: column;
+    align-items: start;
     margin: .25rem 0;
     padding: .25rem 1rem;
     background-color: #fcf8ff;
     border-radius: 4px;
-    width: 100%;
     transition: background 100ms ease-in;
     font-weight: 500;
 }
 .searchbar-item:hover {
     background-color: #f4e7fd;
     transition: background 100ms ease-in;
+}
+
+.searchbar-title {
+    font-weight: 600;
+    width: 120%;
+    font-size: large;
 }
 </style>

@@ -1,7 +1,9 @@
 <template>
-  <div class="container search-page-wrapper bg-slate-50 rounded-lg shadow-md">
+  <div class="search-page-wrapper bg-slate-50 rounded-lg shadow-md">
       <SearchBar/> 
+
       <p class="pt-4 text-2xl font-medium text-slate-600 mb-5">Search Results</p>
+      
       <SearchResult/>
   </div>  
 </template>
@@ -14,11 +16,8 @@ import SearchBar from './searchBar.vue';
 
 <style scoped>
     .search-page-wrapper {
-        width: 100%;
         height: 100%;
-        min-width: 80vw;
-        min-height: 60vh;
-        padding: 2rem 1rem;
+        padding: 2rem 3rem;
     }
 
 </style>

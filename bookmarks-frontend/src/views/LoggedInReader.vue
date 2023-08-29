@@ -36,9 +36,6 @@
     min-height: 80vh;
     width: 100%;
     padding: 1.25rem;
-    display: grid;
-    grid-template-columns: 1;
-    grid-auto-rows: minmax(min-content, max-content);
     gap: 2ch;
     justify-content: center;
   }
