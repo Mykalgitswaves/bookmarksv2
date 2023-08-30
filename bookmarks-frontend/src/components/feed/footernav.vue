@@ -42,8 +42,14 @@
         <div 
             class="nav-button-group hover:bg-gray-200"
             v-show="!isSearchBarActive"
+            @click="goToSocialPage()"
         >
-            <button class="footer-nav-button" alt="feed">
+            <button 
+                class="footer-nav-button"
+                type="button"
+                @click="goToSocialPage()"
+                alt="feed"
+            >
                 <IconSocial/>
             </button>
             <p>Social</p>
@@ -82,8 +88,12 @@ function goToSearchPage() {
     router.push(`/feed/${route.params.user}/search/`);
 }
 
-function goToFeedPage(){
+function goToFeedPage() {
     router.push(`/feed/${route.params.user}/review/all`);
+}
+
+function goToSocialPage() {
+    router.push(`/feed/${route.params.user}/social/`)
 }
 
 const activeBorderClasses = 'border-solid border-2 border-indigo-300';
