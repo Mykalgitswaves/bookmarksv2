@@ -157,9 +157,9 @@ class Book():
     def __init__(self, book_id, gr_id=None, 
                  img_url="", small_img_url="", pages=None, 
                  publication_year=None, lang="", title="", 
-                 description="", isbn24="" ,genres=[], 
+                 description="", isbn24=None ,genres=[], 
                  authors=[], tags=[], reviews=[], 
-                 genre_names=[], author_names=[], in_database=True):
+                 genre_names=[], author_names=[], google_id="",in_database=True):
         self.id = book_id
         self.gr_id = gr_id
         self.img_url = img_url
@@ -176,7 +176,8 @@ class Book():
         self.tags = tags
         self.reviews = reviews
         self.isbn24 = isbn24,
-        self.in_database = in_database
+        self.in_database = in_database,
+        self.google_id = google_id
     def add_tag(self,tag_id):
         """
         Adds a tag to the book
@@ -190,8 +191,14 @@ class Book():
             driver = Neo4jDriver()
             driver.add_book_tag(self.id, tag_id)
             self.tags.append(tag_id)
+            driver.close()
         else:
             raise Exception("This relationship already exists")
+    def add_to_db(self):
+        driver = Neo4jDriver()
+        driver.create_book(self.title,self.img_url,self.pages,self.publication_year,self.lang,self.description,self.genres,
+                           self.authors,self.isbn24,self.small_img_url,self.author_names,self.genre_names,self.google_id)
+        driver.close()
         
 class Author():
     def __init__(self, author_id, full_name, books=[]):
@@ -390,7 +397,6 @@ class Neo4jDriver():
         """
         with self.driver.session() as session:
             result = session.execute_write(self.get_unique_pk_query, node)
-        print(result)
         return(result)
     @staticmethod
     def get_unique_pk_query(tx, node):
@@ -545,7 +551,9 @@ class Neo4jDriver():
                 book.authors.append(response["g.id"])
         return(book)
     
-    def create_book(self, title, img_url, pages, publication_year, lang, description='', genres=[], authors=[], isbn24=''):
+    def create_book(self, title, img_url, pages, publication_year, lang, 
+                    description='', genres=[], authors=[], isbn24='', 
+                    small_img_url='', author_names=[],genre_names=[],google_id=""):
         """
         Creates a book node in the database
 
@@ -563,11 +571,36 @@ class Neo4jDriver():
             Book: book object with all related metadata
         """
         book_id = self.get_unique_pk("Book")
+
+        if not genres:
+            for genre_name in genre_names:
+                result = self.find_genre_by_name(genre_name)
+                if result:
+                    genres.append(result)
+                else:
+                    result = self.create_genre(genre_name)
+                    genres.append(result)
+        
+        if not authors:
+            for author_name in author_names:
+                result = self.find_author_by_name(author_name)
+                if result:
+                    authors.append(result)
+                else:
+                    result = self.create_author(author_name)
+                    authors.append(result.id)
+
         with self.driver.session() as session:
-            book = session.execute_write(self.create_book_query, book_id, title, img_url, pages, publication_year, lang, description, genres, authors, isbn24)
+            book = session.execute_write(self.create_book_query, book_id, 
+                                         title, img_url, pages, publication_year, 
+                                         lang, description, genres, authors, 
+                                         isbn24, small_img_url, author_names,google_id)
         return(book)
     @staticmethod
-    def create_book_query(tx, book_id, title, img_url, pages, publication_year, lang, description, genres, authors, isbn24):
+    def create_book_query(tx,book_id, title, img_url, 
+                          pages, publication_year, lang, 
+                          description, genres, authors, isbn24, 
+                          small_img_url, author_names,google_id):
         query = """
                 create (b:Book {id:$book_id, 
                 title:$title, 
@@ -576,7 +609,10 @@ class Neo4jDriver():
                 publication_year:$pages, 
                 lang:$lang, 
                 description:$description, 
-                isbn24:$isbn24})
+                isbn24:$isbn24,
+                small_img_url:$small_img_url,
+                author_names:$author_names,
+                google_id:$google_id})
                 """
         result = tx.run(query,
                         book_id=book_id, 
@@ -586,7 +622,10 @@ class Neo4jDriver():
                         publication_year=publication_year, 
                         lang=lang, 
                         description=description, 
-                        isbn24=isbn24)
+                        isbn24=isbn24[0],
+                        small_img_url=small_img_url,
+                        author_names=author_names,
+                        google_id=google_id)
         query = """
                 match (a:Author {id:$author_id})
                 match (b:Book {id:$book_id})
@@ -599,9 +638,10 @@ class Neo4jDriver():
                 match (b:Book {id:$book_id})
                 merge (b)-[h:HAS_GENRE]->(g)
                 """
+
         for genre in genres:
             result = tx.run(query, genre_id=genre, book_id=book_id)
-
+                
         book = Book(book_id=book_id, 
                     title=title, 
                     img_url=img_url, 
@@ -1145,8 +1185,8 @@ class Neo4jDriver():
         return(result)
     @staticmethod
     def find_book_by_isnb13_query(tx,isbn13):
-        query = "match (bb:Book {isbn24:$isnb13})-[WROTE]-(a:Author) return bb.id,bb.title,bb.small_img_url,bb.description,a.name"
-        result = tx.run(query,isnb13=isbn13)
+        query = "match (bb:Book {isbn24:$isbn13})-[WROTE]-(a:Author) return bb.id,bb.title,bb.small_img_url,bb.description,a.name"
+        result = tx.run(query,isbn13=isbn13)
         response = result.single()
         if response:
             book = Book(response['bb.id'],
@@ -1158,6 +1198,55 @@ class Neo4jDriver():
             return(book)
         else:
             return(None)
+    def find_genre_by_name(self,name):
+        """
+        Checks if a genre exists in the DB by name
+        """
+        with self.driver.session() as session:
+            result = session.execute_read(self.find_genre_by_name_query, name)
+        return(result)
+    @staticmethod
+    def find_genre_by_name_query(tx,name):
+        query = "match (g:Genre {name:$name}) return g.id"
+        result = tx.run(query,name=name)
+        response = result.single()
+        if response:
+            return(response['g.id'])
+        else:
+            return(None)
+        
+    def create_genre(self,name):
+        """
+        Checks if a genre exists in the DB by name
+        """
+        genre_id = self.get_unique_pk("Genre")
+        with self.driver.session() as session:
+            result = session.execute_write(self.create_genre_query, genre_id, name)
+        return(result)
+    @staticmethod
+    def create_genre_query(tx,genre_id, name):
+        query = "create (g:Genre {id:$genre_id, name:$name}) return g.id"
+        result = tx.run(query,genre_id=genre_id,name=name)
+        response = result.single()
+        return(response['g.id'])
+    
+    def find_author_by_name(self,name):
+        """
+        Checks if an author exists in the DB by name
+        """
+        with self.driver.session() as session:
+            result = session.execute_read(self.find_author_by_name_query, name)
+        return(result)
+    @staticmethod
+    def find_author_by_name_query(tx,name):
+        query = "match (a:Author {name:$name}) return a.id"
+        result = tx.run(query,name=name)
+        response = result.single()
+        if response:
+            return(response['a.id'])
+        else:
+            return(None)
+        
     def close(self):
         self.driver.close()
 
