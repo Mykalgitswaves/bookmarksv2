@@ -11,8 +11,8 @@
     <label class="gray-700">Enter your email</label>
     <input
       class="py-2 px-4 rounded-md border-2 border-indigo-200"
-      v-model="formBlob.email"
-      name="email"
+      v-model="formBlob.username"
+      name="username"
       type="email"
       placeholder="Email"
     />
@@ -72,41 +72,45 @@ import { useRouter } from 'vue-router';
 
 const message = ref('');
 const formBlob = ref({
-  email: '',
+  username: '',
   password: ''
 });
 const errorMessage = ref(false);
-  
 const router = useRouter();
 
 async function submitForm() {
+  const formData = new URLSearchParams();
+
+  formData.append('username', toRaw(formBlob.value.username));
+  formData.append('password', toRaw(formBlob.value.password));
+  
   try {
-    const response = await fetch('http://127.0.0.1:8000/api/login', {
+    const response = await fetch('http://127.0.0.1:8000/api/token', {
       method: 'POST',
       headers: {
-        Accept: 'application.json',
-        'Content-Type': 'application/json',
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'Accept': 'application/json'
       },
       // convert this from proxy toRaw
-      body: JSON.stringify(toRaw(formBlob.value)),
-      cache: 'default'
+      body: formData,
     })
-    const data = await response.json()
-    if(!data.statusCode) {
+    const data = response.json()
+    if(response.ok){
       console.log(data)
-      errorMessage.value = false;
-      return router.push(`/feed/${data.data}/review/all`);
-    } else {
-      console.log(data)
-      message.value = data.detail;
-      errorMessage.value = true
-      
-      setTimeout(() => {
-        return (errorMessage.value = false)
-      }, 2000)
+      const token = data.access_token;
+      document.cookie = token;
+      return router.push(`/feed/${data.uuid}/review/all`);
+
     }
   } catch(error) {
-    console.error(error);
+      console.error(error)
+    //   message.value = error.detail;
+    //   errorMessage.value = true
+      
+    //   setTimeout(() => {
+    //     return (errorMessage.value = false)
+    //   }, 2000)
+    // console.error(error);
   }
 }
 </script>

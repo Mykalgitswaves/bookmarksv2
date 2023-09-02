@@ -153,7 +153,7 @@ async def get_current_active_user(
         raise HTTPException(status_code=400, detail="Inactive user")
     return current_user
 
-@app.post("/token", response_model=Token)
+@app.post("/api/token", response_model=Token)
 async def login_for_access_token(
     form_data: Annotated[OAuth2PasswordRequestForm, Depends()]
 ):
@@ -168,7 +168,8 @@ async def login_for_access_token(
     access_token = create_access_token(
         data={"sub": user.username}, expires_delta=access_token_expires
     )
-    return {"access_token": access_token, "token_type": "bearer"}
+    # NEed to retunr user.user_id for routing here @Kyle.
+    return {"access_token": access_token, "token_type": "bearer" }
 
 @app.post("/create-login", response_model=Token)
 async def post_create_login_user(form_data:Annotated[OAuth2PasswordRequestForm, Depends()]):
@@ -211,43 +212,43 @@ def verify_access_token_2(access_token: str):
         decoded_token = jwt.decode(access_token, CONFIG['SECRET_KEY'], algorithms=[CONFIG['ALGORITHM']], options={"verify_sub": False})
         return decoded_token
 
-@app.post("/api/login")
-async def login_user(request: Request):
-    """
-    Endpoint for logging in users. Covers incorrect usernames incorrect passwords. 
-    On success returns user_id which is used to route to home page.
-    """
-    req = await request.json()
-    email = req.get('email')
-    password = req.get('password')
+# @app.post("/api/login")
+# async def login_user(request: Request):
+#     """
+#     Endpoint for logging in users. Covers incorrect usernames incorrect passwords. 
+#     On success returns user_id which is used to route to home page.
+#     """
+#     req = await request.json()
+#     email = req.get('email')
+#     password = req.get('password')
 
-    no_user_error = HTTPException(
-            status_code=404,
-            detail="username does not match a valid user",
-            headers={"WWW-Authenticate": "Bearer"},
-    )
+#     no_user_error = HTTPException(
+#             status_code=404,
+#             detail="username does not match a valid user",
+#             headers={"WWW-Authenticate": "Bearer"},
+#     )
 
-    # Unlikely but i guess we need this?
-    if email and password is not None:
-        driver = Neo4jDriver()
-        user = driver.pull_user_by_username(email)
-        driver.close()
+#     # Unlikely but i guess we need this?
+#     if email and password is not None:
+#         driver = Neo4jDriver()
+#         user = driver.pull_user_by_username(email)
+#         driver.close()
 
-        if user:
-            hashed_password = user.hashed_password
+#         if user:
+#             hashed_password = user.hashed_password
 
-            password_error = HTTPException(
-                status_code=401,
-                detail="incorrect password",
-                headers={"WWW-Authenticate": "Bearer"},
-            )
+#             password_error = HTTPException(
+#                 status_code=401,
+#                 detail="incorrect password",
+#                 headers={"WWW-Authenticate": "Bearer"},
+#             )
 
-            if verify_password(password, hashed_password) == True:
-                return JSONResponse(content={"data": jsonable_encoder(user.user_id)})
+#             if verify_password(password, hashed_password) == True:
+#                 return JSONResponse(content={"data": jsonable_encoder(user.user_id)})
             
-            return password_error
+#             return password_error
 
-        return no_user_error
+#         return no_user_error
 
 @app.get("/users/me")
 async def read_users_me(current_user: Annotated[User, Depends(get_current_active_user)]):
