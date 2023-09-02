@@ -212,6 +212,31 @@ def verify_access_token_2(access_token: str):
         decoded_token = jwt.decode(access_token, CONFIG['SECRET_KEY'], algorithms=[CONFIG['ALGORITHM']], options={"verify_sub": False})
         return decoded_token
 
+@app.get("/api/auth_user")
+async def verify_user(request: Request, current_user: Annotated[User, Depends(get_current_active_user)]):
+    """
+    Verifies if the user has a current access token and if the access token is equivalent to the uuid
+    """
+    req = await request.json()
+    uuid = req['uuid']
+    if uuid and current_user:
+        if uuid == current_user.user_id:
+            return HTTPException(status_code=200, detail="User is validated") # User is validated
+        else:
+            validation_error = HTTPException(
+                status_code=401,
+                detail="uuid and access token dont match",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+            return validation_error
+    else:
+        validation_error = HTTPException(
+                status_code=401,
+                detail="Missing uuid or access token",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+        return validation_error
+
 # @app.post("/api/login")
 # async def login_user(request: Request):
 #     """
@@ -260,12 +285,51 @@ async def read_users_me(current_user: Annotated[User, Depends(get_current_active
 @app.put("/setup-reader/books")
 async def put_users_me_books(request: Request, current_user: Annotated[User, Depends(get_current_active_user)]):
     book_array = await request.json()
+    try:
+        for book in book_array:
+            current_user.add_reviewed_setup(book_id=int(book['id']), rating=int(book['review']))
 
-    driver = Neo4jDriver()
-    for book in book_array:
-        current_user.add_reviewed_setup(book_id=int(book['id']), rating=int(book['review']))
-    driver.close()
-    return {"user": current_user}
+    except:
+        network_error = HTTPException(
+                status_code=404,
+                detail="Network error occurred during setup, please try again later",
+                headers={"WWW-Authenticate": "Bearer"},
+                )
+        return network_error
+
+@app.put("/setup-reader/genres")
+async def put_users_me_genres(request: Request, current_user: Annotated[User, Depends(get_current_active_user)]):
+    genres = await request.json()
+
+    try:
+        for genre in genres:
+            current_user.add_favorite_genre(genre_id=int(genre['id']))
+
+    except:
+        network_error = HTTPException(
+                status_code=404,
+                detail="Network error occurred during setup, please try again later",
+                headers={"WWW-Authenticate": "Bearer"},
+                )
+        return network_error
+
+@app.put("/setup-reader/authors")
+async def put_users_me_authors(request: Request, current_user: Annotated[User, Depends(get_current_active_user)]):
+    authors = await request.json()
+
+    try:
+        for author in authors:
+            current_user.add_favorite_author(author_id=int(author['id']))
+    except:
+        network_error = HTTPException(
+                status_code=404,
+                detail="Network error occurred during setup, please try again later",
+                headers={"WWW-Authenticate": "Bearer"},
+                )
+        return network_error
+    
+    return JSONResponse(content={"uuid": jsonable_encoder(current_user.user_id)})
+
 
 @app.get("/books")
 async def get_books(skip: int = 0, limit: int = 3):
@@ -330,28 +394,6 @@ async def get_genres_by_title(text: str, skip: int=0, limit: int=3):
     driver.close()
     return result
 
-@app.put("/setup-reader/genres")
-async def put_users_me_genres(request: Request, credentials: HTTPAuthorizationCredentials = Depends(security)):
-    access_token = credentials.credentials
-
-    if not access_token:
-        raise HTTPException(status_code=401, detail="Missing session cookie")
-
-    # Verify the access token
-    if access_token.startswith('session_token='):
-        access_token = access_token[len('session_token='):]
-    decoded_token = verify_access_token_2(access_token)
-
-    user_id = decoded_token['sub']
-    
-    genres = await request.json()
-
-    driver = Neo4jDriver()
-    user =  driver.pull_user_node(user_id=user_id)
-    for genre in genres:
-        user.add_favorite_genre(genre_id=int(genre['id']))
-    driver.close()
-    return {"user": user}
 
 @app.get("/authors/{text}")
 async def get_authors_by_title(text: str, skip: int=0, limit: int=3):
@@ -363,29 +405,6 @@ async def get_authors_by_title(text: str, skip: int=0, limit: int=3):
     driver.close()
     return result
             
-@app.put("/setup-reader/authors")
-async def put_users_me_authors(request: Request, credentials: HTTPAuthorizationCredentials = Depends(security)):
-    access_token = credentials.credentials
-
-    if not access_token:
-        raise HTTPException(status_code=401, detail="Missing session cookie")
-
-    # Verify the access token
-    if access_token.startswith('session_token='):
-        access_token = access_token[len('session_token='):]
-    decoded_token = verify_access_token_2(access_token)
-
-    user_id = decoded_token['sub']
-    
-    authors = await request.json()
-
-    driver = Neo4jDriver()
-    user =  driver.pull_user_node(user_id=user_id)
-    for author in authors:
-        user.add_favorite_author(author_id=int(author['id']))
-    driver.close()
-    
-    return JSONResponse(content={"user_id": jsonable_encoder(user.user_id)})
     
 @app.get("/api/author/")
 async def get_author_page(request: Request):
