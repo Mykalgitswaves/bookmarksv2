@@ -53,6 +53,13 @@ Steps for starting uvicorn server:
 
     6) Install dependencies with pip inside conda. For more cash money chix.
 
+    
+Retrieving user data from access token
+
+The get_current_user function is responsible for validating a user given the access token. It works in conjunction with get_current_active_user
+to validate that the user is not disable (not like ADA or anything). 
+
+To retrieve this in an endpoint, pass current_user: Annotated[User, Depends(get_current_active_user)] as an argument
 """
 
 app = FastAPI()
@@ -161,67 +168,8 @@ async def login_for_access_token(
     access_token = create_access_token(
         data={"sub": user.username}, expires_delta=access_token_expires
     )
-    driver.close()
     return {"access_token": access_token, "token_type": "bearer"}
 
-@app.get("/users/me")
-async def read_users_me(current_user: Annotated[User, Depends(get_current_active_user)]):
-    driver = Neo4jDriver()
-    current_user = driver.pull_user_node(current_user.user_id)
-    driver.close()
-    return current_user
-
-@app.get("/books")
-async def get_books(skip: int = 0, limit: int = 3):
-    """
-    Used for initial fetch 
-    """
-    driver = Neo4jDriver()
-    result = driver.pull_n_books(skip, limit)
-    driver.close()
-    return result
-
-@app.get("/books/n/")
-async def get_books_by_n(request: Request, skip: int=0, limit=int, by_n=True):
-    """
-    Used to grab a certain amount of books
-    """
-    request_limit = int(request.query_params['limit'])
-    driver = Neo4jDriver()
-    result = driver.pull_n_books(skip, limit=request_limit, by_n=by_n)
-    driver.close()
-    return result
-
-@app.get("/books/{text}")
-async def get_books_by_title(text: str, skip: int=0, limit: int=3):
-    """
-    Search a damn book
-    """
-    driver = Neo4jDriver()
-    result = driver.pull_search2_books(text=text, skip=skip, limit=limit)
-    driver.close()
-    return result
-
-@app.get("/genres/{text}")
-async def get_genres_by_title(text: str, skip: int=0, limit: int=3):
-    """
-    Search for a genre by text
-    """
-    driver = Neo4jDriver()
-    result = driver.pull_search2_genre(text=text, skip=skip, limit=limit)
-    driver.close()
-    return result
-
-@app.get("/authors/{text}")
-async def get_authors_by_title(text: str, skip: int=0, limit: int=3):
-    """
-    Search for an author by text
-    """
-    driver = Neo4jDriver()
-    result = driver.pull_search2_author(text=text, skip=skip, limit=limit)
-    driver.close()
-    return result
-            
 @app.post("/create-login", response_model=Token)
 async def post_create_login_user(form_data:Annotated[OAuth2PasswordRequestForm, Depends()]):
         """
@@ -233,146 +181,35 @@ async def post_create_login_user(form_data:Annotated[OAuth2PasswordRequestForm, 
         print(username, password, form_data)
 
         if username and password:
-            driver = Neo4jDriver()
-            user = driver.create_user(username=username, password=password)
+            try:
+                driver = Neo4jDriver()
+                user = driver.create_user(username=username, password=password)
 
-            authenticate_user(form_data.username, password)
-            access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
-            access_token = create_access_token(
-                data={"sub": user.user_id}, expires_delta=access_token_expires
+                authenticate_user(form_data.username, password)
+                access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+                access_token = create_access_token(
+                    data={"sub": user.user_id}, expires_delta=access_token_expires
+                )
+                driver.close()
+                return {"access_token": access_token, "token_type": "bearer"} , RedirectResponse(url="/setup-reader/me", status_code=301)
+            except:
+                network_error = HTTPException(
+                status_code=404,
+                detail="Network error occurred during login, please try again later",
+                headers={"WWW-Authenticate": "Bearer"},
+                )
+                return network_error
+        else:
+            password_error = HTTPException(
+                status_code=401,
+                detail="Please enter a valid username and password",
+                headers={"WWW-Authenticate": "Bearer"},
             )
-            driver.close()
-            return {"access_token": access_token, "token_type": "bearer"} #, RedirectResponse(url="/setup-reader/me", status_code=301)
-
-@app.get("/setup-reader/me")
-async def read_users_me(current_user: Annotated[User, Depends(get_current_active_user)]):
-    """
-    Redirected endpoint for decorate reader views, provides with correct context/maybe we want to store uuid in the params of url instead
-    might be less secure.
-    """
-    driver = Neo4jDriver()
-    current_user = driver.pull_user_node(current_user.user_id)
-    driver.close()
-    return current_user
-
+            return password_error
 
 def verify_access_token_2(access_token: str):
         decoded_token = jwt.decode(access_token, CONFIG['SECRET_KEY'], algorithms=[CONFIG['ALGORITHM']], options={"verify_sub": False})
         return decoded_token
-
-
-@app.put("/setup-reader/books")
-async def put_users_me_books(request: Request, credentials: HTTPAuthorizationCredentials = Depends(security)):
-    access_token = credentials.credentials
-
-    if not access_token:
-        raise HTTPException(status_code=401, detail="Missing session cookie")
-
-    # Verify the access token
-    if access_token.startswith('session_token='):
-        access_token = access_token[len('session_token='):]
-    decoded_token = verify_access_token_2(access_token)
-
-    user_id = decoded_token['sub']
-    
-    book_array = await request.json()
-
-    driver = Neo4jDriver()
-    user =  driver.pull_user_node(user_id=user_id)
-    for book in book_array:
-        user.add_reviewed_setup(book_id=int(book['id']), rating=int(book['review']))
-    driver.close()
-    return {"user": user}
-
-@app.put("/setup-reader/genres")
-async def put_users_me_genres(request: Request, credentials: HTTPAuthorizationCredentials = Depends(security)):
-    access_token = credentials.credentials
-
-    if not access_token:
-        raise HTTPException(status_code=401, detail="Missing session cookie")
-
-    # Verify the access token
-    if access_token.startswith('session_token='):
-        access_token = access_token[len('session_token='):]
-    decoded_token = verify_access_token_2(access_token)
-
-    user_id = decoded_token['sub']
-    
-    genres = await request.json()
-
-    driver = Neo4jDriver()
-    user =  driver.pull_user_node(user_id=user_id)
-    for genre in genres:
-        user.add_favorite_genre(genre_id=int(genre['id']))
-    driver.close()
-    return {"user": user}
-
-@app.put("/setup-reader/authors")
-async def put_users_me_authors(request: Request, credentials: HTTPAuthorizationCredentials = Depends(security)):
-    access_token = credentials.credentials
-
-    if not access_token:
-        raise HTTPException(status_code=401, detail="Missing session cookie")
-
-    # Verify the access token
-    if access_token.startswith('session_token='):
-        access_token = access_token[len('session_token='):]
-    decoded_token = verify_access_token_2(access_token)
-
-    user_id = decoded_token['sub']
-    
-    authors = await request.json()
-
-    driver = Neo4jDriver()
-    user =  driver.pull_user_node(user_id=user_id)
-    for author in authors:
-        user.add_favorite_author(author_id=int(author['id']))
-    driver.close()
-    
-    return JSONResponse(content={"user_id": jsonable_encoder(user.user_id)})
-
-@app.get("/feed/{user_id}")
-async def get_user_home_feed(credentials: HTTPAuthorizationCredentials = Depends(security)):
-    """
-    After a user submits to put_decorate_reader_create endpoint they are redirected to their home feed which is a profile page containing information gathered from the set up of their profile. It should return information about the User. Also, they need to have a cookie to access this endpoint so even if someone guesses the correct uuid unless they have a cookie they wont be able to access any sensitive information. In the case they dont have cookie we redirect to sign in / sign up page.
-    """
-
-@app.get("/api/search/{param}")
-async def search_for_param(param: str, skip: int=0, limit: int=5):
-    """
-    Endpoint used for searching for users, todo add in credentials for searching
-    """
-    
-    driver = Neo4jDriver()
-    book_search = BookSearch()
-    books_result = book_search.search(param)
-    search_result = driver.search_for_param(param=param, skip=skip, limit=limit)
-    search_result['books'] = books_result
-    driver.close()
-   
-    return JSONResponse(content={"data": jsonable_encoder(search_result)})
-
-@app.get("/api/books/{book_id}")
-async def get_book_page(book_id: int):
-    """
-    Endpoint for book page
-    """
-    driver = Neo4jDriver()
-    book = driver.pull_book_node(book_id=book_id)
-    driver.close()
-
-    return JSONResponse(content={"data": jsonable_encoder(book)})
-
-@app.get("/api/books/{book_id}/similar")
-async def get_book_page(book_id: int):
-    """
-    Endpoint for similar book=
-    """
-    driver = Neo4jDriver()
-    books = driver.pull_similar_books(book_id=book_id)
-    driver.close()
-
-    return JSONResponse(content={"data": jsonable_encoder(books)})
 
 @app.post("/api/login")
 async def login_user(request: Request):
@@ -411,6 +248,143 @@ async def login_user(request: Request):
             return password_error
 
         return no_user_error
+
+@app.get("/users/me")
+async def read_users_me(current_user: Annotated[User, Depends(get_current_active_user)]):
+    """
+    Returns the current user data, requires the get_current_active_user to validate the user from a token 
+    """
+    return current_user
+
+@app.put("/setup-reader/books")
+async def put_users_me_books(request: Request, current_user: Annotated[User, Depends(get_current_active_user)]):
+    book_array = await request.json()
+
+    driver = Neo4jDriver()
+    for book in book_array:
+        current_user.add_reviewed_setup(book_id=int(book['id']), rating=int(book['review']))
+    driver.close()
+    return {"user": current_user}
+
+@app.get("/books")
+async def get_books(skip: int = 0, limit: int = 3):
+    """
+    Used for initial fetch 
+    """
+    driver = Neo4jDriver()
+    result = driver.pull_n_books(skip, limit)
+    driver.close()
+    return result
+
+@app.get("/books/n")
+async def get_books_by_n(request: Request, skip: int=0, limit:int=5, by_n=True):
+    """
+    Used to grab a certain amount of books
+    """
+    request_limit = int(request.query_params['limit'])
+    driver = Neo4jDriver()
+    result = driver.pull_n_books(skip, limit=request_limit, by_n=by_n)
+    driver.close()
+    return JSONResponse(content={"data": jsonable_encoder(result)}) 
+
+@app.get("/books/{text}")
+async def get_books_by_title(text: str, skip: int=0, limit: int=3):
+    """
+    Search a damn book
+    """
+    driver = Neo4jDriver()
+    result = driver.pull_search2_books(text=text, skip=skip, limit=limit)
+    driver.close()
+    return JSONResponse(content={"data": jsonable_encoder(result)}) 
+
+@app.get("/api/books/{book_id}")
+async def get_book_page(book_id: int):
+    """
+    Endpoint for book page
+    """
+    driver = Neo4jDriver()
+    book = driver.pull_book_node(book_id=book_id)
+    driver.close()
+
+    return JSONResponse(content={"data": jsonable_encoder(book)})
+
+@app.get("/api/books/{book_id}/similar")
+async def get_book_page(book_id: int):
+    """
+    Endpoint for similar book=
+    """
+    driver = Neo4jDriver()
+    books = driver.pull_similar_books(book_id=book_id)
+    driver.close()
+
+    return JSONResponse(content={"data": jsonable_encoder(books)})
+
+@app.get("/genres/{text}")
+async def get_genres_by_title(text: str, skip: int=0, limit: int=3):
+    """
+    Search for a genre by text
+    """
+    driver = Neo4jDriver()
+    result = driver.pull_search2_genre(text=text, skip=skip, limit=limit)
+    driver.close()
+    return result
+
+@app.put("/setup-reader/genres")
+async def put_users_me_genres(request: Request, credentials: HTTPAuthorizationCredentials = Depends(security)):
+    access_token = credentials.credentials
+
+    if not access_token:
+        raise HTTPException(status_code=401, detail="Missing session cookie")
+
+    # Verify the access token
+    if access_token.startswith('session_token='):
+        access_token = access_token[len('session_token='):]
+    decoded_token = verify_access_token_2(access_token)
+
+    user_id = decoded_token['sub']
+    
+    genres = await request.json()
+
+    driver = Neo4jDriver()
+    user =  driver.pull_user_node(user_id=user_id)
+    for genre in genres:
+        user.add_favorite_genre(genre_id=int(genre['id']))
+    driver.close()
+    return {"user": user}
+
+@app.get("/authors/{text}")
+async def get_authors_by_title(text: str, skip: int=0, limit: int=3):
+    """
+    Search for an author by text
+    """
+    driver = Neo4jDriver()
+    result = driver.pull_search2_author(text=text, skip=skip, limit=limit)
+    driver.close()
+    return result
+            
+@app.put("/setup-reader/authors")
+async def put_users_me_authors(request: Request, credentials: HTTPAuthorizationCredentials = Depends(security)):
+    access_token = credentials.credentials
+
+    if not access_token:
+        raise HTTPException(status_code=401, detail="Missing session cookie")
+
+    # Verify the access token
+    if access_token.startswith('session_token='):
+        access_token = access_token[len('session_token='):]
+    decoded_token = verify_access_token_2(access_token)
+
+    user_id = decoded_token['sub']
+    
+    authors = await request.json()
+
+    driver = Neo4jDriver()
+    user =  driver.pull_user_node(user_id=user_id)
+    for author in authors:
+        user.add_favorite_author(author_id=int(author['id']))
+    driver.close()
+    
+    return JSONResponse(content={"user_id": jsonable_encoder(user.user_id)})
     
 @app.get("/api/author/")
 async def get_author_page(request: Request):
@@ -426,3 +400,24 @@ async def get_author_page(request: Request):
     driver.close()
 
     return JSONResponse(content={"author": jsonable_encoder(response)})
+
+@app.get("/feed/{user_id}")
+async def get_user_home_feed(credentials: HTTPAuthorizationCredentials = Depends(security)):
+    """
+    After a user submits to put_decorate_reader_create endpoint they are redirected to their home feed which is a profile page containing information gathered from the set up of their profile. It should return information about the User. Also, they need to have a cookie to access this endpoint so even if someone guesses the correct uuid unless they have a cookie they wont be able to access any sensitive information. In the case they dont have cookie we redirect to sign in / sign up page.
+    """
+
+@app.get("/api/search/{param}")
+async def search_for_param(param: str, skip: int=0, limit: int=5):
+    """
+    Endpoint used for searching for users, todo add in credentials for searching
+    """
+    
+    driver = Neo4jDriver()
+    book_search = BookSearch()
+    books_result = book_search.search(param)
+    search_result = driver.search_for_param(param=param, skip=skip, limit=limit)
+    search_result['books'] = books_result
+    driver.close()
+   
+    return JSONResponse(content={"data": jsonable_encoder(search_result)})
