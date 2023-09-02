@@ -71,16 +71,16 @@ export default {
       try {
         const formData = toRaw(this.formBlob);
 
-        const response = await fetch('http://127.0.0.1:8000/create-login', {
+        const response = await fetch('http://127.0.0.1:8000/api/create-login', {
           method: 'POST',
           headers: {'Content-Type': 'application/x-www-form-urlencoded'},
           body:  new URLSearchParams({
+            full_name: formData['fullname'],
             username: formData['username'],
             password: formData['password']
             })
           })
           const data = await response.json();
-          const authStore = authTokenStore();
           
           // Check if the response is successful
           if (response.ok) {
@@ -89,7 +89,6 @@ export default {
 
             // Use the token as needed (e.g., store it in local storage, set it as a cookie, etc.)
             document.cookie = `session_token=${token}; path=/; SameSite=Strict`;
-            authStore.saveAuthToken(window.cookie)
             console.log(window.cookie);
             this.navigate()
           } else {

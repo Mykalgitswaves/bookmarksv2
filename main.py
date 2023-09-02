@@ -171,7 +171,7 @@ async def login_for_access_token(
     # NEed to retunr user.user_id for routing here @Kyle.
     return {"token":{"access_token": access_token, "token_type": "bearer"}, "user":{"uuid":user.user_id}}
 
-@app.post("/create-login", response_model=Token)
+@app.post("/api/create-login", response_model=Token)
 async def post_create_login_user(form_data:Annotated[OAuth2PasswordRequestForm, Depends()]):
         """
         create user and then login as user with authenticated session
