@@ -78,6 +78,7 @@ const formBlob = ref({
 const errorMessage = ref(false);
 const router = useRouter();
 
+// Convert this to a controller function to use elsewhere.
 async function submitForm() {
   const formData = new URLSearchParams();
 
@@ -85,7 +86,7 @@ async function submitForm() {
   formData.append('password', toRaw(formBlob.value.password));
   
   try {
-    const response = await fetch('http://127.0.0.1:8000/api/token', {
+    await fetch('http://127.0.0.1:8000/api/token', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
@@ -93,15 +94,14 @@ async function submitForm() {
       },
       // convert this from proxy toRaw
       body: formData,
-    })
-    const data = response.json()
-    if(response.ok){
+    }).then((res) => res.json())
+    .then((data) => {
       console.log(data)
+      const uuid = data.user.uuid
       const token = data.access_token;
       document.cookie = token;
-      return router.push(`/feed/${data.uuid}/review/all`);
-
-    }
+      return router.push(`/feed/${uuid}/review/all`);
+    })
   } catch(error) {
       console.error(error)
     //   message.value = error.detail;
