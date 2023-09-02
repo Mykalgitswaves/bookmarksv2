@@ -153,7 +153,7 @@ async def get_current_active_user(
         raise HTTPException(status_code=400, detail="Inactive user")
     return current_user
 
-@app.post("/api/token", response_model=Token)
+@app.post("/api/token")
 async def login_for_access_token(
     form_data: Annotated[OAuth2PasswordRequestForm, Depends()]
 ):
@@ -169,7 +169,7 @@ async def login_for_access_token(
         data={"sub": user.username}, expires_delta=access_token_expires
     )
     # NEed to retunr user.user_id for routing here @Kyle.
-    return {"access_token": access_token, "token_type": "bearer" }
+    return {"token":{"access_token": access_token, "token_type": "bearer"}, "user":{"uuid":user.user_id}}
 
 @app.post("/create-login", response_model=Token)
 async def post_create_login_user(form_data:Annotated[OAuth2PasswordRequestForm, Depends()]):
@@ -192,7 +192,7 @@ async def post_create_login_user(form_data:Annotated[OAuth2PasswordRequestForm, 
                     data={"sub": user.user_id}, expires_delta=access_token_expires
                 )
                 driver.close()
-                return {"access_token": access_token, "token_type": "bearer"} , RedirectResponse(url="/setup-reader/me", status_code=301)
+                return {"access_token": access_token, "token_type": "bearer"}
             except:
                 network_error = HTTPException(
                 status_code=404,
