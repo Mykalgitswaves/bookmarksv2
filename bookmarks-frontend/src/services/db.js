@@ -1,5 +1,6 @@
 import { toRaw } from 'vue'
-
+import { useRouter } from 'vue-router'
+import { helpersCtrl } from './helpers';
 /**
 // @param successRouterFunction: This is an optional param to control the routes after a successfull request,
  must be passed in as a regular function
@@ -7,10 +8,32 @@ import { toRaw } from 'vue'
 // 
  */
 
-
-
 export const db = {
-    // Note params must be an object for this to work. Use key value.
+
+    // THis assumes you already have accessToken saved onto cookies.
+    authenticate: async (url, uuid) => {
+        const router = useRouter();
+        const accessTokenFromCookies = helpersCtrl.getCookieByParam(['token'])
+        try {
+            const response = await fetch(url + '?' + new URLSearchParams({'uuid': uuid}), {
+                method: 'GET',
+                headers: {
+                    Authorization: `Bearer ${accessTokenFromCookies}`,
+                    'Content-Type': 'application/json',
+                }
+            })
+            const data = response.json()
+            if(response.ok) {
+                return data
+            } else {
+                router.push('/');
+            }
+        } catch(err) {
+            console.error(err)
+            router.push('/')
+        }
+    },
+        // Note params must be an object for this to work. Use key value.
     get: async (url, params, debug, successRouterFunction) => {
         params = typeof params === Proxy ? toRaw(params) : params
         try {

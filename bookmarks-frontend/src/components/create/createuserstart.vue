@@ -48,8 +48,7 @@
 
 <script>
 import { useStore } from '../../stores/page'
-import { authTokenStore } from '../../stores/isAuthenticated'
-import {toRaw} from 'vue';
+import { toRaw } from 'vue';
 
 export default {
   data() {
@@ -85,11 +84,11 @@ export default {
           // Check if the response is successful
           if (response.ok) {
             console.log(data)
-            const token = data.access_token;
+            document.cookie = JSON.stringify(data.access_token);
 
             // Use the token as needed (e.g., store it in local storage, set it as a cookie, etc.)
-            document.cookie = `session_token=${token}; path=/; SameSite=Strict`;
-            console.log(window.cookie);
+            // document.cookie = `session_token=${token}; path=/; SameSite=Strict`;
+            // console.log(document.cookie);
             this.navigate()
           } else {
             // Handle the case when the response is not successful
@@ -103,7 +102,6 @@ export default {
     },
     mounted() {
       this.state = useStore()
-      this.authStore = authTokenStore();
     }
 }
 </script>

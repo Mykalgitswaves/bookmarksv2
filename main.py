@@ -128,6 +128,7 @@ def create_access_token(data: dict, expires_delta: timedelta | None = None):
     return encoded_jwt
 
 async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]):
+    
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",
@@ -217,8 +218,7 @@ async def verify_user(request: Request, current_user: Annotated[User, Depends(ge
     """
     Verifies if the user has a current access token and if the access token is equivalent to the uuid
     """
-    req = await request.json()
-    uuid = req['uuid']
+    uuid = request.query_params['uuid']
     if uuid and current_user:
         if uuid == current_user.user_id:
             return HTTPException(status_code=200, detail="User is validated") # User is validated

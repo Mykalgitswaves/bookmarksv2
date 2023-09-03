@@ -96,9 +96,8 @@ async function submitForm() {
       body: formData,
     }).then((res) => res.json())
     .then((data) => {
-      console.log(data)
       const uuid = data.user.uuid
-      const token = data.access_token;
+      const token = `token=${data.token.access_token}`;
       document.cookie = token;
       return router.push(`/feed/${uuid}/review/all`);
     })

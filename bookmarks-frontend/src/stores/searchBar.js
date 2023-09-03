@@ -2,7 +2,6 @@ import { defineStore } from 'pinia';
 import {ref} from 'vue'
 
 export const searchResultStore = defineStore('searchResults' , () => {
-    
         const data = ref(null);
         function saveAndLoadSearchResults(newData) {
             // Check to see if there is data in storage or if ref is already not null

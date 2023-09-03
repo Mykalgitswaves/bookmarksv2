@@ -33,6 +33,7 @@ import { useBookStore } from '../../stores/books'
 import AuthorSearch from './authorSearch.vue'
 import { app_router } from '@/main.js'
 import { toRaw } from 'vue'
+import { helpersCtrl } from '../../services/helpers'
 
 export default {
   components: {
@@ -71,7 +72,7 @@ export default {
       state.addAuthor(author)
     },
     async updateAuthors() {
-      const token = document.cookie;
+      const token = helpersCtrl.getCookieByParam(['token'])
       const authorStore = useBookStore()
       const authors = toRaw(authorStore.authors)
       if(token && authors) {
