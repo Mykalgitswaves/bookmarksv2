@@ -23,36 +23,32 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref } from 'vue'
 import { urls } from '../../services/urls';
 import { useStore } from '../../stores/page';
 import { helpersCtrl } from '../../services/helpers';
 
-const store = ref(null)
 const fullname = ref('');
 
 async function submitNameAndNavigate() {
     const accessTokenFromCookies = helpersCtrl.getCookieByParam(['token'])
     console.log(accessTokenFromCookies)
     try {
-    const response = await fetch(urls.setup.name, {
-        method: 'PUT',
-        headers: {
-            Accept: 'application/json',
-            Authorization: `Bearer ${accessTokenFromCookies}`,
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(fullname.value)
-    });
-    const data = response.json()
-    return data
+        const response = await fetch(urls.setup.name, {
+            method: 'PUT',
+            headers: {
+                Accept: 'application/json',
+                Authorization: `Bearer ${accessTokenFromCookies}`,
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(fullname.value)
+        });
+        if(response.ok || response.status === 200) {
+            const store = useStore()
+            store.getNextPage()
+        }
     } catch(err) {
         console.error(err)
     }
 }
-
-onMounted(() => {
-    store.value = useStore();
-})
-
 </script>

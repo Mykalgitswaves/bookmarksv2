@@ -214,8 +214,14 @@ async def setup_user_name(request: Request, current_user: Annotated[User, Depend
     if current_user:
         try:
             driver = Neo4jDriver()
-            driver.put_name_on_user(username=current_user.username, full_name=name)
+            user = driver.put_name_on_user(username=current_user.username, full_name=name)
             driver.close()
+            if user is not None:
+                return HTTPException(
+                    status_code=200,
+                    detail="SUCCESS DUDE"
+                )
+
         except:
             return HTTPException(
                 status_code=500,
