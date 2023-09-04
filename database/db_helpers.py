@@ -473,6 +473,29 @@ class Neo4jDriver():
                 """
         result = tx.run(query,review_id=review_id,new_rating=new_rating)
         return(result)
+    def put_name_on_user(self, username, full_name):
+        """
+        Decorates a user instance with a name.
+        Args:
+            username: username for user.
+            full_name: String for new full_name property on user instance
+        Returns:
+            None
+        """
+        with self.driver.session() as session:
+            result = session.execute_write(self.put_name_on_user_query, username, full_name)
+    @staticmethod
+    def put_name_on_user_query(tx, username, full_name):
+        """
+        Finds user by username and sets a full_name on user instance
+        """
+        query = """
+                match (u:User {username:$username})
+                set u.full_name = $full_name
+                return u
+                """
+        result = tx.run(query, username=username, full_name=full_name)
+        return result.single()
     def create_review(self, rating, user, book):
         """
         Creates a review in the database

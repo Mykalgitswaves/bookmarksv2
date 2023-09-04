@@ -128,7 +128,6 @@ def create_access_token(data: dict, expires_delta: timedelta | None = None):
     return encoded_jwt
 
 async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]):
-    
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",
@@ -190,7 +189,7 @@ async def post_create_login_user(form_data:Annotated[OAuth2PasswordRequestForm, 
                 authenticate_user(form_data.username, password)
                 access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
                 access_token = create_access_token(
-                    data={"sub": user.user_id}, expires_delta=access_token_expires
+                    data={"sub": user.username}, expires_delta=access_token_expires
                 )
                 driver.close()
                 return {"access_token": access_token, "token_type": "bearer"}
@@ -208,6 +207,20 @@ async def post_create_login_user(form_data:Annotated[OAuth2PasswordRequestForm, 
                 headers={"WWW-Authenticate": "Bearer"},
             )
             return password_error
+
+@app.put("/setup-reader/name")
+async def setup_user_name(request: Request, current_user: Annotated[User, Depends(get_current_active_user)]):
+    name = await request.json()
+    if current_user:
+        try:
+            driver = Neo4jDriver()
+            driver.put_name_on_user(username=current_user.username, full_name=name)
+            driver.close()
+        except:
+            return HTTPException(
+                status_code=500,
+                detail="Internal error, try again later"
+            )
 
 def verify_access_token_2(access_token: str):
         decoded_token = jwt.decode(access_token, CONFIG['SECRET_KEY'], algorithms=[CONFIG['ALGORITHM']], options={"verify_sub": False})

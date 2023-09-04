@@ -22,11 +22,12 @@
 
 <script>
 // Import create user form components
-import CreateUser from '@/components/create/createuserstart.vue'
-import CreateUserFormBooks from '@/components/create/createuserformbooks.vue'
-import CreateUserFormGenre from '@/components/create/createusergenre.vue'
-import CreateUserFormFinal from '@/components/create/createuserfinal.vue'
-import NavIcon from '@/components/svg/icon-menu.vue'
+import CreateUser from '@/components/create/createuserstart.vue';
+import CreateUserName from '@/components/create/createusername.vue';
+import CreateUserFormBooks from '@/components/create/createuserformbooks.vue';
+import CreateUserFormGenre from '@/components/create/createusergenre.vue';
+import CreateUserFormFinal from '@/components/create/createuserfinal.vue';
+import NavIcon from '@/components/svg/icon-menu.vue';
 import PlaceholderIcon from '@/components/svg/icon-placeholder.vue';
 import Logo from '@/components/svg/icon-logo.vue'
 import MobileMenu from '@/components/create/menu.vue'
@@ -38,9 +39,10 @@ import { useBookStore } from '../stores/books.js'
 // Map to components keep the view the same
 const userFormMapping = {
   0: CreateUser,
-  1: CreateUserFormBooks,
-  2: CreateUserFormGenre,
-  3: CreateUserFormFinal
+  1: CreateUserName,
+  2: CreateUserFormBooks,
+  3: CreateUserFormGenre,
+  4: CreateUserFormFinal
 }
 
 export default {

@@ -7,8 +7,8 @@ export const useStore = defineStore('formState', {
   actions: {
     getNextPage() {
       this.page++
-      if (this.page > 3) {
-        this.page = 3 // Restrict page value to a maximum of 4
+      if (this.page > 4) {
+        this.page = 4 // Restrict page value to a maximum of 4
       }
       localStorage.setItem('page', this.page.toString()) // Save updated page value to local storage
     },

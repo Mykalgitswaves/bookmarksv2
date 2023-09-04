@@ -1,19 +1,19 @@
 <template>
-  <h1 class="text-center text-4xl font-medium mb-16">Create account</h1>
+  <h1 class="text-center text-4xl font-medium mb-16 text-gray-700">Create an account</h1>
 
   <form
     class="grid grid-cols-1 w-80 h-80 gap-2 place-content-center"
   >
-    <label class="gray-700">Enter your username (email)</label>
+    <label class="text-gray-700" for="email">Enter a valid email</label>
     <input
       class="py-2 px-4 rounded-md border-2 border-indigo-200"
       v-model="formBlob.username"
-      name="fullname"
+      name="email"
       type="text"
       placeholder="Email"
     />
 
-    <label class="gray-700">Password</label>
+    <label class="gray-700" for="password">Password</label>
     <input
       class="py-2 px-4 rounded-md border-2 border-indigo-200"
       v-model="formBlob.password"
@@ -60,8 +60,7 @@ export default {
     async sendData() {
       try {
         const formData = toRaw(this.formBlob);
-
-        const response = await fetch('http://127.0.0.1:8000/api/create-login', {
+        await fetch('http://127.0.0.1:8000/api/create-login', {
           method: 'POST',
           headers: {'Content-Type': 'application/x-www-form-urlencoded'},
           body:  new URLSearchParams({
@@ -69,17 +68,12 @@ export default {
             password: formData['password']
             })
           })
-          const data = await response.json();
-          
-          // Check if the response is successful
-          if (response.ok) {
-            console.log(data)
-            document.cookie = `token=${data.token.access_token}`;
-            this.navigate()
-          } else {
-            // Handle the case when the response is not successful
-            console.log('Error:', data.detail);
-            }
+            .then((res) => res.json())
+            .then((data) => {
+              console.log(data)
+              document.cookie = `token=${data.access_token}`;
+              this.navigate()
+            });
           } catch (error) {
             // Handle any errors
             console.error('Error:', error);
