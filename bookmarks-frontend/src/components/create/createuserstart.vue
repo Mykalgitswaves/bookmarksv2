@@ -84,11 +84,7 @@ export default {
           // Check if the response is successful
           if (response.ok) {
             console.log(data)
-            document.cookie = JSON.stringify(data.access_token);
-
-            // Use the token as needed (e.g., store it in local storage, set it as a cookie, etc.)
-            // document.cookie = `session_token=${token}; path=/; SameSite=Strict`;
-            // console.log(document.cookie);
+            document.cookie = `token=${data.token.access_token}`;
             this.navigate()
           } else {
             // Handle the case when the response is not successful
