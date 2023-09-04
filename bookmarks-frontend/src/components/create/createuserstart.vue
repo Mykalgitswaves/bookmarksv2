@@ -4,14 +4,6 @@
   <form
     class="grid grid-cols-1 w-80 h-80 gap-2 place-content-center"
   >
-    <label class="gray-700">Enter your real name (or nickname)</label>
-    <input
-      class="py-2 px-4 rounded-md border-2 border-indigo-200"
-      v-model="formBlob.full_name"
-      name="fullname"
-      type="text"
-      placeholder="Goffert"
-    />
     <label class="gray-700">Enter your username (email)</label>
     <input
       class="py-2 px-4 rounded-md border-2 border-indigo-200"
@@ -54,7 +46,6 @@ export default {
   data() {
     return {
       formBlob: {
-        full_name: '',
         username: '',
         password: '',
         state: null,
@@ -74,7 +65,6 @@ export default {
           method: 'POST',
           headers: {'Content-Type': 'application/x-www-form-urlencoded'},
           body:  new URLSearchParams({
-            full_name: formData['fullname'],
             username: formData['username'],
             password: formData['password']
             })
