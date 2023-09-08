@@ -10,57 +10,44 @@
               class="text-indigo-600 hover:text-indigo-300 duration-300 cursor-pointer" 
           />
     </nav>
-    <div id="mobilemenu" 
-        class="fixed top-0 left-0 h-screen w-screen z-20 grid place-content-center bg_opacity gap-5"
+    
+    <div 
         v-if="!isMenuHidden"
+        id="mobilemenu" 
+        class="fixed top-0 left-0 h-screen w-screen z-20 grid place-content-center-top bg_opacity gap-5 mt-20"
     >
-        <h2 class="mt-20 text-2xl font-semibold text-slate-800 text-center">Your favorite</h2>
+        <div>
+            <div class="text-center mt-10">
+                <h2 class="text-2xl font-semibold text-slate-800">Your profile</h2>
+                <p class="text-slate-600">An overview of your favorites</p>
+            </div>
+            <div class="mt-10 grid-3">
+                <button 
+                    :class="'px-3 py-2 grid-item ' + isSelected('books')"
+                    type="button"
+                    @click="selected = 'books'"
+                >
+                    Books
+                </button>
 
-        <div class="max-w-[700px] w-90">
-            <h4 class="px-5 text-xl text-slate-700">Books</h4>
-            
-            <div class="flex flex-col align-start max-w-[700px] w-100 ">
-           
-                <ul>
-                    <li v-for="(book, index) in books" :key="index"
-                    class="flex flex-row gap-5 px-4 place-content-start rounded-md my-3 w-[100%] min-w-[280px]"
-                    >
-                        <div class="flex flex-col justify- align-start">
-                            <p class="font-semibold text-gray-800">
-                            {{ book.title }}
-                            </p>
-                            
-                            <p v-for="(name, index) in book.author_names" :key="index" class="inline text-sm text-gray-800">
-                            {{ name }}
-                            </p>
-                            <button 
-                            
-                            class="underline underline-offset-2"
-                            v-if="isBookInMenu"
-                            @click="removeBook(book)"
-                            >remove</button>
-                        </div>
-                    </li>
-                </ul> 
-       
-            </div> 
-        </div>
-        <div class="px-5">
-            <h4 class="text-xl text-slate-700 mb-5">Genres</h4>
-            <ul :class="genres.length > 1 ? 'genre-pills' : ''">
-                <li v-for="genre in genres" :key="genre.id" class="">
-                    <p class="text-gray-800">{{ genre.name }}</p>
-                </li>
-            </ul>
-        </div>
+                <button 
+                    :class="'px-3 py-2 grid-item ' + isSelected('genres')"
+                    type="button"
+                    @click="selected = 'genres'"
+                >
+                    Genres
+                </button>
 
-        <div class="w-90 px-5">
-            <h4 class="text-xl text-slate-700 mb-5">Authors</h4>
-            <ul>
-            <li v-for="author in authors" :key="author" class="flex flex-row centered gap-5">
-                <p class="text-gray-800">{{ author.name }}</p>
-            </li>
-            </ul>
+                <button 
+                    :class="'px-3 py-2 grid-item ' + isSelected('authors')"
+                    type="button"
+                    @click="selected = 'authors'"
+                >
+                    Authors
+                </button>
+            </div>
+
+            <component :is="isSelectedMapping"/>
         </div>
     </div>
 </template>
@@ -74,6 +61,17 @@
     import placeholder from '@/assets/books.png';
     import genrePlaceholder from '@/assets/literary.png';
     import authorPlaceholder from '@/assets/people.png';
+
+    import authorsList from './menu/AuthorsList.vue';
+    import genresList from './menu/GenresList.vue';
+    import writersList from './menu/WritersList.vue';
+
+
+    const componentMap = {
+        'books': genresList,
+        'genres': authorsList,
+        'writers': writersList,
+    }
 
     export default {
         components: {
@@ -107,7 +105,8 @@
                     img_url: authorPlaceholder,
                     full_name: 'Anyone come to mind?'
                 }],
-                dataBooks: null
+                dataBooks: null,
+                selected: 'books',
             }
         },
         computed: {
@@ -130,6 +129,9 @@
                 } else {
                     return authors
                 }
+            },
+            isSelectedMapping()  {
+                return componentMap[this.selected]
             }
         },
         methods: {
@@ -139,7 +141,12 @@
             removeBook(book){
                 const state = useBookStore();
                 this.dataBooks = state.removeBook(book)
-            }
+            },
+            isSelected(option) {
+                if (this.selected === option) {
+                    return 'active'
+                }
+            },
         },
         mounted(){
             let state = useBookStore()
@@ -150,6 +157,24 @@
 
 
 <style>
+
+.grid-3 {
+    display: grid;
+    grid-template-columns: repeat(3, 100px);
+    justify-content: center;
+    gap: 1rem;
+}
+
+.grid-item {
+    border-bottom: solid 3px rgb(160, 157, 234);
+    color: rgb(160, 157, 234);
+}
+
+.grid-item.active {
+    border-color: rgb(79 70 229);
+    color: rgb(79 70 229);
+}
+
 .pop-out-element {
   position: fixed;
   top: 0;
