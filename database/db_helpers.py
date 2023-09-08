@@ -196,8 +196,9 @@ class Book():
             raise Exception("This relationship already exists")
     def add_to_db(self):
         driver = Neo4jDriver()
-        driver.create_book(self.title,self.img_url,self.pages,self.publication_year,self.lang,self.description,self.genres,
+        id = driver.create_book(self.title,self.img_url,self.pages,self.publication_year,self.lang,self.description,self.genres,
                            self.authors,self.isbn24,self.small_img_url,self.author_names,self.genre_names,self.google_id)
+        self.id = id
         driver.close()
         
 class Author():
@@ -618,7 +619,7 @@ class Neo4jDriver():
                                          title, img_url, pages, publication_year, 
                                          lang, description, genres, authors, 
                                          isbn24, small_img_url, author_names,google_id)
-        return(book)
+        return(book_id)
     @staticmethod
     def create_book_query(tx,book_id, title, img_url, 
                           pages, publication_year, lang, 
@@ -1267,6 +1268,62 @@ class Neo4jDriver():
         response = result.single()
         if response:
             return(response['a.id'])
+        else:
+            return(None)
+    
+    def get_book_by_google_id(self,google_id):
+        """
+        Finds a book by google id if in db
+
+        Args:
+            google_id: Google id of the book to pull
+        Returns:
+            Book: book object containing all the metadata
+        """
+        with self.driver.session() as session:
+            book = session.execute_write(self.get_book_by_google_id_query, google_id)
+        return(book)
+    @staticmethod
+    def get_book_by_google_id_query(tx,google_id):
+        query = """
+                match (b:Book {google_id:$google_id}) 
+                match (b)-[r]-(g)
+                return b.gr_id,
+                b.id, 
+                b.img_url, 
+                b.isbn24, 
+                b.lang, 
+                b.originalPublicationYear, 
+                b.pages, 
+                b.small_img_url, 
+                b.description, 
+                b.title,
+                TYPE(r),
+                g.id
+                """
+        result = tx.run(query, google_id=google_id)
+        response = result.single()
+        if response:
+            book = Book(book_id=response["b.id"], 
+                        gr_id=response["b.gr_id"], 
+                        img_url=response["b.img_url"],
+                        small_img_url=response["b.small_img_url"],
+                        pages=response["b.pages"],
+                        publication_year=response["b.originalPublicationYear"],
+                        lang=response["b.lang"],
+                        title=response["b.title"],
+                        description=response["b.description"],
+                        isbn24 = response["b.isbn24"])
+            for response in result:
+                if response['TYPE(r)'] == 'HAS_TAG':
+                    book.tags.append(response["g.id"])
+                elif response['TYPE(r)'] == 'HAS_GENRE':
+                    book.genres.append(response["g.id"])
+                elif response['TYPE(r)'] == 'IS_REVIEW_OF':
+                    book.reviews.append(response["g.id"])
+                elif response['TYPE(r)'] == 'WROTE':
+                    book.authors.append(response["g.id"])
+            return(book)
         else:
             return(None)
         

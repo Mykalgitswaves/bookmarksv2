@@ -9,6 +9,7 @@ from database.db_helpers import (
     Neo4jDriver
 )
 from database.api.books_api.search import BookSearch
+from database.api.books_api.add_book import pull_google_book
 from database.auth import verify_access_token
 
 from fastapi import FastAPI, HTTPException, Depends, status, Request
@@ -382,13 +383,16 @@ async def get_books_by_title(text: str, skip: int=0, limit: int=3):
     return JSONResponse(content={"data": jsonable_encoder(result)}) 
 
 @app.get("/api/books/{book_id}")
-async def get_book_page(book_id: int):
+async def get_book_page(book_id: int, google:bool):
     """
     Endpoint for book page
     """
-    driver = Neo4jDriver()
-    book = driver.pull_book_node(book_id=book_id)
-    driver.close()
+    if google:
+        book = pull_google_book(book_id)
+    else:
+        driver = Neo4jDriver()
+        book = driver.pull_book_node(book_id=book_id)
+        driver.close()
 
     return JSONResponse(content={"data": jsonable_encoder(book)})
 
