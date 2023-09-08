@@ -12,7 +12,7 @@ def pull_google_book(google_id:str):
     api_key = CONFIG['books_api_key']
     
     driver = Neo4jDriver()
-    db_response = driver.get_book_by_google_id(google_id)
+    db_response = driver.get_book_by_google_id("g"+google_id)
     if not db_response:
         path = f"https://www.googleapis.com/books/v1/volumes/{google_id}?key={api_key}"
         r = requests.get(path)
@@ -78,7 +78,7 @@ def pull_google_book(google_id:str):
                         pages=pageCount,
                         publication_year=publishedDate,
                         lang = language,
-                        google_id= response['id'],
+                        google_id= "g"+response['id'],
                         in_database=False)
         
             book.add_to_db()

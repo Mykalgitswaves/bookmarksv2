@@ -383,12 +383,12 @@ async def get_books_by_title(text: str, skip: int=0, limit: int=3):
     return JSONResponse(content={"data": jsonable_encoder(result)}) 
 
 @app.get("/api/books/{book_id}")
-async def get_book_page(book_id: int, google:bool):
+async def get_book_page(book_id: str):
     """
     Endpoint for book page
     """
-    if google:
-        book = pull_google_book(book_id)
+    if book_id[0] == 'g':
+        book = pull_google_book(book_id[1:])
     else:
         driver = Neo4jDriver()
         book = driver.pull_book_node(book_id=book_id)

@@ -68,7 +68,7 @@ class BookSearch():
                         
 
 
-                        book = Book(result['id'], 
+                        book = Book("g"+result['id'], 
                                     small_img_url=small_img_url,
                                     title=title,
                                     description=description,
