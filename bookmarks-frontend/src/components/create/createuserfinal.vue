@@ -85,12 +85,14 @@ export default {
           },
           body: JSON.stringify(authors)
         }).then((response) => {
+          console.log(response)
           if (!response.ok) {
             throw new Error('Network response was not ok')
             }
           return response.json()
         }).then((data) => {
-            app_router.push(`/feed/${data.user_id}/review/all`)
+            console.log(data)
+            // app_router.push(`/feed/${data.user_id}/review/all`)
           })
         } catch(err) {
           console.log(err)

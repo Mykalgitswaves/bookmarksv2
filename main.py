@@ -336,7 +336,7 @@ async def put_users_me_genres(request: Request, current_user: Annotated[User, De
 @app.put("/setup-reader/authors")
 async def put_users_me_authors(request: Request, current_user: Annotated[User, Depends(get_current_active_user)]):
     authors = await request.json()
-
+    
     try:
         for author in authors:
             current_user.add_favorite_author(author_id=int(author['id']))
@@ -347,7 +347,6 @@ async def put_users_me_authors(request: Request, current_user: Annotated[User, D
                 headers={"WWW-Authenticate": "Bearer"},
                 )
         return network_error
-    
     return JSONResponse(content={"uuid": jsonable_encoder(current_user.user_id)})
 
 

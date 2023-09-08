@@ -4,7 +4,7 @@
     <div id="subnavcreate" class="flex flex-row gap-5 w-100 justify-center mt-10 mb-20">
       <button type="button" @click="getPrevPage">Prev</button>
       <p class="text-indigo-500 mx-2">
-        <span class="text-indigo-800 underline underline-offset-2">{{ page + 1 }}</span> / 4
+        <span class="text-indigo-800 underline underline-offset-2">{{ page + 1 }}</span> / 5
       </p>
       <button type="button" @click="getNextPage">Next</button>
     </div>
