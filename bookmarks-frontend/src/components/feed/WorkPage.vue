@@ -14,10 +14,8 @@
                         <span>{{ fallbackTitle }}</span>
                     </p>
 
-                    <p>
-                       <span v-if="loaded">{{ description }}</span>
-                       <span v-if="!loaded">{{ fallbackDescription }}</span>
-                    </p>
+                    <p v-if="loaded" v-html="description"></p>
+                    <p v-if="!loaded">{{ fallbackDescription }}</p>
                 </div>
 
                 <div class="mt-5 container flex justify-between">
@@ -36,9 +34,9 @@
                 </div>
             </div>
 
-            <p class="text-xl font-semibold text-slate-700 my-5">Reviews of this work</p>
-
             <SimilarBooks/>
+
+            <p class="text-xl font-semibold text-slate-700 my-5">Reviews of this work</p>
     </TransitionGroup>
     </section>
 </template>
@@ -70,7 +68,7 @@ async function getWorkPage() {
 
 getWorkPage()
 
-const description = computed(() => (data.value.description.toLowerCase()));
+const description = computed(() => (data.value.description));
 const title = computed(() => (data.value.title));
 const image = computed(() => (data.value.img_url));
 const loaded = computed(() => data.value === null ? false : true);
@@ -106,7 +104,7 @@ onMounted(() => {
         border-radius: .25rem;
     }
 
-    /* .work-page-enter-active,
+    .work-page-enter-active,
     .work-page-leave-active {
         transform: 0 45px;
         transition: opacity 0.5s ease-out;
@@ -115,5 +113,5 @@ onMounted(() => {
     .work-page-enter-from,
     .work-page-leave-to {
         opacity: 0;
-    } */
+    }
 </style>
