@@ -197,7 +197,7 @@ class Book():
     def add_to_db(self):
         driver = Neo4jDriver()
         id = driver.create_book(self.title,self.img_url,self.pages,self.publication_year,self.lang,self.description,self.genres,
-                           self.authors,self.isbn24,self.small_img_url,self.author_names,self.genre_names,self.google_id)
+                           self.authors,self.isbn24,self.small_img_url,self.author_names,self.genre_names,self.google_id,self.gr_id)
         self.id = id
         driver.close()
         
@@ -577,7 +577,7 @@ class Neo4jDriver():
     
     def create_book(self, title, img_url, pages, publication_year, lang, 
                     description='', genres=[], authors=[], isbn24='', 
-                    small_img_url='', author_names=[],genre_names=[],google_id=""):
+                    small_img_url='', author_names=[],genre_names=[],google_id="",gr_id=""):
         """
         Creates a book node in the database
 
@@ -618,13 +618,13 @@ class Neo4jDriver():
             book = session.execute_write(self.create_book_query, book_id, 
                                          title, img_url, pages, publication_year, 
                                          lang, description, genres, authors, 
-                                         isbn24, small_img_url, author_names,google_id)
+                                         isbn24, small_img_url, author_names,google_id,gr_id)
         return(book_id)
     @staticmethod
     def create_book_query(tx,book_id, title, img_url, 
                           pages, publication_year, lang, 
                           description, genres, authors, isbn24, 
-                          small_img_url, author_names,google_id):
+                          small_img_url, author_names,google_id,gr_id):
         query = """
                 create (b:Book {id:$book_id, 
                 title:$title, 
@@ -636,7 +636,8 @@ class Neo4jDriver():
                 isbn24:$isbn24,
                 small_img_url:$small_img_url,
                 author_names:$author_names,
-                google_id:$google_id})
+                google_id:$google_id,
+                gr_id:$gr_id})
                 """
         result = tx.run(query,
                         book_id=book_id, 
@@ -649,7 +650,8 @@ class Neo4jDriver():
                         isbn24=isbn24[0],
                         small_img_url=small_img_url,
                         author_names=author_names,
-                        google_id=google_id)
+                        google_id=google_id,
+                        gr_id=gr_id)
         query = """
                 match (a:Author {id:$author_id})
                 match (b:Book {id:$book_id})
@@ -675,6 +677,7 @@ class Neo4jDriver():
                     description=description, 
                     isbn24=isbn24,
                     genres=genres,
+                    gr_id=gr_id,
                     authors=authors)
 
         return(book)
