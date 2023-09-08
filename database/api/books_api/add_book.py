@@ -79,7 +79,7 @@ def pull_google_book(google_id:str):
                         publication_year=publishedDate,
                         lang = language,
                         google_id= "g"+response['id'],
-                        gr_id=None,
+                        gr_id='',
                         in_database=False)
         
             book.add_to_db()
