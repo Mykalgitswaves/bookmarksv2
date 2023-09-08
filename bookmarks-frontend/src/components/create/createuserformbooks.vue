@@ -16,7 +16,7 @@
       </label>
     </form>
 
-    <BookSearchResults class="max-w-[600px]" :data="data" />
+    <BookSearchResults class="max-w-[600px]" :data="searchResultArray"/>
     
     <button
       class=" mt-5 px-20 py-3 bg-indigo-600 rounded-md text-indigo-100 w-88 max-w-[600px]"
@@ -28,62 +28,56 @@
   </div>
 </template>
 
-<script>
+<script setup>
+import { toRaw, ref, computed } from 'vue'
 import BookSearchResults from './booksearchresults.vue'
 import { useStore } from '../../stores/page.js';
 import { useBookStore } from '../../stores/books';
-import { toRaw } from 'vue'
+import { helpersCtrl } from '../../services/helpers';
+    
+const formBlob = ref({});
+const dataRef = ref([]);
+const state = ref(null);
 
-export default {
-  components: {
-    BookSearchResults
-  },
-  data() {
-    return {
-      formBlob: {},
-      data: null,
-      state: null
-    }
-  },
-  methods: {
-    async searchBooks(event) {
-      try {
-        const response = await fetch(`http://127.0.0.1:8000/books/${event.target.value}/`)
-        const data = await response.json()
-        this.data = data
-        console.log(data)
-      } catch (err) {
-        console.log(err)
-        this.data = null
-      }
-    },
-    async updateUser() {
-      const token = document.cookie;
-      const books = toRaw(this.bookState.books)
-      console.log(books)
-      if(token && books) {
-      try {
-        await fetch('http://127.0.0.1:8000/setup-reader/books', {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`
-          },
-          body: JSON.stringify(books)
-        })
-        } catch(err) {
-        console.log(err)
-        }
-      }
-    },
-    navigate() {
-      this.state.getNextPage()
-      console.log(this.state.page)
-    }
-  },
-  mounted() {
-    this.state = useStore()
-    this.bookState = useBookStore()
+const searchResultArray = computed(() => (dataRef.value))
+
+const bookState = useBookStore()
+
+function navigate() {
+  const store = useStore()
+  store.getNextPage()
+  console.log(store.page)
+}
+
+async function searchBooks(event) {
+  try {
+    const response = await fetch(`http://127.0.0.1:8000/books/${event.target.value}/`)
+    const data = await response.json()
+    dataRef.value = data.data
+    console.log(data.value, 'this data')
+  } catch (err) {
+    console.log(err)
   }
 }
+
+async function updateUser() {
+  const token = helpersCtrl.getCookieByParam('token');
+  const books = toRaw(bookState.books)
+  console.log(books)
+  if(token && books) {
+  try {
+    await fetch('http://127.0.0.1:8000/setup-reader/books', {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`
+      },
+      body: JSON.stringify(books)
+      })
+    } catch(err) {
+      console.log(err)
+    }
+  }
+}
+
 </script>
