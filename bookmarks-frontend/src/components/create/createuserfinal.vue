@@ -75,7 +75,6 @@ export default {
       const token = helpersCtrl.getCookieByParam(['token'])
       const store = useBookStore()
       let authors = store.getAuthorsIds
-      console.log(typeof authors)
       if(token && authors) {
       try {
         await fetch('http://127.0.0.1:8000/setup-reader/authors', {
