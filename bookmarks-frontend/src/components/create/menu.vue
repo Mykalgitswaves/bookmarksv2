@@ -10,11 +10,11 @@
               class="text-indigo-600 hover:text-indigo-300 duration-300 cursor-pointer" 
           />
     </nav>
-    
+
     <div 
         v-if="!isMenuHidden"
         id="mobilemenu" 
-        class="fixed top-0 left-0 h-screen w-screen z-20 grid place-content-center-top bg_opacity gap-5 mt-20"
+        class="fixed top-0 left-0 h-screen w-screen z-20 grid place-content-center-top bg_opacity gap-5 overflow-y-scroll"
     >
         <div>
             <div class="text-center mt-10">
@@ -39,15 +39,17 @@
                 </button>
 
                 <button 
-                    :class="'px-3 py-2 grid-item ' + isSelected('authors')"
+                    :class="'px-3 py-2 grid-item ' + isSelected('writers')"
                     type="button"
-                    @click="selected = 'authors'"
+                    @click="selected = 'writers'"
                 >
                     Authors
                 </button>
             </div>
-
-            <component :is="isSelectedMapping"/>
+            
+            <KeepAlive>
+                <component :is="isSelectedMapping"/>
+            </KeepAlive>
         </div>
     </div>
 </template>
@@ -62,15 +64,16 @@
     import genrePlaceholder from '@/assets/literary.png';
     import authorPlaceholder from '@/assets/people.png';
 
-    import authorsList from './menu/AuthorsList.vue';
-    import genresList from './menu/GenresList.vue';
-    import writersList from './menu/WritersList.vue';
+    import BooksList from './menu/BooksList.vue';
+    import GenresList from './menu/GenresList.vue';
+    import WritersList from './menu/WritersList.vue';
+
 
 
     const componentMap = {
-        'books': genresList,
-        'genres': authorsList,
-        'writers': writersList,
+        'books': BooksList,
+        'genres': GenresList,
+        'writers': WritersList,
     }
 
     export default {
@@ -150,7 +153,7 @@
         },
         mounted(){
             let state = useBookStore()
-            this.dataBooks = state.getBooks();
+            this.dataBooks = state.getBooks;
         }
 }
 </script>
@@ -181,9 +184,9 @@
   left: 0;
   z-index: 5; 
   display: flex;
-  width: 30vw;
+  width: 100vw;
   flex-direction: row;
-  justify-content: start;
+  justify-content: space-between;
   align-items: center;
   gap: 2ch;
 }
@@ -195,4 +198,6 @@
 .centered {
   align-items: center;
 }
+
+
 </style>

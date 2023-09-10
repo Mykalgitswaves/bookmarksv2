@@ -73,8 +73,9 @@ export default {
     },
     async updateAuthors() {
       const token = helpersCtrl.getCookieByParam(['token'])
-      const authorStore = useBookStore()
-      const authors = toRaw(authorStore.authors)
+      const store = useBookStore()
+      let authors = store.getAuthorsIds
+      console.log(typeof authors)
       if(token && authors) {
       try {
         await fetch('http://127.0.0.1:8000/setup-reader/authors', {
@@ -92,7 +93,8 @@ export default {
           return response.json()
         }).then((data) => {
             console.log(data)
-            // app_router.push(`/feed/${data.user_id}/review/all`)
+            app_router.push(`/feed/${data.uuid}/review/all`)
+            store.createUserSuccess()
           })
         } catch(err) {
           console.log(err)

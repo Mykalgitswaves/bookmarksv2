@@ -18,6 +18,10 @@ export const useStore = defineStore('formState', {
         this.page = 0 // Restrict page value to a minimum of 0
       }
       localStorage.setItem('page', this.page.toString()) // Save updated page value to local storage
+    },
+    goToPage(n) {
+      this.page = n;
+      localStorage.setItem('page', this.page.toString());
     }
   }
 })
