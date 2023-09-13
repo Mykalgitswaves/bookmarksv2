@@ -22,6 +22,10 @@ export const useStore = defineStore('formState', {
     goToPage(n) {
       this.page = n;
       localStorage.setItem('page', this.page.toString());
+    },
+    clearPageStore() {
+      this.page = 0;
+      localStorage.removeItem('page');
     }
   }
 })

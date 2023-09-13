@@ -12,7 +12,7 @@
   </div>
 </template>
 <script setup>
-      import { ref, toRaw, computed, defineAsyncComponent, onBeforeMount, watch } from 'vue';
+      import { ref, toRaw, computed, defineAsyncComponent, onBeforeMount, watch, onMounted } from 'vue';
       import { useRoute } from "vue-router";
       import { db } from '@/services/db.js';
       import { urls } from '@/services/urls.js';
@@ -25,30 +25,23 @@
       const user = route.params.user;
 
       const loading = [{
-        title: 'Loading',
+        title: 'Loading ',
         genres: ['good', 'comes', 'to', 'those', 'who', 'wait']
       }];
 
-      const bookData = ref([]);
+      const bookData = ref(null);
 
-      async function getWorks() {
-        bookData.value = await db.get(urls.booksByN, {'limit': 25})
-      }
-
-      onBeforeMount(() => {
-        return getWorks()
-      });
-
-      const store = searchResultStore();
-
-      watch(bookData.value, (oldValue, newValue) => {
-        if(oldValue, newValue) {
-          store.saveAndLoadSearchResults(newValue);
-        }
+      onMounted(() => {
+        bookData.value = db.get(urls.booksByN, {'limit': 25}, true)
       })
+      
+      // const store = searchResultStore();
 
-      const books = computed(() => bookData.value.length ? toRaw(bookData.value) : loading)
+      const books = computed(() => (bookData.value))
       // const loaded = computed(() => bookData.value.length ? true : false)
+      watch(bookData, (oldValue, newValue) => {
+        console.log(newValue, oldValue)
+      })
 
       const WorkCard = defineAsyncComponent({
         loader: () => import('./WorkCard.vue'),

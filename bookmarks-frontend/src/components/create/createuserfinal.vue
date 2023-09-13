@@ -28,12 +28,12 @@
 </template>
 
 <script>
-import { useBookStore } from '../../stores/books'
-
-import AuthorSearch from './authorSearch.vue'
-import { app_router } from '@/main.js'
-import { toRaw } from 'vue'
-import { helpersCtrl } from '../../services/helpers'
+import { useBookStore } from '../../stores/books';
+import { useStore } from '../../stores/page';
+import AuthorSearch from './authorSearch.vue';
+import { app_router } from '@/main.js';
+import { toRaw } from 'vue';
+import { helpersCtrl } from '../../services/helpers';
 
 export default {
   components: {
@@ -73,7 +73,8 @@ export default {
     },
     async updateAuthors() {
       const token = helpersCtrl.getCookieByParam(['token'])
-      const store = useBookStore()
+      const store = useBookStore();
+      const pageStore = useStore();
       let authors = store.getAuthorsIds
       if(token && authors) {
       try {
@@ -94,6 +95,7 @@ export default {
             console.log(data)
             app_router.push(`/feed/${data.uuid}/review/all`)
             store.createUserSuccess()
+            pageStore.clearPageStore()
           })
         } catch(err) {
           console.log(err)
