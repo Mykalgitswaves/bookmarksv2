@@ -65,10 +65,17 @@
   import { useRoute, useRouter } from 'vue-router'; 
 
   const props = defineProps({
-    work: Object,
-    user: Number
+    work: {
+      type: Object,
+      required: true,
+    },
+      user: {
+        type: Number,
+        required: false,
+      }
   })
- 
+  console.log('loaded the fucking work card on the page')
+
   const route = useRoute();
   const router = useRouter()
   const workPage = `/feed/${route.params.user}/works/${props.work.id}`;
@@ -84,7 +91,6 @@
   function bookMarkIt() {
     isBookmarking.value = !isBookmarking.value;
   }
-
 </script>
 
 <style>

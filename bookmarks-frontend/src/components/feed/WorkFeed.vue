@@ -72,12 +72,18 @@ const user = route.params.user;
 const toggleCreateReviewType = ref(false);
 const bookData = ref(null);
 const postOptions = ['review', 'update', 'comparison']
+
 const mapping = {
   "review": createReviewPost,
 }
 
+async function loadData() {
+  bookData.value = await db.get(urls.booksByN, {'limit': 25}, true)
+  console.log('attempting to do this right')
+}
+
 onMounted(() => {
-  bookData.value = db.get(urls.booksByN, {'limit': 25}, true)
+    loadData()
 })
 
 let postTypeMapping = 'review';
@@ -87,9 +93,10 @@ function selectHandler(e) {
   postTypeMapping = e.target.value;
 }
 
-const books = computed(() => (bookData.value))
-watch(bookData, (oldValue, newValue) => {
-  console.log(newValue, oldValue)
+const books = computed(() => (bookData.value ? bookData.value.data : ''))
+
+watch(bookData.value, (oldValue, newValue) => {
+  console.log(newValue, oldValue, 'watching watching watching')
 })
 </script>
 
