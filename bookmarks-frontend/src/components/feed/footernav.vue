@@ -1,5 +1,5 @@
 <template>
-    <footer :class="'bg-slate-200 ' + isMinimized">
+    <footer :class="isMinimized">
         <div class="nav-button-group hidden-on-mobile">
             <button 
                 class="footer-nav-button"
@@ -126,7 +126,8 @@ footer {
     display: flex;
     justify-content: space-around;
     padding: 1rem;
-    background: rgba(243, 244, 246, 98%);
+    background: linear-gradient(45deg, rgba(235, 241, 255, 0.5), rgba(255,255,255,0));
+    backdrop-filter: blur(5px);
     transition-duration: 250ms;
     transition-timing-function: ease-in-out;
 }
@@ -190,7 +191,11 @@ footer.minimized .nav-button-group p { display: none;}
         justify-content: start;
         gap: 1.5rem;
         align-items: center;
-        background: transparent
+        background: linear-gradient(45deg, rgba(235, 241, 255, 0.5), rgba(255,255,255,0));
+        backdrop-filter: blur(5px);
+        margin-left: 1ch;
+        border-radius: .75rem;
+        margin-top: 10rem;
     }
 
     footer.minimized {
@@ -207,8 +212,15 @@ footer.minimized .nav-button-group p { display: none;}
         position: sticky;
         top: 3rem;
         display: flex;
-        align-self: start;
+        justify-content: space-between;
         border-radius: .5rem;
+        width: 100%;
+        height: 40px;
+    }
+
+    .nav-button-group:first-of-type :hover {
+        transform: scaleX(1.05);
+        transition: all 150ms ease-in-out;
     }
 
     /* #Todo: Make the search bar responsive so it looks better on mobile and desktop */
@@ -232,17 +244,15 @@ footer.minimized .nav-button-group p { display: none;}
 
 .footer-nav-button {
     border-radius: 50%;
-    padding: .5rem;
+    padding: .25rem;
     margin-left: .5rem;
-    margin-right: .5rem;
+    margin-right: 1ch;
     color: #667EEA;
-    border: solid 2px #667EEA;
     align-content: center;
     justify-content: center;
     transition-duration: 250ms;
 }
 .footer-nav-button:hover {
-    border: solid 2px #343fa9;
     color: #343fa9;
     transform: scale(1.02);
 }

@@ -6,7 +6,7 @@
 
         <div class="grid-row-readers">
             <div 
-                class="reader bg-slate-100 " 
+                class="reader" 
                 v-for="(user, index) in paginatedUsers"
                 :key="index"
             >   
@@ -16,7 +16,7 @@
                     </div>
                     
                     <button 
-                        class="bg-indigo-900 text-indigo-100 px-2 py-2 rounded-md"
+                        class="bg-indigo-900 px-2 py-2 rounded-sm text-white"
                         type="button"
                         alt="follow user"
                         @click="followUser(index)"
@@ -63,17 +63,17 @@ function followUser(index) {
     border-radius: 4px;
     display: flex;
     flex-direction: column;
-    transition: background 150ms ease-in-out;
+    transition: background 200ms ease-in-out;
     align-items: start;
+    background: var(--background-container-gradient);
 }
 
 .reader:hover {
-    background-color: rgb(169, 176, 239);
+    background: var(--hover-container-gradient);
+    transition: all 200ms ease-in-out;
 }
 
-.reader:hover .reviews {
-    color: #f7f7f7;
-}
+
 .reader button {
     width: 100%;
 }
