@@ -29,4 +29,68 @@
 :root {
   --background-container-gradient: linear-gradient(45deg, rgba(245, 248, 254, 0.5), rgba(255,255,255,0));
   --hover-container-gradient: linear-gradient(45deg, rgba(216, 216, 216, 0.5), rgba(255,255,255,0));
+
+
+  --media-screen-min-tablet: 768px;
+}
+
+.radio-group {
+  display: flex;
+  flex-direction: row;
+  border:  2px solid #818cf8;
+  border-radius: .5rem; 
+  width: fit-content;
+  overflow: clip;
+}
+
+.radio-select {
+  padding: .5ch 1ch;
+  height: fit-content;
+  width: fit-content;
+  background-color: #fff;
+  color: #52525b;
+}
+
+
+.radio-select input {
+  margin-right: 1ch;
+  accent-color: #818cf8;
+}
+
+.radio-select input:checked {
+  accent-color: #3730a3;
+}
+
+.radio-select:has(input:checked) {
+  background: #e0e7ff;
+  color: #1e1b4b;
+}
+
+.btn-relative {
+  position: relative !important;
+}
+
+.popout-flyout {
+  position: absolute;
+  top: 40px;
+  left: 0;
+  margin-top: .25rem;
+  width: 250px;
+  background-color: #fff;
+  border-radius: .25rem;
+  overflow: clip;
+}
+
+.popout-flyout button {
+  display: block;
+  color: #4338ca;
+  width: 100%;
+  text-align: start;
+  padding: 0.2rem 1rem;
+  margin-top: .4rem;
+  margin-bottom: .4rem;
+}
+
+.popout-flyout button:hover {
+  background-color: #eef2ff;
 }

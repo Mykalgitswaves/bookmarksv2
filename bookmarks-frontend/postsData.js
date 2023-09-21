@@ -45,12 +45,29 @@ export const postData = {
                     ],                
                     "plot": [
                         {
-                            "index": 0,
-                            "id":3,
-                            "q" :"what do you think about the protagonist",
-                            "response": '',
-                            "is_spoiler": null,
-                        }
+                            "index": 1, 
+                            "id": 7,
+                            "q": "Did you find the overall plot predictable or surprising? Why?",
+                            "response": "",
+                            "is_spoiler": null
+                          },
+                          {
+                            "index": 2, 
+                            "id": 8,
+                            "q": "Were you satisfied with how the various storylines and loose ends were resolved by the end?",
+                            "response": "", 
+                            "is_spoiler": null
+                          },
+                          {
+                            "index": 3,
+                            "id": 9,
+                            "q": "Which plot twists stood out to you the most? Did you see them coming?",
+                            "response": "",
+                            "is_spoiler": null
+                          }
+                    ],
+                    "tone": [
+                    
                     ]
         },
         "update": {},

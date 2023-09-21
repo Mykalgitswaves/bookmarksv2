@@ -119,6 +119,7 @@ const booksByGenreFilter = false
 
 .author-row {
     display: flex;
+    flex-wrap: wrap;
     gap: 1rem;
     border-top: solid 2px #f4e7fd;
     padding-top: 1ch;

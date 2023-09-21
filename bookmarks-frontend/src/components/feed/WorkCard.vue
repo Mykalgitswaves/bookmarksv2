@@ -74,7 +74,6 @@
         required: false,
       }
   })
-  console.log('loaded the fucking work card on the page')
 
   const route = useRoute();
   const router = useRouter()
@@ -82,7 +81,7 @@
   const isBookmarking = ref(false);
 
 
-  const bookMarkingStyles = computed(() => (isBookmarking.value ? 'bg-indigo-500' : 'not-bookmarking-bg'))
+  const bookMarkingStyles = computed(() => (isBookmarking.value ? 'bg-indigo-500' : ''))
 
   function toAuthorPage(id) {
     return router.push(`/feed/${route.params.user}/authors/${id}`)
@@ -95,13 +94,12 @@
 
 <style>
 
-.not-bookmarking-bg { background-color: #F7FAFC; }
-
 .review-card {
   padding: 15px 20px;
   border-radius: .25rem;
   margin-inline: auto;
   min-width: 100%;
+  background: var(--background-container-gradient);
 }
 
 .review-card-top {

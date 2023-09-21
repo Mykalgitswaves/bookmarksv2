@@ -81,13 +81,18 @@
     color: #5A67D8;
     font-weight: 400;
 }
+
 .searchbar input {
-    width: 280px;
+    max-width: 300px;
+    width: 100%;
 }
 
 .filter-grid {
     display: flex;
     gap: 10px;
+    justify-content: space-between;
+    margin-top: 1ch;
+    max-width: 400px;
 }
 
 

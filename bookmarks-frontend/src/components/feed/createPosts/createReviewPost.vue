@@ -5,7 +5,19 @@
         </span>
     </p>
 
-    <ul class="container questions">
+    <div class="radio-group">
+        <label
+            :for="cat"
+            class="radio-select"
+            v-for="(cat, index) in questionCats"
+            :key="index"
+        >
+            <input :id="cat" type="radio" :value="cat" name="question-radios" v-model="currentTopic" @change="reloadQuestions">
+            {{ cat }}
+        </label>
+    </div>
+
+    <ul class="container questions" :key="characterQuestions">
             <li
                 v-for="q in characterQuestions"
                 :key="q.index"
@@ -60,11 +72,14 @@ import { ref, computed, toRaw, watch } from 'vue'
 import { postData } from '../../../../postsData.js';
 import { stateCtrl } from '../../../stores/createPostStore';
 
-const characterQuestionToggles = ref(false);;
+const questionCats = Array.from(Object.keys(postData.posts.review))
+console.log(questionCats)
+// Defaults to character, this change will dictate the questions rendered. we can model it.
+const currentTopic = ref('character');
 
-
-const characterQuestions = JSON.parse(JSON.stringify(postData.posts.review.character));
+let characterQuestions = JSON.parse(JSON.stringify(postData.posts.review[currentTopic.value]));
 const store = stateCtrl;
+
 
 function loadAndUpdateState() {
     store.state()
@@ -74,11 +89,11 @@ function loadAndUpdateState() {
 
 const questionDict = ref({});
 const entries = ref([]);
-
 // we need a way to clone only the questions users select and then add those to our set but we need to be able to model our data after that.
 
-watch(questionDict.value, (oldValue, newValue) => {
-    console.log(oldValue, newValue, 'questionDict')
+// Watch to see if value changed and if it does then recreate object.
+watch(currentTopic, () => {
+    characterQuestions = JSON.parse(JSON.stringify(postData.posts.review[currentTopic.value]));
 })
 
 watch(entries.value, (oldValue, newValue) => {
