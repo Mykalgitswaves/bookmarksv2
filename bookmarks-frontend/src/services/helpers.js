@@ -28,8 +28,8 @@ export const helpersCtrl = {
         // Return null if param is not found;
         return null;
     },
-    // function for assembling data into a dictionary that our db can send in a post request
     /**
+    * Function for assembling data into a dictionary that our db can use to create reviews
     * @param {{questionList: Array}} details - contains question dictionaries that hold q.id, q.q, q.response, q.isSpoiler 
     * @param {{bookId: Number}} details - contains id for book review
     * @param {{headline: String}} details - Headline for book review 
@@ -42,8 +42,7 @@ export const helpersCtrl = {
         data.questions = Array.from(questionList.map((q) => q.q))
         data.ids = Array.from(questionList.map((q) => q.id))
         data.responses = Array.from(questionList.map((q) => q.response))
-        // data.isSpoiler = Array.from(questionList.map((q) => q.isSpoiler))
-        data.spoilers = [false]
+        data.spoilers = Array.from(questionList.map((q) => q.is_spoiler))
         return data;
     }
 }

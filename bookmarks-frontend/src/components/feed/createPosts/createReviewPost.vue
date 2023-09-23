@@ -55,7 +55,7 @@
                         ></textarea>
                         <div class="flex gap-5 space-between">
                             <div>
-                                <SpoilerRadioGroup :model-object="q.is_spoiler" @is-spoiler-event="handleSpoilers"/>
+                                <SpoilerRadioGroup :model-object="q" @is-spoiler-event="handleSpoilers"/>
                             </div>
 
                             <div class="grid grid-cols-2 gap-5">
@@ -120,10 +120,10 @@ const questionMapping = {
 }
 
 const store = stateCtrl;
-const isPostableData = ref(false)
+
 const questionDict = ref({});
 const entries = ref([]);
-
+const spoilers = ref([])
 // functions
 const emit = defineEmits();
 
@@ -140,6 +140,12 @@ function bookIdHandler(e) {
 function handleCustomQuestionEmit(e) {
     entries.value.push(e)
     console.log(entries.value)
+}
+
+function handleSpoilers(e){
+    const index = questionMapping[currentTopic.value].indexOf(e)
+    questionMapping[currentTopic.value].splice(index, index + 1, e)
+    console.log(questionMapping[currentTopic.value]);
 }
 
 watch(entries, () => {

@@ -12,7 +12,7 @@
                     type="radio"
                     :value="bool"
                     name="radio-group-bool"
-                    v-model="modelObject"
+                    v-model="modelObject.is_spoiler"
                     @change="emit('is-spoiler-event', modelObject)"
                 >
                 <span class="inline">{{ bool === true ? 'yes' : 'no' }}</span>

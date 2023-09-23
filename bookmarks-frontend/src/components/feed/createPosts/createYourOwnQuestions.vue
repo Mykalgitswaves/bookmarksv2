@@ -28,7 +28,7 @@
             v-model="q.response"
         ></textarea>
         
-        <SpoilerRadioGroup :model-object="q.isSpoilers" @is-spoiler-event="handleSpoilers"/>
+        <SpoilerRadioGroup :model-object="q" @is-spoiler-event="handleSpoilers"/>
 
         <button 
             type="button"
@@ -49,7 +49,7 @@
     const q = {}
     q.question = null;
     q.response = null;
-    q.isSpoilers = null;
+    q.is_spoiler = null;
 
     function saveQuestionToSet(question, response, spoilers) {
         console.log(question, response, spoilers)
@@ -59,7 +59,7 @@
     }
 
     function handleSpoilers(e) {
-        q.isSpoilers = e
+        q.is_spoiler = e.is_spoiler
     }
 </script>
 <style scoped>
