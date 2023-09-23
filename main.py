@@ -1,7 +1,11 @@
 import json
 from database.db_helpers import (
     User,
-    Review,
+    ReviewPost,
+    UpdatePost,
+    ComparisonPost,
+    MilestonePost,
+    RecommendationPost,
     Book,
     Author,
     Genre,
@@ -172,6 +176,24 @@ async def login_for_access_token(
     # NEed to retunr user.user_id for routing here @Kyle.
     return {"token":{"access_token": access_token, "token_type": "bearer"}, "user":{"uuid":user.user_id}}
 
+@app.post("/token")
+async def login_for_access_token(
+    form_data: Annotated[OAuth2PasswordRequestForm, Depends()]
+):
+    user = authenticate_user(form_data.username, form_data.password)
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Incorrect username or password",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    access_token = create_access_token(
+        data={"sub": user.username}, expires_delta=access_token_expires
+    )
+    # NEed to retunr user.user_id for routing here @Kyle.
+    return {"token":{"access_token": access_token, "token_type": "bearer"}, "user":{"uuid":user.user_id}}
+
 @app.post("/api/create-login", response_model=Token)
 async def post_create_login_user(form_data:Annotated[OAuth2PasswordRequestForm, Depends()]):
         """
@@ -180,7 +202,7 @@ async def post_create_login_user(form_data:Annotated[OAuth2PasswordRequestForm, 
         print(form_data)
         password = get_password_hash(form_data.password)
         username = form_data.username
-        print(username, password, form_data)
+        # print(username, password, form_data)
 
         if username and password:
             try:
@@ -424,3 +446,120 @@ async def search_for_param(param: str, skip: int=0, limit: int=5):
     driver.close()
    
     return JSONResponse(content={"data": jsonable_encoder(search_result)})
+
+@app.post("/api/review/create_review")
+async def create_review(request: Request, current_user: Annotated[User, Depends(get_current_active_user)]):
+    """
+    Creates a post of type Review
+    
+    {"book_id":,
+     "headline":,
+     "content":[{id:,text,responses,spoilers},]
+     questions:[]
+     ids:[]
+     responses:[]
+     spoilers:[]
+     }
+
+    """
+    if not current_user:
+        raise HTTPException("401","Unauthorized")
+
+    response = await request.json()
+    
+    review = ReviewPost(id='',book=response['book_id'],user_username=current_user.username,headline=response['headline'],
+                        questions=response['questions'],question_ids=response['ids'],responses=response['responses'],spoilers=response['spoilers'])
+    review.create_post()
+
+    return JSONResponse(content={"data": jsonable_encoder(review)})
+
+@app.post("/api/review/create_update")
+async def create_update(request: Request, current_user: Annotated[User, Depends(get_current_active_user)]):
+    """
+    Creates a post of type Update
+    
+    {"book_id":,
+     "headline":,
+     "page",
+     questions:[]
+     ids:[]
+     responses:[]
+     spoilers:[]
+     }
+
+    """
+    if not current_user:
+        raise HTTPException("401","Unauthorized")
+
+    response = await request.json()
+    
+    update = UpdatePost(id='',book=response['book_id'],user_username=current_user.username,headline=response['headline'],page=response['page'],
+                        questions=response['questions'],question_ids=response['ids'],responses=response['responses'],spoilers=response['spoilers'])
+    update.create_post()
+
+    return JSONResponse(content={"data": jsonable_encoder(update)})
+
+@app.post("/api/review/create_comparison")
+async def create_comparison(request: Request, current_user: Annotated[User, Depends(get_current_active_user)]):
+    """
+    Creates a post of type Comparison
+    
+    {"book_id":,
+     "headline":,
+     compared_books:[]
+     comparators:[]
+     comparator_ids:[]
+     responses:[]
+     book_specific_responses:[[]]
+     }
+    """
+    if not current_user:
+        raise HTTPException("401","Unauthorized")
+
+    response = await request.json()
+    
+    comparison = ComparisonPost(id='',book=response['compared_books'],user_username=current_user.username,headline=response['headline'],
+                   comparators=response['comparators'],comparator_ids=response['comparator_ids'],responses=response['responses'],book_specific_responses=response['book_specific_responses'])
+    comparison.create_post()
+
+    return JSONResponse(content={"data": jsonable_encoder(comparison)})
+
+@app.post("/api/review/create_recommendation_friend")
+async def create_recommendation_friend(request: Request, current_user: Annotated[User, Depends(get_current_active_user)]):
+    """
+    Creates a post of type RecommendationFriend
+    
+    {"book_id":,
+     "to_user_username":,
+     "from_user_text":,
+     "to_user_text":
+     }
+    """
+    if not current_user:
+        raise HTTPException("401","Unauthorized")
+
+    response = await request.json()
+    
+    recommendation = RecommendationPost(id='',book=response['book_id'],user_username=current_user.username,to_user_username=response['to_user_username'],
+                                        from_user_text=response['from_user_text'],to_user_text=response['to_user_text'])
+    recommendation.create_post()
+
+    return JSONResponse(content={"data": jsonable_encoder(recommendation)})
+
+@app.post("/api/review/create_milestone")
+async def create_milestone(request: Request, current_user: Annotated[User, Depends(get_current_active_user)]):
+    """
+    Creates a post of type Milestone
+    
+    {"num_books":
+     }
+    """
+    if not current_user:
+        raise HTTPException("401","Unauthorized")
+
+    response = await request.json()
+    
+    milestone = MilestonePost(id='',book="",user_username=current_user.username, num_books=response['num_books'])
+    milestone.create_post()
+
+    return JSONResponse(content={"data": jsonable_encoder(milestone)})
