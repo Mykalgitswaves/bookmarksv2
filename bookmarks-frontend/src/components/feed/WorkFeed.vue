@@ -14,9 +14,11 @@
         
       </button>
       <button
+        v-if="toggleCreateReviewType"
         type="button"
-        class="flex-center justify-center px-3 py-2 rounded-md color-white bg-indigo-600"
-        v-if="emittedPostData.length"
+        class="flex-center justify-center px-3 py-2 rounded-md "
+        :class="emittedPostData.length ? 'bg-indigo-600 color-white' : 'bg-slate-200 text-slate-600'"
+        @click="postToEndpoint()"
       >
         <IconAddPost/>
         Post
@@ -91,8 +93,8 @@ const user = route.params.user;
 const toggleCreateReviewType = ref(false);
 const selectDropdown = ref(false);
 const bookData = ref(null);
+const isPostableData = ref(null)
 const postOptions = ['review', 'update', 'comparison'];
-
 const mapping = {
   "review": createReviewPost,
   "update": createUpdatePost
@@ -114,13 +116,33 @@ function selectHandler(option) {
   postTypeMapping.value = option;
 }
 
-let emittedPostData = []
+let emittedPostData = ref([])
 
 function handlePost(e) {
-  emittedPostData = e
+  console.log('emitted to work feed', e)
+  emittedPostData.value = e
+}
+
+const urlsMapping = {
+  "review": urls.reviews.review,
+  "update": urls.reviews.update,
+}
+
+
+async function postToEndpoint() {
+  return await db.post(urlsMapping[postTypeMapping.value], emittedPostData, true)
 }
 
 const books = computed(() => (bookData.value ? bookData.value.data : ''))
+
+watch(emittedPostData.value, (oldValue, newValue) => {
+  if(newValue) {
+    console.log(newValue)
+    isPostableData.value = true;
+  } else {
+    isPostableData.value = false;
+  }
+})
 
 </script>
 

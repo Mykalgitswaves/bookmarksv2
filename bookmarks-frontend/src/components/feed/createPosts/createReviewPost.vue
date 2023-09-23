@@ -55,13 +55,13 @@
                         ></textarea>
                         <div class="flex gap-5 space-between">
                             <div>
-                                <SpoilerRadioGroup @is-spoiler-event="handleSpoilers"/>
+                                <SpoilerRadioGroup :model-object="q.is_spoiler" @is-spoiler-event="handleSpoilers"/>
                             </div>
 
                             <div class="grid grid-cols-2 gap-5">
                                 <button 
                                     type="button"
-                                    class="block btn-add "
+                                    class="block btn-add"
                                     :class="q.response !== '' ? 'added' : ''"
                                     @click="store.add(q) && loadAndUpdateState()"
                                 >
@@ -95,6 +95,7 @@
 import { ref, defineEmits, toRaw, watch } from 'vue'
 import { postData } from '../../../../postsData.js';
 import { stateCtrl } from '../../../stores/createPostStore';
+import { helpersCtrl } from '../../../services/helpers';
 import SearchBooks from './searchBooks.vue';
 import CreateYourOwnQuestions from './createYourOwnQuestions.vue';
 import SpoilerRadioGroup from './spoilerRadioGroup.vue';
@@ -124,7 +125,8 @@ const questionDict = ref({});
 const entries = ref([]);
 
 // functions
-const emit = defineEmits()
+const emit = defineEmits();
+
 function loadAndUpdateState() {
     store.state()
     entries.value = [...store.toArray()]
@@ -141,13 +143,15 @@ function handleCustomQuestionEmit(e) {
 }
 
 watch(entries, () => {
-    emit('is-postable-data', entries.value)
+    emit('is-postable-data', helpersCtrl.formatReviewData(entries.value, book.value.id, 'fix this at a later date'))
 })
 
 // Watch to see if value changed and if it does then recreate object.
 watch(currentTopic, () => {
     characterQuestions = JSON.parse(JSON.stringify(postData.posts.review[currentTopic.value]));
 })
+
+
 
 </script>
 
@@ -162,6 +166,7 @@ watch(currentTopic, () => {
     border-radius: .25rem;
     background-color: rgb(129 140 248);
     padding: .75rem 2rem;
+    max-height: 50px;
 }
 
 .added {
@@ -205,4 +210,8 @@ textarea {
     width: 100%;
 }
 
+
+button {
+    max-height: 50px;
+}
 </style>

@@ -12,16 +12,21 @@
                     type="radio"
                     :value="bool"
                     name="radio-group-bool"
-                    v-model="isSpoilers"
-                    @change="emit('is-spoiler-event', isSpoilers)"
+                    v-model="modelObject"
+                    @change="emit('is-spoiler-event', modelObject)"
                 >
                 <span class="inline">{{ bool === true ? 'yes' : 'no' }}</span>
             </label>
         </div>
 </template>
 <script setup>
-import { defineEmits } from 'vue'
-let isSpoilers = null
+import { defineEmits, computed, toRaw } from 'vue'
+const props = defineProps({
+    modelObject: Object
+})
+
+const modelObject = computed(() => (props.modelObject))
+
 const emit = defineEmits();
 
 

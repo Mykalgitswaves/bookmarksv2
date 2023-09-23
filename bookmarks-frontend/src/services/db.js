@@ -54,12 +54,15 @@ export const db = {
     },
     // Can use raw params not strinfigied,can even pass in proxy
     post: async (url, params, debug, successRouterFunction) => {
+        const token = helpersCtrl.getCookieByParam(['token']);
+        console.log(token)
         // Check if you are passing in proxy and if you are convert it to a raw object before posting to database.
         try {
         params = typeof params === Proxy ? toRaw(params) : params
             const response = await fetch(url, {
                 method: 'POST',
                 headers: {
+                    Authorization: `Bearer ${token}`,
                     Accept: 'application.json',
                     'Content-Type': 'application/json',
                   },

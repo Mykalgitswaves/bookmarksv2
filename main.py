@@ -454,7 +454,6 @@ async def create_review(request: Request, current_user: Annotated[User, Depends(
     
     {"book_id":,
      "headline":,
-     "content":[{id:,text,responses,spoilers},]
      questions:[]
      ids:[]
      responses:[]
@@ -466,8 +465,9 @@ async def create_review(request: Request, current_user: Annotated[User, Depends(
         raise HTTPException("401","Unauthorized")
 
     response = await request.json()
-    
-    review = ReviewPost(id='',book=response['book_id'],user_username=current_user.username,headline=response['headline'],
+    response = response['_value']
+
+    review = ReviewPost(post_id='',book=response['book_id'],user_username=current_user.username,headline=response['headline'],
                         questions=response['questions'],question_ids=response['ids'],responses=response['responses'],spoilers=response['spoilers'])
     review.create_post()
 
@@ -493,7 +493,8 @@ async def create_update(request: Request, current_user: Annotated[User, Depends(
 
     response = await request.json()
     
-    update = UpdatePost(id='',book=response['book_id'],user_username=current_user.username,headline=response['headline'],page=response['page'],
+
+    update = UpdatePost(post_id='',book=response['book_id'],user_username=current_user.username,headline=response['headline'],page=response['page'],
                         questions=response['questions'],question_ids=response['ids'],responses=response['responses'],spoilers=response['spoilers'])
     update.create_post()
 

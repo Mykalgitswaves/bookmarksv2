@@ -28,7 +28,7 @@
             v-model="q.response"
         ></textarea>
         
-        <SpoilerRadioGroup @is-spoiler-event="handleSpoilers"/>
+        <SpoilerRadioGroup :model-object="q.isSpoilers" @is-spoiler-event="handleSpoilers"/>
 
         <button 
             type="button"

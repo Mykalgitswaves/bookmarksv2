@@ -36,7 +36,7 @@
       const route = useRoute();
       onMounted(() => {
         // Passing strings of url and uuid to authenticate function.
-        // return db.authenticate(urls.authUrl, route.params.user);
+        return db.authenticate(urls.authUrl, route.params.user);
       });
 </script>
 <style scoped>
