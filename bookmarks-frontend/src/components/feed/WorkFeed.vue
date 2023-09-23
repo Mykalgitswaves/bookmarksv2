@@ -38,6 +38,8 @@
     </button>
     </div>
 
+    
+
       <component :is="mapping[postTypeMapping]" :key="postTypeMapping" v-if="toggleCreateReviewType"/>
 
 
