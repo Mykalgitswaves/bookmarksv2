@@ -3,11 +3,10 @@
   <h1 class="text-center text-4xl font-medium mb-16">Log in</h1>
 
   <form
-    class="grid grid-cols-1 w-80 h-80 gap-2 place-content-center"
+    class="grid grid-cols-1 h-80 gap-2 place-content-center px-5"
     @submit.prevent="submitForm()"
     method="POST"
   >
-    <p class="text-center text-xl text-indigo-600 mb-5">Already have an account?</p>
     <label class="gray-700">Enter your email</label>
     <input
       class="py-2 px-4 rounded-md border-2 border-indigo-200"
@@ -49,18 +48,10 @@
   <div class="grid mt-10 text-center">
   <RouterLink to="/create-user">
     <button type="button" class="my-2">
-        For readers
+        <span class="italic">For readers</span><br>
         <span class="text-md text-indigo-600 font-semibold underline underline-offset-2">
         create an account
         </span>
-    </button>
-  </RouterLink>
-
-  <RouterLink to="/create-user-writer">
-    <button type="button" class="my-2">
-      
-        For writers<span class="text-md text-indigo-500 font-semibold underline underline-offset-2">
-        create an account</span>
     </button>
   </RouterLink>
 </div>

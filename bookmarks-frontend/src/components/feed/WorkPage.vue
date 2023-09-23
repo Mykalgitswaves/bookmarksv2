@@ -1,8 +1,7 @@
 <template>
     <section class="works-page-wrapper-margin">
     <TransitionGroup name="work-page">
-            <p class="text-xl font-semibold lh-fix"><button type="button" v-if="loaded">works page</button><span v-if="!loaded">Good things come to those who wait...</span></p>
-            <button type="button" @click="backToFeed">Back</button>
+            <button type="button" class="px-3 py-2 bg-indigo-500 text-white rounded-md" @click="backToFeed">Back</button>
             <div :class="'works-wrapper shadow-lg mt-5 ' + activeWork">
                 <div class="">
                     <img :src="image" :alt="title + 'image'" v-if="loaded">
