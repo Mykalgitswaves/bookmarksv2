@@ -303,7 +303,7 @@ class Neo4jDriver():
             # print(user.books, user.reviews, user.want_to_read, user.authors, user.genres, user.reading, user.friends, user.username, user.created_date)
         return(user)
     @staticmethod
-    def pull_user_node_query(tx,user_id):
+    def pull_user_node_query(tx,user_id): # TODO: Honestly redo this whole query shits garbage
         # TODO: 
         query = """
                 match (u:User {id: $user_id})-[r]-(b) return TYPE(r),Labels(b),b.id,u.username,u.created_date,u.email,u.disabled
@@ -322,9 +322,8 @@ class Neo4jDriver():
                     user.authors.append(response["b.id"]) 
                 elif response["Labels(b)"] == ["Genre"]:
                     user.genres.append(response["b.id"])
-                elif response["Labels(b)"] == ["Review"]:
+                elif response["Labels(b)"] == ["Review"]: # TODO: Fix this for new review types
                     user.liked_reviews.append(response["b.id"])
-            # Kyle i added this because i was getting error referencing before assignments on my put request.
             elif response["TYPE(r)"] == "HAS_FRIEND":
                 user.friends.append(response["b.id"])
             elif response["u.username"]:
@@ -398,7 +397,7 @@ class Neo4jDriver():
                 match (uu:User {id: $user_id}) match (aa:Author {id: $author_id}) merge (uu)-[rr:LIKES]->(aa)
                 """
         result = tx.run(query, user_id=user_id, author_id=author_id)
-    def add_liked_review(self, user_id, review_id):
+    def add_liked_review(self, user_id, review_id): #TODO Fix this after we redo review likes
         """
         Adds a liked review for a user
         
@@ -493,50 +492,7 @@ class Neo4jDriver():
         user = User(user_id=user_id,username=username, hashed_password=password, disabled=False)
         user.created_date = response['u.created_date']
         return(user)
-    def pull_review_node(self,review_id):
-        """
-        Returns all the metadata for a review
-        Args:
-            review_id: PK of review to retrieve
-        Returns:
-            Review: review object with metadata
-        """
-        with self.driver.session() as session:
-            result = session.execute_write(self.pull_review_node_query, review_id)
-        return(result)
-    @staticmethod
-    def pull_review_node_query(tx, review_id):
-        query = """
-                match (rn:Review {id: $review_id})-[r]-(b) return TYPE(r),b.id,rn.rating
-                """
-        result = tx.run(query, review_id=review_id)
-        for response in result:
-            if response['TYPE(r)'] == "WROTE_REVIEW":
-                user_id = response["b.id"]
-            elif response['TYPE(r)'] == "IS_REVIEW_OF":
-                book_id = response["b.id"]
-        rating = response['rn.rating']
-        review = Review(review_id=review_id,user=user_id,book=book_id,rating=rating)
-        return(review)
-    def change_review_rating(self,review_id,new_rating):
-        """
-        Changes the rating associated with a review in the DB
-        Args:
-            review_id: PK for the review to be altered
-            new_rating: New rating for the review
-        Returns:
-            None
-        """
-        with self.driver.session() as session:
-            result = session.execute_write(self.create_user_query, review_id, new_rating)
-    @staticmethod
-    def change_review_rating_query(tx,review_id,new_rating):
-        query = """
-                match (r:Rating {id:$review_id})
-                set r += {rating:$new_rating}
-                """
-        result = tx.run(query,review_id=review_id,new_rating=new_rating)
-        return(result)
+
     def put_name_on_user(self, username, full_name):
         """
         Decorates a user instance with a name.
@@ -560,6 +516,7 @@ class Neo4jDriver():
                 """
         result = tx.run(query, username=username, full_name=full_name)
         return result.single()
+    
     def pull_book_node(self,book_id):
         """
         Pulls all the data from a book in the DB
@@ -606,7 +563,7 @@ class Neo4jDriver():
                 book.tags.append(response["g.id"])
             elif response['TYPE(r)'] == 'HAS_GENRE':
                 book.genres.append(response["g.id"])
-            elif response['TYPE(r)'] == 'IS_REVIEW_OF':
+            elif response['TYPE(r)'] == 'IS_REVIEW_OF': ## TODO update this
                 book.reviews.append(response["g.id"])
             elif response['TYPE(r)'] == 'WROTE':
                 book.authors.append(response["g.id"])
@@ -1120,23 +1077,8 @@ class Neo4jDriver():
             disabled=response["u.disabled"]
         )
         return(user)
-    def add_reviewed_book_setup(self, book_id, user_id, rating):
-        """
-        
-        """
-        with self.driver.session() as session:
-            user = session.execute_write(self.add_reviewed_book_setup_query, book_id, user_id, rating)
-        
-    @staticmethod
-    def add_reviewed_book_setup_query(tx, book_id, user_id, rating):
-        query = """
-                match (u:User {id:$user_id})
-                match (b:Book {id:$book_id}) 
-                merge (u)-[rr:REVIEWED {rating:$rating}]->(b)
-                """
-        result = tx.run(query, user_id=user_id,book_id=book_id, rating=rating)
 
-    def pull_all_reviews_by_user(self):
+    def pull_all_reviews_by_user(self): #TODO Redo this for new review format
         with self.driver.session() as session:
             result = session.execute_read(self.pull_all_reviews_by_user_query)
         return(result)
@@ -1383,7 +1325,7 @@ class Neo4jDriver():
     def create_review_query(tx, review_id, review_post):
         query = """
                 match (u:User {username:$username})
-                match (b:Book {id:$book_id})
+                merge (b:Book {id:$book_id})
                 create (r:Review {id:$review_id, 
                                 created_date:datetime(),
                                 headline:$headline,
@@ -1400,6 +1342,7 @@ class Neo4jDriver():
         response = result.single()
         created_date = response["r.created_date"]
         return(created_date)
+    
     def create_update(self, update_post:UpdatePost):
         """
         Creates a review in the database
@@ -1417,7 +1360,7 @@ class Neo4jDriver():
     def create_update_query(tx, update_id, update_post):
         query = """
             match (u:User {username:$username})
-            match (b:Book {id:$book_id})
+            merge (b:Book {id:$book_id})
             create (d:Update {id:$update_id, 
                             created_date:datetime(),
                             page:$page,
@@ -1435,6 +1378,7 @@ class Neo4jDriver():
         response = result.single()
         created_date = response["d.created_date"]
         return(created_date)
+    
     def create_comparison(self, comparison_post:ComparisonPost):
         """
         Creates a review in the database
@@ -1452,8 +1396,8 @@ class Neo4jDriver():
     def create_comparison_query(tx, comparison_id, comparison_post):
         query = """
         match (u:User {username:$username})
-        match (b:Book {id:$book_id_1})
-        match (bb:Book {id:$book_id_2})
+        merge (b:Book {id:$book_id_1})
+        merge (bb:Book {id:$book_id_2})
         create (c:Comparison {id:$comparison_id, 
                             created_date:datetime(),
                             headline:$headline,
@@ -1485,6 +1429,7 @@ class Neo4jDriver():
         response = result.single()
         created_date = response["c.created_date"]
         return(created_date)
+    
     def create_recommendation_post(self, recommendation_post:RecommendationPost):
         """
         Creates a review in the database
@@ -1503,7 +1448,7 @@ class Neo4jDriver():
         query = """
         match (u:User {username:$username})
         match (f:User {username:$to_user_username})
-        match (b:Book {id:$book_id})
+        merge (b:Book {id:$book_id})
         create (r:RecommendationFriend {id:$recommendation_id, 
                                         created_date:datetime(),
                                         from_user_text:$from_user_text,
@@ -1518,6 +1463,7 @@ class Neo4jDriver():
         response = result.single()
         created_date = response["r.created_date"]
         return(created_date)
+    
     def create_milestone(self, milestone_post:MilestonePost):
         """
         Creates a review in the database

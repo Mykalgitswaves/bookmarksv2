@@ -492,7 +492,7 @@ async def create_update(request: Request, current_user: Annotated[User, Depends(
         raise HTTPException("401","Unauthorized")
 
     response = await request.json()
-    
+    response = response['_value']
 
     update = UpdatePost(post_id='',book=response['book_id'],user_username=current_user.username,headline=response['headline'],page=response['page'],
                         questions=response['questions'],question_ids=response['ids'],responses=response['responses'],spoilers=response['spoilers'])
@@ -518,8 +518,9 @@ async def create_comparison(request: Request, current_user: Annotated[User, Depe
         raise HTTPException("401","Unauthorized")
 
     response = await request.json()
-    
-    comparison = ComparisonPost(id='',book=response['compared_books'],user_username=current_user.username,headline=response['headline'],
+    response = response['_value']
+
+    comparison = ComparisonPost(post_id='',book=response['compared_books'],user_username=current_user.username,headline=response['headline'],
                    comparators=response['comparators'],comparator_ids=response['comparator_ids'],responses=response['responses'],book_specific_responses=response['book_specific_responses'])
     comparison.create_post()
 
@@ -540,8 +541,9 @@ async def create_recommendation_friend(request: Request, current_user: Annotated
         raise HTTPException("401","Unauthorized")
 
     response = await request.json()
+    response = response['_value']
     
-    recommendation = RecommendationPost(id='',book=response['book_id'],user_username=current_user.username,to_user_username=response['to_user_username'],
+    recommendation = RecommendationPost(post_id='',book=response['book_id'],user_username=current_user.username,to_user_username=response['to_user_username'],
                                         from_user_text=response['from_user_text'],to_user_text=response['to_user_text'])
     recommendation.create_post()
 
@@ -559,8 +561,9 @@ async def create_milestone(request: Request, current_user: Annotated[User, Depen
         raise HTTPException("401","Unauthorized")
 
     response = await request.json()
+    response = response['_value']
     
-    milestone = MilestonePost(id='',book="",user_username=current_user.username, num_books=response['num_books'])
+    milestone = MilestonePost(post_id='',book="",user_username=current_user.username, num_books=response['num_books'])
     milestone.create_post()
 
     return JSONResponse(content={"data": jsonable_encoder(milestone)})
