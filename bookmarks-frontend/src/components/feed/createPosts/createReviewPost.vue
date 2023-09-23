@@ -1,7 +1,10 @@
 <template>
-<div>
+    <p class="text-2xl mt-5 font-semibold">Start by picking a book 
+    </p>
+    <SearchBooks/>
+<div v-if="hasBookSelected">
     <p class="text-2xl my-5 font-semibold">The content monster is hungry for your thoughts 🍪. 
-        <span class="text-indigo-400 font font-medium"><br>Answering some prompts might suffice?
+        <span class="text-indigo-500 font font-medium"><br>Pick a genre and answer some questions.
         </span>
     </p>
 
@@ -64,16 +67,19 @@
                     </TransitionGroup>
             </li>
     </ul>
+    <p class="text-2xl my-5 text-indigo-500 font-medium">Or make your own questions</p>
+    <div class="mobile-menu-spacer sm:hidden"></div>
 </div>
-<div class="mobile-menu-spacer sm:hidden"></div>
 </template>
 <script setup>
 import { ref, computed, toRaw, watch } from 'vue'
 import { postData } from '../../../../postsData.js';
 import { stateCtrl } from '../../../stores/createPostStore';
-
+import SearchBooks from './searchBooks.vue';
 const questionCats = Array.from(Object.keys(postData.posts.review))
 console.log(questionCats)
+
+const hasBookSelected = ref(false);
 // Defaults to character, this change will dictate the questions rendered. we can model it.
 const currentTopic = ref('character');
 
@@ -86,6 +92,7 @@ function loadAndUpdateState() {
     entries.value = [...store.toArray()]
     console.log(entries.value, 'Re-Loaded store')
 }
+
 
 const questionDict = ref({});
 const entries = ref([]);
@@ -160,6 +167,9 @@ textarea {
   opacity: 0;
 }
 
+.questions {
+    min-height: 350px
+}
 .questions .box-btn {
     width: 100%;
 }

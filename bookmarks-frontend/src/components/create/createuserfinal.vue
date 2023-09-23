@@ -78,7 +78,7 @@ export default {
       let authors = store.getAuthorsIds
       if(token && authors) {
       try {
-        await fetch('http://127.0.0.1:8000/setup-reader/authors', {
+        await fetch('http://127.0.0.1:8000/setup-reader/authors/', {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',

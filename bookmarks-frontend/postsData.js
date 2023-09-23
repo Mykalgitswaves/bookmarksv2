@@ -1,19 +1,29 @@
 export const postData = {
     "posts": { 
         "review": {
-                    "character": [
+                    "all": [
                         {
-                            "index": 0,
-                            "id": 1,
-                            "q" :"what do you think about the protagonist",
+                            "index": 10,
+                            "id": 10,
+                            "q" :"what is this book about?",
                             "type": "character",
                             "response": '',
                             "is_spoiler": null,
                         },
                         {
-                            "index": 1,
-                            "id": 2,
-                            "q" :"what do you think about the relationship between the protagonist(s) and antagonist(s)",
+                            "index": 11,
+                            "id": 11,
+                            "q" :"what do you like about this book?",
+                            "type": "character",
+                            "response": '',
+                            "is_spoiler": null,
+                        },
+                    ],
+                    "character": [
+                        {
+                            "index": 0,
+                            "id": 1,
+                            "q" :"what do you think about the protagonist",
                             "type": "character",
                             "response": '',
                             "is_spoiler": null,
@@ -67,7 +77,27 @@ export const postData = {
                           }
                     ],
                     "tone": [
-                    
+                        {  
+                            "index": 0,
+                            "id": 1,
+                            "q": "Did you find the overall tone of the book satisfying? Why or why not?",
+                            "response": "",
+                            "is_spoiler": false
+                          },
+                          {
+                            "index": 1, 
+                            "id": 2, 
+                            "q": "How would you describe the tone and atmosphere of the key settings in the book?",
+                            "response": "",
+                            "is_spoiler": false
+                          },
+                          {
+                            "index": 2,
+                            "id": 3,
+                            "q": "Were there any shifts in tone that stood out to you? If so, what purpose did they serve?",
+                            "response": "",
+                            "is_spoiler": false
+                          }
                     ]
         },
         "update": {},
