@@ -1,3 +1,11 @@
 .space-between {
     justify-content: space-between;
 }
+
+.content-end {
+    align-content: end;
+}
+
+.items-end {
+    align-items: end;
+}

@@ -1,26 +1,28 @@
 <template>
-    <p class="mb-2 italic text-slate-600">spoilers?</p>
+    <p class="mb-1 italic text-slate-600 text-small">spoilers?</p>
         <div class="radio-group">
-            <label
-                class="radio-select flex"
-                :for="`radio-group-${bool}`" 
-                v-for="(bool, index) in [true, false]"
-                :key="index"
-            >
-                <input
-                    :id="`radio-group-${bool}`"
-                    type="radio"
-                    :value="bool"
-                    name="radio-group-bool"
-                    v-model="modelObject.is_spoiler"
-                    @change="emit('is-spoiler-event', modelObject)"
+            <KeepAlive>
+                <label
+                    class="radio-select flex"
+                    :for="`radio-group-${modelObject.id}-id`" 
+                    v-for="(bool, index) in [true, false]"
+                    :key="index"
                 >
-                <span class="inline">{{ bool === true ? 'yes' : 'no' }}</span>
-            </label>
+                    <input
+                        :id="`radio-group-${modelObject.id}-id`"
+                        type="radio"
+                        :value="bool"
+                        :name="`radio-group-${modelObject.id}-bool`"
+                        v-model="modelObject.is_spoiler"
+                        @change="emit('is-spoiler-event', modelObject)"
+                    >
+                    <span class="inline">{{ bool === true ? 'yes' : 'no' }}</span>
+                </label>
+            </KeepAlive>
         </div>
 </template>
 <script setup>
-import { defineEmits, computed, toRaw } from 'vue'
+import { defineEmits, computed } from 'vue'
 const props = defineProps({
     modelObject: Object
 })

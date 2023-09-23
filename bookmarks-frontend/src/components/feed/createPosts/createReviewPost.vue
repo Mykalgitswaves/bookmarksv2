@@ -10,8 +10,14 @@
     <div v-if="book" class="container">
         <div class="my-5">
             <p class="mb-2">You're reviewing <span class=" block italic text-indigo-500">{{ book.title }}</span></p>
-            <p class="text-2xl font-medium">Pick a genre and answer some questions.</p>
         </div>
+        <div class>
+            <p class="text-2xl font-medium my-5 text-slate-600">Add a headline for your review.</p>
+            <label for=""></label>
+            <input type="text" class="">
+        </div>
+
+        <p class="text-2xl font-medium my-5 text-slate-600">Pick a topic to answer some questions.</p>
 
         <div class="radio-group">
             <label
@@ -37,7 +43,7 @@
                     class="text-start my-3 text-lg question-border px-5 py-5 cursor-pointer w-100 box-btn"
                     @click="questionDict[q.id] = q"
                 >
-                    {{ q.q }}?
+                    <span class="block">{{ q.q }}?</span>
                     <span class="block text-slate-400" :key="q.response">
                         {{ q.response }}
                     </span>
@@ -47,21 +53,24 @@
             <TransitionGroup name="list" tag="li">
                     <div v-if="questionDict[q.id]">
                         <textarea 
+                            :ref="(el) => isAddDisabled(el)"
                             class="border-2"
                             :name="q.type"
                             :id="q.index"
                             cols="" rows="7"
                             v-model="q.response"
+                            @change="isAddDisabled(el)"
                         ></textarea>
                         <div class="flex gap-5 space-between">
                             <div>
                                 <SpoilerRadioGroup :model-object="q" @is-spoiler-event="handleSpoilers"/>
                             </div>
 
-                            <div class="grid grid-cols-2 gap-5">
+                            <div class="flex gap-5 items-end">
                                 <button 
+                                    :disabled="canAdd === false"
                                     type="button"
-                                    class="block btn-add"
+                                    class="block btn-add max-h-50"
                                     :class="q.response !== '' ? 'added' : ''"
                                     @click="store.add(q) && loadAndUpdateState()"
                                 >
@@ -71,7 +80,7 @@
 
                                 <button
                                     type="button"
-                                    class="px-3 py-2 bg-red-500 text-white rounded-md"
+                                    class="px-3 py-3 bg-red-500 text-white rounded-md max-h-50"
                                     @click="questionDict[q.id] = null">
                                 Hide
                                 </button>
@@ -105,6 +114,7 @@ const questionCats = Array.from(Object.keys(postData.posts.review))
 
 // Refs
 const book = ref(null);
+const canAdd = ref(false);
 // Defaults to character, this change will dictate the questions rendered. we can model it.
 const currentTopic = ref('character');
 let characterQuestions = JSON.parse(JSON.stringify(postData.posts.review['character']));
@@ -146,6 +156,10 @@ function handleSpoilers(e){
     const index = questionMapping[currentTopic.value].indexOf(e)
     questionMapping[currentTopic.value].splice(index, index + 1, e)
     console.log(questionMapping[currentTopic.value]);
+}
+
+function isAddDisabled(el) {
+    ref(el).value > 5 ? canAdd.value = true : canAdd.value = false;
 }
 
 watch(entries, () => {
@@ -210,14 +224,16 @@ textarea {
 }
 
 .questions {
-    min-height: 250px
+    min-height: 250px;
 }
 .questions .box-btn {
     width: 100%;
+    padding: 1ch;
+    line-height: 1.2;
 }
 
 
-button {
+.max-h-50 {
     max-height: 50px;
 }
 </style>
