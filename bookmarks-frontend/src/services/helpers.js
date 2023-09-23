@@ -35,7 +35,6 @@ export const helpersCtrl = {
     * @param {{headline: String}} details - Headline for book review 
     */
     formatReviewData: (questionList, book_id, headline) => {
-        debugger;
         questionList = typeof questionList === Proxy ? toRaw(questionList) : questionList
         const data = {}
         data.book_id = book_id;
