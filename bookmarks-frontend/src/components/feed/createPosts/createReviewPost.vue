@@ -54,7 +54,11 @@
                             v-model="q.response"
                         ></textarea>
                         <div class="flex gap-5 space-between">
-                            <div class="flex gap-5">
+                            <div>
+                                <SpoilerRadioGroup @is-spoiler-event="handleSpoilers"/>
+                            </div>
+
+                            <div class="grid grid-cols-2 gap-5">
                                 <button 
                                     type="button"
                                     class="block btn-add "
@@ -73,9 +77,6 @@
                                 </button>
                             </div>
 
-                            <div>
-                                <SpoilerRadioGroup @is-spoiler-event="handleSpoilers"/>
-                            </div>
                         </div>
                     </div>
                 </TransitionGroup>
@@ -203,4 +204,5 @@ textarea {
 .questions .box-btn {
     width: 100%;
 }
+
 </style>

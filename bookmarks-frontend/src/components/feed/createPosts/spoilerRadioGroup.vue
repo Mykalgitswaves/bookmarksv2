@@ -1,5 +1,5 @@
 <template>
-    <p class="my-2 italic text-slate-600">does this contain spoilers?</p>
+    <p class="mb-2 italic text-slate-600">spoilers?</p>
         <div class="radio-group">
             <label
                 class="radio-select flex"

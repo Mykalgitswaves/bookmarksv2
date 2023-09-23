@@ -1,6 +1,7 @@
 @import 'forms.css';
 @import 'grids.css';
 @import 'helpers.css';
+@import 'flex.css';
 
 @tailwind base;
 @tailwind components;
