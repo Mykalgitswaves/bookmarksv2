@@ -66,7 +66,7 @@ const reviewRange = ref(5)
     bookScore.set(object['book'], object['score'])
     // add raw object to state
     const state = useBookStore()
-    const included = state.books.filter(book => book.id === object['book'])
+    const included = state.getBooks.filter(book => book.id === object['book'])
     if(included < 1){
       state.addBook({
         'id': object['book'], 

@@ -570,7 +570,7 @@ class Neo4jDriver():
             Book: book object containing all the metadata
         """
         with self.driver.session() as session:
-            book = session.execute_write(self.pull_book_node_query, book_id)
+            book = session.execute_write(self.pull_book_node_query, int(book_id))
         return(book)
     @staticmethod
     def pull_book_node_query(tx,book_id):

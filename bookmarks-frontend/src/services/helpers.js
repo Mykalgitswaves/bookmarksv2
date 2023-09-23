@@ -26,5 +26,5 @@ export const helpersCtrl = {
 
         // Return null if param is not found;
         return null;
-    }
+    },
 }

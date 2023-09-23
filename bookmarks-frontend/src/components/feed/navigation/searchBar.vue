@@ -13,7 +13,7 @@
     </div>
     <div class="filter-grid">
         <button
-            :class="'my-2 px-4 py-2 bg-indigo-900 text-indigo-100 rounded-lg ' + hoverStyles"
+            class="my-2 px-4 py-2 bg-indigo-900 text-white rounded-sm"
             type="button"
             name="resetFilters"
             @click="resetFilters"
@@ -22,7 +22,7 @@
         </button>
 
         <button 
-            :class="'my-2 px-4 py-2 bg-indigo-900 text-indigo-100 rounded-lg ' + hoverStyles"
+            class="my-2 px-4 py-2 bg-indigo-900 text-white rounded-sm"
             type="button"
             name="authorsFilter"
             @click="toggleAuthorFilter"
@@ -31,7 +31,7 @@
         </button>
 
         <button 
-            :class="'my-2 px-4 py-2 bg-indigo-900 text-indigo-100 rounded-lg ' + hoverStyles"
+            class="my-2 px-4 py-2 bg-indigo-900 text-white rounded-sm"
             type="button"
             name="booksFilters"
             @click="toggleBooksFilter"
@@ -40,7 +40,7 @@
         </button>
 
         <button 
-            :class="'my-2 px-4 py-2 bg-indigo-900 text-indigo-100 rounded-lg ' + hoverStyles"
+            class="my-2 px-4 py-2 bg-indigo-900 text-white rounded-sm"
             type="button"
             name="usersFilters"
             @click="toggleUsersFilter"
@@ -81,14 +81,19 @@
     color: #5A67D8;
     font-weight: 400;
 }
+
 .searchbar input {
-    width: 280px;
+    max-width: 300px;
+    width: 100%;
 }
 
 .filter-grid {
     display: flex;
     gap: 10px;
+    justify-content: space-between;
+    margin-top: 1ch;
+    max-width: 400px;
 }
-.filter-grid button:hover { color: #26318b;} 
+
 
 </style>

@@ -14,7 +14,83 @@
   line-height: 2ch;
 }
 
+.grid-pills.menu {
+  grid-template-columns: repeat(auto-fit, minmax(12ch, 1fr));
+}
+
 .icon-star {
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' height='12' fill='currentColor' viewBox='0 96 960 960' width='48'%3E%3Cpath d='m323 851 157-94 157 95-42-178 138-120-182-16-71-168-71 167-182 16 138 120-42 178Zm-90 125 65-281L80 506l288-25 112-265 112 265 288 25-218 189 65 281-247-149-247 149Zm247-355Z' /%3E%3C/svg%3E");
 }
 
+.text-white {
+  color: #fff;
+}
+
+:root {
+  --background-container-gradient: linear-gradient(45deg, rgba(245, 248, 254, 0.5), rgba(255,255,255,0));
+  --hover-container-gradient: linear-gradient(45deg, rgba(216, 216, 216, 0.5), rgba(255,255,255,0));
+
+
+  --media-screen-min-tablet: 768px;
+}
+
+.radio-group {
+  display: flex;
+  flex-direction: row;
+  border:  2px solid #818cf8;
+  border-radius: .5rem; 
+  width: fit-content;
+  overflow: clip;
+}
+
+.radio-select {
+  padding: .5ch 1ch;
+  height: fit-content;
+  width: fit-content;
+  background-color: #fff;
+  color: #52525b;
+}
+
+
+.radio-select input {
+  margin-right: 1ch;
+  accent-color: #818cf8;
+}
+
+.radio-select input:checked {
+  accent-color: #3730a3;
+}
+
+.radio-select:has(input:checked) {
+  background: #e0e7ff;
+  color: #1e1b4b;
+}
+
+.btn-relative {
+  position: relative !important;
+}
+
+.popout-flyout {
+  position: absolute;
+  top: 40px;
+  left: 0;
+  margin-top: .25rem;
+  width: 250px;
+  background-color: #fff;
+  border-radius: .25rem;
+  overflow: clip;
+}
+
+.popout-flyout button {
+  display: block;
+  color: #4338ca;
+  width: 100%;
+  text-align: start;
+  padding: 0.2rem 1rem;
+  margin-top: .4rem;
+  margin-bottom: .4rem;
+}
+
+.popout-flyout button:hover {
+  background-color: #eef2ff;
+}

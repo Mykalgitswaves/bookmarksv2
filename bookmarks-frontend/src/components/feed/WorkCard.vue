@@ -65,17 +65,23 @@
   import { useRoute, useRouter } from 'vue-router'; 
 
   const props = defineProps({
-    work: Object,
-    user: Number
+    work: {
+      type: Object,
+      required: true,
+    },
+      user: {
+        type: Number,
+        required: false,
+      }
   })
- 
+
   const route = useRoute();
   const router = useRouter()
   const workPage = `/feed/${route.params.user}/works/${props.work.id}`;
   const isBookmarking = ref(false);
 
 
-  const bookMarkingStyles = computed(() => (isBookmarking.value ? 'bg-indigo-500' : 'not-bookmarking-bg'))
+  const bookMarkingStyles = computed(() => (isBookmarking.value ? 'bg-indigo-500' : ''))
 
   function toAuthorPage(id) {
     return router.push(`/feed/${route.params.user}/authors/${id}`)
@@ -84,18 +90,16 @@
   function bookMarkIt() {
     isBookmarking.value = !isBookmarking.value;
   }
-
 </script>
 
 <style>
-
-.not-bookmarking-bg { background-color: #F7FAFC; }
 
 .review-card {
   padding: 15px 20px;
   border-radius: .25rem;
   margin-inline: auto;
   min-width: 100%;
+  background: var(--background-container-gradient);
 }
 
 .review-card-top {

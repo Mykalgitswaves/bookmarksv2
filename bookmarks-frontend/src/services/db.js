@@ -35,7 +35,7 @@ export const db = {
     },
         // Note params must be an object for this to work. Use key value.
     get: async (url, params, debug, successRouterFunction) => {
-        params = typeof params === Proxy ? toRaw(params) : params
+        params = (typeof params === Proxy ? toRaw(params) : params)
         try {
             const response = await fetch(url + '?' + new URLSearchParams(params));
             const data = await response.json();
@@ -43,10 +43,11 @@ export const db = {
                     console.log(data, 'data');
                     console.log(response, 'response');
                 }
-                if(response.ok) {
+                if(response.ok || response.status === 200) {
                     if(successRouterFunction) {
                         return data && successRouterFunction
                     }
+                    console.log('returning', data)
                     return data
                 }
         } catch(err) { return console.error(err); }

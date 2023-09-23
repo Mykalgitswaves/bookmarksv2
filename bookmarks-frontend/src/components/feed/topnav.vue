@@ -18,7 +18,7 @@
         />
         
         <div class="navbar-text">
-            <p class="text-slate-800 font-semibold text-xl">{{ user.fullName }} Bookmarks</p>
+            <p class="text-slate-800 font-semibold text-xl">{{ user.fullName }}</p>
             <p><span v-for="(genre, index) in user.genres" :key="index">{{ genre + helpersCtrl.commanator(index, user.genres.length)}}</span></p>
         </div>
       </div>

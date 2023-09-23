@@ -1,5 +1,5 @@
 <template>
-  <main class="w-screen h-screen bg-gray-100 relative">
+  <main class="w-screen bg-white relative">
     <RouterView />
   </main>
 </template>
@@ -13,6 +13,8 @@ export default {
 <style>
 html {
   --tw-bg-opacity: 1;
-  background-color: rgb(243 244 246 / var(--tw-bg-opacity));
+  background-color: #fff;
 }
+
+
 </style>

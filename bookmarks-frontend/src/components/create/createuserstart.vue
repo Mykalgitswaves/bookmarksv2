@@ -13,12 +13,12 @@
       placeholder="Email"
     />
 
-    <label class="gray-700" for="password">Password</label>
+    <label class="gray-700" for="password">Enter a strong word you can remember <br><span class="text-gray-500">(password)</span></label>
     <input
       class="py-2 px-4 rounded-md border-2 border-indigo-200"
       v-model="formBlob.password"
       name="password"
-      type="text"
+      type="password"
       placeholder="Password"
     />
 

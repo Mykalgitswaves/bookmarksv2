@@ -1,7 +1,7 @@
 <template>
   <TopNav :profilePicture="profilePicture"/>
   <div class="sidebar">
-    <div class="bg-gray-200 main-layout">  
+    <div class="main-layout">  
       <RouterView></RouterView>
     </div>
     <FooterNav/>
@@ -36,12 +36,12 @@
       const route = useRoute();
       onMounted(() => {
         // Passing strings of url and uuid to authenticate function.
-        return db.authenticate(urls.authUrl, route.params.user);
+        // return db.authenticate(urls.authUrl, route.params.user);
       });
 </script>
 <style scoped>
   .main-layout {
-    min-height: 80vh;
+    min-height: 100%;
     width: 100%;
     padding: 1.25rem;
     gap: 2ch;
