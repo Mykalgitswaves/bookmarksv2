@@ -1,0 +1,26 @@
+/* 
+------------------------------------------- 
+    Styles for various grid containers and wrappers 
+    used throughout dash and anon.
+------------------------------------------- 
+*/
+
+/* Used for genres on sign up and auth */
+
+.grid-pills {
+    gap: 1ch;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(12ch, 1fr));
+    justify-items: center;
+    align-items: center;
+  }
+  
+  .grid-pills > * {
+    line-height: 2ch;
+  }
+  
+  .grid-pills.menu {
+    grid-template-columns: repeat(auto-fit, minmax(12ch, 1fr));
+  }
+
+  /* -------------------------------------------  */

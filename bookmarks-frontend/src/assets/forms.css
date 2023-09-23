@@ -1,0 +1,90 @@
+  /*
+  ------------------------------------------- 
+   Styles for forms, flyouts, and inputs
+  ------------------------------------------- 
+  */
+
+
+  /* default flyout styling in forms? */
+
+  .btn-relative {
+    position: relative !important;
+  }
+  
+  .popout-flyout {
+    position: absolute;
+    top: 40px;
+    left: 0;
+    margin-top: .25rem;
+    width: 250px;
+    background-color: #fff;
+    border-radius: .25rem;
+    overflow: clip;
+  }
+  
+  .popout-flyout button {
+    display: block;
+    color: #4338ca;
+    width: 100%;
+    text-align: start;
+    padding: 0.2rem 1rem;
+    margin-top: .4rem;
+    margin-bottom: .4rem;
+  }
+  
+  .popout-flyout button:hover {
+    background-color: #eef2ff;
+  }
+
+  /* -------------------------------------------  */
+
+  /* default radio group styling */
+
+  .radio-group {
+    display: flex;
+    flex-direction: row;
+    border:  2px solid #818cf8;
+    border-radius: .5rem; 
+    width: fit-content;
+    overflow: clip;
+  }
+  
+  .radio-select {
+    padding: .5ch 1ch;
+    height: fit-content;
+    width: fit-content;
+    background-color: #fff;
+    color: #52525b;
+  }
+  
+  
+  .radio-select input {
+    margin-right: 1ch;
+    accent-color: #818cf8;
+  }
+  
+  .radio-select input:checked {
+    accent-color: #3730a3;
+  }
+  
+  .radio-select:has(input:checked) {
+    background: #e0e7ff;
+    color: #1e1b4b;
+  }
+
+  /* -------------------------------------------  */
+
+  /* questions for posts */
+
+  .question-border {
+    border: dotted 2px rgb(229 231 235);
+    transition-duration: 250ms;
+  }
+  
+  .question-border:hover {
+    transform: scale(1.02);
+    transition-duration: 250ms;
+    border-color: rgb(129 140 248);
+  }
+  
+  /* -------------------------------------------  */

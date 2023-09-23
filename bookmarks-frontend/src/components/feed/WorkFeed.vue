@@ -3,6 +3,7 @@
     <div class="flex justify-between">
     <div class="btn-relative">
       <button 
+        v-if="postTypeMapping === ''"
         class="flex-center justify-center px-2 py-2 rounded-md color-white bg-indigo-600"
         type="button"
         @click="selectDropdown = !selectDropdown"
@@ -10,8 +11,16 @@
         <IconPlus />
         
         <span>Make a Post</span>
+        
       </button>
-      
+      <button
+        type="button"
+        class="flex-center justify-center px-3 py-2 rounded-md color-white bg-indigo-600"
+        v-if="emittedPostData.length"
+      >
+        <IconAddPost/>
+        Post
+      </button>
 
       <div 
         v-if="selectDropdown" 
@@ -38,10 +47,12 @@
     </button>
     </div>
 
-    
-
-      <component :is="mapping[postTypeMapping]" :key="postTypeMapping" v-if="toggleCreateReviewType"/>
-
+      <component 
+        v-if="toggleCreateReviewType" 
+        :is="mapping[postTypeMapping]" 
+        :key="postTypeMapping" 
+        @is-postable-data="handlePost"
+      />
 
       <div v-if="!toggleCreateReviewType">
         <p class="pt-4 text-2xl font-medium text-slate-600 mb-5">Recommended Works</p>
@@ -72,6 +83,7 @@ import IconPlus from '../svg/icon-plus.vue'
 import IconExit from '../svg/icon-exit.vue';
 import createReviewPost from './createPosts/createReviewPost.vue';
 import createUpdatePost from './createPosts/createUpdatePost.vue';
+import IconAddPost from '../svg/icon-add-post.vue';
 
 // const store = searchResultStore();
 const route = useRoute();
@@ -89,7 +101,6 @@ const mapping = {
 async function loadData() {
   if(bookData.value === null) {
     bookData.value = await db.get(urls.booksByN, {'limit': 25}, true)
-    console.log('attempting to do this right')
   }
 }
 
@@ -103,19 +114,14 @@ function selectHandler(option) {
   postTypeMapping.value = option;
 }
 
-// function cardDelayFn() {
-//   if (bookData.value !== null) {
-//     return setTimeout(() => {
-//       return true
-//     }, 500)
-//   }
-// }
+let emittedPostData = []
+
+function handlePost(e) {
+  emittedPostData = e
+}
 
 const books = computed(() => (bookData.value ? bookData.value.data : ''))
 
-watch(bookData.value, (oldValue, newValue) => {
-  console.log(newValue, oldValue, 'watching watching watching')
-})
 </script>
 
 <style scoped>

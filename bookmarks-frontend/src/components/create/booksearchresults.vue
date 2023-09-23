@@ -6,7 +6,7 @@
         :key="book.id"
       >
         <li
-          @click="isToggled[book.id] = !isToggled[book.id];"
+          @click="isToggled[book.id] = !isToggled[book.id]; authEmit(book)"
           :class="'flex flex-row gap-5 py-4 px-4 place-content-start bg-gray-100 rounded-md my-3 hover:bg-gray-200 max-w-[700px]' +
             (isToggled[book.id] === true ? 'border-solid border-indigo-200 border-2 bg-indigo-50' : '')"
         >
@@ -19,7 +19,7 @@
           </div>
         </li>
 
-        <div class="inline-block my-1" v-if="isToggled[book.id]">
+        <div class="inline-block my-1" v-if="isToggled[book.id] && !props.isAuth">
           <ul>
             <li v-for="index in reviewRange" :key="index" 
               class="inline-block"
@@ -43,7 +43,7 @@
 
 <script setup>
 import { useBookStore } from '../../stores/books'
-import { toRaw, ref, computed, onMounted, defineProps, watch } from 'vue'
+import { toRaw, ref, computed, onMounted, defineProps, watch, defineEmits } from 'vue'
 import Star from '../svg/icon-star.vue'
 
 const promiseBooks = ref(null)
@@ -56,9 +56,14 @@ const reviewRange = ref(5)
     data: {
       type: Array,
       required: true
+    },
+    isAuth: {
+      type: Boolean,
+      required: false,
+      default: false
     }
   })
-
+  const emit = defineEmits();
   const books = computed(() => (props.data))
 
   function addScore(object){
@@ -79,6 +84,14 @@ const reviewRange = ref(5)
     }
   }
    
+  function authEmit(book_id) {
+    if(props.isAuth) {
+      console.log(`emitting ${book_id}`)
+      return emit('book-id', book_id)
+    }
+    return;
+  }
+
   watch(books.value, (oldValue, newValue) => {
     console.log('new books', newValue)
   })

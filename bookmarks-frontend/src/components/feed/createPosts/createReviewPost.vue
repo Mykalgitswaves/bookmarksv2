@@ -1,30 +1,36 @@
 <template>
-    <p class="text-2xl mt-5 font-semibold">Start by picking a book 
-    </p>
-    <SearchBooks/>
-<div v-if="hasBookSelected">
-    <p class="text-2xl my-5 font-semibold">The content monster is hungry for your thoughts 🍪. 
-        <span class="text-indigo-500 font font-medium"><br>Pick a genre and answer some questions.
-        </span>
-    </p>
+    <div v-if="!book">
+        <p class="text-2xl my-5 font-semibold">The content monster is hungry for your thoughts 🍪. <br/>
+            <span class="text-indigo-500">Start by picking a book </span>
+        </p>
 
-    <div class="radio-group">
-        <label
-            :for="cat"
-            class="radio-select"
-            v-for="(cat, index) in questionCats"
-            :key="index"
-        >
-            <input :id="cat" type="radio" :value="cat" name="question-radios" v-model="currentTopic" @change="reloadQuestions">
-            {{ cat }}
-        </label>
+        <SearchBooks @book-to-parent="bookIdHandler"/>
     </div>
 
-    <ul class="container questions" :key="characterQuestions">
-            <li
-                v-for="q in characterQuestions"
-                :key="q.index"
+    <div v-if="book" class="container">
+        <div class="my-5">
+            <p class="mb-2">You're reviewing <span class=" block italic text-indigo-500">{{ book.title }}</span></p>
+            <p class="text-2xl font-medium">Pick a genre and answer some questions.</p>
+        </div>
+
+        <div class="radio-group">
+            <label
+                :for="cat"
+                class="radio-select"
+                v-for="(cat, index) in questionCats"
+                :key="index"
             >
+                <input :id="cat" type="radio" :value="cat" name="question-radios" v-model="currentTopic" @change="reloadQuestions">
+                {{ cat }}
+            </label>
+        </div>
+
+        <ul class="container questions" :key="characterQuestions">
+            <li
+                v-for="(q, index) in questionMapping[currentTopic]"
+                :key="index"
+            >
+            <KeepAlive>
                 <button 
                     type="button"
                     :class="entries.includes(q) ? 'active' : ''"
@@ -36,15 +42,18 @@
                         {{ q.response }}
                     </span>
                 </button>
-                    <TransitionGroup name="list" tag="li">
-                        <div v-if="questionDict[q.id]">
-                            <textarea 
-                                class="border-2"
-                                :name="q.type"
-                                :id="q.index"
-                                cols="" rows="7"
-                                v-model="q.response"
-                            ></textarea>
+            </KeepAlive>
+                
+            <TransitionGroup name="list" tag="li">
+                    <div v-if="questionDict[q.id]">
+                        <textarea 
+                            class="border-2"
+                            :name="q.type"
+                            :id="q.index"
+                            cols="" rows="7"
+                            v-model="q.response"
+                        ></textarea>
+                        <div class="flex gap-5 space-between">
                             <div class="flex gap-5">
                                 <button 
                                     type="button"
@@ -63,65 +72,86 @@
                                 Hide
                                 </button>
                             </div>
+
+                            <div>
+                                <SpoilerRadioGroup @is-spoiler-event="handleSpoilers"/>
+                            </div>
                         </div>
-                    </TransitionGroup>
+                    </div>
+                </TransitionGroup>
             </li>
-    </ul>
-    <p class="text-2xl my-5 text-indigo-500 font-medium">Or make your own questions</p>
-    <div class="mobile-menu-spacer sm:hidden"></div>
-</div>
+        </ul>
+
+        <div>
+            <p class="text-2xl my-5 text-indigo-500 font-medium">Or make your own questions</p>
+            <CreateYourOwnQuestions @custom-question="handleCustomQuestionEmit"/>
+        </div>
+
+        <div class="mobile-menu-spacer sm:hidden"></div>
+    </div>
 </template>
 <script setup>
-import { ref, computed, toRaw, watch } from 'vue'
+import { ref, defineEmits, toRaw, watch } from 'vue'
 import { postData } from '../../../../postsData.js';
 import { stateCtrl } from '../../../stores/createPostStore';
 import SearchBooks from './searchBooks.vue';
-const questionCats = Array.from(Object.keys(postData.posts.review))
-console.log(questionCats)
+import CreateYourOwnQuestions from './createYourOwnQuestions.vue';
+import SpoilerRadioGroup from './spoilerRadioGroup.vue';
 
-const hasBookSelected = ref(false);
+
+const questionCats = Array.from(Object.keys(postData.posts.review))
+
+// Refs
+const book = ref(null);
 // Defaults to character, this change will dictate the questions rendered. we can model it.
 const currentTopic = ref('character');
+let characterQuestions = JSON.parse(JSON.stringify(postData.posts.review['character']));
+let plotQuestions = JSON.parse(JSON.stringify(postData.posts.review['plot']));
+let toneQuestions = JSON.parse(JSON.stringify(postData.posts.review['tone']));
+let allQuestions = JSON.parse(JSON.stringify(postData.posts.review['all']));
 
-let characterQuestions = JSON.parse(JSON.stringify(postData.posts.review[currentTopic.value]));
+const questionMapping = {
+    'character': characterQuestions,
+    'plot': plotQuestions,
+    'tone': toneQuestions,
+    'all': allQuestions
+}
+
 const store = stateCtrl;
+const isPostableData = ref(false)
+const questionDict = ref({});
+const entries = ref([]);
 
-
+// functions
+const emit = defineEmits()
 function loadAndUpdateState() {
     store.state()
     entries.value = [...store.toArray()]
     console.log(entries.value, 'Re-Loaded store')
 }
 
+function bookIdHandler(e) {
+    book.value = e;
+}
 
-const questionDict = ref({});
-const entries = ref([]);
-// we need a way to clone only the questions users select and then add those to our set but we need to be able to model our data after that.
+function handleCustomQuestionEmit(e) {
+    entries.value.push(e)
+    console.log(entries.value)
+}
+
+watch(entries, () => {
+    emit('is-postable-data', entries.value)
+})
 
 // Watch to see if value changed and if it does then recreate object.
 watch(currentTopic, () => {
     characterQuestions = JSON.parse(JSON.stringify(postData.posts.review[currentTopic.value]));
 })
 
-watch(entries.value, (oldValue, newValue) => {
-        console.log(newValue, 'something deep changed')
-})
-
 </script>
 
 <style scoped>
 .text-white { color: #fff; }
-.question-border {
-    border: dotted 2px rgb(229 231 235);
-    transition-duration: 250ms;
-}
-
-.question-border:hover {
-    transform: scale(1.02);
-    transition-duration: 250ms;
-    border-color: rgb(129 140 248);
-}
-
 .active {
     border-color: rgb(70, 84, 213);
 }
@@ -168,7 +198,7 @@ textarea {
 }
 
 .questions {
-    min-height: 350px
+    min-height: 250px
 }
 .questions .box-btn {
     width: 100%;

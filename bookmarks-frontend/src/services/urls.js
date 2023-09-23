@@ -5,6 +5,7 @@ export const urls = {
     baseUrl: baseUrl,
     setup: {
         name: baseUrl + 'setup-reader/name',
+        bookByText: (text) => (`${baseUrl}books/${text}`),
     },
     authUrl: baseUrl + 'api/auth_user/',
     booksByN: baseUrl + 'books/n/',
