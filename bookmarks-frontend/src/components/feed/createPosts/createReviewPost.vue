@@ -11,7 +11,7 @@
         <div class="my-5">
             <p class="mb-2">You're reviewing <span class=" block italic text-indigo-500 font-semibold">{{ book.title }}</span></p>
         </div>
-        
+
         <div class>
             <p class="text-2xl font-medium my-5 text-slate-600">Add a headline for your review.</p>
             
@@ -127,13 +127,16 @@ const questionCats = Array.from(Object.keys(postData.posts.review))
 // Refs
 const book = ref(null);
 const canAdd = ref(false);
+
 // Defaults to character, this change will dictate the questions rendered. we can model it.
 const currentTopic = ref('character');
+// clones of our fixture data.
 let characterQuestions = JSON.parse(JSON.stringify(postData.posts.review['character']));
 let plotQuestions = JSON.parse(JSON.stringify(postData.posts.review['plot']));
 let toneQuestions = JSON.parse(JSON.stringify(postData.posts.review['tone']));
 let allQuestions = JSON.parse(JSON.stringify(postData.posts.review['all']));
 
+// used to show certain question sets.
 const questionMapping = {
     'character': characterQuestions,
     'plot': plotQuestions,
@@ -146,9 +149,10 @@ const store = stateCtrl;
 const questionDict = ref({});
 const entries = ref([]);
 const headline = ref('')
+
 // functions
 const emit = defineEmits();
-
+// updates state, duh.
 function loadAndUpdateState() {
     store.state()
     entries.value = [...store.toArray()]
@@ -158,18 +162,20 @@ function loadAndUpdateState() {
 function bookIdHandler(e) {
     book.value = e;
 }
-
+// emits from child components.
 function handleCustomQuestionEmit(e) {
     entries.value.push(e)
     console.log(entries.value)
 }
-
+// looks for index of question being emitted by parent component and replaces question with spoiler boolean.
 function handleSpoilers(e){
     const index = questionMapping[currentTopic.value].indexOf(e)
     questionMapping[currentTopic.value].splice(index, index + 1, e)
     console.log(questionMapping[currentTopic.value]);
 }
-
+// THis doesnt work but we want to make a function that
+// doesnt allow people to allow empty strings as question answer pairs to avoid empty reviews.
+// Should also check on backend.
 function isAddDisabled(el) {
     ref(el).value > 5 ? canAdd.value = true : canAdd.value = false;
 }
