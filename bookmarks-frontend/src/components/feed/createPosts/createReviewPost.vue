@@ -9,12 +9,24 @@
 
     <div v-if="book" class="container">
         <div class="my-5">
-            <p class="mb-2">You're reviewing <span class=" block italic text-indigo-500">{{ book.title }}</span></p>
+            <p class="mb-2">You're reviewing <span class=" block italic text-indigo-500 font-semibold">{{ book.title }}</span></p>
         </div>
+        
         <div class>
             <p class="text-2xl font-medium my-5 text-slate-600">Add a headline for your review.</p>
-            <label for=""></label>
-            <input type="text" class="">
+            
+            <label 
+                for="headline"
+                class="block italic text-indigo-500 my-2"
+            >This will appear front and center on your review</label>
+
+            <input 
+                id="headline" 
+                type="text"
+                placeholder="A masterpiece - someguy"
+                class="border-indigo-300 border-solid border-2 rounded-md px-2 py-1"
+                v-model="headline"
+            >
         </div>
 
         <p class="text-2xl font-medium my-5 text-slate-600">Pick a topic to answer some questions.</p>
@@ -133,7 +145,7 @@ const store = stateCtrl;
 
 const questionDict = ref({});
 const entries = ref([]);
-const spoilers = ref([])
+const headline = ref('')
 // functions
 const emit = defineEmits();
 
@@ -163,7 +175,7 @@ function isAddDisabled(el) {
 }
 
 watch(entries, () => {
-    emit('is-postable-data', helpersCtrl.formatReviewData(entries.value, book.value.id, 'fix this at a later date'))
+    emit('is-postable-data', helpersCtrl.formatReviewData(entries.value, book.value.id, headline.value))
 })
 
 // Watch to see if value changed and if it does then recreate object.
