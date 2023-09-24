@@ -1,7 +1,4 @@
 <template>
-    <div>
-
-    </div>
     <button
         v-if="!creating" 
         type="button"

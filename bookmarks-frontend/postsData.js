@@ -79,6 +79,14 @@ export const postData = {
                             "response": "",
                             "is_spoiler": false
                           }
+                    ],
+                    "entries": [
+                        {   
+                            "id": -1,
+                            "q": 'Answer prompts or add your own questions to review books.',
+                            "response": "View or edit your responses here.",
+                            "is_spoiler": null
+                        }
                     ]
         },
         "update": {},

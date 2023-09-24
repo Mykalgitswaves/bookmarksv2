@@ -24,7 +24,7 @@
                 id="headline" 
                 type="text"
                 placeholder="A masterpiece - someguy"
-                class="border-indigo-300 border-solid border-2 rounded-md px-2 py-1"
+                class="border-indigo-500 border-solid border-2 rounded-md px-2 py-1 w-60"
                 v-model="headline"
             >
         </div>
@@ -63,7 +63,7 @@
             </KeepAlive>
                 
             <TransitionGroup name="list" tag="li">
-                    <div v-if="questionDict[q.id]">
+                    <div v-if="questionDict[q.id] && q.id !== -1">
                         <textarea 
                             :ref="(el) => isAddDisabled(el)"
                             class="border-2"
@@ -121,7 +121,7 @@ import SearchBooks from './searchBooks.vue';
 import CreateYourOwnQuestions from './createYourOwnQuestions.vue';
 import SpoilerRadioGroup from './spoilerRadioGroup.vue';
 
-
+// get qs from data and add in entries.
 const questionCats = Array.from(Object.keys(postData.posts.review))
 
 // Refs
@@ -129,26 +129,26 @@ const book = ref(null);
 const canAdd = ref(false);
 
 // Defaults to character, this change will dictate the questions rendered. we can model it.
-const currentTopic = ref('character');
+const currentTopic = ref('entries');
 // clones of our fixture data.
 let characterQuestions = JSON.parse(JSON.stringify(postData.posts.review['character']));
 let plotQuestions = JSON.parse(JSON.stringify(postData.posts.review['plot']));
 let toneQuestions = JSON.parse(JSON.stringify(postData.posts.review['tone']));
 let allQuestions = JSON.parse(JSON.stringify(postData.posts.review['all']));
-
-// used to show certain question sets.
-const questionMapping = {
-    'character': characterQuestions,
-    'plot': plotQuestions,
-    'tone': toneQuestions,
-    'all': allQuestions
-}
-
+const viewEntriesDefault = JSON.parse(JSON.stringify(postData.posts.review['entries']))
 const store = stateCtrl;
 
 const questionDict = ref({});
 const entries = ref([]);
 const headline = ref('')
+// used to show certain question sets.
+const questionMapping = {
+    'character': characterQuestions,
+    'plot': plotQuestions,
+    'tone': toneQuestions,
+    'all': allQuestions,
+    'entries': entries.value.length > 0 ? entries.value : viewEntriesDefault,
+}
 
 // functions
 const emit = defineEmits();
@@ -194,7 +194,11 @@ watch(currentTopic, () => {
 </script>
 
 <style scoped>
-.text-white { color: #fff; }
+
+.text-white { 
+    color: #fff;
+}
+
 .active {
     border-color: rgb(70, 84, 213);
 }
@@ -250,8 +254,11 @@ textarea {
     line-height: 1.2;
 }
 
-
 .max-h-50 {
     max-height: 50px;
+}
+
+.border-indigo-500 {
+    border-color: rgb(99 102 241);
 }
 </style>
