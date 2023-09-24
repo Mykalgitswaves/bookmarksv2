@@ -15,7 +15,7 @@
             id="question"
             type="text"
             class="text-start mb-5 text-lg question-border px-5 py-5 cursor-pointer box-btn active"
-            v-model="q.question"
+            v-model="q.q"
         >
         <label for="answer" class="text-slate-600 italic ">Answer</label>
         <textarea 
@@ -30,7 +30,7 @@
         <button 
             type="button"
             class="py-3 rounded-md text-white bg-indigo-600 w-100 mt-5"
-            @click="saveQuestionToSet(question=q.question, response=q.response, spoilers=q.isSpoilers)"
+            @click="saveQuestionToSet(question=q.q, response=q.response, spoilers=q.is_spoiler)"
         >
             Add question
         </button>
@@ -44,7 +44,7 @@
     const emit = defineEmits();
     const creating = ref(false);
     const q = {}
-    q.question = null;
+    q.q = null;
     q.response = null;
     q.is_spoiler = null;
 

@@ -13,11 +13,11 @@
         </div>
 
         <div class>
-            <p class="text-2xl font-medium my-5 text-slate-600">Add a headline for your review.</p>
+            <p class="text-2xl font-medium my-5 text-slate-600">Add a headline (TLDR) for your review.</p>
             
             <label 
                 for="headline"
-                class="block italic text-indigo-500 my-2"
+                class="block text-indigo-400 my-2"
             >This will appear front and center on your review</label>
 
             <input 
@@ -129,13 +129,13 @@ const book = ref(null);
 const canAdd = ref(false);
 
 // Defaults to character, this change will dictate the questions rendered. we can model it.
-const currentTopic = ref('entries');
+const currentTopic = ref('Your post');
 // clones of our fixture data.
 let characterQuestions = JSON.parse(JSON.stringify(postData.posts.review['character']));
 let plotQuestions = JSON.parse(JSON.stringify(postData.posts.review['plot']));
 let toneQuestions = JSON.parse(JSON.stringify(postData.posts.review['tone']));
 let allQuestions = JSON.parse(JSON.stringify(postData.posts.review['all']));
-const viewEntriesDefault = JSON.parse(JSON.stringify(postData.posts.review['entries']))
+const viewEntriesDefault = JSON.parse(JSON.stringify(postData.posts.review['Your post']))
 const store = stateCtrl;
 
 const questionDict = ref({});
@@ -147,7 +147,7 @@ const questionMapping = {
     'plot': plotQuestions,
     'tone': toneQuestions,
     'all': allQuestions,
-    'entries': entries.value.length > 0 ? entries.value : viewEntriesDefault,
+    'Your post': entries.value.length > 0 ? entries.value : viewEntriesDefault,
 }
 
 // functions
@@ -165,6 +165,7 @@ function bookIdHandler(e) {
 // emits from child components.
 function handleCustomQuestionEmit(e) {
     entries.value.push(e)
+    questionMapping['Your post'] = entries.value;
     console.log(entries.value)
 }
 // looks for index of question being emitted by parent component and replaces question with spoiler boolean.

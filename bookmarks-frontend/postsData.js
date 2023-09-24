@@ -80,7 +80,7 @@ export const postData = {
                             "is_spoiler": false
                           }
                     ],
-                    "entries": [
+                    "Your post": [
                         {   
                             "id": -1,
                             "q": 'Answer prompts or add your own questions to review books.',
