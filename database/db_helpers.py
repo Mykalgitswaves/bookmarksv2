@@ -147,13 +147,14 @@ class Review():
 
 
 class ReviewPost(Review):
-    def __init__(self, post_id, book, questions, question_ids, responses, spoilers, headline="", created_date="", user_username="", user_id=""):
+    def __init__(self, post_id, book, questions, question_ids, responses, spoilers, headline="", created_date="", user_username="", user_id="", book_title=""):
         super().__init__(post_id,book, created_date, user_id, user_username)
         self.headline = headline
         self.questions = questions
         self.question_ids = question_ids
         self.responses = responses
         self.spoilers = spoilers
+        self.book_title = book_title
     def create_post(self):
         driver = Neo4jDriver()
         created_date, id = driver.create_review(self)
@@ -1155,6 +1156,7 @@ class Neo4jDriver():
             elif response['labels(p)'] == ["Review"]:
                     output['Review'].append(ReviewPost(post_id=post["id"],
                                                        book=response['b']['id'],
+                                                       book_title=response['b']['title'],
                                                        created_date=post["created_date"],
                                                        questions=post['questions'],
                                                        question_ids=post['question_ids'],

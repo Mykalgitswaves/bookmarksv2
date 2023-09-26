@@ -57,6 +57,21 @@
       />
 
       <div v-if="!toggleCreateReviewType">
+        <p class="pt-4 text-2xl font-medium text-slate-600 mb-5">Reviews</p>
+
+        <TransitionGroup v-if="reviewData" name="reviews" tag="div">
+          <ReviewPost
+            v-for="post in reviewData" :key="post.id"
+            :id="post.id"
+            :book="post.book"
+            :headline="post.headline"
+            :question_ids="post.question_ids"
+            :questions="post.questions"
+            :responses="post.responses"
+            :spoilers="post.spoilers"
+            :username="post.user_username"
+          />
+        </TransitionGroup>
         <p class="pt-4 text-2xl font-medium text-slate-600 mb-5">Recommended Works</p>
         
         <KeepAlive>
@@ -85,6 +100,7 @@ import IconPlus from '../svg/icon-plus.vue'
 import IconExit from '../svg/icon-exit.vue';
 import createReviewPost from './createPosts/createReviewPost.vue';
 import createUpdatePost from './createPosts/createUpdatePost.vue';
+import ReviewPost from './posts/reviewPost.vue';
 import IconAddPost from '../svg/icon-add-post.vue';
 
 // const store = searchResultStore();
@@ -99,6 +115,10 @@ const postOptions = ['review', 'update', 'comparison'];
 const mapping = {
   "review": createReviewPost,
   "update": createUpdatePost
+}
+
+const dataMap = {
+  "reviews": '',
 }
 
 async function loadWorks() {
@@ -200,4 +220,15 @@ watch(emittedPostData.value, (oldValue, newValue) => {
   .cards-leave-to {
     opacity: 0;
   }
+
+  .reviews-leave-active,
+  .reviews-enter-active {
+    transition: all 0.5s ease;
+  }
+  .reviews-enter-from,
+  .reviews-leave-to {
+    opacity: 0;
+  }
+
+  
 </style>
