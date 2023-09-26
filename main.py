@@ -570,4 +570,4 @@ async def create_milestone(request: Request, current_user: Annotated[User, Depen
 
 @app.get("/api/{user_id}/posts")
 async def get_user_posts(current_user: Annotated[User, Depends(get_current_active_user)]):
-    return(current_user.get_posts())
+    return(JSONResponse(content={"data": jsonable_encoder(current_user.get_posts())}))
