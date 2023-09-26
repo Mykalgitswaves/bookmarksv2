@@ -30,7 +30,7 @@
         <button 
             type="button"
             class="py-3 rounded-md text-white bg-indigo-600 w-100 mt-5"
-            @click="saveQuestionToSet(question=q.q, response=q.response, spoilers=q.is_spoiler)"
+            @click="saveQuestionToSet(id=q.id, question=q.q, response=q.response, spoilers=q.is_spoiler)"
         >
             Add question
         </button>
@@ -44,14 +44,17 @@
     const emit = defineEmits();
     const creating = ref(false);
     const q = {}
+    q.id = 0;
     q.q = null;
     q.response = null;
     q.is_spoiler = null;
 
-    function saveQuestionToSet(question, response, spoilers) {
-        console.log(question, response, spoilers)
+    function saveQuestionToSet(id, question, response, spoilers) {
+        console.log(id, question, response, spoilers)
         console.log(q)
         creating.value = false;
+        // Default to false.
+        q.is_spoiler === null ? q.is_spoiler = false : q.is_spoiler
         emit('custom-question', q)
     }
 

@@ -2,6 +2,7 @@
 @import 'grids.css';
 @import 'helpers.css';
 @import 'flex.css';
+@import 'buttons.css';
 
 @tailwind base;
 @tailwind components;

@@ -5,14 +5,12 @@ export const postData = {
                         {
                             "id": 10,
                             "q" :"what is this book about?",
-                            "type": "character",
                             "response": '',
                             "is_spoiler": null,
                         },
                         {
                             "id": 11,
                             "q" :"what do you like about this book?",
-                            "type": "character",
                             "response": '',
                             "is_spoiler": null,
                         },
@@ -21,21 +19,18 @@ export const postData = {
                         { 
                             "id": 3,
                             "q": "Which character in the book did you most relate to and why?",
-                            "type": "character",
                             "response": "",
                             "is_spoiler": null
                         },
                         {
                             "id": 4, 
                             "q": "Did you find the protagonist's character arc satisfying or lacking? Why?",  
-                            "type": "character",
                             "response": "",
                             "is_spoiler": null
                         },
                         {
                             "id": 5,
                             "q": "Which relationships between characters stood out to you the most?",
-                            "type": "character",  
                             "response": "",
                             "is_spoiler": null
                         }
@@ -65,19 +60,19 @@ export const postData = {
                             "id": 1,
                             "q": "Did you find the overall tone of the book satisfying? Why or why not?",
                             "response": "",
-                            "is_spoiler": false
+                            "is_spoiler": null
                           },
                           { 
                             "id": 2, 
                             "q": "How would you describe the tone and atmosphere of the key settings in the book?",
                             "response": "",
-                            "is_spoiler": false
+                            "is_spoiler": null
                           },
                           {
                             "id": 3,
                             "q": "Were there any shifts in tone that stood out to you? If so, what purpose did they serve?",
                             "response": "",
-                            "is_spoiler": false
+                            "is_spoiler": null
                           }
                     ],
                     "Your post": [

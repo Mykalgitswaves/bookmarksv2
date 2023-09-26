@@ -17,7 +17,7 @@
         v-if="toggleCreateReviewType"
         type="button"
         class="flex-center justify-center px-3 py-2 rounded-md "
-        :class="emittedPostData.length ? 'bg-indigo-600 color-white' : 'bg-slate-200 text-slate-600'"
+        :class="emittedPostData?.responses.length ? 'bg-indigo-600 color-white' : 'bg-slate-200 text-slate-600'"
         @click="postToEndpoint()"
       >
         <IconAddPost/>
@@ -93,6 +93,7 @@ const user = route.params.user;
 const toggleCreateReviewType = ref(false);
 const selectDropdown = ref(false);
 const bookData = ref(null);
+const reviewData = ref(null);
 const isPostableData = ref(null)
 const postOptions = ['review', 'update', 'comparison'];
 const mapping = {
@@ -100,14 +101,17 @@ const mapping = {
   "update": createUpdatePost
 }
 
-async function loadData() {
+async function loadWorks() {
   if(bookData.value === null) {
-    bookData.value = await db.get(urls.booksByN, {'limit': 25}, true)
+    bookData.value = await db.get(urls.booksByN, {'limit': 25}, true);
+  }
+  if(reviewData.value === null) {
+    reviewData.value = await db.get(urls.reviews, {'limit': 25}, true);
   }
 }
 
 onMounted(() => {
-    loadData()
+    loadWorks()
 })
 
 let postTypeMapping = ref('');

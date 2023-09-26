@@ -1,0 +1,15 @@
+.disabled-btn {
+    background-color: #f8fafc ;
+    color: #1e293b;
+    cursor: not-allowed;
+}
+
+.btn {
+    padding: .75rem 2rem;
+    border-radius: .25rem;
+}
+
+.add-btn {
+    color: #fff;
+    background-color: rgb(129 140 248);
+}
