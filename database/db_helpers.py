@@ -130,7 +130,12 @@ class User():
         driver = Neo4jDriver()
         driver.add_reviewed_book_setup(user_id=self.user_id, book_id=book_id, rating=rating)
         self.books.append(book_id)
-    
+
+    def get_posts(self):
+        driver = Neo4jDriver()
+        output = driver.pull_all_reviews_by_user(self.username)
+        driver.close()
+        return(output)
 
 class Review():
     def __init__(self, post_id, book, created_date="", user_id="", user_username=""):
@@ -175,13 +180,13 @@ class UpdatePost(Review):
 
 
 class ComparisonPost(Review):
-    def __init__(self, post_id, compared_books, headline:str, comparators:list, comparator_ids:list, responses:list, book_specific_resoponses:list, created_date="", user_id="", user_username=""):
+    def __init__(self, post_id, compared_books, headline:str, comparators:list, comparator_ids:list, responses:list, book_specific_responses:list, created_date="", user_id="", user_username=""):
         super().__init__(post_id, compared_books, created_date, user_id, user_username)
         self.headline = headline
         self.comparators = comparators
         self.comparator_ids = comparator_ids
         self.responses = responses
-        self.book_specific_responses = book_specific_resoponses
+        self.book_specific_responses = book_specific_responses
     def create_post(self):
         driver = Neo4jDriver()
         created_date, id = driver.create_comparison(self)
@@ -190,7 +195,7 @@ class ComparisonPost(Review):
         driver.close()
 
 
-class RecommendationPost(Review):
+class RecommendationFriend(Review):
     def __init__(self, post_id, book, to_user_username, from_user_text, to_user_text, created_date="", user_id="", user_username=""):
         super().__init__(post_id, book, created_date, user_id, user_username)
         self.to_user_username = to_user_username
@@ -1077,17 +1082,87 @@ class Neo4jDriver():
             disabled=response["u.disabled"]
         )
         return(user)
-
-    def pull_all_reviews_by_user(self): #TODO Redo this for new review format
+    @timing_decorator
+    def pull_all_reviews_by_user(self, username): 
         with self.driver.session() as session:
-            result = session.execute_read(self.pull_all_reviews_by_user_query)
+            result = session.execute_read(self.pull_all_reviews_by_user_query, username)
         return(result)
     @staticmethod
-    def pull_all_reviews_by_user_query(tx):
-        query = "match (u:User)-[rr:REVIEWED]-(b:Book) return u.id,rr.rating,b.id"
-        result = tx.run(query)
-        result = [{"user":response["u.id"],"book":response["b.id"],"rating":response["rr.rating"]} for response in result]
-        return(result)
+    def pull_all_reviews_by_user_query(tx, username):
+        query = """ match (u:User {username:$username})-[r:POSTED]->(p)
+                    optional match (p)-[rb:POST_FOR_BOOK]-(b)
+                    optional match (p)-[ru:RECOMMENDED_TO]->(uu)
+                    optional match (p)-[rc:HAS_RESPONSE]-(c)
+                    return p, labels(p), c, b, uu
+                    order by p.created_date desc"""
+        result = tx.run(query, username=username)
+        results = [record for record in result.data()]
+        
+        output = {"Milestone":[],
+                  "RecommendationFriend":[],
+                  "Comparison":[],
+                  "Update":[],
+                  "Review":[]}
+        
+        for response in results:
+            post = response['p']
+            if response['labels(p)'] == ["Milestone"]:
+                output['Milestone'].append(MilestonePost(post_id=post["id"],
+                                                         book="",
+                                                         created_date=post["created_date"],
+                                                         num_books=post["num_books"],
+                                                         user_username=username))                                                        
+                
+            elif response['labels(p)'] == ["RecommendationFriend"]:
+                output['RecommendationFriend'].append(RecommendationFriend(post_id=post["id"],
+                                                                           book=response['b']['id'],
+                                                                           created_date=post["created_date"],
+                                                                           to_user_username=response['uu']['username'],
+                                                                           from_user_text=post['from_user_text'],
+                                                                           to_user_text=post['to_user_text'],
+                                                                           user_username=username))
+            
+            elif response['labels(p)'] == ["Comparison"]:
+                comparator = response['c']
+                if output['Comparison']:
+                    if output['Comparison'][-1].id == post["id"]:
+                        output['Comparison'][-1].comparators.append([comparator['comparator']])
+                        output['Comparison'][-1].comparator_ids.append([comparator['comparator_id']])
+                        output['Comparison'][-1].responses.append([comparator['response']])
+                        output['Comparison'][-1].book_specific_responses.append([comparator['book_specific_responses']])
+                        continue
+                
+                output['Comparison'].append(ComparisonPost(post_id=post['id'],
+                                                           compared_books=post['compared_books'],
+                                                           created_date=post['created_date'],
+                                                           headline=post['headline'],
+                                                           user_username=username,
+                                                           comparators=[comparator['comparator']],
+                                                           comparator_ids=[comparator['comparator_id']],
+                                                           responses=[comparator['response']],
+                                                           book_specific_responses=[comparator['book_specific_responses']]))
+            elif response['labels(p)'] == ["Update"]:
+                output['Update'].append(UpdatePost(post_id=post["id"],
+                                                   book=response['b']['id'],
+                                                   created_date=post["created_date"],
+                                                   page=post['page'],
+                                                   questions=post['questions'],
+                                                   question_ids=post['question_ids'],
+                                                   responses=post['responses'],
+                                                   spoilers=post['spoilers'],
+                                                   user_username=username))
+
+            elif response['labels(p)'] == ["Review"]:
+                    output['Review'].append(ReviewPost(post_id=post["id"],
+                                                       book=response['b']['id'],
+                                                       created_date=post["created_date"],
+                                                       questions=post['questions'],
+                                                       question_ids=post['question_ids'],
+                                                       responses=post['responses'],
+                                                       spoilers=post['spoilers'],
+                                                       user_username=username))
+
+        return(output)
         
     def search_for_param(self, param, skip, limit):
         """
@@ -1430,11 +1505,11 @@ class Neo4jDriver():
         created_date = response["c.created_date"]
         return(created_date)
     
-    def create_recommendation_post(self, recommendation_post:RecommendationPost):
+    def create_recommendation_post(self, recommendation_post:RecommendationFriend):
         """
         Creates a review in the database
         Args:
-            recommendation_post: RecommendationPost object to be pushed to DB
+            recommendation_post: RecommendationFriend object to be pushed to DB
         Returns:
             created_date: Exact datetime of creation from Neo4j
             recommendation_id: PK of the recommendation in the db
@@ -1498,5 +1573,6 @@ class Neo4jDriver():
 
 
 if __name__ == "__main__":
-    review = MilestonePost(post_id="",book="",user_username="kyle_test@aol.com",num_books=100)
-    review.create_post()
+    driver = Neo4jDriver()
+    driver.pull_all_reviews_by_user("kyle_test@aol.com")
+    driver.close()

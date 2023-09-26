@@ -5,7 +5,7 @@ from database.db_helpers import (
     UpdatePost,
     ComparisonPost,
     MilestonePost,
-    RecommendationPost,
+    RecommendationFriend,
     Book,
     Author,
     Genre,
@@ -543,7 +543,7 @@ async def create_recommendation_friend(request: Request, current_user: Annotated
     response = await request.json()
     response = response['_value']
     
-    recommendation = RecommendationPost(post_id='',book=response['book_id'],user_username=current_user.username,to_user_username=response['to_user_username'],
+    recommendation = RecommendationFriend(post_id='',book=response['book_id'],user_username=current_user.username,to_user_username=response['to_user_username'],
                                         from_user_text=response['from_user_text'],to_user_text=response['to_user_text'])
     recommendation.create_post()
 
@@ -567,3 +567,7 @@ async def create_milestone(request: Request, current_user: Annotated[User, Depen
     milestone.create_post()
 
     return JSONResponse(content={"data": jsonable_encoder(milestone)})
+
+@app.get("/api/{user_id}/posts")
+async def get_user_posts(current_user: Annotated[User, Depends(get_current_active_user)]):
+    return(current_user.get_posts())
