@@ -106,7 +106,7 @@ async function loadWorks() {
     bookData.value = await db.get(urls.booksByN, {'limit': 25}, true);
   }
   if(reviewData.value === null) {
-    reviewData.value = await db.get(urls.reviews, {'limit': 25}, true);
+    reviewData.value = await db.get(urls.reviews.getReviews(user), true);
   }
 }
 

@@ -37,7 +37,13 @@ export const db = {
     get: async (url, params, debug, successRouterFunction) => {
         params = (typeof params === Proxy ? toRaw(params) : params)
         try {
-            const response = await fetch(url + '?' + new URLSearchParams(params));
+            const token = helpersCtrl.getCookieByParam(['token'])
+            const response = await fetch(url + '?' + new URLSearchParams(params), {
+                method: 'GET',
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            });
             const data = await response.json();
                 if(debug) {
                     console.log(data, 'data');

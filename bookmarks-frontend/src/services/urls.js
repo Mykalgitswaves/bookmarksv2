@@ -13,6 +13,7 @@ export const urls = {
     author: baseUrl + 'api/author/',
     reviews: {
         review: baseUrl + 'api/review/create_review',
-        update: baseUrl + 'api/review/create_update'
+        update: baseUrl + 'api/review/create_update',
+        getReviews: (user_id) => (baseUrl +`api/${user_id}/posts`), 
     }
 }
