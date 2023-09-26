@@ -17,7 +17,7 @@
         v-if="toggleCreateReviewType"
         type="button"
         class="flex-center justify-center px-3 py-2 rounded-md "
-        :class="emittedPostData?.responses.length ? 'bg-indigo-600 color-white' : 'bg-slate-200 text-slate-600'"
+        :class="emittedPostData?.responses?.length ? 'bg-indigo-600 color-white' : 'bg-slate-200 text-slate-600'"
         @click="postToEndpoint()"
       >
         <IconAddPost/>

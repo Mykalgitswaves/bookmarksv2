@@ -466,9 +466,17 @@ async def create_review(request: Request, current_user: Annotated[User, Depends(
 
     response = await request.json()
     response = response['_value']
-
-    review = ReviewPost(post_id='',book=response['book_id'],user_username=current_user.username,headline=response['headline'],
-                        questions=response['questions'],question_ids=response['ids'],responses=response['responses'],spoilers=response['spoilers'])
+    breakpoint()
+    review = ReviewPost(
+                    post_id='', 
+                    book=response['book_id'],
+                    user_username=current_user.username,
+                    headline=response['headline'],
+                    questions=response['questions'],
+                    question_ids=response['ids'],
+                    responses=response['responses'],
+                    spoilers=response['spoilers']
+            )
     review.create_post()
 
     return JSONResponse(content={"data": jsonable_encoder(review)})

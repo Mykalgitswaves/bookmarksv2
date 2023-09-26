@@ -61,7 +61,7 @@ const { book, responses,
     background: var(--background-container-gradient);
     padding: 1rem;
     border-radius: .25rem;
-    box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+    border: solid 2px ;
     margin-block: 1rem;
     /* Fallbacks for non logical prop abiding browsers */
     margin-top: 1rem;

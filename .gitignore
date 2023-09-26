@@ -3,7 +3,6 @@ dotenv
 env
 .dotenv
 config.json
-*.json
 *.pyc
 *.cpython
 __pycache__
