@@ -61,9 +61,10 @@
 
         <TransitionGroup v-if="reviewData" name="reviews" tag="div">
           <ReviewPost
-            v-for="post in reviewData" :key="post.id"
+            v-for="post in reviewData.data.Review" :key="post.id"
             :id="post.id"
             :book="post.book"
+            :title="post.book_title"
             :headline="post.headline"
             :question_ids="post.question_ids"
             :questions="post.questions"

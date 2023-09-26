@@ -1,7 +1,12 @@
 <template>
     <div class="review-post-wrapper">
-        <div></div>
-    </div>    
+        <p class="text-slate-600 text-center">
+            <span class="text-indigo-600 cursor-pointer">{{ username }}'s</span>
+             review of 
+             <span class="block my-2 italic font-semibold">{{ title }}</span>
+        </p>
+        <p class="fancy text-2xl">{{ headline }}</p>
+    </div>   
 </template>
 <script setup>
 import { toRefs } from 'vue'
@@ -37,7 +42,7 @@ const props = defineProps({
     headline: {
         type: String,
         required: false,
-        default: () => '',
+        default: () => 'Not too much thought',
     },
     id: {
         type: Number,
@@ -45,12 +50,21 @@ const props = defineProps({
     }
 })
 
-const { book, responses, questions, spoilers, username, question_ids, headline, id } = toRefs(props)
+const { book, responses,
+     questions, spoilers,
+      username, question_ids,
+       headline, id, title } = toRefs(props)
 
 </script>
 <style scoped>
 .review-post-wrapper {
     background: var(--background-container-gradient);
     padding: 1rem;
+    border-radius: .25rem;
+    box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+    margin-block: 1rem;
+    /* Fallbacks for non logical prop abiding browsers */
+    margin-top: 1rem;
+    margin-bottom: 1rem;
 }
 </style>

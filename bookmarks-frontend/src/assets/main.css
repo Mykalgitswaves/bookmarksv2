@@ -3,6 +3,7 @@
 @import 'helpers.css';
 @import 'flex.css';
 @import 'buttons.css';
+@import 'fonts.css';
 
 @tailwind base;
 @tailwind components;

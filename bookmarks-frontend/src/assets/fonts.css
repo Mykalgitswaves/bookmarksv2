@@ -1,0 +1,10 @@
+@import url('https://fonts.googleapis.com/css2?family=Pinyon+Script&family=Ubuntu:wght@300;500&display=swap');
+
+/* use with font-family: var(--variable); to activate fancy ness */
+:root {
+    --fancy-script:  'Pinyon Script', cursive; 
+}
+
+.fancy {
+    font-family: var(--fancy-script);
+}
