@@ -456,25 +456,6 @@ class Neo4jDriver():
                 match (uu:User {id: $user_id}) match (bb:Book {id: $book_id}) match (uu)-[old_r]->(bb) delete old_r merge (uu)-[tt:IS_READING]->(bb) 
                 """
         result = tx.run(query, user_id=user_id, book_id=book_id)
-    def get_unique_pk(self, node):
-        """
-        Returns a unique primary key for the node instance
-        Args:
-            node: Node to get a primary key for
-        Returns
-            int: Primary Key which has never been used before
-        """
-        with self.driver.session() as session:
-            result = session.execute_write(self.get_unique_pk_query, node)
-        return(result)
-    @staticmethod
-    def get_unique_pk_query(tx, node):
-        query = f"""
-                match (n:{node}) return MAX(n.id)
-                """
-        result = tx.run(query)
-        response = result.single()
-        return(int(response['MAX(n.id)']) + 1)
 
     def create_user(self, username, password):
         """
@@ -593,8 +574,9 @@ class Neo4jDriver():
             isbn24: ISBN24 number is applicable
         Returns:
             Book: book object with all related metadata
+
+        TODO: This uses a lot of queries rn can be made faster
         """
-        book_id = self.get_unique_pk("Book")
 
         if not genres:
             for genre_name in genre_names:
@@ -615,18 +597,18 @@ class Neo4jDriver():
                     authors.append(result.id)
 
         with self.driver.session() as session:
-            book = session.execute_write(self.create_book_query, book_id, 
+            book_id = session.execute_write(self.create_book_query,
                                          title, img_url, pages, publication_year, 
                                          lang, description, genres, authors, 
                                          isbn24, small_img_url, author_names,google_id,gr_id)
         return(book_id)
     @staticmethod
-    def create_book_query(tx,book_id, title, img_url, 
+    def create_book_query(tx,title, img_url, 
                           pages, publication_year, lang, 
                           description, genres, authors, isbn24, 
                           small_img_url, author_names,google_id,gr_id):
         query = """
-                create (b:Book {id:$book_id, 
+                create (b:Book {id:"c"+randomUUID(), 
                 title:$title, 
                 img_url:$img_url, 
                 pages:$pages, 
@@ -638,9 +620,10 @@ class Neo4jDriver():
                 author_names:$author_names,
                 google_id:$google_id,
                 gr_id:$gr_id})
+                return b.id
                 """
+        
         result = tx.run(query,
-                        book_id=book_id, 
                         title=title, 
                         img_url=img_url, 
                         pages=pages, 
@@ -652,6 +635,10 @@ class Neo4jDriver():
                         author_names=author_names,
                         google_id=google_id,
                         gr_id=gr_id)
+        
+        response = result.single()
+        book_id = response['b.id']
+
         query = """
                 match (a:Author {id:$author_id})
                 match (b:Book {id:$book_id})
@@ -659,6 +646,7 @@ class Neo4jDriver():
                 """
         for author in authors:
             result = tx.run(query, author_id=author, book_id=book_id)
+
         query = """
                 match (g:Genre {id:$genre_id})
                 match (b:Book {id:$book_id})
@@ -790,17 +778,21 @@ class Neo4jDriver():
         Returns:
             Author: Author object with all related metadata
         """
-        author_id = self.get_unique_pk("Author")
         with self.driver.session() as session:
-            author = session.execute_write(self.create_author_query, author_id, full_name, books)
+            author = session.execute_write(self.create_author_query, full_name, books)
         return(author)
     @staticmethod
-    def create_author_query(tx, author_id, full_name, books):
+    def create_author_query(tx, full_name, books):
         # Creates the author node
         query = """
-                create (a:Author {id:$author_id, name:$full_name})
+                create (a:Author {id:randomUUID(), name:$full_name})
+                return a.id
                 """
-        result = tx.run(query, author_id=author_id,full_name=full_name)
+        result = tx.run(query, 
+                        full_name=full_name)
+        response = result.single()
+        author_id = response["a.id"]
+
         # Creates the author-book relationships
         query = """
                 match (a:Author {id:$author_id})
@@ -1302,14 +1294,13 @@ class Neo4jDriver():
         """
         Checks if a genre exists in the DB by name
         """
-        genre_id = self.get_unique_pk("Genre")
         with self.driver.session() as session:
-            result = session.execute_write(self.create_genre_query, genre_id, name)
+            result = session.execute_write(self.create_genre_query, name)
         return(result)
     @staticmethod
-    def create_genre_query(tx,genre_id, name):
-        query = "create (g:Genre {id:$genre_id, name:$name}) return g.id"
-        result = tx.run(query,genre_id=genre_id,name=name)
+    def create_genre_query(tx,name):
+        query = "create (g:Genre {id:randomUUID(), name:$name}) return g.id"
+        result = tx.run(query,name=name)
         response = result.single()
         return(response['g.id'])
     
@@ -1394,16 +1385,15 @@ class Neo4jDriver():
             created_date: Exact datetime of creation from Neo4j
             review_id: PK of the review_post in DB
         """
-        review_id = self.get_unique_pk("Review")
         with self.driver.session() as session:
-            created_date = session.execute_write(self.create_review_query, review_id, review_post)
+            created_date,review_id = session.execute_write(self.create_review_query, review_post)
         return(created_date,review_id)
     @staticmethod
-    def create_review_query(tx, review_id, review_post):
+    def create_review_query(tx, review_post):
         query = """
                 match (u:User {username:$username})
                 merge (b:Book {id:$book_id})
-                create (r:Review {id:$review_id, 
+                create (r:Review {id:randomUUID(), 
                                 created_date:datetime(),
                                 headline:$headline,
                                 questions:$questions,
@@ -1412,13 +1402,14 @@ class Neo4jDriver():
                                 spoilers:$spoilers})
                 create (u)-[p:POSTED]->(r)
                 create (r)-[pp:POST_FOR_BOOK]->(b)
-                return r.created_date
+                return r.created_date, r.id
                 """
-        result = tx.run(query, username=review_post.user_username, book_id=review_post.book, review_id=review_id, headline=review_post.headline, questions=review_post.questions,
+        result = tx.run(query, username=review_post.user_username, book_id=review_post.book, headline=review_post.headline, questions=review_post.questions,
                         question_ids=review_post.question_ids,responses=review_post.responses,spoilers=review_post.spoilers)
         response = result.single()
         created_date = response["r.created_date"]
-        return(created_date)
+        review_id = response['r.id']
+        return(created_date, review_id)
     
     def create_update(self, update_post:UpdatePost):
         """
@@ -1429,16 +1420,15 @@ class Neo4jDriver():
             created_date: Exact datetime of creation from Neo4j
             update_id: PK of the update in the db
         """
-        update_id = self.get_unique_pk("Update")
         with self.driver.session() as session:
-            created_date = session.execute_write(self.create_update_query, update_id, update_post)
+            created_date, update_id = session.execute_write(self.create_update_query, update_post)
         return(created_date,update_id)
     @staticmethod
-    def create_update_query(tx, update_id, update_post):
+    def create_update_query(tx, update_post):
         query = """
             match (u:User {username:$username})
             merge (b:Book {id:$book_id})
-            create (d:Update {id:$update_id, 
+            create (d:Update {id:randomUUID(), 
                             created_date:datetime(),
                             page:$page,
                             headline:$headline,
@@ -1448,13 +1438,14 @@ class Neo4jDriver():
                             spoilers:$spoilers})
             create (u)-[p:POSTED]->(d)
             create (d)-[pp:POST_FOR_BOOK]->(b)
-            return d.created_date
+            return d.created_date, d.id
                 """
-        result = tx.run(query, username=update_post.user_username, book_id=update_post.book, update_id=update_id, page=update_post.page, headline=update_post.headline, questions=update_post.questions,
+        result = tx.run(query, username=update_post.user_username, book_id=update_post.book, page=update_post.page, headline=update_post.headline, questions=update_post.questions,
                         question_ids=update_post.question_ids,responses=update_post.responses,spoilers=update_post.spoilers)
         response = result.single()
         created_date = response["d.created_date"]
-        return(created_date)
+        update_id = response["d.id"]
+        return(created_date, update_id)
     
     def create_comparison(self, comparison_post:ComparisonPost):
         """
@@ -1465,17 +1456,16 @@ class Neo4jDriver():
             created_date: Exact datetime of creation from Neo4j
             comparison_id: PK of the comparison in the db
         """
-        comparison_id = self.get_unique_pk("Comparison")
         with self.driver.session() as session:
-            created_date = session.execute_write(self.create_comparison_query, comparison_id, comparison_post)
+            created_date, comparison_id = session.execute_write(self.create_comparison_query, comparison_post)
         return(created_date,comparison_id)
     @staticmethod
-    def create_comparison_query(tx, comparison_id, comparison_post):
+    def create_comparison_query(tx, comparison_post):
         query = """
         match (u:User {username:$username})
         merge (b:Book {id:$book_id_1})
         merge (bb:Book {id:$book_id_2})
-        create (c:Comparison {id:$comparison_id, 
+        create (c:Comparison {id:randomUUID(), 
                             created_date:datetime(),
                             headline:$headline,
                             compared_books:$compared_books})
@@ -1498,14 +1488,23 @@ class Neo4jDriver():
         book_specific_responses: book_specific_responses[i]
         })
         create (c)-[:HAS_RESPONSE]->(cr)
-        return c.created_date
+        return c.created_date, c.id
                 """
-        result = tx.run(query, username=comparison_post.user_username, book_id_1=comparison_post.book[0], book_id_2=comparison_post.book[1],comparison_id=comparison_id, 
-                        headline=comparison_post.headline, compared_books=comparison_post.book, comparators=comparison_post.comparators,
-                        comparator_ids=comparison_post.comparator_ids,responses=comparison_post.responses,book_specific_responses=comparison_post.book_specific_responses)
+        result = tx.run(query, 
+                        username=comparison_post.user_username, 
+                        book_id_1=comparison_post.book[0], 
+                        book_id_2=comparison_post.book[1], 
+                        headline=comparison_post.headline, 
+                        compared_books=comparison_post.book, 
+                        comparators=comparison_post.comparators,
+                        comparator_ids=comparison_post.comparator_ids,
+                        responses=comparison_post.responses,
+                        book_specific_responses=comparison_post.book_specific_responses)
+        
         response = result.single()
         created_date = response["c.created_date"]
-        return(created_date)
+        comparison_id = response["c.id"]
+        return(created_date,comparison_id)
     
     def create_recommendation_post(self, recommendation_post:RecommendationFriend):
         """
@@ -1516,30 +1515,35 @@ class Neo4jDriver():
             created_date: Exact datetime of creation from Neo4j
             recommendation_id: PK of the recommendation in the db
         """
-        recommendation_id = self.get_unique_pk("RecommendationFriend")
         with self.driver.session() as session:
-            created_date = session.execute_write(self.create_recommendation_post_query, recommendation_id, recommendation_post)
+            created_date,recommendation_id = session.execute_write(self.create_recommendation_post_query, recommendation_post)
         return(created_date,recommendation_id)
     @staticmethod
-    def create_recommendation_post_query(tx, recommendation_id, recommendation_post):
+    def create_recommendation_post_query(tx, recommendation_post):
         query = """
         match (u:User {username:$username})
         match (f:User {username:$to_user_username})
         merge (b:Book {id:$book_id})
-        create (r:RecommendationFriend {id:$recommendation_id, 
+        create (r:RecommendationFriend {id:randomUUID(), 
                                         created_date:datetime(),
                                         from_user_text:$from_user_text,
                                         to_user_text:$to_user_text})
         create (u)-[p:POSTED]->(r)
         create (r)-[rr:RECOMMENDED_TO]->(f)
         create (r)-[pp:POST_FOR_BOOK]->(b)
-        return r.created_date
+        return r.created_date, r.id
         """
-        result = tx.run(query, username=recommendation_post.user_username, book_id=recommendation_post.book,recommendation_id=recommendation_id, to_user_username=recommendation_post.to_user_username,
-                        from_user_text=recommendation_post.from_user_text, to_user_text=recommendation_post.to_user_text)
+        result = tx.run(query, 
+                        username=recommendation_post.user_username, 
+                        book_id=recommendation_post.book, 
+                        to_user_username=recommendation_post.to_user_username,
+                        from_user_text=recommendation_post.from_user_text, 
+                        to_user_text=recommendation_post.to_user_text)
+        
         response = result.single()
         created_date = response["r.created_date"]
-        return(created_date)
+        recommendation_id = response["r.id"]
+        return(created_date,recommendation_id)
     
     def create_milestone(self, milestone_post:MilestonePost):
         """
@@ -1550,25 +1554,27 @@ class Neo4jDriver():
             created_date: Exact datetime of creation from Neo4j
             milestone_id: PK of the milestone in the db
         """
-        milestone_id = self.get_unique_pk("Milestone")
         with self.driver.session() as session:
-            created_date = session.execute_write(self.create_milestone_query, milestone_id, milestone_post)
+            created_date,milestone_id = session.execute_write(self.create_milestone_query, milestone_post)
         return(created_date,milestone_id)
     @staticmethod
-    def create_milestone_query(tx, milestone_id, milestone_post):
+    def create_milestone_query(tx, milestone_post):
         query = """
         match (u:User {username:$username})
-        create (m:Milestone {id:$milestone_id,
+        create (m:Milestone {id:randomUUID(),
                             created_date:datetime(),
                             num_books:$num_books
         })
         create (u)-[r:POSTED]->(m)
-        return m.created_date
+        return m.created_date, m.id
         """
-        result = tx.run(query, username=milestone_post.user_username,milestone_id=milestone_id, num_books=milestone_post.num_books)
+        result = tx.run(query, 
+                        username=milestone_post.user_username,
+                        num_books=milestone_post.num_books)
         response = result.single()
         created_date = response["m.created_date"]
-        return(created_date)
+        milestone_id = response["m.id"]
+        return(created_date,milestone_id)
     def close(self):
         self.driver.close()
 
