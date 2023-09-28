@@ -6,12 +6,11 @@ from database.db_helpers import Book, Neo4jDriver
 from helpers import timing_decorator 
 
 @timing_decorator
-def pull_google_book(google_id:str):
+def pull_google_book(google_id:str, driver):
     with open("config.json","r") as f:
         CONFIG = json.load(f)
     api_key = CONFIG['books_api_key']
     
-    driver = Neo4jDriver()
     db_response = driver.get_book_by_google_id("g"+google_id)
     if not db_response:
         path = f"https://www.googleapis.com/books/v1/volumes/{google_id}?key={api_key}"
@@ -81,7 +80,7 @@ def pull_google_book(google_id:str):
                         google_id= "g"+response['id'],
                         in_database=False)
         
-            book.add_to_db()
+            book.add_to_db(driver)
             return(book)
         else:
             raise Exception(f"ID {google_id} Not Found")

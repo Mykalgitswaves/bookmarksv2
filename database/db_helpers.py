@@ -36,7 +36,7 @@ class User():
         self.full_name = full_name
         self.hashed_password = hashed_password
         self.disabled=disabled
-    def add_friend(self, friend_id:int):
+    def add_friend(self, friend_id,driver):
         """
         Adds a friendship relationship to the database
         
@@ -45,13 +45,12 @@ class User():
         Returns:
             None
         """
-        driver = Neo4jDriver()
         if friend_id not in self.friends:
             driver.add_user_friend(self.user_id, friend_id)
             self.friends.append(friend_id)
         else:
             raise Exception("This relationship already exists")
-    def add_favorite_genre(self, genre_id:int):
+    def add_favorite_genre(self, genre_id,driver):
         """
         Adds a favorite genre relationship to the database
         
@@ -60,13 +59,12 @@ class User():
         Returns:
             None
         """
-        driver = Neo4jDriver()
         if genre_id not in self.genres:
             driver.add_favorite_genre(self.user_id, genre_id)
             self.genres.append(genre_id)
         else:
             raise Exception("This relationship already exists")
-    def add_favorite_author(self, author_id:int):
+    def add_favorite_author(self, author_id, driver):
         """
         Adds a favorite author relationship to the database
         
@@ -75,13 +73,12 @@ class User():
         Returns:
             None
         """
-        driver = Neo4jDriver()
         if author_id not in self.authors:
             driver.add_favorite_author(self.user_id, author_id)
             self.authors.append(author_id)
         else:
             raise Exception("This relationship already exists")
-    def add_liked_review(self, review_id:int):
+    def add_liked_review(self, review_id, driver):
         """
         Adds a liked review relationship to the database
         
@@ -90,13 +87,12 @@ class User():
         Returns:
             None
         """
-        driver = Neo4jDriver()
         if review_id not in self.liked_reviews:
             driver.add_liked_review(self.user_id, review_id)
             self.liked_reviews.append(review_id)
         else:
             raise Exception("This relationship already exists")
-    def add_to_read(self, book_id:int):
+    def add_to_read(self, book_id, driver):
         """
         Adds a book to the user's to read list in db. Deletes all other relationships to this book
         
@@ -105,13 +101,12 @@ class User():
         Returns:
             None
         """
-        driver = Neo4jDriver()
         if book_id not in self.want_to_read:
             driver.add_to_read(self.user_id, book_id)
             self.want_to_read.append(book_id)
         else:
             raise Exception("This relationship already exists")
-    def add_is_reading(self, book_id:int):
+    def add_is_reading(self, book_id, driver):
         """
         Adds a book to the user's currently reading list in db. Deletes all other relationships to this book
         
@@ -121,20 +116,13 @@ class User():
             None
         """
         if book_id not in self.reading:
-            driver = Neo4jDriver()
             driver.add_reading(self.user_id, book_id)
             self.reading.append(book_id)
         else:
             raise Exception("This relationship already exists")
-    def add_reviewed_setup(self, book_id:int, rating:int):
-        driver = Neo4jDriver()
-        driver.add_reviewed_book_setup(user_id=self.user_id, book_id=book_id, rating=rating)
-        self.books.append(book_id)
 
-    def get_posts(self):
-        driver = Neo4jDriver()
+    def get_posts(self,driver):
         output = driver.pull_all_reviews_by_user(self.username)
-        driver.close()
         return(output)
 
 class Review():
@@ -155,12 +143,10 @@ class ReviewPost(Review):
         self.responses = responses
         self.spoilers = spoilers
         self.book_title = book_title
-    def create_post(self):
-        driver = Neo4jDriver()
+    def create_post(self,driver):
         created_date, id = driver.create_review(self)
         self.id = id
         self.created_date = created_date
-        driver.close()
     
 
 class UpdatePost(Review):
@@ -172,12 +158,10 @@ class UpdatePost(Review):
         self.question_ids = question_ids
         self.responses = responses
         self.spoilers = spoilers
-    def create_post(self):
-        driver = Neo4jDriver()
+    def create_post(self,driver):
         created_date, id = driver.create_update(self)
         self.id = id
         self.created_date = created_date
-        driver.close()
 
 
 class ComparisonPost(Review):
@@ -188,12 +172,10 @@ class ComparisonPost(Review):
         self.comparator_ids = comparator_ids
         self.responses = responses
         self.book_specific_responses = book_specific_responses
-    def create_post(self):
-        driver = Neo4jDriver()
+    def create_post(self, driver):
         created_date, id = driver.create_comparison(self)
         self.id = id
         self.created_date = created_date
-        driver.close()
 
 
 class RecommendationFriend(Review):
@@ -202,24 +184,21 @@ class RecommendationFriend(Review):
         self.to_user_username = to_user_username
         self.from_user_text = from_user_text
         self.to_user_text = to_user_text
-    def create_post(self):
-        driver = Neo4jDriver()
+    def create_post(self,driver):
         created_date, id = driver.create_recommendation_post(self)
         self.id = id
         self.created_date = created_date
-        driver.close()
 
 
 class MilestonePost(Review):
     def __init__(self, post_id, book, num_books:int, created_date="", user_id="", user_username=""):
         super().__init__(post_id, book, created_date, user_id, user_username)
         self.num_books = num_books
-    def create_post(self):
-        driver = Neo4jDriver()
+    def create_post(self,driver):
         created_date, id = driver.create_milestone(self)
         self.id = id
         self.created_date = created_date
-        driver.close()
+
 
 
 class Book():
@@ -247,7 +226,7 @@ class Book():
         self.isbn24 = isbn24,
         self.in_database = in_database,
         self.google_id = google_id
-    def add_tag(self,tag_id):
+    def add_tag(self,tag_id, driver):
         """
         Adds a tag to the book
         
@@ -257,18 +236,15 @@ class Book():
             None
         """
         if tag_id not in self.tags:
-            driver = Neo4jDriver()
             driver.add_book_tag(self.id, tag_id)
             self.tags.append(tag_id)
-            driver.close()
         else:
             raise Exception("This relationship already exists")
-    def add_to_db(self):
-        driver = Neo4jDriver()
+    def add_to_db(self, driver):
         id = driver.create_book(self.title,self.img_url,self.pages,self.publication_year,self.lang,self.description,self.genres,
                            self.authors,self.isbn24,self.small_img_url,self.author_names,self.genre_names,self.google_id,self.gr_id)
         self.id = id
-        driver.close()
+
         
 class Author():
     def __init__(self, author_id, full_name, books=[]):

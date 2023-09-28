@@ -95,6 +95,9 @@ app.add_middleware(
     allow_methods=["PUT", "GET", "POST", "DELETE"],
 )
 
+# Single driver that we start
+driver = Neo4jDriver()
+
 class Token(BaseModel):
     access_token: str
     token_type: str
@@ -103,9 +106,7 @@ class TokenData(BaseModel):
     username: str | None = None
 
 def get_user(username: str):
-    driver = Neo4jDriver()
     user = driver.pull_user_by_username(username=username)
-    driver.close()
     return(user)
 
 def verify_password(plain_password, hashed_password):
@@ -173,7 +174,7 @@ async def login_for_access_token(
     access_token = create_access_token(
         data={"sub": user.username}, expires_delta=access_token_expires
     )
-    # NEed to retunr user.user_id for routing here @Kyle.
+    
     return {"token":{"access_token": access_token, "token_type": "bearer"}, "user":{"uuid":user.user_id}}
 
 @app.post("/token")
@@ -199,14 +200,13 @@ async def post_create_login_user(form_data:Annotated[OAuth2PasswordRequestForm, 
         """
         create user and then login as user with authenticated session
         """
-        print(form_data)
+        # print(form_data)
         password = get_password_hash(form_data.password)
         username = form_data.username
         # print(username, password, form_data)
 
         if username and password:
             try:
-                driver = Neo4jDriver()
                 user = driver.create_user(username=username, password=password)
 
                 authenticate_user(form_data.username, password)
@@ -214,7 +214,6 @@ async def post_create_login_user(form_data:Annotated[OAuth2PasswordRequestForm, 
                 access_token = create_access_token(
                     data={"sub": user.username}, expires_delta=access_token_expires
                 )
-                driver.close()
                 return {"access_token": access_token, "token_type": "bearer"}
             except:
                 network_error = HTTPException(
@@ -236,9 +235,8 @@ async def setup_user_name(request: Request, current_user: Annotated[User, Depend
     name = await request.json()
     if current_user:
         try:
-            driver = Neo4jDriver()
             user = driver.put_name_on_user(username=current_user.username, full_name=name)
-            driver.close()
+            
             if user is not None:
                 return HTTPException(
                     status_code=200,
@@ -307,7 +305,7 @@ async def put_users_me_genres(request: Request, current_user: Annotated[User, De
 
     try:
         for genre in genres:
-            current_user.add_favorite_genre(genre_id=int(genre['id']))
+            current_user.add_favorite_genre(genre_id=int(genre['id']),driver=driver)
 
     except:
         network_error = HTTPException(
@@ -322,7 +320,7 @@ async def put_users_me_authors(request: Request, current_user: Annotated[User, D
     authors = await request.json()
     try:
         for author in list(authors):
-            current_user.add_favorite_author(author_id=int(author))
+            current_user.add_favorite_author(author_id=int(author),driver=driver)
     except:
         network_error = HTTPException(
                 status_code=404,
@@ -338,9 +336,7 @@ async def get_books(skip: int = 0, limit: int = 3):
     """
     Used for initial fetch 
     """
-    driver = Neo4jDriver()
     result = driver.pull_n_books(skip, limit)
-    driver.close()
     return result
 
 @app.get("/books/n")
@@ -349,9 +345,7 @@ async def get_books_by_n(request: Request, skip: int=0, limit:int=5, by_n=True):
     Used to grab a certain amount of books
     """
     request_limit = int(request.query_params['limit'])
-    driver = Neo4jDriver()
     result = driver.pull_n_books(skip, limit=request_limit, by_n=by_n)
-    driver.close()
     return JSONResponse(content={"data": jsonable_encoder(result)}) 
 
 @app.get("/books/{text}")
@@ -359,9 +353,7 @@ async def get_books_by_title(text: str, skip: int=0, limit: int=3):
     """
     Search a damn book
     """
-    driver = Neo4jDriver()
     result = driver.pull_search2_books(text=text, skip=skip, limit=limit)
-    driver.close()
     return JSONResponse(content={"data": jsonable_encoder(result)}) 
 
 @app.get("/api/books/{book_id}")
@@ -370,12 +362,10 @@ async def get_book_page(book_id: str):
     Endpoint for book page
     """
     if book_id[0] == 'g':
-        book = pull_google_book(book_id[1:])
+        book = pull_google_book(book_id[1:], driver)
     else:
-        driver = Neo4jDriver()
         book = driver.pull_book_node(book_id=book_id)
-        driver.close()
-
+        
     return JSONResponse(content={"data": jsonable_encoder(book)})
 
 @app.get("/api/books/{book_id}/similar")
@@ -383,10 +373,7 @@ async def get_book_page(book_id: int):
     """
     Endpoint for similar book=
     """
-    driver = Neo4jDriver()
     books = driver.pull_similar_books(book_id=book_id)
-    driver.close()
-
     return JSONResponse(content={"data": jsonable_encoder(books)})
 
 @app.get("/genres/{text}")
@@ -394,9 +381,7 @@ async def get_genres_by_title(text: str, skip: int=0, limit: int=3):
     """
     Search for a genre by text
     """
-    driver = Neo4jDriver()
     result = driver.pull_search2_genre(text=text, skip=skip, limit=limit)
-    driver.close()
     return result
 
 
@@ -405,9 +390,7 @@ async def get_authors_by_title(text: str, skip: int=0, limit: int=3):
     """
     Search for an author by text
     """
-    driver = Neo4jDriver()
     result = driver.pull_search2_author(text=text, skip=skip, limit=limit)
-    driver.close()
     return result
             
     
@@ -416,13 +399,10 @@ async def get_author_page(request: Request):
     """
     Get an author from the db for their page. Load related books with this that the author wrote.
     """
-    print(request)
+    # print(request)
     author_id = int(request.query_params['book'])
 
-
-    driver = Neo4jDriver()
     response = driver.pull_author_page_nodes(author_id=author_id)
-    driver.close()
 
     return JSONResponse(content={"author": jsonable_encoder(response)})
 
@@ -438,12 +418,10 @@ async def search_for_param(param: str, skip: int=0, limit: int=5):
     Endpoint used for searching for users, todo add in credentials for searching
     """
     
-    driver = Neo4jDriver()
     book_search = BookSearch()
     books_result = book_search.search(param)
     search_result = driver.search_for_param(param=param, skip=skip, limit=limit)
     search_result['books'] = books_result
-    driver.close()
    
     return JSONResponse(content={"data": jsonable_encoder(search_result)})
 
@@ -477,7 +455,7 @@ async def create_review(request: Request, current_user: Annotated[User, Depends(
                     responses=response['responses'],
                     spoilers=response['spoilers']
             )
-    review.create_post()
+    review.create_post(driver)
 
     return JSONResponse(content={"data": jsonable_encoder(review)})
 
@@ -504,7 +482,7 @@ async def create_update(request: Request, current_user: Annotated[User, Depends(
 
     update = UpdatePost(post_id='',book=response['book_id'],user_username=current_user.username,headline=response['headline'],page=response['page'],
                         questions=response['questions'],question_ids=response['ids'],responses=response['responses'],spoilers=response['spoilers'])
-    update.create_post()
+    update.create_post(driver)
 
     return JSONResponse(content={"data": jsonable_encoder(update)})
 
@@ -530,7 +508,7 @@ async def create_comparison(request: Request, current_user: Annotated[User, Depe
 
     comparison = ComparisonPost(post_id='',book=response['compared_books'],user_username=current_user.username,headline=response['headline'],
                    comparators=response['comparators'],comparator_ids=response['comparator_ids'],responses=response['responses'],book_specific_responses=response['book_specific_responses'])
-    comparison.create_post()
+    comparison.create_post(driver)
 
     return JSONResponse(content={"data": jsonable_encoder(comparison)})
 
@@ -553,7 +531,7 @@ async def create_recommendation_friend(request: Request, current_user: Annotated
     
     recommendation = RecommendationFriend(post_id='',book=response['book_id'],user_username=current_user.username,to_user_username=response['to_user_username'],
                                         from_user_text=response['from_user_text'],to_user_text=response['to_user_text'])
-    recommendation.create_post()
+    recommendation.create_post(driver)
 
     return JSONResponse(content={"data": jsonable_encoder(recommendation)})
 
@@ -572,11 +550,11 @@ async def create_milestone(request: Request, current_user: Annotated[User, Depen
     response = response['_value']
     
     milestone = MilestonePost(post_id='',book="",user_username=current_user.username, num_books=response['num_books'])
-    milestone.create_post()
+    milestone.create_post(driver)
 
     return JSONResponse(content={"data": jsonable_encoder(milestone)})
 
 @app.get("/api/{user_id}/posts")
 async def get_user_posts(user_id: str, current_user: Annotated[User, Depends(get_current_active_user)]):
     if user_id and current_user:
-        return(JSONResponse(content={"data": jsonable_encoder(current_user.get_posts())}))
+        return(JSONResponse(content={"data": jsonable_encoder(current_user.get_posts(driver))}))
