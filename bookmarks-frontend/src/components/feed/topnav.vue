@@ -1,6 +1,6 @@
 <template>
-  <nav class="shadow-sm relative">
-    <div class="navbar-p border-solid border-indigo-500 border-b-2">
+  <nav class=" relative">
+    <div class="navbar-p">
       <Logo />
       <div class="flex reverse"> 
         <button class="ml-5 text-indigo-800"

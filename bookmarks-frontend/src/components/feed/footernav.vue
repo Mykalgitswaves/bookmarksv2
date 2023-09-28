@@ -1,5 +1,5 @@
 <template>
-    <footer :class="isMinimized">
+    <footer :class="isMinimized" class="lg:border-solid border-indigo-100 border-[1px]">
         <div class="nav-button-group hidden-on-mobile">
             <button 
                 class="footer-nav-button"
