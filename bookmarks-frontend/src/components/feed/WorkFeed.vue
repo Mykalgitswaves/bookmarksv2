@@ -123,16 +123,15 @@ const dataMap = {
 }
 
 async function loadWorks() {
-  if(bookData.value === null) {
     bookData.value = await db.get(urls.booksByN, {'limit': 25}, true);
   }
-  if(reviewData.value === null) {
-    reviewData.value = await db.get(urls.reviews.getReviews(user), true);
-  }
-}
+ async function loadReviews() {
+   reviewData.value = await db.get(urls.reviews.getReviews(user), true);
+ }
 
 onMounted(() => {
     loadWorks()
+    loadReviews()
 })
 
 let postTypeMapping = ref('');
@@ -155,7 +154,10 @@ const urlsMapping = {
 
 
 async function postToEndpoint() {
-  return await db.post(urlsMapping[postTypeMapping.value], emittedPostData, true)
+  toggleCreateReviewType.value = false;
+  return await db.post(urlsMapping[postTypeMapping.value], emittedPostData, true).then(() => {
+    loadWorks()
+  })
 }
 
 const books = computed(() => (bookData.value ? bookData.value.data : ''))

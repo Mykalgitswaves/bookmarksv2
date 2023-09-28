@@ -444,7 +444,6 @@ async def create_review(request: Request, current_user: Annotated[User, Depends(
 
     response = await request.json()
     response = response['_value']
-    breakpoint()
     review = ReviewPost(
                     post_id='', 
                     book=response['book_id'],

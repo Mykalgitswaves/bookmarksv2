@@ -6,10 +6,15 @@
              <span class="block my-2 italic font-semibold">{{ title }}</span>
         </p>
         <p class="fancy text-2xl">{{ headline }}</p>
+        <div class="review-questions">
+            <Switch/>
+            <p></p>   
+        </div>
     </div>   
 </template>
 <script setup>
-import { toRefs } from 'vue'
+import { toRefs, ref } from 'vue';
+import Switch from '../partials/switch.vue'
 const props = defineProps({
     book: {
         type: Number,
@@ -54,6 +59,9 @@ const { book, responses,
      questions, spoilers,
       username, question_ids,
        headline, id, title } = toRefs(props)
+
+
+const isSpoilersToggled = ref(false);
 
 </script>
 <style scoped>
