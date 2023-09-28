@@ -1,6 +1,6 @@
 <template>
     <div class="h-auto flex-col gap-5 ml-5" v-if="store.data">
-        <div>
+        <div v-if="f['authors']">
             <div class="mb-2 flex flex-col">
                 <p class="text-slate-600 text-lg mb-2">
                     <span class="text-indigo-500 text-2xl mr-2">{{ authors.length }}</span> Authors
@@ -18,7 +18,7 @@
             </div>
         </div>
 
-        <div class="my-5">
+        <div v-if="f['users']" class="my-5">
             <p class="text-slate-600 text-lg mb-2">
                 <span class="text-indigo-500 text-2xl mr-2 ">{{ users.length }}</span> Users
             </p>
@@ -34,7 +34,7 @@
             </div>
         </div>
         
-        <div>
+        <div v-if="f['books']">
             <p class="text-slate-600 text-lg mb-2">
                 <span class="text-indigo-500 text-2xl mr-2">{{ books.length }}</span>
                 Books
@@ -60,7 +60,7 @@
             </div>
         </div>
 
-        <div v-if="booksByGenreFilter">
+        <div v-if="f['genres']">
             <p class="text-indigo-500 mb-2">
                 Books by genre {{ books_by_genre.length }}
             </p>
@@ -74,18 +74,54 @@
                 {{ book.title }}
             </button>            
         </div>
+
+        <div v-if="f['books_by_authors']">
+            <p class="text-indigo-500 mb-2">
+                Books by author {{ books_by_author.length }}
+            </p>
+
+            <button 
+                v-for="(book, index) in books_by_author" 
+                :key="index"
+                class="searchbar-item"
+                @click="toBookPage(book)"
+            >
+                {{ book.title }}
+            </button>            
+        </div>
     </div>
 </template>
 
 <script setup>
-import { toRaw, computed, ref } from "vue"
+import { toRefs, computed, ref, watch } from "vue"
 import { useRouter, useRoute } from 'vue-router';
 import { searchResultStore } from '@/stores/searchBar.js';
-import { helpersCtrl } from '@/services/helpers.js'
+
+const props = defineProps({
+    newData: {
+        type: Object,
+    },
+    filters: {
+        type: Object,
+    }
+})
+
+const f = ref({
+    "authors": true,
+    "users": true,
+    "books": true,
+    "genres": true,
+    "books_by_authors": true,
+    "reset": false
+});
+
+
+const { newData, filters } = toRefs(props) 
 
 const store = searchResultStore()
 const data = ref(null)
-data.value = store.data
+data.value = newData.value;
+
 
 const authors = computed(() => (store.data.authors ? store.data.authors : ['No authors for you']));
 const books = computed(() => (store.data.books ? store.data.books : ['No books for you']));
@@ -110,8 +146,26 @@ function toUserPage(user){
     return router.push(`/feed/${user}/users/${user}`);
 }
 
-// Figure out what to do with these fitlers.
-const booksByGenreFilter = false
+
+function resetFilters() {
+    const keys = Array.from(Object.keys(f.value))
+    keys.forEach((key) => {
+        if(key !== 'reset'){
+            f.value[key] = true;
+        } else {
+            f.value[key] = false;
+        }
+    });
+}
+
+watch(filters, (newValue) => {
+    f.value = newValue
+    if(newValue['reset'] === true) {
+        resetFilters();
+    }
+})
+
+
 
 </script>
 
