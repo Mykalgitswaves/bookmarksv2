@@ -1,6 +1,6 @@
 <template>
     <div class="mx-10 mt-10 md:mx-52">
-        <div class="w-60 mt-5 mb-5 grid-pills menu">
+        <div class="mt-5 mb-5 grid-pills menu">
         <div
           @click="(genre.id !== 0 ? removeGenre(genre) : '')"
           v-for="genre in genres"

@@ -5,11 +5,13 @@
                 @click="(book.id === 0 ? goToBookSearchPage(): '')"
                 v-for="book in books" 
                 :key="book.id"
-                class="max-h-[150px] w-[100%] flex flex-row gap-5 py-2 px-4 place-content-start bg-indigo-100 rounded-md my-3 hover:bg-gray-200"
+                class="max-h-[150px] w-[100%] flex items-center flex-row gap-5 py-4 px-4 place-content-start bg-indigo-50 rounded-md my-3 hover:bg-gray-200
+                border-solid border-indigo-200 border-2
+                "
             >
                 <img
                     v-if="book.id !== 0"
-                    class="h-24 aspect-ratio"
+                    class="h-24 aspect-ratio self-center"
                     :src="book.img_url" 
                 />
 
@@ -18,7 +20,7 @@
                 <div class="flex flex-col justify-center">
                     <p class="text-xl font-semibold text-gray-800">{{ book.title }}</p>
                     
-                    <p v-for="name in book.author_names" :key="name" class="inline text-sm text-gray-800">{{ name }}</p>
+                    <p v-for="name in book.author_names" :key="name" class="inline text-gray-600">{{ name }}</p>
                     <span class="text-sm text-gray-500">{{ book.publication_year }}</span>
                 </div>
             </li>
@@ -50,3 +52,11 @@ function goToBookSearchPage() {
 }
 
 </script>
+
+<style scoped>
+
+.items-center {
+    align-items: center;
+}
+
+</style>

@@ -3,18 +3,19 @@
     <h2 class="text-3xl font-medium mb-4">What kind of reader are you?</h2>
     <p class="text-gray-500">Search for some of your favorite books</p>
 
-    <form class="grid grid-cols-1 gap-2" action="submitForm" method="POST">
+    <div class="grid grid-cols-1 gap-2">
       <input
         class="py-2 px-4 rounded-md border-2 border-indigo-200 mt-5 w-62 max-w-[600px]"
-        @change="searchBooks($event)"
+        @keyup="searchBooks($event)"
         placeholder="Search for books"
         name="searchForBooks"
         type="text"
       />
+
       <label class="text-gray-600 text-sm" for="searchForBooks">
         Tap a book and review it to add it to your shelf
       </label>
-    </form>
+    </div>
 
     <BookSearchResults class="max-w-[600px]" :data="searchResultArray"/>
     
@@ -44,9 +45,9 @@ const searchResultArray = computed(() => (dataRef.value))
 const bookState = useBookStore()
 
 function navigate() {
-  const store = useStore()
-  store.getNextPage()
-  console.log(store.page)
+  const store = useStore();
+  store.getNextPage();
+  console.log(store.page);
 }
 
 async function searchBooks(event) {

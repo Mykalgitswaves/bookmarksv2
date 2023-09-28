@@ -8,7 +8,7 @@
 
     <input
       class="py-2 px-4 rounded-md border-2 border-indigo-200 mt-10 w-80 max-w-[600px]"
-      @change="searchAuthors($event)"
+      @keyup="searchAuthors($event)"
       placeholder="Search for authors"
       name="searchForAuthor"
       type="text"
@@ -32,7 +32,6 @@ import { useBookStore } from '../../stores/books';
 import { useStore } from '../../stores/page';
 import AuthorSearch from './authorSearch.vue';
 import { app_router } from '@/main.js';
-import { toRaw } from 'vue';
 import { helpersCtrl } from '../../services/helpers';
 
 export default {

@@ -6,7 +6,7 @@
     <input
       class="py-2 px-4 rounded-md border-2 border-indigo-200 mt-5 w-[100%]"
       v-bind="isEmpty"
-      @change="searchGenres($event)"
+      @keyup="searchGenres($event)"
       placeholder="Search for genres"
       name="searchForBooks"
       type="text"
@@ -42,6 +42,7 @@
 import { useStore } from '../../stores/page'
 import { useBookStore } from '../../stores/books'
 import { toRaw } from 'vue'
+import { helpersCtrl } from '../../services/helpers'
 
 export default {
   data() {
@@ -88,22 +89,22 @@ export default {
       }
     },
     async updateGenres() {
-      const token = document.cookie;
-      const genreStore = useBookStore()
-      const genres = toRaw(genreStore.genres)
-      console.log(genres)
+      const token = helpersCtrl.getCookieByParam(['token']);
+      const genreStore = useBookStore();
+      const genres = toRaw(genreStore.genres);
+      
       if(token && genres) {
-      try {
-        await fetch('http://127.0.0.1:8000/setup-reader/genres', {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`
-          },
-          body: JSON.stringify(genres)
-        })
+        try {
+          await fetch('http://127.0.0.1:8000/setup-reader/genres', {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${token}`
+            },
+            body: JSON.stringify(genres)
+          })
         } catch(err) {
-        console.log(err)
+          console.log(err)
         }
       }
     }
