@@ -42,7 +42,7 @@ class BookSearch():
                             thumbnail=None
                         if "title" in result['volumeInfo']:
                             title=result['volumeInfo']['title']
-                            print(title)
+                            # print(title)
                         else:
                             title=None
                         if 'description' in result['volumeInfo']: 

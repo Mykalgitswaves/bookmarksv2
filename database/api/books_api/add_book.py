@@ -80,7 +80,7 @@ def pull_google_book(google_id:str, driver):
                         google_id= "g"+response['id'],
                         in_database=False)
         
-            book.add_to_db(driver)
+            # book.add_to_db(driver) 
             return(book)
         else:
             raise Exception(f"ID {google_id} Not Found")
