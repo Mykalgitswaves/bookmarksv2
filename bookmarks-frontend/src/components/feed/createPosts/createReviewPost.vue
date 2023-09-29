@@ -4,7 +4,7 @@
             <span class="text-indigo-500">Start by picking a book </span>
         </p>
 
-        <SearchBooks @book-to-parent="bookIdHandler"/>
+        <SearchBooks @book-to-parent="bookHandler"/>
     </div>
 
     <div v-if="book" class="container">
@@ -99,7 +99,7 @@
                                 </button>
                                 <button 
                                     type="button"
-                                    class="ml-5 btn max-h-50 bg-amber-300"
+                                    class="ml-5 btn max-h-50 bg-red-600 text-white"
                                     @click="questionDict[q.id] = null"
                                 >Hide
                                 </button>
@@ -167,7 +167,7 @@ function loadAndUpdateState() {
     questionMapping['Your post'] = entries.value;
 }
 
-function bookIdHandler(e) {
+function bookHandler(e) {
     book.value = e;
 }
 
@@ -204,7 +204,14 @@ function addToState(q) {
 };
 // Add a watcher to emit up when something is added, doesn't seem to capture when entries loses entry with splice so we have duplicate above.
 watch(entries, () => {
-    emit('is-postable-data', helpersCtrl.formatReviewData(entries.value, book.value.id, headline.value))
+    emit('is-postable-data', helpersCtrl.formatReviewData(entries.value, book.value, headline.value))
+})
+
+watch(headline, () => {
+    if(entries.value?.length) {
+        console.log('emitting this stuff big dog.')
+        emit('is-postable-data', helpersCtrl.formatReviewData(entries.value, book.value, headline.value))
+    }
 })
 
 // Watch to see if value changed and if it does then recreate object.
@@ -288,9 +295,5 @@ textarea {
 
 .border-indigo-500 {
     border-color: rgb(99 102 241);
-}
-
-.bg-amber-300 {
-    background-color: #fde68a;
 }
 </style>

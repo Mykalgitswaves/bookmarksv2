@@ -84,10 +84,10 @@ const reviewRange = ref(5)
     }
   }
    
-  function authEmit(book_id) {
+  function authEmit(book) {
     if(props.isAuth) {
-      console.log(`emitting ${book_id}`)
-      return emit('book-id', book_id)
+      console.log(`emitting ${book}`)
+      return emit('book-id', book)
     }
     return;
   }

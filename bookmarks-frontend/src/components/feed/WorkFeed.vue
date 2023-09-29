@@ -43,7 +43,7 @@
       v-if="toggleCreateReviewType"
       type="button" 
       class="flex-center justify-center px-2 py-2 bg-red-600 rounded-md color-white" 
-      @click="toggleCreateReviewType = false"
+      @click="toggleCreateReviewType = false; postTypeMapping = ''"
     >
         <IconExit/>
     </button>
@@ -156,7 +156,9 @@ const urlsMapping = {
 async function postToEndpoint() {
   toggleCreateReviewType.value = false;
   return await db.post(urlsMapping[postTypeMapping.value], emittedPostData, true).then(() => {
+    postTypeMapping.value = '';
     loadWorks()
+    
   })
 }
 

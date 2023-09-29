@@ -2,7 +2,7 @@
      <form class="grid grid-cols-1 gap-2" action="submitForm" method="POST">
       <input
         class="py-2 px-4 rounded-md border-2 border-indigo-200 mt-5 w-62 max-w-[600px]"
-        @change="searchBooks($event)"
+        @keyup="searchBooks($event)"
         placeholder="Search for books"
         name="searchForBooks"
         type="text"
@@ -29,6 +29,7 @@ async function searchBooks(e) {
 }
 
 function toParent(e) {
+  console.log(e, e.value)
   emit('book-to-parent', e)
 }
 
