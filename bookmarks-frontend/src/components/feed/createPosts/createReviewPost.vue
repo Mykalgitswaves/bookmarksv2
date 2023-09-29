@@ -181,6 +181,7 @@ function handleCustomQuestionEmit(e) {
 
 // looks for index of question being emitted by parent component and replaces question with spoiler boolean.
 function handleSpoilers(e){
+    console.log(e)
     const index = questionMapping[currentTopic.value].indexOf(e)
     questionMapping[currentTopic.value].splice(index, index + 1, e)
 }
