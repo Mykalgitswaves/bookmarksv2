@@ -16,7 +16,9 @@ from database.api.books_api.search import BookSearch
 from database.api.books_api.add_book import pull_google_book
 from database.auth import verify_access_token
 
-from fastapi import FastAPI, HTTPException, Depends, status, Request
+from db_tasks import update_book_google_id
+
+from fastapi import FastAPI, HTTPException, Depends, status, Request, BackgroundTasks
 from fastapi.responses import RedirectResponse, JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm, HTTPAuthorizationCredentials, HTTPBearer
@@ -357,12 +359,13 @@ async def get_books_by_title(text: str, skip: int=0, limit: int=3):
     return JSONResponse(content={"data": jsonable_encoder(result)}) 
 
 @app.get("/api/books/{book_id}")
-async def get_book_page(book_id: str):
+async def get_book_page(book_id: str, background_tasks:BackgroundTasks):
     """
     Endpoint for book page
     """
     if book_id[0] == 'g':
-        book = pull_google_book(book_id[1:], driver)
+        book = pull_google_book(book_id, driver)
+        background_tasks.add_task(book.add_to_db,driver)
     else:
         book = driver.pull_book_node(book_id=book_id)
         
@@ -426,7 +429,9 @@ async def search_for_param(param: str, skip: int=0, limit: int=5):
     return JSONResponse(content={"data": jsonable_encoder(search_result)})
 
 @app.post("/api/review/create_review")
-async def create_review(request: Request, current_user: Annotated[User, Depends(get_current_active_user)]):
+async def create_review(request: Request, 
+                        current_user: Annotated[User, Depends(get_current_active_user)],
+                        background_tasks: BackgroundTasks):
     """
     Creates a post of type Review
     
@@ -444,9 +449,12 @@ async def create_review(request: Request, current_user: Annotated[User, Depends(
 
     response = await request.json()
     response = response['_value']
+
+    book_id = response['book_id']
+
     review = ReviewPost(
                     post_id='', 
-                    book=response['book_id'],
+                    book=book_id,
                     user_username=current_user.username,
                     headline=response['headline'],
                     questions=response['questions'],
@@ -456,10 +464,15 @@ async def create_review(request: Request, current_user: Annotated[User, Depends(
             )
     review.create_post(driver)
 
+    if book_id[0] == "g":
+        background_tasks.add_task(update_book_google_id,book_id,driver)
+
     return JSONResponse(content={"data": jsonable_encoder(review)})
 
 @app.post("/api/review/create_update")
-async def create_update(request: Request, current_user: Annotated[User, Depends(get_current_active_user)]):
+async def create_update(request: Request, 
+                        current_user: Annotated[User, Depends(get_current_active_user)],
+                        background_tasks: BackgroundTasks):
     """
     Creates a post of type Update
     
@@ -479,14 +492,30 @@ async def create_update(request: Request, current_user: Annotated[User, Depends(
     response = await request.json()
     response = response['_value']
 
-    update = UpdatePost(post_id='',book=response['book_id'],user_username=current_user.username,headline=response['headline'],page=response['page'],
-                        questions=response['questions'],question_ids=response['ids'],responses=response['responses'],spoilers=response['spoilers'])
+    book_id = response['book_id']
+
+    update = UpdatePost(post_id='',
+                        book=book_id,
+                        user_username=current_user.username,
+                        headline=response['headline'],
+                        page=response['page'],
+                        questions=response['questions'],
+                        question_ids=response['ids'],
+                        responses=response['responses'],
+                        spoilers=response['spoilers'])
+    
     update.create_post(driver)
+
+    if book_id[0] == "g":
+        background_tasks.add_task(update_book_google_id,book_id,driver)
+
 
     return JSONResponse(content={"data": jsonable_encoder(update)})
 
 @app.post("/api/review/create_comparison")
-async def create_comparison(request: Request, current_user: Annotated[User, Depends(get_current_active_user)]):
+async def create_comparison(request: Request, 
+                            current_user: Annotated[User, Depends(get_current_active_user)],
+                            background_tasks: BackgroundTasks):
     """
     Creates a post of type Comparison
     
@@ -505,14 +534,29 @@ async def create_comparison(request: Request, current_user: Annotated[User, Depe
     response = await request.json()
     response = response['_value']
 
-    comparison = ComparisonPost(post_id='',book=response['compared_books'],user_username=current_user.username,headline=response['headline'],
-                   comparators=response['comparators'],comparator_ids=response['comparator_ids'],responses=response['responses'],book_specific_responses=response['book_specific_responses'])
+    book_ids = response['compared_books']
+
+    comparison = ComparisonPost(post_id='',
+                                book=book_ids,
+                                user_username=current_user.username,
+                                headline=response['headline'],
+                                comparators=response['comparators'],
+                                comparator_ids=response['comparator_ids'],
+                                responses=response['responses'],
+                                book_specific_responses=response['book_specific_responses'])
+    
     comparison.create_post(driver)
+
+    for book_id in book_ids:
+        if book_id[0] == "g":
+            background_tasks.add_task(update_book_google_id,book_id,driver)
 
     return JSONResponse(content={"data": jsonable_encoder(comparison)})
 
 @app.post("/api/review/create_recommendation_friend")
-async def create_recommendation_friend(request: Request, current_user: Annotated[User, Depends(get_current_active_user)]):
+async def create_recommendation_friend(request: Request, 
+                                       current_user: Annotated[User, Depends(get_current_active_user)],
+                                       background_tasks: BackgroundTasks):
     """
     Creates a post of type RecommendationFriend
     
@@ -527,10 +571,20 @@ async def create_recommendation_friend(request: Request, current_user: Annotated
 
     response = await request.json()
     response = response['_value']
+
+    book_id = response['book_id']
+
+    recommendation = RecommendationFriend(post_id='',
+                                          book=book_id,
+                                          user_username=current_user.username,
+                                          to_user_username=response['to_user_username'],
+                                          from_user_text=response['from_user_text'],
+                                          to_user_text=response['to_user_text'])
     
-    recommendation = RecommendationFriend(post_id='',book=response['book_id'],user_username=current_user.username,to_user_username=response['to_user_username'],
-                                        from_user_text=response['from_user_text'],to_user_text=response['to_user_text'])
     recommendation.create_post(driver)
+
+    if book_id[0] == "g":
+        background_tasks.add_task(update_book_google_id,book_id,driver)
 
     return JSONResponse(content={"data": jsonable_encoder(recommendation)})
 
@@ -548,7 +602,11 @@ async def create_milestone(request: Request, current_user: Annotated[User, Depen
     response = await request.json()
     response = response['_value']
     
-    milestone = MilestonePost(post_id='',book="",user_username=current_user.username, num_books=response['num_books'])
+    milestone = MilestonePost(post_id='',
+                              book="",
+                              user_username=current_user.username,
+                              num_books=response['num_books'])
+    
     milestone.create_post(driver)
 
     return JSONResponse(content={"data": jsonable_encoder(milestone)})

@@ -1,18 +1,19 @@
 import requests
 import json
-import sys
-sys.path.append('./')
-from database.db_helpers import Book
-from helpers import timing_decorator 
 
-@timing_decorator
-def pull_google_book(google_id:str, driver):
-    with open("config.json","r") as f:
+from database.db_helpers import (
+    Book
+)
+
+with open("config.json","r") as f:
         CONFIG = json.load(f)
+
+
+def update_book_google_id(google_id:str, driver):
     api_key = CONFIG['books_api_key']
-    
     db_response = driver.get_book_by_google_id(google_id)
-    if not db_response:
+
+    if db_response:    
         path = f"https://www.googleapis.com/books/v1/volumes/{google_id[1:]}?key={api_key}"
         r = requests.get(path)
         response = r.json()
@@ -66,24 +67,36 @@ def pull_google_book(google_id:str, driver):
             else:
                 language = None
             
-            book = Book(None, 
-                        small_img_url=small_img_url,
-                        title=title,
-                        description=description,
-                        isbn24=isbn_13,
-                        author_names=author_names,
-                        genre_names=genres,
-                        img_url=thumbnail,
-                        pages=pageCount,
-                        publication_year=publishedDate,
-                        lang = language,
-                        google_id= "g"+response['id'],
-                        in_database=False)
-            # book.add_to_db(driver) 
-            return(book)
+            parameters = {
+                "small_img_url":small_img_url,
+                "title":title,
+                "description":description,
+                "isbn24":isbn_13,
+                "author_names":author_names,
+                "genre_names":genres,
+                "img_url":thumbnail,
+                "pages":pageCount,
+                "publication_year":publishedDate,
+                "lang ": language,
+                "google_id": google_id
+            }
+        
+            
+            query = """
+                    match (b:Book {id:$google_id})
+                    set b.id = randomUUID(),
+                        b.google_id = $google_id,
+                        b.description = $description,
+                        b.isbn24 = $isbn_13,
+                        b.img_url = $img_url,
+                        b.lang = $lang,
+                        b.originalPublicationYear = $publication_year,
+                        b.pages = $pages
+                    """
+            
+            with driver.driver.session() as session:
+                session.run(query,parameters)
         else:
-            raise Exception(f"ID {google_id} Not Found")
+            print(f"API returned no response for book with google id {google_id}")     
     else:
-        return(db_response)
-if __name__ == "__main__":
-    pull_google_book("gleOXovlXrX0C")
+        print(f"Book with google id {google_id} is not in DB as primary key")
