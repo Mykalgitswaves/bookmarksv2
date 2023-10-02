@@ -3,7 +3,8 @@
         <input
             class="px-2 py-2 rounded-md border-indigo-100 border-2 border-solid w-100 my-2"
             type="text"
-            :value="q.q"
+            v-model="q.q"
+            :placeholder="q.q"
         />
 
         <textarea
