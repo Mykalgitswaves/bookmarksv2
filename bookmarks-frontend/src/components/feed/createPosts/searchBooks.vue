@@ -24,8 +24,8 @@ const emit = defineEmits()
 const searchResultsArray = ref(null);
 
 async function searchBooks(e) {
-  searchResultsArray.value = await db.get(urls.setup.bookByText(e.target.value))
-  console.log(searchResultsArray.value, 'logging this shit boy')
+  searchResultsArray.value = await db.get(urls.create.searchBook(e.target.value))
+  console.log(searchResultsArray.value,'searchBookEndpoint')
 }
 
 function toParent(e) {

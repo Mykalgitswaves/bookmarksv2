@@ -47,5 +47,15 @@ export const helpersCtrl = {
         data.spoilers = Array.from(questionList.map((q) => q.is_spoiler))
         
         return data;
+    },
+    /**
+    * Function for cloning objects
+    * @param {{obj}} obj - creates clone of object 
+    * @returns {{obj}} cloned obj
+    */
+    clone(obj) {
+        const clone = JSON.parse(JSON.stringify(obj));
+        console.log(clone)
+        return clone
     }
 }

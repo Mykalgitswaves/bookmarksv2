@@ -28,6 +28,7 @@
         <SpoilerRadioGroup :model-object="q" @is-spoiler-event="handleSpoilers"/>
 
         <button 
+            :disabled="!q.response && !q.q"
             type="button"
             class="py-3 rounded-md text-white bg-indigo-600 w-100 mt-5"
             @click="saveQuestionToSet(id=q.id, question=q.q, response=q.response, spoilers=q.is_spoiler)"
@@ -39,28 +40,41 @@
 <script setup>
     import IconPlus from '../../svg/icon-plus.vue'
     import SpoilerRadioGroup from './spoilerRadioGroup.vue';
-    import { ref, defineEmits } from 'vue'
+    import { ref, defineEmits, toRaw } from 'vue'
 
     const emit = defineEmits();
     const creating = ref(false);
-    const q = {}
-    q.id = 0;
-    q.q = null;
-    q.response = null;
-    q.is_spoiler = null;
+    const q = ref({});
+    q.value.id = 0;
+    q.value.q = null;
+    q.value.response = null;
+    q.value.is_spoiler = false;
 
-    function saveQuestionToSet(id, question, response, spoilers) {
+    async function saveQuestionToSet(id, question, response, spoilers) {
         console.log(id, question, response, spoilers)
-        console.log(q)
+        console.log(q.value)
         creating.value = false;
-        // Default to false.
-        q.is_spoiler === null ? q.is_spoiler = false : q.is_spoiler
-        emit('custom-question', q)
+        const res = await emit('custom-question', toRaw(q.value))
+        if(res) {
+            clearResponses();
+        }
+    }
+
+    function clearResponses() {
+        q.value.q = ''
+        q.value.response = ''
+        q.value.is_spoiler = false;
+        creating.value = false
     }
 
     function handleSpoilers(e) {
-        q.is_spoiler = e.is_spoiler
+        if(q.value) {
+            q.value.is_spoiler = e.is_spoiler
+        } else {
+            console.error('No question to set spoiler on dude.')
+        }
     }
+
 </script>
 <style scoped>
     .light-green-btn {

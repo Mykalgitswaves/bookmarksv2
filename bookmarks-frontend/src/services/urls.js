@@ -11,9 +11,12 @@ export const urls = {
     booksByN: baseUrl + 'books/n/',
     login: baseUrl + 'api/login/',
     author: baseUrl + 'api/author/',
+    create: {
+        searchBook: (text) => (`${baseUrl}api/search/book/${text}`)
+    },
     reviews: {
         review: baseUrl + 'api/review/create_review',
         update: baseUrl + 'api/review/create_update',
-        getReviews: (user_id) => (baseUrl +`api/${user_id}/posts`), 
+        getReviews: (user_id) => (baseUrl +`api/${user_id}/posts`),
     }
 }

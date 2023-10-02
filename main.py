@@ -428,6 +428,17 @@ async def search_for_param(param: str, skip: int=0, limit: int=5):
    
     return JSONResponse(content={"data": jsonable_encoder(search_result)})
 
+@app.get("/api/search/book/{param}")
+async def search_for_param(param: str, skip: int=0, limit: int=5):
+    """
+    Endpoint used for searching for users, todo add in credentials for searching
+    """
+    
+    book_search = BookSearch()
+    books_result = book_search.search(param)
+   
+    return JSONResponse(content={"data": jsonable_encoder(books_result)})
+
 @app.post("/api/review/create_review")
 async def create_review(request: Request, 
                         current_user: Annotated[User, Depends(get_current_active_user)],
