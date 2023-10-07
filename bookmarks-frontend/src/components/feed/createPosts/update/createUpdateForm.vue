@@ -2,7 +2,7 @@
     <div class="container grid">
         <CreatePostHeadline @headline-changed="headlineHandler" :review-type="'update'"/>
         
-        <h3 class="text-2xl font-medium mb-2 mt-5 text-slate-600">Im on page <span class="fancy text-indigo-600">{{ page }}</span></h3>
+        <h3 class="text-2xl font-medium mb-2 mt-5 text-slate-600">Im on page <span class="italic text-indigo-600">{{ page }}</span></h3>
         
         <label class="input-number short" for="page-number">
             <input
@@ -28,7 +28,7 @@
         <div class="flex gap-5 space-between items-end">
             <div class="self-start">
                 <label :for="update.id" class="flex items-center">
-                    <span class="mr-2">Spoilers</span>
+                    <span class="text-slate-600 mr-2">Spoilers</span>
                     <input :id="update.id" 
                         type="checkbox"
                         v-model="update.is_spoiler"
@@ -41,7 +41,7 @@
     </div>    
 </template>
 <script setup>
-import { ref, watch } from 'vue';
+import { ref, watch, reactive } from 'vue';
 import CreatePostHeadline from '../createPostHeadline.vue';
 const emit = defineEmits();
 const headline = ref('');
@@ -53,24 +53,22 @@ const props = defineProps({
 
 })
 
-function headlineHandler(e) {
-    headline.value = e;
-}
-const update = {
-    headline: headline.value,
+
+const update = reactive({
+    headline: '',
     book_id: props.bookId,
     page: page.value,
     is_spoiler: false,
     response: ''
+})
+
+function headlineHandler(e) {
+    console.log(e, 'headline')
+    update.headline = e;
 }
 
 watch(update, () => {
-    if (
-        update.book_id && 
-        update.response !== '' &&
-        update.page > 2 && 
-        update.headline !== ''
-    )(emit('update-complete', update));
+    return emit('update-complete', update);
 });
 
 </script>

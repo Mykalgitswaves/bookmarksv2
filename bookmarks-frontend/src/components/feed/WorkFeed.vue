@@ -17,7 +17,7 @@
         v-if="toggleCreateReviewType"
         type="button"
         class="flex-center justify-center px-3 py-2 rounded-md "
-        :class="emittedPostData?.responses?.length ? 'bg-indigo-600 color-white' : 'bg-slate-200 text-slate-600'"
+        :class="isPostableData ? 'bg-indigo-600 color-white' : 'bg-slate-200 text-slate-600'"
         @click="postToEndpoint()"
       >
         <IconAddPost/>
@@ -111,11 +111,11 @@ const toggleCreateReviewType = ref(false);
 const selectDropdown = ref(false);
 const bookData = ref(null);
 const reviewData = ref(null);
-const isPostableData = ref(null)
+const isPostableData = ref(false);
 const postOptions = ['review', 'update', 'comparison'];
 const mapping = {
   "review": createReviewPost,
-  "update": createUpdatePost
+  "update": createUpdatePost,
 }
 
 const dataMap = {
@@ -130,7 +130,7 @@ async function loadWorks() {
  }
 
 onMounted(() => {
-    loadWorks()
+    loadWorks();
     // Below doesnt work we need to fix query inside pull_all_reviews_by_user_query.
     // loadReviews()
 })
@@ -141,11 +141,11 @@ function selectHandler(option) {
   postTypeMapping.value = option;
 }
 
-let emittedPostData = ref([])
+let emittedPostData = ref(null);
 
 function handlePost(e) {
-  console.log('emitted to work feed', e)
-  emittedPostData.value = e
+  console.log('emitted to work feed', e);
+  emittedPostData.value = e;
 }
 
 const urlsMapping = {
@@ -158,20 +158,16 @@ async function postToEndpoint() {
   toggleCreateReviewType.value = false;
   return await db.post(urlsMapping[postTypeMapping.value], emittedPostData, true).then(() => {
     postTypeMapping.value = '';
-    loadWorks()
+    loadWorks();
     
-  })
+  });
 }
 
 const books = computed(() => (bookData.value ? bookData.value.data : ''))
 
-watch(emittedPostData.value, (oldValue, newValue) => {
-  if(newValue) {
-    console.log(newValue)
-    isPostableData.value = true;
-  } else {
-    isPostableData.value = false;
-  }
+watch(emittedPostData, () => {
+  debugger;
+  isPostableData.value = true;
 })
 
 </script>

@@ -10,18 +10,20 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref, toRaw } from 'vue';
 import SearchBooks from './searchBooks.vue';
 import CreateUpdateFormVue from './update/createUpdateForm.vue';
 
 const emit = defineEmits();
 const book = ref(null);
+let update = null;
 
 function bookHandler(e) {
     book.value = e;
 }
 
 function updateEmitHandler(e){
-    console.log(e)
+    update = toRaw(e);
+    emit('is-postable-data', update);
 }
 </script>
