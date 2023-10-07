@@ -23,7 +23,7 @@
                                 @click="store.addOrUpdateQuestion(question)"
                             >
                                     <span class="block">{{ question.q }}?</span>
-                                    <span class="block text-slate-400" :key="question.response">
+                                    <span class="block text-slate-400 text-start" :key="question.response">
                                         {{ question.response }}
                                     </span>
                             </button>

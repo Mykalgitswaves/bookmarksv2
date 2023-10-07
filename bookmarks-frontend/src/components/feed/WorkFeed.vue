@@ -86,8 +86,8 @@
           </TransitionGroup>
         </KeepAlive>
       </div>
-    
-  </div>
+    </div>
+    <div class="mobile-menu-spacer sm:hidden"></div>
 </template>
 <script setup>
 import { ref, toRaw, computed, watch, onMounted } from 'vue';
@@ -131,7 +131,8 @@ async function loadWorks() {
 
 onMounted(() => {
     loadWorks()
-    loadReviews()
+    // Below doesnt work we need to fix query inside pull_all_reviews_by_user_query.
+    // loadReviews()
 })
 
 let postTypeMapping = ref('');

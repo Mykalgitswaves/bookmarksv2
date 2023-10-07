@@ -13,3 +13,7 @@
 .items-end {
     align-items: end;
 }
+
+.self-start {
+    align-self: start;
+}

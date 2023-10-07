@@ -1,5 +1,27 @@
 <template>
-    <div class="container">
-        cash money shit for updates
+    <div v-if="!book">
+        <p class="text-2xl mb-2 mt-5 font-semibold">The content monster is hungry for your thoughts 🍪. <br/>
+            <span class="text-indigo-500">Start by picking a book </span>
+        </p>
+
+        <SearchBooks @book-to-parent="bookHandler"/>
     </div>
+    <CreateUpdateFormVue v-if="book" :book-id="book.id" @update-complete="updateEmitHandler"/>    
 </template>
+
+<script setup>
+import { ref } from 'vue';
+import SearchBooks from './searchBooks.vue';
+import CreateUpdateFormVue from './update/createUpdateForm.vue';
+
+const emit = defineEmits();
+const book = ref(null);
+
+function bookHandler(e) {
+    book.value = e;
+}
+
+function updateEmitHandler(e){
+    console.log(e)
+}
+</script>

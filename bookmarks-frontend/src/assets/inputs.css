@@ -1,0 +1,24 @@
+.input-number .input-title {
+    display: block;
+    font-size: 16px;
+    font-weight: medium;
+    padding-bottom: 5px;
+}
+
+.input-number input[type="number"] {
+    display: block;
+    border: solid 2px #c7d2fe;
+    padding: 10px 8px;
+    border-radius: 4px;
+}
+
+.input-number input[type="number"].short {
+    width: 100px;
+}
+
+.summary-update textarea {
+    border: solid 2px #c7d2fe;
+    border-radius: 4px;
+    width: 100%;
+    max-width: 600px;
+}

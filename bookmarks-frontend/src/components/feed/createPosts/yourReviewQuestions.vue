@@ -8,21 +8,21 @@
                     :ref="(el) => createPostResponseFormArr.push(el)"
                 >
                         <span class="block">{{ question.q }}?</span>
-                        <span class="block text-slate-400" :key="question.response">
+                        <span class="block text-slate-400 text-start" :key="question.response">
                             {{ question.response }}
                         </span>
                 </button>
 
                 
             </div>
-            <CreatePostResponseForm :q="question" v-if="!createPostResponseFormArr[i]"/>
+            <CreatePostResponseForm :q="question" v-if="!createPostResponseFormArr[i]" @store-changed="storeChangeHandler()"/>
         </li>
     </ul>
     
     
 </template>
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, watch } from 'vue';
 import { createQuestionStore } from '../../../stores/createPostStore';
 import CreatePostResponseForm from './createPostResponseForm.vue';
 import IconRemove from '../../svg/icon-remove.vue';
@@ -37,7 +37,12 @@ const props = defineProps({
 const store = createQuestionStore();
 const questions = computed(() => store.arr ? store.arr : []);
 const createPostResponseFormArr = ref([])
+const emit = defineEmits();
 
+function storeChangeHandler() {
+    console.log('emit emit emit')
+    emit('question-form-completed')
+}
 </script>
 
 <style scoped>

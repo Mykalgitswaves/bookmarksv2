@@ -1,6 +1,6 @@
 <template>
     <div v-if="!book">
-        <p class="text-2xl my-5 font-semibold">The content monster is hungry for your thoughts 🍪. <br/>
+        <p class="text-2xl mb-2 mt-5 font-semibold">The content monster is hungry for your thoughts 🍪. <br/>
             <span class="text-indigo-500">Start by picking a book </span>
         </p>
 
@@ -17,6 +17,7 @@
         <p class="text-2xl font-medium my-5 text-slate-600">Add and answer questions.</p>
 
         <div class="grid-two-btn-container">
+            
             <button
                 type="button" 
                 class="btn border-indigo-500 text-indigo-500 text-lg"
@@ -39,6 +40,7 @@
         <YourReviewQuestions 
             v-if="currentPostTopic === 'review'"
             :is-viewing-review="true"
+            @question-form-completed="hasQuestionDataHandler()"
         />
         <div class="mobile-menu-spacer sm:hidden"></div>
     </div>
@@ -87,6 +89,11 @@ const questionMapping = {
 // functions
 const emit = defineEmits();
 
+function hasQuestionDataHandler(){
+    entries.value = store.arr
+    console.log('entries has been changed', entries.value)
+}
+
 function bookHandler(e) {
     book.value = e;
 }
@@ -99,21 +106,6 @@ function headlineHandler(e) {
 const count = computed(() => {
     return store.arr.length
 })
-// looks for index of question being emitted by parent component and replaces question with spoiler boolean.
-
-
-function removeQuestionFromEntries(q, index) {
-    // delete is not working.
-    // Remove from entries. then emit new object;
-        store.delete(q)
-        entries.value = store.toArray();
-        questionMapping[currentTopic.value][index].response = ''
-        // idea is to refresh the store when u delete a question.
-        if(!store.toArray()?.length === 0) {
-            questionMapping['Your post'] = JSON.parse(JSON.stringify(postData.posts.review['Your post']))
-        }
-        emit('is-postable-data', entries.value)
-}
 
 // Add a watcher to emit up when something is added, doesn't seem to capture when entries loses entry with splice so we have duplicate above.
 watch(entries, () => {
@@ -158,10 +150,7 @@ textarea {
     text-align: start;
 }
 
-.mobile-menu-spacer {
-    height: 5rem;
-    width: auto;
-}
+
 .list-move,
 .list-enter-active,
 .list-leave-active {

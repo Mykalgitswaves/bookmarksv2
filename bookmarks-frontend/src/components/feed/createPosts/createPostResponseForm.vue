@@ -16,9 +16,9 @@
         />
 
         <div class="flex gap-5 space-between items-end">
-            <div>
+            <div class="self-start">
                 <label :for="q.id" class="flex items-center">
-                    <span class="mr-5">Spoilers</span>
+                    <span class="mr-2">Spoilers</span>
                     <input :id="q.id" 
                         type="checkbox"
                         v-model="q.is_spoiler"
@@ -35,7 +35,7 @@
                     :class="{
                         'added': q.response !== '',
                     }"
-                    @click="store.addOrUpdateQuestion(q)"
+                    @click="alertQuestionWatch(q)"
                 >
                     Add response
                 </button>
@@ -65,4 +65,9 @@ const q  = toRaw(props.q)
 console.log(q)
 const store = createQuestionStore();
 const emit = defineEmits();
+
+function alertQuestionWatch(question) {
+    store.addOrUpdateQuestion(question)
+    emit('store-changed')
+}
 </script>
