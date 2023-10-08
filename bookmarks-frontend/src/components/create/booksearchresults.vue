@@ -6,7 +6,7 @@
         :key="book.id"
       >
         <li
-          @click="isToggled[book.id] = !isToggled[book.id]; authEmit(book)"
+          @click="bookClickHandler(book);"
           :class="'flex flex-row gap-5 py-4 px-4 place-content-start bg-gray-100 rounded-md my-3 hover:bg-gray-200 max-w-[700px]' +
             (isToggled[book.id] === true ? 'border-solid border-indigo-200 border-2 bg-indigo-50' : '')"
         >
@@ -61,10 +61,18 @@ const reviewRange = ref(5)
       type: Boolean,
       required: false,
       default: false
+    },
+    isComparison: {
+      type: Boolean,
+      required: false,
+      default: false,
     }
   })
   const emit = defineEmits();
-  const books = computed(() => (props.data))
+
+  const books = computed(() => (props.data));
+
+  
 
   function addScore(object){
     // set to map obj cause its better ds for this.
@@ -86,15 +94,22 @@ const reviewRange = ref(5)
    
   function authEmit(book) {
     if(props.isAuth) {
-      console.log(`emitting ${book}`)
       return emit('book-id', book)
     }
     return;
   }
 
-  watch(books.value, (oldValue, newValue) => {
-    console.log('new books', newValue)
-  })
+  function bookClickHandler(book) {
+    isToggled[book.id] = !isToggled[book.id];
+    authEmit(book);
+    isToggled.value[book.id] = true
+    // if (props.isComparison) {
+    //   const index = books.value.indexOf(book);
+    //   comparator = [books.value[index]];
+    // }
+  }
+
+  
 
   onMounted(() => {
     const state = useBookStore()

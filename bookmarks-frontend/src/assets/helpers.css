@@ -45,3 +45,12 @@
     height: 5rem;
     width: auto;
   }
+
+  .my-15 {
+    margin-top: 3rem;
+    margin-bottom: 3rem;
+  }
+
+  .mt-15 {
+    margin-top: 3rem;
+  }

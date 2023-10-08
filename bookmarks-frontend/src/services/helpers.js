@@ -57,5 +57,13 @@ export const helpersCtrl = {
         const clone = JSON.parse(JSON.stringify(obj));
         console.log(clone)
         return clone
+    },
+    /**
+    * Function for saving books to refs
+    * @param {{book_id}} string_number - either a string or a number. 
+    * @returns {{void}} void
+    */
+    bookHandler(book_id, ref) {
+        ref.value = book_id
     }
 }

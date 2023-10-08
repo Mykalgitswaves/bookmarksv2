@@ -101,6 +101,7 @@ import IconPlus from '../svg/icon-plus.vue'
 import IconExit from '../svg/icon-exit.vue';
 import createReviewPost from './createPosts/createReviewPost.vue';
 import createUpdatePost from './createPosts/createUpdatePost.vue';
+import createComparisonPost from './createPosts/createComparisonPost.vue';
 import ReviewPost from './posts/reviewPost.vue';
 import IconAddPost from '../svg/icon-add-post.vue';
 
@@ -113,9 +114,11 @@ const bookData = ref(null);
 const reviewData = ref(null);
 const isPostableData = ref(false);
 const postOptions = ['review', 'update', 'comparison'];
+
 const mapping = {
   "review": createReviewPost,
   "update": createUpdatePost,
+  "comparison": createComparisonPost,
 }
 
 const dataMap = {
@@ -144,13 +147,13 @@ function selectHandler(option) {
 let emittedPostData = ref(null);
 
 function handlePost(e) {
-  console.log('emitted to work feed', e);
   emittedPostData.value = e;
 }
 
 const urlsMapping = {
   "review": urls.reviews.review,
   "update": urls.reviews.update,
+  "comparison": urls.reviews.comparison,
 }
 
 
@@ -166,7 +169,6 @@ async function postToEndpoint() {
 const books = computed(() => (bookData.value ? bookData.value.data : ''))
 
 watch(emittedPostData, () => {
-  debugger;
   isPostableData.value = true;
 })
 

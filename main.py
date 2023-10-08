@@ -530,7 +530,8 @@ async def create_comparison(request: Request,
     """
     Creates a post of type Comparison
     
-    {"book_id":,
+    {
+     "book_id":,
      "headline":,
      compared_books:[]
      comparators:[]
