@@ -121,13 +121,10 @@ const mapping = {
   "comparison": createComparisonPost,
 }
 
-const dataMap = {
-  "reviews": '',
-}
-
 async function loadWorks() {
     bookData.value = await db.get(urls.booksByN, {'limit': 25}, true);
-  }
+}
+
  async function loadReviews() {
    reviewData.value = await db.get(urls.reviews.getReviews(user), true);
  }

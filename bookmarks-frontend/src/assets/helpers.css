@@ -54,3 +54,7 @@
   .mt-15 {
     margin-top: 3rem;
   }
+
+  .nowrap {
+    white-space: nowrap;
+  }

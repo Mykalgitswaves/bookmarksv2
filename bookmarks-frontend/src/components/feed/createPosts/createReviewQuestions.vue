@@ -78,20 +78,7 @@ activeQuestionCat.value.forEach((boolean) => (boolean.value = false));
 
 <style scoped>
 
-.question-topic {
-    font-size: 18px;
-    font-weight: semibold;
-    display: flex;
-    justify-content: space-between;
-    margin: 1rem 0;
-    padding: .75rem 1rem;
-    width: 100%;
-    border: solid 2px #e2e8f0;
-    color: #1e293b;
-    background: #f8fafc;
-    border-radius: 4px;
-    transition: all 150ms ease-in-out;
-}
+
 
 .active {
     transform: rotate(180deg);

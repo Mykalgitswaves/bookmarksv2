@@ -6,10 +6,10 @@
     <button
         v-if="currentStep > 0 && !isDoneReviewing"
         type="button"
-        class="mb-5 underline cursor-pointer underline-offset-2"
+        class="mb-5 flex items-center gap-2"
         @click="clearFirstBook()"
     >
-        Edit book 1: <span class="text-indigo-500 italic">{{ firstBook }}</span>
+        <IconEdit /><span class="text-indigo-500 italic">{{ firstBook }}</span>
     </button>
 
     <component
@@ -19,15 +19,19 @@
         v-on="currentComponent.events"
     ></component>
 
-    <button
-        v-if="isDoneReviewing"
-        type="button"
-        class="mt-15 mb-5 cursor-pointer flex items-center gap-2 text-slate-800"
-        @click="clearSecondBook()"
-    >
-        <IconEdit />
-        <span class="underline">Edit selection</span>
-    </button>
+    <div v-if="isDoneReviewing" class="mt-15 flex space-between container gap-5">
+        <p class="font-semibold text-left">Comparing <span class="text-indigo-500">{{ books[0].title }}</span> and <span class="text-indigo-500">{{ books[1].title }}</span></p>
+
+        <button
+            type="button"
+            class="cursor-pointer text-indigo-600 px-2"
+            alt="edit selection"
+            @click="clearSecondBook()"
+        >
+            <IconEdit />
+            <span class="underline hidden">Edit selection</span>
+        </button>
+    </div>
 </template>
 <script setup>
 

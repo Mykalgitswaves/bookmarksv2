@@ -2,19 +2,20 @@
     <CreateComparisonSelection 
         @books-selected="booksHandlerFn"
     />
-
-    <div v-if="books.length === 2">
-        Comparing <span class="text-indigo-500">{{ books[0].title }}</span> and <span class="text-indigo-500">{{ books[1].title }}</span>
-        <div>
-            
-        </div>
-    </div>
+    
+    <CreateComparisonQuestionsVue 
+        v-if="books.length === 2"
+        :books="books"
+    />
+    
+    <div class="mobile-menu-spacer"></div>
 </template>
 <script setup>
 import CreateComparisonSelection from './comparison/createComparisonSelection.vue';
-import {ref, reactive} from 'vue';
+import CreateComparisonQuestionsVue from './comparison/createComparisonQuestions.vue';
+import { ref } from 'vue';
 
-let books = ref([]);
+const books = ref([]);
 
 function booksHandlerFn(e) {
     console.log('working working working')
@@ -22,3 +23,12 @@ function booksHandlerFn(e) {
 }
 
 </script>
+
+<style scoped>
+
+.comparison-images {
+    aspect-ratio: 3/4;
+    height: 150px;
+    margin: 2ch 0;
+}
+</style>
