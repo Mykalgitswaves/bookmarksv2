@@ -467,6 +467,8 @@ async def create_review(request: Request,
                     post_id='', 
                     book=book_id,
                     user_username=current_user.username,
+                    book_title=response['title'],
+                    book_small_img=response['small_img_url'],
                     headline=response['headline'],
                     questions=response['questions'],
                     question_ids=response['ids'],
@@ -507,6 +509,8 @@ async def create_update(request: Request,
 
     update = UpdatePost(post_id='',
                         book=book_id,
+                        book_title=response['title'],
+                        book_small_img=response['small_img_url'],
                         user_username=current_user.username,
                         headline=response['headline'],
                         page=response['page'],
@@ -555,7 +559,9 @@ async def create_comparison(request: Request,
                                 comparators=response['comparators'],
                                 comparator_ids=response['comparator_ids'],
                                 responses=response['responses'],
-                                book_specific_responses=response['book_specific_responses'])
+                                book_specific_responses=response['book_specific_responses'],
+                                book_title=response['title'],
+                                book_small_img=response['small_img_url'])
     
     comparison.create_post(driver)
 
@@ -591,7 +597,9 @@ async def create_recommendation_friend(request: Request,
                                           user_username=current_user.username,
                                           to_user_username=response['to_user_username'],
                                           from_user_text=response['from_user_text'],
-                                          to_user_text=response['to_user_text'])
+                                          to_user_text=response['to_user_text'],
+                                          book_title=response['title'],
+                                          book_small_img=response['small_img_url'],)
     
     recommendation.create_post(driver)
 

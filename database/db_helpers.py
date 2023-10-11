@@ -126,23 +126,24 @@ class User():
         return(output)
 
 class Review():
-    def __init__(self, post_id, book, created_date="", user_id="", user_username=""):
+    def __init__(self, post_id, book, created_date="", user_id="", user_username="",book_title="", book_small_img=""):
         self.id = post_id
         self.created_date = created_date
         self.user_username = user_username
         self.user_id = user_id
         self.book = book
+        self.book_title = book_title
+        self.book_small_img = book_small_img
 
 
 class ReviewPost(Review):
-    def __init__(self, post_id, book, questions, question_ids, responses, spoilers, headline="", created_date="", user_username="", user_id="", book_title=""):
-        super().__init__(post_id,book, created_date, user_id, user_username)
+    def __init__(self, post_id, book, questions, question_ids, responses, spoilers, headline="", created_date="", user_username="", user_id="",book_small_img="",book_title=""):
+        super().__init__(post_id,book, created_date, user_id, user_username,book_title,book_small_img)
         self.headline = headline
         self.questions = questions
         self.question_ids = question_ids
         self.responses = responses
         self.spoilers = spoilers
-        self.book_title = book_title
     def create_post(self,driver):
         created_date, id = driver.create_review(self)
         self.id = id
@@ -150,8 +151,8 @@ class ReviewPost(Review):
     
 
 class UpdatePost(Review):
-    def __init__(self, post_id, book, page, questions, question_ids, responses, spoilers, headline="", created_date="", user_id="", user_username=""):
-        super().__init__(post_id, book, created_date, user_id, user_username)
+    def __init__(self, post_id, book, page, questions, question_ids, responses, spoilers, headline="", created_date="", user_id="", user_username="",book_small_img="",book_title=""):
+        super().__init__(post_id, book, created_date, user_id, user_username,book_title,book_small_img)
         self.page = page
         self.headline = headline
         self.questions = questions
@@ -165,8 +166,8 @@ class UpdatePost(Review):
 
 
 class ComparisonPost(Review):
-    def __init__(self, post_id, compared_books, headline:str, comparators:list, comparator_ids:list, responses:list, book_specific_responses:list, created_date="", user_id="", user_username=""):
-        super().__init__(post_id, compared_books, created_date, user_id, user_username)
+    def __init__(self, post_id, compared_books, headline:str, comparators:list, comparator_ids:list, responses:list, book_specific_responses:list, created_date="", user_id="", user_username="",book_small_img=["",""],book_title=["",""]):
+        super().__init__(post_id, compared_books, created_date, user_id, user_username,book_title,book_small_img)
         self.headline = headline
         self.comparators = comparators
         self.comparator_ids = comparator_ids
@@ -179,8 +180,8 @@ class ComparisonPost(Review):
 
 
 class RecommendationFriend(Review):
-    def __init__(self, post_id, book, to_user_username, from_user_text, to_user_text, created_date="", user_id="", user_username=""):
-        super().__init__(post_id, book, created_date, user_id, user_username)
+    def __init__(self, post_id, book, to_user_username, from_user_text, to_user_text, created_date="", user_id="", user_username="",book_small_img="",book_title=""):
+        super().__init__(post_id, book, created_date, user_id, user_username,book_title,book_small_img)
         self.to_user_username = to_user_username
         self.from_user_text = from_user_text
         self.to_user_text = to_user_text
@@ -191,8 +192,8 @@ class RecommendationFriend(Review):
 
 
 class MilestonePost(Review):
-    def __init__(self, post_id, book, num_books:int, created_date="", user_id="", user_username=""):
-        super().__init__(post_id, book, created_date, user_id, user_username)
+    def __init__(self, post_id, book, num_books:int, created_date="", user_id="", user_username="",book_small_img="",book_title=""):
+        super().__init__(post_id, book, created_date, user_id, user_username,book_title,book_small_img)
         self.num_books = num_books
     def create_post(self,driver):
         created_date, id = driver.create_milestone(self)
@@ -1368,7 +1369,7 @@ class Neo4jDriver():
     def create_review_query(tx, review_post):
         query = """
                 match (u:User {username:$username})
-                merge (b:Book {id:$book_id})
+                merge (b:Book {id:$book_id, title:$title, small_img_url:$small_img_url})
                 create (r:Review {id:randomUUID(), 
                                 created_date:datetime(),
                                 headline:$headline,
@@ -1380,8 +1381,17 @@ class Neo4jDriver():
                 create (r)-[pp:POST_FOR_BOOK]->(b)
                 return r.created_date, r.id
                 """
-        result = tx.run(query, username=review_post.user_username, book_id=review_post.book, headline=review_post.headline, questions=review_post.questions,
-                        question_ids=review_post.question_ids,responses=review_post.responses,spoilers=review_post.spoilers)
+        result = tx.run(query, 
+                        username=review_post.user_username, 
+                        book_id=review_post.book, 
+                        headline=review_post.headline, 
+                        questions=review_post.questions,
+                        question_ids=review_post.question_ids,
+                        responses=review_post.responses,
+                        spoilers=review_post.spoilers, 
+                        title=review_post.book_title,
+                        small_img_url=review_post.book_small_img)
+        
         response = result.single()
         created_date = response["r.created_date"]
         review_id = response['r.id']
@@ -1403,7 +1413,7 @@ class Neo4jDriver():
     def create_update_query(tx, update_post):
         query = """
             match (u:User {username:$username})
-            merge (b:Book {id:$book_id})
+            merge (b:Book {id:$book_id, title:$title, small_img_url:$small_img_url})
             create (d:Update {id:randomUUID(), 
                             created_date:datetime(),
                             page:$page,
@@ -1416,8 +1426,18 @@ class Neo4jDriver():
             create (d)-[pp:POST_FOR_BOOK]->(b)
             return d.created_date, d.id
                 """
-        result = tx.run(query, username=update_post.user_username, book_id=update_post.book, page=update_post.page, headline=update_post.headline, questions=update_post.questions,
-                        question_ids=update_post.question_ids,responses=update_post.responses,spoilers=update_post.spoilers)
+        result = tx.run(query, 
+                        username=update_post.user_username, 
+                        book_id=update_post.book, 
+                        page=update_post.page, 
+                        headline=update_post.headline, 
+                        questions=update_post.questions,
+                        question_ids=update_post.question_ids,
+                        responses=update_post.responses,
+                        spoilers=update_post.spoilers, 
+                        title=update_post.book_title, 
+                        small_img_url=update_post.book_small_img)
+        
         response = result.single()
         created_date = response["d.created_date"]
         update_id = response["d.id"]
@@ -1439,8 +1459,8 @@ class Neo4jDriver():
     def create_comparison_query(tx, comparison_post):
         query = """
         match (u:User {username:$username})
-        merge (b:Book {id:$book_id_1})
-        merge (bb:Book {id:$book_id_2})
+        merge (b:Book {id:$book_id_1, title:$title_1, small_img_url:$small_img_url_1})
+        merge (bb:Book {id:$book_id_2, title:$title_2, small_img_url:$small_img_url_2})
         create (c:Comparison {id:randomUUID(), 
                             created_date:datetime(),
                             headline:$headline,
@@ -1468,8 +1488,12 @@ class Neo4jDriver():
                 """
         result = tx.run(query, 
                         username=comparison_post.user_username, 
-                        book_id_1=comparison_post.book[0], 
-                        book_id_2=comparison_post.book[1], 
+                        book_id_1=comparison_post.book[0],
+                        book_id_2=comparison_post.book[1],
+                        title_1=comparison_post.book_title[0],
+                        title_2=comparison_post.book_title[1],
+                        small_img_url_1=comparison_post.book_small_img[0],
+                        small_img_url_2=comparison_post.book_small_img[1],
                         headline=comparison_post.headline, 
                         compared_books=comparison_post.book, 
                         comparators=comparison_post.comparators,
@@ -1499,7 +1523,7 @@ class Neo4jDriver():
         query = """
         match (u:User {username:$username})
         match (f:User {username:$to_user_username})
-        merge (b:Book {id:$book_id})
+        merge (b:Book {id:$book_id, title:$title, small_img_url:$small_img_url})
         create (r:RecommendationFriend {id:randomUUID(), 
                                         created_date:datetime(),
                                         from_user_text:$from_user_text,
@@ -1511,7 +1535,9 @@ class Neo4jDriver():
         """
         result = tx.run(query, 
                         username=recommendation_post.user_username, 
-                        book_id=recommendation_post.book, 
+                        book_id=recommendation_post.book,
+                        title=recommendation_post.book_title,
+                        small_img_url=recommendation_post.book_small_img,
                         to_user_username=recommendation_post.to_user_username,
                         from_user_text=recommendation_post.from_user_text, 
                         to_user_text=recommendation_post.to_user_text)

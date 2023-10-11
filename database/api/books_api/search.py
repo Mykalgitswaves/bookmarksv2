@@ -1,8 +1,9 @@
 import requests
 import json
+from database.db_helpers import Book, Neo4jDriver
+
 import sys
 sys.path.append('./')
-from database.db_helpers import Book, Neo4jDriver
 from helpers import timing_decorator 
 
 class BookSearch():
