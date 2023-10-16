@@ -19,18 +19,18 @@
         v-on="currentComponent.events"
     ></component>
 
-    <div v-if="isDoneReviewing" class="mt-15 flex space-between container gap-5">
-        <p class="font-semibold text-left">Comparing <span class="text-indigo-500">{{ books[0].title }}</span> and <span class="text-indigo-500">{{ books[1].title }}</span></p>
-
+    <div v-if="isDoneReviewing" class="mt-15 flex container gap-5">
         <button
             type="button"
-            class="cursor-pointer text-indigo-600 px-2"
+            class="cursor-pointer text-indigo-600"
             alt="edit selection"
             @click="clearSecondBook()"
         >
             <IconEdit />
             <span class="underline hidden">Edit selection</span>
         </button>
+        <p class="font-semibold text-left">Comparing <span class="text-indigo-500">{{ books[0].title }}</span> and <span class="text-indigo-500">{{ books[1].title }}</span></p>
+
     </div>
 </template>
 <script setup>
