@@ -27,6 +27,7 @@ export class Comparison {
         this.comparator_a_headline = ''
         this.comparator_b_headline =  ''
         this.is_ai_generated = false
+        this.is_add_irony = false
     }
 };
         // post_id='',

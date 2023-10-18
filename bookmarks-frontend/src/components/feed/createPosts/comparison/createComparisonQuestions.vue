@@ -7,6 +7,7 @@
                     name="comparison dropdown"
                     id="comparison_dropdown"
                     v-model="question.topic"
+                    @change="(e) = (question.topic = e)"
                 >
                     <option 
                         v-for="(topic, index) in topics"
@@ -22,7 +23,7 @@
                     id="" 
                     cols="30" 
                     rows="10"
-                    :placeholder="`The ${question.topic} of both books...`"
+                    :placeholder="`The ${topic} of both books...`"
                     v-model="question.comparison"
                 />
             </div>
@@ -55,6 +56,13 @@
                         <span class="text-gray-600">Generate headlines based of my content with LLM's</span>
                 </label>
             </div>
+            <div class="is_ai my-5">
+                <label for="add_irony">
+                    <input type="checkbox" value="true" v-model="question.is_add_irony">
+                        <IconIrony/>
+                        <span class="text-gray-600">Add irony...</span>
+                </label>
+            </div>
 
             <button 
                 class="w-100 py-4 bg-indigo-500 rounded-sm text-white text-xl"
@@ -66,12 +74,13 @@
     </div>
 </template>
 <script setup>
-import { watch } from 'vue';
+import { ref } from 'vue';
 import IconChevron from '../../../svg/icon-chevron.vue'; 
 import IconPlus from '../../../svg/icon-plus.vue';
 import { questions, topics, Comparison } from './comparison';
 import { createQuestionStore } from '../../../../stores/createPostStore';
 import IconAi from '../../../svg/icon-ai.vue';
+import IconIrony from '../../../svg/icon-irony.vue';
 
 const props = defineProps({
     books: {
@@ -79,10 +88,10 @@ const props = defineProps({
         required: true
     }
 });
-
 const store = createQuestionStore();
 let question = new Comparison();
-
+question.topic = topics[0];
+const topic = ref(question.topic)
 const emit = defineEmits(['postable-store-data']);
 
 function addQuestionToStoreFn(question) {
