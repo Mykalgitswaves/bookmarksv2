@@ -1,53 +1,53 @@
 <template>
   <div>
-    <div class="flex justify-between">
-    <div class="btn-relative">
-      <button 
-        v-if="postTypeMapping === ''"
-        class="flex-center justify-center px-2 py-2 rounded-md color-white bg-indigo-600"
-        type="button"
-        @click="selectDropdown = !selectDropdown"
-      >
-        <IconPlus />
-        
-        <span>Make a Post</span>
-        
-      </button>
-      <button
-        v-if="toggleCreateReviewType"
-        type="button"
-        class="flex-center justify-center px-3 py-2 rounded-md "
-        :class="isPostableData ? 'bg-indigo-600 color-white' : 'bg-slate-200 text-slate-600'"
-        @click="postToEndpoint()"
-      >
-        <IconAddPost/>
-        Post
-      </button>
-
-      <div 
-        v-if="selectDropdown" 
-        class="popout-flyout shadow-lg"
-      >
+    <div class="flex gap-5">
+      <div class="btn-relative">
         <button 
-          type="button" 
-          v-for="(option, index) in postOptions"
-          :key="index"
-          @click="selectHandler(option); toggleCreateReviewType = true; selectDropdown = false"  
+          v-if="postTypeMapping === ''"
+          class="flex-center justify-center px-2 py-2 rounded-md color-white bg-indigo-600"
+          type="button"
+          @click="selectDropdown = !selectDropdown"
         >
-          {{ option }}
+          <IconPlus />
+          
+          <span>Make a Post</span>
+          
         </button>
+        <button
+          v-if="toggleCreateReviewType"
+          type="button"
+          class="flex-center justify-center px-3 py-2 rounded-md "
+          :class="isPostableData ? 'bg-indigo-600 color-white' : 'bg-slate-200 text-slate-600'"
+          @click="postToEndpoint()"
+        >
+          <IconAddPost/>
+          Post
+        </button>
+
+        <div 
+          v-if="selectDropdown" 
+          class="popout-flyout shadow-lg"
+        >
+          <button 
+            type="button" 
+            v-for="(option, index) in postOptions"
+            :key="index"
+            @click="selectHandler(option); toggleCreateReviewType = true; selectDropdown = false"  
+          >
+            {{ option }}
+          </button>
+        </div>
       </div>
-    </div>
-    
-    <button 
-      v-if="toggleCreateReviewType"
-      type="button" 
-      class="flex-center justify-center px-2 py-2 bg-red-600 rounded-md color-white" 
-      @click="toggleCreateReviewType = false; postTypeMapping = ''"
-    >
-        <IconExit/>
-    </button>
-    </div>
+      
+      <button 
+        v-if="toggleCreateReviewType"
+        type="button" 
+        class="flex-center justify-center px-2 py-2 bg-red-600 rounded-md color-white" 
+        @click="toggleCreateReviewType = false; postTypeMapping = ''"
+      >
+          <IconExit/>
+      </button>
+      </div>
 
       <component 
         v-if="toggleCreateReviewType" 
@@ -159,7 +159,7 @@ async function postToEndpoint() {
   return await db.post(urlsMapping[postTypeMapping.value], emittedPostData, true).then(() => {
     postTypeMapping.value = '';
     loadWorks();
-    
+    loadReviews();
   });
 }
 

@@ -16,8 +16,8 @@ export class Comparison {
 
     constructor() {
         this.id = ++Comparison.count
-        this.comparator_a = null
-        this.comparator_b = null
+        this.comparator_ids = []
+        this.book_small_imgs = []
         this.comparator_a_title = null
         this.comparator_b_title = null
         this.topic =  ''
@@ -29,3 +29,13 @@ export class Comparison {
         this.is_ai_generated = false
     }
 };
+        // post_id='',
+        // book=book_ids,
+        // user_username=current_user.username,
+        // headline=response['headline'],
+        // comparators=response['comparators'],
+        // comparator_ids=response['comparator_ids'],
+        // responses=response['responses'],
+        // book_specific_responses=response['book_specific_responses'],
+        // book_title=response['title'],
+        // book_small_img=response['small_img_url'])

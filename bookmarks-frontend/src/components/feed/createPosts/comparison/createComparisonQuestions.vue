@@ -86,8 +86,7 @@ let question = new Comparison();
 const emit = defineEmits(['postable-store-data']);
 
 function addQuestionToStoreFn(question) {
-    question.comparator_a = props.books[0].id;
-    question.comparator_b = props.books[1].id;
+    question.comparator_ids = [ props.books[0].id, props.books[1].id ];
     question.comparator_a_title = props.books[0].title;
     question.comparator_b_title = props.books[1].title;
     question.id = store.arr.length++;
