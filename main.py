@@ -531,6 +531,7 @@ async def create_update(request: Request,
 async def create_comparison(request: Request, 
                             current_user: Annotated[User, Depends(get_current_active_user)],
                             background_tasks: BackgroundTasks):
+    breakpoint()
     """
     Creates a post of type Comparison
     

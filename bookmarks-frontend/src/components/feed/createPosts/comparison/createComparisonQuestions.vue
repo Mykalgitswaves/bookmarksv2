@@ -59,30 +59,44 @@
             <button 
                 class="w-100 py-4 bg-indigo-500 rounded-sm text-white text-xl"
                 type="button"
-                @click="emit('comparison-question', question)"
+                @click="addQuestionToStoreFn(question)"
             >
                 Add
             </button>
     </div>
 </template>
 <script setup>
+import { watch } from 'vue';
 import IconChevron from '../../../svg/icon-chevron.vue'; 
 import IconPlus from '../../../svg/icon-plus.vue';
-import { questions, topics, comparison } from './comparison';
+import { questions, topics, Comparison } from './comparison';
+import { createQuestionStore } from '../../../../stores/createPostStore';
 import IconAi from '../../../svg/icon-ai.vue';
+
 const props = defineProps({
     books: {
         type: Array,
         required: true
     }
-})
+});
 
-const question = comparison;
-question.comparator_a = props.books[0]?.id;
-question.comparator_b = props.books[0]?.id;
-const emit = defineEmits();
+const store = createQuestionStore();
+let question = new Comparison();
 
+const emit = defineEmits(['postable-store-data']);
+
+function addQuestionToStoreFn(question) {
+    question.comparator_a = props.books[0].id;
+    question.comparator_b = props.books[1].id;
+    question.comparator_a_title = props.books[0].title;
+    question.comparator_b_title = props.books[1].title;
+    question.id = store.arr.length++;
+    store.addOrUpdateQuestion(question);
+    question = new Comparison()
+    emit('postable-store-data', store.arr)
+}
 </script>
+
 <style scoped>
 
 .add-topic {

@@ -7,15 +7,24 @@
                     @click="createPostResponseFormArr[i] = !createPostResponseFormArr[i]"
                     :ref="(el) => createPostResponseFormArr.push(el)"
                 >
-                        <span class="block">{{ question.q }}?</span>
-                        <span class="block text-slate-400 text-start" :key="question.response">
+                        <span v-if="!props.isComparison" class="block">{{ question.q }}?</span>
+                        <span v-if="!props.isComparison" class="block text-slate-400 text-start" :key="question.response">
                             {{ question.response }}
                         </span>
-                </button>
 
-                
+                        <span v-if="props.isComparison" class="block">{{ `The ${question.topic} of both books...` }}</span>
+
+                        <span v-if="props.isComparison" class="block text-slate-400 text-start">{{ question.comparison }}</span>
+                </button>
             </div>
-            <CreatePostResponseForm :q="question" v-if="!createPostResponseFormArr[i]" @store-changed="storeChangeHandler()"/>
+
+            <CreatePostResponseForm 
+                v-if="!createPostResponseFormArr[i]" 
+                :q="question" 
+                :is-comparison="true"  
+                :is-viewing-question="true" 
+                @store-changed="storeChangeHandler()"
+            />
         </li>
     </ul>
     
@@ -31,18 +40,38 @@ const props = defineProps({
     isViewingReview: {
         type: Boolean,
         required: true,
+    },
+    questions: {
+        type: Array,
+        required: false,
+    },
+    isComparison: {
+        type: Boolean,
+        required: false,
+        default: false,
     }
-})
+});
 
 const store = createQuestionStore();
-const questions = computed(() => store.arr ? store.arr : []);
-const createPostResponseFormArr = ref([])
+
+const questions = computed(() => { 
+    if (props.questions.length) {
+        return props.questions;
+    } else if (store.arr) {
+        return store.arr;
+    } else { 
+       return [];
+    }
+});
+
+const createPostResponseFormArr = ref([]);
+
 const emit = defineEmits();
 
 function storeChangeHandler() {
-    console.log('emit emit emit')
-    emit('question-form-completed')
-}
+    emit('question-form-completed');
+};
+
 </script>
 
 <style scoped>
