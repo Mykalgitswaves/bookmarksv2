@@ -543,14 +543,14 @@ async def create_comparison(request: Request,
      book_specific_headlines:[]
      }
     """
+    
     if not current_user:
         raise HTTPException("401","Unauthorized")
 
     response = await request.json()
     response = response['_value']
-
     comparison = ComparisonPost(post_id='',
-                                book=response["book_ids"],
+                                compared_books=response["book_ids"],
                                 user_username=current_user.username,
                                 headline="",
                                 comparators=response['comparator_topics'],

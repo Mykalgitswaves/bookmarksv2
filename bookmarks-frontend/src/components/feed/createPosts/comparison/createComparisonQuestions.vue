@@ -1,6 +1,6 @@
 <template>
     <div class="container max-w-[600px] mt-5">
-        <p class="text-gray-600 my-5">
+            <p class="text-gray-600 my-5">
                 <span class="text-2xl text-indigo-600 font-medium block">Brevity is a luxury,</span>
                 write a short headline to summarize the commonality shared by both books
             </p>
@@ -23,7 +23,7 @@
                     class="select-1"
                     name="comparison dropdown"
                     id="comparison_dropdown"
-                    v-model="question.topic"
+                    v-model="topic"
                     @change="(e) = (question.topic = e)"
                 >
                     <option 
@@ -77,7 +77,7 @@
     </div>
 </template>
 <script setup>
-import { ref, watch } from 'vue';
+import { ref, watch, toRaw } from 'vue';
 import { questions, topics, Comparison, formatQuestionStoreForPost } from './comparison';
 import { createQuestionStore } from '../../../../stores/createPostStore';
 import IconAi from '../../../svg/icon-ai.vue';
@@ -93,22 +93,21 @@ const store = createQuestionStore();
 let question = new Comparison();
 let comparator_a_headline;
 let comparator_b_headline;
-question.topic = topics[0];
-const topic = ref(question.topic)
+const topic = ref('')
 const emit = defineEmits(['postable-store-data']);
 const placeholder = ref('');
 
 watch(topic, (newValue) => {
-    console.log(newValue)
     placeholder.value = questions.find((q) => q.topic === newValue).q
 })
 
 function addQuestionToStoreFn(question) {
+    question.topic = toRaw(topic.value);
     question.book_ids = [ props.books[0].id, props.books[1].id ];
-    question.comparator_id = questions.find((q) => question.topic === q.topic).pk;
+    question.comparator_id = questions.find((q) => (topic.value === q.topic)).pk;
+    question.small_img_url = [ props.books[0].small_img_url, props.books[1].small_img_url ]
     question.comparator_a_title = props.books[0].title;
     question.comparator_b_title = props.books[1].title;
-    question.id = store.arr.length++;
     store.addOrUpdateQuestion(question);
     question = new Comparison()
     const postData = formatQuestionStoreForPost(store.arr, [comparator_a_headline, comparator_b_headline]);

@@ -166,8 +166,8 @@ class UpdatePost(Review):
 
 
 class ComparisonPost(Review):
-    def __init__(self, post_id, compared_books, headline:str, comparators:list, comparator_ids:list, responses:list, book_specific_headlines:list, created_date="", user_id="", user_username="",book_small_img=["",""],book_title=["",""]):
-        super().__init__(post_id, compared_books, created_date, user_id, user_username,book_title,book_small_img)
+    def __init__(self, post_id, compared_books, headline:str, comparators:list, comparator_ids:list, responses:list, book_specific_headlines:list, created_date="", user_id="", user_username="", book_small_img=["",""], book_title=["",""]):
+        super().__init__(post_id, compared_books, created_date, user_id, user_username, book_title, book_small_img)
         self.headline = headline
         self.comparators = comparators
         self.comparator_ids = comparator_ids

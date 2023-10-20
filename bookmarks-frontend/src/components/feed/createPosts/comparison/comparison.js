@@ -52,11 +52,14 @@ export class Comparison {
 */
 export const formatQuestionStoreForPost = (store, headlineArray) => {
     const postData = {}
+
     postData.book_ids = store[0].book_ids;
     postData.book_titles = [store[0].comparator_a_title, store[0].comparator_b_title]
-    postData.comparator_ids = store.map((q) => q.comparator_ids)
-    postData.book_small_imgs = store[0].book_small_imgs
+    postData.comparator_ids = store.map((q) => q.comparator_id)
+    postData.book_small_imgs = store[0].small_img_url
     postData.comparator_topics = store.map((q) => q.topic)
     postData.responses = store.map((q) => q.comparison)
     postData.book_specific_headlines = headlineArray;
+
+    return postData
 }
