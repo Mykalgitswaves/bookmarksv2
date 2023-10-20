@@ -103,12 +103,10 @@
     <div class="mobile-menu-spacer sm:hidden"></div>
 </template>
 <script setup>
-import { ref, toRaw, computed, watch, onMounted } from 'vue';
+import { ref,  computed, watch, onMounted } from 'vue';
 import { useRoute } from "vue-router";
 import { db } from '@/services/db.js';
 import { urls } from '@/services/urls.js';
-import { postData } from '../../../postsData.js'
-import { searchResultStore } from '@/stores/searchBar.js'
 import WorkCard from './WorkCard.vue';
 import IconPlus from '../svg/icon-plus.vue'
 import IconExit from '../svg/icon-exit.vue';
