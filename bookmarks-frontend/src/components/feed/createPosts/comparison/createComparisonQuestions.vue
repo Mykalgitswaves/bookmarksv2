@@ -104,6 +104,7 @@ watch(topic, (newValue) => {
 function addQuestionToStoreFn(question) {
     question.topic = toRaw(topic.value);
     question.book_ids = [ props.books[0].id, props.books[1].id ];
+    console.log(question.book_ids)
     question.comparator_id = questions.find((q) => (topic.value === q.topic)).pk;
     question.small_img_url = [ props.books[0].small_img_url, props.books[1].small_img_url ]
     question.comparator_a_title = props.books[0].title;

@@ -61,7 +61,7 @@
 
         <TransitionGroup v-if="reviewData" name="reviews" tag="div">
           <ComparisonPost 
-            v-for="post in reviewData.data.comparison" :key="post.id"
+            v-for="post in reviewData?.data.Comparison" :key="post"
             :book="post.book"
             :small_img_url="post.book_small_img"
             :headlines="post.book_specific_headlines"
@@ -72,9 +72,9 @@
             :id="post.id"
             :username="post.user_username"
           />
-          
+
           <ReviewPost
-            v-for="post in reviewData.data.Review" :key="post.id"
+            v-for="post in reviewData?.data.Review" :key="post.id"
             :id="post.id"
             :book="post.book"
             :title="post.book_title"
@@ -138,18 +138,15 @@ const mapping = {
 async function loadWorks() {
     bookData.value = await db.get(urls.booksByN, {'limit': 25}, true);
     reviewData.value = await db.get(urls.reviews.getReviews(user), true);
-    comparisonData.value = await db.get(urls.reviews.getComparisons(user), true);
+    // comparisonData.value = await db.get(urls.reviews.getComparisons(user), true);
 }
 
- async function loadReviews() {
-   
- }
 
 onMounted(() => {
     // Below doesnt work we need to fix query inside pull_all_reviews_by_user_query.
     // loadReviews()
     loadWorks();
-    loadReviews();
+    
 })
 
 let postTypeMapping = ref('');
@@ -184,6 +181,10 @@ const books = computed(() => (bookData.value ? bookData.value.data : ''))
 
 watch(emittedPostData, () => {
   isPostableData.value = true;
+})
+
+watch(reviewData, (newV) => {
+  console.log(newV)
 })
 
 </script>

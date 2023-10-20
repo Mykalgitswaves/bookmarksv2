@@ -173,7 +173,7 @@ class ComparisonPost(Review):
         self.comparator_ids = comparator_ids
         self.responses = responses
         self.book_specific_headlines = book_specific_headlines
-        self.book_title = book_title
+ 
     def create_post(self, driver):
         created_date, id = driver.create_comparison(self)
         self.id = id
@@ -1064,7 +1064,8 @@ class Neo4jDriver():
                     optional match (p)-[rb:POST_FOR_BOOK]-(b)
                     optional match (p)-[ru:RECOMMENDED_TO]->(uu)
                     optional match (p)-[rc:HAS_RESPONSE]-(c)
-                    return p, labels(p), c, b, uu
+                    optional match (p)-[ct:COMPARES_TO]-(bb)
+                    return p, labels(p), c, b, uu, bb
                     order by p.created_date desc"""
         result = tx.run(query, username=username)
         results = [record for record in result.data()]
@@ -1102,15 +1103,15 @@ class Neo4jDriver():
                         output['Comparison'][-1].responses.append([comparator['response']])
                         output['Comparison'][-1].book_specific_responses.append([comparator['book_specific_responses']])
                         continue
-         
+                    print(response['b'])
                 output['Comparison'].append(ComparisonPost(post_id=post['id'],
                                                            compared_books=post['compared_books'],
                                                            created_date=post['created_date'],
                                                            headline=post['headline'],
                                                            user_username=username,
+                                                           book_title=[response['b']['title'], response['bb']['title']],
                                                            comparators=[comparator['comparators']],
                                                            comparator_ids=[comparator['comparator_ids']],
-                                                           book_title=[comparator['title']],
                                                            responses=[comparator['responses']],
                                                            book_specific_headlines=[comparator['book_specific_headlines']]))
             elif response['labels(p)'] == ["Update"]:
