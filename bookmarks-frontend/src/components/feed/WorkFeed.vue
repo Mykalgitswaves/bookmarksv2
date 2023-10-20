@@ -125,7 +125,6 @@ const toggleCreateReviewType = ref(false);
 const selectDropdown = ref(false);
 const bookData = ref(null);
 const reviewData = ref(null);
-const comparisonData = ref(null);
 const isPostableData = ref(false);
 const postOptions = ['review', 'update', 'comparison'];
 
@@ -138,12 +137,10 @@ const mapping = {
 async function loadWorks() {
     bookData.value = await db.get(urls.booksByN, {'limit': 25}, true);
     reviewData.value = await db.get(urls.reviews.getReviews(user), true);
-    // comparisonData.value = await db.get(urls.reviews.getComparisons(user), true);
 }
 
 
 onMounted(() => {
-    // Below doesnt work we need to fix query inside pull_all_reviews_by_user_query.
     // loadReviews()
     loadWorks();
     
