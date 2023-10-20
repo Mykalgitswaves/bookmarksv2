@@ -19,5 +19,6 @@ export const urls = {
         update: baseUrl + 'api/review/create_update',
         comparison: baseUrl + 'api/review/create_comparison',
         getReviews: (user_id) => (baseUrl +`api/${user_id}/posts`),
+        getComparisons: (user_id) => (baseUrl + `api/${user_id}/comparisons`),
     }
 }

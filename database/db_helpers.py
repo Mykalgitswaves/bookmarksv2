@@ -1092,8 +1092,8 @@ class Neo4jDriver():
                                                                            to_user_text=post['to_user_text'],
                                                                            user_username=username))
             
-            elif response['labels(p)'] == ["Comparison"]:
-                comparator = response['c']
+            elif response['labels(p)'] == ['Comparison']:
+                comparator = response['p']
                 if output['Comparison']:
                     if output['Comparison'][-1].id == post["id"]:
                         output['Comparison'][-1].comparators.append([comparator['comparator']])
@@ -1101,16 +1101,16 @@ class Neo4jDriver():
                         output['Comparison'][-1].responses.append([comparator['response']])
                         output['Comparison'][-1].book_specific_responses.append([comparator['book_specific_responses']])
                         continue
-                
+           
                 output['Comparison'].append(ComparisonPost(post_id=post['id'],
                                                            compared_books=post['compared_books'],
                                                            created_date=post['created_date'],
                                                            headline=post['headline'],
                                                            user_username=username,
-                                                           comparators=[comparator['comparator']],
-                                                           comparator_ids=[comparator['comparator_id']],
-                                                           responses=[comparator['response']],
-                                                           book_specific_responses=[comparator['book_specific_responses']]))
+                                                           comparators=[comparator['comparators']],
+                                                           comparator_ids=[comparator['comparator_ids']],
+                                                           responses=[comparator['responses']],
+                                                           book_specific_headlines=[comparator['book_specific_headlines']]))
             elif response['labels(p)'] == ["Update"]:
                 output['Update'].append(UpdatePost(post_id=post["id"],
                                                    book=response['b']['id'],
