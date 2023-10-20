@@ -166,13 +166,13 @@ class UpdatePost(Review):
 
 
 class ComparisonPost(Review):
-    def __init__(self, post_id, compared_books, headline:str, comparators:list, comparator_ids:list, responses:list, book_specific_responses:list, created_date="", user_id="", user_username="",book_small_img=["",""],book_title=["",""]):
+    def __init__(self, post_id, compared_books, headline:str, comparators:list, comparator_ids:list, responses:list, book_specific_headlines:list, created_date="", user_id="", user_username="",book_small_img=["",""],book_title=["",""]):
         super().__init__(post_id, compared_books, created_date, user_id, user_username,book_title,book_small_img)
         self.headline = headline
         self.comparators = comparators
         self.comparator_ids = comparator_ids
         self.responses = responses
-        self.book_specific_responses = book_specific_responses
+        self.book_specific_headlines = book_specific_headlines
     def create_post(self, driver):
         created_date, id = driver.create_comparison(self)
         self.id = id
@@ -1464,26 +1464,16 @@ class Neo4jDriver():
         create (c:Comparison {id:randomUUID(), 
                             created_date:datetime(),
                             headline:$headline,
-                            compared_books:$compared_books})
+                            compared_books:$compared_books,
+                            comparator_ids:$comparator_ids,
+                            comparators:$comparators,
+                            responses:$responses,
+                            book_specific_headlines:$book_specific_headlines})
 
         create (u)-[p:POSTED]->(c)
         create (c)-[pp:POST_FOR_BOOK]->(b)
         create (c)-[cc:COMPARES_TO]->(bb)
 
-        WITH c,
-            $comparators AS comparators,
-            $comparator_ids AS comparator_ids,
-            $responses AS responses,
-            $book_specific_responses AS book_specific_responses
-
-        unwind RANGE(0, SIZE(comparators) - 1) AS i
-        CREATE (cr:ComparisonResponse {
-        comparator: comparators[i],
-        comparator_id: comparator_ids[i],
-        response: responses[i],
-        book_specific_responses: book_specific_responses[i]
-        })
-        create (c)-[:HAS_RESPONSE]->(cr)
         return c.created_date, c.id
                 """
         result = tx.run(query, 
@@ -1499,7 +1489,7 @@ class Neo4jDriver():
                         comparators=comparison_post.comparators,
                         comparator_ids=comparison_post.comparator_ids,
                         responses=comparison_post.responses,
-                        book_specific_responses=comparison_post.book_specific_responses)
+                        book_specific_headlines=comparison_post.book_specific_headlines)
         
         response = result.single()
         created_date = response["c.created_date"]

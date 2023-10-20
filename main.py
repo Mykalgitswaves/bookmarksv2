@@ -535,13 +535,12 @@ async def create_comparison(request: Request,
     Creates a post of type Comparison
     
     {
-     "book_id":,
-     "headline":,
-     compared_books:[]
-     comparators:[]
-     comparator_ids:[]
-     responses:[]
-     book_specific_responses:[[]]
+     "book_ids":[],
+     comparators:[],
+     compared_books:[],
+     comparator_ids:[],
+     responses:[],
+     book_specific_headlines:[]
      }
     """
     if not current_user:
@@ -550,22 +549,20 @@ async def create_comparison(request: Request,
     response = await request.json()
     response = response['_value']
 
-    book_ids = response['compared_books']
-
     comparison = ComparisonPost(post_id='',
-                                book=book_ids,
+                                book=response["book_ids"],
                                 user_username=current_user.username,
-                                headline=response['headline'],
-                                comparators=response['comparators'],
+                                headline="",
+                                comparators=response['comparator_topics'],
                                 comparator_ids=response['comparator_ids'],
                                 responses=response['responses'],
-                                book_specific_responses=response['book_specific_responses'],
-                                book_title=response['title'],
-                                book_small_img=response['small_img_url'])
+                                book_specific_headlines=response['book_specific_headlines'],
+                                book_title=response['book_titles'],
+                                book_small_img=response['book_small_imgs'])
     
     comparison.create_post(driver)
 
-    for book_id in book_ids:
+    for book_id in response["book_ids"]:
         if book_id[0] == "g":
             background_tasks.add_task(update_book_google_id,book_id,driver)
 
