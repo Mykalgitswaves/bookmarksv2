@@ -1110,6 +1110,7 @@ class Neo4jDriver():
                                                            headline=post['headline'],
                                                            user_username=username,
                                                            book_title=[response['b']['title'], response['bb']['title']],
+                                                           book_small_img=[response['b']['small_img_url'], response['bb']['small_img_url']],
                                                            comparators=[comparator['comparators']],
                                                            comparator_ids=[comparator['comparator_ids']],
                                                            responses=[comparator['responses']],

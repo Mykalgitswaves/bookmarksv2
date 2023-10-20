@@ -108,6 +108,7 @@ import { useRoute } from "vue-router";
 import { db } from '@/services/db.js';
 import { urls } from '@/services/urls.js';
 import WorkCard from './WorkCard.vue';
+import ComparisonPost from './posts/comparisonPost.vue';
 import IconPlus from '../svg/icon-plus.vue'
 import IconExit from '../svg/icon-exit.vue';
 import createReviewPost from './createPosts/createReviewPost.vue';
