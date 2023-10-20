@@ -1,5 +1,22 @@
 <template>
     <div class="container max-w-[600px] mt-5">
+        <p class="text-gray-600 my-5">
+                <span class="text-2xl text-indigo-600 font-medium block">Brevity is a luxury,</span>
+                write a short headline to summarize the commonality shared by both books
+            </p>
+            
+            <div class="comparator-headlines">
+                <label for="book1headline">
+                    <span class="mx-2 text-gray-600">{{ props.books[0]?.title }}</span>
+                    <input id="book1headline" type="text" v-model="comparator_a_headline">
+                </label>
+
+                <label for="book2headline">
+                    <span class="mx-2 text-gray-600">{{ props.books[1]?.title }}</span>
+                    <input id="book2headline" type="text" v-model="comparator_b_headline">
+                </label>
+            </div>
+
             <div class="select-1">
                 <label for="comparison_dropdown">Pick a topic to create a comparison</label>
                 <select 
@@ -23,7 +40,7 @@
                     id="" 
                     cols="30" 
                     rows="10"
-                    :placeholder="`The ${topic} of both books...`"
+                    :placeholder="placeholder"
                     v-model="question.comparison"
                 />
             </div>
@@ -32,20 +49,6 @@
                 <label class="spoiler" for="comparisonSpoiler">
                     <input id="comparisonSpoiler" type="checkbox" value="true" v-model="question.is_spoiler">
                         <span class="mx-2 text-gray-600">Spoiler</span>
-                </label>
-            </div>
-
-            <p class="my-5 text-gray-600"><span class="text-indigo-600 text-2xl font-medium block">Brevity is a luxury,</span> write a short headline to summarize the commonality shared by both books</p>
-            
-            <div class="comparator-headlines">
-                <label for="book1headline">
-                    <span class="mx-2 text-gray-600">{{ props.books[0]?.title }}</span>
-                    <input id="book1headline" type="text" v-model="question.comparator_a_headline">
-                </label>
-
-                <label for="book2headline">
-                    <span class="mx-2 text-gray-600">{{ props.books[1]?.title }}</span>
-                    <input id="book2headline" type="text" v-model="question.comparator_b_headline">
                 </label>
             </div>
 
@@ -74,10 +77,8 @@
     </div>
 </template>
 <script setup>
-import { ref } from 'vue';
-import IconChevron from '../../../svg/icon-chevron.vue'; 
-import IconPlus from '../../../svg/icon-plus.vue';
-import { questions, topics, Comparison } from './comparison';
+import { ref, watch } from 'vue';
+import { questions, topics, Comparison, formatQuestionStoreForPost } from './comparison';
 import { createQuestionStore } from '../../../../stores/createPostStore';
 import IconAi from '../../../svg/icon-ai.vue';
 import IconIrony from '../../../svg/icon-irony.vue';
@@ -90,18 +91,28 @@ const props = defineProps({
 });
 const store = createQuestionStore();
 let question = new Comparison();
+let comparator_a_headline;
+let comparator_b_headline;
 question.topic = topics[0];
 const topic = ref(question.topic)
 const emit = defineEmits(['postable-store-data']);
+const placeholder = ref('');
+
+watch(topic, (newValue) => {
+    console.log(newValue)
+    placeholder.value = questions.find((q) => q.topic === newValue).q
+})
 
 function addQuestionToStoreFn(question) {
-    question.comparator_ids = [ props.books[0].id, props.books[1].id ];
+    question.book_ids = [ props.books[0].id, props.books[1].id ];
+    question.comparator_id = questions.find((q) => question.topic === q.topic).pk;
     question.comparator_a_title = props.books[0].title;
     question.comparator_b_title = props.books[1].title;
     question.id = store.arr.length++;
     store.addOrUpdateQuestion(question);
     question = new Comparison()
-    emit('postable-store-data', store.arr)
+    const postData = formatQuestionStoreForPost(store.arr, [comparator_a_headline, comparator_b_headline]);
+    emit('postable-store-data', postData)
 }
 </script>
 
