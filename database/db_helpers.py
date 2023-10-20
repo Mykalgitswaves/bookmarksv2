@@ -173,6 +173,7 @@ class ComparisonPost(Review):
         self.comparator_ids = comparator_ids
         self.responses = responses
         self.book_specific_headlines = book_specific_headlines
+        self.book_title = book_title
     def create_post(self, driver):
         created_date, id = driver.create_comparison(self)
         self.id = id
@@ -1101,7 +1102,7 @@ class Neo4jDriver():
                         output['Comparison'][-1].responses.append([comparator['response']])
                         output['Comparison'][-1].book_specific_responses.append([comparator['book_specific_responses']])
                         continue
-           
+         
                 output['Comparison'].append(ComparisonPost(post_id=post['id'],
                                                            compared_books=post['compared_books'],
                                                            created_date=post['created_date'],
@@ -1109,6 +1110,7 @@ class Neo4jDriver():
                                                            user_username=username,
                                                            comparators=[comparator['comparators']],
                                                            comparator_ids=[comparator['comparator_ids']],
+                                                           book_title=[comparator['title']],
                                                            responses=[comparator['responses']],
                                                            book_specific_headlines=[comparator['book_specific_headlines']]))
             elif response['labels(p)'] == ["Update"]:
@@ -1123,6 +1125,7 @@ class Neo4jDriver():
                                                    user_username=username))
 
             elif response['labels(p)'] == ["Review"]:
+                    
                     output['Review'].append(ReviewPost(post_id=post["id"],
                                                        book=response['b']['id'],
                                                        book_title=response['b']['title'],

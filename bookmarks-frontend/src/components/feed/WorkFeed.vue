@@ -60,6 +60,19 @@
         <p class="pt-4 text-2xl font-medium text-slate-600 mb-5">Reviews</p>
 
         <TransitionGroup v-if="reviewData" name="reviews" tag="div">
+          <ComparisonPost 
+            v-for="post in reviewData.data.comparison" :key="post.id"
+            :book="post.book"
+            :small_img_url="post.book_small_img"
+            :headlines="post.book_specific_headlines"
+            :book_title="post.book_title"
+            :comparisons="post.responses"
+            :comparator_ids="post.comparators"
+            :created_at="post.created_date"
+            :id="post.id"
+            :username="post.user_username"
+          />
+          
           <ReviewPost
             v-for="post in reviewData.data.Review" :key="post.id"
             :id="post.id"
