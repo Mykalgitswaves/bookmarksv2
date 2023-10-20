@@ -1,5 +1,22 @@
 <template>
     <div class="container max-w-[600px] mt-5">
+        <p class="text-gray-600 my-5">
+                <span class="text-2xl text-indigo-600 font-medium block">Brevity is a luxury,</span>
+                write a short headline to summarize the commonality shared by both books
+            </p>
+            
+            <div class="comparator-headlines">
+                <label for="book1headline">
+                    <span class="mx-2 text-gray-600">{{ props.books[0]?.title }}</span>
+                    <input id="book1headline" type="text" v-model="comparator_a_headline">
+                </label>
+
+                <label for="book2headline">
+                    <span class="mx-2 text-gray-600">{{ props.books[1]?.title }}</span>
+                    <input id="book2headline" type="text" v-model="comparator_b_headline">
+                </label>
+            </div>
+
             <div class="select-1">
                 <label for="comparison_dropdown">Pick a topic to create a comparison</label>
                 <select 
@@ -7,6 +24,7 @@
                     name="comparison dropdown"
                     id="comparison_dropdown"
                     v-model="question.topic"
+                    @change="(e) = (question.topic = e)"
                 >
                     <option 
                         v-for="(topic, index) in topics"
@@ -22,7 +40,7 @@
                     id="" 
                     cols="30" 
                     rows="10"
-                    :placeholder="`The ${question.topic} of both books...`"
+                    :placeholder="placeholder"
                     v-model="question.comparison"
                 />
             </div>
@@ -34,20 +52,6 @@
                 </label>
             </div>
 
-            <p class="my-5 text-gray-600"><span class="text-indigo-600 text-2xl font-medium block">Brevity is a luxury,</span> write a short headline to summarize the commonality shared by both books</p>
-            
-            <div class="comparator-headlines">
-                <label for="book1headline">
-                    <span class="mx-2 text-gray-600">{{ props.books[0]?.title }}</span>
-                    <input id="book1headline" type="text" v-model="question.comparator_a_headline">
-                </label>
-
-                <label for="book2headline">
-                    <span class="mx-2 text-gray-600">{{ props.books[1]?.title }}</span>
-                    <input id="book2headline" type="text" v-model="question.comparator_b_headline">
-                </label>
-            </div>
-
             <div class="is_ai my-5">
                 <label for="generate_ai">
                     <input id="generate_ai" type="checkbox" value="true" v-model="question.is_ai_generated">
@@ -55,34 +59,63 @@
                         <span class="text-gray-600">Generate headlines based of my content with LLM's</span>
                 </label>
             </div>
+            <div class="is_ai my-5">
+                <label for="add_irony">
+                    <input type="checkbox" value="true" v-model="question.is_add_irony">
+                        <IconIrony/>
+                        <span class="text-gray-600">Add irony...</span>
+                </label>
+            </div>
 
             <button 
                 class="w-100 py-4 bg-indigo-500 rounded-sm text-white text-xl"
                 type="button"
-                @click="emit('comparison-question', question)"
+                @click="addQuestionToStoreFn(question)"
             >
                 Add
             </button>
     </div>
 </template>
 <script setup>
-import IconChevron from '../../../svg/icon-chevron.vue'; 
-import IconPlus from '../../../svg/icon-plus.vue';
-import { questions, topics, comparison } from './comparison';
+import { ref, watch } from 'vue';
+import { questions, topics, Comparison, formatQuestionStoreForPost } from './comparison';
+import { createQuestionStore } from '../../../../stores/createPostStore';
 import IconAi from '../../../svg/icon-ai.vue';
+import IconIrony from '../../../svg/icon-irony.vue';
+
 const props = defineProps({
     books: {
         type: Array,
         required: true
     }
+});
+const store = createQuestionStore();
+let question = new Comparison();
+let comparator_a_headline;
+let comparator_b_headline;
+question.topic = topics[0];
+const topic = ref(question.topic)
+const emit = defineEmits(['postable-store-data']);
+const placeholder = ref('');
+
+watch(topic, (newValue) => {
+    console.log(newValue)
+    placeholder.value = questions.find((q) => q.topic === newValue).q
 })
 
-const question = comparison;
-question.comparator_a = props.books[0]?.id;
-question.comparator_b = props.books[0]?.id;
-const emit = defineEmits();
-
+function addQuestionToStoreFn(question) {
+    question.book_ids = [ props.books[0].id, props.books[1].id ];
+    question.comparator_id = questions.find((q) => question.topic === q.topic).pk;
+    question.comparator_a_title = props.books[0].title;
+    question.comparator_b_title = props.books[1].title;
+    question.id = store.arr.length++;
+    store.addOrUpdateQuestion(question);
+    question = new Comparison()
+    const postData = formatQuestionStoreForPost(store.arr, [comparator_a_headline, comparator_b_headline]);
+    emit('postable-store-data', postData)
+}
 </script>
+
 <style scoped>
 
 .add-topic {

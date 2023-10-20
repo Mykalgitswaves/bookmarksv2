@@ -85,97 +85,33 @@ export const postData = {
                     ]
         },
         "update": {},
-        "comparison": {
-            "tone": [
-                {
-                    "id": 20,
-                    "comparison": "Both the protagonist and antagonist",
-                    "book_a": "",
-                    "book_b": "",
-                    "is_spoiler": false
-                },
-                {
-                    "id": 21,
-                    "comparison": "The general mood of the story is",
-                    "book_a": "",
-                    "book_b": "",
-                    "is_spoiler": false
-                }
-            ],
-            "character": [
-                {
-                    "id": 22,
-                    "comparison": "Main character's resilience in adversity",
-                    "book_a": "",
-                    "book_b": "",
-                    "is_spoiler": false
-                },
-                {
-                    "id": 23,
-                    "comparison": "Role of secondary characters in driving the story",
-                    "book_a": "",
-                    "book_b": "",
-                    "is_spoiler": false
-                }
-            ],
-            "plot": [
-                {
-                    "id": 24,
-                    "comparison": "The central conflict revolves around",
-                    "book_a": "",
-                    "book_b": "",
-                    "is_spoiler": false
-                },
-                {
-                    "id": 25,
-                    "comparison": "The climax of the story was unexpected because",
-                    "book_a": "",
-                    "book_b": "",
-                    "is_spoiler": false
-                }
-            ],
-            "setting": [
-                {
-                    "id": 26,
-                    "comparison": "The story's setting significantly influences the narrative in terms of",
-                    "book_a": "",
-                    "book_b": "",
-                    "is_spoiler": false
-                },
-                {
-                    "id": 27,
-                    "comparison": "Historical or cultural influences noticeable in the setting are",
-                    "book_a": "",
-                    "book_b": "",
-                    "is_spoiler": false
-                }
-            ],
-            "other": [
-                {
-                    "id": 28,
-                    "comparison": "The narrative technique in the books differs in terms of",
-                    "book_a": "",
-                    "book_b": "",
-                    "is_spoiler": false
-                },
-                {
-                    "id": 29,
-                    "comparison": "The use of symbolism in the books is evident through",
-                    "book_a": "",
-                    "book_b": "",
-                    "is_spoiler": false
-                }
-            ],
-            "custom": [
-                {
-                    "id": -1,
-                    "comparison": "",
-                    "book_a": "",
-                    "book_b": "",
-                    "is_spoiler": false
-                }
-            ]
-        },
+        "comparison": [
+            {
+                "topic": "tone", 
+                "pk": 1,
+                "q": "The tone of these works..."
+            },
+            {
+                "topic": "character", 
+                "pk": 2,
+                "q": "The character of these works..."
+            },
+            {
+                "topic": "plot", 
+                "pk": 3,
+                "q": "The plot of these works..."
+            },
+            {
+                "topic": "setting", 
+                "pk": 4,
+                "q": "The setting of these works..."
+            },
+            {
+                "topic": "custom", 
+                "pk": 5,
+                "q": ""
+            }
+        ]
     },
 }
 

@@ -1,14 +1,13 @@
 <template>
     <div>
-        yo yo yo
+        <YourReviewQuestions :questions="store.arr" :is-comparison="true" :is-viewing-review="true"/>
     </div>
 </template>
 <script setup>
 import { watch } from 'vue';
-import { store } from './comparison';
+import { createQuestionStore } from '../../../../stores/createPostStore';
+import YourReviewQuestions from '../yourReviewQuestions.vue';
 
-watch(store.keys(), (newValue) => {
-    console.log(newValue);
-});
+const store = createQuestionStore();
 
 </script>

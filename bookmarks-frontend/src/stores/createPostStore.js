@@ -20,14 +20,14 @@ export const createQuestionStore = defineStore('questions', () => {
     const arr = ref([]);
 
     // Convert the Map to an array for easier rendering in the Vue template
-    function  updateArr() {
+    function updateArr() {
         arr.value = [...state.values()];
     }
     
     // Add or update a question in the map
     function addOrUpdateQuestion(question) {
-        if(!state.has(question)) {
-            state.set(question.id, question)
+        if (!state.has(question)) {
+            state.set(question.id, question);
             updateArr();
         }
     }

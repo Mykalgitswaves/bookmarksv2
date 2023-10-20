@@ -28,7 +28,7 @@
             <CreateComparisonQuestionsVue 
                 v-show="currentView === 'add'"
                 :books="books"
-                @comparison-question="comparisonHandlerFn"
+                @postable-store-data="comparisonHandlerFn"
             />
         </KeepAlive>
         <KeepAlive>
@@ -45,21 +45,19 @@ import CreateComparisonSelection from './comparison/createComparisonSelection.vu
 import CreateComparisonQuestionsVue from './comparison/createComparisonQuestions.vue';
 import ViewComparisonQuestionsVue from './comparison/viewComparisonQuestions.vue';
 import { ref } from 'vue';
-import { store } from './comparison/comparison'
 
 const books = ref([]);
 const currentView = ref('add');
-let count;
 
 function booksHandlerFn(e) {
     console.log('working working working');
     books.value = e;
 }
 
+const emit = defineEmits(['is-postable-data']);
+
 function comparisonHandlerFn(e) {
-    // Way we store multiple peices of on client in store.
-    const key = `${e.topic}-${e.comparator_a}-${e.comparator_b}`;
-    store.set(key, e);
+    emit('is-postable-data', e);
 }
 
 </script>
