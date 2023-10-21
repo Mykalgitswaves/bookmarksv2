@@ -50,15 +50,41 @@
       </button>
 
 
-
-      <button
-        type="button"
-        class="flex-center justify-center px-2 py-2 border-2 border-indigo-600 text-indigo-600"
-        @click=""
-      >
-          <IconFilter />
-          Filter
-      </button>
+        <div class="btn-relative">
+          <button
+            type="button"
+            class="flex-center justify-center px-2 py-2 bg-indigo-100 text-indigo-600 rounded-md"
+            @click="filterPopout = !filterPopout"
+          >
+              <IconFilter />
+              Filter
+          </button>
+          
+          <div
+            v-if="filterPopout"
+            class="popout-flyout shadow-lg px-2 py-2"
+          >
+            <div 
+              v-for="(option, index) in filterOptions" 
+              :key="index"
+              class="is_ai my-2"
+            >
+              <label
+                :for="index + '-option'"
+                
+              >
+                <input 
+                  type="checkbox" 
+                  name="" 
+                  :id="option.pk + '-option'"
+                  v-model="option.is_active"
+                  :value="true"
+                />
+                {{ option.filter }}
+              </label>
+            </div>
+          </div>
+        </div>
       </div>
 
       <component 
@@ -108,7 +134,7 @@ import { ref,  computed, watch, onMounted } from 'vue';
 import { useRoute } from "vue-router";
 import { db } from '@/services/db.js';
 import { urls } from '@/services/urls.js';
-import WorkCard from './WorkCard.vue';
+import { filterOptions } from './filters.js';
 import ComparisonPost from './posts/comparisonPost.vue';
 import IconPlus from '../svg/icon-plus.vue'
 import IconExit from '../svg/icon-exit.vue';
@@ -128,6 +154,7 @@ const bookData = ref(null);
 const reviewData = ref(null);
 const isPostableData = ref(false);
 const postOptions = ['review', 'update', 'comparison'];
+const filterPopout = ref(false);
 
 const mapping = {
   "review": createReviewPost,
@@ -247,5 +274,8 @@ watch(reviewData, (newV) => {
     opacity: 0;
   }
 
+  .border-indigo-600 {
+    border-color: #4f46e5;
+  }
   
 </style>
