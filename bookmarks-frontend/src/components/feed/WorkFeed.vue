@@ -1,6 +1,6 @@
 <template>
   <div>
-    <div class="flex gap-5">
+    <div class="flex gap-5 space-between">
       <div class="btn-relative">
         <button 
           v-if="postTypeMapping === ''"
@@ -62,7 +62,7 @@
           
           <div
             v-if="filterPopout"
-            class="popout-flyout shadow-lg px-2 py-2"
+            class="popout-right shadow-lg px-2 py-2"
           >
             <div 
               v-for="(option, index) in filterOptions" 
@@ -95,7 +95,6 @@
       />
 
       <div v-if="!toggleCreateReviewType">
-        <p class="pt-4 text-2xl font-medium text-slate-600 mb-5">Feed</p>
 
         <TransitionGroup v-if="reviewData" name="reviews" tag="div">
           <div v-if="!filterOptions[0].is_active">
