@@ -14,13 +14,62 @@
                 <img class="comparison-image" :src="props.small_img_url[1]" alt="">
             </div>
         </div>
-        <div class="card-responses">
 
+        <button 
+            v-if="!showReview[props.id]"
+            type="button" 
+            class="my-5 w-90 bg-indigo-600 text-white py-4 text-xl rounded-md"
+            @click="showReview[props.id] = true"
+        >
+            Show comparison
+        </button>
+
+        <Transition>
+            <div v-if="showReview[props.id] === true" >
+                <div
+                    class="comparison-headline-wrapper"
+                >
+                        <p class="comparison-headline">{{ props.headlines[0][0] }}</p>
+                        <p class="comparison-headline">{{ props.headlines[0][1] }}</p>
+                </div>
+
+                <div class="card-responses">
+                    <h3 class="text-indigo-600 text-xl font-semibold mb-4">Commonalities</h3>
+                    <ul class="card-commonalities">
+                        <li v-for="(comp, index) in props.comparators" :key="index">
+                            {{ comp[0] }}
+                        </li>
+                    </ul>
+                    <ul class="my-5">
+                        <li 
+                            v-for="(c, index) in props.comparisons" 
+                            :key="index"
+                            class="tab-commonalities"
+                        >
+                            <button 
+                                type="button" 
+                                class="text-indigo-600 text-2xl "
+                                @click="comparisons[index] = true"
+                            >
+                                {{ props.comparators[index][0] }}
+                            </button>
+
+                            <p>{{ c[0] }}</p>
+                        </li>  
+                    </ul>
+                </div>
+            </div>
+        </Transition>
+
+        <div class="card-footer">
+            
         </div>
     </div>
 </template>
 <script setup>
 import IconLinkArrow from '../../svg/icon-arrow-link.vue';
+import { reactive, ref } from 'vue';
+
 const props = defineProps({
     book: {
         type: Array,
@@ -39,6 +88,10 @@ const props = defineProps({
         required: false,
     },
     comparisons: {
+        type: Array,
+        required: true
+    },
+    comparators: {
         type: Array,
         required: true
     },
@@ -69,8 +122,12 @@ const props = defineProps({
         default: false
     }
 })
-console.log(props)
 
+const showReview = reactive({});
+showReview[props.id] = false;
+
+const comparisons = reactive({})
+const comparisonRefs = ref([])
 // :headlines="post.book_specific_headlines"
 // :book_title="post.book_title"
 // :comparisons="post.responses"
@@ -81,7 +138,7 @@ console.log(props)
 </script>
 
 <style scoped>
-
+@import url('https://fonts.googleapis.com/css2?family=Pinyon+Script&family=Tangerine&family=Ubuntu:wght@300;500&display=swap');
 .card {
     text-align: center;
     border: 1px solid #A0AEC0;
@@ -102,12 +159,20 @@ console.log(props)
 
 .card-content-main h3 {
     margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 2ch;
 }
 
 .book-title-span-wrap {
     display: inline-block;
     overflow-wrap: break-word;
-    width: 146px;
+    width: 176px;
+    font-size: 18px;
+    font-weight: 600;
+    font-style: italic;
+    color: #4f46e5;
 }
 .comparison-images {
     display: flex;
@@ -121,5 +186,55 @@ console.log(props)
     object-fit: cover;
     height: 137px;
     width: 100px;
+}
+
+.comparison-headline-wrapper {
+    display: grid;
+    grid-template-columns: 170px 170px;
+    justify-content: center;
+}
+.comparison-headline {
+    font-size: 44px;
+    font-family: 'Tangerine', cursive;
+    color: #4f46e5;
+}
+.card-footer {
+    padding: 15px 20px;
+}
+
+.card-commonalities {
+    gap: 1ch;
+    display: grid;
+    grid-template-columns: auto-fit, minmax(12ch, 1fr);
+    justify-content: center;
+    align-items: center;
+}
+
+.card-commonalities li {
+    line-height: 2ch;
+    border: 2px solid #818cf8;
+    padding: 8px;
+    color: #818cf8;
+    border-radius: 4px;
+    font-size: 16px;
+    align-self: center;
+    max-width: 12ch;
+}
+
+.tab-commonalities {
+    width: 90%;
+    text-align: start;
+    margin-left: 25px;
+    margin-right: 25px;
+}
+
+.v-enter-active,
+.v-leave-active {
+  transition: opacity 0.5s ease;
+}
+
+.v-enter-from,
+.v-leave-to {
+  opacity: 0;
 }
 </style>

@@ -13,6 +13,7 @@
           <span>Make a Post</span>
           
         </button>
+
         <button
           v-if="toggleCreateReviewType"
           type="button"
@@ -47,6 +48,17 @@
       >
           <IconExit/>
       </button>
+
+
+
+      <button
+        type="button"
+        class="flex-center justify-center px-2 py-2 border-2 border-indigo-600 text-indigo-600"
+        @click=""
+      >
+          <IconFilter />
+          Filter
+      </button>
       </div>
 
       <component 
@@ -57,7 +69,7 @@
       />
 
       <div v-if="!toggleCreateReviewType">
-        <p class="pt-4 text-2xl font-medium text-slate-600 mb-5">Reviews</p>
+        <p class="pt-4 text-2xl font-medium text-slate-600 mb-5">Feed</p>
 
         <TransitionGroup v-if="reviewData" name="reviews" tag="div">
           <ComparisonPost 
@@ -67,6 +79,7 @@
             :headlines="post.book_specific_headlines"
             :book_title="post.book_title"
             :comparisons="post.responses"
+            :comparators="post.comparators"
             :comparator_ids="post.comparators"
             :created_at="post.created_date"
             :id="post.id"
@@ -86,18 +99,6 @@
             :username="post.user_username"
           />
         </TransitionGroup>
-        <p class="pt-4 text-2xl font-medium text-slate-600 mb-5">Recommended Works</p>
-        
-        <KeepAlive>
-          <TransitionGroup name="cards" tag="div" class="card-grids">
-            <WorkCard 
-              v-for="(work, index) in books" 
-              :key="index" 
-              :work="work"
-              :user="user"
-            />
-          </TransitionGroup>
-        </KeepAlive>
       </div>
     </div>
     <div class="mobile-menu-spacer sm:hidden"></div>
@@ -111,6 +112,7 @@ import WorkCard from './WorkCard.vue';
 import ComparisonPost from './posts/comparisonPost.vue';
 import IconPlus from '../svg/icon-plus.vue'
 import IconExit from '../svg/icon-exit.vue';
+import IconFilter from '../svg/icon-filter.vue';
 import createReviewPost from './createPosts/createReviewPost.vue';
 import createUpdatePost from './createPosts/createUpdatePost.vue';
 import createComparisonPost from './createPosts/createComparisonPost.vue';
