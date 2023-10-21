@@ -98,32 +98,36 @@
         <p class="pt-4 text-2xl font-medium text-slate-600 mb-5">Feed</p>
 
         <TransitionGroup v-if="reviewData" name="reviews" tag="div">
-          <ComparisonPost 
-            v-for="post in reviewData?.data.Comparison" :key="post"
-            :book="post.book"
-            :small_img_url="post.book_small_img"
-            :headlines="post.book_specific_headlines"
-            :book_title="post.book_title"
-            :comparisons="post.responses"
-            :comparators="post.comparators"
-            :comparator_ids="post.comparators"
-            :created_at="post.created_date"
-            :id="post.id"
-            :username="post.user_username"
-          />
+          <div v-if="!filterOptions[0].is_active">
+            <ComparisonPost 
+              v-for="post in reviewData?.data.Comparison" :key="post"
+              :book="post.book"
+              :small_img_url="post.book_small_img"
+              :headlines="post.book_specific_headlines"
+              :book_title="post.book_title"
+              :comparisons="post.responses"
+              :comparators="post.comparators"
+              :comparator_ids="post.comparators"
+              :created_at="post.created_date"
+              :id="post.id"
+              :username="post.user_username"
+            />
+          </div>
 
-          <ReviewPost
-            v-for="post in reviewData?.data.Review" :key="post.id"
-            :id="post.id"
-            :book="post.book"
-            :title="post.book_title"
-            :headline="post.headline"
-            :question_ids="post.question_ids"
-            :questions="post.questions"
-            :responses="post.responses"
-            :spoilers="post.spoilers"
-            :username="post.user_username"
-          />
+          <div v-if="!filterOptions[1].is_active">
+            <ReviewPost
+              v-for="post in reviewData?.data.Review" :key="post.id"
+              :id="post.id"
+              :book="post.book"
+              :title="post.book_title"
+              :headline="post.headline"
+              :question_ids="post.question_ids"
+              :questions="post.questions"
+              :responses="post.responses"
+              :spoilers="post.spoilers"
+              :username="post.user_username"
+            />
+          </div>
         </TransitionGroup>
       </div>
     </div>

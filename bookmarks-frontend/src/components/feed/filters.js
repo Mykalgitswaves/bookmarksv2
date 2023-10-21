@@ -1,4 +1,6 @@
-export const filterOptions = [
+import { reactive } from 'vue';
+
+export const filterOptions = reactive([
     {
       pk: 1,
       filter: 'comparison',
@@ -14,4 +16,4 @@ export const filterOptions = [
       filter: 'update',
       is_active: false,
     } 
-  ]
+  ])
