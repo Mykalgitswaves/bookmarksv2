@@ -1247,7 +1247,7 @@ class Neo4jDriver():
         response = result.single()
         if response:
             book = Book(response['bb.id'],
-                 small_img_url=response['bb.small_image_url'],
+                 small_img_url=response['bb.small_img_url'],
                  title=response['bb.title'],
                  description=response['bb.description']
                  )
