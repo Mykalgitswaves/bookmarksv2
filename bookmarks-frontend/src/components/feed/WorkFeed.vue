@@ -52,6 +52,7 @@
 
         <div class="btn-relative">
           <button
+            v-if="!toggleCreateReviewType"
             type="button"
             class="flex-center justify-center px-2 py-2 bg-indigo-100 text-indigo-600 rounded-md"
             @click="filterPopout = !filterPopout"

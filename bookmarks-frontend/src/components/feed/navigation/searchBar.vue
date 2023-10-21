@@ -115,6 +115,7 @@ async function searchRequest(searchData) {
 
 .filter-grid {
     display: flex;
+    flex-wrap: wrap;
     gap: 10px;
     justify-content: space-between;
     margin-top: 1ch;
