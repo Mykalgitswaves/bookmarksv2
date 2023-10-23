@@ -25,7 +25,7 @@
         </button>
 
         <Transition>
-            <div v-if="showReview[props.id] === true" >
+            <div v-if="showReview[props.id] === true">
                 <div
                     class="comparison-headline-wrapper"
                 >
@@ -35,11 +35,13 @@
 
                 <div class="card-responses">
                     <h3 class="text-indigo-600 text-xl font-semibold mb-4">Commonalities</h3>
+
                     <ul class="card-commonalities">
                         <li v-for="(comp, index) in props.comparators" :key="index">
                             {{ comp[0] }}
                         </li>
                     </ul>
+
                     <ul class="my-5">
                         <li 
                             v-for="(c, index) in props.comparisons" 
@@ -58,18 +60,38 @@
                         </li>  
                     </ul>
                 </div>
+                           
+                <div class="card-footer">
+                    <button
+                        type="button"
+                        class="text-slate-600 flex items-center"
+                    >
+                        <IconComment/>
+                        <span class="ml-2">Add comment</span>
+                    </button>
+                
+                    <button 
+                        type="button" 
+                        class="text-slate-600 flex items-center"
+                        @click="AddLikeOrDislike(props.id)"
+                    >
+                        <IconLike/>
+                        <span class="ml-2">Like</span>
+                    </button>
+                </div>
             </div>
         </Transition>
-
-        <div class="card-footer">
-            
-        </div>
     </div>
 </template>
 <script setup>
 import IconLinkArrow from '../../svg/icon-arrow-link.vue';
-import { reactive, ref } from 'vue';
+import IconLike from '../../svg/icon-like.vue';
+import IconComment from '../../svg/icon-comment.vue';
 
+import { reactive, ref, } from 'vue';
+import { db } from '../../../services/db';
+import { urls } from '../../../services/urls';
+import { useRoute } from 'vue-router'
 const props = defineProps({
     book: {
         type: Array,
@@ -127,14 +149,20 @@ const showReview = reactive({});
 showReview[props.id] = false;
 
 const comparisons = reactive({})
-const comparisonRefs = ref([])
-// :headlines="post.book_specific_headlines"
-// :book_title="post.book_title"
-// :comparisons="post.responses"
-// :comparator_ids="post.comparators"
-// :created_at="post.created_date"
-// :id="post.id"
-// :username="post.user_username"
+const isLiked = ref(null);
+const route = useRoute();
+
+async function AddLikeOrDislike(id){
+    const user_id = route.params.user
+    await db.post(
+        urls.reviews.likeComparison(user_id, id), true
+        )
+        .then((res) => {
+            console.log(res)
+            isLiked.value = true;
+        });
+}
+
 </script>
 
 <style scoped>
@@ -145,7 +173,7 @@ const comparisonRefs = ref([])
     border-radius: 5px;
     margin-top: 1rem;
     margin-bottom: 1rem;
-    max-width: 800px;
+    max-width: 880px;
 }
 
 .card-header {
@@ -200,6 +228,8 @@ const comparisonRefs = ref([])
 }
 .card-footer {
     padding: 15px 20px;
+    display: flex;
+    justify-content: space-between;
 }
 
 .card-commonalities {
