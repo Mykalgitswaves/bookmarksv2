@@ -98,7 +98,7 @@
       <div v-if="!toggleCreateReviewType">
 
         <TransitionGroup v-if="reviewData" name="reviews" tag="div">
-          <div v-if="!filterOptions[0].is_active" class=" justify-center">
+          <div v-if="!filterOptions[0].is_active">
             <ComparisonPost 
               v-for="post in reviewData?.data.Comparison"
               :key="post.id"
@@ -115,7 +115,7 @@
             />
           </div>
 
-          <div v-if="!filterOptions[1].is_active" class=" justify-center">
+          <div v-if="!filterOptions[1].is_active">
             <ReviewPost
               v-for="post in reviewData?.data.Review" 
               :key="post.id"
