@@ -50,13 +50,14 @@
                         >
                             <button 
                                 type="button" 
-                                class="text-indigo-600 text-2xl "
-                                @click="comparisons[index] = true"
+                                class="text-2xl text-indigo-600 flex content-between items-center"
+                                @click=""
                             >
-                                {{ props.comparators[index][0] }}
+                                <span>{{ props.comparators[index][0] }}</span>
+                                <IconChevron class="mt-2"/>
                             </button>
-
-                            <p>{{ c[0] }}</p>
+                            
+                            <p class="mt-2 ml-2 text-slate-500">{{ c[0] }}</p>
                         </li>  
                     </ul>
                 </div>
@@ -73,6 +74,7 @@
                     <button 
                         type="button" 
                         class="text-slate-600 flex items-center"
+                        :class="{'is-liked': isLiked}"
                         @click="AddLikeOrDislike(props.id)"
                     >
                         <IconLike/>
@@ -87,6 +89,7 @@
 import IconLinkArrow from '../../svg/icon-arrow-link.vue';
 import IconLike from '../../svg/icon-like.vue';
 import IconComment from '../../svg/icon-comment.vue';
+import IconChevron from '../../svg/icon-chevron.vue';
 
 import { reactive, ref, } from 'vue';
 import { db } from '../../../services/db';
@@ -256,6 +259,10 @@ async function AddLikeOrDislike(id){
     text-align: start;
     margin-left: 25px;
     margin-right: 25px;
+}
+
+.is-liked {
+    color: #4f46e5;
 }
 
 .v-enter-active,
