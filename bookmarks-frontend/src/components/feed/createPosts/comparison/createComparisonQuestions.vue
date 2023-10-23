@@ -17,6 +17,8 @@
                 </label>
             </div>
 
+            <p class="text-xl text-indigo-600 font-medium mt-10 mb-5">Add comparisons</p>
+
             <div class="select-1">
                 <label for="comparison_dropdown">Pick a topic to create a comparison</label>
                 <select 
@@ -70,7 +72,7 @@
             <button 
                 class="w-100 py-4 bg-indigo-500 rounded-sm text-white text-xl"
                 type="button"
-                @click="addQuestionToStoreFn(question)"
+                @click="addQuestionToStoreFn(question); resetQuestion();"
             >
                 Add
             </button>
@@ -104,15 +106,17 @@ watch(topic, (newValue) => {
 function addQuestionToStoreFn(question) {
     question.topic = toRaw(topic.value);
     question.book_ids = [ props.books[0].id, props.books[1].id ];
-    console.log(question.book_ids)
     question.comparator_id = questions.find((q) => (topic.value === q.topic)).pk;
     question.small_img_url = [ props.books[0].small_img_url, props.books[1].small_img_url ]
     question.comparator_a_title = props.books[0].title;
     question.comparator_b_title = props.books[1].title;
     store.addOrUpdateQuestion(question);
-    question = new Comparison()
     const postData = formatQuestionStoreForPost(store.arr, [comparator_a_headline, comparator_b_headline]);
     emit('postable-store-data', postData)
+}
+
+function resetQuestion() {
+    question = new Comparison();
 }
 </script>
 
