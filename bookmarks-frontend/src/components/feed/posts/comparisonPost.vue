@@ -4,14 +4,20 @@
             <p class="text-slate-600"><span class="text-indigo-600 underline italic cursor-pointer">@{{ props.username }}</span> made a comparison</p>
         </div>
         <div class="card-content-main">
-            <h3><span class="book-title-span-wrap">{{ props.book_title[0] }}</span> and <span class="book-title-span-wrap">{{ props.book_title[1] }}</span></h3>
-
-            <div class="comparison-images">
-                <img class="comparison-image" :src="props.small_img_url[0]" alt="">
+            <div class="comparisons">
+                <div class="comparison">
+                    <img class="comparison-image" :src="props.small_img_url[0]" alt="">
+                    <p class="text-xl font-semibold">{{ props.book_title[0] }}</p>
+                    <p class="comparison-headline">{{ props.headlines[0][0] }}</p>
+                </div>
 
                 <IconLinkArrow />
-                
-                <img class="comparison-image" :src="props.small_img_url[1]" alt="">
+
+                <div class="comparison">
+                    <img class="comparison-image" :src="props.small_img_url[1]" alt="">
+                    <p class="text-xl font-semibold">{{ props.book_title[1] }}</p>
+                    <p class="comparison-headline">{{ props.headlines[0][1] }}</p>
+                </div>
             </div>
         </div>
 
@@ -26,36 +32,20 @@
 
         <Transition>
             <div v-if="showReview[props.id] === true">
-                <div
-                    class="comparison-headline-wrapper"
-                >
-                        <p class="comparison-headline">{{ props.headlines[0][0] }}</p>
-                        <p class="comparison-headline">{{ props.headlines[0][1] }}</p>
-                </div>
 
                 <div class="card-responses">
-                    <h3 class="text-indigo-600 text-xl font-semibold mb-4">Commonalities</h3>
+                    <div class="divider"></div>
 
-                    <ul class="card-commonalities">
-                        <li v-for="(comp, index) in props.comparators" :key="index">
-                            {{ comp[0] }}
-                        </li>
-                    </ul>
+                    <h3 class="text-slate-500 text-2xl my-2">Commonalities</h3>
 
-                    <ul class="my-5">
+                    <ul class="my-3 content-start">
                         <li 
                             v-for="(c, index) in props.comparisons" 
                             :key="index"
-                            class="tab-commonalities"
+                            class="card-commonalities"
                         >
-                            <button 
-                                type="button" 
-                                class="text-2xl text-indigo-600 flex content-between items-center"
-                                @click=""
-                            >
-                                <span>{{ props.comparators[index][0] }}</span>
-                                <IconChevron class="mt-2"/>
-                            </button>
+                        
+                            <h3>{{ props.comparators[index][0] }}</h3>
                             
                             <p class="mt-2 ml-2 text-slate-500">{{ c[0] }}</p>
                         </li>  
@@ -68,14 +58,14 @@
                         class="text-slate-600 flex items-center"
                     >
                         <IconComment/>
-                        <span class="ml-2">Add comment</span>
+                        <span class="ml-2">comments</span>
                     </button>
                 
                     <button 
                         type="button" 
                         class="text-slate-600 flex items-center"
                         :class="{'is-liked': isLiked}"
-                        @click="AddLikeOrDislike(props.id)"
+                        @click="AddLikeOrUnlike(props.id)"
                     >
                         <IconLike/>
                         <span class="ml-2">Like</span>
@@ -155,7 +145,7 @@ const comparisons = reactive({})
 const isLiked = ref(null);
 const route = useRoute();
 
-async function AddLikeOrDislike(id){
+async function AddLikeOrUnlike(id){
     const user_id = route.params.user
     await db.post(
         urls.reviews.likeComparison(user_id, id), true
@@ -169,7 +159,7 @@ async function AddLikeOrDislike(id){
 </script>
 
 <style scoped>
-@import url('https://fonts.googleapis.com/css2?family=Pinyon+Script&family=Tangerine&family=Ubuntu:wght@300;500&display=swap');
+
 .card {
     text-align: center;
     border: 1px solid #A0AEC0;
@@ -185,7 +175,7 @@ async function AddLikeOrDislike(id){
 }
 
 .card-content-main {
-    padding: 15px 20px;
+    padding: 30px 20px;
 }
 
 .card-content-main h3 {
@@ -205,30 +195,60 @@ async function AddLikeOrDislike(id){
     font-style: italic;
     color: #4f46e5;
 }
-.comparison-images {
-    display: flex;
+.comparisons {
+    --comparisons-grid-columns: fit-content auto fit-content;
+    display: grid;
+    grid-template-columns: var(--comparisons-grid-columns);
     column-gap: 20px;
-    align-items: center;
-    justify-content: center;
+    align-items: start;
+    justify-content: space-around;
     color: #4f46e5;
+
+    @media screen and (min-width: 550px) {
+        --comparisons-grid-columns: 1fr 20px 1fr;
+    }
+}
+
+.comparisons > :nth-child(2) {
+    --arrow-rotation: rotate(90deg);
+
+    align-self: center;
+    justify-self: center;
+    transform: var(--arrow-rotation);
+    margin: 20px;
+
+    @media screen and (min-width: 550px) {
+        --arrow-rotation: rotate(0deg);
+    }
+}
+
+.comparison {
+    display: grid;
+    row-gap: 12px;
 }
 
 .comparison-image {
     object-fit: cover;
     height: 137px;
     width: 100px;
+    justify-self: center;
 }
 
 .comparison-headline-wrapper {
+    --headline-grid-column: 1fr 1fr;
+    text-align: left;
+    padding-left: 16px;
+    padding-right: 16px;
     display: grid;
-    grid-template-columns: 170px 170px;
-    justify-content: center;
+    grid-template-columns: var(--headline-grid-column);
 }
 .comparison-headline {
-    font-size: 44px;
-    font-family: 'Tangerine', cursive;
-    color: #4f46e5;
+    font-size: 16px;
+    font-weight: 500;
+    text-align: center;
+    color: #334155;
 }
+
 .card-footer {
     padding: 15px 20px;
     display: flex;
@@ -241,16 +261,19 @@ async function AddLikeOrDislike(id){
     grid-template-columns: auto-fit, minmax(12ch, 1fr);
     justify-content: center;
     align-items: center;
+    text-align: start;
+    padding: 0 16px;
 }
 
-.card-commonalities li {
+.card-commonalities h3 {
     line-height: 2ch;
     border: 2px solid #818cf8;
     padding: 8px;
     color: #818cf8;
     border-radius: 4px;
     font-size: 16px;
-    align-self: center;
+    text-align: center;
+    margin: 0 auto;
     max-width: 12ch;
 }
 
@@ -259,6 +282,11 @@ async function AddLikeOrDislike(id){
     text-align: start;
     margin-left: 25px;
     margin-right: 25px;
+}
+
+.divider {
+    border-bottom: 1px solid #e7e7e7;
+    margin: 12px 25%;
 }
 
 .is-liked {
