@@ -7,7 +7,7 @@
         class="py-2 px-4 rounded-md border-2 border-indigo-200 w-62 max-w-[600px]"
         :ref="(el) => (inputRef.push(el))"
         :class="props.labelAbove ? 'mt-0' : 'mt-5'"
-        @keyup="searchBooks($event)"
+        @keyup="debouncedSearchBooks($event)"
         placeholder="Search for books"
         name="searchForBooks"
         type="text"
@@ -31,6 +31,7 @@ import { ref, reactive, computed, watch } from 'vue';
 import BookSearchResults from '../../create/booksearchresults.vue';
 import { db } from '../../../services/db';
 import { urls } from '../../../services/urls';
+import { helpersCtrl } from '../../../services/helpers';
 
 const props = defineProps({
   labelAbove: {
@@ -45,6 +46,7 @@ const props = defineProps({
 })
 
 const emit = defineEmits()
+const { debounce } = helpersCtrl;
 const searchResultsArray = ref(null);
 const book = ref(null);
 const inputRef = ref([]);
@@ -53,6 +55,8 @@ async function searchBooks(e) {
   searchResultsArray.value = await db.get(urls.create.searchBook(e.target.value))
   console.log(searchResultsArray.value,'searchBookEndpoint')
 }
+
+const debouncedSearchBooks = debounce(searchBooks, 500, false)
 
 function toParent(e) {
   book.value = e
