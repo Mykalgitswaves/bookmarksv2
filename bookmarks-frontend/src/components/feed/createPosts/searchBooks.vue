@@ -56,7 +56,7 @@ async function searchBooks(e) {
   console.log(searchResultsArray.value,'searchBookEndpoint')
 }
 
-const debouncedSearchBooks = debounce(searchBooks, 500, false)
+const debouncedSearchBooks = debounce(searchBooks, 500, true)
 
 function toParent(e) {
   book.value = e
