@@ -36,7 +36,7 @@
                 <div class="card-responses">
                     <div class="divider"></div>
 
-                    <h3 class="text-slate-500 text-2xl my-2">Commonalities</h3>
+                    <h3 class="text-slate-700 text-lg my-2">Commonalities:</h3>
 
                     <ul class="my-3 content-start">
                         <li 
@@ -256,9 +256,6 @@ async function AddLikeOrUnlike(id){
 }
 
 .card-commonalities {
-    gap: 1ch;
-    display: grid;
-    grid-template-columns: auto-fit, minmax(12ch, 1fr);
     justify-content: center;
     align-items: center;
     text-align: start;
@@ -266,15 +263,12 @@ async function AddLikeOrUnlike(id){
 }
 
 .card-commonalities h3 {
+    font-size: 26px;
     line-height: 2ch;
-    border: 2px solid #818cf8;
-    padding: 8px;
+    padding: 0 8px;
     color: #818cf8;
-    border-radius: 4px;
-    font-size: 16px;
-    text-align: center;
-    margin: 0 auto;
-    max-width: 12ch;
+    text-align: start;
+    font-style: italic;
 }
 
 .tab-commonalities {
