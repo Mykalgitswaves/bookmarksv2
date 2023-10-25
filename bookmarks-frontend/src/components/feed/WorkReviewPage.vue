@@ -17,8 +17,6 @@
         :key="index"
         :review="review"
     />
-
-    
 </template>
 
 <script setup>

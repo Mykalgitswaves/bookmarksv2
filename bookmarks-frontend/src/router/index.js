@@ -3,7 +3,7 @@ import SignUpView from '@/views/signup.vue'
 import CreateUserBooksView from '@/views/createuser.vue'
 import CreateUserWriterView from '@/views/createwriter.vue'
 import LoggedInView from '@/views/LoggedInReader.vue'
-import WorkReviewPage from '@/components/feed/WorkReviewPage.vue'
+import commentsPage from '@/components/feed/commentsPage.vue'
 import WorkFeed from '@/components/feed/WorkFeed.vue'
 import WorkPage from '@/components/feed/WorkPage.vue'
 import AuthorPage from '@/components/feed/authors/AuthorPage.vue';
@@ -35,12 +35,16 @@ const router = createRouter({
       component: LoggedInView,
       children: [
         {
-          path: 'review/all',
-          component: WorkFeed
+          path: 'all',
+          component: WorkFeed,
         },
         {
-        path: 'review/:review',
-        component: WorkReviewPage
+          path: 'comparison/:comparison',
+          component: commentsPage,
+        },
+        {
+          path: 'review/:review',
+          component: commentsPage
         },
         {
           path: 'works/:work',

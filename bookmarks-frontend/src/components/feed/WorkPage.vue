@@ -52,7 +52,7 @@ const data = ref(null);
 const isActiveWork = ref(false);
 
 function backToFeed() {
-    return router.push(`/feed/${route.params.user}/review/all`)
+    return router.push(`/feed/${route.params.user}/all`)
 };
 
 async function getWorkPage() {

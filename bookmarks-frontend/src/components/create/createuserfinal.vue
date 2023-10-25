@@ -92,7 +92,7 @@ export default {
           return response.json()
         }).then((data) => {
             console.log(data)
-            app_router.push(`/feed/${data.uuid}/review/all`)
+            app_router.push(`/feed/${data.uuid}/all`)
             store.createUserSuccess()
             pageStore.clearPageStore()
           })

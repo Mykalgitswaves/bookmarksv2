@@ -89,7 +89,7 @@ function goToSearchPage() {
 }
 
 function goToFeedPage() {
-    router.push(`/feed/${route.params.user}/review/all`);
+    router.push(`/feed/${route.params.user}/all`);
 }
 
 function goToSocialPage() {

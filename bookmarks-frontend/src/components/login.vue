@@ -90,7 +90,7 @@ async function submitForm() {
       const uuid = data.user.uuid
       const token = `token=${data.token.access_token}`;
       document.cookie = token;
-      return router.push(`/feed/${uuid}/review/all`);
+      return router.push(`/feed/${uuid}/all`);
     })
   } catch(error) {
       console.error(error)

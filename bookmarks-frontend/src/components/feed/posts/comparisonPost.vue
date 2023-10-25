@@ -32,7 +32,6 @@
 
         <Transition>
             <div v-if="showReview[props.id] === true">
-
                 <div class="card-responses">
                     <div class="divider"></div>
 
@@ -56,6 +55,7 @@
                     <button
                         type="button"
                         class="text-slate-600 flex items-center"
+                        @click="router.push(`/feed/${user}/comparison/${props.id}`)"
                     >
                         <IconComment/>
                         <span class="ml-2">comments</span>
@@ -79,12 +79,12 @@
 import IconLinkArrow from '../../svg/icon-arrow-link.vue';
 import IconLike from '../../svg/icon-like.vue';
 import IconComment from '../../svg/icon-comment.vue';
-import IconChevron from '../../svg/icon-chevron.vue';
 
 import { reactive, ref, } from 'vue';
 import { db } from '../../../services/db';
 import { urls } from '../../../services/urls';
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
+
 const props = defineProps({
     book: {
         type: Array,
@@ -141,9 +141,10 @@ const props = defineProps({
 const showReview = reactive({});
 showReview[props.id] = false;
 
-const comparisons = reactive({})
 const isLiked = ref(null);
 const route = useRoute();
+const router = useRouter();
+const user = route.params.user;
 
 async function AddLikeOrUnlike(id){
     const user_id = route.params.user
