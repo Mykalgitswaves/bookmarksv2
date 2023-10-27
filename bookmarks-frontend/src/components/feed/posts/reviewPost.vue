@@ -55,7 +55,7 @@
     </div> 
 </template>
 <script setup>
-import { toRefs, ref } from 'vue';
+import { ref } from 'vue';
 import IconLike from '../../svg/icon-like.vue';
 import IconComment from '../../svg/icon-comment.vue';
 
@@ -104,5 +104,5 @@ const props = defineProps({
 });
 
 const isLiked = ref(false);
-console.log(props)
+
 </script>
