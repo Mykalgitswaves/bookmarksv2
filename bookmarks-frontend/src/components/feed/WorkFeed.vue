@@ -98,7 +98,7 @@
       <div v-if="!toggleCreateReviewType">
 
         <TransitionGroup v-if="reviewData" name="reviews" tag="div">
-          <div v-if="!filterOptions[0].is_active">
+          <div v-if="!filterOptions[0].is_active" class="center-cards">
             <ComparisonPost 
               v-for="post in reviewData?.data.Comparison"
               :key="post.id"
@@ -115,7 +115,7 @@
             />
           </div>
 
-          <div v-if="!filterOptions[1].is_active">
+          <div v-if="!filterOptions[1].is_active" class="center-cards">
             <ReviewPost
               v-for="post in reviewData?.data.Review" 
               :key="post.id"
@@ -131,9 +131,9 @@
               :small_img_url="post.book_small_img"
             />
           </div>
-          <div v-if="!filterOptions[2].is_active">
-          <UpdatePost
-          v-for="post in reviewData?.data.Update" 
+          <div v-if="!filterOptions[2].is_active" class="center-cards">
+            <UpdatePost
+              v-for="post in reviewData?.data.Update" 
               :key="post.id"
               :id="post.id"
               :book="post.book"
@@ -144,8 +144,8 @@
               :username="post.user_username"
               :small_img_url="post.book_small_img"
               :page="post.page"
-          />
-        </div>
+            />
+          </div>
         </TransitionGroup>
       </div>
     </div>

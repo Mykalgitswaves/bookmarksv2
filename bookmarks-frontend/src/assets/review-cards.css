@@ -1,10 +1,16 @@
 .card {
+    --card-width: 70vw;
     text-align: center;
     border: 1px solid #A0AEC0;
     border-radius: 5px;
     margin-top: 1rem;
     margin-bottom: 1rem;
+    width: var(--card-width);
     max-width: 880px;
+
+    @media screen and (max-width: 767px) {
+        --card-width: 90vw;
+    }
 }
 
 .card-header {
@@ -137,4 +143,9 @@
 
 .card-is-liked {
     border-color: #4f46e5;
+}
+
+.center-cards {
+    display: grid;
+    justify-content: center;
 }
