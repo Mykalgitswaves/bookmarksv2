@@ -128,6 +128,7 @@
               :responses="post.responses"
               :spoilers="post.spoilers"
               :username="post.user_username"
+              :small_img_url="post.book_small_img"
             />
           </div>
         </TransitionGroup>

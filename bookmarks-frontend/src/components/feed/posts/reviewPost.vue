@@ -1,20 +1,64 @@
 <template>
-    <div class="review-post-wrapper">
-        <p class="text-slate-600 text-center">
-            <span class="text-indigo-600 cursor-pointer">{{ username }}'s</span>
-             review of 
-             <span class="block my-2 italic font-semibold">{{ title }}</span>
-        </p>
-        <p class="fancy text-2xl">{{ headline }}</p>
-        <div class="review-questions">
-            <Switch/>
-            <p></p>   
+<div class="card" :class="{'card-is-liked': isLiked}">
+        <div class="card-header">
+            <p class="text-slate-600 text-center">
+                <span class="text-indigo-600 cursor-pointer">{{ props.username }}'s</span>
+                made a review: 
+            </p>
         </div>
-    </div>   
+
+        <div class="card-content-main">
+            <div class="c_c_m_inner">
+                <img class="review-image" :src="props.small_img_url" alt="">
+                <p class="text-xl font-semibold my-2 text-indigo-600">{{ props.title }}</p>
+                <p v-if="props.headline.length" class="fancy text-2xl">{{ props.headline }}</p>
+            </div>
+        </div>
+
+        <div class="card-responses">
+                    <div class="divider"></div>
+
+                    <ul class="my-3 content-start">
+                        <li 
+                            v-for="(r, index) in props.responses" 
+                            :key="index"
+                            class="card-commonalities"
+                        >
+                        
+                            <h3>{{ props.questions[index] }}</h3>
+                            
+                            <p class="mt-2 ml-2 text-slate-500">{{ r }}</p>
+                        </li>  
+                    </ul>
+                </div>
+
+        <div class="card-footer">
+            <button
+                type="button"
+                class="text-slate-600 flex items-center"
+                @click="navigateToCommentPage()"
+            >
+                <IconComment/>
+                <span class="ml-2">comments</span>
+            </button>
+        
+            <button 
+                type="button" 
+                class="text-slate-600 flex items-center"
+                :class="{'is-liked': isLiked}"
+                @click="isLiked = !isLiked"
+            >
+                <IconLike/>
+                <span class="ml-2">Like</span>
+            </button>
+        </div>
+    </div> 
 </template>
 <script setup>
 import { toRefs, ref } from 'vue';
-import Switch from '../partials/switch.vue'
+import IconLike from '../../svg/icon-like.vue';
+import IconComment from '../../svg/icon-comment.vue';
+
 const props = defineProps({
     book: {
         type: Number,
@@ -52,27 +96,13 @@ const props = defineProps({
     id: {
         type: Number,
         required: true
+    },
+    small_img_url: {
+        type: String,
+        required: true
     }
-})
+});
 
-const { book, responses,
-     questions, spoilers,
-      username, question_ids,
-       headline, id, title } = toRefs(props)
-
-
-const isSpoilersToggled = ref(false);
-
+const isLiked = ref(false);
+console.log(props)
 </script>
-<style scoped>
-.review-post-wrapper {
-    background: var(--background-container-gradient);
-    padding: 1rem;
-    border-radius: .25rem;
-    border: solid 2px ;
-    margin-block: 1rem;
-    /* Fallbacks for non logical prop abiding browsers */
-    margin-top: 1rem;
-    margin-bottom: 1rem;
-}
-</style>

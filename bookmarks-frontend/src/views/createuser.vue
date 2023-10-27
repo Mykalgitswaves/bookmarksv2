@@ -13,9 +13,6 @@
           <MobileMenu/>
     </teleport>
 
-    
-
-
     <component :is="createFormState" />
   </div>
 </template>
@@ -104,7 +101,6 @@ export default {
     const state = useStore()
     this.state = state
     this.createFormState = computed(() => userFormMapping[state.page])
-    
   }
 }
 </script>

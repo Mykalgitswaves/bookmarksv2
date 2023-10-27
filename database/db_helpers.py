@@ -1136,6 +1136,7 @@ class Neo4jDriver():
                                                        question_ids=post['question_ids'],
                                                        responses=post['responses'],
                                                        spoilers=post['spoilers'],
+                                                       book_small_img=response['b']['img_url'],
                                                        user_username=username))
 
         return(output)
