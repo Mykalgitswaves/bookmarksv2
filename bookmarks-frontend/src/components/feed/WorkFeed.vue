@@ -131,7 +131,7 @@
               :small_img_url="post.book_small_img"
             />
           </div>
-          <div v-if="!filterOptions[1].is_active">
+          <div v-if="!filterOptions[2].is_active">
           <UpdatePost
           v-for="post in reviewData?.data.Update" 
               :key="post.id"
