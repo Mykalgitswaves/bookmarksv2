@@ -131,6 +131,21 @@
               :small_img_url="post.book_small_img"
             />
           </div>
+          <div v-if="!filterOptions[1].is_active">
+          <UpdatePost
+          v-for="post in reviewData?.data.Update" 
+              :key="post.id"
+              :id="post.id"
+              :book="post.book"
+              :title="post.book_title"
+              :headline="post.headline"
+              :response="post.response"
+              :spoiler="post.spoiler"
+              :username="post.user_username"
+              :small_img_url="post.book_small_img"
+              :page="post.page"
+          />
+        </div>
         </TransitionGroup>
       </div>
     </div>
@@ -144,13 +159,14 @@ import { db } from '@/services/db.js';
 import { urls } from '@/services/urls.js';
 import { filterOptions } from './filters.js';
 import ComparisonPost from './posts/comparisonPost.vue';
+import ReviewPost from './posts/reviewPost.vue';
+import UpdatePost from './posts/updatePost.vue';
 import IconPlus from '../svg/icon-plus.vue'
 import IconExit from '../svg/icon-exit.vue';
 import IconFilter from '../svg/icon-filter.vue';
 import createReviewPost from './createPosts/createReviewPost.vue';
 import createUpdatePost from './createPosts/createUpdatePost.vue';
 import createComparisonPost from './createPosts/createComparisonPost.vue';
-import ReviewPost from './posts/reviewPost.vue';
 import IconAddPost from '../svg/icon-add-post.vue';
 
 // const store = searchResultStore();
