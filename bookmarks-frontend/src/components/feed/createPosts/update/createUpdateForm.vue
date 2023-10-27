@@ -43,11 +43,13 @@
 <script setup>
 import { ref, watch, reactive } from 'vue';
 import CreatePostHeadline from '../createPostHeadline.vue';
+import { helpersCtrl } from '../../../../services/helpers';
+
 const emit = defineEmits();
 const headline = ref('');
 const page = ref(0);
 const props = defineProps({
-    bookId: {
+    book: {
         required: true
     }
 
@@ -56,7 +58,9 @@ const props = defineProps({
 
 const update = reactive({
     headline: '',
-    book_id: props.bookId,
+    book_id: props.book.id,
+    book_title: props.book.title,
+    small_img_url: props.book.small_img_url,
     page: page.value,
     is_spoiler: false,
     response: ''
@@ -68,7 +72,7 @@ function headlineHandler(e) {
 }
 
 watch(update, () => {
-    return emit('update-complete', update);
+    return emit('update-complete', helpersCtrl.formatUpdateData(update));
 });
 
 </script>

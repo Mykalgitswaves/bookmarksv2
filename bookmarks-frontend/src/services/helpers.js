@@ -48,6 +48,19 @@ export const helpersCtrl = {
         
         return data;
     },
+    formatUpdateData: (update) => {
+        const data = {};
+        
+        data.book_id = update.book_id;
+        data.title = update.book_title;
+        data.small_img_url = update.small_img_url;
+        data.page = update.page;
+        data.headline = update.headline;
+        data.response = update.response;
+        data.is_spoiler = update.is_spoiler;
+
+        return data;
+    },
     /**
     * Function for cloning objects
     * @param {{obj}} obj - creates clone of object 

@@ -151,14 +151,12 @@ class ReviewPost(Review):
     
 
 class UpdatePost(Review):
-    def __init__(self, post_id, book, page, questions, question_ids, responses, spoilers, headline="", created_date="", user_id="", user_username="",book_small_img="",book_title=""):
+    def __init__(self, post_id, book, page, response, spoiler, headline="", created_date="", user_id="", user_username="",book_small_img="",book_title=""):
         super().__init__(post_id, book, created_date, user_id, user_username,book_title,book_small_img)
         self.page = page
         self.headline = headline
-        self.questions = questions
-        self.question_ids = question_ids
-        self.responses = responses
-        self.spoilers = spoilers
+        self.response = response
+        self.spoiler = spoiler
     def create_post(self,driver):
         created_date, id = driver.create_update(self)
         self.id = id
@@ -1118,12 +1116,12 @@ class Neo4jDriver():
             elif response['labels(p)'] == ["Update"]:
                 output['Update'].append(UpdatePost(post_id=post["id"],
                                                    book=response['b']['id'],
+                                                   book_title=response['b']['title'],
                                                    created_date=post["created_date"],
                                                    page=post['page'],
-                                                   questions=post['questions'],
-                                                   question_ids=post['question_ids'],
-                                                   responses=post['responses'],
-                                                   spoilers=post['spoilers'],
+                                                   response=post['response'],
+                                                   spoiler=post['spoiler'],
+                                                   book_small_img=response['b']['small_img_url'],
                                                    user_username=username))
 
             elif response['labels(p)'] == ["Review"]:
@@ -1424,10 +1422,8 @@ class Neo4jDriver():
                             created_date:datetime(),
                             page:$page,
                             headline:$headline,
-                            questions:$questions,
-                            question_ids:$question_ids,
-                            responses:$responses,
-                            spoilers:$spoilers})
+                            response:$response,
+                            spoiler:$spoiler})
             create (u)-[p:POSTED]->(d)
             create (d)-[pp:POST_FOR_BOOK]->(b)
             return d.created_date, d.id
@@ -1437,10 +1433,8 @@ class Neo4jDriver():
                         book_id=update_post.book, 
                         page=update_post.page, 
                         headline=update_post.headline, 
-                        questions=update_post.questions,
-                        question_ids=update_post.question_ids,
-                        responses=update_post.responses,
-                        spoilers=update_post.spoilers, 
+                        response=update_post.response,
+                        spoiler=update_post.spoiler, 
                         title=update_post.book_title, 
                         small_img_url=update_post.book_small_img)
         

@@ -6,7 +6,7 @@
 
         <SearchBooks @book-to-parent="bookHandler"/>
     </div>
-    <CreateUpdateFormVue v-if="book" :book-id="book.id" @update-complete="updateEmitHandler"/>    
+    <CreateUpdateFormVue v-if="book" :book="book" @update-complete="updateEmitHandler"/>    
 </template>
 
 <script setup>

@@ -24,7 +24,7 @@
         <div class="card-responses">
             <div class="divider"></div>
 
-            <h3 class="text-slate-700 text-lg my-2">Commonalities:</h3>
+            <h3 class="text-slate-700 text-lg my-2">Commonalities</h3>
 
             <ul class="my-3 content-start">
                 <li 

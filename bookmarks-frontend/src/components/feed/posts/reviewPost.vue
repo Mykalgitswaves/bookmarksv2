@@ -17,6 +17,11 @@
 
         <div class="card-responses">
                     <div class="divider"></div>
+                    
+                    <div class="text-slate-600 my-2 justify-self items-center">
+                        <IconBrain/>
+                        
+                    </div>
 
                     <ul class="my-3 content-start">
                         <li 
@@ -58,6 +63,7 @@
 import { ref } from 'vue';
 import IconLike from '../../svg/icon-like.vue';
 import IconComment from '../../svg/icon-comment.vue';
+import IconBrain from '../../svg/icon-brain.vue';
 
 const props = defineProps({
     book: {
@@ -106,3 +112,9 @@ const props = defineProps({
 const isLiked = ref(false);
 
 </script>
+<style scoped>
+.justify-self {
+    display: flex;
+    justify-content: center;
+}
+</style>

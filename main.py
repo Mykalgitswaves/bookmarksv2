@@ -506,7 +506,6 @@ async def create_update(request: Request,
     response = response['_value']
 
     book_id = response['book_id']
-
     update = UpdatePost(post_id='',
                         book=book_id,
                         book_title=response['title'],
@@ -514,10 +513,8 @@ async def create_update(request: Request,
                         user_username=current_user.username,
                         headline=response['headline'],
                         page=response['page'],
-                        questions=response['questions'],
-                        question_ids=response['ids'],
-                        responses=response['responses'],
-                        spoilers=response['spoilers'])
+                        response=response['response'],
+                        spoiler=response['is_spoiler'])
     
     update.create_post(driver)
 
