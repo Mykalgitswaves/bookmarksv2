@@ -133,6 +133,8 @@ const route = useRoute();
 const router = useRouter();
 const user = route.params.user;
 
+
+
 async function AddLikeOrUnlike(id){
     const user_id = route.params.user
     await db.post(
@@ -145,7 +147,7 @@ async function AddLikeOrUnlike(id){
 }
 
 function navigateToCommentPage() {
-    postStore.save(props);
+    postStore.save(props.id);
     router.push(`/feed/${user}/comparison/${props.id}`);
 }
 

@@ -1570,6 +1570,82 @@ class Neo4jDriver():
     def close(self):
         self.driver.close()
 
+    def get_post(self, post_id, username):
+        with self.driver.session() as session:
+            post = session.execute_read(self.get_post_query, post_id, username)
+        return(post)
+    @staticmethod
+    def get_post_query(tx, post_id, username):
+        query = """
+            match (p {id:$post_id}) return p, labels(p)
+        """
+
+        result = tx.run(query, post_id=post_id)
+        response = result.single()
+        post = response['p']
+
+        if response['labels(p)'] == ["Milestone"]:
+           output = MilestonePost(post_id=post["id"],
+                                    book="",
+                                    created_date=post["created_date"],
+                                    num_books=post["num_books"],
+                                    user_username=username)                                                        
+                
+        elif response['labels(p)'] == ["RecommendationFriend"]:
+            output = RecommendationFriend(post_id=post["id"],
+                                        book=response['b']['id'],
+                                        created_date=post["created_date"],
+                                        to_user_username=response['uu']['username'],
+                                        from_user_text=post['from_user_text'],
+                                        to_user_text=post['to_user_text'],
+                                        user_username=username)
+            
+        elif response['labels(p)'] == ['Comparison']:
+            comparator = response['p']
+            if output['Comparison']:
+                if output['Comparison'][-1].id == post["id"]:
+                    output['Comparison'][-1].comparators.append([comparator['comparator']])
+                    output['Comparison'][-1].comparator_ids.append([comparator['comparator_id']])
+                    output['Comparison'][-1].responses.append([comparator['response']])
+                    output['Comparison'][-1].book_specific_responses.append([comparator['book_specific_responses']])
+                    continue
+            
+            output = ComparisonPost(post_id=post['id'],
+                                    compared_books=post['compared_books'],
+                                    created_date=post['created_date'],
+                                    headline=post['headline'],
+                                    user_username=username,
+                                    book_title=[response['b']['title'], response['bb']['title']],
+                                    book_small_img=[response['b']['small_img_url'], response['bb']['small_img_url']],
+                                    comparators=[comparator['comparators']],
+                                    comparator_ids=[comparator['comparator_ids']],
+                                    responses=[comparator['responses']],
+                                    book_specific_headlines=[comparator['book_specific_headlines']])
+            
+        elif response['labels(p)'] == ["Update"]:
+            output = UpdatePost(post_id=post["id"],
+                                book=response['b']['id'],
+                                book_title=response['b']['title'],
+                                created_date=post["created_date"],
+                                page=post['page'],
+                                response=post['response'],
+                                spoiler=post['spoiler'],
+                                book_small_img=response['b']['small_img_url'],
+                                user_username=username)
+
+        elif response['labels(p)'] == ["Review"]:
+                output = ReviewPost(post_id=post["id"],
+                                    book=response['b']['id'],
+                                    book_title=response['b']['title'],
+                                    created_date=post["created_date"],
+                                    questions=post['questions'],
+                                    question_ids=post['question_ids'],
+                                    responses=post['responses'],
+                                    spoilers=post['spoilers'],
+                                    book_small_img=response['b']['img_url'],
+                                    user_username=username)
+                
+        return response
 
 
 if __name__ == "__main__":
