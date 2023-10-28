@@ -410,12 +410,6 @@ async def get_author_page(request: Request):
 
     return JSONResponse(content={"author": jsonable_encoder(response)})
 
-@app.get("/feed/{user_id}")
-async def get_user_home_feed(credentials: HTTPAuthorizationCredentials = Depends(security)):
-    """
-    After a user submits to put_decorate_reader_create endpoint they are redirected to their home feed which is a profile page containing information gathered from the set up of their profile. It should return information about the User. Also, they need to have a cookie to access this endpoint so even if someone guesses the correct uuid unless they have a cookie they wont be able to access any sensitive information. In the case they dont have cookie we redirect to sign in / sign up page.
-    """
-
 @app.get("/api/search/{param}")
 async def search_for_param(param: str, skip: int=0, limit: int=5):
     """
@@ -550,7 +544,6 @@ async def create_comparison(request: Request,
     comparison = ComparisonPost(post_id='',
                                 compared_books=response["book_ids"],
                                 user_username=current_user.username,
-                                headline="",
                                 comparators=response['comparator_topics'],
                                 comparator_ids=response['comparator_ids'],
                                 responses=response['responses'],
@@ -562,6 +555,7 @@ async def create_comparison(request: Request,
 
     for book_id in response["book_ids"]:
         if book_id[0] == "g":
+            print("Started background task")
             background_tasks.add_task(update_book_google_id,book_id,driver)
 
     return JSONResponse(content={"data": jsonable_encoder(comparison)})
@@ -632,7 +626,7 @@ async def get_user_posts(user_id: str, current_user: Annotated[User, Depends(get
         return(JSONResponse(content={"data": jsonable_encoder(current_user.get_posts(driver))}))
 
 @app.get("/api/{user_id}/posts/{post_id}/post")
-async def get_post(post_id: str, user_id: str, current_user: Annotated[User, Depends(get_current_active_user)]):
+async def get_post(post_id: str, current_user: Annotated[User, Depends(get_current_active_user)]):
     if post_id and current_user:
         post = driver.get_post(post_id=post_id, username=current_user.username)
         return (JSONResponse(content={"data": jsonable_encoder(post)}))

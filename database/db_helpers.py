@@ -165,9 +165,8 @@ class UpdatePost(Review):
 
 
 class ComparisonPost(Review):
-    def __init__(self, post_id, compared_books, headline:str, comparators:list, comparator_ids:list, responses:list, book_specific_headlines:list, created_date="", user_id="", user_username="", book_small_img=["",""], book_title=["",""],comments=[]):
+    def __init__(self, post_id, compared_books, comparators:list, comparator_ids:list, responses:list, book_specific_headlines:list, created_date="", user_id="", user_username="", book_small_img=["",""], book_title=["",""],comments=[]):
         super().__init__(post_id, compared_books, created_date, user_id, user_username, book_title, book_small_img,comments)
-        self.headline = headline
         self.comparators = comparators
         self.comparator_ids = comparator_ids
         self.responses = responses
@@ -1079,8 +1078,7 @@ class Neo4jDriver():
                     optional match (p)-[rb:POST_FOR_BOOK]-(b)
                     optional match (p)-[ru:RECOMMENDED_TO]->(uu)
                     optional match (p)-[rc:HAS_RESPONSE]-(c)
-                    optional match (p)-[ct:COMPARES_TO]-(bb)
-                    return p, labels(p), c, b, uu, bb
+                    return p, labels(p), c, b, uu
                     order by p.created_date desc"""
         result = tx.run(query, username=username)
         results = [record for record in result.data()]
@@ -1110,26 +1108,25 @@ class Neo4jDriver():
                                                                            user_username=username))
             
             elif response['labels(p)'] == ['Comparison']:
-                comparator = response['p']
                 if output['Comparison']:
                     if output['Comparison'][-1].id == post["id"]:
-                        output['Comparison'][-1].comparators.append([comparator['comparator']])
-                        output['Comparison'][-1].comparator_ids.append([comparator['comparator_id']])
-                        output['Comparison'][-1].responses.append([comparator['response']])
-                        output['Comparison'][-1].book_specific_responses.append([comparator['book_specific_responses']])
+                        output['Comparison'][-1].compared_books.append(response['b']['id'])
+                        output['Comparison'][-1].book_title.append(response['b']['title'])
+                        output['Comparison'][-1].book_small_img.append(response['b']['small_img_url'])
                         continue
-                
-                output['Comparison'].append(ComparisonPost(post_id=post['id'],
-                                                           compared_books=post['compared_books'],
-                                                           created_date=post['created_date'],
-                                                           headline=post['headline'],
-                                                           user_username=username,
-                                                           book_title=[response['b']['title'], response['bb']['title']],
-                                                           book_small_img=[response['b']['small_img_url'], response['bb']['small_img_url']],
-                                                           comparators=[comparator['comparators']],
-                                                           comparator_ids=[comparator['comparator_ids']],
-                                                           responses=[comparator['responses']],
-                                                           book_specific_headlines=[comparator['book_specific_headlines']]))
+
+                output['Comparison'].append(ComparisonPost(post_id=post["id"],
+                                            compared_books=[response['b']['id']],
+                                            user_username=username,
+                                            comparators=post['comparator_topics'],
+                                            created_date=post['created_date'],
+                                            comparator_ids=post['comparator_ids'],
+                                            responses=post['responses'],
+                                            book_specific_headlines=post['book_specific_headlines'],
+                                            book_title=[response['b']['title']],
+                                            book_small_img=[response['b']['small_img_url']]))
+
+
             elif response['labels(p)'] == ["Update"]:
                 output['Update'].append(UpdatePost(post_id=post["id"],
                                                    book=response['b']['id'],
@@ -1480,8 +1477,6 @@ class Neo4jDriver():
         merge (bb:Book {id:$book_id_2, title:$title_2, small_img_url:$small_img_url_2})
         create (c:Comparison {id:randomUUID(), 
                             created_date:datetime(),
-                            headline:$headline,
-                            compared_books:$compared_books,
                             comparator_ids:$comparator_ids,
                             comparators:$comparators,
                             responses:$responses,
@@ -1489,7 +1484,7 @@ class Neo4jDriver():
 
         create (u)-[p:POSTED]->(c)
         create (c)-[pp:POST_FOR_BOOK]->(b)
-        create (c)-[cc:COMPARES_TO]->(bb)
+        create (c)-[cc:POST_FOR_BOOK]->(bb)
 
         return c.created_date, c.id
                 """
@@ -1501,7 +1496,6 @@ class Neo4jDriver():
                         title_2=comparison_post.book_title[1],
                         small_img_url_1=comparison_post.book_small_img[0],
                         small_img_url_2=comparison_post.book_small_img[1],
-                        headline=comparison_post.headline, 
                         compared_books=comparison_post.book, 
                         comparators=comparison_post.comparators,
                         comparator_ids=comparison_post.comparator_ids,
@@ -1645,60 +1639,54 @@ class Neo4jDriver():
         created_date = response["c.created_date"]
         comment_id = response["c.id"]
         return(created_date,comment_id)
-    def close(self):
-        self.driver.close()
 
     def get_post(self, post_id, username):
+        """
+        Returns a post by UUID. Works for post types Update, Comparison, Review, and Milestone
+        Also returns the book objects
+        """
         with self.driver.session() as session:
             post = session.execute_read(self.get_post_query, post_id, username)
         return(post)
     @staticmethod
     def get_post_query(tx, post_id, username):
         query = """
-            match (p {id:$post_id}) return p, labels(p)
+            match (p {id:$post_id}) 
+            match (p)-[:POST_FOR_BOOK]-(b:Book)
+            return p, labels(p), b.id, b.title, b.small_img_url
         """
 
         result = tx.run(query, post_id=post_id)
-        response = result.single()
+        result = [record for record in result.data()]
+        response = result[0]
         post = response['p']
 
         if response['labels(p)'] == ["Milestone"]:
-           output = MilestonePost(post_id=post["id"],
+            output = MilestonePost(post_id=post["id"],
                                     book="",
                                     created_date=post["created_date"],
                                     num_books=post["num_books"],
                                     user_username=username)                                                        
-                
-        elif response['labels(p)'] == ["RecommendationFriend"]:
-            output = RecommendationFriend(post_id=post["id"],
-                                        book=response['b']['id'],
-                                        created_date=post["created_date"],
-                                        to_user_username=response['uu']['username'],
-                                        from_user_text=post['from_user_text'],
-                                        to_user_text=post['to_user_text'],
-                                        user_username=username)
             
         elif response['labels(p)'] == ['Comparison']:
-            comparator = response['p']
-            if output['Comparison']:
-                if output['Comparison'][-1].id == post["id"]:
-                    output['Comparison'][-1].comparators.append([comparator['comparator']])
-                    output['Comparison'][-1].comparator_ids.append([comparator['comparator_id']])
-                    output['Comparison'][-1].responses.append([comparator['response']])
-                    output['Comparison'][-1].book_specific_responses.append([comparator['book_specific_responses']])
-                    
-            
-            output = ComparisonPost(post_id=post['id'],
-                                    compared_books=post['compared_books'],
-                                    created_date=post['created_date'],
-                                    headline=post['headline'],
-                                    user_username=username,
-                                    book_title=[response['b']['title'], response['bb']['title']],
-                                    book_small_img=[response['b']['small_img_url'], response['bb']['small_img_url']],
-                                    comparators=[comparator['comparators']],
-                                    comparator_ids=[comparator['comparator_ids']],
-                                    responses=[comparator['responses']],
-                                    book_specific_headlines=[comparator['book_specific_headlines']])
+            book_ids = []
+            book_titles = []
+            book_small_img_urls = []
+            for response in result:
+                book_ids.append(response['b.id'])
+                book_titles.append(response['b.title'])
+                book_small_img_urls.append(response['b.small_img_url'])
+
+            output = ComparisonPost(post_id=post["id"],
+                            compared_books=book_ids,
+                            user_username=username,
+                            comparators=post['comparator_topics'],
+                            created_date=post['created_date'],
+                            comparator_ids=post['comparator_ids'],
+                            responses=post['responses'],
+                            book_specific_headlines=post['book_specific_headlines'],
+                            book_title=book_titles,
+                            book_small_img=book_small_img_urls)
             
         elif response['labels(p)'] == ["Update"]:
             output = UpdatePost(post_id=post["id"],
@@ -1723,8 +1711,10 @@ class Neo4jDriver():
                                     book_small_img=response['b']['img_url'],
                                     user_username=username)
                 
-        return response
+        return output
 
+    def close(self):
+        self.driver.close()
 
 if __name__ == "__main__":
     driver = Neo4jDriver()
