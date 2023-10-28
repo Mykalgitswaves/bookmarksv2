@@ -148,7 +148,7 @@ async function AddLikeOrUnlike(id){
 
 function navigateToCommentPage() {
     postStore.save(props.id);
-    router.push(`/feed/${user}/comparison/${props.id}`);
+    router.push(`/feed/${user}/post/${props.id}`);
 }
 
 </script>

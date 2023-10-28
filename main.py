@@ -631,9 +631,9 @@ async def get_user_posts(user_id: str, current_user: Annotated[User, Depends(get
         return(JSONResponse(content={"data": jsonable_encoder(current_user.get_posts(driver))}))
 
 @app.get("/api/{user_id}/posts/{post_id}/post")
-async def get_post(post_id: str, user_id: str):
-    if post_id and user_id:
-        post = driver.get_post(post_id=post_id)
+async def get_post(post_id: str, user_id: str, current_user: Annotated[User, Depends(get_current_active_user)]):
+    if post_id and current_user:
+        post = driver.get_post(post_id=post_id, username=current_user.username)
         return (JSONResponse(content={"data": jsonable_encoder(post)}))
 
 

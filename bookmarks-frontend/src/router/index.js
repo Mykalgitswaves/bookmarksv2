@@ -39,12 +39,8 @@ const router = createRouter({
           component: WorkFeed,
         },
         {
-          path: 'comparison/:comparison',
+          path: 'post/:post',
           component: commentsPage,
-        },
-        {
-          path: 'review/:review',
-          component: commentsPage
         },
         {
           path: 'works/:work',
