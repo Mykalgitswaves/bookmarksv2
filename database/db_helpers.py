@@ -167,6 +167,7 @@ class UpdatePost(Review):
 class ComparisonPost(Review):
     def __init__(self, post_id, compared_books, comparators:list, comparator_ids:list, responses:list, book_specific_headlines:list, created_date="", user_id="", user_username="", book_small_img=["",""], book_title=["",""],comments=[]):
         super().__init__(post_id, compared_books, created_date, user_id, user_username, book_title, book_small_img,comments)
+        self.compared_books = compared_books
         self.comparators = comparators
         self.comparator_ids = comparator_ids
         self.responses = responses
@@ -1118,7 +1119,7 @@ class Neo4jDriver():
                 output['Comparison'].append(ComparisonPost(post_id=post["id"],
                                             compared_books=[response['b']['id']],
                                             user_username=username,
-                                            comparators=post['comparator_topics'],
+                                            comparators=post['comparators'],
                                             created_date=post['created_date'],
                                             comparator_ids=post['comparator_ids'],
                                             responses=post['responses'],

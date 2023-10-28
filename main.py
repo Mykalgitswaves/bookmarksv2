@@ -541,6 +541,10 @@ async def create_comparison(request: Request,
 
     response = await request.json()
     response = response['_value']
+
+    if response["book_ids"][0] == response["book_ids"][1]:
+        raise HTTPException("400","Comparisons require two unique books, please select another book for your post.") 
+
     comparison = ComparisonPost(post_id='',
                                 compared_books=response["book_ids"],
                                 user_username=current_user.username,

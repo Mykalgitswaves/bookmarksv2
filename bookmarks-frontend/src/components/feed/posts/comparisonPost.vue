@@ -8,7 +8,7 @@
                 <div class="comparison">
                     <img class="comparison-image" :src="props.small_img_url[0]" alt="">
                     <p class="text-xl font-semibold">{{ props.book_title[0] }}</p>
-                    <p class="comparison-headline">{{ props.headlines[0][0] }}</p>
+                    <p class="comparison-headline">{{ props.headlines[0] }}</p>
                 </div>
 
                 <IconLinkArrow />
@@ -16,7 +16,7 @@
                 <div class="comparison">
                     <img class="comparison-image" :src="props.small_img_url[1]" alt="">
                     <p class="text-xl font-semibold">{{ props.book_title[1] }}</p>
-                    <p class="comparison-headline">{{ props.headlines[0][1] }}</p>
+                    <p class="comparison-headline">{{ props.headlines[1] }}</p>
                 </div>
             </div>
         </div>
@@ -33,9 +33,9 @@
                     class="card-commonalities"
                 >
                 
-                    <h3>{{ props.comparators[index][0] }}</h3>
+                    <h3>{{ props.comparators[index] }}</h3>
                     
-                    <p class="mt-2 ml-2 text-slate-500">{{ c[0] }}</p>
+                    <p class="mt-2 ml-2 text-slate-500">{{ c }}</p>
                 </li>  
             </ul>
         </div>
