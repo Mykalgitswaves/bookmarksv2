@@ -1681,7 +1681,7 @@ class Neo4jDriver():
             output = ComparisonPost(post_id=post["id"],
                             compared_books=book_ids,
                             user_username=username,
-                            comparators=post['comparator_topics'],
+                            comparators=post['comparators'],
                             created_date=post['created_date'],
                             comparator_ids=post['comparator_ids'],
                             responses=post['responses'],
