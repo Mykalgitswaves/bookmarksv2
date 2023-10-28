@@ -630,7 +630,14 @@ async def create_milestone(request: Request, current_user: Annotated[User, Depen
 async def get_user_posts(user_id: str, current_user: Annotated[User, Depends(get_current_active_user)]):
     if user_id and current_user:
         return(JSONResponse(content={"data": jsonable_encoder(current_user.get_posts(driver))}))
-    
+
+@app.get("/api/{user_id}/posts/{post_id}/post")
+async def get_post(post_id: str, user_id: str, current_user: Annotated[User, Depends(get_current_active_user)]):
+    if post_id and current_user:
+        post = driver.get_post(post_id=post_id, username=current_user.username)
+        return (JSONResponse(content={"data": jsonable_encoder(post)}))
+
+
 @app.post("/api/{user_id}/like/comparisons/{comparison_id}")
 async def like_comparison_post(user_id: str, comparison_id: str, current_user: Annotated[User, Depends(get_current_active_user)]):
     if user_id and current_user and comparison_id:
