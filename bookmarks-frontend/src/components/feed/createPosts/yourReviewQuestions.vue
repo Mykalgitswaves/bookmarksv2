@@ -21,7 +21,7 @@
             <CreatePostResponseForm 
                 v-if="!createPostResponseFormArr[i]" 
                 :q="question" 
-                :is-comparison="true"  
+                :is-comparison="props.isComparison"  
                 :is-viewing-question="true" 
                 @store-changed="storeChangeHandler()"
             />
@@ -55,7 +55,7 @@ const props = defineProps({
 const store = createQuestionStore();
 
 const questions = computed(() => { 
-    if (props.questions.length) {
+    if (props.questions?.length) {
         return props.questions;
     } else if (store.arr) {
         return store.arr;

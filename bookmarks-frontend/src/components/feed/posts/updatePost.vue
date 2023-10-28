@@ -51,6 +51,7 @@
 </template>
 <script setup>
 import { ref } from 'vue';
+import { useRouter, useRoute } from 'vue-router';
 import IconComment from '../../svg/icon-comment.vue';
 import IconLike from '../../svg/icon-like.vue';
 
@@ -95,4 +96,13 @@ const props = defineProps({
 });
 
 const isLiked = ref(false);
+
+const router = useRouter();
+const route = useRoute();
+
+const { user } = route.params
+
+function navigateToCommentPage() {
+    router.push(`/feed/${user}/post/${props.id}`);
+}
 </script>

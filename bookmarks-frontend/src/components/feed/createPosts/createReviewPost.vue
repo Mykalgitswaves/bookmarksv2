@@ -40,6 +40,7 @@
         <YourReviewQuestions 
             v-if="currentPostTopic === 'review'"
             :is-viewing-review="true"
+            :is-comparison="false"
             @question-form-completed="hasQuestionDataHandler()"
         />
         <div class="mobile-menu-spacer sm:hidden"></div>

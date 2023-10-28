@@ -1101,7 +1101,7 @@ class Neo4jDriver():
                 
             elif response['labels(p)'] == ["RecommendationFriend"]:
                 output['RecommendationFriend'].append(RecommendationFriend(post_id=post["id"],
-                                                                           book=response['b']['id'],
+                                                                           book=response['b.id'],
                                                                            created_date=post["created_date"],
                                                                            to_user_username=response['uu']['username'],
                                                                            from_user_text=post['from_user_text'],
@@ -1149,7 +1149,7 @@ class Neo4jDriver():
                                                        question_ids=post['question_ids'],
                                                        responses=post['responses'],
                                                        spoilers=post['spoilers'],
-                                                       book_small_img=response['b']['img_url'],
+                                                       book_small_img=response['b']['small_img_url'],
                                                        user_username=username))
 
         return(output)
@@ -1691,25 +1691,25 @@ class Neo4jDriver():
             
         elif response['labels(p)'] == ["Update"]:
             output = UpdatePost(post_id=post["id"],
-                                book=response['b']['id'],
-                                book_title=response['b']['title'],
+                                book=response['b.id'],
+                                book_title=response['b.title'],
                                 created_date=post["created_date"],
                                 page=post['page'],
                                 response=post['response'],
                                 spoiler=post['spoiler'],
-                                book_small_img=response['b']['small_img_url'],
+                                book_small_img=response['b.small_img_url'],
                                 user_username=username)
 
         elif response['labels(p)'] == ["Review"]:
                 output = ReviewPost(post_id=post["id"],
-                                    book=response['b']['id'],
-                                    book_title=response['b']['title'],
+                                    book=response['b.id'],
+                                    book_title=response['b.title'],
                                     created_date=post["created_date"],
                                     questions=post['questions'],
                                     question_ids=post['question_ids'],
                                     responses=post['responses'],
                                     spoilers=post['spoilers'],
-                                    book_small_img=response['b']['img_url'],
+                                    book_small_img=response['b.small_img_url'],
                                     user_username=username)
                 
         return output
