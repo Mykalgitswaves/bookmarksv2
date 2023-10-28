@@ -126,7 +126,7 @@ class User():
         return(output)
 
 class Review():
-    def __init__(self, post_id, book, created_date="", user_id="", user_username="",book_title="", book_small_img=""):
+    def __init__(self, post_id, book, created_date="", user_id="", user_username="",book_title="", book_small_img="", comments=[]):
         self.id = post_id
         self.created_date = created_date
         self.user_username = user_username
@@ -134,11 +134,12 @@ class Review():
         self.book = book
         self.book_title = book_title
         self.book_small_img = book_small_img
+        self.comments = comments
 
 
 class ReviewPost(Review):
-    def __init__(self, post_id, book, questions, question_ids, responses, spoilers, headline="", created_date="", user_username="", user_id="",book_small_img="",book_title=""):
-        super().__init__(post_id,book, created_date, user_id, user_username,book_title,book_small_img)
+    def __init__(self, post_id, book, questions, question_ids, responses, spoilers, headline="", created_date="", user_username="", user_id="",book_small_img="",book_title="",comments=[]):
+        super().__init__(post_id,book, created_date, user_id, user_username,book_title,book_small_img,comments)
         self.headline = headline
         self.questions = questions
         self.question_ids = question_ids
@@ -151,8 +152,8 @@ class ReviewPost(Review):
     
 
 class UpdatePost(Review):
-    def __init__(self, post_id, book, page, response, spoiler, headline="", created_date="", user_id="", user_username="",book_small_img="",book_title=""):
-        super().__init__(post_id, book, created_date, user_id, user_username,book_title,book_small_img)
+    def __init__(self, post_id, book, page, response, spoiler, headline="", created_date="", user_id="", user_username="",book_small_img="",book_title="",comments=[]):
+        super().__init__(post_id, book, created_date, user_id, user_username,book_title,book_small_img,comments)
         self.page = page
         self.headline = headline
         self.response = response
@@ -164,8 +165,8 @@ class UpdatePost(Review):
 
 
 class ComparisonPost(Review):
-    def __init__(self, post_id, compared_books, headline:str, comparators:list, comparator_ids:list, responses:list, book_specific_headlines:list, created_date="", user_id="", user_username="", book_small_img=["",""], book_title=["",""]):
-        super().__init__(post_id, compared_books, created_date, user_id, user_username, book_title, book_small_img)
+    def __init__(self, post_id, compared_books, headline:str, comparators:list, comparator_ids:list, responses:list, book_specific_headlines:list, created_date="", user_id="", user_username="", book_small_img=["",""], book_title=["",""],comments=[]):
+        super().__init__(post_id, compared_books, created_date, user_id, user_username, book_title, book_small_img,comments)
         self.headline = headline
         self.comparators = comparators
         self.comparator_ids = comparator_ids
@@ -179,8 +180,8 @@ class ComparisonPost(Review):
 
 
 class RecommendationFriend(Review):
-    def __init__(self, post_id, book, to_user_username, from_user_text, to_user_text, created_date="", user_id="", user_username="",book_small_img="",book_title=""):
-        super().__init__(post_id, book, created_date, user_id, user_username,book_title,book_small_img)
+    def __init__(self, post_id, book, to_user_username, from_user_text, to_user_text, created_date="", user_id="", user_username="",book_small_img="",book_title="",comments=[]):
+        super().__init__(post_id, book, created_date, user_id, user_username,book_title,book_small_img,comments)
         self.to_user_username = to_user_username
         self.from_user_text = from_user_text
         self.to_user_text = to_user_text
@@ -191,8 +192,8 @@ class RecommendationFriend(Review):
 
 
 class MilestonePost(Review):
-    def __init__(self, post_id, book, num_books:int, created_date="", user_id="", user_username="",book_small_img="",book_title=""):
-        super().__init__(post_id, book, created_date, user_id, user_username,book_title,book_small_img)
+    def __init__(self, post_id, book, num_books:int, created_date="", user_id="", user_username="",book_small_img="",book_title="",comments=[]):
+        super().__init__(post_id, book, created_date, user_id, user_username,book_title,book_small_img,comments)
         self.num_books = num_books
     def create_post(self,driver):
         created_date, id = driver.create_milestone(self)
@@ -263,6 +264,22 @@ class Tag():
         self.id = tag_id
         self.name = name
         self.books = books
+
+class Comment():
+    def __init__(self, comment_id, post_id, replied_to, text, username, created_date="", likes=0, pinned=False):
+        self.id = comment_id
+        self.post_id = post_id
+        self.replied_to = replied_to
+        self.text = text
+        self.username = username
+        self.created_date = created_date
+        self.likes = likes
+        self.pinned = pinned
+    def create_comment(self, driver):
+        comment_id, created_date = driver.create_comment(self)
+        self.id = comment_id
+        self.created_date = created_date
+
 
 class Neo4jDriver():
     def __init__(self):
@@ -1567,6 +1584,67 @@ class Neo4jDriver():
         created_date = response["m.created_date"]
         milestone_id = response["m.id"]
         return(created_date,milestone_id)
+
+    def create_comment(self, comment:Comment):
+        """
+        Creates a comment in the database
+        Args:
+            comment: Comment object to be pushed to DB
+        Returns:
+            created_date: Exact datetime of creation from Neo4j
+            comment_id: PK of the comment in the db
+        """
+        with self.driver.session() as session:
+            created_date,comment_id = session.execute_write(self.create_comment_query, comment)
+        return(created_date,comment_id)
+    @staticmethod
+    def create_comment_query(tx, comment):
+        query_w_reply = """
+        match (pp {id:$post_id})
+        match (u:User {username:$username})
+        MATCH (parent:Comment {id: $replied_to})
+        create (c:Comment {
+            id:randomUUID(),
+            created_date:datetime(),
+            text:$text,
+            likes:0
+        })
+        merge (pp)-[h:HAS_COMMENT]->(c)
+        merge (u)-[cc:COMMENTED]->(c)
+        MERGE (c)-[:REPLIED_TO]->(parent)
+
+        return c.id, c.created_date
+        """
+        query_no_reply = """
+        match (pp {id:$post_id})
+        match (u:User {username:$username})
+        create (c:Comment {
+            id:randomUUID(),
+            created_date:datetime(),
+            text:$text,
+            likes:0
+        })
+        merge (pp)-[h:HAS_COMMENT]->(c)
+        merge (u)-[cc:COMMENTED]->(c)
+
+        return c.id, c.created_date
+        """
+        if comment.replied_to:
+            result = tx.run(query_w_reply, 
+                            post_id = comment.post_id,
+                            replied_to = comment.replied_to,
+                            text = comment.text,
+                            username = comment.username)
+        else:
+            result = tx.run(query_no_reply, 
+                            post_id = comment.post_id,
+                            replied_to = comment.replied_to,
+                            text = comment.text,
+                            username = comment.username)
+        response = result.single()
+        created_date = response["c.created_date"]
+        comment_id = response["c.id"]
+        return(created_date,comment_id)
     def close(self):
         self.driver.close()
 
@@ -1574,5 +1652,10 @@ class Neo4jDriver():
 
 if __name__ == "__main__":
     driver = Neo4jDriver()
-    driver.pull_all_reviews_by_user("kyle_test@aol.com")
+    comment = Comment(comment_id = "",
+                      post_id = "5d6fa774-79d3-4730-93ae-13be9f323521",
+                      replied_to="9ff5d63c-21a1-4ce4-8bfd-f27e0cac1675",
+                      text="some text",
+                      username="kyle_test@aol.com")
+    comment.create_comment(driver)
     driver.close()

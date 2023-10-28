@@ -10,6 +10,7 @@ from database.db_helpers import (
     Author,
     Genre,
     Tag,
+    Comment,
     Neo4jDriver
 )
 from database.api.books_api.search import BookSearch
@@ -634,3 +635,21 @@ async def get_user_posts(user_id: str, current_user: Annotated[User, Depends(get
 async def like_comparison_post(user_id: str, comparison_id: str, current_user: Annotated[User, Depends(get_current_active_user)]):
     if user_id and current_user and comparison_id:
         return (JSONResponse(content={"data": "you liked this shit"}))
+    
+@app.post("/api/review/create_comment")
+async def create_comment(request: Request, current_user: Annotated[User, Depends(get_current_active_user)]):
+    if not current_user:
+        raise HTTPException("401","Unauthorized")
+
+    response = await request.json()
+    response = response['_value']
+    
+    comment = Comment(comment_id='',
+                        post_id=response['post_id'],
+                        username=current_user.username,
+                        replied_to=response['replied_to'],
+                        text=response['text'])
+    
+    comment.create_comment(driver)
+
+    return JSONResponse(content={"data": jsonable_encoder(comment)})
