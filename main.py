@@ -658,3 +658,19 @@ async def create_comment(request: Request, current_user: Annotated[User, Depends
     comment.create_comment(driver)
 
     return JSONResponse(content={"data": jsonable_encoder(comment)})
+
+@app.post("/api/review/{post_id}/like") # NOT SURE IF THIS MAKES ANY SENSE @MICHAEL
+async def like_post(request: Request, current_user: Annotated[User, Depends(get_current_active_user)]):
+    """
+    Adds a like to a post. Take the following format.
+    {
+    "post_id":str
+    }
+    """
+    
+    if not current_user:
+        raise HTTPException("401","Unauthorized")
+    response = await request.json()
+    response = response['_value']
+
+    driver.add_liked_review(current_user,response["post_id"])

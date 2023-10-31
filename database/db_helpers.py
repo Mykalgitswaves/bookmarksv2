@@ -126,7 +126,17 @@ class User():
         return(output)
 
 class Review():
-    def __init__(self, post_id, book, created_date="", user_id="", user_username="",book_title="", book_small_img="", comments=[]):
+    def __init__(self, 
+                 post_id, 
+                 book, 
+                 created_date="", 
+                 user_id="", 
+                 user_username="",
+                 book_title="", 
+                 book_small_img="", 
+                 comments=[], 
+                 likes=0):
+        
         self.id = post_id
         self.created_date = created_date
         self.user_username = user_username
@@ -135,16 +145,42 @@ class Review():
         self.book_title = book_title
         self.book_small_img = book_small_img
         self.comments = comments
+        self.likes = likes
 
 
 class ReviewPost(Review):
-    def __init__(self, post_id, book, questions, question_ids, responses, spoilers, headline="", created_date="", user_username="", user_id="",book_small_img="",book_title="",comments=[]):
-        super().__init__(post_id,book, created_date, user_id, user_username,book_title,book_small_img,comments)
+    def __init__(self, 
+                 post_id, 
+                 book, 
+                 questions, 
+                 question_ids, 
+                 responses, 
+                 spoilers, 
+                 headline="", 
+                 created_date="", 
+                 user_username="", 
+                 user_id="",
+                 book_small_img="",
+                 book_title="",
+                 comments=[],
+                 likes=0):
+        
+        super().__init__(post_id,
+                         book, 
+                         created_date, 
+                         user_id, 
+                         user_username,
+                         book_title,
+                         book_small_img,
+                         comments,
+                         likes)
+        
         self.headline = headline
         self.questions = questions
         self.question_ids = question_ids
         self.responses = responses
         self.spoilers = spoilers
+
     def create_post(self,driver):
         created_date, id = driver.create_review(self)
         self.id = id
@@ -152,12 +188,36 @@ class ReviewPost(Review):
     
 
 class UpdatePost(Review):
-    def __init__(self, post_id, book, page, response, spoiler, headline="", created_date="", user_id="", user_username="",book_small_img="",book_title="",comments=[]):
-        super().__init__(post_id, book, created_date, user_id, user_username,book_title,book_small_img,comments)
+    def __init__(self, 
+                 post_id, 
+                 book, 
+                 page, 
+                 response, 
+                 spoiler, 
+                 headline="", 
+                 created_date="", 
+                 user_id="", 
+                 user_username="",
+                 book_small_img="",
+                 book_title="",
+                 comments=[],
+                 likes=0):
+        
+        super().__init__(post_id, 
+                         book, 
+                         created_date, 
+                         user_id, 
+                         user_username,
+                         book_title,
+                         book_small_img,
+                         comments,
+                         likes)
+        
         self.page = page
         self.headline = headline
         self.response = response
         self.spoiler = spoiler
+
     def create_post(self,driver):
         created_date, id = driver.create_update(self)
         self.id = id
@@ -165,8 +225,31 @@ class UpdatePost(Review):
 
 
 class ComparisonPost(Review):
-    def __init__(self, post_id, compared_books, comparators:list, comparator_ids:list, responses:list, book_specific_headlines:list, created_date="", user_id="", user_username="", book_small_img=["",""], book_title=["",""],comments=[]):
-        super().__init__(post_id, compared_books, created_date, user_id, user_username, book_title, book_small_img,comments)
+    def __init__(self, 
+                 post_id, 
+                 compared_books, 
+                 comparators:list, 
+                 comparator_ids:list, 
+                 responses:list, 
+                 book_specific_headlines:list, 
+                 created_date="", 
+                 user_id="", 
+                 user_username="", 
+                 book_small_img=["",""], 
+                 book_title=["",""],
+                 comments=[],
+                 likes=0):
+        
+        super().__init__(post_id, 
+                         compared_books, 
+                         created_date, 
+                         user_id, 
+                         user_username, 
+                         book_title, 
+                         book_small_img,
+                         comments,
+                         likes)
+        
         self.compared_books = compared_books
         self.comparators = comparators
         self.comparator_ids = comparator_ids
@@ -180,11 +263,34 @@ class ComparisonPost(Review):
 
 
 class RecommendationFriend(Review):
-    def __init__(self, post_id, book, to_user_username, from_user_text, to_user_text, created_date="", user_id="", user_username="",book_small_img="",book_title="",comments=[]):
-        super().__init__(post_id, book, created_date, user_id, user_username,book_title,book_small_img,comments)
+    def __init__(self, 
+                 post_id, 
+                 book, 
+                 to_user_username, 
+                 from_user_text, 
+                 to_user_text, 
+                 created_date="", 
+                 user_id="", 
+                 user_username="",
+                 book_small_img="",
+                 book_title="",
+                 comments=[],
+                 likes=0):
+        
+        super().__init__(post_id, 
+                         book, 
+                         created_date, 
+                         user_id, 
+                         user_username,
+                         book_title,
+                         book_small_img,
+                         comments,
+                         likes)
+        
         self.to_user_username = to_user_username
         self.from_user_text = from_user_text
         self.to_user_text = to_user_text
+
     def create_post(self,driver):
         created_date, id = driver.create_recommendation_post(self)
         self.id = id
@@ -192,9 +298,30 @@ class RecommendationFriend(Review):
 
 
 class MilestonePost(Review):
-    def __init__(self, post_id, book, num_books:int, created_date="", user_id="", user_username="",book_small_img="",book_title="",comments=[]):
-        super().__init__(post_id, book, created_date, user_id, user_username,book_title,book_small_img,comments)
+    def __init__(self, 
+                 post_id, 
+                 book, 
+                 num_books:int, 
+                 created_date="", 
+                 user_id="", 
+                 user_username="",
+                 book_small_img="",
+                 book_title="",
+                 comments=[],
+                 likes=0):
+        
+        super().__init__(post_id, 
+                         book, 
+                         created_date, 
+                         user_id, 
+                         user_username,
+                         book_title,
+                         book_small_img,
+                         comments,
+                         likes)
+        
         self.num_books = num_books
+
     def create_post(self,driver):
         created_date, id = driver.create_milestone(self)
         self.id = id
@@ -396,24 +523,27 @@ class Neo4jDriver():
                 match (uu:User {id: $user_id}) match (aa:Author {id: $author_id}) merge (uu)-[rr:LIKES]->(aa)
                 """
         result = tx.run(query, user_id=user_id, author_id=author_id)
-    def add_liked_review(self, user_id, review_id): #TODO Fix this after we redo review likes
+    def add_liked_post(self, user_id, post_id):
         """
-        Adds a liked review for a user
+        Adds a liked post for a user
         
         Args:
             user_id: users PK
-            review_id: reviews's PK
+            post_id: post's PK
         Returns:
             None
         """
         with self.driver.session() as session:
-            result = session.execute_write(self.add_liked_review_query, user_id, review_id)    
+            result = session.execute_write(self.add_liked_post_query, user_id, post_id)    
     @staticmethod
-    def add_liked_review_query(tx, user_id, review_id):
+    def add_liked_post_query(tx, user_id, post_id):
         query = """
-                match (uu:User {id: $user_id}) match (rr:Review {id: $review_id}) merge (uu)-[ll:LIKES]->(aa)
+                match (uu:User {username: $username}) 
+                match (rr {id: $post_id}) 
+                merge (uu)-[ll:LIKES]->(aa)
+                set rr.likes = rr.likes + 1
                 """
-        result = tx.run(query, user_id=user_id, review_id=review_id)
+        result = tx.run(query, user_id=user_id, post_id=post_id)
     def add_to_read(self,user_id,book_id):
         """
         Adds a book to a users to_read. Deletes all other relationships to this book
@@ -1097,7 +1227,8 @@ class Neo4jDriver():
                                                          book="",
                                                          created_date=post["created_date"],
                                                          num_books=post["num_books"],
-                                                         user_username=username))                                                        
+                                                         user_username=username,
+                                                         likes=post['likes']))                                                        
                 
             elif response['labels(p)'] == ["RecommendationFriend"]:
                 output['RecommendationFriend'].append(RecommendationFriend(post_id=post["id"],
@@ -1106,7 +1237,8 @@ class Neo4jDriver():
                                                                            to_user_username=response['uu']['username'],
                                                                            from_user_text=post['from_user_text'],
                                                                            to_user_text=post['to_user_text'],
-                                                                           user_username=username))
+                                                                           user_username=username,
+                                                                           likes=post["likes"]))
             
             elif response['labels(p)'] == ['Comparison']:
                 if output['Comparison']:
@@ -1125,7 +1257,8 @@ class Neo4jDriver():
                                             responses=post['responses'],
                                             book_specific_headlines=post['book_specific_headlines'],
                                             book_title=[response['b']['title']],
-                                            book_small_img=[response['b']['small_img_url']]))
+                                            book_small_img=[response['b']['small_img_url']],
+                                            likes=post['likes']))
 
 
             elif response['labels(p)'] == ["Update"]:
@@ -1137,7 +1270,8 @@ class Neo4jDriver():
                                                    response=post['response'],
                                                    spoiler=post['spoiler'],
                                                    book_small_img=response['b']['small_img_url'],
-                                                   user_username=username))
+                                                   user_username=username,
+                                                   likes=post['likes']))
 
             elif response['labels(p)'] == ["Review"]:
                     
@@ -1150,7 +1284,8 @@ class Neo4jDriver():
                                                        responses=post['responses'],
                                                        spoilers=post['spoilers'],
                                                        book_small_img=response['b']['small_img_url'],
-                                                       user_username=username))
+                                                       user_username=username,
+                                                       likes=post['likes']))
 
         return(output)
         
@@ -1667,7 +1802,8 @@ class Neo4jDriver():
                                     book="",
                                     created_date=post["created_date"],
                                     num_books=post["num_books"],
-                                    user_username=username)                                                        
+                                    user_username=username,
+                                    likes=post['likes'])                                                        
             
         elif response['labels(p)'] == ['Comparison']:
             book_ids = []
@@ -1687,7 +1823,8 @@ class Neo4jDriver():
                             responses=post['responses'],
                             book_specific_headlines=post['book_specific_headlines'],
                             book_title=book_titles,
-                            book_small_img=book_small_img_urls)
+                            book_small_img=book_small_img_urls,
+                            likes=post['likes'])
             
         elif response['labels(p)'] == ["Update"]:
             output = UpdatePost(post_id=post["id"],
@@ -1698,7 +1835,8 @@ class Neo4jDriver():
                                 response=post['response'],
                                 spoiler=post['spoiler'],
                                 book_small_img=response['b.small_img_url'],
-                                user_username=username)
+                                user_username=username,
+                                likes=post['likes'])
 
         elif response['labels(p)'] == ["Review"]:
                 output = ReviewPost(post_id=post["id"],
@@ -1710,7 +1848,8 @@ class Neo4jDriver():
                                     responses=post['responses'],
                                     spoilers=post['spoilers'],
                                     book_small_img=response['b.small_img_url'],
-                                    user_username=username)
+                                    user_username=username,
+                                    likes=post['likes'])
                 
         return output
 
