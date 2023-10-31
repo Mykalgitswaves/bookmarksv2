@@ -78,7 +78,7 @@ class User():
             self.authors.append(author_id)
         else:
             raise Exception("This relationship already exists")
-    def add_liked_review(self, review_id, driver):
+    def add_liked_post(self, review_id, driver):
         """
         Adds a liked review relationship to the database
         
@@ -88,7 +88,7 @@ class User():
             None
         """
         if review_id not in self.liked_reviews:
-            driver.add_liked_review(self.user_id, review_id)
+            driver.add_liked_post(self.user_id, review_id)
             self.liked_reviews.append(review_id)
         else:
             raise Exception("This relationship already exists")
@@ -1768,7 +1768,6 @@ class Neo4jDriver():
         else:
             result = tx.run(query_no_reply, 
                             post_id = comment.post_id,
-                            replied_to = comment.replied_to,
                             text = comment.text,
                             username = comment.username)
         response = result.single()
@@ -1852,6 +1851,28 @@ class Neo4jDriver():
                                     likes=post['likes'])
                 
         return output
+    
+    def add_liked_comment(self, user_id, comment_id):
+        """
+        Adds a liked comment for a user
+        
+        Args:
+            user_id: users PK
+            comment_id: comment's PK
+        Returns:
+            None
+        """
+        with self.driver.session() as session:
+            result = session.execute_write(self.add_liked_comment_query, user_id, comment_id)    
+    @staticmethod
+    def add_liked_comment_query(tx, user_id, comment_id):
+        query = """
+                match (uu:User {username: $username}) 
+                match (rr:Comment {id: $comment_id}) 
+                merge (uu)-[ll:LIKES]->(aa)
+                set rr.likes = rr.likes + 1
+                """
+        result = tx.run(query, user_id=user_id, comment_id=comment_id)
 
     def close(self):
         self.driver.close()

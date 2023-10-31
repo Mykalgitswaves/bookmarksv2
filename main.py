@@ -643,6 +643,11 @@ async def like_comparison_post(user_id: str, comparison_id: str, current_user: A
     
 @app.post("/api/review/create_comment")
 async def create_comment(request: Request, current_user: Annotated[User, Depends(get_current_active_user)]):
+    """
+    Endpoint for posting a comment.
+
+    Value 'replied_to' should be None if comment is not a reply to another comment
+    """
     if not current_user:
         raise HTTPException("401","Unauthorized")
 
@@ -673,4 +678,20 @@ async def like_post(request: Request, current_user: Annotated[User, Depends(get_
     response = await request.json()
     response = response['_value']
 
-    driver.add_liked_review(current_user,response["post_id"])
+    driver.add_liked_post(current_user,response["post_id"])
+
+@app.post("/api/review/{comment_id}/like") # NOT SURE IF THIS MAKES ANY SENSE @MICHAEL
+async def like_comment(request: Request, current_user: Annotated[User, Depends(get_current_active_user)]):
+    """
+    Adds a like to a post. Take the following format.
+    {
+    "comment_id":str
+    }
+    """
+    
+    if not current_user:
+        raise HTTPException("401","Unauthorized")
+    response = await request.json()
+    response = response['_value']
+
+    driver.add_liked_comment(current_user,response["comment_id"])
