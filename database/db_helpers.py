@@ -1911,13 +1911,13 @@ class Neo4jDriver():
                 OPTIONAL MATCH (u)-[likedReply:LIKES]->(rc)
                 WITH c, rr, r, rc, rrr, u, likedParent, likedReply, commenter, replyCommenter
                 ORDER BY rc.likes DESC, rc.created_date ASC
-                WITH c, rr, r, COLLECT(rc)[0] AS topLikedReply, COLLECT(rrr)[0] AS topLikedRel, u, 
+                WITH c, rr, r, COLLECT(rc)[0] AS top_liked_reply, COLLECT(rrr)[0] AS topLikedRel, u, 
                     COLLECT(likedParent)[0] AS likedParentRel, COLLECT(likedReply)[0] AS likedReplyRel, 
-                    commenter, COLLECT(replyCommenter)[0] AS topReplyCommenter
-                RETURN c, topLikedReply,
-                    CASE WHEN likedParentRel IS NOT NULL THEN true ELSE false END AS parentLikedByUser,
-                    CASE WHEN likedReplyRel IS NOT NULL THEN true ELSE false END AS replyLikedByUser,
-                    commenter.username, topReplyCommenter.username
+                    commenter, COLLECT(replyCommenter)[0] AS top_reply_commenter
+                RETURN c, top_liked_reply,
+                    CASE WHEN likedParentRel IS NOT NULL THEN true ELSE false END AS parent_liked_by_user,
+                    CASE WHEN likedReplyRel IS NOT NULL THEN true ELSE false END AS reply_liked_by_user,
+                    commenter.username, top_reply_commenter.username
                 order by c.created_date desc
                 skip $skip
                 limit $limit
@@ -1937,21 +1937,21 @@ class Neo4jDriver():
             
             response_entry = {response['c']['id']:
                               {"comment":comment,
-                               "likedByCurrentUser":response['parentLikedByUser'],
+                               "liked_by_current_user":response['parent_liked_by_user'],
                                "replies":[]}}
             
-            if response['topLikedReply']:
-                reply = Comment(comment_id=response['topLikedReply']['id'],
+            if response['top_liked_reply']:
+                reply = Comment(comment_id=response['top_liked_reply']['id'],
                                 post_id=post_id,
                                 replied_to=response["c"]["id"],
-                                text=response["topLikedReply"]['text'],
-                                username=response['topReplyCommenter.username'],
-                                created_date=response["topLikedReply"]["created_date"],
-                                likes=response['topLikedReply']['likes'],
-                                pinned=response['topLikedReply']['pinned'])
-                response_entry[response['c']['id']]['replies'].append({response['topLikedReply']['id']:
+                                text=response["top_liked_reply"]['text'],
+                                username=response['top_reply_commenter.username'],
+                                created_date=response["top_liked_reply"]["created_date"],
+                                likes=response['top_liked_reply']['likes'],
+                                pinned=response['top_liked_reply']['pinned'])
+                response_entry[response['c']['id']]['replies'].append({response['top_liked_reply']['id']:
                                                                        {"comment":reply,
-                                                                        "likedByCurrentUser":response["replyLikedByUser"],
+                                                                        "liked_by_current_user":response["reply_liked_by_user"],
                                                                         "replies":[]}})
 
             comment_response.update(response_entry)
