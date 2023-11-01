@@ -523,27 +523,27 @@ class Neo4jDriver():
                 match (uu:User {id: $user_id}) match (aa:Author {id: $author_id}) merge (uu)-[rr:LIKES]->(aa)
                 """
         result = tx.run(query, user_id=user_id, author_id=author_id)
-    def add_liked_post(self, user_id, post_id):
+    def add_liked_post(self, username, post_id):
         """
         Adds a liked post for a user
         
         Args:
-            user_id: users PK
+            username: users PK
             post_id: post's PK
         Returns:
             None
         """
         with self.driver.session() as session:
-            result = session.execute_write(self.add_liked_post_query, user_id, post_id)    
+            result = session.execute_write(self.add_liked_post_query, username, post_id)    
     @staticmethod
-    def add_liked_post_query(tx, user_id, post_id):
+    def add_liked_post_query(tx, username, post_id):
         query = """
                 match (uu:User {username: $username}) 
                 match (rr {id: $post_id}) 
-                merge (uu)-[ll:LIKES]->(aa)
+                merge (uu)-[ll:LIKES]->(rr)
                 set rr.likes = rr.likes + 1
                 """
-        result = tx.run(query, user_id=user_id, post_id=post_id)
+        result = tx.run(query, username=username, post_id=post_id)
     def add_to_read(self,user_id,book_id):
         """
         Adds a book to a users to_read. Deletes all other relationships to this book
@@ -1232,7 +1232,7 @@ class Neo4jDriver():
                 
             elif response['labels(p)'] == ["RecommendationFriend"]:
                 output['RecommendationFriend'].append(RecommendationFriend(post_id=post["id"],
-                                                                           book=response['b.id'],
+                                                                           book=response['b']['id'],
                                                                            created_date=post["created_date"],
                                                                            to_user_username=response['uu']['username'],
                                                                            from_user_text=post['from_user_text'],
@@ -1737,7 +1737,8 @@ class Neo4jDriver():
             id:randomUUID(),
             created_date:datetime(),
             text:$text,
-            likes:0
+            likes:0,
+            is_reply:True
         })
         merge (pp)-[h:HAS_COMMENT]->(c)
         merge (u)-[cc:COMMENTED]->(c)
@@ -1752,7 +1753,8 @@ class Neo4jDriver():
             id:randomUUID(),
             created_date:datetime(),
             text:$text,
-            likes:0
+            likes:0,
+            is_reply:False
         })
         merge (pp)-[h:HAS_COMMENT]->(c)
         merge (u)-[cc:COMMENTED]->(c)
@@ -1852,37 +1854,143 @@ class Neo4jDriver():
                 
         return output
     
-    def add_liked_comment(self, user_id, comment_id):
+    def add_liked_comment(self, username, comment_id):
         """
         Adds a liked comment for a user
         
         Args:
-            user_id: users PK
+            username: users PK
             comment_id: comment's PK
         Returns:
             None
         """
         with self.driver.session() as session:
-            result = session.execute_write(self.add_liked_comment_query, user_id, comment_id)    
+            result = session.execute_write(self.add_liked_comment_query, username, comment_id)    
     @staticmethod
-    def add_liked_comment_query(tx, user_id, comment_id):
+    def add_liked_comment_query(tx, username, comment_id):
         query = """
                 match (uu:User {username: $username}) 
                 match (rr:Comment {id: $comment_id}) 
-                merge (uu)-[ll:LIKES]->(aa)
+                create (uu)-[ll:LIKES]->(rr)
                 set rr.likes = rr.likes + 1
                 """
-        result = tx.run(query, user_id=user_id, comment_id=comment_id)
+        result = tx.run(query, username=username, comment_id=comment_id)
+
+    def get_all_comments_for_post(self, post_id, username, skip, limit):
+        """
+        Gets all the comments on the post. For comments in a thread, returns the number of comments in the thread
+        as well as the most liked reply.
+
+        Load in batches, so only 5 comments at a time, in order from most recent to least recent
+
+        Also return if the current user has liked each of the comments
+
+        Args:
+            post_id: PK of the post for which to return comments    
+            username: username of the current user
+            skip: Low index of comments to grab
+            limit: high index of comments to grab 
+        """
+        with self.driver.session() as session:
+            result = session.execute_read(self.get_all_comments_for_post_query, post_id, username, skip, limit)  
+        return(result)
+    @staticmethod
+    def get_all_comments_for_post_query(tx, post_id, username, skip, limit):
+        query = """
+                match (uu:User {username: $username}) 
+                match (rr {id: $post_id}) 
+                match (rr)-[r:HAS_COMMENT]->(c:Comment {is_reply:false})
+                // Find the user who commented the parent comment
+                MATCH (commenter:User)-[:COMMENTED]->(c)
+                OPTIONAL MATCH (rc:Comment)-[rrr:REPLIED_TO]->(c)
+                // Find the user who commented the reply
+                OPTIONAL MATCH (replyCommenter:User)-[:COMMENTED]->(rc)
+                // Check if user with <username> has liked the parent comment
+                OPTIONAL MATCH (u)-[likedParent:LIKES]->(c)
+                // Check if user with <username> has liked the reply
+                OPTIONAL MATCH (u)-[likedReply:LIKES]->(rc)
+                WITH c, rr, r, rc, rrr, u, likedParent, likedReply, commenter, replyCommenter
+                ORDER BY rc.likes DESC, rc.created_date ASC
+                WITH c, rr, r, COLLECT(rc)[0] AS topLikedReply, COLLECT(rrr)[0] AS topLikedRel, u, 
+                    COLLECT(likedParent)[0] AS likedParentRel, COLLECT(likedReply)[0] AS likedReplyRel, 
+                    commenter, COLLECT(replyCommenter)[0] AS topReplyCommenter
+                RETURN c, topLikedReply,
+                    CASE WHEN likedParentRel IS NOT NULL THEN true ELSE false END AS parentLikedByUser,
+                    CASE WHEN likedReplyRel IS NOT NULL THEN true ELSE false END AS replyLikedByUser,
+                    commenter.username, topReplyCommenter.username
+                order by c.created_date desc
+                skip $skip
+                limit $limit
+                """
+        result = tx.run(query, username=username, post_id=post_id, skip=skip, limit=limit)
+        # result = [record for record in result.data()]
+        comment_response = {}
+        for response in result:
+            comment = Comment(comment_id=response['c']['id'],
+                              post_id=post_id,
+                              replied_to=None,
+                              text=response['c']['text'],
+                              username=response['commenter.username'],
+                              created_date=response['c']['created_date'],
+                              likes=response['c']['likes'],
+                              pinned=response['c']['pinned'])
+            
+            response_entry = {response['c']['id']:
+                              {"comment":comment,
+                               "likedByCurrentUser":response['parentLikedByUser'],
+                               "replies":[]}}
+            
+            if response['topLikedReply']:
+                reply = Comment(comment_id=response['topLikedReply']['id'],
+                                post_id=post_id,
+                                replied_to=response["c"]["id"],
+                                text=response["topLikedReply"]['text'],
+                                username=response['topReplyCommenter.username'],
+                                created_date=response["topLikedReply"]["created_date"],
+                                likes=response['topLikedReply']['likes'],
+                                pinned=response['topLikedReply']['pinned'])
+                response_entry[response['c']['id']]['replies'].append({response['topLikedReply']['id']:
+                                                                       {"comment":reply,
+                                                                        "likedByCurrentUser":response["replyLikedByUser"],
+                                                                        "replies":[]}})
+
+            comment_response.update(response_entry)
+        return(comment_response)
+    
+    def add_pinned_comment(self, comment_id, post_id):
+        """
+        Adds a pinned comment for a post
+        
+        Args:
+            comment_id: comment's PK
+            post_id: post's PK
+        Returns:
+            None
+        """
+        with self.driver.session() as session:
+            result = session.execute_write(self.add_pinned_comment_query, comment_id, post_id)    
+    @staticmethod
+    def add_pinned_comment_query(tx, comment_id, post_id):
+        query = """
+                match (pp {id: $post_id}) 
+                match (rr:Comment {id: $comment_id}) 
+                create (pp)-[ll:PINNED]->(rr)
+                set rr.pinned = True
+                """
+        result = tx.run(query, comment_id=comment_id, post_id=post_id)
 
     def close(self):
         self.driver.close()
 
 if __name__ == "__main__":
     driver = Neo4jDriver()
-    comment = Comment(comment_id = "",
-                      post_id = "5d6fa774-79d3-4730-93ae-13be9f323521",
-                      replied_to="9ff5d63c-21a1-4ce4-8bfd-f27e0cac1675",
-                      text="some text",
-                      username="kyle_test@aol.com")
-    comment.create_comment(driver)
+    # comment = Comment(comment_id = "",
+    #                   post_id = "5d6fa774-79d3-4730-93ae-13be9f323521",
+    #                   replied_to="75e86244-f545-4a49-9aac-50f64a8776f9",
+    #                   text="second reply in thread",
+    #                   username="kyle_test@aol.com")
+    # comment.create_comment(driver)
+    # driver.add_liked_comment("michaelfinal.png@gmail.com","c64a7a98-3120-43fd-9aad-368b412494fe")
+    # driver.add_liked_comment("kyle_test@aol.com","c64a7a98-3120-43fd-9aad-368b412494fe")
+    driver.get_all_comments_for_post("5d6fa774-79d3-4730-93ae-13be9f323521","kyle_test@aol.com",0,10)
     driver.close()

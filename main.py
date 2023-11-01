@@ -695,3 +695,43 @@ async def like_comment(request: Request, current_user: Annotated[User, Depends(g
     response = response['_value']
 
     driver.add_liked_comment(current_user,response["comment_id"])
+
+@app.get("/api/review/{post_id}/comments")
+async def get_comments_for_post(request: Request, current_user: Annotated[User, Depends(get_current_active_user)]):
+    """
+    Gets the comments on a post
+    Uses skip and limit for pagination
+    {
+    "post_id":str,
+    "skip":int,
+    "limit":int
+    }
+    """
+    if not current_user:
+        raise HTTPException("401","Unauthorized")
+    response = await request.json()
+    response = response['_value']
+
+    comments = driver.get_all_comments_for_post(post_id=response["post_id"],
+                                                username=current_user,
+                                                skip=response['skip'],
+                                                limit=response['limit'])
+    
+    return JSONResponse(content={"data": jsonable_encoder(comments)})
+
+@app.post("/api/review/{comment_id}/pin")
+async def pin_comment(request: Request, current_user: Annotated[User, Depends(get_current_active_user)]): #@MICHAEL DO WE NEED TO VALIDATE THAT THE CURRENT USER IS THE POST AUTHOR HERE
+    """
+    Adds a like to a post. Take the following format.
+    {
+    "comment_id":str,
+    "post_id":str
+    }
+    """
+    
+    if not current_user:
+        raise HTTPException("401","Unauthorized")
+    response = await request.json()
+    response = response['_value']
+
+    driver.add_pinned_comment(response["comment_id"],response["post_id"])
