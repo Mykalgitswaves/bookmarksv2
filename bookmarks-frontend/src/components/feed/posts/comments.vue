@@ -42,9 +42,9 @@ async function postComment(){
 <style scoped>
     .send-comment-btn {
         padding: 8px;
-        border-radius: 50%;
-        background-color: #3730a3;
-        color: #4b5563;
+        border-radius: 4px;
+        color: #eef2ff;
+        background-color: #4b5563;
         display: grid;
         height: min-content;
         align-self: center;
@@ -53,7 +53,8 @@ async function postComment(){
 
     .make-comments-container {
         display: flex;
-        justify-content: space-around;
+        justify-content: center;
+        column-gap: 20px;
         padding: 20px;
         width: 100%;
         max-width: 880px;
