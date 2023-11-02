@@ -1,5 +1,5 @@
 <template>
-    <div v-if="postType !== ''">
+    <transition-group tag="div" name="content">
         <div v-if="postType === 'ComparisonPost'" class="center-cards">
             <ComparisonPost 
               :book="p.book"
@@ -42,8 +42,9 @@
               :page="p.page"
             />
           </div>
-          <Comments :comments="p.comments"/>
-    </div>
+          <Comments v-if="p?.comments" :comments="p.comments"/>
+          <div class="mobile-menu-spacer sm:hidden"></div>
+    </transition-group>
 </template>
 <script setup>
 import { ref } from 'vue'
@@ -71,7 +72,6 @@ async function get_post() {
         postType.value = res.data.post_type;
     });
 }
-
 get_post();
 
 </script>

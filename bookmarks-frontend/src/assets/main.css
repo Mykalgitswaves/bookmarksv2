@@ -28,4 +28,12 @@
 }
 
 
+.content-enter-active,
+.content-leave-active {
+  transition: opacity 0.5s ease;
+}
 
+.content-enter-from,
+.content-leave-to {
+  opacity: 0;
+}
