@@ -633,7 +633,8 @@ async def get_user_posts(user_id: str, current_user: Annotated[User, Depends(get
 async def get_post(post_id: str, current_user: Annotated[User, Depends(get_current_active_user)]):
     if post_id and current_user:
         post = driver.get_post(post_id=post_id, username=current_user.username)
-        return (JSONResponse(content={"data": jsonable_encoder(post)}))
+        post_type = type(post).__name__
+        return (JSONResponse(content={"data": jsonable_encoder({"post": post, "post_type": post_type})}))
 
 
 @app.post("/api/{user_id}/like/comparisons/{comparison_id}")
