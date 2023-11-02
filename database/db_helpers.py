@@ -1979,6 +1979,79 @@ class Neo4jDriver():
                 """
         result = tx.run(query, comment_id=comment_id, post_id=post_id)
 
+    def remove_liked_comment(self, username, comment_id):
+        """
+        removes a liked comment for a user
+        
+        Args:
+            username: users PK
+            comment_id: comment's PK
+        Returns:
+            None
+        """
+        with self.driver.session() as session:
+            result = session.execute_write(self.remove_liked_comment_query, username, comment_id)    
+    @staticmethod
+    def remove_liked_comment_query(tx, username, comment_id):
+        query = """
+                match (uu:User {username: $username}) 
+                match (rr:Comment {id: $comment_id}) 
+                match (uu)-[ll:LIKES]->(rr)
+                delete ll
+                WITH rr
+                WHERE rr.likes > 0
+                SET rr.likes = rr.likes - 1
+                """
+        result = tx.run(query, username=username, comment_id=comment_id)
+
+    def remove_liked_post(self, username, post_id):
+        """
+        removes a liked post for a user
+        
+        Args:
+            username: users PK
+            post_id: post's PK
+        Returns:
+            None
+        """
+        with self.driver.session() as session:
+            result = session.execute_write(self.remove_liked_post_query, username, post_id)    
+    @staticmethod
+    def remove_liked_post_query(tx, username, post_id):
+        query = """
+                match (uu:User {username: $username}) 
+                match (rr {id: $post_id}) 
+                match (uu)-[ll:LIKES]->(rr)
+                delete ll
+                WITH rr
+                WHERE rr.likes > 0
+                SET rr.likes = rr.likes - 1
+                """
+        result = tx.run(query, username=username, post_id=post_id)
+
+    def remove_pinned_comment(self, comment_id, post_id):
+        """
+        removes a pinned comment for a post
+        
+        Args:
+            comment_id: comment's PK
+            post_id: post's PK
+        Returns:
+            None
+        """
+        with self.driver.session() as session:
+            result = session.execute_write(self.remove_pinned_comment_query, comment_id, post_id)    
+    @staticmethod
+    def remove_pinned_comment_query(tx, comment_id, post_id):
+        query = """
+                match (pp {id: $post_id}) 
+                match (rr:Comment {id: $comment_id}) 
+                match (pp)-[ll:PINNED]->(rr)
+                delete ll
+                set rr.pinned = False
+                """
+        result = tx.run(query, comment_id=comment_id, post_id=post_id)
+
     def close(self):
         self.driver.close()
 

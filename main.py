@@ -722,7 +722,7 @@ async def get_comments_for_post(request: Request, current_user: Annotated[User, 
 @app.post("/api/review/{comment_id}/pin")
 async def pin_comment(request: Request, current_user: Annotated[User, Depends(get_current_active_user)]): #@MICHAEL DO WE NEED TO VALIDATE THAT THE CURRENT USER IS THE POST AUTHOR HERE
     """
-    Adds a like to a post. Take the following format.
+    Adds a pin to a comment. Take the following format.
     {
     "comment_id":str,
     "post_id":str
@@ -735,3 +735,52 @@ async def pin_comment(request: Request, current_user: Annotated[User, Depends(ge
     response = response['_value']
 
     driver.add_pinned_comment(response["comment_id"],response["post_id"])
+
+@app.post("/api/review/{comment_id}/remove_like") # NOT SURE IF THIS MAKES ANY SENSE @MICHAEL
+async def remove_like_comment(request: Request, current_user: Annotated[User, Depends(get_current_active_user)]):
+    """
+    remove a like to a post. Take the following format.
+    {
+    "comment_id":str
+    }
+    """
+    
+    if not current_user:
+        raise HTTPException("401","Unauthorized")
+    response = await request.json()
+    response = response['_value']
+
+    driver.remove_liked_comment(current_user,response["comment_id"])
+
+@app.post("/api/review/{post_id}/remove_like") # NOT SURE IF THIS MAKES ANY SENSE @MICHAEL
+async def remove_like_post(request: Request, current_user: Annotated[User, Depends(get_current_active_user)]):
+    """
+    remove a like to a post. Take the following format.
+    {
+    "post_id":str
+    }
+    """
+    
+    if not current_user:
+        raise HTTPException("401","Unauthorized")
+    response = await request.json()
+    response = response['_value']
+
+    driver.remove_liked_post(current_user,response["post_id"])
+
+@app.post("/api/review/{comment_id}/remove_pin")
+async def remove_pin_comment(request: Request, current_user: Annotated[User, Depends(get_current_active_user)]): #@MICHAEL DO WE NEED TO VALIDATE THAT THE CURRENT USER IS THE POST AUTHOR HERE
+    """
+    remove a pin from a comment. Take the following format.
+    {
+    "comment_id":str,
+    "post_id":str
+    }
+    """
+    
+    if not current_user:
+        raise HTTPException("401","Unauthorized")
+    response = await request.json()
+    response = response['_value']
+
+    driver.remove_pinned_comment(response["comment_id"],response["post_id"])
