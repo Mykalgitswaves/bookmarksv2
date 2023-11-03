@@ -653,7 +653,6 @@ async def create_comment(request: Request, current_user: Annotated[User, Depends
         raise HTTPException("401","Unauthorized")
 
     response = await request.json()
-    response = response['_value']
     
     comment = Comment(comment_id='',
                         post_id=response['post_id'],

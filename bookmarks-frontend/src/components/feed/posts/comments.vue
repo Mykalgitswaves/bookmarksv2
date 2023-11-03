@@ -20,31 +20,54 @@
     <div v-if="!props.comments.length">
         <p class="text-center text-2xl text-indigo-500 font-bold">Pretty quiet here... 🦗<span class="block text-lg font-medium text-slate-600">Get the conversation started with your opinion</span></p>
     </div>
+
+    <div v-else>
+        <Comment
+            v-for="(comment,index) in comments"
+            :key="index"
+            :comment="comment"
+        />
+    </div>
 </template>
 <script setup>
 import { db } from '../../../services/db';
-import { ref } from 'vue';
+import { urls } from '../../../services/urls';
+import { ref, computed } from 'vue';
 import IconSend from '../../svg/icon-send.vue';
+import Comment from './comment.vue';
 
 const props = defineProps({
     comments: {
         type: Array,
         required: false,
+    },
+    postId: {
+        type: String,
+        required: true,
     }
 });
 
 const comment = ref('')
+const comments = computed(() => props.comments);
+const replied_to = ref(null)
 
 async function postComment(){
-    await db.comments.post()
+    const data = {
+        "post_id": props.postId,
+        "text": comment.value,
+        "pinned": false,
+        "replied_to": replied_to.value,
+    }
+    await db.post(urls.reviews.createComment(), data, true).then((res) => comments.value.push(res.data))
 }
 </script>
+
 <style scoped>
     .send-comment-btn {
-        padding: 8px;
+        padding: 12px;
         border-radius: 4px;
         color: #eef2ff;
-        background-color: #4b5563;
+        background-color: #573c77;
         display: grid;
         height: min-content;
         align-self: center;

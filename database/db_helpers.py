@@ -1284,8 +1284,8 @@ class Neo4jDriver():
                                                        responses=post['responses'],
                                                        spoilers=post['spoilers'],
                                                        book_small_img=response['b']['small_img_url'],
-                                                       user_username=username,
-                                                       likes=post['likes']))
+                                                       user_username=username
+                                                      ))
 
         return(output)
         
@@ -1790,14 +1790,15 @@ class Neo4jDriver():
         query = """
             match (p {id:$post_id}) 
             match (p)-[:POST_FOR_BOOK]-(b:Book)
-            return p, labels(p), b.id, b.title, b.small_img_url
+            optional match (c:Comment)-[r]-(p)
+            return p, labels(p), b.id, b.title, b.small_img_url, c
         """
 
         result = tx.run(query, post_id=post_id)
         result = [record for record in result.data()]
         response = result[0]
         post = response['p']
-
+        comments = []
         if response['labels(p)'] == ["Milestone"]:
             output = MilestonePost(post_id=post["id"],
                                     book="",
@@ -1810,10 +1811,12 @@ class Neo4jDriver():
             book_ids = []
             book_titles = []
             book_small_img_urls = []
+            
             for response in result:
                 book_ids.append(response['b.id'])
                 book_titles.append(response['b.title'])
                 book_small_img_urls.append(response['b.small_img_url'])
+                comments.append(response['c'])
 
             output = ComparisonPost(post_id=post["id"],
                             compared_books=book_ids,
@@ -1825,9 +1828,15 @@ class Neo4jDriver():
                             book_specific_headlines=post['book_specific_headlines'],
                             book_title=book_titles,
                             book_small_img=book_small_img_urls,
-                            likes=post['likes'])
+                            likes=post['likes'],
+                            comments=comments,
+                            )
             
         elif response['labels(p)'] == ["Update"]:
+            
+            for response in result:
+                comments.append(response['c'])
+
             output = UpdatePost(post_id=post["id"],
                                 book=response['b.id'],
                                 book_title=response['b.title'],
@@ -1837,9 +1846,15 @@ class Neo4jDriver():
                                 spoiler=post['spoiler'],
                                 book_small_img=response['b.small_img_url'],
                                 user_username=username,
-                                likes=post['likes'])
+                                likes=post['likes'],
+                                comments=comments,
+                                )
 
         elif response['labels(p)'] == ["Review"]:
+                
+                for response in result:
+                    comments.append(response['c'])
+
                 output = ReviewPost(post_id=post["id"],
                                     book=response['b.id'],
                                     book_title=response['b.title'],
@@ -1850,7 +1865,9 @@ class Neo4jDriver():
                                     spoilers=post['spoilers'],
                                     book_small_img=response['b.small_img_url'],
                                     user_username=username,
-                                    likes=post['likes'])
+                                    likes=post['likes'],
+                                    comments=comments,
+                                    )
                 
         return output
     

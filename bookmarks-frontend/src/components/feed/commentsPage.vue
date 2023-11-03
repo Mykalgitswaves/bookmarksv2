@@ -42,7 +42,7 @@
               :page="p.page"
             />
           </div>
-          <Comments v-if="p?.comments" :comments="p.comments"/>
+          <Comments v-if="p?.comments" :comments="p.comments" :post-id="p.id"/>
           <div class="mobile-menu-spacer sm:hidden"></div>
     </transition-group>
 </template>
