@@ -26,7 +26,8 @@
             <li v-for="(comment,index) in comments" :key="index">
                 <Comment
                     :comment="comment[1].comment"
-                    :is-liked="comments[1].liked_by_current_user"
+                    :is-liked="comment[1].liked_by_current_user"
+                    :replies="comment[1].replies"
                 />
             </li>
         </transition-group>

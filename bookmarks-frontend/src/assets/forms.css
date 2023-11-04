@@ -117,7 +117,7 @@
   
 
   /* comments for posts */
-  
+
   .send-comment-btn {
     padding: 12px;
     border-radius: 4px;
@@ -155,4 +155,30 @@
 
 .make-comment-textarea:hover {
     border-color: #6366f1;
+}
+
+
+.comment {
+  display: block;
+  padding: 14px 2.25rem;
+  border-radius: 8px;
+  border: solid 1px rgb(238 242 255);
+  transition-duration: 250ms;
+  transition-timing-function: ease;
+}
+
+.comment.reply {
+  margin-left: 40px;
+  border-color: #c4b5fd;
+}
+
+.comment:hover {
+  border-color: #c7d2fe;
+}
+
+.comment-footer {
+  display: flex;
+  align-items: center;
+  justify-content: end;
+  margin-top: .5em;
 }
