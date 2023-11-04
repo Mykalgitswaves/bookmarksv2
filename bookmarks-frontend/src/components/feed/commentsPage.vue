@@ -42,12 +42,12 @@
               :page="p.page"
             />
           </div>
-          <Comments v-if="p?.comments" :comments="p.comments" :post-id="p.id"/>
+          <Comments v-if="comments.length" :comments="comments" :post-id="p.id"/>
           <div class="mobile-menu-spacer sm:hidden"></div>
     </transition-group>
 </template>
 <script setup>
-import { ref } from 'vue'
+import { ref, reactive } from 'vue'
 import { useRoute } from 'vue-router';
 import { urls } from '../../services/urls'; 
 import { db } from '../../services/db';
@@ -62,16 +62,24 @@ import ReviewPost from './posts/ReviewPost.vue';
 // This is for modeling comments and sending to backend
 const p = ref(null);
 const postType = ref('');
+const comments = ref([]);
+
+const request = reactive({
+    "skip": 0,
+    "limit": 20,
+});
 
 const route = useRoute();
 const { user, post } = route.params;
 
-async function get_post() {
+async function get_post_and_comments() {
     await db.get(urls.reviews.getPost(user, post)).then((res) => {
         p.value = res.data.post;
         postType.value = res.data.post_type;
     });
+    await db.get(urls.reviews.getComments(post), request, true)
 }
-get_post();
+
+get_post_and_comments();
 
 </script>

@@ -22,6 +22,7 @@ export const urls = {
         getComparisons: (user_id) => (baseUrl + `api/${user_id}/comparisons`),
         getPost: (user_id, id) => (baseUrl + `api/${user_id}/posts/${id}/post`),
         likeComparison: (comparison_id, user_id) => (baseUrl + `api/${user_id}/like/comparisons/${comparison_id}`),
-        createComment: () => (baseUrl + 'api/review/create_comment') 
+        createComment: () => (baseUrl + 'api/review/create_comment'),
+        getComments: (post_id) =>(baseUrl + `api/review/${post_id}/comments`)
     }
 }

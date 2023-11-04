@@ -20,6 +20,7 @@ from database.auth import verify_access_token
 from db_tasks import update_book_google_id
 
 from fastapi import FastAPI, HTTPException, Depends, status, Request, BackgroundTasks
+from fastapi import Query
 from fastapi.responses import RedirectResponse, JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm, HTTPAuthorizationCredentials, HTTPBearer
@@ -697,7 +698,7 @@ async def like_comment(request: Request, current_user: Annotated[User, Depends(g
     driver.add_liked_comment(current_user,response["comment_id"])
 
 @app.get("/api/review/{post_id}/comments")
-async def get_comments_for_post(request: Request, current_user: Annotated[User, Depends(get_current_active_user)]):
+async def get_comments_for_post(request: Request, post_id: str, current_user: Annotated[User, Depends(get_current_active_user)], skip: int | None = Query(default=None), limit: int | None = Query(default=None)):
     """
     Gets the comments on a post
     Uses skip and limit for pagination
@@ -709,15 +710,13 @@ async def get_comments_for_post(request: Request, current_user: Annotated[User, 
     """
     if not current_user:
         raise HTTPException("401","Unauthorized")
-    response = await request.json()
-    response = response['_value']
-
-    comments = driver.get_all_comments_for_post(post_id=response["post_id"],
-                                                username=current_user,
-                                                skip=response['skip'],
-                                                limit=response['limit'])
-    
-    return JSONResponse(content={"data": jsonable_encoder(comments)})
+    if post_id:
+        comments = driver.get_all_comments_for_post(post_id=post_id,
+                                                    username=current_user.username,
+                                                    skip=skip,
+                                                    limit=limit)
+        
+        return JSONResponse(content={"data": jsonable_encoder(comments)})
 
 @app.post("/api/review/{comment_id}/pin")
 async def pin_comment(request: Request, current_user: Annotated[User, Depends(get_current_active_user)]): #@MICHAEL DO WE NEED TO VALIDATE THAT THE CURRENT USER IS THE POST AUTHOR HERE

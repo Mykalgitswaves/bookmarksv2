@@ -1791,6 +1791,7 @@ class Neo4jDriver():
             match (p {id:$post_id}) 
             match (p)-[:POST_FOR_BOOK]-(b:Book)
             optional match (c:Comment)-[r]-(p)
+            optional match (u:User)-[cc:COMMENTED]-(c)
             return p, labels(p), b.id, b.title, b.small_img_url, c
         """
 

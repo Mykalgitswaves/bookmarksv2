@@ -22,11 +22,13 @@
     </div>
 
     <div v-else>
-        <Comment
-            v-for="(comment,index) in comments"
-            :key="index"
-            :comment="comment"
-        />
+        <transition-group name="content" tag="ul">
+            <li v-for="(comment,index) in comments" :key="index">
+                <Comment
+                    :comment="comment"
+                />
+            </li>
+        </transition-group>
     </div>
 </template>
 <script setup>
@@ -61,45 +63,3 @@ async function postComment(){
     await db.post(urls.reviews.createComment(), data, true).then((res) => comments.value.push(res.data))
 }
 </script>
-
-<style scoped>
-    .send-comment-btn {
-        padding: 12px;
-        border-radius: 4px;
-        color: #eef2ff;
-        background-color: #573c77;
-        display: grid;
-        height: min-content;
-        align-self: center;
-    }
-
-
-    .make-comments-container {
-        display: flex;
-        justify-content: center;
-        column-gap: 20px;
-        padding: 20px;
-        width: 100%;
-        max-width: 880px;
-    }
-    .make-comment-textarea {
-        display: grid;
-        align-self: start;
-        width: 70%;
-        height: 60px;
-        resize: none;
-        line-height: 2.5em; 
-        text-align: left;
-        background-color: #eef2ff;
-        border: solid 1px #eef2ff;
-        border-radius: 4px;
-        padding-left: 15px;
-        transition-timing-function: ease;
-        transition-duration: 250ms;
-    }
-
-    .make-comment-textarea:hover {
-        border-color: #6366f1;
-    }
-
-</style>
