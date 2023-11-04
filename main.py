@@ -762,3 +762,11 @@ async def remove_pin_comment(request: Request, current_user: Annotated[User, Dep
     response = response['_value']
 
     driver.remove_pinned_comment(response["comment_id"],response["post_id"])
+
+@app.get("/api/posts")
+async def get_all_posts(current_user: Annotated[User, Depends(get_current_active_user)], skip: int | None = Query(default=None), limit: int | None = Query(default=None)):
+    """
+    Pagination for all posts to replace feed. Currently just returns all posts from all users, no curated algo. 
+    """
+    if current_user:
+        return(JSONResponse(content={"data": jsonable_encoder(driver.get_feed(current_user, skip, limit))}))

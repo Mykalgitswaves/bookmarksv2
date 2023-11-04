@@ -2070,6 +2070,107 @@ class Neo4jDriver():
                 """
         result = tx.run(query, comment_id=comment_id, post_id=post_id)
 
+    @timing_decorator
+    def get_feed(self, current_user:User, skip:int, limit:int): 
+        with self.driver.session() as session:
+            result = session.execute_read(self.get_feed_query, current_user.username, skip, limit)
+        return(result)
+    @staticmethod
+    def get_feed_query(tx, username, skip, limit):
+        query = """ 
+                    MATCH (p)
+                    WHERE p:Milestone OR p:Review OR p:Comparison OR p:Update
+                    match (p)<-[pr:POSTED]-(u:User)
+                    optional match (cu:User {username:$username})-[lr:LIKES]->(p)
+                    optional match (p)-[br:POST_FOR_BOOK]-(b)
+                    RETURN p, labels(p), u.username, b
+                    CASE WHEN lr IS NOT NULL THEN true ELSE false END AS liked_by_current_user
+                    CASE WHEN u.username = $username THEN true ELSE false END AS posted_by_current_user
+                    order by p.created_date desc
+                    skip $skip
+                    limit $limit
+                    """
+        result = tx.run(query, username=username, skip=skip, limit=limit)
+        # results = [record for record in result.data()]
+        
+        output = {"Milestone":[],
+                  "RecommendationFriend":[],
+                  "Comparison":[],
+                  "Update":[],
+                  "Review":[]}
+        
+        for response in result:
+            post = response['p']
+            if response['labels(p)'] == ["Milestone"]:
+                milestone = MilestonePost(post_id=post["id"],
+                                                         book="",
+                                                         created_date=post["created_date"],
+                                                         num_books=post["num_books"],
+                                                         user_username=username,
+                                                         likes=post['likes'])
+                milestone.liked_by_current_user = response['liked_by_current_user']
+                milestone.posted_by_current_user = response['posted_by_current_user']
+                output['Milestone'].append(milestone)                                                       
+            
+            elif response['labels(p)'] == ['Comparison']:
+                if output['Comparison']:
+                    if output['Comparison'][-1].id == post["id"]:
+                        output['Comparison'][-1].compared_books.append(response['b']['id'])
+                        output['Comparison'][-1].book_title.append(response['b']['title'])
+                        output['Comparison'][-1].book_small_img.append(response['b']['small_img_url'])
+                        continue
+                
+                comparison = ComparisonPost(post_id=post["id"],
+                                            compared_books=[response['b']['id']],
+                                            user_username=username,
+                                            comparators=post['comparators'],
+                                            created_date=post['created_date'],
+                                            comparator_ids=post['comparator_ids'],
+                                            responses=post['responses'],
+                                            book_specific_headlines=post['book_specific_headlines'],
+                                            book_title=[response['b']['title']],
+                                            book_small_img=[response['b']['small_img_url']],
+                                            likes=post['likes'])
+                
+                comparison.liked_by_current_user = response['liked_by_current_user']
+                comparison.posted_by_current_user = response['posted_by_current_user']
+                output['Comparison'].append(comparison)
+
+
+            elif response['labels(p)'] == ["Update"]:
+                update = UpdatePost(post_id=post["id"],
+                                                   book=response['b']['id'],
+                                                   book_title=response['b']['title'],
+                                                   created_date=post["created_date"],
+                                                   page=post['page'],
+                                                   response=post['response'],
+                                                   spoiler=post['spoiler'],
+                                                   book_small_img=response['b']['small_img_url'],
+                                                   user_username=username,
+                                                   likes=post['likes'])
+                
+                update.liked_by_current_user = response['liked_by_current_user']
+                update.posted_by_current_user = response['posted_by_current_user']
+                output['Update'].append(update)
+
+            elif response['labels(p)'] == ["Review"]:
+                review = ReviewPost(post_id=post["id"],
+                                                    book=response['b']['id'],
+                                                    book_title=response['b']['title'],
+                                                    created_date=post["created_date"],
+                                                    questions=post['questions'],
+                                                    question_ids=post['question_ids'],
+                                                    responses=post['responses'],
+                                                    spoilers=post['spoilers'],
+                                                    book_small_img=response['b']['small_img_url'],
+                                                    user_username=username
+                                                    )
+                review.liked_by_current_user = response['liked_by_current_user']
+                review.posted_by_current_user = response['posted_by_current_user']
+                output['Review'].append(review)
+
+        return(output)
+
     def close(self):
         self.driver.close()
 
@@ -2083,5 +2184,6 @@ if __name__ == "__main__":
     # comment.create_comment(driver)
     # driver.add_liked_comment("michaelfinal.png@gmail.com","c64a7a98-3120-43fd-9aad-368b412494fe")
     # driver.add_liked_comment("kyle_test@aol.com","c64a7a98-3120-43fd-9aad-368b412494fe")
-    driver.get_all_comments_for_post("5d6fa774-79d3-4730-93ae-13be9f323521","kyle_test@aol.com",0,10)
+    # driver.get_all_comments_for_post("5d6fa774-79d3-4730-93ae-13be9f323521","kyle_test@aol.com",0,10)
+    # driver.add_liked_post("michaelfinal.png@gmail.com","4dc66647-efae-4ff8-b810-2f7a8b618254")
     driver.close()
