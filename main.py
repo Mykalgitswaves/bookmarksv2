@@ -666,47 +666,34 @@ async def create_comment(request: Request, current_user: Annotated[User, Depends
     return JSONResponse(content={"data": jsonable_encoder(comment)})
 
 @app.post("/api/review/{post_id}/like") # NOT SURE IF THIS MAKES ANY SENSE @MICHAEL
-async def like_post(request: Request, current_user: Annotated[User, Depends(get_current_active_user)]):
+async def like_post(request: Request, post_id: str, current_user: Annotated[User, Depends(get_current_active_user)]):
     """
     Adds a like to a post. Take the following format.
-    {
-    "post_id":str
-    }
     """
     
     if not current_user:
         raise HTTPException("401","Unauthorized")
-    response = await request.json()
-    response = response['_value']
 
-    driver.add_liked_post(current_user,response["post_id"])
+    if post_id:
+        driver.add_liked_post(current_user,post_id)
 
 @app.post("/api/review/{comment_id}/like") # NOT SURE IF THIS MAKES ANY SENSE @MICHAEL
-async def like_comment(request: Request, current_user: Annotated[User, Depends(get_current_active_user)]):
+async def like_comment(request: Request, comment_id:str, current_user: Annotated[User, Depends(get_current_active_user)]):
     """
     Adds a like to a post. Take the following format.
-    {
-    "comment_id":str
-    }
     """
     
     if not current_user:
         raise HTTPException("401","Unauthorized")
-    response = await request.json()
-    response = response['_value']
 
-    driver.add_liked_comment(current_user,response["comment_id"])
+    if comment_id:
+        driver.add_liked_comment(current_user,comment_id)
 
 @app.get("/api/review/{post_id}/comments")
 async def get_comments_for_post(request: Request, post_id: str, current_user: Annotated[User, Depends(get_current_active_user)], skip: int | None = Query(default=None), limit: int | None = Query(default=None)):
     """
     Gets the comments on a post
     Uses skip and limit for pagination
-    {
-    "post_id":str,
-    "skip":int,
-    "limit":int
-    }
     """
     if not current_user:
         raise HTTPException("401","Unauthorized")
@@ -736,36 +723,28 @@ async def pin_comment(request: Request, current_user: Annotated[User, Depends(ge
     driver.add_pinned_comment(response["comment_id"],response["post_id"])
 
 @app.post("/api/review/{comment_id}/remove_like") # NOT SURE IF THIS MAKES ANY SENSE @MICHAEL
-async def remove_like_comment(request: Request, current_user: Annotated[User, Depends(get_current_active_user)]):
+async def remove_like_comment(request: Request, comment_id:str, current_user: Annotated[User, Depends(get_current_active_user)]):
     """
-    remove a like to a post. Take the following format.
-    {
-    "comment_id":str
-    }
+    remove a like to a comment.
     """
     
     if not current_user:
         raise HTTPException("401","Unauthorized")
-    response = await request.json()
-    response = response['_value']
-
-    driver.remove_liked_comment(current_user,response["comment_id"])
+    
+    if comment_id:
+        driver.remove_liked_comment(current_user,comment_id)
 
 @app.post("/api/review/{post_id}/remove_like") # NOT SURE IF THIS MAKES ANY SENSE @MICHAEL
-async def remove_like_post(request: Request, current_user: Annotated[User, Depends(get_current_active_user)]):
+async def remove_like_post(request: Request, post_id:str, current_user: Annotated[User, Depends(get_current_active_user)]):
     """
-    remove a like to a post. Take the following format.
-    {
-    "post_id":str
-    }
+    remove a like to a post. 
     """
     
     if not current_user:
         raise HTTPException("401","Unauthorized")
-    response = await request.json()
-    response = response['_value']
-
-    driver.remove_liked_post(current_user,response["post_id"])
+   
+    if post_id:
+        driver.remove_liked_post(current_user,post_id)
 
 @app.post("/api/review/{comment_id}/remove_pin")
 async def remove_pin_comment(request: Request, current_user: Annotated[User, Depends(get_current_active_user)]): #@MICHAEL DO WE NEED TO VALIDATE THAT THE CURRENT USER IS THE POST AUTHOR HERE
