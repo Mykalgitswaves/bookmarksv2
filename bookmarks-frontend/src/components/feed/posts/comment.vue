@@ -16,10 +16,10 @@
             >
                 <IconLike/>
                 <span
-                    v-if="props.comment.likes.length" 
+                    v-if="props.comment?.likes?.length" 
                     class="ml-2 text-indigo-500 italic"
                 >
-                    {{ props.comment.likes }}
+                    {{ props.comment?.likes }}
                 </span>
             </button>
             <button 
@@ -29,10 +29,10 @@
             >
                 <IconPin/>
                 <span
-                    v-if="props.comment.likes.length" 
+                    v-if="props.comment?.likes?.length" 
                     class="ml-2 text-indigo-500 italic"
                 >
-                    {{ props.comment.likes }}
+                    {{ props.comment?.likes }}
                 </span>
             </button>
 
@@ -67,6 +67,10 @@ const props = defineProps({
     comment: {
         type: Object,
         required: true,
+    },
+    isLikedByCurrentUser: {
+        type: Boolean,
+        required: true
     }
 });
 

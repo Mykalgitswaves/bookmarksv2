@@ -77,7 +77,9 @@ async function get_post_and_comments() {
         p.value = res.data.post;
         postType.value = res.data.post_type;
     });
-    await db.get(urls.reviews.getComments(post), request, true)
+    await db.get(urls.reviews.getComments(post), request, true).then((res) => {
+        comments.value = Object.entries(res.data)
+    })
 }
 
 get_post_and_comments();

@@ -25,7 +25,8 @@
         <transition-group name="content" tag="ul">
             <li v-for="(comment,index) in comments" :key="index">
                 <Comment
-                    :comment="comment"
+                    :comment="comment[1].comment"
+                    :is-liked="comments[1].liked_by_current_user"
                 />
             </li>
         </transition-group>
