@@ -677,17 +677,17 @@ async def like_post(request: Request, post_id: str, current_user: Annotated[User
     if post_id:
         driver.add_liked_post(current_user,post_id)
 
-@app.post("/api/review/{comment_id}/like") # NOT SURE IF THIS MAKES ANY SENSE @MICHAEL
-async def like_comment(request: Request, comment_id:str, current_user: Annotated[User, Depends(get_current_active_user)]):
+@app.put("/api/review/{comment_id}/like") # NOT SURE IF THIS MAKES ANY SENSE @MICHAEL
+async def like_comment(comment_id:str, current_user: Annotated[User, Depends(get_current_active_user)]):
     """
     Adds a like to a post. Take the following format.
     """
-    
+
     if not current_user:
         raise HTTPException("401","Unauthorized")
 
     if comment_id:
-        driver.add_liked_comment(current_user,comment_id)
+        driver.add_liked_comment(current_user.username, comment_id)
 
 @app.get("/api/review/{post_id}/comments")
 async def get_comments_for_post(request: Request, post_id: str, current_user: Annotated[User, Depends(get_current_active_user)], skip: int | None = Query(default=None), limit: int | None = Query(default=None)):
@@ -722,8 +722,8 @@ async def pin_comment(request: Request, current_user: Annotated[User, Depends(ge
 
     driver.add_pinned_comment(response["comment_id"],response["post_id"])
 
-@app.post("/api/review/{comment_id}/remove_like") # NOT SURE IF THIS MAKES ANY SENSE @MICHAEL
-async def remove_like_comment(request: Request, comment_id:str, current_user: Annotated[User, Depends(get_current_active_user)]):
+@app.put("/api/review/{comment_id}/remove_like") # NOT SURE IF THIS MAKES ANY SENSE @MICHAEL
+async def remove_like_comment(comment_id:str, current_user: Annotated[User, Depends(get_current_active_user)]):
     """
     remove a like to a comment.
     """
@@ -732,7 +732,7 @@ async def remove_like_comment(request: Request, comment_id:str, current_user: An
         raise HTTPException("401","Unauthorized")
     
     if comment_id:
-        driver.remove_liked_comment(current_user,comment_id)
+        driver.remove_liked_comment(current_user.username, comment_id)
 
 @app.post("/api/review/{post_id}/remove_like") # NOT SURE IF THIS MAKES ANY SENSE @MICHAEL
 async def remove_like_post(request: Request, post_id:str, current_user: Annotated[User, Depends(get_current_active_user)]):

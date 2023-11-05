@@ -1937,7 +1937,6 @@ class Neo4jDriver():
                 set rr.likes = rr.likes + 1
                 """
         result = tx.run(query, username=username, comment_id=comment_id)
-
     def get_all_comments_for_post(self, post_id, username, skip, limit):
         """
         Gets all the comments on the post. For comments in a thread, returns the number of comments in the thread

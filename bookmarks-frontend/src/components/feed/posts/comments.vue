@@ -1,6 +1,6 @@
 <template>
     <div class="flex content-center px-2">
-        <div class="make-comments-container">
+        <div class="make-comments-container main">
             <textarea 
                 class="make-comment-textarea"
                 type="text"
@@ -23,7 +23,7 @@
 
     <div v-else>
         <transition-group name="content" tag="ul">
-            <li v-for="(comment,index) in comments" :key="index">
+            <li v-for="(comment,index) in comments" :key="index" class="comments-wrapper">
                 <Comment
                     :comment="comment[1].comment"
                     :is-liked="comment[1].liked_by_current_user"
@@ -62,6 +62,9 @@ async function postComment(){
         "pinned": false,
         "replied_to": replied_to.value,
     }
-    await db.post(urls.reviews.createComment(), data, true).then((res) => comments.value.push(res.data))
+
+    if(comment.value.length > 1){
+        await db.post(urls.reviews.createComment(), data, true).then((res) => comments.value.push(res.data))
+    }
 }
 </script>
