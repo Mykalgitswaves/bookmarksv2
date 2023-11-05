@@ -206,8 +206,8 @@
 
 .comment.reply {
   border-color: rgb(238 242 255);
-  width: 90%;
-  justify-self: center;
+  transform: scaleX(95%);
+  margin-right: -20px;
 }
 
 .comment:hover {
