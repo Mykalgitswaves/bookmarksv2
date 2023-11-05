@@ -690,7 +690,7 @@ async def like_comment(comment_id:str, current_user: Annotated[User, Depends(get
         driver.add_liked_comment(current_user.username, comment_id)
 
 @app.get("/api/review/{post_id}/comments")
-async def get_comments_for_post(request: Request, post_id: str, current_user: Annotated[User, Depends(get_current_active_user)], skip: int | None = Query(default=None), limit: int | None = Query(default=None)):
+async def get_comments_for_post(post_id: str, current_user: Annotated[User, Depends(get_current_active_user)], skip: int | None = Query(default=None), limit: int | None = Query(default=None)):
     """
     Gets the comments on a post
     Uses skip and limit for pagination
