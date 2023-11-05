@@ -1980,8 +1980,8 @@ class Neo4jDriver():
                     CASE WHEN likedReplyRel IS NOT NULL THEN true ELSE false END AS reply_liked_by_user,
                     commenter.username, 
                     top_reply_commenter.username,
-                    case when commenter.username = $username then true else false as parent_posted_by_user,
-                    case when top_reply_commenter.username = $username then true else false as reply_posted_by_user
+                    case when commenter.username = $username then true else false END as parent_posted_by_user,
+                    case when top_reply_commenter.username = $username then true else false END as reply_posted_by_user
                 order by c.created_date desc
                 skip $skip
                 limit $limit
