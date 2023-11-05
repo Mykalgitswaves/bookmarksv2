@@ -1837,12 +1837,12 @@ class Neo4jDriver():
             match (p)-[:POST_FOR_BOOK]-(b:Book)
             match (pu:User)-[pr:POSTED]->(p)
             optional match (cu:User)-[lr:LIKES]->(p)
-            return p, labels(p), b.id, b.title, b.small_img_url, pu.username
-            CASE WHEN lr IS NOT NULL THEN true ELSE false END AS liked_by_current_user
+            return p, labels(p), b.id, b.title, b.small_img_url, pu.username,
+            CASE WHEN lr IS NOT NULL THEN true ELSE false END AS liked_by_current_user,
             CASE WHEN pu.username = $username THEN true ELSE false END AS posted_by_current_user
         """
 
-        result = tx.run(query, post_id=post_id)
+        result = tx.run(query, post_id=post_id, username=username)
         result = [record for record in result.data()]
         response = result[0]
         post = response['p']
@@ -2133,8 +2133,8 @@ class Neo4jDriver():
                     match (p)<-[pr:POSTED]-(u:User)
                     optional match (cu:User {username:$username})-[lr:LIKES]->(p)
                     optional match (p)-[br:POST_FOR_BOOK]-(b)
-                    RETURN p, labels(p), u.username, b
-                    CASE WHEN lr IS NOT NULL THEN true ELSE false END AS liked_by_current_user
+                    RETURN p, labels(p), u.username, b,
+                    CASE WHEN lr IS NOT NULL THEN true ELSE false END AS liked_by_current_user,
                     CASE WHEN u.username = $username THEN true ELSE false END AS posted_by_current_user
                     order by p.created_date desc
                     skip $skip
