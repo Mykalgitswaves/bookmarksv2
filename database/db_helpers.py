@@ -1937,32 +1937,40 @@ class Neo4jDriver():
                 set rr.likes = rr.likes + 1
                 """
         result = tx.run(query, username=username, comment_id=comment_id)
-    def get_all_replies_for_comment(self, comment_id):
+    def get_all_replies_for_comment(self, comment_id, username):
         """
         get all replies for a specific comment
         """
         with self.driver.session() as session:
-            comments = session.execute_read(self.get_all_replies_for_comment_query, comment_id)
+            comments = session.execute_read(self.get_all_replies_for_comment_query, comment_id, username)
         return(comments)
     @staticmethod
-    def get_all_replies_for_comment_query(tx, comment_id):
+    def get_all_replies_for_comment_query(tx, comment_id, username):
         query = """
-            match (cc:Comment)-[REPLIED_TO]-(c:Comment {id: $comment_id})
-            match (p:Post)-[HAS_COMMENT]-(c)
-            match (u:User)-[POSTED]-(c)
-            return c, u, p
+            match (currentUser:User {username:$username})
+            match (cr:Comment)-[REPLIED_TO]->(c:Comment {id: $comment_id})
+            match (p)-[HAS_COMMENT]->(cr)
+            match (commenter:User)-[POSTED]->(cr)
+            optional match (currentUser)-[likedReply:LIKES]->(cr)
+            return cr, commenter.username, p.id,
+            CASE WHEN likedReply IS NOT NULL THEN true ELSE false END AS liked_by_current_user,
+            Case when commenter.username = $username then true else false END as posted_by_current_user
         """
-        result = tx.run(query, comment_id=comment_id)
+        result = tx.run(query, comment_id=comment_id, username=username)
         comments = []
         for response in result:
             comments.append(Comment(
-                comment_id=response['c']['id'],
-                replied_to=response['cc']['id'],
-                text=response['c']['text'],
-                likes=response['c']['likes'],
-                created_date=response['c']['created_date'],
-                username=response['u']['username']
+                comment_id=response['cr']['id'],
+                replied_to=comment_id,
+                text=response['cr']['text'],
+                likes=response['cr']['likes'],
+                created_date=response['cr']['created_date'],
+                username=response['commenter.username'],
+                post_id=response["p.id"],
+                liked_by_current_user=response["liked_by_current_user"],
+                posted_by_current_user=response["posted_by_current_user"]
             ))
+        print(comments)
         return(comments)
 
     def get_all_comments_for_post(self, post_id, username, skip, limit):
@@ -2264,4 +2272,5 @@ if __name__ == "__main__":
     # driver.add_liked_comment("kyle_test@aol.com","c64a7a98-3120-43fd-9aad-368b412494fe")
     # driver.get_all_comments_for_post("5d6fa774-79d3-4730-93ae-13be9f323521","kyle_test@aol.com",0,10)
     # driver.add_liked_post("michaelfinal.png@gmail.com","4dc66647-efae-4ff8-b810-2f7a8b618254")
+    driver.get_all_replies_for_comment("7fa1b7fc-62d4-4c4f-b00b-87fa3802bf37","michaelfinal.png@gmail.com")
     driver.close()
