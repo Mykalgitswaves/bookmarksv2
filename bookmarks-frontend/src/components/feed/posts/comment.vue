@@ -74,8 +74,14 @@
         @reply-posted="($event) => replies.push($event)"
     />
 
-    <button v-if="replies.length > 1" type="button" class="text-indigo-500 font-semibold underline">View more replies...</button>   
-
+    <button 
+        v-if="replies.length > 0 && !moreRepliesLoaded"
+        type="button"
+        class="text-indigo-500 font-semibold underline ml-5 mt-2"
+        @click="fetchMoreReplies()"
+    >
+        View more replies...
+    </button>   
     
 </template>
 <script setup>
@@ -111,6 +117,7 @@ const reply = ref('');
 const isReplying = ref(false);
 const is_liked = ref(props.isLiked);
 const replies = ref(props.replies);
+const moreRepliesLoaded = ref(false);
 
 async function postReply() {
     const data = {
@@ -135,6 +142,13 @@ async function likeComment() {
 async function unlikeComment(){
     is_liked.value = false;
     await db.put(urls.reviews.unlikeComment(props.comment.id))
+}
+
+async function fetchMoreReplies() { 
+    await db.get(urls.reviews.getMoreComments(props.comment.id)).then((res) => {
+        console.log(res)
+        moreRepliesLoaded.value = true;
+    })
 }
 
 </script>

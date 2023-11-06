@@ -705,6 +705,17 @@ async def get_comments_for_post(post_id: str, current_user: Annotated[User, Depe
         
         return JSONResponse(content={"data": jsonable_encoder(comments)})
 
+@app.get("/api/review/comments/{comment_id}/replies")
+async def get_all_replies_for_comment(comment_id: str, current_user: Annotated[User, Depends(get_current_active_user)]):
+    """
+    Returns a list of comments for a specific reply.
+    """
+    if not current_user:
+        raise HTTPException("401", "Unauthorized")
+    if comment_id:
+        replies = driver.get_all_replies_for_comment(comment_id=comment_id)
+        return(JSONResponse(content={"data": jsonable_encoder(replies)}))
+    
 @app.post("/api/review/{comment_id}/pin")
 async def pin_comment(request: Request, current_user: Annotated[User, Depends(get_current_active_user)]): #@MICHAEL DO WE NEED TO VALIDATE THAT THE CURRENT USER IS THE POST AUTHOR HERE
     """

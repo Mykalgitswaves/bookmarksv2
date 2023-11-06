@@ -25,6 +25,7 @@ export const urls = {
         createComment: () => (baseUrl + 'api/review/create_comment'),
         likeComment: (comment_id) => (baseUrl + `api/review/${comment_id}/like`),
         unlikeComment: (comment_id) => (baseUrl + `api/review/${comment_id}/remove_like`),
-        getComments: (post_id) =>(baseUrl + `api/review/${post_id}/comments`)
+        getComments: (post_id) =>(baseUrl + `api/review/${post_id}/comments`),
+        getMoreComments: (comment_id) => (baseUrl + `api/review/comments/${comment_id}/replies`),
     }
 }

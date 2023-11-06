@@ -1937,6 +1937,36 @@ class Neo4jDriver():
                 set rr.likes = rr.likes + 1
                 """
         result = tx.run(query, username=username, comment_id=comment_id)
+    def get_all_replies_for_comment(self, comment_id):
+        """
+        get all replies for a specific comment
+        """
+        with self.driver.session() as session:
+            comments = session.execute_read(self.get_all_replies_for_comment_query, comment_id)
+        return(comments)
+    @staticmethod
+    def get_all_replies_for_comment_query(tx, comment_id):
+        query = """
+            match (c:Comment)-[REPLIED_TO]-(cc:Comment {id: $comment_id})
+            match (p:Post)-[HAS_COMMENT]-(cc)
+            match (u:User)-[POSTED]-(c)
+            return c, u, p
+        """
+        result = tx.run(query, comment_id=comment_id)
+        comments = []
+        for response in result:
+            breakpoint()
+            comments.append(Comment(
+                post_id=response['p']['id'],
+                comment_id=response['c']['id'],
+                replied_to=response['cc']['id'],
+                text=response['c']['text'],
+                likes=response['c']['likes'],
+                created_date=response['c']['created_date'],
+                username=response['u']['username']
+            ))
+        return(comments)
+
     def get_all_comments_for_post(self, post_id, username, skip, limit):
         """
         Gets all the comments on the post. For comments in a thread, returns the number of comments in the thread

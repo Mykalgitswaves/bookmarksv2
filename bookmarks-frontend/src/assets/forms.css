@@ -163,11 +163,17 @@
     border-color: #6366f1;
 }
 
-
-.comments-wrapper {
+ul:has(.comments-wrapper) {
   display: grid;
   grid-template-columns: 1fr;
-  margin-left: auto;
+  row-gap: 10px;
+}
+
+
+li.comments-wrapper  {
+  padding-left: 10px;
+  border-left: 2px solid #f8fafc;
+  height: 90%;
 }
 
 .comment {
