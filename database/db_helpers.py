@@ -1947,17 +1947,15 @@ class Neo4jDriver():
     @staticmethod
     def get_all_replies_for_comment_query(tx, comment_id):
         query = """
-            match (c:Comment)-[REPLIED_TO]-(cc:Comment {id: $comment_id})
-            match (p:Post)-[HAS_COMMENT]-(cc)
+            match (cc:Comment)-[REPLIED_TO]-(c:Comment {id: $comment_id})
+            match (p:Post)-[HAS_COMMENT]-(c)
             match (u:User)-[POSTED]-(c)
             return c, u, p
         """
         result = tx.run(query, comment_id=comment_id)
         comments = []
         for response in result:
-            breakpoint()
             comments.append(Comment(
-                post_id=response['p']['id'],
                 comment_id=response['c']['id'],
                 replied_to=response['cc']['id'],
                 text=response['c']['text'],
