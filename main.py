@@ -716,7 +716,7 @@ async def get_all_replies_for_comment(comment_id: str, current_user: Annotated[U
     if not current_user:
         raise HTTPException("401", "Unauthorized")
     if comment_id:
-        replies = driver.get_all_replies_for_comment(comment_id=comment_id)
+        replies = driver.get_all_replies_for_comment(comment_id=comment_id, username=current_user.username)
         return(JSONResponse(content={"data": jsonable_encoder(replies)}))
     
 @app.post("/api/review/{comment_id}/pin")

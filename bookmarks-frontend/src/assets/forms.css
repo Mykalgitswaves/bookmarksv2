@@ -170,10 +170,11 @@ ul:has(.comments-wrapper) {
 }
 
 
-li.comments-wrapper  {
+.comments-wrapper  {
   padding-left: 10px;
   border-left: 2px solid #f8fafc;
   height: 90%;
+  display: grid;
 }
 
 .comment {
@@ -214,6 +215,8 @@ li.comments-wrapper  {
   border-color: rgb(238 242 255);
   transform: scaleX(95%);
   margin-right: -20px;
+  margin-top: 1.25rem;
+  margin-bottom: 1.25rem;
 }
 
 .comment:hover {

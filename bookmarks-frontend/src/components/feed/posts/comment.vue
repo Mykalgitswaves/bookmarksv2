@@ -82,7 +82,15 @@
     >
         View more replies...
     </button>   
-    
+    <div v-if="moreRepliesLoaded" class="comments-wrapper">
+        <Reply 
+            v-for="(reply, index) in moreReplies"
+            :key="index"
+            :reply="reply"
+            :is-liked-by-current-user="reply.liked_by_current_user"
+            @reply-posted="($event) => moreReplies.push($event)"
+        />
+    </div>
 </template>
 <script setup>
 import Reply from './reply.vue';
@@ -118,6 +126,7 @@ const isReplying = ref(false);
 const is_liked = ref(props.isLiked);
 const replies = ref(props.replies);
 const moreRepliesLoaded = ref(false);
+const moreReplies = ref([]);
 
 async function postReply() {
     const data = {
@@ -146,7 +155,7 @@ async function unlikeComment(){
 
 async function fetchMoreReplies() { 
     await db.get(urls.reviews.getMoreComments(props.comment.id)).then((res) => {
-        console.log(res)
+        moreReplies.value = res.data;
         moreRepliesLoaded.value = true;
     })
 }
