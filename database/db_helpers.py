@@ -1246,7 +1246,7 @@ class Neo4jDriver():
                     optional match (p)-[rb:POST_FOR_BOOK]-(b)
                     optional match (p)-[ru:RECOMMENDED_TO]->(uu)
                     optional match (p)<-[rl:LIKES]-(u)
-                    return p, labels(p), c, b, uu,
+                    return p, labels(p), b, uu,
                     CASE WHEN rl IS NOT NULL THEN true ELSE false END AS liked_by_current_user
                     order by p.created_date desc"""
         result = tx.run(query, username=username)
