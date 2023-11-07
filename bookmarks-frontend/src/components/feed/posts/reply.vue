@@ -40,7 +40,6 @@
                 >
                     <IconTrash/>
                 </button>
-
             </div>
         </div>
     </div>
@@ -63,12 +62,15 @@ const props = defineProps({
         type: Boolean,
         default: false,
     }
-})
+});
+
+console.log(props);
+
+const emit = defineEmits();
 
 async function deleteReply(post_id) { 
-    await db.put(urls.reviews.deleteComment(post_id), true).then((res) => {
-        console.log(res);
-    })
+    await db.put(urls.reviews.deleteComment(post_id), null, true).then(() => {
+        emit('deleted', post_id);
+    });
 }
-
 </script>

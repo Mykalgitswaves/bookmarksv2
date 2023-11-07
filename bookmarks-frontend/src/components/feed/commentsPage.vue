@@ -42,7 +42,7 @@
               :page="p.page"
             />
           </div>
-          <Comments v-if="comments.length" :comments="comments" :post-id="p.id"/>
+          <Comments v-if="p" :comments="comments" :post-id="p.id" :post-username="p.user_username"/>
           <div class="mobile-menu-spacer sm:hidden"></div>
     </transition-group>
 </template>
@@ -79,6 +79,7 @@ async function get_post_and_comments() {
     });
     await db.get(urls.reviews.getComments(post), request, true).then((res) => {
         comments.value = Object.entries(res.data)
+        console.log(comments.value)
     })
 }
 

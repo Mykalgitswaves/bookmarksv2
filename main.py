@@ -797,7 +797,7 @@ async def set_comment_as_deleted(comment_id:str, current_user: Annotated[User, D
         driver.set_comment_as_deleted(comment_id)
 
 @app.put("/api/review/{post_id}/delete")
-async def set_comment_as_deleted(post_id:str, current_user: Annotated[User, Depends(get_current_active_user)]):
+async def set_post_as_deleted(post_id:str, current_user: Annotated[User, Depends(get_current_active_user)]):
     """
     Set the deleted field for a post and all comments to true
     """
