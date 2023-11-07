@@ -78,7 +78,7 @@
     <Reply 
         v-for="(reply, index) in replies"
         :key="index"
-        :reply="Object.entries(reply)[0][1]"
+        :reply="Object.values(reply)[0]"
         :is-liked-by-current-user="reply.liked_by_current_user"
         @deleted="handleDelete($event)"
     />
@@ -91,6 +91,7 @@
     >
         View more replies...
     </button>   
+
     <div v-if="moreRepliesLoaded" class="comments-wrapper">
         <Reply 
             v-for="(reply, index) in moreReplies"
@@ -121,7 +122,7 @@ const props = defineProps({
     },
     isLiked: {
         type: Boolean,
-        required: true
+        required: false
     },
     replies: {
         type: Array,
@@ -129,7 +130,7 @@ const props = defineProps({
     },
     postUsername: {
         type: String,
-        required: true,
+        required: false,
     },
 });
 

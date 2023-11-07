@@ -51,7 +51,6 @@ import { ref, reactive } from 'vue'
 import { useRoute } from 'vue-router';
 import { urls } from '../../services/urls'; 
 import { db } from '../../services/db';
-import { postStore } from '../../stores/postStore';
 import Comments from './posts/comments.vue';
 import ComparisonPost from './posts/comparisonPost.vue';
 import UpdatePost from './posts/updatePost.vue';
@@ -77,9 +76,9 @@ async function get_post_and_comments() {
         p.value = res.data.post;
         postType.value = res.data.post_type;
     });
+    
     await db.get(urls.reviews.getComments(post), request, true).then((res) => {
-        comments.value = Object.entries(res.data)
-        console.log(comments.value)
+        comments.value.push(...Object.values(res.data))
     })
 }
 
