@@ -1242,10 +1242,9 @@ class Neo4jDriver():
         return(result)
     @staticmethod
     def pull_all_reviews_by_user_query(tx, username): # TODO: Not sure if this needs the posted_by_current_user decorator
-        query = """ match (u:User {username:$username})-[r:POSTED]->(p)
+        query = """ match (u:User {username:$username})-[r:POSTED]->(p {deleted:false})
                     optional match (p)-[rb:POST_FOR_BOOK]-(b)
                     optional match (p)-[ru:RECOMMENDED_TO]->(uu)
-                    optional match (p)-[rc:HAS_RESPONSE]-(c)
                     optional match (p)<-[rl:LIKES]-(u)
                     return p, labels(p), c, b, uu,
                     CASE WHEN rl IS NOT NULL THEN true ELSE false END AS liked_by_current_user
@@ -1574,7 +1573,8 @@ class Neo4jDriver():
                                 questions:$questions,
                                 question_ids:$question_ids,
                                 responses:$responses,
-                                spoilers:$spoilers})
+                                spoilers:$spoilers,
+                                deleted:false})
                 create (u)-[p:POSTED]->(r)
                 create (r)-[pp:POST_FOR_BOOK]->(b)
                 return r.created_date, r.id
@@ -1617,7 +1617,8 @@ class Neo4jDriver():
                             page:$page,
                             headline:$headline,
                             response:$response,
-                            spoiler:$spoiler})
+                            spoiler:$spoiler,
+                            deleted:false})
             create (u)-[p:POSTED]->(d)
             create (d)-[pp:POST_FOR_BOOK]->(b)
             return d.created_date, d.id
@@ -1660,7 +1661,8 @@ class Neo4jDriver():
                             comparator_ids:$comparator_ids,
                             comparators:$comparators,
                             responses:$responses,
-                            book_specific_headlines:$book_specific_headlines})
+                            book_specific_headlines:$book_specific_headlines,
+                            deleted:false})
 
         create (u)-[p:POSTED]->(c)
         create (c)-[pp:POST_FOR_BOOK]->(b)
@@ -1708,7 +1710,8 @@ class Neo4jDriver():
         create (r:RecommendationFriend {id:randomUUID(), 
                                         created_date:datetime(),
                                         from_user_text:$from_user_text,
-                                        to_user_text:$to_user_text})
+                                        to_user_text:$to_user_text,
+                                        deleted:false})
         create (u)-[p:POSTED]->(r)
         create (r)-[rr:RECOMMENDED_TO]->(f)
         create (r)-[pp:POST_FOR_BOOK]->(b)
@@ -1746,7 +1749,8 @@ class Neo4jDriver():
         match (u:User {username:$username})
         create (m:Milestone {id:randomUUID(),
                             created_date:datetime(),
-                            num_books:$num_books
+                            num_books:$num_books,
+                            deleted:false
         })
         create (u)-[r:POSTED]->(m)
         return m.created_date, m.id
@@ -1774,15 +1778,16 @@ class Neo4jDriver():
     @staticmethod
     def create_comment_query(tx, comment):
         query_w_reply = """
-        match (pp {id:$post_id})
+        match (pp {id:$post_id, deleted:false})
         match (u:User {username:$username})
-        MATCH (parent:Comment {id: $replied_to})
+        MATCH (parent:Comment {id: $replied_to, deleted:false})
         create (c:Comment {
             id:randomUUID(),
             created_date:datetime(),
             text:$text,
             likes:0,
-            is_reply:True
+            is_reply:True,
+            deleted:false
         })
         merge (pp)-[h:HAS_COMMENT]->(c)
         merge (u)-[cc:COMMENTED]->(c)
@@ -1791,14 +1796,15 @@ class Neo4jDriver():
         return c.id, c.created_date
         """
         query_no_reply = """
-        match (pp {id:$post_id})
+        match (pp {id:$post_id, deleted:false})
         match (u:User {username:$username})
         create (c:Comment {
             id:randomUUID(),
             created_date:datetime(),
             text:$text,
             likes:0,
-            is_reply:False
+            is_reply:False,
+            deleted:false
         })
         merge (pp)-[h:HAS_COMMENT]->(c)
         merge (u)-[cc:COMMENTED]->(c)
@@ -1816,9 +1822,14 @@ class Neo4jDriver():
                             post_id = comment.post_id,
                             text = comment.text,
                             username = comment.username)
-        response = result.single()
-        created_date = response["c.created_date"]
-        comment_id = response["c.id"]
+        
+        if result:
+            response = result.single()
+            created_date = response["c.created_date"]
+            comment_id = response["c.id"]
+        else:
+            created_date = None
+            comment_id = None
         return(created_date,comment_id)
 
     def get_post(self, post_id, username):
@@ -1832,7 +1843,7 @@ class Neo4jDriver():
     @staticmethod
     def get_post_query(tx, post_id, username):
         query = """
-            match (p {id:$post_id})
+            match (p {id:$post_id, deleted:false})
             match (cu:User {username:$username})
             match (p)-[:POST_FOR_BOOK]-(b:Book)
             match (pu:User)-[pr:POSTED]->(p)
@@ -1948,8 +1959,8 @@ class Neo4jDriver():
     def get_all_replies_for_comment_query(tx, comment_id, username):
         query = """
             match (currentUser:User {username:$username})
-            match (cr:Comment)-[REPLIED_TO]->(c:Comment {id: $comment_id})
-            match (p)-[HAS_COMMENT]->(cr)
+            match (cr:Comment {deleted:false})-[REPLIED_TO]->(c:Comment {id: $comment_id, deleted:false})
+            match (p {deleted:false})-[HAS_COMMENT]->(cr)
             match (commenter:User)-[POSTED]->(cr)
             optional match (currentUser)-[likedReply:LIKES]->(cr)
             return cr, commenter.username, p.id,
@@ -1970,7 +1981,6 @@ class Neo4jDriver():
                 liked_by_current_user=response["liked_by_current_user"],
                 posted_by_current_user=response["posted_by_current_user"]
             ))
-        print(comments)
         return(comments)
 
     def get_all_comments_for_post(self, post_id, username, skip, limit):
@@ -1995,11 +2005,11 @@ class Neo4jDriver():
     def get_all_comments_for_post_query(tx, post_id, username, skip, limit):
         query = """
                 match (uu:User {username: $username}) 
-                match (rr {id: $post_id}) 
-                match (rr)-[r:HAS_COMMENT]->(c:Comment {is_reply:false})
+                match (rr {id: $post_id, deleted:false}) 
+                match (rr)-[r:HAS_COMMENT]->(c:Comment {is_reply:false, deleted:false})
                 // Find the user who commented the parent comment
                 MATCH (commenter:User)-[:COMMENTED]->(c)
-                OPTIONAL MATCH (rc:Comment)-[rrr:REPLIED_TO]->(c)
+                OPTIONAL MATCH (rc:Comment {deleted:false})-[rrr:REPLIED_TO]->(c)
                 // Find the user who commented the reply
                 OPTIONAL MATCH (replyCommenter:User)-[:COMMENTED]->(rc)
                 // Check if user with <username> has liked the parent comment
@@ -2164,7 +2174,7 @@ class Neo4jDriver():
     @staticmethod
     def get_feed_query(tx, username, skip, limit):
         query = """ 
-                    MATCH (p)
+                    MATCH (p {deleted:false})
                     WHERE p:Milestone OR p:Review OR p:Comparison OR p:Update
                     match (p)<-[pr:POSTED]-(u:User)
                     optional match (cu:User {username:$username})-[lr:LIKES]->(p)
@@ -2256,6 +2266,48 @@ class Neo4jDriver():
                 output['Review'].append(review)
 
         return(output)
+    
+    def set_post_as_deleted(self,post_id):
+        """
+        Set deleted flag of a post and all comments on that post to True
+        
+        Args:
+            post_id: post's PK
+        Returns:
+            None
+        """
+        with self.driver.session() as session:
+            result = session.execute_write(self.set_post_as_deleted_query, post_id)    
+    @staticmethod
+    def set_post_as_deleted_query(tx, post_id):
+        query = """
+                match (pp {id: $post_id})
+                match (postComment:Comment)<-[commentRel:HAS_COMMENT]-(pp)
+                set pp.deleted=true
+                set postComment.deleted=true
+                """
+        result = tx.run(query, post_id=post_id)
+
+    def set_comment_as_deleted(self,comment_id):
+        """
+        Set deleted flag of a comment to True
+        
+        Args:
+            comment_id: comment's PK
+        Returns:
+            None
+        """
+        with self.driver.session() as session:
+            result = session.execute_write(self.set_comment_as_deleted_query, comment_id)    
+    @staticmethod
+    def set_comment_as_deleted_query(tx, comment_id):
+        query = """
+                match (comment {id: $comment_id})
+                match (commentReply:Comment)-[replyRel:REPLIED_TO]-(comment)
+                set comment.deleted=true
+                set commentReply.deleted=true
+                """
+        result = tx.run(query, comment_id=comment_id)
 
     def close(self):
         self.driver.close()

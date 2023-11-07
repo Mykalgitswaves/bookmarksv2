@@ -663,6 +663,9 @@ async def create_comment(request: Request, current_user: Annotated[User, Depends
     
     comment.create_comment(driver)
 
+    if not comment.id and not comment.created_date:
+        raise HTTPException("410"," Gone - This chapter closes, yet its essence endures beyond the veil")
+
     return JSONResponse(content={"data": jsonable_encoder(comment)})
 
 @app.post("/api/review/{post_id}/like") # NOT SURE IF THIS MAKES ANY SENSE @MICHAEL
@@ -781,3 +784,25 @@ async def get_all_posts(current_user: Annotated[User, Depends(get_current_active
     """
     if current_user:
         return(JSONResponse(content={"data": jsonable_encoder(driver.get_feed(current_user, skip, limit))}))
+    
+@app.put("/api/review/{comment_id}/delete")
+async def set_comment_as_deleted(comment_id:str, current_user: Annotated[User, Depends(get_current_active_user)]):
+    """
+    Set the deleted field for a comment and all replies to true
+    """
+    if not current_user:
+        raise HTTPException("401","Unauthorized")
+   
+    if comment_id:
+        driver.set_comment_as_deleted(comment_id)
+
+@app.put("/api/review/{post_id}/delete")
+async def set_comment_as_deleted(post_id:str, current_user: Annotated[User, Depends(get_current_active_user)]):
+    """
+    Set the deleted field for a post and all comments to true
+    """
+    if not current_user:
+        raise HTTPException("401","Unauthorized")
+   
+    if post_id:
+        driver.set_post_as_deleted(post_id)
