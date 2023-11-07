@@ -31,7 +31,7 @@
                 </button>
 
                 <button 
-                    v-if="isOp"
+                    v-if="props.comment.username === props.postUsername"
                     class="ml-5 flex items-center justify-end"
                     type="button"
                 >
@@ -42,6 +42,15 @@
                     >
                         {{ props.comment?.likes }}
                     </span>
+                </button>
+
+                <button 
+                    v-if="props.comment.posted_by_current_user"
+                    class="ml-5"
+                    type="button"
+                    @click="deleteComment(props.comment.id)"
+                >
+                    <IconTrash/>
                 </button>
             </div>
         </div>
@@ -71,18 +80,26 @@
         :key="index"
         :reply="Object.entries(reply)[0][1]"
         :is-liked-by-current-user="reply.liked_by_current_user"
-        @reply-posted="($event) => replies.push($event)"
+        @deleted="handleDelete($event)"
     />
 
     <button 
         v-if="replies.length > 0 && !moreRepliesLoaded"
         type="button"
-        class="text-indigo-500 font-semibold underline ml-5 mt-2"
+        class="text-indigo-500 font-semibold underline ml-5 mt-2 justify-self-start"
         @click="fetchMoreReplies()"
     >
         View more replies...
     </button>   
-    
+    <div v-if="moreRepliesLoaded" class="comments-wrapper">
+        <Reply 
+            v-for="(reply, index) in moreReplies"
+            :key="index"
+            :reply="reply"
+            :is-liked-by-current-user="reply.liked_by_current_user"
+            @deleted="handleDelete($event)"
+        />
+    </div>
 </template>
 <script setup>
 import Reply from './reply.vue';
@@ -91,6 +108,7 @@ import IconComment from '../../svg/icon-comment.vue';
 import IconPin from '../../svg/icon-pin.vue';
 import IconReply from '../../svg/icon-reply.vue';
 import IconExit from '../../svg/icon-exit.vue';
+import IconTrash from '../../svg/icon-trash.vue';
 
 import { ref, computed } from 'vue';
 import { urls } from '../../../services/urls';
@@ -108,16 +126,22 @@ const props = defineProps({
     replies: {
         type: Array,
         required: false,
-    }
+    },
+    postUsername: {
+        type: String,
+        required: true,
+    },
 });
 
-console.log(props.isLiked)
+console.log(props)
 
 const reply = ref('');
 const isReplying = ref(false);
 const is_liked = ref(props.isLiked);
 const replies = ref(props.replies);
 const moreRepliesLoaded = ref(false);
+const moreReplies = ref([]);
+const emit = defineEmits();
 
 async function postReply() {
     const data = {
@@ -146,9 +170,20 @@ async function unlikeComment(){
 
 async function fetchMoreReplies() { 
     await db.get(urls.reviews.getMoreComments(props.comment.id)).then((res) => {
-        console.log(res)
+        moreReplies.value = res.data;
         moreRepliesLoaded.value = true;
     })
+}
+
+async function deleteComment(comment_id) {
+    await db.put(urls.reviews.deleteComment(comment_id), null, true).then(() => {
+        emit('comment-deleted', comment_id)
+    })
+}
+
+
+function handleDelete(event) {
+    moreReplies.value = moreReplies.value.filter((r) => r !== event)
 }
 
 </script>

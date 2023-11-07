@@ -716,7 +716,7 @@ async def get_all_replies_for_comment(comment_id: str, current_user: Annotated[U
     if not current_user:
         raise HTTPException("401", "Unauthorized")
     if comment_id:
-        replies = driver.get_all_replies_for_comment(comment_id=comment_id)
+        replies = driver.get_all_replies_for_comment(comment_id=comment_id, username=current_user.username)
         return(JSONResponse(content={"data": jsonable_encoder(replies)}))
     
 @app.post("/api/review/{comment_id}/pin")
@@ -797,7 +797,7 @@ async def set_comment_as_deleted(comment_id:str, current_user: Annotated[User, D
         driver.set_comment_as_deleted(comment_id)
 
 @app.put("/api/review/{post_id}/delete")
-async def set_comment_as_deleted(post_id:str, current_user: Annotated[User, Depends(get_current_active_user)]):
+async def set_post_as_deleted(post_id:str, current_user: Annotated[User, Depends(get_current_active_user)]):
     """
     Set the deleted field for a post and all comments to true
     """

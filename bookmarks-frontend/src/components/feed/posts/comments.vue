@@ -17,17 +17,19 @@
             </button>
         </div>
     </div>
-    <div v-if="!props.comments.length">
+    <div v-if="props.comments?.length === 0">
         <p class="text-center text-2xl text-indigo-500 font-bold">Pretty quiet here... 🦗<span class="block text-lg font-medium text-slate-600">Get the conversation started with your opinion</span></p>
     </div>
 
     <div v-else>
         <transition-group name="content" tag="ul">
-            <li v-for="(comment,index) in comments" :key="index" class="comments-wrapper">
+            <li v-for="(comment, index) in comments" :key="index" class="comments-wrapper">
                 <Comment
                     :comment="comment[1].comment"
                     :is-liked="comment[1].liked_by_current_user"
                     :replies="comment[1].replies"
+                    :post-username="props.userUsername"
+                    @comment-deleted="filterDeleteComments($event)"
                 />
             </li>
         </transition-group>
@@ -36,7 +38,7 @@
 <script setup>
 import { db } from '../../../services/db';
 import { urls } from '../../../services/urls';
-import { ref, computed } from 'vue';
+import { ref } from 'vue';
 import IconSend from '../../svg/icon-send.vue';
 import Comment from './comment.vue';
 
@@ -48,12 +50,18 @@ const props = defineProps({
     postId: {
         type: String,
         required: true,
+    },
+    userUsername: {
+        type: String,
+        required: true,
     }
 });
 
-const comment = ref('')
-const comments = computed(() => props.comments);
-const replied_to = ref(null)
+console.log(props.comments)
+
+const comment = ref('');
+const comments = ref(props.comments);
+const replied_to = ref(null);
 
 async function postComment(){
     const data = {
@@ -61,10 +69,15 @@ async function postComment(){
         "text": comment.value,
         "pinned": false,
         "replied_to": replied_to.value,
-    }
+    };
 
     if(comment.value.length > 1){
-        await db.post(urls.reviews.createComment(), data, true).then((res) => comments.value.push(res.data))
-    }
-}
+        await db.post(urls.reviews.createComment(), data, true).then((res) => comments.value.push(res.data));
+    };
+};
+
+function filterDeleteComments(comment_id) {
+    comments.value = comments.value.filter((c) => (c[1].comment.id !== comment_id))
+};
+
 </script>

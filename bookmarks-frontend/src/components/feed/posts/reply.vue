@@ -6,19 +6,6 @@
 
             <div class="comment-footer">
                 <button 
-                    class=""
-                    type="button"
-                    @click="isReplying = !isReplying"
-                >
-                    <span v-if="!isReplying" class="flex items-center">
-                        <IconComment />
-                        <span class="text-sm ml-2 underline">reply</span>
-                    </span>
-
-                    <IconExit v-if="isReplying" />
-                </button>
-
-                <button 
                     class="ml-5 flex items-center justify-end"
                     type="button"
                 >
@@ -44,35 +31,23 @@
                         {{ props.reply?.comment.likes }}
                     </span>
                 </button>
-            </div>
-        </div>
-
-        <transition-group name="content">
-            <div v-if="isReplying" class="make-comments-container">
-                <textarea 
-                    class="make-comment-textarea"
-                    type="text"
-                    v-model="reply"
-                    placeholder="Be nice, be thoughtful"    
-                />
 
                 <button
-                    class="send-comment-btn" 
+                    class="ml-5 flex items-center justify-end text-red-600"
                     type="button"
-                    @click="postReply()"
+                    role="delete"
+                    @click="deleteReply(props.reply.id)"
                 >
-                    <IconReply />
+                    <IconTrash/>
                 </button>
             </div>
-        </transition-group>
+        </div>
     </div>
 </template>
 <script setup>
-import IconComment from '../../svg/icon-comment.vue';
 import IconPin from '../../svg/icon-pin.vue';
 import IconLike from '../../svg/icon-like.vue';
-import IconReply from '../../svg/icon-reply.vue';
-import IconExit from '../../svg/icon-exit.vue';
+import IconTrash from '../../svg/icon-trash.vue';
 
 import { ref } from 'vue';
 import { db } from '../../../services/db';
@@ -87,24 +62,15 @@ const props = defineProps({
         type: Boolean,
         default: false,
     }
-})
+});
 
-const isReplying = ref(false);
-const reply = ref('');
+console.log(props);
+
 const emit = defineEmits();
 
-async function postReply() {
-    const data = {
-        "post_id": props.reply.comment.post_id,
-        "text": reply.value,
-        "pinned": false,
-        "replied_to": props.reply.comment.replied_to,
-    };
-
-    if (reply.value.length) {
-        await db.post(urls.reviews.createComment(), data, true).then((res) => {
-            emit('reply-posted', res.data);
-        });
-    };
+async function deleteReply(post_id) { 
+    await db.put(urls.reviews.deleteComment(post_id), null, true).then(() => {
+        emit('deleted', post_id);
+    });
 }
 </script>
