@@ -681,7 +681,7 @@ class Neo4jDriver():
         query = """
                 match (b:Book {id:$book_id}) 
                 match (b)-[r]-(g)
-                return b.gr_id, 
+                return
                 b.img_url, 
                 b.isbn24, 
                 b.lang, 
@@ -693,10 +693,13 @@ class Neo4jDriver():
                 TYPE(r),
                 g.id
                 """
+        if len(book_id) <= 5:
+            book_id = int(book_id)
+
         result = tx.run(query, book_id=book_id)
         response = result.single()
-        book = Book(book_id=book_id, 
-                    gr_id=response["b.gr_id"], 
+
+        book = Book(book_id=book_id,
                     img_url=response["b.img_url"],
                     small_img_url=response["b.small_img_url"],
                     pages=response["b.pages"],
@@ -772,7 +775,7 @@ class Neo4jDriver():
                 title:$title, 
                 img_url:$img_url, 
                 pages:$pages, 
-                publication_year:$pages, 
+                publication_year:$publication_year, 
                 lang:$lang, 
                 description:$description, 
                 isbn24:$isbn24,
@@ -1510,7 +1513,7 @@ class Neo4jDriver():
     @staticmethod
     def get_book_by_google_id_query(tx,google_id):
         query = """
-                match (b:Book {google_id:$google_id}) 
+                match (b:Book {id:$google_id}) 
                 match (b)-[r]-(g)
                 return b.gr_id,
                 b.id, 

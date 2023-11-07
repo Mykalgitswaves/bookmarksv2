@@ -94,7 +94,7 @@ def update_book_google_id(google_id:str, driver):
                         b.pages = $pages
                     """
             
-            with driver.driver.session() as session:
+            with driver.driver.session() as session: # This looks wrong
                 session.run(query,parameters)
         else:
             print(f"API returned no response for book with google id {google_id}")     
