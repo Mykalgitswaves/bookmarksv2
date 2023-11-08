@@ -118,7 +118,7 @@ async function postComment(){
 
     if(comment.value.length > 1){
         await db.post(urls.reviews.createComment(), data, true).then((res) => {
-            comments.value.push(res.data)
+            comments.value.push({"comment": res.data})
         });
     };
 };

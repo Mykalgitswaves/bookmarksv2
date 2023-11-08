@@ -69,7 +69,7 @@ console.log(props);
 const emit = defineEmits();
 
 async function deleteReply(post_id) { 
-    await db.put(urls.reviews.deleteComment(post_id), null, true).then(() => {
+    await db.put(urls.reviews.deleteComment(post_id), null).then(() => {
         emit('deleted', post_id);
     });
 }
