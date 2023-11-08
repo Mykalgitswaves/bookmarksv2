@@ -1,19 +1,42 @@
 <template>
+    <BackBtn/>
+    
     <section>
-        what up doofas
+        <div class="book-info-card">
+            <img :src="book?.img_url" alt="" class="book-info-card-img">
+
+            <div class="book-info-card-info">
+                <h2>{{ book?.title }}</h2>
+
+                <p>{{ book?.isbn24[0] }}</p>
+
+                <p>
+                    <span 
+                        v-for="(author, index) in book?.author_names"
+                        :key="index"
+                    >
+                        {{ 
+                            author + commanator(index, book?.author_names?.length) 
+                        }}
+                    </span>
+                </p>
+            </div>
+        </div>
     </section>
 </template>
 
 <script setup>
 // import SimilarBooks from '@/components/feed/SimilarBooks.vue';
+import BackBtn from './partials/back-btn.vue';
 import { ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router'
 import { db } from '../../services/db';
 import { urls } from '../../services/urls';
+import { helpersCtrl } from '../../services/helpers';
 
 const router = useRouter();
 const route = useRoute();
-
+const { commanator } = helpersCtrl
 const book_id = route.params.work;
 const book = ref(null);
 
@@ -22,26 +45,22 @@ function backToFeed() {
 };
 
 async function getWorkPage() {
-    await db.get(urls.reviews.getBookPage(book_id), null, true);
+    await db.get(urls.books.getBookPage(book_id), null, true).then((res) => {
+        book.value = res.data;
+    })
 }
 getWorkPage()
 
 </script>
 <style scoped>
-    .works-wrapper {
-        min-height: 250px;
-        border-radius: .3rem;
-        padding: 1rem;
-        max-width: 1000px;
-        width: 60vw;
-        min-width: 300px;
+    .book-info-card {
+        display: flex;
+        column-gap: 20px;
     }
 
-    .placeholder {
-        height: 146px;
-        width: 98px;
-        background-color: #1e1e1e;
-        border-radius: .25rem;
+    .book-info-card-info {
+        display: grid;
+        row-gap: 12px;
     }
 
     .work-page-enter-active,
