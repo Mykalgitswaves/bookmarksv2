@@ -40,7 +40,6 @@ const cc = ref(props.comments);
 
 function filterDeleteComments(comment_id) {
     console.log(cc.value, 'before filter')
-    debugger;
     let temp = cc.value.find((c) => c.comment.id === comment_id)
     cc.value = cc.value.filter((c) => c.comment !== temp.comment);
     console.log(cc.value, 'after filter')
