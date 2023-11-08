@@ -4,6 +4,7 @@
     </div>
 
     <div v-else>
+        <TransitionGroup name="content" tag="ul"> 
             <li v-for="c in cc" :key="c.id" class="comments-wrapper">
                 <Comment
                     :comment="c.comment"
@@ -13,6 +14,7 @@
                     @comment-deleted="filterDeleteComments"
                 />
             </li>
+        </TransitionGroup> 
     </div>
 </template>
 <script setup>

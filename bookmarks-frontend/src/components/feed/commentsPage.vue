@@ -1,4 +1,13 @@
 <template>
+  <button
+    type="button"
+    class="flex ml-5 my-2 text-indigo-600 items-center md:ml-10"
+    @click="router.back()"
+  >
+    <IconBack/>
+    <span class="ml-2">Back</span>
+  </button>
+
     <transition-group tag="div" name="content">
         <div v-if="postType === 'ComparisonPost'" class="center-cards">
             <ComparisonPost 
@@ -42,7 +51,7 @@
               :page="p.page"
             />
           </div>
-          <div class="flex content-center px-2">
+          <div v-if="p" class="flex content-center px-2">
             <div class="make-comments-container main">
                 <textarea 
                     class="make-comment-textarea"
@@ -68,10 +77,11 @@
 </template>
 <script setup>
 import { ref, reactive } from 'vue'
-import { useRoute } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 import { urls } from '../../services/urls'; 
 import { db } from '../../services/db';
 import IconSend from '../svg/icon-send.vue';
+import IconBack from '../svg/icon-back.vue';
 import Comments from './posts/comments.vue';
 import ComparisonPost from './posts/comparisonPost.vue';
 import UpdatePost from './posts/updatePost.vue';
@@ -90,6 +100,7 @@ const request = reactive({
 });
 
 const route = useRoute();
+const router = useRouter();
 const { user, post } = route.params;
 
 async function get_post_and_comments() {
@@ -122,5 +133,4 @@ async function postComment(){
         });
     };
 };
-
 </script>
