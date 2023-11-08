@@ -78,29 +78,19 @@
     <Reply 
         v-for="(reply, index) in replies"
         :key="index"
-        :reply="Object.values(reply)[0]"
+        :reply="reply"
         :is-liked-by-current-user="reply.liked_by_current_user"
         @deleted="handleDelete($event)"
     />
 
     <button 
-        v-if="replies.length > 0 && !moreRepliesLoaded"
+        v-if="replies?.length > 0 && !moreRepliesLoaded"
         type="button"
         class="text-indigo-500 font-semibold underline ml-5 mt-2 justify-self-start"
         @click="fetchMoreReplies()"
     >
         View more replies...
     </button>   
-
-    <div v-if="moreRepliesLoaded" class="comments-wrapper">
-        <Reply 
-            v-for="(reply, index) in moreReplies"
-            :key="index"
-            :reply="reply"
-            :is-liked-by-current-user="reply.liked_by_current_user"
-            @deleted="handleDelete($event)"
-        />
-    </div>
 </template>
 <script setup>
 import Reply from './reply.vue';
@@ -153,8 +143,8 @@ async function postReply() {
     };
 
     if(reply.value.length) {
-        await db.post(urls.reviews.createComment(), data, true).then((res) => {
-            replies.value.push(res.data);
+        await db.post(urls.reviews.createComment(), data).then((res) => {
+            replies.value.push({"comment": res.data});
         });
     };
 };
@@ -171,13 +161,13 @@ async function unlikeComment(){
 
 async function fetchMoreReplies() { 
     await db.get(urls.reviews.getMoreComments(props.comment.id)).then((res) => {
-        moreReplies.value = res.data;
+        replies.value = res.data;
         moreRepliesLoaded.value = true;
     })
 }
 
 async function deleteComment(comment_id) {
-    await db.put(urls.reviews.deleteComment(comment_id), null, true).then(() => {
+    await db.put(urls.reviews.deleteComment(comment_id)).then(() => {
         emit('comment-deleted', comment_id)
     })
 }

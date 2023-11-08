@@ -1828,12 +1828,12 @@ class Neo4jDriver():
         
         if result:
             response = result.single()
-            created_date = response["c.created_date"]
             comment_id = response["c.id"]
+            created_date = response["c.created_date"]
         else:
             created_date = None
             comment_id = None
-        return(created_date,comment_id)
+        return(comment_id, created_date)
 
     def get_post(self, post_id, username):
         """
@@ -2037,7 +2037,7 @@ class Neo4jDriver():
                 """
         result = tx.run(query, username=username, post_id=post_id, skip=skip, limit=limit)
         # result = [record for record in result.data()]
-        comment_response = {}
+        comment_response = []
         for response in result:
             comment = Comment(comment_id=response['c']['id'],
                               post_id=post_id,
@@ -2050,10 +2050,9 @@ class Neo4jDriver():
                               liked_by_current_user=response['parent_liked_by_user'],
                               posted_by_current_user=response['parent_posted_by_user'])
             
-            response_entry = {response['c']['id']:
-                              {"comment":comment,
+            response_entry = {"comment":comment,
                                "liked_by_current_user":response['parent_liked_by_user'],
-                               "replies":[]}}
+                               "replies":[]}
             
             if response['top_liked_reply']:
                 reply = Comment(comment_id=response['top_liked_reply']['id'],
@@ -2066,12 +2065,13 @@ class Neo4jDriver():
                                 pinned=response['top_liked_reply']['pinned'],
                                 liked_by_current_user=response['reply_liked_by_user'],
                                 posted_by_current_user=response['reply_posted_by_user'])
-                response_entry[response['c']['id']]['replies'].append({response['top_liked_reply']['id']:
-                                                                       {"comment":reply,
-                                                                        "liked_by_current_user":response["reply_liked_by_user"],
-                                                                        "replies":[]}})
+                response_entry['replies'].append({
+                                            "comment":reply,
+                                            "liked_by_current_user":response["reply_liked_by_user"],
+                                            "replies":[]
+                                        })
 
-            comment_response.update(response_entry)
+            comment_response.append(response_entry)
         return(comment_response)
     
     def add_pinned_comment(self, comment_id, post_id):
@@ -2285,7 +2285,7 @@ class Neo4jDriver():
     def set_post_as_deleted_query(tx, post_id):
         query = """
                 match (pp {id: $post_id})
-                match (postComment:Comment)<-[commentRel:HAS_COMMENT]-(pp)
+                optional match (postComment:Comment)<-[commentRel:HAS_COMMENT]-(pp)
                 set pp.deleted=true
                 set postComment.deleted=true
                 """
@@ -2306,7 +2306,7 @@ class Neo4jDriver():
     def set_comment_as_deleted_query(tx, comment_id):
         query = """
                 match (comment {id: $comment_id})
-                match (commentReply:Comment)-[replyRel:REPLIED_TO]-(comment)
+                optional match (commentReply:Comment)-[replyRel:REPLIED_TO]-(comment)
                 set comment.deleted=true
                 set commentReply.deleted=true
                 """

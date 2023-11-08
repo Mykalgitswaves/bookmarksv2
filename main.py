@@ -663,6 +663,8 @@ async def create_comment(request: Request, current_user: Annotated[User, Depends
     
     comment.create_comment(driver)
 
+    comment.posted_by_current_user = True
+    
     if not comment.id and not comment.created_date:
         raise HTTPException("410"," Gone - This chapter closes, yet its essence endures beyond the veil")
 

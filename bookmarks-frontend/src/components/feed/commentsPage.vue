@@ -42,7 +42,27 @@
               :page="p.page"
             />
           </div>
-          <Comments v-if="p" :comments="comments" :post-id="p.id" :post-username="p.user_username"/>
+          <div class="flex content-center px-2">
+            <div class="make-comments-container main">
+                <textarea 
+                    class="make-comment-textarea"
+                    type="text"
+                    v-model="comment"
+                    placeholder="Be nice, be thoughtful"    
+                />
+
+                <button
+                    class="send-comment-btn" 
+                    type="button"
+                    @click="postComment()"
+                >
+                    <IconSend />
+                </button>
+            </div>
+          </div>
+
+          <Comments v-if="p && comments.length" :comments="comments" :post-id="p.id" :post-username="p.user_username"/>
+
           <div class="mobile-menu-spacer sm:hidden"></div>
     </transition-group>
 </template>
@@ -51,6 +71,7 @@ import { ref, reactive } from 'vue'
 import { useRoute } from 'vue-router';
 import { urls } from '../../services/urls'; 
 import { db } from '../../services/db';
+import IconSend from '../svg/icon-send.vue';
 import Comments from './posts/comments.vue';
 import ComparisonPost from './posts/comparisonPost.vue';
 import UpdatePost from './posts/updatePost.vue';
@@ -78,10 +99,28 @@ async function get_post_and_comments() {
     });
     
     await db.get(urls.reviews.getComments(post), request, true).then((res) => {
-        comments.value.push(...Object.values(res.data))
+        comments.value = res.data
     })
 }
 
 get_post_and_comments();
+
+const comment = ref('');
+const replied_to = ref(null);
+
+async function postComment(){
+    const data = {
+        "post_id": p.value.id,
+        "text": comment.value,
+        "pinned": false,
+        "replied_to": replied_to.value,
+    };
+
+    if(comment.value.length > 1){
+        await db.post(urls.reviews.createComment(), data, true).then((res) => {
+            comments.value.push(res.data)
+        });
+    };
+};
 
 </script>
