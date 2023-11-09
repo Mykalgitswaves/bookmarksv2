@@ -10,7 +10,10 @@
         <div class="card-content-main">
             <div class="c_c_m_inner">
                 <img class="review-image" :src="props.small_img_url" alt="">
-                <p class="text-xl font-semibold my-2 text-indigo-600">{{ props.title }}</p>
+                <p 
+                    class="text-xl font-semibold my-2 text-indigo-600"
+                    @click="router.push(`/feed/${user}/works/${props.book}`)"
+                >{{ props.title }}</p>
                 <p v-if="props.headline.length" class="fancy text-2xl">{{ props.headline }}</p>
             </div>
         </div>
