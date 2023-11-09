@@ -7,7 +7,7 @@
             <div class="comparisons">
                 <div class="comparison">
                     <img class="comparison-image" :src="props.small_img_url[0]" alt="">
-                    <p class="text-xl font-semibold" @click="router.push(`/feed/${user}/works/${props.book[0]}`)">{{ props.book_title[0] }}</p>
+                    <p class="text-xl font-semibold cursor-pointer" @click="router.push(`/feed/${user}/works/${props.book[0]}`)">{{ props.book_title[0] }}</p>
                     <p class="comparison-headline">{{ props.headlines[0] }}</p>
                 </div>
 
@@ -15,7 +15,7 @@
 
                 <div class="comparison">
                     <img class="comparison-image" :src="props.small_img_url[1]" alt="">
-                    <p class="text-xl font-semibold" @click="router.push(`/feed/${user}/works/${props.book[1]}`)">{{ props.book_title[1] }}</p>
+                    <p class="text-xl font-semibold cursor-pointer" @click="router.push(`/feed/${user}/works/${props.book[1]}`)">{{ props.book_title[1] }}</p>
                     <p class="comparison-headline">{{ props.headlines[1] }}</p>
                 </div>
             </div>

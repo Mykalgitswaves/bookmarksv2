@@ -11,7 +11,7 @@
             <div class="c_c_m_inner">
                 <img class="review-image" :src="props.small_img_url" alt="">
                 <p 
-                    class="text-xl font-semibold my-2 text-indigo-600" 
+                    class="text-xl font-semibold my-2 text-indigo-600 cursor-pointer" 
                     @click="router.push(`/feed/${user}/works/${props.book}`)"
                 >{{ props.title }}</p>
                 <p v-if="props.headline.length" class="fancy text-2xl">{{ props.headline }}</p>
