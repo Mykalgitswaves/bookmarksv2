@@ -832,12 +832,16 @@ class Neo4jDriver():
                 gr_id:$gr_id})
                 return b.id
                 """
-        # To avoid None Type errors
+        # To avoid None Type errors. THE IS INSTANCE PART COULD BE TOTALLY USELESS CATCH IS THERE TO CHECK
         if isbn13:
-            isbn13 = isbn13[0]
+            if not isinstance(isbn13,int):
+                print(isbn13)
+                isbn13 = isbn13[0]
 
         if isbn10:
-            isbn10 = isbn10[0]
+            if not isinstance(isbn10,int):
+                print(isbn10)
+                isbn10 = isbn10[0]
         
         result = tx.run(query,
                         title=title, 
@@ -846,8 +850,8 @@ class Neo4jDriver():
                         publication_year=publication_year, 
                         lang=lang, 
                         description=description, 
-                        isbn13=isbn13[0],
-                        isbn10=isbn10[0],
+                        isbn13=isbn13,
+                        isbn10=isbn10,
                         small_img_url=small_img_url,
                         author_names=author_names,
                         google_id=google_id,
@@ -1570,7 +1574,7 @@ class Neo4jDriver():
             Book: book object containing all the metadata
         """
         with self.driver.session() as session:
-            book = session.execute_write(self.get_book_by_google_id_query, google_id)
+            book = session.execute_read(self.get_book_by_google_id_query, google_id)
         return(book)
     @staticmethod
     def get_book_by_google_id_query(tx,google_id):
@@ -1617,6 +1621,91 @@ class Neo4jDriver():
             return(book)
         else:
             return(None)
+        
+    def get_book_by_google_id_flexible(self,google_id):
+        """
+        Finds a book by google id if in db.
+
+        This is the more flexible version, search for the google id in both the ID and google_id fields
+
+        Args:
+            google_id: Google id of the book to pull
+        Returns:
+            Book: book object containing all the metadata
+        """
+        with self.driver.session() as session:
+            book = session.execute_read(self.get_book_by_google_id_flexible_query, google_id)
+        return(book)
+    @staticmethod
+    def get_book_by_google_id_flexible_query(tx,google_id):
+        query = """
+                match (b:Book)
+                WHERE b.id = $google_id OR b.google_id = $google_id
+                match (b)-[r]-(g)
+                return b.gr_id,
+                b.id, 
+                b.img_url, 
+                b.isbn13,
+                b.isbn10,
+                b.lang, 
+                b.originalPublicationYear, 
+                b.pages, 
+                b.small_img_url, 
+                b.description, 
+                b.title,
+                TYPE(r),
+                g.id
+                """
+        result = tx.run(query, google_id=google_id)
+        response = result.single()
+        if response:
+            book = Book(book_id=response["b.id"], 
+                        gr_id=response["b.gr_id"], 
+                        img_url=response["b.img_url"],
+                        small_img_url=response["b.small_img_url"],
+                        pages=response["b.pages"],
+                        publication_year=response["b.originalPublicationYear"],
+                        lang=response["b.lang"],
+                        title=response["b.title"],
+                        description=response["b.description"],
+                        isbn13 = response["b.isbn13"],
+                        isbn10 = response["b.isbn10"],
+                        google_id=google_id)
+            for response in result:
+                if response['TYPE(r)'] == 'HAS_TAG':
+                    book.tags.append(response["g.id"])
+                elif response['TYPE(r)'] == 'HAS_GENRE':
+                    book.genres.append(response["g.id"])
+                elif response['TYPE(r)'] == 'IS_REVIEW_OF':
+                    book.reviews.append(response["g.id"])
+                elif response['TYPE(r)'] == 'WROTE':
+                    book.authors.append(response["g.id"])
+            return(book)
+        else:
+            return(None)
+        
+    def get_id_by_google_id(self,google_id):
+        """
+        Uses the google id to find the id in our db
+        """
+        with self.driver.session() as session:
+            book = session.execute_read(self.get_id_by_google_id_query, google_id)
+        return(book)
+    @staticmethod
+    def get_id_by_google_id_query(tx,google_id):
+        query = """
+                match (b:Book)
+                WHERE b.google_id = $google_id
+                return b.id
+                """
+        result = tx.run(query, google_id=google_id)
+        response = result.single()
+        if response:
+            return response["b.id"]
+        else:
+            return None
+        
+        
     def create_review(self, review_post:ReviewPost):
         """
         Creates a review in the database

@@ -366,8 +366,12 @@ async def get_book_page(book_id: str, background_tasks:BackgroundTasks):
     Endpoint for book page
     """
     if book_id[0] == 'g':
-        book = pull_google_book(book_id, driver)
-        background_tasks.add_task(book.add_to_db,driver)
+        # Checks if the book is already in our database
+        book = driver.get_book_by_google_id_flexible(book_id)
+        if not book:
+            # Pulls the book down otherwise
+            book = pull_google_book(book_id, driver)
+            background_tasks.add_task(book.add_to_db,driver)
     else:
         book = driver.pull_book_node(book_id=book_id)
         
@@ -459,6 +463,10 @@ async def create_review(request: Request,
 
     book_id = response['book_id']
 
+    response = driver.get_id_by_google_id(book_id)
+    if response:
+        book_id = response
+
     review = ReviewPost(
                     post_id='', 
                     book=book_id,
@@ -502,6 +510,11 @@ async def create_update(request: Request,
     response = response['_value']
 
     book_id = response['book_id']
+
+    response = driver.get_id_by_google_id(book_id)
+    if response:
+        book_id = response
+
     update = UpdatePost(post_id='',
                         book=book_id,
                         book_title=response['title'],
@@ -544,10 +557,18 @@ async def create_comparison(request: Request,
     response = response['_value']
 
     if response["book_ids"][0] == response["book_ids"][1]:
-        raise HTTPException("400","Comparisons require two unique books, please select another book for your post.") 
+        raise HTTPException("400","Comparisons require two unique books, please select another book for your post.")
+    
+    book_ids = []
+    for book_id in response['book_ids']:
+        response = driver.get_id_by_google_id(book_id)
+        if response:
+            book_ids.append(response)
+        else:
+            book_ids.append(book_id)
 
     comparison = ComparisonPost(post_id='',
-                                compared_books=response["book_ids"],
+                                compared_books=book_ids,
                                 user_username=current_user.username,
                                 comparators=response['comparator_topics'],
                                 comparator_ids=response['comparator_ids'],
@@ -558,7 +579,7 @@ async def create_comparison(request: Request,
     
     comparison.create_post(driver)
 
-    for book_id in response["book_ids"]:
+    for book_id in book_ids:
         if book_id[0] == "g":
             print("Started background task")
             background_tasks.add_task(update_book_google_id,book_id,driver)
@@ -585,6 +606,9 @@ async def create_recommendation_friend(request: Request,
     response = response['_value']
 
     book_id = response['book_id']
+    response = driver.get_id_by_google_id(book_id)
+    if response:
+        book_id = response
 
     recommendation = RecommendationFriend(post_id='',
                                           book=book_id,
