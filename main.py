@@ -808,3 +808,19 @@ async def set_post_as_deleted(post_id:str, current_user: Annotated[User, Depends
    
     if post_id:
         driver.set_post_as_deleted(post_id)
+
+@app.get("/api/review/{post_id}/pinned_comments")
+async def get_pinned_comments_for_post(post_id: str, current_user: Annotated[User, Depends(get_current_active_user)], skip: int | None = Query(default=None), limit: int | None = Query(default=None)):
+    """
+    Gets the pinned comments on a post
+    Uses skip and limit for pagination
+    """
+    if not current_user:
+        raise HTTPException("401","Unauthorized")
+    if post_id:
+        comments = driver.get_all_pinned_comments_for_post(post_id=post_id,
+                                                    username=current_user.username,
+                                                    skip=skip,
+                                                    limit=limit)
+        
+        return JSONResponse(content={"data": jsonable_encoder(comments)})
