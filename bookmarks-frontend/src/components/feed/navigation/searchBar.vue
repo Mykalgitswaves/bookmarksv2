@@ -4,7 +4,7 @@
                 <input
                     name="searchbar"
                     v-model="searchData"
-                    @keyup="searchRequest(searchData)"
+                    @keyup="debouncedSearchRequest($event)"
                     class="border-solid border-2
                     border-indigo-300 py-2 pl-2 rounded-md" 
                     type="text" placeholder=" What are you looking for?"
@@ -56,7 +56,8 @@
 <script setup>
 import { ref, watch } from 'vue';
 import { searchResultStore } from '@/stores/searchBar.js'; 
-
+import { helpersCtrl } from '../../../services/helpers';
+const { debounce } = helpersCtrl
 const responseBlob = ref(null);
 const searchData = ref('');
 const store = searchResultStore();
@@ -83,10 +84,10 @@ watch(currentFilter, (newValue) => {
 
 
 // Gets own specific search Request from here.
-async function searchRequest(searchData) {
-    if (searchData.length > 1) {
+async function searchRequest() {
+    if (searchData.value.length > 1) {
         try {
-            return await fetch(`http://127.0.0.1:8000/api/search/${searchData}`) 
+            return await fetch(`http://127.0.0.1:8000/api/search/${searchData.value}`) 
                 .then((data) => data.json())
                 .then(res => {
                     responseBlob.value = res.data;
@@ -97,6 +98,8 @@ async function searchRequest(searchData) {
                 return console.error(err);
         }
 }}
+
+const debouncedSearchRequest = debounce(searchRequest, 500, false)
 
 </script>
 
