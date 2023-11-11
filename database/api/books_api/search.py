@@ -25,6 +25,7 @@ class BookSearch():
             for result in response['items']:
                 if 'industryIdentifiers' in result['volumeInfo']:
                     isbn13 = next((item for item in result['volumeInfo']['industryIdentifiers'] if item["type"] == "ISBN_13"), None)
+                    isbn10 = next((item for item in result['volumeInfo']['industryIdentifiers'] if item["type"] == "ISBN_10"), None)
                     if 'imageLinks' in result['volumeInfo']:
                         if "smallThumbnail" in result['volumeInfo']['imageLinks']:
                             small_img_url=result['volumeInfo']['imageLinks']['smallThumbnail']
@@ -70,6 +71,7 @@ class BookSearch():
                                 title=title,
                                 description=description,
                                 isbn13=isbn13['identifier'],
+                                isbn10=isbn10['identifier'],
                                 author_names=author_names,
                                 genre_names=genres,
                                 img_url=thumbnail,

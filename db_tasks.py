@@ -22,8 +22,12 @@ def update_book_google_id(google_id:str, driver):
                 isbn13 = next((item for item in response['volumeInfo']['industryIdentifiers'] if item["type"] == "ISBN_13"), None)
                 if 'identifier' in isbn13:
                     isbn13 = int(isbn13['identifier'])
+                isbn10 = next((item for item in response['volumeInfo']['industryIdentifiers'] if item["type"] == "ISBN_10"), None)
+                if 'identifier' in isbn10:
+                    isbn10 = int(isbn10['identifier'])
             else:
                 isbn13 = None
+                isbn10 = None
                 
             if 'imageLinks' in response['volumeInfo']:
                 if "smallThumbnail" in response['volumeInfo']['imageLinks']:
@@ -72,6 +76,7 @@ def update_book_google_id(google_id:str, driver):
                 "title":title,
                 "description":description,
                 "isbn13":isbn13,
+                "isbn10":isbn10,
                 "author_names":author_names,
                 "genre_names":genres,
                 "img_url":thumbnail,
@@ -87,7 +92,8 @@ def update_book_google_id(google_id:str, driver):
                     set b.id = randomUUID(),
                         b.google_id = $google_id,
                         b.description = $description,
-                        b.isbn13 = $isbn_13,
+                        b.isbn13 = $isbn13,
+                        b.isbn10 = $isbn10
                         b.img_url = $img_url,
                         b.lang = $lang,
                         b.originalPublicationYear = $publication_year,

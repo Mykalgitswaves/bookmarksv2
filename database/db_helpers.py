@@ -366,12 +366,27 @@ class MilestonePost(Review):
 
 
 class Book():
-    def __init__(self, book_id, gr_id=None, 
-                 img_url="", small_img_url="", pages=None, 
-                 publication_year=None, lang="", title="", 
-                 description="", isbn13=None ,genres=[], 
-                 authors=[], tags=[], reviews=[], 
-                 genre_names=[], author_names=[], google_id="",in_database=True):
+    def __init__(self, 
+                 book_id, 
+                 gr_id=None, 
+                 img_url="", 
+                 small_img_url="", 
+                 pages=None, 
+                 publication_year=None, 
+                 lang="", 
+                 title="", 
+                 description="", 
+                 isbn13=None,
+                 isbn10=None,
+                 genres=[], 
+                 authors=[], 
+                 tags=[], 
+                 reviews=[], 
+                 genre_names=[], 
+                 author_names=[], 
+                 google_id="",
+                 in_database=True):
+        
         self.id = book_id
         self.gr_id = gr_id
         self.img_url = img_url
@@ -387,9 +402,11 @@ class Book():
         self.author_names = author_names
         self.tags = tags
         self.reviews = reviews
-        self.isbn13 = isbn13,
-        self.in_database = in_database,
+        self.isbn13 = isbn13
+        self.isbn10 = isbn10
+        self.in_database = in_database
         self.google_id = google_id
+
     def add_tag(self,tag_id, driver):
         """
         Adds a tag to the book
@@ -406,7 +423,7 @@ class Book():
             raise Exception("This relationship already exists")
     def add_to_db(self, driver):
         id = driver.create_book(self.title,self.img_url,self.pages,self.publication_year,self.lang,self.description,self.genres,
-                           self.authors,self.isbn13,self.small_img_url,self.author_names,self.genre_names,self.google_id,self.gr_id)
+                           self.authors,self.isbn13, self.isbn10, self.small_img_url,self.author_names,self.genre_names,self.google_id,self.gr_id)
         self.id = id
 
         
@@ -697,7 +714,8 @@ class Neo4jDriver():
                 match (b)-[r]-(g)
                 return
                 b.img_url, 
-                b.isbn13, 
+                b.isbn13,
+                b.isbn10,
                 b.lang, 
                 b.originalPublicationYear, 
                 b.pages, 
@@ -721,7 +739,8 @@ class Neo4jDriver():
                     lang=response["b.lang"],
                     title=response["b.title"],
                     description=response["b.description"],
-                    isbn13 = response["b.isbn13"])
+                    isbn13 = response["b.isbn13"],
+                    isbn10 = response["b.isbn10"])
         for response in result:
             if response['TYPE(r)'] == 'HAS_TAG':
                 book.tags.append(response["g.id"])
@@ -734,7 +753,7 @@ class Neo4jDriver():
         return(book)
     
     def create_book(self, title, img_url, pages, publication_year, lang, 
-                    description='', genres=[], authors=[], isbn13='', 
+                    description='', genres=[], authors=[], isbn13=None, isbn10=None, 
                     small_img_url='', author_names=[],genre_names=[],google_id="",gr_id=""):
         """
         Creates a book node in the database
@@ -748,7 +767,8 @@ class Neo4jDriver():
             description: Short description of the book
             genres: Genre IDs of the related genres
             authors: Author IDs of the authors who wrote the book
-            isbn13: isbn13 number is applicable
+            isbn13: isbn13 number if applicable
+            isbn10: isbn10 number if applicable
         Returns:
             Book: book object with all related metadata
 
@@ -775,14 +795,25 @@ class Neo4jDriver():
 
         with self.driver.session() as session:
             book_id = session.execute_write(self.create_book_query,
-                                         title, img_url, pages, publication_year, 
-                                         lang, description, genres, authors, 
-                                         isbn13, small_img_url, author_names,google_id,gr_id)
+                                            title, 
+                                            img_url, 
+                                            pages, 
+                                            publication_year, 
+                                            lang, 
+                                            description, 
+                                            genres, 
+                                            authors, 
+                                            isbn13,
+                                            isbn10, 
+                                            small_img_url, 
+                                            author_names,
+                                            google_id,
+                                            gr_id)
         return(book_id)
     @staticmethod
     def create_book_query(tx,title, img_url, 
                           pages, publication_year, lang, 
-                          description, genres, authors, isbn13, 
+                          description, genres, authors, isbn13, isbn10,
                           small_img_url, author_names,google_id,gr_id):
         # Our IDs must start with C to distinguish them from google ids
         query = """
@@ -794,12 +825,19 @@ class Neo4jDriver():
                 lang:$lang, 
                 description:$description, 
                 isbn13:$isbn13,
+                isbn10:$isbn10,
                 small_img_url:$small_img_url,
                 author_names:$author_names,
                 google_id:$google_id,
                 gr_id:$gr_id})
                 return b.id
                 """
+        # To avoid None Type errors
+        if isbn13:
+            isbn13 = isbn13[0]
+
+        if isbn10:
+            isbn10 = isbn10[0]
         
         result = tx.run(query,
                         title=title, 
@@ -809,6 +847,7 @@ class Neo4jDriver():
                         lang=lang, 
                         description=description, 
                         isbn13=isbn13[0],
+                        isbn10=isbn10[0],
                         small_img_url=small_img_url,
                         author_names=author_names,
                         google_id=google_id,
@@ -1541,7 +1580,8 @@ class Neo4jDriver():
                 return b.gr_id,
                 b.id, 
                 b.img_url, 
-                b.isbn13, 
+                b.isbn13,
+                b.isbn10,
                 b.lang, 
                 b.originalPublicationYear, 
                 b.pages, 
@@ -1563,7 +1603,8 @@ class Neo4jDriver():
                         lang=response["b.lang"],
                         title=response["b.title"],
                         description=response["b.description"],
-                        isbn13 = response["b.isbn13"])
+                        isbn13 = response["b.isbn13"],
+                        isbn10 = response["b.isbn10"])
             for response in result:
                 if response['TYPE(r)'] == 'HAS_TAG':
                     book.tags.append(response["g.id"])
