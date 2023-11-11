@@ -144,7 +144,7 @@ async function postReply() {
 
     if(reply.value.length) {
         await db.post(urls.reviews.createComment(), data).then((res) => {
-            replies.value?.push({"comment": res.data});
+            replies.value?.unshift({"comment": res.data});
         });
     };
 };
