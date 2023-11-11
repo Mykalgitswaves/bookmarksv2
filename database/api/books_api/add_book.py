@@ -18,11 +18,11 @@ def pull_google_book(google_id:str, driver):
         response = r.json()
         if 'volumeInfo' in response:
             if 'industryIdentifiers' in response['volumeInfo']:
-                isbn_13 = next((item for item in response['volumeInfo']['industryIdentifiers'] if item["type"] == "ISBN_13"), None)
-                if 'identifier' in isbn_13:
-                    isbn_13 = int(isbn_13['identifier'])
+                isbn13 = next((item for item in response['volumeInfo']['industryIdentifiers'] if item["type"] == "ISBN_13"), None)
+                if 'identifier' in isbn13:
+                    isbn13 = int(isbn13['identifier'])
             else:
-                isbn_13 = None
+                isbn13 = None
                 
             if 'imageLinks' in response['volumeInfo']:
                 if "smallThumbnail" in response['volumeInfo']['imageLinks']:
@@ -70,7 +70,7 @@ def pull_google_book(google_id:str, driver):
                         small_img_url=small_img_url,
                         title=title,
                         description=description,
-                        isbn24=isbn_13,
+                        isbn13=isbn13,
                         author_names=author_names,
                         genre_names=genres,
                         img_url=thumbnail,

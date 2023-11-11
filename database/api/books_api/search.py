@@ -24,62 +24,59 @@ class BookSearch():
         if response["totalItems"] > 0:
             for result in response['items']:
                 if 'industryIdentifiers' in result['volumeInfo']:
-                    isbn_13 = next((item for item in result['volumeInfo']['industryIdentifiers'] if item["type"] == "ISBN_13"), None)
-                    if not isbn_13:
-                        continue
-                    book = driver.find_book_by_isnb13(int(isbn_13['identifier']))
-                    if not book:
-                        if 'imageLinks' in result['volumeInfo']:
-                            if "smallThumbnail" in result['volumeInfo']['imageLinks']:
-                                small_img_url=result['volumeInfo']['imageLinks']['smallThumbnail']
-                            else:
-                                small_img_url=None
-                            if "thumbnail" in result['volumeInfo']['imageLinks']:
-                                thumbnail=result['volumeInfo']['imageLinks']['thumbnail']
-                            else:
-                                thumbnail=None
+                    isbn13 = next((item for item in result['volumeInfo']['industryIdentifiers'] if item["type"] == "ISBN_13"), None)
+                    if 'imageLinks' in result['volumeInfo']:
+                        if "smallThumbnail" in result['volumeInfo']['imageLinks']:
+                            small_img_url=result['volumeInfo']['imageLinks']['smallThumbnail']
                         else:
                             small_img_url=None
+                        if "thumbnail" in result['volumeInfo']['imageLinks']:
+                            thumbnail=result['volumeInfo']['imageLinks']['thumbnail']
+                        else:
                             thumbnail=None
-                        if "title" in result['volumeInfo']:
-                            title=result['volumeInfo']['title']
-                            # print(title)
-                        else:
-                            title=None
-                        if 'description' in result['volumeInfo']: 
-                            description=result['volumeInfo']['description']
-                        else:
-                            description=None
-                        if 'authors' in result['volumeInfo']: 
-                            author_names=result['volumeInfo']['authors']
-                        else:
-                            author_names=None
-                        if 'categories' in result["volumeInfo"]:
-                            genres = result["volumeInfo"]['categories']
-                        else:
-                            genres = []
-                        if 'publishedDate' in result["volumeInfo"]:
-                            publishedDate = result["volumeInfo"]['publishedDate']
-                        else:
-                            publishedDate = None
-                        if 'pageCount' in result["volumeInfo"]:
-                            pageCount = result["volumeInfo"]['pageCount']
-                        else:
-                            pageCount = None
-                        
+                    else:
+                        small_img_url=None
+                        thumbnail=None
+                    if "title" in result['volumeInfo']:
+                        title=result['volumeInfo']['title']
+                        # print(title)
+                    else:
+                        title=None
+                    if 'description' in result['volumeInfo']: 
+                        description=result['volumeInfo']['description']
+                    else:
+                        description=None
+                    if 'authors' in result['volumeInfo']: 
+                        author_names=result['volumeInfo']['authors']
+                    else:
+                        author_names=None
+                    if 'categories' in result["volumeInfo"]:
+                        genres = result["volumeInfo"]['categories']
+                    else:
+                        genres = []
+                    if 'publishedDate' in result["volumeInfo"]:
+                        publishedDate = result["volumeInfo"]['publishedDate']
+                    else:
+                        publishedDate = None
+                    if 'pageCount' in result["volumeInfo"]:
+                        pageCount = result["volumeInfo"]['pageCount']
+                    else:
+                        pageCount = None
+                    
 
 
-                        book = Book("g"+result['id'], 
-                                    small_img_url=small_img_url,
-                                    title=title,
-                                    description=description,
-                                    isbn24=isbn_13['identifier'],
-                                    author_names=author_names,
-                                    genre_names=genres,
-                                    img_url=thumbnail,
-                                    pages=pageCount,
-                                    publication_year=publishedDate,
-                                    in_database=False) 
+                    book = Book("g"+result['id'], 
+                                small_img_url=small_img_url,
+                                title=title,
+                                description=description,
+                                isbn13=isbn13['identifier'],
+                                author_names=author_names,
+                                genre_names=genres,
+                                img_url=thumbnail,
+                                pages=pageCount,
+                                publication_year=publishedDate,
+                                in_database=False)
+                    
                     search_results.append(book)
                     
         else:
