@@ -129,7 +129,7 @@ console.log(props)
 const reply = ref('');
 const isReplying = ref(false);
 const is_liked = ref(props.isLiked);
-const replies = ref(props.replies);
+const replies = ref(props.replies ? props.replies : []);
 const moreRepliesLoaded = ref(false);
 const moreReplies = ref([]);
 const emit = defineEmits();
@@ -144,7 +144,7 @@ async function postReply() {
 
     if(reply.value.length) {
         await db.post(urls.reviews.createComment(), data).then((res) => {
-            replies.value.push({"comment": res.data});
+            replies.value?.push({"comment": res.data});
         });
     };
 };
