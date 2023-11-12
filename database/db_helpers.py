@@ -1395,7 +1395,8 @@ class Neo4jDriver():
                                                        book_small_img=response['b']['small_img_url'],
                                                        user_username=username,
                                                        liked_by_current_user=response['liked_by_current_user'],
-                                                       num_comments=response['num_comments']
+                                                       num_comments=response['num_comments'],
+                                                       likes=post['likes']
                                                       ))
 
         return(output)
