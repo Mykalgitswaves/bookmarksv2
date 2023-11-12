@@ -463,9 +463,9 @@ async def create_review(request: Request,
 
     book_id = response['book_id']
 
-    response = driver.get_id_by_google_id(book_id)
-    if response:
-        book_id = response
+    db_id = driver.get_id_by_google_id(book_id)
+    if db_id:
+        book_id = db_id
 
     review = ReviewPost(
                     post_id='', 
@@ -511,9 +511,9 @@ async def create_update(request: Request,
 
     book_id = response['book_id']
 
-    response = driver.get_id_by_google_id(book_id)
-    if response:
-        book_id = response
+    db_id = driver.get_id_by_google_id(book_id)
+    if db_id:
+        book_id = db_id
 
     update = UpdatePost(post_id='',
                         book=book_id,
@@ -561,9 +561,9 @@ async def create_comparison(request: Request,
     
     book_ids = []
     for book_id in response['book_ids']:
-        response = driver.get_id_by_google_id(book_id)
-        if response:
-            book_ids.append(response)
+        db_id = driver.get_id_by_google_id(book_id)
+        if db_id:
+            book_ids.append(db_id)
         else:
             book_ids.append(book_id)
 
@@ -606,9 +606,9 @@ async def create_recommendation_friend(request: Request,
     response = response['_value']
 
     book_id = response['book_id']
-    response = driver.get_id_by_google_id(book_id)
-    if response:
-        book_id = response
+    db_id = driver.get_id_by_google_id(book_id)
+    if db_id:
+        book_id = db_id
 
     recommendation = RecommendationFriend(post_id='',
                                           book=book_id,
