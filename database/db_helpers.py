@@ -1686,7 +1686,7 @@ class Neo4jDriver():
         
     def get_id_by_google_id(self,google_id):
         """
-        Uses the google id to find the id in our db
+        Uses the google id to find the id, title, and small_img_url in our db
         """
         with self.driver.session() as session:
             book = session.execute_read(self.get_id_by_google_id_query, google_id)
@@ -1696,12 +1696,12 @@ class Neo4jDriver():
         query = """
                 match (b:Book)
                 WHERE b.google_id = $google_id
-                return b.id
+                return b.id, b.title, b.small_img_url
                 """
         result = tx.run(query, google_id=google_id)
         response = result.single()
         if response:
-            return response["b.id"]
+            return ({"id":response["b.id"], "title":response["b.title"], "small_img_url":response["b.small_img_url"]})
         else:
             return None
         

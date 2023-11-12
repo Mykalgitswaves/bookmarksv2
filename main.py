@@ -462,17 +462,21 @@ async def create_review(request: Request,
     response = response['_value']
 
     book_id = response['book_id']
+    small_img_url = response['small_img_url']
+    title = response['title']
 
-    db_id = driver.get_id_by_google_id(book_id)
-    if db_id:
-        book_id = db_id
+    db_book = driver.get_id_by_google_id(book_id)
+    if db_book:
+        book_id = db_book['id']
+        small_img_url = db_book['small_img_url']
+        title = db_book['title']
 
     review = ReviewPost(
                     post_id='', 
                     book=book_id,
                     user_username=current_user.username,
-                    book_title=response['title'],
-                    book_small_img=response['small_img_url'],
+                    book_title=title,
+                    book_small_img=small_img_url,
                     headline=response['headline'],
                     questions=response['questions'],
                     question_ids=response['ids'],
@@ -510,15 +514,19 @@ async def create_update(request: Request,
     response = response['_value']
 
     book_id = response['book_id']
+    small_img_url = response['small_img_url']
+    title = response['title']
 
-    db_id = driver.get_id_by_google_id(book_id)
-    if db_id:
-        book_id = db_id
-
+    db_book = driver.get_id_by_google_id(book_id)
+    if db_book:
+        book_id = db_book['id']
+        small_img_url = db_book['small_img_url']
+        title = db_book['title']
+        
     update = UpdatePost(post_id='',
                         book=book_id,
-                        book_title=response['title'],
-                        book_small_img=response['small_img_url'],
+                        book_title=title,
+                        book_small_img=small_img_url,
                         user_username=current_user.username,
                         headline=response['headline'],
                         page=response['page'],
@@ -560,12 +568,22 @@ async def create_comparison(request: Request,
         raise HTTPException("400","Comparisons require two unique books, please select another book for your post.")
     
     book_ids = []
-    for book_id in response['book_ids']:
-        db_id = driver.get_id_by_google_id(book_id)
-        if db_id:
-            book_ids.append(db_id)
+    small_image_urls = []
+    titles = []
+    
+    books_metadata = zip(response['book_ids'],response['book_small_imgs'],response['book_titles'])
+
+    for book_id, small_image_url, title in books_metadata:
+        db_book = driver.get_id_by_google_id(book_id)
+        if db_book:
+            book_ids.append(db_book['id'])
+            small_image_urls.append(db_book['small_img_url'])
+            titles.append(db_book['titles'])
         else:
             book_ids.append(book_id)
+            small_image_urls.append(small_image_url)
+            titles.append(title)
+            
 
     comparison = ComparisonPost(post_id='',
                                 compared_books=book_ids,
@@ -574,8 +592,8 @@ async def create_comparison(request: Request,
                                 comparator_ids=response['comparator_ids'],
                                 responses=response['responses'],
                                 book_specific_headlines=response['book_specific_headlines'],
-                                book_title=response['book_titles'],
-                                book_small_img=response['book_small_imgs'])
+                                book_title=titles,
+                                book_small_img=small_image_urls)
     
     comparison.create_post(driver)
 
@@ -606,9 +624,14 @@ async def create_recommendation_friend(request: Request,
     response = response['_value']
 
     book_id = response['book_id']
-    db_id = driver.get_id_by_google_id(book_id)
-    if db_id:
-        book_id = db_id
+    small_img_url = response['small_img_url']
+    title = response['title']
+
+    db_book = driver.get_id_by_google_id(book_id)
+    if db_book:
+        book_id = db_book['id']
+        small_img_url = db_book['small_img_url']
+        title = db_book['title']
 
     recommendation = RecommendationFriend(post_id='',
                                           book=book_id,
@@ -616,8 +639,8 @@ async def create_recommendation_friend(request: Request,
                                           to_user_username=response['to_user_username'],
                                           from_user_text=response['from_user_text'],
                                           to_user_text=response['to_user_text'],
-                                          book_title=response['title'],
-                                          book_small_img=response['small_img_url'],)
+                                          book_title=title,
+                                          book_small_img=small_img_url)
     
     recommendation.create_post(driver)
 
