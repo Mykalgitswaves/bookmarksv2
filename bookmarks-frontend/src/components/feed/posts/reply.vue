@@ -15,7 +15,7 @@
                 >
                     <IconLike/>
                     <span class="ml-2">
-                        {{ commentLikes }} likes
+                        {{ commentLikesFormatted }}
                     </span>
                 </button>
 
@@ -50,7 +50,7 @@ import IconPin from '../../svg/icon-pin.vue';
 import IconLike from '../../svg/icon-like.vue';
 import IconTrash from '../../svg/icon-trash.vue';
 
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 import { db } from '../../../services/db';
 import { urls } from '../../../services/urls';
 
@@ -68,13 +68,26 @@ const props = defineProps({
 console.log(props);
 const is_liked = ref(props.reply?.liked_by_current_user);
 const commentLikes = ref(props.reply?.likes)
-
 const emit = defineEmits();
 
+const commentLikesFormatted = computed(() => {
+    if(commentLikes.value === 1) {
+        return `${commentLikes.value} like` 
+    } else {
+        return `${commentLikes.value} likes`
+    }
+})
+
 async function likeComment() {
-    is_liked.value = true;
-    commentLikes.value += 1
-    await db.put(urls.reviews.likeComment(props.reply?.id), null, true);
+    if(is_liked.value === false){
+        is_liked.value = true;
+        commentLikes.value += 1
+        await db.put(urls.reviews.likeComment(props.reply?.id), null, true);
+    } else {
+        is_liked.value = false;
+        commentLikes.value -= 1
+        await db.put(urls.reviews.unlikeComment(props.reply?.id), null, true);
+    }
 }
 
 async function deleteReply(post_id) { 

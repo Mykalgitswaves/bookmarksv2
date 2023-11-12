@@ -22,11 +22,8 @@
                     @click="is_liked ? unlikeComment() : likeComment()"
                 >
                     <IconLike/>
-                    <span
-                        v-if="props.comment?.likes?.length" 
-                        class="ml-2 text-indigo-500 italic"
-                    >
-                        {{ props.comment?.likes }}
+                    <span class="ml-2 text-indigo-500 italic">
+                        {{ commentLikesFormatted }} 
                     </span>
                 </button>
 
@@ -86,7 +83,7 @@
     <button 
         v-if="props.comment.num_replies > 1 && !moreRepliesLoaded"
         type="button"
-        class="text-indigo-500 font-semibold underline ml-5 mt-2 justify-self-start"
+        class="text-indigo-500 font-semibold underline ml-5 mt-2 text-start"
         @click="fetchMoreReplies()"
     >
         View {{ num_replies - 1 }} more replies...
@@ -140,7 +137,16 @@ const is_liked = ref(props.isLiked);
 const replies = ref(props.replies ? props.replies.map((r) => r.comment) : []);
 const moreRepliesLoaded = ref(false);
 const moreReplies = ref([]);
-const commentLikes = ref(props.likes);
+const commentLikes = ref(props.comment.likes);
+
+const commentLikesFormatted = computed(() => {
+    if(commentLikes.value === 1) {
+        return `${commentLikes.value} like` 
+    } else {
+        return `${commentLikes.value} likes`
+    }
+})
+
 const num_replies = ref(props.comment?.num_replies);
 const emit = defineEmits();
 
@@ -154,7 +160,7 @@ async function postReply() {
 
     if(reply.value.length) {
         await db.post(urls.reviews.createComment(), data).then((res) => {
-            replies.value?.unshift({"comment": res.data});
+            replies.value?.unshift(res.data);
             isReplying.value = false;
             num_replies.value += 1;
         });
@@ -188,7 +194,7 @@ async function deleteComment(comment_id) {
 
 
 function handleDelete(event) {
-    moreReplies.value = moreReplies.value.filter((r) => r !== event)
+    replies.value = replies.value.filter((r) => r.id !== event);
 }
 
 </script>
