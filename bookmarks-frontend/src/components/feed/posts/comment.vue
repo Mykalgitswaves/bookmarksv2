@@ -84,7 +84,7 @@
     />
 
     <button 
-        v-if="props.num_replies > 1 && !moreRepliesLoaded"
+        v-if="props.comment.num_replies > 1 && !moreRepliesLoaded"
         type="button"
         class="text-indigo-500 font-semibold underline ml-5 mt-2 justify-self-start"
         @click="fetchMoreReplies()"
@@ -137,7 +137,7 @@ console.log(props)
 const reply = ref('');
 const isReplying = ref(false);
 const is_liked = ref(props.isLiked);
-const replies = ref(props.replies ? props.replies : []);
+const replies = ref(props.replies ? props.replies.map((r) => r.comment) : []);
 const moreRepliesLoaded = ref(false);
 const moreReplies = ref([]);
 const commentLikes = ref(props.likes);

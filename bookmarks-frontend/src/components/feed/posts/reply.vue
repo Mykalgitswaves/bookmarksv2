@@ -2,11 +2,10 @@
     <div class="reply comment" 
     :class="{
         'liked': is_liked,
-        'op': props.reply.comment.posted_by_current_user 
+        'op': props.reply?.posted_by_current_user 
     }">
         <div class="comment-inner">
-            <p v-if="props.reply.comment">{{ props.reply?.comment?.text }}</p>
-            <p v-if="props.reply.text">{{ props.reply?.text }}</p>
+            <p v-if="props.reply">{{ props.reply?.text }}</p>
 
             <div class="comment-footer">
                 <button 
@@ -27,10 +26,10 @@
                 >
                     <IconPin/>
                     <span
-                        v-if="props.reply?.comment.likes?.length" 
+                        v-if="props.reply?.likes" 
                         class="ml-2 text-indigo-500 italic"
                     >
-                        {{ props.reply?.comment.likes }}
+                        {{ props.reply?.likes }}
                     </span>
                 </button>
 
@@ -38,7 +37,7 @@
                     class="ml-5 flex items-center justify-end text-red-600"
                     type="button"
                     role="delete"
-                    @click="deleteReply(props.reply.id)"
+                    @click="deleteReply(props.reply?.id)"
                 >
                     <IconTrash/>
                 </button>
@@ -67,15 +66,15 @@ const props = defineProps({
 });
 
 console.log(props);
-const is_liked = ref(props.reply.comment.liked_by_current_user);
-const commentLikes = ref(props.reply.comment.likes)
+const is_liked = ref(props.reply?.liked_by_current_user);
+const commentLikes = ref(props.reply?.likes)
 
 const emit = defineEmits();
 
 async function likeComment() {
     is_liked.value = true;
     commentLikes.value += 1
-    await db.put(urls.reviews.likeComment(props.reply.comment.id), null, true);
+    await db.put(urls.reviews.likeComment(props.reply?.id), null, true);
 }
 
 async function deleteReply(post_id) { 
