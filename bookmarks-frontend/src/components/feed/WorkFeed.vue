@@ -112,6 +112,7 @@
               :created_at="post.created_date"
               :id="post.id"
               :username="post.user_username"
+              :likes="post.likes"
             />
           </div>
 
@@ -129,6 +130,7 @@
               :spoilers="post.spoilers"
               :username="post.user_username"
               :small_img_url="post.book_small_img"
+              :likes="post.likes"
             />
           </div>
           <div v-if="!filterOptions[2].is_active" class="center-cards">
@@ -144,6 +146,7 @@
               :username="post.user_username"
               :small_img_url="post.book_small_img"
               :page="post.page"
+              :likes="post.likes"
             />
           </div>
         </TransitionGroup>

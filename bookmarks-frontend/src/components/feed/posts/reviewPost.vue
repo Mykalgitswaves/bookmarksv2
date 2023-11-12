@@ -54,10 +54,10 @@
                 type="button" 
                 class="text-slate-600 flex items-center"
                 :class="{'is-liked': isLiked}"
-                @click="isLiked = !isLiked"
+                @click="likePost()"
             >
                 <IconLike/>
-                <span class="ml-2">Like</span>
+                <span class="ml-2">{{ postLikes }} likes</span>
             </button>
         </div>
     </div> 
@@ -65,6 +65,8 @@
 <script setup>
 import { ref } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
+import { db } from '../../../services/db';
+import { urls } from '../../../services/urls';
 import IconLike from '../../svg/icon-like.vue';
 import IconComment from '../../svg/icon-comment.vue';
 import IconBrain from '../../svg/icon-brain.vue';
@@ -94,6 +96,10 @@ const props = defineProps({
         type: String,
         required: true,
     },
+    likes: {
+        type: Number,
+        required: false,
+    },
     question_ids: {
         type: Array,
         required: true,
@@ -114,11 +120,25 @@ const props = defineProps({
 });
 
 const isLiked = ref(false);
+const postLikes = ref(props.likes);
 
 const router = useRouter();
 const route = useRoute();
 console.log(props.book)
 const { user } = route.params
+
+async function likePost() {
+    isLiked.value = !isLiked.value;
+    if(isLiked.value === true) {
+        await db.put(urls.reviews.likePost(props.id), null, true).then(() => {
+            postLikes.value += 1;
+        })
+    } else {
+        await db.put(urls.reviews.unlikePost(props.id), null, true).then(() => {
+            postLikes.value -= 1;
+        })
+    }
+}
 
 function navigateToCommentPage() {
     router.push(`/feed/${user}/post/${props.id}`);

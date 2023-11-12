@@ -717,8 +717,8 @@ async def create_comment(request: Request, current_user: Annotated[User, Depends
 
     return JSONResponse(content={"data": jsonable_encoder(comment)})
 
-@app.post("/api/review/{post_id}/like") # NOT SURE IF THIS MAKES ANY SENSE @MICHAEL
-async def like_post(request: Request, post_id: str, current_user: Annotated[User, Depends(get_current_active_user)]):
+@app.put("/api/review/{post_id}/like") # NOT SURE IF THIS MAKES ANY SENSE @MICHAEL
+async def like_post(post_id: str, current_user: Annotated[User, Depends(get_current_active_user)]):
     """
     Adds a like to a post. Take the following format.
     """
@@ -727,7 +727,7 @@ async def like_post(request: Request, post_id: str, current_user: Annotated[User
         raise HTTPException("401","Unauthorized")
 
     if post_id:
-        driver.add_liked_post(current_user,post_id)
+        driver.add_liked_post(current_user.username, post_id)
 
 @app.put("/api/review/{comment_id}/like") # NOT SURE IF THIS MAKES ANY SENSE @MICHAEL
 async def like_comment(comment_id:str, current_user: Annotated[User, Depends(get_current_active_user)]):
