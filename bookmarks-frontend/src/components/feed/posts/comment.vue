@@ -19,7 +19,7 @@
                 <button 
                     class="ml-5 flex items-center justify-end"
                     type="button"
-                    @click="is_liked ? unlikeComment() : likeComment()"
+                    @click="likeComment()"
                 >
                     <IconLike/>
                     <span class="ml-2 text-indigo-500 italic">
@@ -129,14 +129,11 @@ const props = defineProps({
     }
 });
 
-console.log(props)
-
 const reply = ref('');
 const isReplying = ref(false);
-const is_liked = ref(props.isLiked);
+const is_liked = ref(props.comment.liked_by_current_user);
 const replies = ref(props.replies ? props.replies.map((r) => r.comment) : []);
 const moreRepliesLoaded = ref(false);
-const moreReplies = ref([]);
 const commentLikes = ref(props.comment.likes);
 
 const commentLikesFormatted = computed(() => {
@@ -168,16 +165,16 @@ async function postReply() {
 };
 
 async function likeComment() {
-    is_liked.value = true;
-    commentLikes.value += 1
-    await db.put(urls.reviews.likeComment(props.comment.id));
+    if(is_liked.value === false) {
+        is_liked.value = true;
+        commentLikes.value += 1
+        await db.put(urls.reviews.likeComment(props.comment.id));
+    } else {
+        is_liked.value = false;
+        commentLikes.value -= 1;
+        await db.put(urls.reviews.unlikeComment(props.comment.id))    
+    }
 };
-
-async function unlikeComment(){
-    is_liked.value = false;
-    commentLikes.value -= 1;
-    await db.put(urls.reviews.unlikeComment(props.comment.id))
-}
 
 async function fetchMoreReplies() { 
     await db.get(urls.reviews.getMoreComments(props.comment.id)).then((res) => {
@@ -194,7 +191,9 @@ async function deleteComment(comment_id) {
 
 
 function handleDelete(event) {
-    replies.value = replies.value.filter((r) => r.id !== event);
+    replies.value = replies.value.filter((r) => {
+        r.id !== event
+    });
 }
 
 </script>
