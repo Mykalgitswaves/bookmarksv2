@@ -89,7 +89,7 @@
         class="text-indigo-500 font-semibold underline ml-5 mt-2 justify-self-start"
         @click="fetchMoreReplies()"
     >
-        View more replies...
+        View {{ num_replies - 1 }} more replies...
     </button>   
 </template>
 <script setup>
@@ -141,6 +141,7 @@ const replies = ref(props.replies ? props.replies.map((r) => r.comment) : []);
 const moreRepliesLoaded = ref(false);
 const moreReplies = ref([]);
 const commentLikes = ref(props.likes);
+const num_replies = ref(props.comment?.num_replies);
 const emit = defineEmits();
 
 async function postReply() {
@@ -155,6 +156,7 @@ async function postReply() {
         await db.post(urls.reviews.createComment(), data).then((res) => {
             replies.value?.unshift({"comment": res.data});
             isReplying.value = false;
+            num_replies.value += 1;
         });
     };
 };
@@ -173,7 +175,7 @@ async function unlikeComment(){
 
 async function fetchMoreReplies() { 
     await db.get(urls.reviews.getMoreComments(props.comment.id)).then((res) => {
-        replies.value = res.data;
+        replies.value = res.data.slice(1, res.data.length + 1);
         moreRepliesLoaded.value = true;
     })
 }
