@@ -2536,7 +2536,7 @@ class Neo4jDriver():
                 """
         result = tx.run(query, username=username, post_id=post_id, skip=skip, limit=limit)
         # result = [record for record in result.data()]
-        comment_response = {}
+        comment_response = []
         for response in result:
             comment = Comment(comment_id=response['c']['id'],
                               post_id=post_id,
@@ -2550,10 +2550,9 @@ class Neo4jDriver():
                               posted_by_current_user=response['parent_posted_by_user'],
                               num_replies=response['num_replies'])
             
-            response_entry = {response['c']['id']:
-                              {"comment":comment,
+            response_entry = {"comment":comment,
                                "liked_by_current_user":response['parent_liked_by_user'],
-                               "replies":[]}}
+                               "replies":[]}
             
             if response['top_liked_reply']:
                 reply = Comment(comment_id=response['top_liked_reply']['id'],
@@ -2566,12 +2565,11 @@ class Neo4jDriver():
                                 pinned=response['top_liked_reply']['pinned'],
                                 liked_by_current_user=response['reply_liked_by_user'],
                                 posted_by_current_user=response['reply_posted_by_user'])
-                response_entry[response['c']['id']]['replies'].append({response['top_liked_reply']['id']:
-                                                                       {"comment":reply,
-                                                                        "liked_by_current_user":response["reply_liked_by_user"],
-                                                                        "replies":[]}})
+                response_entry['replies'].append({"comment":reply,
+                                                 "liked_by_current_user":response["reply_liked_by_user"],
+                                                 "replies":[]})
 
-            comment_response.update(response_entry)
+            comment_response.append(response_entry)
         return(comment_response)
 
     def close(self):
