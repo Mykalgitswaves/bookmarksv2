@@ -2177,12 +2177,12 @@ class Neo4jDriver():
                 // Find the user who commented the reply
                 OPTIONAL MATCH (replyCommenter:User)-[:COMMENTED]->(rc)
                 // Check if user with <username> has liked the parent comment
-                OPTIONAL MATCH (u)-[likedParent:LIKES]->(c)
+                OPTIONAL MATCH (uu)-[likedParent:LIKES]->(c)
                 // Check if user with <username> has liked the reply
-                OPTIONAL MATCH (u)-[likedReply:LIKES]->(rc)
-                WITH c, rr, r, rc, rrr, u, likedParent, likedReply, commenter, replyCommenter, num_replies
+                OPTIONAL MATCH (uu)-[likedReply:LIKES]->(rc)
+                WITH c, rr, r, rc, rrr, uu, likedParent, likedReply, commenter, replyCommenter, num_replies
                 ORDER BY rc.likes DESC, rc.created_date ASC
-                WITH c, rr, r, COLLECT(rc)[0] AS top_liked_reply, COLLECT(rrr)[0] AS topLikedRel, u, 
+                WITH c, rr, r, COLLECT(rc)[0] AS top_liked_reply, COLLECT(rrr)[0] AS topLikedRel, uu, 
                     COLLECT(likedParent)[0] AS likedParentRel, COLLECT(likedReply)[0] AS likedReplyRel, 
                     commenter, COLLECT(replyCommenter)[0] AS top_reply_commenter, num_replies
                 RETURN c, top_liked_reply,
