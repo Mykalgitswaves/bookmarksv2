@@ -2123,7 +2123,7 @@ class Neo4jDriver():
             match (currentUser:User {username:$username})
             match (cr:Comment {deleted:false})-[REPLIED_TO]->(c:Comment {id: $comment_id, deleted:false})
             match (p {deleted:false})-[HAS_COMMENT]->(cr)
-            match (commenter:User)-[POSTED]->(cr)
+            match (commenter:User)-[COMMENTED]->(cr)
             optional match (currentUser)-[likedReply:LIKES]->(cr)
             return cr, commenter.username, p.id,
             CASE WHEN likedReply IS NOT NULL THEN true ELSE false END AS liked_by_current_user,
