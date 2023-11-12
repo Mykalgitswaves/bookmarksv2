@@ -1730,7 +1730,8 @@ class Neo4jDriver():
                                 question_ids:$question_ids,
                                 responses:$responses,
                                 spoilers:$spoilers,
-                                deleted:false})
+                                deleted:false,
+                                likes:0})
                 create (u)-[p:POSTED]->(r)
                 create (r)-[pp:POST_FOR_BOOK]->(b)
                 return r.created_date, r.id
@@ -1774,7 +1775,8 @@ class Neo4jDriver():
                             headline:$headline,
                             response:$response,
                             spoiler:$spoiler,
-                            deleted:false})
+                            deleted:false,
+                            likes:0})
             create (u)-[p:POSTED]->(d)
             create (d)-[pp:POST_FOR_BOOK]->(b)
             return d.created_date, d.id
@@ -1818,7 +1820,8 @@ class Neo4jDriver():
                             comparators:$comparators,
                             responses:$responses,
                             book_specific_headlines:$book_specific_headlines,
-                            deleted:false})
+                            deleted:false,
+                            likes:0})
 
         create (u)-[p:POSTED]->(c)
         create (c)-[pp:POST_FOR_BOOK]->(b)
@@ -1867,7 +1870,8 @@ class Neo4jDriver():
                                         created_date:datetime(),
                                         from_user_text:$from_user_text,
                                         to_user_text:$to_user_text,
-                                        deleted:false})
+                                        deleted:false,
+                                        likes:0})
         create (u)-[p:POSTED]->(r)
         create (r)-[rr:RECOMMENDED_TO]->(f)
         create (r)-[pp:POST_FOR_BOOK]->(b)
@@ -1906,7 +1910,8 @@ class Neo4jDriver():
         create (m:Milestone {id:randomUUID(),
                             created_date:datetime(),
                             num_books:$num_books,
-                            deleted:false
+                            deleted:false,
+                            likes:0
         })
         create (u)-[r:POSTED]->(m)
         return m.created_date, m.id
