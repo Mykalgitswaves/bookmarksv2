@@ -188,7 +188,7 @@ ul:has(.comments-wrapper) {
   justify-self: center;
 }
 
-.comment.liked {
+.comment.liked, .comment.reply.op.liked {
   color: #4f46e5;
   border-color: #4f46e5;
   background-color: #f8fafc;
@@ -219,7 +219,11 @@ ul:has(.comments-wrapper) {
   margin-bottom: 1.25rem;
 }
 
-.comment:hover {
+.comment.reply.op {
+  border-color: rgb(211, 219, 244);
+}
+
+.comment:hover, .comment.reply.op:hover {
   border-color: #c7d2fe;
 }
 

@@ -13,6 +13,8 @@
               :created_at="p.created_date"
               :id="p.id"
               :username="p.user_username"
+              :num_replies="p.num_replies"
+              :likes="p.likes"
             />
           </div>
 
@@ -28,6 +30,8 @@
               :spoilers="p.spoilers"
               :username="p.user_username"
               :small_img_url="p.book_small_img"
+              :num_replies="p.num_replies"
+              :likes="p.likes"
             />
           </div>
           <div v-if="postType === 'UpdatePost'" class="center-cards">
@@ -41,6 +45,8 @@
               :username="p.user_username"
               :small_img_url="p.book_small_img"
               :page="p.page"
+              :num_replies="p.num_replies"
+              :likes="p.likes"
             />
           </div>
           <div v-if="p" class="flex content-center px-2">

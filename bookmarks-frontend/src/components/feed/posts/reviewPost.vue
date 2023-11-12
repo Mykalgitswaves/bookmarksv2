@@ -1,5 +1,5 @@
 <template>
-<div class="card" :class="{'card-is-liked': isLiked}">
+<div class="card" :class="{'card-is-liked': isLiked || props.liked_by_current_user}">
         <div class="card-header">
             <p class="text-slate-600 text-center">
                 <span class="text-indigo-600 cursor-pointer">{{ props.username }}'s</span>
@@ -47,7 +47,10 @@
                 @click="navigateToCommentPage()"
             >
                 <IconComment/>
-                <span class="ml-2">comments</span>
+                
+                <span class="ml-2">
+                    {{ props.num_comments }} comments
+                </span>
             </button>
         
             <button 
@@ -116,6 +119,14 @@ const props = defineProps({
     small_img_url: {
         type: String,
         required: true
+    },
+    liked_by_current_user: {
+        type: Boolean,
+        required: true,
+    },
+    num_comments: {
+        type: Number,
+        required: true,
     }
 });
 

@@ -10,6 +10,8 @@
                     :comment="c.comment"
                     :is-liked="c.liked_by_current_user"
                     :replies="c.replies"
+                    :num_replies="c.num_replies"
+                    :likes="c.likes"
                     :post-username="props.userUsername"
                     @comment-deleted="filterDeleteComments"
                 />

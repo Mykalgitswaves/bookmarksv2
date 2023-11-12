@@ -1,5 +1,5 @@
 <template>
-    <div class="my-3 comment" :class="{'is-replying': isReplying, 'liked': is_liked}">
+    <div class="my-3 comment" :class="{'is-replying': isReplying, 'liked': (is_liked || comment.liked_by_current_user)}">
         <div class="comment-inner">
             <p class="">{{ props.comment.text }}</p>
             <div class="comment-footer">
@@ -40,7 +40,7 @@
                         v-if="props.comment?.likes?.length" 
                         class="ml-2 text-indigo-500 italic"
                     >
-                        {{ props.comment?.likes }}
+                        {{ commentLikes }}
                     </span>
                 </button>
 
@@ -84,7 +84,7 @@
     />
 
     <button 
-        v-if="replies?.length > 0 && !moreRepliesLoaded"
+        v-if="props.num_replies > 1 && !moreRepliesLoaded"
         type="button"
         class="text-indigo-500 font-semibold underline ml-5 mt-2 justify-self-start"
         @click="fetchMoreReplies()"
@@ -122,6 +122,14 @@ const props = defineProps({
         type: String,
         required: false,
     },
+    num_replies: {
+        type: Number,
+        required: true,
+    },
+    likes: {
+        type: Number,
+        required: true
+    }
 });
 
 console.log(props)
@@ -132,6 +140,7 @@ const is_liked = ref(props.isLiked);
 const replies = ref(props.replies ? props.replies : []);
 const moreRepliesLoaded = ref(false);
 const moreReplies = ref([]);
+const commentLikes = ref(props.likes);
 const emit = defineEmits();
 
 async function postReply() {
@@ -145,17 +154,20 @@ async function postReply() {
     if(reply.value.length) {
         await db.post(urls.reviews.createComment(), data).then((res) => {
             replies.value?.unshift({"comment": res.data});
+            isReplying.value = false;
         });
     };
 };
 
 async function likeComment() {
     is_liked.value = true;
+    commentLikes.value += 1
     await db.put(urls.reviews.likeComment(props.comment.id));
 };
 
 async function unlikeComment(){
     is_liked.value = false;
+    commentLikes.value -= 1;
     await db.put(urls.reviews.unlikeComment(props.comment.id))
 }
 

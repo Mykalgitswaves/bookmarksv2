@@ -737,7 +737,6 @@ async def like_comment(comment_id:str, current_user: Annotated[User, Depends(get
 
     if not current_user:
         raise HTTPException("401","Unauthorized")
-
     if comment_id:
         driver.add_liked_comment(current_user.username, comment_id)
 

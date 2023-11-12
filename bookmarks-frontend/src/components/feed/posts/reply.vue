@@ -1,5 +1,9 @@
 <template>
-    <div class="reply comment">
+    <div class="reply comment" 
+    :class="{
+        'liked': is_liked,
+        'op': props.reply.comment.posted_by_current_user 
+    }">
         <div class="comment-inner">
             <p v-if="props.reply.comment">{{ props.reply?.comment?.text }}</p>
             <p v-if="props.reply.text">{{ props.reply?.text }}</p>
@@ -8,13 +12,11 @@
                 <button 
                     class="ml-5 flex items-center justify-end"
                     type="button"
+                    @click="likeComment()"
                 >
                     <IconLike/>
-                    <span
-                        v-if="props.reply?.comment?.likes?.length" 
-                        class="ml-2 text-indigo-500 italic"
-                    >
-                        {{ props.reply?.comment?.likes }}
+                    <span class="ml-2">
+                        {{ commentLikes }} likes
                     </span>
                 </button>
 
@@ -65,8 +67,16 @@ const props = defineProps({
 });
 
 console.log(props);
+const is_liked = ref(props.reply.comment.liked_by_current_user);
+const commentLikes = ref(props.reply.comment.likes)
 
 const emit = defineEmits();
+
+async function likeComment() {
+    is_liked.value = true;
+    commentLikes.value += 1
+    await db.put(urls.reviews.likeComment(props.reply.comment.id), null, true);
+}
 
 async function deleteReply(post_id) { 
     await db.put(urls.reviews.deleteComment(post_id), null).then(() => {
