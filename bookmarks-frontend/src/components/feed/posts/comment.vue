@@ -1,7 +1,7 @@
 <template>
     <div class="my-3 comment" :class="{'is-replying': isReplying, 'liked': (is_liked || comment.liked_by_current_user)}">
         <div class="comment-inner">
-            <p class="">{{ props.comment.text }}</p>
+            <p class="comment-text">{{ props.comment.text }}</p>
             <div class="comment-footer">
                 <button 
                     class=""
@@ -22,8 +22,11 @@
                     @click="likeComment()"
                 >
                     <IconLike/>
-                    <span class="ml-2 text-indigo-500 italic">
-                        {{ commentLikesFormatted }} 
+                    <span 
+                        class="ml-2 text-sm"
+                        :class="{'text-indigo-500': is_liked}"    
+                    >
+                        {{ commentLikes }} 
                     </span>
                 </button>
 
@@ -33,11 +36,8 @@
                     type="button"
                 >
                     <IconPin/>
-                    <span
-                        v-if="props.comment?.likes?.length" 
-                        class="ml-2 text-indigo-500 italic"
-                    >
-                        {{ commentLikes }}
+                    <span class="ml-1 text-sm">
+                        pin
                     </span>
                 </button>
 
@@ -126,6 +126,10 @@ const props = defineProps({
     likes: {
         type: Number,
         required: true
+    },
+    pinned: {
+        type: Boolean,
+        required: false,
     }
 });
 
@@ -189,11 +193,14 @@ async function deleteComment(comment_id) {
     })
 }
 
-
 function handleDelete(event) {
     replies.value = replies.value.filter((r) => {
         r.id !== event
     });
+}
+
+async function pinComment(comment_id, post_id) {
+    
 }
 
 </script>

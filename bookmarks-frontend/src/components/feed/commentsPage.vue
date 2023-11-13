@@ -68,7 +68,7 @@
             </div>
           </div>
 
-          <Comments v-if="p && comments.length" :comments="comments" :post-id="p.id" :post-username="p.user_username"/>
+          <Comments v-if="p" :comments="comments" :post-id="p.id" :post-username="p.user_username" @comment-deleted="commentDeleted"/>
 
           <div class="mobile-menu-spacer sm:hidden"></div>
     </transition-group>
@@ -125,11 +125,16 @@ async function postComment(){
         "pinned": false,
         "replied_to": replied_to.value,
     };
-
+    // cant post empty comment strings.
     if(comment.value.length > 1){
         await db.post(urls.reviews.createComment(), data, true).then((res) => {
             comments.value.push({"comment": res.data})
         });
     };
 };
+
+function commentDeleted(comment_id) {
+        let temp = comments.value.find((c) => c.comment.id === comment_id)
+        comments.value = comments.value.filter((c) => c.comment !== temp.comment);
+}
 </script>

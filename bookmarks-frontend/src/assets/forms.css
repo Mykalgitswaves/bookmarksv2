@@ -183,8 +183,8 @@ ul:has(.comments-wrapper) {
   border: solid 1px #c4b5fd;
   transition-duration: 250ms;
   transition-timing-function: ease;
-  max-width: 880px;
   width: 100%;
+  max-width: 880px;
   justify-self: center;
 }
 
@@ -200,6 +200,10 @@ ul:has(.comments-wrapper) {
   align-items: center;
   justify-content: space-between;
   justify-self: center;
+}
+
+.comment-text {
+  max-width: 500px;
 }
 
 .comment.is-replying {

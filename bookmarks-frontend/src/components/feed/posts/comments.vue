@@ -5,14 +5,15 @@
 
     <div v-else>
         <TransitionGroup name="content" tag="ul"> 
-            <li v-for="c in cc" :key="c.id" class="comments-wrapper">
+            <li v-for="c in props.comments" :key="c.id" class="comments-wrapper">
                 <Comment
                     :comment="c.comment"
                     :is-liked="c.liked_by_current_user"
                     :replies="c.replies"
                     :num_replies="c.num_replies"
                     :likes="c.likes"
-                    :post-username="props.userUsername"
+                    :is_pinned="!!c.pinned"
+                    :post-username="props.postUsername"
                     @comment-deleted="filterDeleteComments"
                 />
             </li>
@@ -20,9 +21,6 @@
     </div>
 </template>
 <script setup>
-import { db } from '../../../services/db';
-import { urls } from '../../../services/urls';
-import { ref } from 'vue';
 import Comment from './comment.vue';
 
 const props = defineProps({
@@ -34,19 +32,15 @@ const props = defineProps({
         type: String,
         required: true,
     },
-    userUsername: {
+    postUsername: {
         type: String,
         required: true,
     }
 });
 
-const cc = ref(props.comments);
-
+const emit = defineEmits(['comment-deleted']);
 function filterDeleteComments(comment_id) {
-    console.log(cc.value, 'before filter')
-    let temp = cc.value.find((c) => c.comment.id === comment_id)
-    cc.value = cc.value.filter((c) => c.comment !== temp.comment);
-    console.log(cc.value, 'after filter')
+    emit('comment-deleted', comment_id);
 };
 
 </script>
