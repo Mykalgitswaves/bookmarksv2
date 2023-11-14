@@ -14,7 +14,7 @@
   .popout-flyout {
     position: absolute;
     top: 40px;
-    left: 0;
+    left: 10px;
     margin-top: .25rem;
     width: 250px;
     background-color: #fff;
@@ -31,6 +31,32 @@
     background-color: #fff;
     border-radius: .25rem;
     overflow: clip;
+  }
+
+  .popout-comment {
+    position: absolute;
+    top: 20px;
+    left: 40px;
+    margin-top: .25rem;
+    width: 130px;
+    background-color: #fff;
+    border-radius: .25rem;
+    overflow: clip;
+    z-index: 9999;
+  }
+
+  .popout-comment button {
+    display: flex;
+    color: #4338ca;
+    width: 100%;
+    text-align: start;
+    padding: 0.2rem 1rem;
+    margin-top: .4rem;
+    margin-bottom: .4rem;
+  }
+
+  .popout-comment button:hover {
+    background-color: #eef2ff;
   }
 
   .popout-flyout button {
@@ -194,6 +220,10 @@ ul:has(.comments-wrapper) {
   background-color: #f8fafc;
 }
 
+.comment.pinned {
+  border-color: #71cbf8;
+}
+
 .comment-inner {
   display: flex;
   flex-direction: row;
@@ -233,6 +263,7 @@ ul:has(.comments-wrapper) {
 
 .comment-footer {
   display: flex;
+  position: relative;
   align-items: center;
   justify-content: end;
   margin-top: .5em;

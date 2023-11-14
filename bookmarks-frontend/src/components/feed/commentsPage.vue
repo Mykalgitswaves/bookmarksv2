@@ -68,7 +68,7 @@
             </div>
           </div>
 
-          <Comments v-if="p" :comments="comments" :post-id="p.id" :post-username="p.user_username" @comment-deleted="commentDeleted"/>
+          <Comments v-if="p" :comments="comments" :post-id="p.id" :post-uuid="uuid" @comment-deleted="commentDeleted" @comment-pinned="commentPinned"/>
 
           <div class="mobile-menu-spacer sm:hidden"></div>
     </transition-group>
@@ -101,6 +101,7 @@ const request = reactive({
 const route = useRoute();
 const router = useRouter();
 const { user, post } = route.params;
+const uuid = ref('');
 
 async function get_post_and_comments() {
     await db.get(urls.reviews.getPost(user, post)).then((res) => {
@@ -109,9 +110,10 @@ async function get_post_and_comments() {
     });
     
     await db.get(urls.reviews.getComments(post), request, true).then((res) => {
-        comments.value = res.data
-    })
-}
+        comments.value = res.data.comments
+        uuid.value = res.data.uuid
+    });
+};
 
 get_post_and_comments();
 
@@ -136,5 +138,13 @@ async function postComment(){
 function commentDeleted(comment_id) {
         let temp = comments.value.find((c) => c.comment.id === comment_id)
         comments.value = comments.value.filter((c) => c.comment !== temp.comment);
+};
+
+function commentPinned(comment_id) {
+    // debugger;
+    // let temp = comments.value.find((c) => c.comment.id === comment_id)
+    // comments.value = comments.value.filter((c) => c.comment !== temp.comment);
+    // temp.pinned = true;
+    // comments.value.unshift({"comment": temp});
 }
 </script>

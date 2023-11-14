@@ -1,5 +1,10 @@
 <template>
-    <div class="my-3 comment" :class="{'is-replying': isReplying, 'liked': (is_liked || comment.liked_by_current_user)}">
+    <div class="my-3 comment" 
+        :class="{
+            'is-replying': isReplying,
+            'liked': (is_liked || comment.liked_by_current_user),
+            'pinned': isPinned
+        }">
         <div class="comment-inner">
             <p class="comment-text">{{ props.comment.text }}</p>
             <div class="comment-footer">
@@ -30,25 +35,41 @@
                     </span>
                 </button>
 
-                <button 
-                    v-if="props.comment.username === props.postUsername"
-                    class="ml-5 flex items-center justify-end"
+                <button
+                    class="ml-5 "
                     type="button"
+                    @click="flyoutToggle = !flyoutToggle"
                 >
-                    <IconPin/>
-                    <span class="ml-1 text-sm">
-                        pin
-                    </span>
+                    <IconMore/>
                 </button>
 
-                <button 
-                    v-if="props.comment.posted_by_current_user"
-                    class="ml-5"
-                    type="button"
-                    @click="deleteComment(props.comment.id)"
+                <div
+                    v-if="route.params.user === props.postUuid" 
+                    :class="{'popout-comment shadow-lg': flyoutToggle}"
                 >
-                    <IconTrash/>
-                </button>
+                    <div v-if="flyoutToggle" class="flyout">
+                        <button 
+                            type="button"
+                            @click="pinComment()"
+                        >
+                            <IconPin/>
+                            <span class="ml-2">
+                                pin
+                            </span>
+                        </button>
+
+                        <button 
+                            v-if="props.comment.posted_by_current_user"
+                            type="button"
+                            @click="deleteComment(props.comment.id)"
+                        >
+                            <IconTrash/>
+                            <span class="ml-2">
+                                delete
+                            </span>
+                        </button>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -97,8 +118,9 @@ import IconPin from '../../svg/icon-pin.vue';
 import IconReply from '../../svg/icon-reply.vue';
 import IconExit from '../../svg/icon-exit.vue';
 import IconTrash from '../../svg/icon-trash.vue';
-
-import { ref, computed } from 'vue';
+import IconMore from '../../svg/icon-more.vue';
+import { useRoute } from 'vue-router';
+import { ref } from 'vue';
 import { urls } from '../../../services/urls';
 import { db } from '../../../services/db';
 
@@ -115,7 +137,7 @@ const props = defineProps({
         type: Array,
         required: false,
     },
-    postUsername: {
+    postUuid: {
         type: String,
         required: false,
     },
@@ -137,19 +159,14 @@ const reply = ref('');
 const isReplying = ref(false);
 const is_liked = ref(props.comment.liked_by_current_user);
 const replies = ref(props.replies ? props.replies.map((r) => r.comment) : []);
+const isPinned = ref(props.pinned);
 const moreRepliesLoaded = ref(false);
 const commentLikes = ref(props.comment.likes);
-
-const commentLikesFormatted = computed(() => {
-    if(commentLikes.value === 1) {
-        return `${commentLikes.value} like` 
-    } else {
-        return `${commentLikes.value} likes`
-    }
-})
+const flyoutToggle = ref(false);
+const route = useRoute();
 
 const num_replies = ref(props.comment?.num_replies);
-const emit = defineEmits();
+const emit = defineEmits(['comment-deleted', 'comment-pinned']);
 
 async function postReply() {
     const data = {
@@ -199,8 +216,11 @@ function handleDelete(event) {
     });
 }
 
-async function pinComment(comment_id, post_id) {
-    
+async function pinComment() {
+    isPinned.value = true;
+    await db.put(urls.reviews.pinComment(props.comment.id, props.comment.post_id)).then(() => {
+        emit('comment-pinned', props.comment.id)
+    })
 }
 
 </script>

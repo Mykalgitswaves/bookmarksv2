@@ -13,8 +13,9 @@
                     :num_replies="c.num_replies"
                     :likes="c.likes"
                     :is_pinned="!!c.pinned"
-                    :post-username="props.postUsername"
-                    @comment-deleted="filterDeleteComments"
+                    :post-uuid="props.postUuid"
+                    @comment-deleted="($event) => emit('comment-deleted', $event)"
+                    @comment-pinned="($event) => emit('comment-pinned', $event)"
                 />
             </li>
         </TransitionGroup> 
@@ -32,15 +33,12 @@ const props = defineProps({
         type: String,
         required: true,
     },
-    postUsername: {
+    postUuid: {
         type: String,
         required: true,
     }
 });
 
-const emit = defineEmits(['comment-deleted']);
-function filterDeleteComments(comment_id) {
-    emit('comment-deleted', comment_id);
-};
+const emit = defineEmits(['comment-deleted','comment-pinned']);
 
 </script>

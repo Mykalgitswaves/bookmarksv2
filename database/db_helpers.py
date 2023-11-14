@@ -2248,7 +2248,8 @@ class Neo4jDriver():
             None
         """
         with self.driver.session() as session:
-            result = session.execute_write(self.add_pinned_comment_query, comment_id, post_id)    
+            result = session.execute_write(self.add_pinned_comment_query, comment_id, post_id)
+        
     @staticmethod
     def add_pinned_comment_query(tx, comment_id, post_id):
         query = """
@@ -2256,9 +2257,10 @@ class Neo4jDriver():
                 match (rr:Comment {id: $comment_id}) 
                 create (pp)-[ll:PINNED]->(rr)
                 set rr.pinned = True
+                return rr
                 """
         result = tx.run(query, comment_id=comment_id, post_id=post_id)
-
+        
     def remove_liked_comment(self, username, comment_id):
         """
         removes a liked comment for a user
@@ -2370,7 +2372,7 @@ class Neo4jDriver():
                                                          book="",
                                                          created_date=post["created_date"],
                                                          num_books=post["num_books"],
-                                                         user_username=username,
+                                                         user_username=response['u.username'],
                                                          likes=post['likes'],
                                                          num_comments=response["num_comments"])
                 
@@ -2388,7 +2390,7 @@ class Neo4jDriver():
                 
                 comparison = ComparisonPost(post_id=post["id"],
                                             compared_books=[response['b']['id']],
-                                            user_username=username,
+                                            user_username=response['u.username'],
                                             comparators=post['comparators'],
                                             created_date=post['created_date'],
                                             comparator_ids=post['comparator_ids'],
@@ -2413,7 +2415,7 @@ class Neo4jDriver():
                                                    response=post['response'],
                                                    spoiler=post['spoiler'],
                                                    book_small_img=response['b']['small_img_url'],
-                                                   user_username=username,
+                                                   user_username=response['u.username'],
                                                    likes=post['likes'],
                                                    num_comments=response["num_comments"])
                 
@@ -2431,7 +2433,7 @@ class Neo4jDriver():
                                                     responses=post['responses'],
                                                     spoilers=post['spoilers'],
                                                     book_small_img=response['b']['small_img_url'],
-                                                    user_username=username,
+                                                    user_username=response['u.username'],
                                                     num_comments=response["num_comments"]
                                                     )
                 review.liked_by_current_user = response['liked_by_current_user']

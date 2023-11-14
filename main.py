@@ -754,7 +754,7 @@ async def get_comments_for_post(post_id: str, current_user: Annotated[User, Depe
                                                     skip=skip,
                                                     limit=limit)
         
-        return JSONResponse(content={"data": jsonable_encoder(comments)})
+        return JSONResponse(content={"data": jsonable_encoder({"comments": comments, "uuid": current_user.user_id})})
 
 @app.get("/api/review/comments/{comment_id}/replies")
 async def get_all_replies_for_comment(comment_id: str, current_user: Annotated[User, Depends(get_current_active_user)]):
@@ -767,8 +767,8 @@ async def get_all_replies_for_comment(comment_id: str, current_user: Annotated[U
         replies = driver.get_all_replies_for_comment(comment_id=comment_id, username=current_user.username)
         return(JSONResponse(content={"data": jsonable_encoder(replies)}))
     
-@app.post("/api/review/{comment_id}/pin")
-async def pin_comment(request: Request, current_user: Annotated[User, Depends(get_current_active_user)]): #@MICHAEL DO WE NEED TO VALIDATE THAT THE CURRENT USER IS THE POST AUTHOR HERE
+@app.put("/api/review/{comment_id}/pin/{post_id}")
+async def pin_comment(comment_id: str, post_id: str, current_user: Annotated[User, Depends(get_current_active_user)]): #@MICHAEL DO WE NEED TO VALIDATE THAT THE CURRENT USER IS THE POST AUTHOR HERE
     """
     Adds a pin to a comment. Take the following format.
     {
@@ -779,10 +779,8 @@ async def pin_comment(request: Request, current_user: Annotated[User, Depends(ge
     
     if not current_user:
         raise HTTPException("401","Unauthorized")
-    response = await request.json()
-    response = response['_value']
 
-    driver.add_pinned_comment(response["comment_id"],response["post_id"])
+    driver.add_pinned_comment(comment_id, post_id)
 
 @app.put("/api/review/{comment_id}/remove_like") # NOT SURE IF THIS MAKES ANY SENSE @MICHAEL
 async def remove_like_comment(comment_id:str, current_user: Annotated[User, Depends(get_current_active_user)]):
@@ -826,12 +824,14 @@ async def remove_pin_comment(request: Request, current_user: Annotated[User, Dep
     driver.remove_pinned_comment(response["comment_id"],response["post_id"])
 
 @app.get("/api/posts")
-async def get_all_posts(current_user: Annotated[User, Depends(get_current_active_user)], skip: int | None = Query(default=None), limit: int | None = Query(default=None)):
+async def get_all_posts(current_user: Annotated[User, Depends(get_current_active_user)]):
     """
     Pagination for all posts to replace feed. Currently just returns all posts from all users, no curated algo. 
     """
+    # skip: int | None = Query(default=None), limit: int | None = Query(default=None)
     if current_user:
-        return(JSONResponse(content={"data": jsonable_encoder(driver.get_feed(current_user, skip, limit))}))
+        feed = driver.get_feed(current_user, 0, 100)
+        return(JSONResponse(content={"data": jsonable_encoder(feed)}))
     
 @app.put("/api/review/{comment_id}/delete")
 async def set_comment_as_deleted(comment_id:str, current_user: Annotated[User, Depends(get_current_active_user)]):
