@@ -35,8 +35,17 @@
                     </span>
                 </button>
 
+                <button 
+                    v-if="isOpOfComment && !isOpOfPost"
+                    type="button"
+                    class="ml-5"
+                    @click="deleteComment(props.comment.id)"
+                >
+                    <IconTrash/>
+                </button>
+
                 <button
-                    v-if="isOpOfPost || isOpOfComment" 
+                    v-if="isOpOfPost" 
                     class="ml-5 "
                     type="button"
                     @click="flyoutToggle = !flyoutToggle"
