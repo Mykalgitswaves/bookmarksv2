@@ -68,7 +68,7 @@
             </div>
           </div>
 
-          <Comments v-if="p" :comments="comments" :post-id="p.id" :post-uuid="uuid" @comment-deleted="commentDeleted" @comment-pinned="commentPinned"/>
+          <Comments v-if="p" :comments="comments" :post-id="p.id" :op-user-uuid="op_user_uuid" @comment-deleted="commentDeleted" @comment-pinned="commentPinned"/>
 
           <div class="mobile-menu-spacer sm:hidden"></div>
     </transition-group>
@@ -91,6 +91,7 @@ import ReviewPost from './posts/ReviewPost.vue';
 // This is for modeling comments and sending to backend
 const p = ref(null);
 const postType = ref('');
+const op_user_uuid = ref('');
 const comments = ref([]);
 
 const request = reactive({
@@ -107,6 +108,7 @@ async function get_post_and_comments() {
     await db.get(urls.reviews.getPost(user, post)).then((res) => {
         p.value = res.data.post;
         postType.value = res.data.post_type;
+        op_user_uuid.value = res.data.op_user_id
     });
     
     await db.get(urls.reviews.getComments(post), request, true).then((res) => {

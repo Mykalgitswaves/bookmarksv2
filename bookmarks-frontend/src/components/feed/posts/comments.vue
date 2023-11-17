@@ -7,13 +7,13 @@
         <TransitionGroup name="content" tag="ul"> 
             <li v-for="c in props.comments" :key="c.id" class="comments-wrapper">
                 <Comment
+                    :op-user-uuid="props.opUserUuid"
                     :comment="c.comment"
                     :is-liked="c.liked_by_current_user"
                     :replies="c.replies"
                     :num_replies="c.num_replies"
                     :likes="c.likes"
                     :is_pinned="!!c.pinned"
-                    :post-uuid="props.postUuid"
                     @comment-deleted="($event) => emit('comment-deleted', $event)"
                     @comment-pinned="($event) => emit('comment-pinned', $event)"
                 />
@@ -34,6 +34,10 @@ const props = defineProps({
         required: true,
     },
     postUuid: {
+        type: String,
+        required: true,
+    },
+    opUserUuid: {
         type: String,
         required: true,
     }

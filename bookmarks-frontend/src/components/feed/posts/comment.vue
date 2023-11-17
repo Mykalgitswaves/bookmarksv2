@@ -36,6 +36,7 @@
                 </button>
 
                 <button
+                    v-if="isOpOfPost || isOpOfComment" 
                     class="ml-5 "
                     type="button"
                     @click="flyoutToggle = !flyoutToggle"
@@ -44,7 +45,6 @@
                 </button>
 
                 <div
-                    v-if="route.params.user === props.postUuid" 
                     :class="{'popout-comment shadow-lg': flyoutToggle}"
                 >
                     <div v-if="flyoutToggle" class="flyout">
@@ -98,6 +98,7 @@
         :key="index"
         :reply="reply"
         :is-liked-by-current-user="reply.liked_by_current_user"
+        :opUserUuid="props.opUserUuid"
         @deleted="handleDelete($event)"
     />
 
@@ -137,10 +138,6 @@ const props = defineProps({
         type: Array,
         required: false,
     },
-    postUuid: {
-        type: String,
-        required: false,
-    },
     num_replies: {
         type: Number,
         required: true,
@@ -152,7 +149,11 @@ const props = defineProps({
     pinned: {
         type: Boolean,
         required: false,
-    }
+    },
+    opUserUuid: {
+        type: String,
+        required: true,
+    },
 });
 
 const reply = ref('');
@@ -164,9 +165,24 @@ const moreRepliesLoaded = ref(false);
 const commentLikes = ref(props.comment.likes);
 const flyoutToggle = ref(false);
 const route = useRoute();
-
+const { user } = route.params;
 const num_replies = ref(props.comment?.num_replies);
 const emit = defineEmits(['comment-deleted', 'comment-pinned']);
+
+let isOpOfPost;
+let isOpOfComment;
+
+if(user === props.opUserUuid){
+    isOpOfPost = true 
+} else {
+    isOpOfPost = false;
+}
+
+if(user === props.comment.user_id) {
+    isOpOfComment = true; 
+} else {
+    isOpOfComment = false;
+}
 
 async function postReply() {
     const data = {

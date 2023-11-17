@@ -680,9 +680,11 @@ async def get_user_posts(user_id: str, current_user: Annotated[User, Depends(get
 @app.get("/api/{user_id}/posts/{post_id}/post")
 async def get_post(post_id: str, current_user: Annotated[User, Depends(get_current_active_user)]):
     if post_id and current_user:
-        post = driver.get_post(post_id=post_id, username=current_user.username)
+        data = driver.get_post(post_id=post_id, username=current_user.username)
+        post = data["post"]
+        user_id = data["user_id"]
         post_type = type(post).__name__
-        return (JSONResponse(content={"data": jsonable_encoder({"post": post, "post_type": post_type})}))
+        return (JSONResponse(content={"data": jsonable_encoder({"post": post, "post_type": post_type, "op_user_id": user_id})}))
 
 
 @app.post("/api/{user_id}/like/comparisons/{comparison_id}")
@@ -701,10 +703,11 @@ async def create_comment(request: Request, current_user: Annotated[User, Depends
         raise HTTPException("401","Unauthorized")
 
     response = await request.json()
-    
+
     comment = Comment(comment_id='',
                         post_id=response['post_id'],
                         username=current_user.username,
+                        user_id=current_user.user_id,
                         replied_to=response['replied_to'],
                         text=response['text'])
     
@@ -754,7 +757,7 @@ async def get_comments_for_post(post_id: str, current_user: Annotated[User, Depe
                                                     skip=skip,
                                                     limit=limit)
         
-        return JSONResponse(content={"data": jsonable_encoder({"comments": comments, "uuid": current_user.user_id})})
+        return JSONResponse(content={"data": jsonable_encoder({"comments": comments})})
 
 @app.get("/api/review/comments/{comment_id}/replies")
 async def get_all_replies_for_comment(comment_id: str, current_user: Annotated[User, Depends(get_current_active_user)]):
