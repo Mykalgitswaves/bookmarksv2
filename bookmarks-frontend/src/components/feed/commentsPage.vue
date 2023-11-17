@@ -34,6 +34,7 @@
               :likes="p.likes"
             />
           </div>
+
           <div v-if="postType === 'UpdatePost'" class="center-cards">
             <UpdatePost
               :id="p.id"
@@ -49,15 +50,19 @@
               :likes="p.likes"
             />
           </div>
+
           <div v-if="p" class="flex content-center px-2">
             <div class="make-comments-container main">
+                <label for="" >
+                <p class="label-text">The trouble with most of us is that we would rather be ruined by praise than saved by criticism. ...
+</p>   
                 <textarea 
                     class="make-comment-textarea"
                     type="text"
                     v-model="comment"
                     placeholder="Be nice, be thoughtful"    
                 />
-
+                </label>
                 <button
                     class="send-comment-btn" 
                     type="button"

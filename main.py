@@ -809,8 +809,8 @@ async def remove_like_post(request: Request, post_id:str, current_user: Annotate
     if post_id:
         driver.remove_liked_post(current_user,post_id)
 
-@app.post("/api/review/{comment_id}/remove_pin")
-async def remove_pin_comment(request: Request, current_user: Annotated[User, Depends(get_current_active_user)]): #@MICHAEL DO WE NEED TO VALIDATE THAT THE CURRENT USER IS THE POST AUTHOR HERE
+@app.put("/api/review/post/{post_id}/comment/{comment_id}/remove_pin")
+async def remove_pin_comment(post_id: str,  comment_id: str, current_user: Annotated[User, Depends(get_current_active_user)]): #@MICHAEL DO WE NEED TO VALIDATE THAT THE CURRENT USER IS THE POST AUTHOR HERE
     """
     remove a pin from a comment. Take the following format.
     {
@@ -821,10 +821,8 @@ async def remove_pin_comment(request: Request, current_user: Annotated[User, Dep
     
     if not current_user:
         raise HTTPException("401","Unauthorized")
-    response = await request.json()
-    response = response['_value']
 
-    driver.remove_pinned_comment(response["comment_id"],response["post_id"])
+    driver.remove_pinned_comment(comment_id, post_id)
 
 @app.get("/api/posts")
 async def get_all_posts(current_user: Annotated[User, Depends(get_current_active_user)]):

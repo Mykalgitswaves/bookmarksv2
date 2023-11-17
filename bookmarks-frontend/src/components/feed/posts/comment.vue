@@ -169,7 +169,7 @@ const reply = ref('');
 const isReplying = ref(false);
 const is_liked = ref(props.comment.liked_by_current_user);
 const replies = ref(props.replies ? props.replies.map((r) => r.comment) : []);
-const isPinned = ref(props.pinned);
+const isPinned = ref(props.comment.pinned);
 const moreRepliesLoaded = ref(false);
 const commentLikes = ref(props.comment.likes);
 const flyoutToggle = ref(false);
@@ -242,10 +242,17 @@ function handleDelete(event) {
 }
 
 async function pinComment() {
-    isPinned.value = true;
-    await db.put(urls.reviews.pinComment(props.comment.id, props.comment.post_id)).then(() => {
-        emit('comment-pinned', props.comment.id)
-    })
+    if(!isPinned.value) {
+        isPinned.value = true;
+        await db.put(urls.reviews.pinComment(props.comment.id, props.comment.post_id)).then(() => {
+            emit('comment-pinned', props.comment.id)
+        })
+    } else {
+        isPinned.value = false
+        await db.put(urls.reviews.unpinComment(props.comment.id, props.comment.post_id)).then(() => {
+            emit('comment-unpinned', props.comment.id)
+        })
+    }
 }
 
 </script>
