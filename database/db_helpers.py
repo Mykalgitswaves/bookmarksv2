@@ -422,9 +422,11 @@ class Book():
         else:
             raise Exception("This relationship already exists")
     def add_to_db(self, driver):
-        id = driver.create_book(self.title,self.img_url,self.pages,self.publication_year,self.lang,self.description,self.genres,
+        book = driver.create_book(self.title,self.img_url,self.pages,self.publication_year,self.lang,self.description,self.genres,
                            self.authors,self.isbn13, self.isbn10, self.small_img_url,self.author_names,self.genre_names,self.google_id,self.gr_id)
-        self.id = id
+        self.id = book.id
+    def add_canon_version(self, canon_book_id:str, driver):
+        driver.create_canon_book_relationship(canon_book_id,self.id)
 
         
 class Author():
@@ -834,12 +836,12 @@ class Neo4jDriver():
                 """
         # To avoid None Type errors. THE IS INSTANCE PART COULD BE TOTALLY USELESS CATCH IS THERE TO CHECK
         if isbn13:
-            if not isinstance(isbn13,int):
+            if not isinstance(isbn13,str):
                 print(isbn13)
                 isbn13 = isbn13[0]
 
         if isbn10:
-            if not isinstance(isbn10,int):
+            if not isinstance(isbn10,str):
                 print(isbn10)
                 isbn10 = isbn10[0]
         
@@ -1494,17 +1496,40 @@ class Neo4jDriver():
         result = tx.run(query,book_id=book_id)
         result = [{"id":response["bb.id"],"title":response["bb.title"],"img_url":response["bb.img_url"]} for response in result]
         return(result)
-    def find_book_by_isnb13(self,isbn13:int):
+    def find_book_by_isbn13(self,isbn13:int):
         """
         Finds a book by its isbn number
         """
         with self.driver.session() as session:
-            result = session.execute_read(self.find_book_by_isnb13_query, isbn13)
+            result = session.execute_read(self.find_book_by_isbn13_query, isbn13)
         return(result)
     @staticmethod
-    def find_book_by_isnb13_query(tx,isbn13):
+    def find_book_by_isbn13_query(tx,isbn13):
         query = "match (bb:Book {isbn13:$isbn13})-[WROTE]-(a:Author) return bb.id,bb.title,bb.small_img_url,bb.img_url,bb.description,a.name"
         result = tx.run(query,isbn13=isbn13)
+        response = result.single()
+        if response:
+            book = Book(response['bb.id'],
+                        img_url=response['bb.img_url'],
+                        small_img_url=response['bb.small_img_url'],
+                        title=response['bb.title'],
+                        description=response['bb.description']
+                 )
+            [book.author_names.append(response['a.name']) for response in result]
+            return(book)
+        else:
+            return(None)
+    def find_book_by_isbn10(self,isbn10:int):
+        """
+        Finds a book by its isbn number
+        """
+        with self.driver.session() as session:
+            result = session.execute_read(self.find_book_by_isbn10_query, isbn10)
+        return(result)
+    @staticmethod
+    def find_book_by_isbn10_query(tx,isbn10):
+        query = "match (bb:Book {isbn10:$isbn10})-[WROTE]-(a:Author) return bb.id,bb.title,bb.small_img_url,bb.img_url,bb.description,a.name"
+        result = tx.run(query,isbn10=isbn10)
         response = result.single()
         if response:
             book = Book(response['bb.id'],
@@ -2571,6 +2596,72 @@ class Neo4jDriver():
 
             comment_response.append(response_entry)
         return(comment_response)
+    def get_all_books(self):
+        """
+        Grabs all the book currently in the db and returns the ID and ISBN #s
+        """
+        with self.driver.session() as session:
+            result = session.execute_read(self.get_all_books_query)  
+        return(result)
+    @staticmethod
+    def get_all_books_query(tx):
+        query = """
+                match (b:Book)
+                WHERE not EXISTS {
+                    MATCH (b)<-[:HAS_VERSION]-(:Book)
+                }
+                return b.id, b.isbn13, b.isbn10, b.google_id, b.gr_id
+                """
+        result = tx.run(query)
+
+        books = []
+        for response in result:
+            book = {"id":response["b.id"],
+                    "isbn13":response["b.isbn13"],
+                    "isbn10":response["b.isbn10"],
+                    "google_id":response["b.google_id"],
+                    "goodreads_id":response['b.gr_id']}
+            
+            books.append(book)
+        
+        return books
+    
+    def create_canon_book_relationship(self, canon_book_id, version_book_id):
+        """
+        Creates the canon book relationship in the DB
+        """
+        with self.driver.session() as session:
+            result = session.execute_write(self.create_canon_book_relationship_query, canon_book_id=canon_book_id, version_book_id=version_book_id)  
+        return(result)
+    @staticmethod
+    def create_canon_book_relationship_query(tx, canon_book_id, version_book_id):
+        query = """
+                match (canon_book:Book {id:$canon_book_id})
+                match (version_book:Book {id:$version_book_id})
+                merge (canon_book)-[:HAS_VERSION]->(version_book)
+                """
+        result = tx.run(query, canon_book_id=canon_book_id, version_book_id=version_book_id)
+    def check_if_version_or_canon(self,book_id):
+        """
+        Checks if a book is already a version or a canon version
+        """
+        with self.driver.session() as session:
+            result = session.execute_read(self.check_if_version_or_canon_query, book_id=book_id)  
+        return(result)
+    @staticmethod
+    def check_if_version_or_canon_query(tx, book_id):
+        query = """
+                match (b:Book {id:$book_id})
+                RETURN CASE 
+                WHEN NOT EXISTS ((b)-[:HAS_VERSION]-(:Book)) 
+                THEN true 
+                ELSE false 
+                END AS relationshipDoesNotExist    
+                """
+        result = tx.run(query, book_id=book_id)
+        response = result.single()
+        return(response['relationshipDoesNotExist'])
+
 
     def close(self):
         self.driver.close()

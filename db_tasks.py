@@ -1,5 +1,6 @@
 import requests
 import json
+from database.api.books_api import book_versions, add_book
 
 from database.db_helpers import (
     Book
@@ -106,3 +107,24 @@ def update_book_google_id(google_id:str, driver):
             print(f"API returned no response for book with google id {google_id}")     
     else:
         print(f"Book with google id {google_id} is not in DB as primary key")
+
+def pull_book_and_versions(google_book:Book, driver):
+    google_book.add_to_db(driver)
+
+    if driver.check_if_version_or_canon(google_book.id):
+        if google_book.isbn13:
+            response = book_versions.pull_versions(google_book.isbn13)
+        elif google_book.isbn10:
+            response = book_versions.pull_versions(google_book.isbn10)
+        else:
+            response = None
+
+        if response:
+            response = response.json()
+            if response['numFound'] != 0:
+                versions = response['docs'][0]['isbn']
+                for version in versions:
+                    version_book = add_book.pull_google_book_or_add_isbn(str(version), driver)
+                    if version_book:
+                        if version_book.id != google_book.id and driver.check_if_version_or_canon(version_book.id):
+                            version_book.add_canon_version(google_book.id, driver)

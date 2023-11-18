@@ -17,7 +17,7 @@ from database.api.books_api.search import BookSearch
 from database.api.books_api.add_book import pull_google_book
 from database.auth import verify_access_token
 
-from db_tasks import update_book_google_id
+from db_tasks import update_book_google_id, pull_book_and_versions
 
 from fastapi import FastAPI, HTTPException, Depends, status, Request, BackgroundTasks
 from fastapi import Query
@@ -371,7 +371,7 @@ async def get_book_page(book_id: str, background_tasks:BackgroundTasks):
         if not book:
             # Pulls the book down otherwise
             book = pull_google_book(book_id, driver)
-            background_tasks.add_task(book.add_to_db,driver)
+            background_tasks.add_task(pull_book_and_versions,book,driver)
     else:
         book = driver.pull_book_node(book_id=book_id)
         
