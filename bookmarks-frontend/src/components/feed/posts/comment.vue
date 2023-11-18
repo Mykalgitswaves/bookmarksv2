@@ -224,6 +224,8 @@ async function postReply() {
             replies.value?.unshift(res.data);
             isReplying.value = false;
             num_replies.value += 1;
+            //default to blank reply in comment.
+            reply.value = '';
         });
     };
 };
