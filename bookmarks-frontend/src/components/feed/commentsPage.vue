@@ -52,16 +52,18 @@
           </div>
 
           <div v-if="p" class="flex content-center px-2">
-            <div class="make-comments-container main mb-10">
+            <div class="make-comments-container main">
                 <label for="post-comment-form">
-                <p class="label-text">The trouble with most of us is that we would rather be ruined by praise than saved by criticism.</p>   
-                <textarea 
-                    id="post-comment-form"  
-                    class="make-comment-textarea"
-                    type="text"
-                    v-model="comment"
-                    :placeholder="placeholders[randomPlaceholderIndex]"    
-                />
+
+                    <p class="label-text">The trouble with most of us is that we would rather be ruined by praise than saved by criticism.</p>   
+                    
+                    <textarea 
+                        id="post-comment-form"  
+                        class="make-comment-textarea"
+                        type="text"
+                        v-model="comment"
+                        :placeholder="placeholders[randomPlaceholderIndex]"    
+                    />
                 </label>
 
                 <button

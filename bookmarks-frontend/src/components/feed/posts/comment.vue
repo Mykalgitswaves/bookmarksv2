@@ -1,6 +1,6 @@
 <template>
     <p class="comment-username">{{ props.comment.username }}:</p>
-    
+
     <div 
         class="my-3 comment" 
         :class="{
@@ -126,7 +126,7 @@
         :reply="reply"
         :is-liked-by-current-user="reply.liked_by_current_user"
         :opUserUuid="props.opUserUuid"
-        @deleted="handleDelete($event)"
+        @deleted="($event) => (replies = replies.filter((r) => (r.id !== $event)))"
     />
 
     <button 
@@ -151,6 +151,7 @@ import { useRoute } from 'vue-router';
 import { ref } from 'vue';
 import { urls } from '../../../services/urls';
 import { db } from '../../../services/db';
+import { template } from 'handlebars';
 
 const props = defineProps({
     comment: {
@@ -254,10 +255,8 @@ async function deleteComment(comment_id) {
     })
 }
 
-function handleDelete(event) {
-    replies.value = replies.value.filter((r) => {
-        r.id !== event
-    });
+function handleDelete(id) {
+    replies.value = replies.value.filter((r) => (r.id !== id));
 }
 
 async function pinComment() {

@@ -25,7 +25,7 @@
                     class="ml-5 flex items-center justify-end text-red-600"
                     type="button"
                     role="delete"
-                    @click="deleteReply(props.reply?.id)"
+                    @click="deleteReply()"
                 >
                     <IconTrash/>
                 </button>
@@ -78,7 +78,7 @@ if(user === props.reply.user_id) {
 
 const is_liked = ref(props.reply?.liked_by_current_user);
 const commentLikes = ref(props.reply?.likes)
-const emit = defineEmits();
+const emit = defineEmits(['deleted']);
 
 const commentLikesFormatted = computed(() => {
     if(commentLikes.value === 1) {
@@ -100,9 +100,8 @@ async function likeComment() {
     }
 }
 
-async function deleteReply(post_id) { 
-    await db.put(urls.reviews.deleteComment(post_id), null).then(() => {
-        emit('deleted', post_id);
-    });
+async function deleteReply() { 
+    emit('deleted', props.reply.id);
+    await db.put(urls.reviews.deleteComment(props.reply.id), null, true);
 }
 </script>

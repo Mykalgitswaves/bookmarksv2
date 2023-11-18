@@ -173,11 +173,16 @@
     padding-left: 0;
     width: 100%;
     max-width: 880px;
-}
-
-.make-comments-container.main {
-  max-width: 100vw;
-  justify-content: center;
+    margin-top: 20px;
+    margin-bottom: 20px;
+  }
+  
+  .make-comments-container.main {
+    border: 1px solid #A0AEC0;
+    border-radius: 8px;
+    width: fit-content;
+    max-width: 100vw;
+    justify-content: center;
 }
 
 .make-comments-container label {
