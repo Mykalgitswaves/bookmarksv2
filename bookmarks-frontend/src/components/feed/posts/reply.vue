@@ -1,4 +1,5 @@
 <template>
+    <p class="comment-username reply">{{ props.reply.username }}:</p>
     <div class="reply comment" 
     :class="{
         'liked': is_liked,

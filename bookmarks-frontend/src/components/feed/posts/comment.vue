@@ -1,4 +1,6 @@
 <template>
+    <p class="comment-username">{{ props.comment.username }}:</p>
+    
     <div 
         class="my-3 comment" 
         :class="{

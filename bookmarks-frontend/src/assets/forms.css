@@ -321,3 +321,19 @@ ul:has(.comments-wrapper) {
   justify-content: end;
   margin-top: .5em;
 }
+
+.comment-username {
+  width: 100%;
+  max-width: 880px;
+  justify-self: center;
+  font-size: 12px;
+}
+
+.comment-username.reply {
+  width: 100%;
+  max-width: 880px;
+  justify-self: center;
+  transform: scaleX(95%);
+  margin-right: -20px;
+  margin-bottom: -8px;
+}
