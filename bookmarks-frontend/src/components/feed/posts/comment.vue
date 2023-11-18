@@ -221,7 +221,7 @@ async function postReply() {
 
     if(reply.value.length) {
         await db.post(urls.reviews.createComment(), data).then((res) => {
-            replies.value?.unshift(res.data);
+            replies.value?.push(res.data);
             isReplying.value = false;
             num_replies.value += 1;
             //default to blank reply in comment.
