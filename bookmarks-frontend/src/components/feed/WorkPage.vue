@@ -2,24 +2,38 @@
     <BackBtn/>
     
     <section>
-        <div class="book-info-card">
-            <img :src="book_img" alt="" class="book-info-card-img">
+        <div class="book-page-header">
+            <div class="book-info-card">
+                <img :src="book_img" alt="" class="book-info-card-img">
 
-            <div class="book-info-card-info">
-                <h2 class="text-2xl font-semibold ml-2">{{ book?.title }}</h2>
+                <div class="book-info-card-info">
+                    <h2 class="text-2xl font-semibold ml-2">{{ book?.title }}</h2>
 
-                <p>{{ book?.isbn24[0] }}</p>
+                    <p>{{ book?.isbn24 }}</p>
 
-                <p>
-                    <span 
-                        v-for="(author, index) in book?.author_names"
-                        :key="index"
-                    >
-                        {{
-                            author + commanator(index, book?.author_names?.length) 
-                        }}
-                    </span>
-                </p>
+                    <p class="ml-2 text-slate-600">
+                        <span 
+                            v-for="(author, index) in book?.author_names"
+                            :key="index"
+                        >
+                            {{
+                                author + commanator(index, book?.author_names?.length) 
+                            }}
+                        </span>
+                        <span v-if="!book.author_names && !book.author_names.length">
+                            Not listed...
+                        </span>
+                    </p>
+                </div>
+            </div>
+
+            <div class="flex">
+                <button 
+                    type="button"
+                    class=""
+                >
+                Add to bookshelf
+                </button>
             </div>
         </div>
     </section>
@@ -29,20 +43,15 @@
 // import SimilarBooks from '@/components/feed/SimilarBooks.vue';
 import BackBtn from './partials/back-btn.vue';
 import { ref, computed } from 'vue';
-import { useRoute, useRouter } from 'vue-router'
+import { useRoute } from 'vue-router'
 import { db } from '../../services/db';
 import { urls } from '../../services/urls';
 import { helpersCtrl } from '../../services/helpers';
 
-const router = useRouter();
 const route = useRoute();
 const { commanator } = helpersCtrl
 const book_id = route.params.work;
 const book = ref(null);
-
-function backToFeed() {
-    return router.push(`/feed/${route.params.user}/all`)
-};
 
 async function getWorkPage() {
     await db.get(urls.books.getBookPage(book_id), null, true).then((res) => {
@@ -55,12 +64,14 @@ const book_img = computed(() => (book.value?.small_img_url || book.value?.img_ur
 
 </script>
 <style scoped>
+    .book-page-header {
+        background-color: #f8fafc;
+        padding: 15px;
+        margin-top: 20px;
+    }
     .book-info-card {
         display: flex;
-        margin-top: 20px;
         column-gap: 20px;
-        padding: 15px;
-        background-color: #f8fafc;
         border-radius: 6px;
     }
 

@@ -151,7 +151,6 @@ import { useRoute } from 'vue-router';
 import { ref } from 'vue';
 import { urls } from '../../../services/urls';
 import { db } from '../../../services/db';
-import { template } from 'handlebars';
 
 const props = defineProps({
     comment: {
