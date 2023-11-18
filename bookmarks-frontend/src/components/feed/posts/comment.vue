@@ -1,10 +1,23 @@
 <template>
-    <div class="my-3 comment" 
+    <div 
+        class="my-3 comment" 
         :class="{
             'is-replying': isReplying,
             'liked': (is_liked || comment.liked_by_current_user),
             'pinned': isPinned
-        }">
+        }"
+    >
+
+        <button 
+            v-if="isPinned"
+            type="button" 
+            class="pinned-comment-btn"
+            :disabled="!isOpOfPost" 
+            @click="pinComment()"
+        >
+            <IconPin/>
+        </button>  
+
         <div class="comment-inner">
             <p class="comment-text">{{ props.comment.text }}</p>
             <div class="comment-footer">
@@ -59,18 +72,21 @@
                     <div v-if="flyoutToggle" class="flyout">
                         <button 
                             type="button"
-                            @click="pinComment()"
+                            @click="pinComment(); flyoutToggle = false"
                         >
                             <IconPin/>
-                            <span class="ml-2">
+                            <span class="ml-2" v-if="!isPinned">
                                 pin
+                            </span>
+                            <span class="ml-2" v-else>
+                                unpin
                             </span>
                         </button>
 
                         <button 
                             v-if="props.comment.posted_by_current_user"
                             type="button"
-                            @click="deleteComment(props.comment.id)"
+                            @click="deleteComment(props.comment.id); flyoutToggle = false"
                         >
                             <IconTrash/>
                             <span class="ml-2">
@@ -176,7 +192,7 @@ const flyoutToggle = ref(false);
 const route = useRoute();
 const { user } = route.params;
 const num_replies = ref(props.comment?.num_replies);
-const emit = defineEmits(['comment-deleted', 'comment-pinned']);
+const emit = defineEmits(['comment-deleted', 'comment-pinned', 'comment-unpinned']);
 
 let isOpOfPost;
 let isOpOfComment;
@@ -224,7 +240,8 @@ async function likeComment() {
 
 async function fetchMoreReplies() { 
     await db.get(urls.reviews.getMoreComments(props.comment.id)).then((res) => {
-        replies.value = res.data.slice(1, res.data.length + 1);
+
+        replies.value = res.data;
         moreRepliesLoaded.value = true;
     })
 }

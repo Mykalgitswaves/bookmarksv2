@@ -756,8 +756,8 @@ async def get_comments_for_post(post_id: str, current_user: Annotated[User, Depe
                                                     username=current_user.username,
                                                     skip=skip,
                                                     limit=limit)
-        
-        return JSONResponse(content={"data": jsonable_encoder({"comments": comments})})
+  
+        return JSONResponse(content={"data": jsonable_encoder({"comments": comments['comments'], "pinned_comments": comments['pinned_comments']})})
 
 @app.get("/api/review/comments/{comment_id}/replies")
 async def get_all_replies_for_comment(comment_id: str, current_user: Annotated[User, Depends(get_current_active_user)]):

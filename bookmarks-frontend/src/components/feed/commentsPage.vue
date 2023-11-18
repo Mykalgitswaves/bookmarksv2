@@ -73,7 +73,7 @@
             </div>
           </div>
 
-          <Comments v-if="p" :comments="comments" :post-id="p.id" :op-user-uuid="op_user_uuid" @comment-deleted="commentDeleted" @comment-pinned="commentPinned"/>
+          <Comments v-if="p" :comments="comments" :pinned-comments="pinnedComments" :post-id="p.id" :op-user-uuid="op_user_uuid" @comment-deleted="commentDeleted"/>
 
           <div class="mobile-menu-spacer sm:hidden"></div>
     </transition-group>
@@ -98,6 +98,7 @@ const p = ref(null);
 const postType = ref('');
 const op_user_uuid = ref('');
 const comments = ref([]);
+const pinnedComments = ref([]);
 
 const request = reactive({
     "skip": 0,
@@ -118,6 +119,7 @@ async function get_post_and_comments() {
     
     await db.get(urls.reviews.getComments(post), request, true).then((res) => {
         comments.value = res.data.comments
+        pinnedComments.value = res.data.pinned_comments
         uuid.value = res.data.uuid
     });
 };
@@ -142,16 +144,11 @@ async function postComment(){
     };
 };
 
+// actual delete happens on db, this just hides from ui before next refresh.
 function commentDeleted(comment_id) {
-        let temp = comments.value.find((c) => c.comment.id === comment_id)
-        comments.value = comments.value.filter((c) => c.comment !== temp.comment);
+    comments.value = comments.value.filter((c) => c.comment.id !== comment_id);
+    pinnedComments.value = pinnedComments.value.filter((c) => c.comment.id !== comment_id);
 };
 
-function commentPinned(comment_id) {
-    // debugger;
-    // let temp = comments.value.find((c) => c.comment.id === comment_id)
-    // comments.value = comments.value.filter((c) => c.comment !== temp.comment);
-    // temp.pinned = true;
-    // comments.value.unshift({"comment": temp});
-}
+
 </script>

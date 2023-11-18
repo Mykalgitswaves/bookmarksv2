@@ -251,10 +251,30 @@ ul:has(.comments-wrapper) {
 
 /*  Time for some animations? */
 .comment.pinned {
+  position: relative;
   border-color: #4f46e5;
-  background-color: #e0e7ff;
+  background-color: #f4f7ff;
   color: #4f46e5;
-  box-shadow: rgba(67,56,202, 0.16) 0px 1px 4px, rgb(238,242,255) 0px 0px 0px 3px;;
+  box-shadow: rgba(67,56,202, 0.26) 0px 1px 4px, rgb(238,242,255) 0px 0px 0px 3px;;
+}
+
+.pinned-comment-btn {
+  position: absolute;
+  top: -10px;
+  left: -10px;
+  background-color: rgba(255, 255, 255, .78);
+  border: 1px solid #4f46e5;
+  border-radius: 50%;
+  padding: 6px;
+  transition: 250ms ease;
+}
+
+.pinned-comment-btn:hover {
+  transform: scale(1.02);
+}
+
+.pinned-comment-btn:active {
+  transform: scale(.98);
 }
 
 .comment-inner {
