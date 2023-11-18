@@ -221,6 +221,7 @@ async function postReply() {
 
     if(reply.value.length) {
         await db.post(urls.reviews.createComment(), data).then((res) => {
+            // replies go to bottom of list?
             replies.value?.push(res.data);
             isReplying.value = false;
             num_replies.value += 1;
