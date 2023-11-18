@@ -14,7 +14,7 @@
   .popout-flyout {
     position: absolute;
     top: 40px;
-    left: 0;
+    left: 10px;
     margin-top: .25rem;
     width: 250px;
     background-color: #fff;
@@ -31,6 +31,32 @@
     background-color: #fff;
     border-radius: .25rem;
     overflow: clip;
+  }
+
+  .popout-comment {
+    position: absolute;
+    top: 20px;
+    left: 40px;
+    margin-top: .25rem;
+    width: 130px;
+    background-color: #fff;
+    border-radius: .25rem;
+    overflow: clip;
+    z-index: 9999;
+  }
+
+  .popout-comment button {
+    display: flex;
+    color: #4338ca;
+    width: 100%;
+    text-align: start;
+    padding: 0.2rem 1rem;
+    margin-top: .4rem;
+    margin-bottom: .4rem;
+  }
+
+  .popout-comment button:hover {
+    background-color: #eef2ff;
   }
 
   .popout-flyout button {
@@ -125,9 +151,20 @@
     background-color: #818cf8;
     display: grid;
     height: min-content;
-    align-self: center;
+    align-self: end;
+    margin-bottom: 6px;
+    transition: 250ms ease;
 }
 
+.send-comment-btn:hover {
+  background-color: #7c3aed;
+  transform: scale(1.02);
+}
+
+.send-comment-btn:active {
+  background-color: #4338ca;
+  transform: scale(.98);
+}
 
 .make-comments-container {
     display: flex;
@@ -143,10 +180,28 @@
   justify-content: center;
 }
 
+.make-comments-container label {
+  width: 70%;
+}
+
+.make-comments-container .label-text::first-letter {
+  font-size: 1.1rem;
+}
+
+.make-comments-container .label-text {
+  padding-bottom: 8px;
+  margin-left: 8px;
+  font-size: 14px;
+  font-weight: 400;
+  font-style: italic;
+  color: #64748b;
+}
+
 .make-comment-textarea {
     display: grid;
     align-self: start;
-    width: 70%;
+    width: 100%;
+    min-width: 280px;
     height: 50px;
     resize: none;
     line-height: 2.5em; 
@@ -183,8 +238,8 @@ ul:has(.comments-wrapper) {
   border: solid 1px #c4b5fd;
   transition-duration: 250ms;
   transition-timing-function: ease;
-  max-width: 880px;
   width: 100%;
+  max-width: 880px;
   justify-self: center;
 }
 
@@ -194,12 +249,44 @@ ul:has(.comments-wrapper) {
   background-color: #f8fafc;
 }
 
+/*  Time for some animations? */
+.comment.pinned {
+  position: relative;
+  border-color: #4f46e5;
+  background-color: #f4f7ff;
+  color: #4f46e5;
+  box-shadow: rgba(67,56,202, 0.26) 0px 1px 4px, rgb(238,242,255) 0px 0px 0px 3px;;
+}
+
+.pinned-comment-btn {
+  position: absolute;
+  top: -10px;
+  left: -10px;
+  background-color: rgba(255, 255, 255, .78);
+  border: 1px solid #4f46e5;
+  border-radius: 50%;
+  padding: 6px;
+  transition: 250ms ease;
+}
+
+.pinned-comment-btn:hover {
+  transform: scale(1.02);
+}
+
+.pinned-comment-btn:active {
+  transform: scale(.98);
+}
+
 .comment-inner {
   display: flex;
   flex-direction: row;
   align-items: center;
   justify-content: space-between;
   justify-self: center;
+}
+
+.comment-text {
+  max-width: 500px;
 }
 
 .comment.is-replying {
@@ -229,7 +316,24 @@ ul:has(.comments-wrapper) {
 
 .comment-footer {
   display: flex;
+  position: relative;
   align-items: center;
   justify-content: end;
   margin-top: .5em;
+}
+
+.comment-username {
+  width: 100%;
+  max-width: 880px;
+  justify-self: center;
+  font-size: 12px;
+}
+
+.comment-username.reply {
+  width: 100%;
+  max-width: 880px;
+  justify-self: center;
+  transform: scaleX(95%);
+  margin-right: -20px;
+  margin-bottom: -8px;
 }

@@ -1,4 +1,5 @@
 <template>
+    <p class="comment-username reply">{{ props.reply.username }}:</p>
     <div class="reply comment" 
     :class="{
         'liked': is_liked,
@@ -15,25 +16,12 @@
                 >
                     <IconLike/>
                     <span class="ml-2">
-                        {{ commentLikes }} likes
-                    </span>
-                </button>
-
-                <button 
-                    v-if="isOp"
-                    class="ml-5 flex items-center justify-end"
-                    type="button"
-                >
-                    <IconPin/>
-                    <span
-                        v-if="props.reply?.likes" 
-                        class="ml-2 text-indigo-500 italic"
-                    >
-                        {{ props.reply?.likes }}
+                        {{ commentLikesFormatted }}
                     </span>
                 </button>
 
                 <button
+                    v-if="isOpOfPost || isOpOfComment"
                     class="ml-5 flex items-center justify-end text-red-600"
                     type="button"
                     role="delete"
@@ -46,11 +34,12 @@
     </div>
 </template>
 <script setup>
-import IconPin from '../../svg/icon-pin.vue';
+// import IconPin from '../../svg/icon-pin.vue';
 import IconLike from '../../svg/icon-like.vue';
 import IconTrash from '../../svg/icon-trash.vue';
 
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
+import { useRoute } from 'vue-router';
 import { db } from '../../../services/db';
 import { urls } from '../../../services/urls';
 
@@ -62,19 +51,53 @@ const props = defineProps({
     isLikedByCurrentUser: {
         type: Boolean,
         default: false,
+    },
+    opUserUuid: {
+        type: String,
+        required: true,
     }
 });
 
-console.log(props);
+const route = useRoute()
+const { user } = route.params;
+
+let isOpOfPost;
+let isOpOfComment;
+
+if(user === props.opUserUuid){
+    isOpOfPost = true 
+} else {
+    isOpOfPost = false;
+}
+
+if(user === props.reply.user_id) {
+    isOpOfComment = true; 
+} else {
+    isOpOfComment = false;
+}
+
 const is_liked = ref(props.reply?.liked_by_current_user);
 const commentLikes = ref(props.reply?.likes)
-
 const emit = defineEmits();
 
+const commentLikesFormatted = computed(() => {
+    if(commentLikes.value === 1) {
+        return `${commentLikes.value} like` 
+    } else {
+        return `${commentLikes.value} likes`
+    }
+})
+
 async function likeComment() {
-    is_liked.value = true;
-    commentLikes.value += 1
-    await db.put(urls.reviews.likeComment(props.reply?.id), null, true);
+    if(is_liked.value === false){
+        is_liked.value = true;
+        commentLikes.value += 1
+        await db.put(urls.reviews.likeComment(props.reply?.id), null, true);
+    } else {
+        is_liked.value = false;
+        commentLikes.value -= 1
+        await db.put(urls.reviews.unlikeComment(props.reply?.id), null, true);
+    }
 }
 
 async function deleteReply(post_id) { 

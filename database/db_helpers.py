@@ -453,7 +453,8 @@ class Comment():
                  post_id, 
                  replied_to, 
                  text, 
-                 username, 
+                 username,
+                 user_id,
                  created_date="", 
                  likes=0, 
                  pinned=False,
@@ -465,6 +466,7 @@ class Comment():
         self.replied_to = replied_to
         self.text = text
         self.username = username
+        self.user_id = user_id
         self.created_date = created_date
         self.likes = likes
         self.pinned = pinned
@@ -2025,8 +2027,8 @@ class Neo4jDriver():
         Also returns the book objects
         """
         with self.driver.session() as session:
-            post = session.execute_read(self.get_post_query, post_id, username)
-        return(post)
+            data = session.execute_read(self.get_post_query, post_id, username)
+        return(data)
     @staticmethod
     def get_post_query(tx, post_id, username):
         query = """
@@ -2035,7 +2037,7 @@ class Neo4jDriver():
             match (p)-[:POST_FOR_BOOK]-(b:Book)
             match (pu:User)-[pr:POSTED]->(p)
             optional match (cu:User)-[lr:LIKES]->(p)
-            return p, labels(p), b.id, b.title, b.small_img_url, pu.username,
+            return p, labels(p), b.id, b.title, b.small_img_url, pu.username, pu.id,
             CASE WHEN lr IS NOT NULL THEN true ELSE false END AS liked_by_current_user,
             CASE WHEN pu.username = $username THEN true ELSE false END AS posted_by_current_user
         """
@@ -2044,6 +2046,8 @@ class Neo4jDriver():
         result = [record for record in result.data()]
         response = result[0]
         post = response['p']
+
+        user_id = response["pu.id"]
 
         if response['labels(p)'] == ["Milestone"]:
             output = MilestonePost(post_id=post["id"],
@@ -2112,7 +2116,7 @@ class Neo4jDriver():
                                     posted_by_current_user=response['posted_by_current_user']
                                     )
                 
-        return output
+        return({"post": output, "user_id": user_id})
     
     def add_liked_comment(self, username, comment_id):
         """
@@ -2150,7 +2154,7 @@ class Neo4jDriver():
             match (p {deleted:false})-[HAS_COMMENT]->(cr)
             match (commenter:User)-[COMMENTED]->(cr)
             optional match (currentUser)-[likedReply:LIKES]->(cr)
-            return cr, commenter.username, p.id,
+            return cr, commenter.username, p.id, commenter.id,
             CASE WHEN likedReply IS NOT NULL THEN true ELSE false END AS liked_by_current_user,
             Case when commenter.username = $username then true else false END as posted_by_current_user
         """
@@ -2164,6 +2168,7 @@ class Neo4jDriver():
                 likes=response['cr']['likes'],
                 created_date=response['cr']['created_date'],
                 username=response['commenter.username'],
+                user_id=response['commenter.id'],
                 post_id=response["p.id"],
                 liked_by_current_user=response["liked_by_current_user"],
                 posted_by_current_user=response["posted_by_current_user"]
@@ -2213,8 +2218,10 @@ class Neo4jDriver():
                 RETURN c, top_liked_reply,
                     CASE WHEN likedParentRel IS NOT NULL THEN true ELSE false END AS parent_liked_by_user,
                     CASE WHEN likedReplyRel IS NOT NULL THEN true ELSE false END AS reply_liked_by_user,
-                    commenter.username, 
+                    commenter.username,
+                    commenter.id,
                     top_reply_commenter.username,
+                    top_reply_commenter.id,
                     case when commenter.username = $username then true else false END as parent_posted_by_user,
                     case when top_reply_commenter.username = $username then true else false END as reply_posted_by_user,
                     num_replies
@@ -2224,43 +2231,85 @@ class Neo4jDriver():
                 """
         result = tx.run(query, username=username, post_id=post_id, skip=skip, limit=limit)
         # result = [record for record in result.data()]
-        comment_response = []
-        for response in result:
-            comment = Comment(comment_id=response['c']['id'],
-                              post_id=post_id,
-                              replied_to=None,
-                              text=response['c']['text'],
-                              username=response['commenter.username'],
-                              created_date=response['c']['created_date'],
-                              likes=response['c']['likes'],
-                              pinned=response['c']['pinned'],
-                              liked_by_current_user=response['parent_liked_by_user'],
-                              posted_by_current_user=response['parent_posted_by_user'],
-                              num_replies=response["num_replies"])
-            
-            response_entry = {"comment":comment,
-                               "liked_by_current_user":response['parent_liked_by_user'],
-                               "replies":[]}
-            
-            if response['top_liked_reply']:
-                reply = Comment(comment_id=response['top_liked_reply']['id'],
-                                post_id=post_id,
-                                replied_to=response["c"]["id"],
-                                text=response["top_liked_reply"]['text'],
-                                username=response['top_reply_commenter.username'],
-                                created_date=response["top_liked_reply"]["created_date"],
-                                likes=response['top_liked_reply']['likes'],
-                                pinned=response['top_liked_reply']['pinned'],
-                                liked_by_current_user=response['reply_liked_by_user'],
-                                posted_by_current_user=response['reply_posted_by_user'])
-                response_entry['replies'].append({
-                                            "comment":reply,
-                                            "liked_by_current_user":response["reply_liked_by_user"],
-                                            "replies":[]
-                                        })
 
-            comment_response.append(response_entry)
-        return(comment_response)
+        comment_response = []
+        pinned_comment_response = []
+        for response in result:
+            if not response['c']['pinned']:
+                comment = Comment(comment_id=response['c']['id'],
+                                post_id=post_id,
+                                replied_to=None,
+                                text=response['c']['text'],
+                                username=response['commenter.username'],
+                                user_id=response['commenter.id'],
+                                created_date=response['c']['created_date'],
+                                likes=response['c']['likes'],
+                                pinned=response['c']['pinned'],
+                                liked_by_current_user=response['parent_liked_by_user'],
+                                posted_by_current_user=response['parent_posted_by_user'],
+                                num_replies=response["num_replies"])
+                
+                response_entry = {"comment":comment,
+                                "liked_by_current_user":response['parent_liked_by_user'],
+                                "replies":[]}
+                
+                if response['top_liked_reply']:
+                    reply = Comment(comment_id=response['top_liked_reply']['id'],
+                                    post_id=post_id,
+                                    replied_to=response["c"]["id"],
+                                    text=response["top_liked_reply"]['text'],
+                                    username=response['top_reply_commenter.username'],
+                                    user_id=response['top_reply_commenter.id'],
+                                    created_date=response["top_liked_reply"]["created_date"],
+                                    likes=response['top_liked_reply']['likes'],
+                                    pinned=response['top_liked_reply']['pinned'],
+                                    liked_by_current_user=response['reply_liked_by_user'],
+                                    posted_by_current_user=response['reply_posted_by_user'])
+                    response_entry['replies'].append({
+                                                "comment":reply,
+                                                "liked_by_current_user":response["reply_liked_by_user"],
+                                                "replies":[]
+                                            })
+
+                comment_response.append(response_entry)
+            else:
+                comment = Comment(comment_id=response['c']['id'],
+                                post_id=post_id,
+                                replied_to=None,
+                                text=response['c']['text'],
+                                username=response['commenter.username'],
+                                user_id=response['commenter.id'],
+                                created_date=response['c']['created_date'],
+                                likes=response['c']['likes'],
+                                pinned=response['c']['pinned'],
+                                liked_by_current_user=response['parent_liked_by_user'],
+                                posted_by_current_user=response['parent_posted_by_user'],
+                                num_replies=response["num_replies"])
+                
+                response_entry = {"comment":comment,
+                                "liked_by_current_user":response['parent_liked_by_user'],
+                                "replies":[]}
+                
+                if response['top_liked_reply']:
+                    reply = Comment(comment_id=response['top_liked_reply']['id'],
+                                    post_id=post_id,
+                                    replied_to=response["c"]["id"],
+                                    text=response["top_liked_reply"]['text'],
+                                    username=response['top_reply_commenter.username'],
+                                    user_id=response['top_reply_commenter.id'],
+                                    created_date=response["top_liked_reply"]["created_date"],
+                                    likes=response['top_liked_reply']['likes'],
+                                    pinned=response['top_liked_reply']['pinned'],
+                                    liked_by_current_user=response['reply_liked_by_user'],
+                                    posted_by_current_user=response['reply_posted_by_user'])
+                    response_entry['replies'].append({
+                                                "comment":reply,
+                                                "liked_by_current_user":response["reply_liked_by_user"],
+                                                "replies":[]
+                                            })
+
+                pinned_comment_response.append(response_entry)
+        return({"comments": comment_response, "pinned_comments": pinned_comment_response})
     
     def add_pinned_comment(self, comment_id, post_id):
         """
@@ -2273,7 +2322,8 @@ class Neo4jDriver():
             None
         """
         with self.driver.session() as session:
-            result = session.execute_write(self.add_pinned_comment_query, comment_id, post_id)    
+            result = session.execute_write(self.add_pinned_comment_query, comment_id, post_id)
+        
     @staticmethod
     def add_pinned_comment_query(tx, comment_id, post_id):
         query = """
@@ -2281,9 +2331,10 @@ class Neo4jDriver():
                 match (rr:Comment {id: $comment_id}) 
                 create (pp)-[ll:PINNED]->(rr)
                 set rr.pinned = True
+                return rr
                 """
         result = tx.run(query, comment_id=comment_id, post_id=post_id)
-
+        
     def remove_liked_comment(self, username, comment_id):
         """
         removes a liked comment for a user
@@ -2395,7 +2446,7 @@ class Neo4jDriver():
                                                          book="",
                                                          created_date=post["created_date"],
                                                          num_books=post["num_books"],
-                                                         user_username=username,
+                                                         user_username=response['u.username'],
                                                          likes=post['likes'],
                                                          num_comments=response["num_comments"])
                 
@@ -2413,7 +2464,7 @@ class Neo4jDriver():
                 
                 comparison = ComparisonPost(post_id=post["id"],
                                             compared_books=[response['b']['id']],
-                                            user_username=username,
+                                            user_username=response['u.username'],
                                             comparators=post['comparators'],
                                             created_date=post['created_date'],
                                             comparator_ids=post['comparator_ids'],
@@ -2438,7 +2489,7 @@ class Neo4jDriver():
                                                    response=post['response'],
                                                    spoiler=post['spoiler'],
                                                    book_small_img=response['b']['small_img_url'],
-                                                   user_username=username,
+                                                   user_username=response['u.username'],
                                                    likes=post['likes'],
                                                    num_comments=response["num_comments"])
                 
@@ -2456,7 +2507,7 @@ class Neo4jDriver():
                                                     responses=post['responses'],
                                                     spoilers=post['spoilers'],
                                                     book_small_img=response['b']['small_img_url'],
-                                                    user_username=username,
+                                                    user_username=response['u.username'],
                                                     num_comments=response["num_comments"]
                                                     )
                 review.liked_by_current_user = response['liked_by_current_user']

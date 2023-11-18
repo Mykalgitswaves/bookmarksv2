@@ -193,7 +193,7 @@ const mapping = {
 
 async function loadWorks() {
     bookData.value = await db.get(urls.booksByN, {'limit': 25}, true);
-    reviewData.value = await db.get(urls.reviews.getReviews(user), true);
+    reviewData.value = await db.get(urls.reviews.getFeed(), true);
 }
 
 

@@ -680,9 +680,11 @@ async def get_user_posts(user_id: str, current_user: Annotated[User, Depends(get
 @app.get("/api/{user_id}/posts/{post_id}/post")
 async def get_post(post_id: str, current_user: Annotated[User, Depends(get_current_active_user)]):
     if post_id and current_user:
-        post = driver.get_post(post_id=post_id, username=current_user.username)
+        data = driver.get_post(post_id=post_id, username=current_user.username)
+        post = data["post"]
+        user_id = data["user_id"]
         post_type = type(post).__name__
-        return (JSONResponse(content={"data": jsonable_encoder({"post": post, "post_type": post_type})}))
+        return (JSONResponse(content={"data": jsonable_encoder({"post": post, "post_type": post_type, "op_user_id": user_id})}))
 
 
 @app.post("/api/{user_id}/like/comparisons/{comparison_id}")
@@ -701,10 +703,11 @@ async def create_comment(request: Request, current_user: Annotated[User, Depends
         raise HTTPException("401","Unauthorized")
 
     response = await request.json()
-    
+
     comment = Comment(comment_id='',
                         post_id=response['post_id'],
                         username=current_user.username,
+                        user_id=current_user.user_id,
                         replied_to=response['replied_to'],
                         text=response['text'])
     
@@ -753,8 +756,8 @@ async def get_comments_for_post(post_id: str, current_user: Annotated[User, Depe
                                                     username=current_user.username,
                                                     skip=skip,
                                                     limit=limit)
-        
-        return JSONResponse(content={"data": jsonable_encoder(comments)})
+  
+        return JSONResponse(content={"data": jsonable_encoder({"comments": comments['comments'], "pinned_comments": comments['pinned_comments']})})
 
 @app.get("/api/review/comments/{comment_id}/replies")
 async def get_all_replies_for_comment(comment_id: str, current_user: Annotated[User, Depends(get_current_active_user)]):
@@ -767,8 +770,8 @@ async def get_all_replies_for_comment(comment_id: str, current_user: Annotated[U
         replies = driver.get_all_replies_for_comment(comment_id=comment_id, username=current_user.username)
         return(JSONResponse(content={"data": jsonable_encoder(replies)}))
     
-@app.post("/api/review/{comment_id}/pin")
-async def pin_comment(request: Request, current_user: Annotated[User, Depends(get_current_active_user)]): #@MICHAEL DO WE NEED TO VALIDATE THAT THE CURRENT USER IS THE POST AUTHOR HERE
+@app.put("/api/review/{comment_id}/pin/{post_id}")
+async def pin_comment(comment_id: str, post_id: str, current_user: Annotated[User, Depends(get_current_active_user)]): #@MICHAEL DO WE NEED TO VALIDATE THAT THE CURRENT USER IS THE POST AUTHOR HERE
     """
     Adds a pin to a comment. Take the following format.
     {
@@ -779,10 +782,8 @@ async def pin_comment(request: Request, current_user: Annotated[User, Depends(ge
     
     if not current_user:
         raise HTTPException("401","Unauthorized")
-    response = await request.json()
-    response = response['_value']
 
-    driver.add_pinned_comment(response["comment_id"],response["post_id"])
+    driver.add_pinned_comment(comment_id, post_id)
 
 @app.put("/api/review/{comment_id}/remove_like") # NOT SURE IF THIS MAKES ANY SENSE @MICHAEL
 async def remove_like_comment(comment_id:str, current_user: Annotated[User, Depends(get_current_active_user)]):
@@ -808,8 +809,8 @@ async def remove_like_post(request: Request, post_id:str, current_user: Annotate
     if post_id:
         driver.remove_liked_post(current_user,post_id)
 
-@app.post("/api/review/{comment_id}/remove_pin")
-async def remove_pin_comment(request: Request, current_user: Annotated[User, Depends(get_current_active_user)]): #@MICHAEL DO WE NEED TO VALIDATE THAT THE CURRENT USER IS THE POST AUTHOR HERE
+@app.put("/api/review/post/{post_id}/comment/{comment_id}/remove_pin")
+async def remove_pin_comment(post_id: str,  comment_id: str, current_user: Annotated[User, Depends(get_current_active_user)]): #@MICHAEL DO WE NEED TO VALIDATE THAT THE CURRENT USER IS THE POST AUTHOR HERE
     """
     remove a pin from a comment. Take the following format.
     {
@@ -820,18 +821,18 @@ async def remove_pin_comment(request: Request, current_user: Annotated[User, Dep
     
     if not current_user:
         raise HTTPException("401","Unauthorized")
-    response = await request.json()
-    response = response['_value']
 
-    driver.remove_pinned_comment(response["comment_id"],response["post_id"])
+    driver.remove_pinned_comment(comment_id, post_id)
 
 @app.get("/api/posts")
-async def get_all_posts(current_user: Annotated[User, Depends(get_current_active_user)], skip: int | None = Query(default=None), limit: int | None = Query(default=None)):
+async def get_all_posts(current_user: Annotated[User, Depends(get_current_active_user)]):
     """
     Pagination for all posts to replace feed. Currently just returns all posts from all users, no curated algo. 
     """
+    # skip: int | None = Query(default=None), limit: int | None = Query(default=None)
     if current_user:
-        return(JSONResponse(content={"data": jsonable_encoder(driver.get_feed(current_user, skip, limit))}))
+        feed = driver.get_feed(current_user, 0, 100)
+        return(JSONResponse(content={"data": jsonable_encoder(feed)}))
     
 @app.put("/api/review/{comment_id}/delete")
 async def set_comment_as_deleted(comment_id:str, current_user: Annotated[User, Depends(get_current_active_user)]):

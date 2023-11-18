@@ -34,6 +34,7 @@
               :likes="p.likes"
             />
           </div>
+
           <div v-if="postType === 'UpdatePost'" class="center-cards">
             <UpdatePost
               :id="p.id"
@@ -49,14 +50,19 @@
               :likes="p.likes"
             />
           </div>
+
           <div v-if="p" class="flex content-center px-2">
-            <div class="make-comments-container main">
+            <div class="make-comments-container main mb-10">
+                <label for="post-comment-form">
+                <p class="label-text">The trouble with most of us is that we would rather be ruined by praise than saved by criticism.</p>   
                 <textarea 
+                    id="post-comment-form"  
                     class="make-comment-textarea"
                     type="text"
                     v-model="comment"
-                    placeholder="Be nice, be thoughtful"    
+                    :placeholder="placeholders[randomPlaceholderIndex]"    
                 />
+                </label>
 
                 <button
                     class="send-comment-btn" 
@@ -68,7 +74,7 @@
             </div>
           </div>
 
-          <Comments v-if="p && comments.length" :comments="comments" :post-id="p.id" :post-username="p.user_username"/>
+          <Comments v-if="p" :comments="comments" :pinned-comments="pinnedComments" :post-id="p.id" :op-user-uuid="op_user_uuid" @comment-deleted="commentDeleted"/>
 
           <div class="mobile-menu-spacer sm:hidden"></div>
     </transition-group>
@@ -91,7 +97,9 @@ import ReviewPost from './posts/ReviewPost.vue';
 // This is for modeling comments and sending to backend
 const p = ref(null);
 const postType = ref('');
+const op_user_uuid = ref('');
 const comments = ref([]);
+const pinnedComments = ref([]);
 
 const request = reactive({
     "skip": 0,
@@ -101,17 +109,21 @@ const request = reactive({
 const route = useRoute();
 const router = useRouter();
 const { user, post } = route.params;
+const uuid = ref('');
 
 async function get_post_and_comments() {
     await db.get(urls.reviews.getPost(user, post)).then((res) => {
         p.value = res.data.post;
         postType.value = res.data.post_type;
+        op_user_uuid.value = res.data.op_user_id
     });
     
     await db.get(urls.reviews.getComments(post), request, true).then((res) => {
-        comments.value = res.data
-    })
-}
+        comments.value = res.data.comments
+        pinnedComments.value = res.data.pinned_comments
+        uuid.value = res.data.uuid
+    });
+};
 
 get_post_and_comments();
 
@@ -125,11 +137,29 @@ async function postComment(){
         "pinned": false,
         "replied_to": replied_to.value,
     };
-
+    // cant post empty comment strings.
     if(comment.value.length > 1){
         await db.post(urls.reviews.createComment(), data, true).then((res) => {
             comments.value.push({"comment": res.data})
         });
     };
 };
+
+// actual delete happens on db, this just hides from ui before next refresh.
+function commentDeleted(comment_id) {
+    comments.value = comments.value.filter((c) => c.comment.id !== comment_id);
+    pinnedComments.value = pinnedComments.value.filter((c) => c.comment.id !== comment_id);
+};
+
+const placeholders = [
+    'Penny for your thoughts',
+    'Whats on your mind?',
+    'Promoting respectfufl discourse',
+    'Thoughts, questions, musings?',
+    'Xo Xo',
+    'Im Charlie Trout'
+]
+
+const randomPlaceholderIndex = Math.floor(Math.random() * (placeholders.length - 1) + 1);
+
 </script>
