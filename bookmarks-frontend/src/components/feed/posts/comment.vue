@@ -39,6 +39,7 @@
                 <button 
                     class="ml-5 flex items-center justify-end"
                     type="button"
+                    :disabled="liking"
                     @click="likeComment()"
                 >
                     <IconLike/>
@@ -88,11 +89,12 @@
                         <button 
                             v-if="props.comment.posted_by_current_user"
                             type="button"
-                            @click="deleteComment(props.comment.id); flyoutToggle = false"
+                            :disabled="deleting"
+                            @click="deleteComment(props.comment.id)"
                         >
                             <IconTrash/>
                             <span class="ml-2">
-                                delete
+                                {{ deleteStatus }}
                             </span>
                         </button>
                     </div>
@@ -194,6 +196,13 @@ const flyoutToggle = ref(false);
 const route = useRoute();
 const { user } = route.params;
 const num_replies = ref(props.comment?.num_replies);
+
+// Limit btns for liking and deleting and replying by adding disabled states.
+const deleteStatus = ref('delete');
+const deleting = ref(false);
+
+const liking = ref(false);
+
 const emit = defineEmits(['comment-deleted', 'comment-pinned', 'comment-unpinned']);
 
 let isOpOfPost;
@@ -232,14 +241,19 @@ async function postReply() {
 };
 
 async function likeComment() {
+    liking.value = true;
     if(is_liked.value === false) {
         is_liked.value = true;
         commentLikes.value += 1
-        await db.put(urls.reviews.likeComment(props.comment.id));
+        await db.put(urls.reviews.likeComment(props.comment.id)).then(() => {
+            liking.value = false;
+        });
     } else {
         is_liked.value = false;
         commentLikes.value -= 1;
-        await db.put(urls.reviews.unlikeComment(props.comment.id))    
+        await db.put(urls.reviews.unlikeComment(props.comment.id)).then(() => {
+            liking.value = true;
+        })    
     }
 };
 
@@ -252,13 +266,14 @@ async function fetchMoreReplies() {
 }
 
 async function deleteComment(comment_id) {
+    deleting.value = true;
+    deleteStatus.value = 'deleting';
+    
     await db.put(urls.reviews.deleteComment(comment_id)).then(() => {
+        deleting.value = false;
+        deleteStatus.value = 'deleted';
         emit('comment-deleted', comment_id)
     })
-}
-
-function handleDelete(id) {
-    replies.value = replies.value.filter((r) => (r.id !== id));
 }
 
 async function pinComment() {
