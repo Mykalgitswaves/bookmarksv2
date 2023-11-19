@@ -70,16 +70,12 @@
               :key="index"
               class="is_ai my-2"
             >
-              <label
-                :for="index + '-option'"
-                
-              >
+              <label :for="index + '-option'">
                 <input 
-                  type="checkbox" 
-                  name="" 
+                  type="checkbox"
                   :id="option.pk + '-option'"
                   v-model="option.is_active"
-                  :value="true"
+                  :value="false"
                 />
                 {{ option.filter }}
               </label>

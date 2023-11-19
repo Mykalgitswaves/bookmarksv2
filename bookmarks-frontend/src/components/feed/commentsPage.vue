@@ -88,7 +88,6 @@ import { urls } from '../../services/urls';
 import { db } from '../../services/db';
 import BackBtn from './partials/back-btn.vue';
 import IconSend from '../svg/icon-send.vue';
-import IconBack from '../svg/icon-back.vue';
 import Comments from './posts/comments.vue';
 import ComparisonPost from './posts/comparisonPost.vue';
 import UpdatePost from './posts/updatePost.vue';

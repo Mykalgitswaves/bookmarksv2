@@ -63,7 +63,7 @@
                             type="button" 
                             v-for="(option, index) in postOptions"
                             :key="index"
-                            @click="selectHandler(option);"  
+                            @click="router.push(mapping[option])"  
                         >
                             {{ option }}
                         </button>
@@ -82,7 +82,7 @@
 // import SimilarBooks from '@/components/feed/SimilarBooks.vue';
 import BackBtn from './partials/back-btn.vue';
 import { ref, computed } from 'vue';
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { db } from '../../services/db';
 import { urls } from '../../services/urls';
 import { helpersCtrl } from '../../services/helpers';
@@ -91,6 +91,9 @@ import IconPlus from '../svg/icon-plus.vue';
 import IconAddReview from '../svg/icon-add-post.vue';
 
 const route = useRoute();
+const router = useRouter();
+const { user, work } = route.params;
+
 const { commanator } = helpersCtrl
 const book_id = route.params.work;
 const book = ref(null);
@@ -105,17 +108,13 @@ async function getWorkPage() {
 getWorkPage()
 
 const book_img = computed(() => (book.value?.small_img_url || book.value?.img_url));
-const postOptions = ["review", "update", "comparison"]
+const postOptions = ["review", "update", "comparison"];
 
 const mapping = {
-  "review": '',
-  "update": '',
-  "comparison": '',
-}
-
-function selectHandler(){
-    postOptions[mapping]
-}
+  "review": `/feed/${user}/create/review/review/work/${work}`,
+  "update": `/feed/${user}/create/review/update/work/${work}`,
+  "comparison": `/feed/${user}/create/review/comparison/work/${work}`,
+};
 
 </script>
 <style scoped>
@@ -123,7 +122,6 @@ function selectHandler(){
         display: flex;
         flex-direction: column;
         justify-content: center;
-        row-gap: 20px;
     }
 
     .book-page-header {
@@ -152,7 +150,7 @@ function selectHandler(){
         padding: 8px 25px;
         column-gap: 6px;
         font-size: 14px;
-        background-color: #6d28d9;
+        background-color: #3730a3;
         color: #fff;
         border-radius: 4px;
         transition: 250ms ease;
@@ -160,8 +158,8 @@ function selectHandler(){
 
     .b-p-t-btn.add {
         background-color: #f8fafc;
-        color: #6d28d9;
-        border: 1px solid #6d28d9;
+        color: #3730a3;
+        border: 1px solid #3730a3;
         position: relative;
     }
 
