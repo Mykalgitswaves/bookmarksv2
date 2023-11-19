@@ -72,7 +72,7 @@
             </div>
         </div>
 
-        <div class="book-page-description">
+        <div v-if="book?.description" class="book-page-description">
             <p v-html="book?.description"></p>
         </div>
     </section>
