@@ -73,7 +73,7 @@
         </div>
 
         <div class="book-page-description">
-            <p>{{ book?.description }}</p>
+            <p v-html="book?.description"></p>
         </div>
     </section>
 </template>
@@ -191,6 +191,7 @@ const mapping = {
         width: 100%;
         max-width: 880px;
         padding: 8px;
+        margin-top: 20px;
     }
 
     /* Animations */
