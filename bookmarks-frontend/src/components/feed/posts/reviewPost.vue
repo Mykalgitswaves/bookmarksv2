@@ -11,7 +11,9 @@
             <div class="c_c_m_inner">
                 <img class="review-image" :src="props.small_img_url" alt="">
                 <p 
-                    class="text-xl font-semibold my-2 text-indigo-600 cursor-pointer" 
+                    class="text-xl font-semibold my-2 text-indigo-600 cursor-pointer
+                    title-hover
+                    " 
                     @click="router.push(`/feed/${user}/works/${props.book}`)"
                 >{{ props.title }}</p>
                 <p v-if="props.headline.length" class="fancy text-2xl">{{ props.headline }}</p>
@@ -139,14 +141,15 @@ console.log(props.book)
 const { user } = route.params
 
 async function likePost() {
-    isLiked.value = !isLiked.value;
-    if(isLiked.value === true) {
+    if(isLiked.value === false) {
         await db.put(urls.reviews.likePost(props.id), null, true).then(() => {
             postLikes.value += 1;
+            isLiked.value = true;
         })
     } else {
         await db.put(urls.reviews.unlikePost(props.id), null, true).then(() => {
             postLikes.value -= 1;
+            isLiked.value = false;
         })
     }
 }
@@ -159,5 +162,24 @@ function navigateToCommentPage() {
 .justify-self {
     display: flex;
     justify-content: center;
+}
+
+.review-image {
+    transition: 250ms ease;
+    border-radius: 4px;
+}
+.review-image:hover {
+    transform: translateY(-5%) rotateX(15deg) translateZ(0);
+    box-shadow: 2px 35px 32px -8px rgba(0, 0, 0, 0.25);
+    -webkit-box-shadow: 2px 35px 32px -8px rgba(0, 0, 0, 0.25);
+    -moz-box-shadow: 2px 35px 32px -8px rgba(0, 0, 0, 0.25);
+}
+
+.title-hover {
+    transition: 250ms ease;
+}
+
+.title-hover:hover {
+    color: #312e81;
 }
 </style>

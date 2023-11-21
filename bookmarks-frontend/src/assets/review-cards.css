@@ -84,6 +84,15 @@
     height: 137px;
     width: 100px;
     justify-self: center;
+    transition: 250ms ease;
+    border-radius: 4px;
+}
+
+.comparison-image:hover {
+    transform: translateY(-5%) rotateX(15deg) translateZ(0);
+    box-shadow: 2px 35px 32px -8px rgba(0, 0, 0, 0.25);
+    -webkit-box-shadow: 2px 35px 32px -8px rgba(0, 0, 0, 0.25);
+    -moz-box-shadow: 2px 35px 32px -8px rgba(0, 0, 0, 0.25);
 }
 
 .comparison-headline-wrapper {
@@ -148,4 +157,12 @@
 .center-cards {
     display: grid;
     justify-content: center;
+}
+
+.title-hover {
+    transition: 250ms ease;
+}
+
+.title-hover:hover {
+    color: #312e81;
 }

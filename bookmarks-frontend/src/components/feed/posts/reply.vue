@@ -77,7 +77,7 @@ if(user === props.reply.user_id) {
 }
 
 const is_liked = ref(props.reply?.liked_by_current_user);
-const commentLikes = ref(props.reply?.likes)
+const commentLikes = ref(props.reply?.likes);
 const emit = defineEmits(['deleted']);
 
 const commentLikesFormatted = computed(() => {
