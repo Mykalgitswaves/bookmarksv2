@@ -10,6 +10,7 @@ import AuthorPage from '@/components/feed/authors/AuthorPage.vue';
 import SearchPage from '@/components/feed/navigation/SearchPage.vue';
 import SocialPage from '@/components/feed/social/SocialPage.vue';
 import CreateReviewPage from '@/components/feed/CreateReviewPage.vue';
+import SettingsPage from '@/components/feed/SettingsPage.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -42,6 +43,10 @@ const router = createRouter({
         {
           path: 'post/:post',
           component: commentsPage,
+        },
+        {
+          path: 'settings',
+          component: SettingsPage
         },
         {
           path: 'works/:work',

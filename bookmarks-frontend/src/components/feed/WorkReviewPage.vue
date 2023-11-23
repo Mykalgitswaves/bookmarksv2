@@ -21,7 +21,6 @@
 
 <script setup>
     import WorkCard from '@/components/feed/WorkCard.vue';
-    import ReviewCard from '@/components/feed/ReviewCard.vue';
     import { useRouter, useRoute } from 'vue-router';
     import { ref } from 'vue';
     const route = useRoute();

@@ -5,65 +5,25 @@
       <div class="flex reverse"> 
         <button class="ml-5 text-indigo-800"
           type="button"
-          alt="show logout menu"
-          @click="isMenuShowing = !isMenuShowing"
+          alt="settings"
+          @click="router.push(pathToSettings)"
         >
-          <IconMenu />
+          <IconSettings />
         </button>
-
-        <img class="profile-image border-solid 
-        border-indigo-600 border-2 ml-5"
-          :src="profilePicture"
-          alt="profileImage"  
-        />
-        
-        <div class="navbar-text">
-            <p class="text-slate-800 font-semibold text-xl">{{ user.fullName }}</p>
-            <p><span v-for="(genre, index) in user.genres" :key="index">{{ genre + helpersCtrl.commanator(index, user.genres.length)}}</span></p>
-        </div>
       </div>
-    </div>
-
-    <div 
-      v-if="isMenuShowing"
-      class="top-menu-wrapper bg-slate-200 rounded-md shadow-lg" 
-    >
-      <button 
-        class="bg-slate-900 text-slate-200 px-3 py-2 rounded-md"
-        type="button" 
-        alt="logout button"
-        @click="logout()"
-      >
-        Logout
-      </button>
     </div>
   </nav>
 </template>
 
 <script setup>
-    import { defineProps, toRefs, computed, ref } from 'vue'
-    import { useNavigationStore } from '@/stores/navigation.js';
-    import { helpersCtrl } from '@/services/helpers.js' 
-    import IconMenu from '../svg/icon-menu.vue';
-    import Logo from '@/components/svg/icon-logo.vue';
-    import router from '../../router';
+    import Logo from '../svg/icon-logo.vue';
+    import IconSettings from '../svg/icon-settings.vue';
+    import { useRoute, useRouter } from 'vue-router'
 
-    const store = useNavigationStore();
-    const props = defineProps({
-        profilePicture: String,
-    })
-
-    function logout(){
-    router.push('/')
-  }
-
-    const { profilePicture } = toRefs(props)
-    const isMenuShowing = ref(false);
-
-    const user = {
-        fullName: 'Aaron Wordnerd III\'s ',
-        genres: ['Fiction', 'Poetry', 'contemporary']
-    };
+    const route = useRoute();
+    const router = useRouter();
+    const { user } = route.params;
+    const pathToSettings = `/feed/${user}/settings`
 
 </script>
 
@@ -111,14 +71,11 @@
 
 .top-menu-wrapper {
   position: absolute;
-  top: 45vh;
-  right: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
+  top: 15vh;
+  right: 0;
   z-index: 10;
   padding: 2rem;
-  width: 300px;
-  text-align: center;
+  width: minmax(60vw, 280px);
   border-bottom-left-radius: 4px;
 }
 

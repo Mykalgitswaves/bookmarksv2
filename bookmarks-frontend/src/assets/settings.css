@@ -1,0 +1,54 @@
+/* Forms on the settings page */
+.settings-section {
+    max-width: 880px;
+}
+
+.edit-profile-picture {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.edit-profile-picture img {
+    width: 150px;
+    height: 150px;
+    border-radius: 50%;
+    margin-bottom: 10px;
+    /* border: solid 4px #4c1d95; */
+    box-shadow: rgba(124,58,237, .24) 0px 0px 0px 2px, rgba(76,29,149, .68) 0px 4px 6px -1px, rgba(255, 255, 255, 0.08) 0px 1px 0px inset;;
+}
+
+
+.settings-info-form-container {
+    display: grid;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    column-gap: 20px;
+}
+
+
+.settings-info-form {
+    display: grid;
+    grid-template-columns: 1fr;
+    row-gap: 15px;
+    max-width: 600px;
+    margin-top: 8px;
+    padding: 20px;
+    border-radius: 8px;
+    background-color: #fafafa;
+}
+
+
+.edit-btn {
+    display: flex;
+    column-gap: 6px;
+    color: #1e293b;
+    text-decoration: underline;
+    justify-self: end;
+}
+
+.edit-btn svg {
+    transform: scale(.9);
+}

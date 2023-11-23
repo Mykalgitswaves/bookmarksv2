@@ -1,0 +1,90 @@
+<template>
+    <BackBtn/>
+    <section class="settings-section">
+        <div class="edit-profile-picture">
+            <img :src="path" alt="">
+            <button
+                v-if="!isEditingProfileImage"
+                type="button"
+                class="edit-btn profile-image"
+                @click="isEditingProfileImage = true"
+            >
+                    <IconEdit/>
+                    edit                
+            </button>
+
+            <button
+                v-if="isEditingProfileImage"
+                type="button"
+                class="edit-btn profile-image"
+                @click="isEditingProfileImage = false"
+            >
+                
+                    <IconExit/>
+                    cancel
+            </button>
+
+            <div>
+                <input 
+                    v-if="isEditingProfileImage"
+                    type="file"
+                />
+            </div>
+        </div>
+
+        <div class="settings-info-form-container">
+            <div>
+                <h2 class="text-xl font-semibold mb-5 mt-5">Public information</h2>
+
+                <div class="settings-info-form">
+                    <label for="user-name">
+                        <p class="text-sm text-slate-600 mb-2">username</p>
+                        <input type="text" id="user-name" class="w-100 py-1 rounded-md">
+                    </label>
+
+                    <label for="email">
+                        <p class="text-sm text-slate-600 mb-2">email</p>
+                        <input type="email" id="user-email" class="w-100 py-1 rounded-md">
+                    </label>
+
+                    <label for="password">
+                        <p class="text-sm text-slate-600 mb-2">password</p>
+                        <input type="text" id="user-password" class="w-100 py-1 rounded-md">
+                    </label>
+                </div>
+            </div>
+            <div>
+                <h2 class="text-xl font-semibold mb-5 mt-5">Associated accounts</h2>
+                <div class="settings-info-form">
+                    <label for="user-social-instagram">
+                        <p class="text-sm text-slate-600 mb-2">instagram</p>
+                        <input type="text" id="user-social-instagram" class="w-100 py-1 rounded-md">
+                    </label>
+
+                    <label for="user-social-twitter">
+                        <p class="text-sm text-slate-600 mb-2">twitter</p>
+                        <input type="text" id="user-social-twitter" class="w-100 py-1 rounded-md">
+                    </label>
+
+                    <label for="user-social-medium">
+                        <p class="text-sm text-slate-600 mb-2">medium</p>
+                        <input type="text" id="user-social-medium" class="w-100 py-1 rounded-md">
+                    </label>
+                </div>
+            </div>
+        </div>
+    </section>
+    <div class="mobile-menu-spacer sm:hidden"></div>
+</template>
+<script setup>
+    import BackBtn from './partials/back-btn.vue';
+    import IconEdit from '../svg/icon-edit.vue';
+    import IconExit from '../svg/icon-exit.vue';
+    import { ref } from 'vue';
+    import path from '../svg/placeholderImg.png'
+    
+    const placeholderPath = '../svg/placeholderImg.png';
+    const isEditingProfileImage = ref(false)
+
+    
+</script>

@@ -6,6 +6,7 @@
 @import 'fonts.css';
 @import 'inputs.css';
 @import 'review-cards.css';
+@import 'settings.css';
 
 @tailwind base;
 @tailwind components;
