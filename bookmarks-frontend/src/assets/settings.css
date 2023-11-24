@@ -35,6 +35,10 @@
     column-gap: 20px;
 }
 
+.settings-info-form.loading {
+    background-color: #e4e4e7;
+    filter: blur(2px);
+}
 
 .settings-info-form {
     display: grid;
@@ -45,8 +49,20 @@
     padding: 20px;
     border-radius: 8px;
     background-color: #fafafa;
+    min-height: 289px;
 }
 
+.settings-info-form-input {
+    min-height: 32px;
+    padding: 8px 12px;
+    width: 100%;
+    border-radius: 6px;
+}
+
+.settings-info-form-input[disabled] {
+    background-color: #fff;
+    cursor: not-allowed;
+}
 
 .edit-btn {
     display: flex;
@@ -54,6 +70,12 @@
     color: #1e293b;
     text-decoration: underline;
     justify-self: end;
+    padding: 6px;
+    border-radius: 6px;
+}
+
+.edit-btn:hover {
+    background-color: #f3f4f6;
 }
 
 .edit-btn svg {

@@ -33,23 +33,37 @@
 
         <div class="settings-info-form-container">
             <div>
-                <h2 class="text-xl font-semibold mb-5 mt-5">Public information</h2>
+                <div class="flex items-center">
+                <h2 class="text-xl font-semibold mb-5 mt-5 mr-5">Public information</h2>
+                <button
+                        type="button"
+                        class="edit-btn"
+                        @click="isEditingProfileForm = true"
+                    >
+                        <IconEdit/>
+                        edit
+                </button>
+                </div>
 
-                <div class="settings-info-form">
-                    <IconEdit/>
+                <div class="settings-info-form" :class="{'loading': !userData.loaded}">
                     <label for="user-name">
                         <p class="text-sm text-slate-600 mb-2">username</p>
-                        <input type="text" id="user-name" class="w-100 py-1 rounded-md">
+                        <input
+                            type="text"
+                            id="user-name"
+                            class="settings-info-form-input"
+                            v-model="userData.username"
+                            :disabled="!isEditingProfileForm">
                     </label>
 
                     <label for="email">
                         <p class="text-sm text-slate-600 mb-2">email</p>
-                        <input type="email" id="user-email" class="w-100 py-1 rounded-md">
+                        <input type="email" id="user-email" class="w-100 py-1 px-2 rounded-md">
                     </label>
 
                     <label for="password">
                         <p class="text-sm text-slate-600 mb-2">password</p>
-                        <input type="text" id="user-password" class="w-100 py-1 rounded-md">
+                        <input type="text" id="user-password" class="w-100 py-1 px-2 rounded-md">
                     </label>
                 </div>
             </div>
@@ -86,8 +100,15 @@
     import { db } from '../../services/db';
     import { urls } from '../../services/urls';
     
-    const isEditingProfileImage = ref(false)
-    const userData = ref(null);
+    const isEditingProfileImage = ref(false);
+    const isEditingProfileForm = ref(false);
+    const userData = ref({
+        loaded: false,
+        username: '',
+        full_name: '',
+        password: '',
+        email: ''
+    });
 
     const route = useRoute();
 
@@ -95,8 +116,9 @@
     async function getUserSettings() {
         await db.get(urls.user.getUser(route.params.user)).then((res) => {
             userData.value = res.data
+            userData.value.loaded = true;
         });
     }
-    
+
     getUserSettings();
 </script>
