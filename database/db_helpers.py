@@ -1592,6 +1592,32 @@ class Neo4jDriver():
         else:
             return(None)
     
+
+    def get_user_for_settings(self, user_id):
+        """
+        gets id of user and returns full user object
+        """
+        with self.driver.session() as session:
+            result = session.execute_read(self.get_user_for_settings_query, user_id)
+        return(result)
+    
+    @staticmethod
+    def get_user_for_settings_query(tx, user_id):
+        query = """
+            match(u:User {id:$user_id}) 
+            return u
+        """
+        result = tx.run(query, user_id=user_id)
+        response = result.single()
+        user = User(
+            user_id=response['u']['id'],
+            username=response['u']['username'],
+            email=response['u']['email'] or '',
+            full_name=response['u']['fullname'] or '',
+            created_date=response['u']['created_date'],
+        )
+        return user
+
     def get_book_by_google_id(self,google_id):
         """
         Finds a book by google id if in db
@@ -2653,6 +2679,7 @@ class Neo4jDriver():
 
             comment_response.append(response_entry)
         return(comment_response)
+
     def get_all_books(self):
         """
         Grabs all the book currently in the db and returns the ID and ISBN #s

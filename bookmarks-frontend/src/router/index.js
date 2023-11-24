@@ -49,8 +49,16 @@ const router = createRouter({
           component: SettingsPage
         },
         {
+          // canonical
           path: 'works/:work',
-          component: WorkPage
+          component: WorkPage,
+          children: [
+            {
+              //feed/:user_uuid/work/:work_uuid/version/:versiun_uuid
+              path: 'version/:version_uuid',
+              component: WorkPage
+            }
+          ]
         },
         {
           path: 'create/review/:reviewType/work/:work1',

@@ -6,11 +6,10 @@
             <button
                 v-if="!isEditingProfileImage"
                 type="button"
-                class="edit-btn profile-image"
+                class=" text-sm text-indigo-600 underline"
                 @click="isEditingProfileImage = true"
             >
-                    <IconEdit/>
-                    edit                
+                    Change profile photo                
             </button>
 
             <button
@@ -37,6 +36,7 @@
                 <h2 class="text-xl font-semibold mb-5 mt-5">Public information</h2>
 
                 <div class="settings-info-form">
+                    <IconEdit/>
                     <label for="user-name">
                         <p class="text-sm text-slate-600 mb-2">username</p>
                         <input type="text" id="user-name" class="w-100 py-1 rounded-md">
@@ -80,11 +80,23 @@
     import BackBtn from './partials/back-btn.vue';
     import IconEdit from '../svg/icon-edit.vue';
     import IconExit from '../svg/icon-exit.vue';
-    import { ref } from 'vue';
     import path from '../svg/placeholderImg.png'
+    import { ref } from 'vue';
+    import { useRoute } from 'vue-router'
+    import { db } from '../../services/db';
+    import { urls } from '../../services/urls';
     
-    const placeholderPath = '../svg/placeholderImg.png';
     const isEditingProfileImage = ref(false)
+    const userData = ref(null);
 
+    const route = useRoute();
+
+    // Call user endpoint for data
+    async function getUserSettings() {
+        await db.get(urls.user.getUser(route.params.user)).then((res) => {
+            userData.value = res.data
+        });
+    }
     
+    getUserSettings();
 </script>
