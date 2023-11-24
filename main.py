@@ -15,6 +15,7 @@ from database.db_helpers import (
 )
 from database.api.books_api.search import BookSearch
 from database.api.books_api.add_book import pull_google_book
+from database.api.books_api.book_versions import search_versions_by_metadata
 from database.auth import verify_access_token
 
 from db_tasks import update_book_google_id, pull_book_and_versions
@@ -872,3 +873,26 @@ async def get_pinned_comments_for_post(post_id: str, current_user: Annotated[Use
                                                     limit=limit)
         
         return JSONResponse(content={"data": jsonable_encoder(comments)})
+    
+@app.get("/api/books/{book_id}/versions")
+async def get_book_versions_from_db(book_id: str):
+    """
+    Endpoint for getting versions of a book from the DB
+    """
+    if book_id[0] == "g":
+        versions = driver.get_book_versions_by_google_id(book_id=book_id)
+    else:
+        versions = driver.get_book_versions(book_id=book_id)
+    
+    return JSONResponse(content={"data": jsonable_encoder(versions)})
+        
+@app.get("/api/books/{book_id}/versions/metadata")
+async def get_book_versions_from_metadata_search(book_id: str, book_title:str, book_authors:list):
+    """
+    Endpoint for getting versions of a book from a metadata search
+    """
+    
+    versions = search_versions_by_metadata(book_title=book_title,book_authors=book_authors)
+    
+    return JSONResponse(content={"data": jsonable_encoder(versions)})
+

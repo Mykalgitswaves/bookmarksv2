@@ -19,7 +19,7 @@ class BookSearch():
         search_results = []
         search_metadata_map = {}
         driver = Neo4jDriver()
-        path = f"https://www.googleapis.com/books/v1/volumes?q={text}&startIndex={skip}&maxResults={limit+round(limit*0.5)}&printType=books&key={self.api_key}"
+        path = f"https://www.googleapis.com/books/v1/volumes?q={text}&startIndex={skip}&maxResults={limit+round(limit*0.5)}&printType=books&projection=lite&key={self.api_key}"
         r = requests.get(path)
         response = r.json()
         # print(response)
@@ -38,7 +38,7 @@ class BookSearch():
                     
                 if title in search_metadata_map:
                     # if any(item in search_metadata_map[title] for item in author_names): # If any of the authors are matching
-                    if search_metadata_map[title] == author_names:
+                    if set(search_metadata_map[title]) == set(author_names):
                         continue
                 
                 search_metadata_map.update({title:author_names}) # Update the metadata map

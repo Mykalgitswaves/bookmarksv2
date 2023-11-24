@@ -2719,6 +2719,100 @@ class Neo4jDriver():
         response = result.single()
         return(response['relationshipDoesNotExist'])
 
+    def get_book_versions(self, book_id):
+        """
+        Grabs all the versions of a book stored in the db
+        """
+        with self.driver.session() as session:
+            result = session.execute_read(self.get_book_versions_query, book_id=book_id)  
+        return(result)
+    @staticmethod
+    def get_book_versions_query(tx, book_id):
+        query = """
+        match (book:Book {id:$book_id})-[:HAS_VERSION]->(version:Book)
+        return version.gr_id,
+        version.id, 
+        version.img_url, 
+        version.isbn13,
+        version.isbn10,
+        version.lang, 
+        version.originalPublicationYear, 
+        version.pages, 
+        version.small_img_url, 
+        version.description, 
+        version.title,
+        version.author_names,
+        version.google_id
+        """
+        versions_list = []
+        result = tx.run(query, book_id=book_id)
+       
+        for response in result:
+            book = Book(book_id=response["version.id"], 
+                            gr_id=response["version.gr_id"], 
+                            img_url=response["version.img_url"],
+                            small_img_url=response["version.small_img_url"],
+                            pages=response["version.pages"],
+                            publication_year=response["version.originalPublicationYear"],
+                            lang=response["version.lang"],
+                            title=response["version.title"],
+                            description=response["version.description"],
+                            isbn13 = response["version.isbn13"],
+                            isbn10 = response["version.isbn10"],
+                            author_names=response["version.author_names"],
+                            google_id=response['version.google_id'])
+            versions_list.append(book)
+        
+        return versions_list
+    
+    def get_book_versions_by_google_id(self, book_id):
+        """
+        Grabs all the versions of a book stored in the db, searching by google_id
+        """
+        with self.driver.session() as session:
+            result = session.execute_read(self.get_book_versions_by_google_id_query, book_id=book_id)  
+        return(result)
+    
+    @staticmethod
+    def get_book_versions_by_google_id_query(tx, book_id):
+        query = """
+        match (book:Book)
+        where book.id = $book_id or book.google_id = $book_id
+        match (book)-[:HAS_VERSION]->(version:Book)
+        return version.gr_id,
+        version.id, 
+        version.img_url, 
+        version.isbn13,
+        version.isbn10,
+        version.lang, 
+        version.originalPublicationYear, 
+        version.pages, 
+        version.small_img_url, 
+        version.description, 
+        version.title,
+        version.author_names,
+        version.google_id
+        """
+        versions_list = []
+        result = tx.run(query, book_id=book_id)
+       
+        for response in result:
+            book = Book(book_id=response["version.id"], 
+                            gr_id=response["version.gr_id"], 
+                            img_url=response["version.img_url"],
+                            small_img_url=response["version.small_img_url"],
+                            pages=response["version.pages"],
+                            publication_year=response["version.originalPublicationYear"],
+                            lang=response["version.lang"],
+                            title=response["version.title"],
+                            description=response["version.description"],
+                            isbn13 = response["version.isbn13"],
+                            isbn10 = response["version.isbn10"],
+                            author_names=response["version.author_names"],
+                            google_id=response['version.google_id'])
+            versions_list.append(book)
+        
+        return versions_list
 
     def close(self):
         self.driver.close()
