@@ -12,17 +12,37 @@ class BookSearch():
             CONFIG = json.load(f)
         self.api_key = CONFIG['books_api_key']
     @timing_decorator
-    def search(self,text):
+    def search(self,text,skip,limit):
         """
         Searches the book api without any additional conditions
         """  
         search_results = []
+        search_metadata_map = {}
         driver = Neo4jDriver()
-        path = f"https://www.googleapis.com/books/v1/volumes?q={text}&startIndex=0&printType=books&key={self.api_key}"
+        path = f"https://www.googleapis.com/books/v1/volumes?q={text}&startIndex={skip}&maxResults={limit+round(limit*0.5)}&printType=books&key={self.api_key}"
         r = requests.get(path)
         response = r.json()
+        # print(response)
         if response["totalItems"] > 0:
             for result in response['items']:
+                if "title" in result['volumeInfo']:
+                    title=result['volumeInfo']['title']
+                    # print(title)
+                else:
+                    title=None
+                    
+                if 'authors' in result['volumeInfo']: 
+                    author_names=result['volumeInfo']['authors']
+                else:
+                    author_names=None
+                    
+                if title in search_metadata_map:
+                    # if any(item in search_metadata_map[title] for item in author_names): # If any of the authors are matching
+                    if search_metadata_map[title] == author_names:
+                        continue
+                
+                search_metadata_map.update({title:author_names}) # Update the metadata map
+                    
                 if 'industryIdentifiers' in result['volumeInfo']:
                     isbn13 = next((item for item in result['volumeInfo']['industryIdentifiers'] if item["type"] == "ISBN_13"), None)
                     isbn10 = next((item for item in result['volumeInfo']['industryIdentifiers'] if item["type"] == "ISBN_10"), None)
@@ -48,19 +68,10 @@ class BookSearch():
                 else:
                     small_img_url=None
                     thumbnail=None
-                if "title" in result['volumeInfo']:
-                    title=result['volumeInfo']['title']
-                    # print(title)
-                else:
-                    title=None
                 if 'description' in result['volumeInfo']: 
                     description=result['volumeInfo']['description']
                 else:
                     description=None
-                if 'authors' in result['volumeInfo']: 
-                    author_names=result['volumeInfo']['authors']
-                else:
-                    author_names=None
                 if 'categories' in result["volumeInfo"]:
                     genres = result["volumeInfo"]['categories']
                 else:
@@ -74,7 +85,6 @@ class BookSearch():
                 else:
                     pageCount = None
                 
-
 
                 book = Book("g"+result['id'], 
                             small_img_url=small_img_url,
@@ -90,7 +100,9 @@ class BookSearch():
                             in_database=False)
                 
                 search_results.append(book)
-                    
+                
+                if len(search_results) >= limit: # Check if over the limit
+                    return(search_results)
         else:
             return([])
         return(search_results)

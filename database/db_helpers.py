@@ -1667,8 +1667,10 @@ class Neo4jDriver():
     @staticmethod
     def get_book_by_google_id_flexible_query(tx,google_id):
         query = """
-                match (b:Book)
-                WHERE b.id = $google_id OR b.google_id = $google_id
+                match (book:Book)
+                WHERE book.id = $google_id OR book.google_id = $google_id
+                OPTIONAL MATCH (canonical:Book)-[:HAS_VERSION]->(book)
+                WITH COALESCE(canonical, book) AS b
                 match (b)-[r]-(g)
                 return b.gr_id,
                 b.id, 
@@ -1681,6 +1683,7 @@ class Neo4jDriver():
                 b.small_img_url, 
                 b.description, 
                 b.title,
+                b.author_names,
                 TYPE(r),
                 g.id
                 """
@@ -1698,6 +1701,7 @@ class Neo4jDriver():
                         description=response["b.description"],
                         isbn13 = response["b.isbn13"],
                         isbn10 = response["b.isbn10"],
+                        author_names=response["b.author_names"],
                         google_id=google_id)
             for response in result:
                 if response['TYPE(r)'] == 'HAS_TAG':
@@ -1714,7 +1718,7 @@ class Neo4jDriver():
         
     def get_id_by_google_id(self,google_id):
         """
-        Uses the google id to find the id, title, and small_img_url in our db
+        Uses the google id to find the id, title, and small_img_url in our db TODO: Same Coalese with canonical
         """
         with self.driver.session() as session:
             book = session.execute_read(self.get_id_by_google_id_query, google_id)
@@ -1722,8 +1726,10 @@ class Neo4jDriver():
     @staticmethod
     def get_id_by_google_id_query(tx,google_id):
         query = """
-                match (b:Book)
-                WHERE b.google_id = $google_id
+                match (book:Book)
+                WHERE book.google_id = $google_id or book.id = $google_id
+                OPTIONAL MATCH (canonical:Book)-[:HAS_VERSION]->(book)
+                WITH COALESCE(canonical, book) AS b
                 return b.id, b.title, b.small_img_url
                 """
         result = tx.run(query, google_id=google_id)

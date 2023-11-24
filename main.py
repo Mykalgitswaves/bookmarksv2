@@ -363,7 +363,7 @@ async def get_books_by_title(text: str, skip: int=0, limit: int=3):
 @app.get("/api/books/{book_id}")
 async def get_book_page(book_id: str, background_tasks:BackgroundTasks):
     """
-    Endpoint for book page
+    Endpoint for book page. If a google id is used, the canonical version of the book is returned
     """
     if book_id[0] == 'g':
         # Checks if the book is already in our database
@@ -422,7 +422,7 @@ async def search_for_param(param: str, skip: int=0, limit: int=5):
     """
     
     book_search = BookSearch()
-    books_result = book_search.search(param)
+    books_result = book_search.search(param, skip, limit)
     search_result = driver.search_for_param(param=param, skip=skip, limit=limit)
     search_result['books'] = books_result
    
@@ -435,7 +435,7 @@ async def search_for_param(param: str, skip: int=0, limit: int=5):
     """
     
     book_search = BookSearch()
-    books_result = book_search.search(param)
+    books_result = book_search.search(param, skip, limit)
    
     return JSONResponse(content={"data": jsonable_encoder(books_result)})
 
@@ -464,12 +464,13 @@ async def create_review(request: Request,
     book_id = response['book_id']
     small_img_url = response['small_img_url']
     title = response['title']
-
-    db_book = driver.get_id_by_google_id(book_id)
-    if db_book:
-        book_id = db_book['id']
-        small_img_url = db_book['small_img_url']
-        title = db_book['title']
+    
+    if book_id[0] == "g":
+        db_book = driver.get_id_by_google_id(book_id) 
+        if db_book:
+            book_id = db_book['id']
+            small_img_url = db_book['small_img_url']
+            title = db_book['title']
 
     review = ReviewPost(
                     post_id='', 
