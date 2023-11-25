@@ -1,4 +1,5 @@
 from neo4j import GraphDatabase
+from fastapi import HTTPException
 import uuid
 import json
 import sys
@@ -6,36 +7,36 @@ sys.path.append('./')
 from helpers import timing_decorator 
 
 class User():
-    def __init__(self, user_id: int, 
+    def __init__(self, user_id: str, 
                  username="", 
                  created_date="", 
-                 book_ids=[], 
-                 review_ids=[],
-                 to_read_ids=[],
-                 liked_authors=[],
-                 liked_genres=[],
-                 currently_reading=[],
+                 post_ids=[],
                  friends=[],
-                 liked_reviews=[],
+                 liked_posts=[],
                  email="",
                  full_name="",
                  hashed_password="",
-                 disabled=False):
+                 disabled=False,
+                 user_type="Standard",
+                 followers=[],
+                 following=[],
+                 profile_img_url="",
+                 bio=""):
         self.user_id = user_id
-        self.books = book_ids
-        self.reviews = review_ids
-        self.want_to_read = to_read_ids
-        self.authors = liked_authors
-        self.genres = liked_genres
-        self.reading = currently_reading
+        self.posts = post_ids
         self.friends = friends
-        self.liked_reviews = liked_reviews
+        self.liked_posts = liked_posts
         self.username = username
         self.created_date = created_date
         self.email = email
         self.full_name = full_name
         self.hashed_password = hashed_password
         self.disabled=disabled
+        self.user_type=user_type
+        self.followers=followers
+        self.following=following
+        self.profile_img_url=profile_img_url
+        self.bio = bio
     def add_friend(self, friend_id,driver):
         """
         Adds a friendship relationship to the database
@@ -120,6 +121,21 @@ class User():
             self.reading.append(book_id)
         else:
             raise Exception("This relationship already exists")
+    def update_username(self,new_username,driver):
+        """
+        Updates the username of a user
+        """
+        result=driver.update_username(new_username=new_username,user_id=self.user_id)
+        if result.status_code == 200:
+            self.username=new_username
+        
+        return result
+    def update_bio(self,new_bio,driver):
+        """
+        Updates the bio of a user
+        """
+        driver.update_bio(new_bio=new_bio,user_id=self.user_id)
+        self.bio=new_bio
 
     def get_posts(self,driver):
         output = driver.pull_all_reviews_by_user(self.username)
@@ -541,7 +557,7 @@ class Neo4jDriver():
                 user.books.append(response["bb.id"])
 
         return(user)
-    def add_user_friend(self, user_id:int, friend_id:int):
+    def add_user_friend(self, user_id:str, friend_id:str):
         """
         Adds a friend relationship between two users
         
@@ -556,7 +572,7 @@ class Neo4jDriver():
     @staticmethod
     def add_user_friend_query(tx, user_id, friend_id):
         query = """
-                match (uu:User {id: $user_id}) match (bb:User {id: $friend_id}) merge (uu)-[rr:HAS_FRIEND]->(bb)
+                match (uu:User {id: $user_id}) match (bb:User {id: $friend_id}) merge (uu)-[rr:HAS_FRIEND]-(bb)
                 """
         result = tx.run(query, user_id=user_id,friend_id=friend_id)
     def add_favorite_genre(self, user_id, genre_id):
@@ -2844,6 +2860,56 @@ class Neo4jDriver():
             versions_list.append(book)
         
         return versions_list
+    
+    
+    ###################################################################################################################
+    ###########
+    ###########        USER QUERIES
+    ###########
+    ###################################################################################################################
+
+    def update_username(self,new_username:str, user_id:str):
+        """
+        Updates the username of a user
+        """
+        with self.driver.session() as session:
+            result = session.execute_write(self.update_username_query, new_username=new_username, user_id=user_id)  
+        return(result)
+    
+    @staticmethod
+    def update_username_query(tx, new_username, user_id):
+        query = """
+        match (u:User {id:$user_id})
+        set u.username = $new_username
+        """
+        try:
+            tx.run(query,user_id=user_id,new_username=new_username)
+            return HTTPException(
+                status_code=200,
+                detail="Username change successfully"
+            )
+        except:
+            return HTTPException(
+                    status_code=401,
+                    detail="Username is already taken"
+                )
+            
+    def update_bio(self,new_bio:str, user_id:str):
+        """
+        Updates the bio of a user
+        """
+        with self.driver.session() as session:
+            result = session.execute_write(self.update_bio_query, new_bio=new_bio, user_id=user_id)  
+        return(result)
+    
+    @staticmethod
+    def update_bio_query(tx, new_bio, user_id):
+        query = """
+        match (u:User {id:$user_id})
+        set u.bio = $new_bio
+        """
+        
+        tx.run(query,user_id=user_id,new_bio=new_bio)
 
     def close(self):
         self.driver.close()
