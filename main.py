@@ -939,7 +939,7 @@ async def update_profile_img(user_id: str, current_user: Annotated[User, Depends
     """
     
 @app.put("/api/user/{user_id}/update_password")
-async def update_profile_img(user_id: str, current_user: Annotated[User, Depends(get_current_active_user)], new_password:str):
+async def update_password(user_id: str, current_user: Annotated[User, Depends(get_current_active_user)], new_password:str):
     """
     Changes the users password.
     """
@@ -951,37 +951,37 @@ async def update_profile_img(user_id: str, current_user: Annotated[User, Depends
     else:
         raise HTTPException(400, detail="Unauthorized")
 
-@app.get("/api/user/{user_id}/send_friend_request")
+@app.put("/api/user/{user_id}/send_friend_request")
 async def update_profile_img(user_id: str, friend_id:str, current_user: Annotated[User, Depends(get_current_active_user)]):
     """
     This send a friend request from user_id -> friend_id 
     """
 
-@app.get("/api/user/{user_id}/unsend_friend_request")
+@app.put("/api/user/{user_id}/unsend_friend_request")
 async def update_profile_img(user_id: str, friend_id:str, current_user: Annotated[User, Depends(get_current_active_user)]):
     """
     THIS IS A PLACEHOLDER. 
     """
     
-@app.get("/api/user/{user_id}/accept_friend_request")
+@app.put("/api/user/{user_id}/accept_friend_request")
 async def update_profile_img(user_id: str, friend_id:str, current_user: Annotated[User, Depends(get_current_active_user)]):
     """
     THIS IS A PLACEHOLDER. 
     """
     
-@app.get("/api/user/{user_id}/decline_friend_request")
+@app.put("/api/user/{user_id}/decline_friend_request")
 async def update_profile_img(user_id: str, friend_id:str, current_user: Annotated[User, Depends(get_current_active_user)]):
     """
     THIS IS A PLACEHOLDER. 
     """
 
-@app.get("/api/user/{user_id}/follow")
+@app.put("/api/user/{user_id}/follow")
 async def update_profile_img(user_id: str, followed_user_id:str, current_user: Annotated[User, Depends(get_current_active_user)]):
     """
     THIS IS A PLACEHOLDER. 
     """
 
-@app.get("/api/user/{user_id}/block")
+@app.put("/api/user/{user_id}/block")
 async def update_profile_img(user_id: str, blocked_user_id:str, current_user: Annotated[User, Depends(get_current_active_user)]):
     """
     THIS IS A PLACEHOLDER. 
