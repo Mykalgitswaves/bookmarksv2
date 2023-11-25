@@ -1,7 +1,10 @@
 <template>
     <div class="card">
         <div class="card-header">
-            <p class="text-slate-600 text-center">
+            <p 
+                class="text-slate-600 text-center"
+                @click="router.push(`/feed/${route.params.user}/user/${props.user_id}`)"
+            >
                 <span class="text-indigo-600 cursor-pointer">{{ props.username }}'s</span>
                 made an update: 
             </p>
@@ -93,6 +96,10 @@ const props = defineProps({
         required: true
     },
     small_img_url: {
+        type: String,
+        required: true
+    },
+    user_id: {
         type: String,
         required: true
     }

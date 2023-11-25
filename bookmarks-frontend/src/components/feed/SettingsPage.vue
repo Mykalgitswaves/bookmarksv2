@@ -62,7 +62,8 @@
                     </label>
 
                     <label for="password">
-                        <p class="text-sm text-slate-600 mb-2">password</p>
+                        <p class="text-sm text-slate-600 mb-2"
+                        >password</p>
                         <input type="text" id="user-password" class="w-100 py-1 px-2 rounded-md">
                     </label>
                 </div>

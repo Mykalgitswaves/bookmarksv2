@@ -2454,7 +2454,7 @@ class Neo4jDriver():
                     optional match (cu:User {username:$username})-[lr:LIKES]->(p)
                     optional match (p)-[br:POST_FOR_BOOK]-(b)
                     optional match (comments:Comment {deleted:false})<-[:HAS_COMMENT]-(p)
-                    RETURN p, labels(p), u.username, b,
+                    RETURN p, labels(p), u.username, b, u.id,
                     CASE WHEN lr IS NOT NULL THEN true ELSE false END AS liked_by_current_user,
                     CASE WHEN u.username = $username THEN true ELSE false END AS posted_by_current_user,
                     count(comments) as num_comments
@@ -2478,6 +2478,7 @@ class Neo4jDriver():
                                                          book="",
                                                          created_date=post["created_date"],
                                                          num_books=post["num_books"],
+                                                         user_id=response['u.id'],
                                                          user_username=response['u.username'],
                                                          likes=post['likes'],
                                                          num_comments=response["num_comments"])
@@ -2497,6 +2498,7 @@ class Neo4jDriver():
                 comparison = ComparisonPost(post_id=post["id"],
                                             compared_books=[response['b']['id']],
                                             user_username=response['u.username'],
+                                            user_id=response['u.id'],
                                             comparators=post['comparators'],
                                             created_date=post['created_date'],
                                             comparator_ids=post['comparator_ids'],
@@ -2520,6 +2522,7 @@ class Neo4jDriver():
                                                    page=post['page'],
                                                    response=post['response'],
                                                    spoiler=post['spoiler'],
+                                                   user_id=response['u.id'],
                                                    book_small_img=response['b']['small_img_url'],
                                                    user_username=response['u.username'],
                                                    likes=post['likes'],
@@ -2538,6 +2541,7 @@ class Neo4jDriver():
                                                     question_ids=post['question_ids'],
                                                     responses=post['responses'],
                                                     spoilers=post['spoilers'],
+                                                    user_id=response['u.id'],
                                                     book_small_img=response['b']['small_img_url'],
                                                     user_username=response['u.username'],
                                                     num_comments=response["num_comments"]

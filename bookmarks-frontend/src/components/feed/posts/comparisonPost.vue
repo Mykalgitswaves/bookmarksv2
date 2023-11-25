@@ -1,7 +1,10 @@
 <template>
     <div class="card">
         <div class="card-header">
-            <p class="text-slate-600"><span class="text-indigo-600 underline italic cursor-pointer">@{{ props.username }}</span> made a comparison</p>
+            <p
+                class="text-slate-600"
+                @click="router.push(`/feed/${route.params.user}/user/${props.user_id}`)"
+            ><span class="text-indigo-600 underline italic cursor-pointer">@{{ props.username }}</span> made a comparison</p>
         </div>
         <div class="card-content-main">
             <div class="comparisons">
@@ -122,6 +125,10 @@ const props = defineProps({
         type: Boolean,
         required: false,
         default: false
+    },
+    user_id: {
+        type: String,
+        required: true
     }
 })
 

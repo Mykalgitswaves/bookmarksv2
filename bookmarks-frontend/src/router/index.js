@@ -10,7 +10,8 @@ import AuthorPage from '@/components/feed/authors/AuthorPage.vue';
 import SearchPage from '@/components/feed/navigation/SearchPage.vue';
 import SocialPage from '@/components/feed/social/SocialPage.vue';
 import CreateReviewPage from '@/components/feed/CreateReviewPage.vue';
-import SettingsPage from '@/components/feed/SettingsPage.vue'
+import SettingsPage from '@/components/feed/SettingsPage.vue';
+import UserPage from '@/components/feed/UserPage.vue';
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -59,6 +60,10 @@ const router = createRouter({
               component: WorkPage
             }
           ]
+        },
+        {
+          path: 'user/:user',
+          component: UserPage,
         },
         {
           path: 'create/review/:reviewType/work/:work1',
