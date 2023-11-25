@@ -1,7 +1,10 @@
 <template>
 <div class="card" :class="{'card-is-liked': isLiked || props.liked_by_current_user}">
         <div class="card-header">
-            <p class="text-slate-600 text-center">
+            <p 
+                class="text-slate-600 text-center"
+                @click="router.push(`/feed/${route.params.user}/user/${props.user_id}`)"
+            >
                 <span class="text-indigo-600 cursor-pointer">{{ props.username }}'s</span>
                 made a review: 
             </p>
@@ -129,6 +132,10 @@ const props = defineProps({
     num_comments: {
         type: Number,
         required: true,
+    },
+    user_id: {
+        type: String,
+        required: true
     }
 });
 

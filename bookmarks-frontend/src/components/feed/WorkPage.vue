@@ -95,7 +95,7 @@ const router = useRouter();
 const { user, work } = route.params;
 
 const { commanator } = helpersCtrl
-const book_id = route.params.work;
+const book_id = route.params.version ? route.params.version : route.params.work;
 const book = ref(null);
 const filterPopout = ref(false);
 

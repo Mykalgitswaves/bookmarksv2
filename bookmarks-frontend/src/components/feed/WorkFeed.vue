@@ -108,6 +108,7 @@
               :created_at="post.created_date"
               :id="post.id"
               :username="post.user_username"
+              :user_id="post.user_id"
               :likes="post.likes"
             />
           </div>
@@ -128,6 +129,7 @@
               :small_img_url="post.book_small_img"
               :likes="post.likes"
               :liked_by_current_user="post.liked_by_current_user"
+              :user_id="post.user_id"
               :num_comments="post.num_comments"
             />
           </div>
@@ -144,6 +146,7 @@
               :username="post.user_username"
               :small_img_url="post.book_small_img"
               :page="post.page"
+              :user_id="post.user_id"
               :likes="post.likes"
             />
           </div>

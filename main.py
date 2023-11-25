@@ -13,6 +13,7 @@ from database.db_helpers import (
     Comment,
     Neo4jDriver
 )
+
 from database.api.books_api.search import BookSearch
 from database.api.books_api.add_book import pull_google_book
 from database.api.books_api.book_versions import search_versions_by_metadata
@@ -896,3 +897,10 @@ async def get_book_versions_from_metadata_search(book_id: str, book_title:str, b
     
     return JSONResponse(content={"data": jsonable_encoder(versions)})
 
+@app.get("/api/user/{user_id}/get_user")
+async def get_complete_user(user_id: str, current_user: Annotated[User, Depends(get_current_active_user)]):
+    if not current_user:
+        raise("400", "Unauthorized")
+    if current_user and user_id:
+        user = driver.get_user_for_settings(user_id=user_id)
+        return JSONResponse(content={"data": jsonable_encoder(user)})

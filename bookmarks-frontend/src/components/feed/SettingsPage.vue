@@ -6,11 +6,10 @@
             <button
                 v-if="!isEditingProfileImage"
                 type="button"
-                class="edit-btn profile-image"
+                class=" text-sm text-indigo-600 underline"
                 @click="isEditingProfileImage = true"
             >
-                    <IconEdit/>
-                    edit                
+                    Change profile photo                
             </button>
 
             <button
@@ -34,31 +33,47 @@
 
         <div class="settings-info-form-container">
             <div>
-                <h2 class="text-xl font-semibold mb-5 mt-5">Public information</h2>
+                <div class="flex items-center">
+                    <h2 class="text-xl font-semibold mb-5 mt-5 mr-5">Public information</h2>
+                    <button
+                            type="button"
+                            class="edit-btn"
+                            @click="isEditingProfileForm = true"
+                        >
+                            <IconEdit/>
+                            edit
+                    </button>
+                </div>
 
-                <div class="settings-info-form">
+                <div class="settings-info-form" :class="{'loading': !userData.loaded}">
                     <label for="user-name">
                         <p class="text-sm text-slate-600 mb-2">username</p>
-                        <input type="text" id="user-name" class="w-100 py-1 rounded-md">
+                        <input
+                            type="text"
+                            id="user-name"
+                            class="settings-info-form-input"
+                            v-model="userData.username"
+                            :disabled="!isEditingProfileForm">
                     </label>
 
                     <label for="email">
                         <p class="text-sm text-slate-600 mb-2">email</p>
-                        <input type="email" id="user-email" class="w-100 py-1 rounded-md">
+                        <input type="email" id="user-email" class="w-100 py-1 px-2 rounded-md">
                     </label>
 
                     <label for="password">
-                        <p class="text-sm text-slate-600 mb-2">password</p>
-                        <input type="text" id="user-password" class="w-100 py-1 rounded-md">
+                        <p class="text-sm text-slate-600 mb-2"
+                        >password</p>
+                        <input type="text" id="user-password" class="w-100 py-1 px-2 rounded-md">
                     </label>
                 </div>
             </div>
             <div>
                 <h2 class="text-xl font-semibold mb-5 mt-5">Associated accounts</h2>
-                <div class="settings-info-form">
+                <div class="settings-info-form" :class="{'loading': !userData.loaded}">
                     <label for="user-social-instagram">
                         <p class="text-sm text-slate-600 mb-2">instagram</p>
-                        <input type="text" id="user-social-instagram" class="w-100 py-1 rounded-md">
+                        <input type="text" id="user-social-instagram" class="settings-info-form-input">
                     </label>
 
                     <label for="user-social-twitter">
@@ -80,11 +95,31 @@
     import BackBtn from './partials/back-btn.vue';
     import IconEdit from '../svg/icon-edit.vue';
     import IconExit from '../svg/icon-exit.vue';
-    import { ref } from 'vue';
     import path from '../svg/placeholderImg.png'
+    import { ref } from 'vue';
+    import { useRoute } from 'vue-router'
+    import { db } from '../../services/db';
+    import { urls } from '../../services/urls';
     
-    const placeholderPath = '../svg/placeholderImg.png';
-    const isEditingProfileImage = ref(false)
+    const isEditingProfileImage = ref(false);
+    const isEditingProfileForm = ref(false);
+    const userData = ref({
+        loaded: false,
+        username: '',
+        full_name: '',
+        password: '',
+        email: ''
+    });
 
-    
+    const route = useRoute();
+
+    // Call user endpoint for data
+    async function getUserSettings() {
+        await db.get(urls.user.getUser(route.params.user)).then((res) => {
+            userData.value = res.data
+            userData.value.loaded = true;
+        });
+    }
+
+    getUserSettings();
 </script>

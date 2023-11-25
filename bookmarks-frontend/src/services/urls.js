@@ -11,6 +11,9 @@ export const urls = {
     booksByN: baseUrl + 'books/n/',
     login: baseUrl + 'api/login/',
     author: baseUrl + 'api/author/',
+    user: {
+        getUser: (user_id) => (baseUrl + `api/user/${user_id}/get_user`)
+    },
     create: {
         searchBook: (text) => (`${baseUrl}api/search/book/${text}`)
     },
