@@ -905,7 +905,7 @@ async def get_complete_user(user_id: str, current_user: Annotated[User, Depends(
         user = driver.get_user_for_settings(user_id=user_id)
         return JSONResponse(content={"data": jsonable_encoder(user)})
     
-@app.get("/api/user/{user_id}/update_username")
+@app.put("/api/user/{user_id}/update_username")
 async def update_username(user_id: str, current_user: Annotated[User, Depends(get_current_active_user)], new_username:str):
     if not current_user:
         raise("400", "Unauthorized")
@@ -915,7 +915,7 @@ async def update_username(user_id: str, current_user: Annotated[User, Depends(ge
     else:
         raise HTTPException(400, detail="Unauthorized")
 
-@app.get("/api/user/{user_id}/update_bio")
+@app.put("/api/user/{user_id}/update_bio")
 async def update_bio(user_id: str, current_user: Annotated[User, Depends(get_current_active_user)], new_bio:str):
     if not current_user:
         raise("400", "Unauthorized")
@@ -925,20 +925,20 @@ async def update_bio(user_id: str, current_user: Annotated[User, Depends(get_cur
     else:
         raise HTTPException(400, detail="Unauthorized")
 
-@app.get("/api/user/{user_id}/update_email")
+@app.put("/api/user/{user_id}/update_email")
 async def update_email(user_id: str, current_user: Annotated[User, Depends(get_current_active_user)], new_email:str):
     """
     THIS IS A PLACEHOLDER. DO WE NEED EMAIL VERIFICATION?
     """
 
 
-@app.get("/api/user/{user_id}/update_profile_img")
+@app.put("/api/user/{user_id}/update_profile_img")
 async def update_profile_img(user_id: str, current_user: Annotated[User, Depends(get_current_active_user)], new_profile_img:str):
     """
     THIS IS A PLACEHOLDER. 
     """
     
-@app.get("/api/user/{user_id}/update_password")
+@app.put("/api/user/{user_id}/update_password")
 async def update_profile_img(user_id: str, current_user: Annotated[User, Depends(get_current_active_user)], new_password:str):
     """
     Changes the users password.
@@ -950,5 +950,63 @@ async def update_profile_img(user_id: str, current_user: Annotated[User, Depends
         return HTTPException(200, detail="Success")
     else:
         raise HTTPException(400, detail="Unauthorized")
-   
+
+@app.get("/api/user/{user_id}/send_friend_request")
+async def update_profile_img(user_id: str, friend_id:str, current_user: Annotated[User, Depends(get_current_active_user)]):
+    """
+    This send a friend request from user_id -> friend_id 
+    """
+
+@app.get("/api/user/{user_id}/unsend_friend_request")
+async def update_profile_img(user_id: str, friend_id:str, current_user: Annotated[User, Depends(get_current_active_user)]):
+    """
+    THIS IS A PLACEHOLDER. 
+    """
     
+@app.get("/api/user/{user_id}/accept_friend_request")
+async def update_profile_img(user_id: str, friend_id:str, current_user: Annotated[User, Depends(get_current_active_user)]):
+    """
+    THIS IS A PLACEHOLDER. 
+    """
+    
+@app.get("/api/user/{user_id}/decline_friend_request")
+async def update_profile_img(user_id: str, friend_id:str, current_user: Annotated[User, Depends(get_current_active_user)]):
+    """
+    THIS IS A PLACEHOLDER. 
+    """
+
+@app.get("/api/user/{user_id}/follow")
+async def update_profile_img(user_id: str, followed_user_id:str, current_user: Annotated[User, Depends(get_current_active_user)]):
+    """
+    THIS IS A PLACEHOLDER. 
+    """
+
+@app.get("/api/user/{user_id}/block")
+async def update_profile_img(user_id: str, blocked_user_id:str, current_user: Annotated[User, Depends(get_current_active_user)]):
+    """
+    THIS IS A PLACEHOLDER. 
+    """
+
+@app.get("/api/user/{user_id}/friend_requests")
+async def update_profile_img(user_id: str, current_user: Annotated[User, Depends(get_current_active_user)]):
+    """
+    THIS IS A PLACEHOLDER. 
+    """
+
+@app.get("/api/user/{user_id}/friends")
+async def update_profile_img(user_id: str, current_user: Annotated[User, Depends(get_current_active_user)]):
+    """
+    THIS IS A PLACEHOLDER. 
+    """
+
+@app.get("/api/user/{user_id}/followers")
+async def update_profile_img(user_id: str, current_user: Annotated[User, Depends(get_current_active_user)]):
+    """
+    THIS IS A PLACEHOLDER. 
+    """
+    
+@app.get("/api/user/{user_id}/blocked_users")
+async def update_profile_img(user_id: str, current_user: Annotated[User, Depends(get_current_active_user)]):
+    """
+    THIS IS A PLACEHOLDER. 
+    """
