@@ -21,7 +21,11 @@ class User():
                  followers=[],
                  following=[],
                  profile_img_url="",
-                 bio=""):
+                 bio="",
+                 friend_of_current_user=False,
+                 friend_request_sent_by_current_user=False,
+                 friend_request_received_by_current_user=False,
+                 followed_by_current_user=False):
         self.user_id = user_id
         self.posts = post_ids
         self.friends = friends
@@ -37,20 +41,10 @@ class User():
         self.following=following
         self.profile_img_url=profile_img_url
         self.bio = bio
-    def add_friend(self, friend_id,driver):
-        """
-        Adds a friendship relationship to the database
-        
-        Args:
-            friend_id: PK of the friend to add
-        Returns:
-            None
-        """
-        if friend_id not in self.friends:
-            driver.add_user_friend(self.user_id, friend_id)
-            self.friends.append(friend_id)
-        else:
-            raise Exception("This relationship already exists")
+        self.friend_of_current_user=friend_of_current_user
+        self.friend_request_sent_by_current_user=friend_request_sent_by_current_user
+        self.friend_request_received_by_current_user=friend_request_received_by_current_user
+        self.followed_by_current_user=followed_by_current_user
     def add_favorite_genre(self, genre_id,driver):
         """
         Adds a favorite genre relationship to the database
@@ -142,7 +136,10 @@ class User():
         """
         driver.update_password(new_password,self.id)
         self.hashed_password = new_password 
-
+    def send_friend_request(self,friend_id,driver):
+        driver.send_friend_request(self.user_id,friend_id)
+    def unsend_friend_request(self,friend_id,driver):
+        driver.unsend_friend_request(self.user_id,friend_id)
     def get_posts(self,driver):
         output = driver.pull_all_reviews_by_user(self.username)
         return(output)
@@ -563,24 +560,6 @@ class Neo4jDriver():
                 user.books.append(response["bb.id"])
 
         return(user)
-    def add_user_friend(self, user_id:str, friend_id:str):
-        """
-        Adds a friend relationship between two users
-        
-        Args:
-            user_id: users PK
-            friend_id: friend's PK
-        Returns:
-            None
-        """
-        with self.driver.session() as session:
-            result = session.execute_write(self.add_user_friend_query, user_id, friend_id)
-    @staticmethod
-    def add_user_friend_query(tx, user_id, friend_id):
-        query = """
-                match (uu:User {id: $user_id}) match (bb:User {id: $friend_id}) merge (uu)-[rr:HAS_FRIEND]-(bb)
-                """
-        result = tx.run(query, user_id=user_id,friend_id=friend_id)
     def add_favorite_genre(self, user_id, genre_id):
         """
         Adds a favorite genre for a user
@@ -2933,6 +2912,50 @@ class Neo4jDriver():
         """
         
         tx.run(query,user_id=user_id,new_password=new_password)
+        
+    ###################################################################################################################
+    ###########
+    ###########        Friend/Follow/Block QUERIES
+    ###########
+    ###################################################################################################################
+
+    def send_friend_request(self,from_user_id:str, to_user_id:str):
+        """
+        Sends a friend request from a user to another user
+        """
+        with self.driver.session() as session:
+            result = session.execute_write(self.send_friend_request_query, from_user_id=from_user_id,to_user_id=to_user_id)  
+        return(result)
+    
+    @staticmethod
+    def send_friend_request_query(tx, from_user_id:str, to_user_id:str):
+        query = """
+        match (fromUser:User {id:$from_user_id})
+        match (toUser:User {id:$to_user_id})
+        merge (fromUser)-[friendRequest:REQUESTED_FRIEND {id:randomUUID(),status:"pending"}]->(toUser)
+        """
+        
+        tx.run(query,from_user_id=from_user_id,to_user_id=to_user_id)
+    
+    def unsend_friend_request(self,from_user_id:str, to_user_id:str):
+        """
+        Unsends a friend request from a user to another user
+        """
+        with self.driver.session() as session:
+            result = session.execute_write(self.unsend_friend_request_query, from_user_id=from_user_id,to_user_id=to_user_id)  
+        return(result)
+    
+    @staticmethod
+    def unsend_friend_request_query(tx, from_user_id:str, to_user_id:str):
+        query = """
+        match (fromUser:User {id:$from_user_id})
+        match (toUser:User {id:$to_user_id})
+        match (fromUser)-[friendRequest:REQUESTED_FRIEND]->(toUser)
+        delete friendRequest
+        """
+        
+        tx.run(query,from_user_id=from_user_id,to_user_id=to_user_id)
+    
 
     def close(self):
         self.driver.close()
@@ -2949,5 +2972,6 @@ if __name__ == "__main__":
     # driver.add_liked_comment("kyle_test@aol.com","c64a7a98-3120-43fd-9aad-368b412494fe")
     # driver.get_all_comments_for_post("5d6fa774-79d3-4730-93ae-13be9f323521","kyle_test@aol.com",0,10)
     # driver.add_liked_post("michaelfinal.png@gmail.com","4dc66647-efae-4ff8-b810-2f7a8b618254")
-    driver.get_all_replies_for_comment("7fa1b7fc-62d4-4c4f-b00b-87fa3802bf37","michaelfinal.png@gmail.com")
+    # driver.get_all_replies_for_comment("7fa1b7fc-62d4-4c4f-b00b-87fa3802bf37","michaelfinal.png@gmail.com")
+    driver.unsend_friend_request("a0f86d40-4915-4773-8aa1-844d1bfd0b41","13b3a431-498f-4145-a144-e8b24b7d2a39")
     driver.close()
