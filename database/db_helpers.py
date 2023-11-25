@@ -137,9 +137,14 @@ class User():
         driver.update_password(new_password,self.id)
         self.hashed_password = new_password 
     def send_friend_request(self,friend_id,driver):
-        driver.send_friend_request(self.user_id,friend_id)
+        result = driver.send_friend_request(self.user_id,friend_id)
+        return result
     def unsend_friend_request(self,friend_id,driver):
-        driver.unsend_friend_request(self.user_id,friend_id)
+        result = driver.unsend_friend_request(self.user_id,friend_id)
+        return result
+    def accept_friend_request(self,friend_id,driver):
+        result = driver.accept_friend_request(self.user_id,friend_id)
+        return(result)
     def get_posts(self,driver):
         output = driver.pull_all_reviews_by_user(self.username)
         return(output)
@@ -2932,10 +2937,21 @@ class Neo4jDriver():
         query = """
         match (fromUser:User {id:$from_user_id})
         match (toUser:User {id:$to_user_id})
-        merge (fromUser)-[friendRequest:REQUESTED_FRIEND {id:randomUUID(),status:"pending"}]->(toUser)
+        merge (fromUser)-[friendRequest:REQUESTED_FRIEND]->(toUser)
+        ON CREATE SET friendRequest.newlyCreated = true
+        ON MATCH SET friendRequest.newlyCreated = false
+        RETURN friendRequest.newlyCreated AS relationshipCreated
         """
         
-        tx.run(query,from_user_id=from_user_id,to_user_id=to_user_id)
+        result = tx.run(query,from_user_id=from_user_id,to_user_id=to_user_id)
+        response = result.single()
+        if not response:
+            return HTTPException(400,"User Not Found")
+        elif response['relationshipCreated']:
+            return HTTPException(200, 'Friend Request Sent')
+        else:
+            return HTTPException(199,'Friend Request Already Exists')
+            
     
     def unsend_friend_request(self,from_user_id:str, to_user_id:str):
         """
@@ -2950,12 +2966,21 @@ class Neo4jDriver():
         query = """
         match (fromUser:User {id:$from_user_id})
         match (toUser:User {id:$to_user_id})
-        match (fromUser)-[friendRequest:REQUESTED_FRIEND]->(toUser)
-        delete friendRequest
+        OPTIONAL MATCH (fromUser)-[friendRequest:REQUESTED_FRIEND]->(toUser)
+        WITH friendRequest, 
+            CASE WHEN friendRequest IS NOT NULL THEN true ELSE false END AS foundRelationship
+        DELETE friendRequest
+        RETURN foundRelationship
         """
         
-        tx.run(query,from_user_id=from_user_id,to_user_id=to_user_id)
-    
+        result = tx.run(query,from_user_id=from_user_id,to_user_id=to_user_id)
+        response = result.single()
+        if not response:
+            return HTTPException(400,"User Not Found")
+        elif response['relationshipCreated']:
+            return HTTPException(200, 'Friend Request Unsent')
+        else:
+            return HTTPException(199,'Friend Request Not Found')
 
     def close(self):
         self.driver.close()

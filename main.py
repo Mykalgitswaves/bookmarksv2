@@ -959,8 +959,8 @@ async def send_friend_request(user_id: str, friend_id:str, current_user: Annotat
     if not current_user:
         raise("400", "Unauthorized")
     if current_user.user_id == user_id:
-        current_user.send_friend_request(friend_id)
-        return HTTPException(200, detail="Success")
+        result = current_user.send_friend_request(friend_id)
+        return result
     else:
         raise HTTPException(400, detail="Unauthorized")
 
@@ -973,17 +973,25 @@ async def unsend_friend_request(user_id: str, friend_id:str, current_user: Annot
     if not current_user:
         raise("400", "Unauthorized")
     if current_user.user_id == user_id:
-        current_user.unsend_friend_request(friend_id)
-        return HTTPException(200, detail="Success")
+        result = current_user.unsend_friend_request(friend_id)
+        return result
     else:
         raise HTTPException(400, detail="Unauthorized")
 
     
 @app.put("/api/user/{user_id}/accept_friend_request")
-async def update_profile_img(user_id: str, friend_id:str, current_user: Annotated[User, Depends(get_current_active_user)]):
+async def accept_friend_request(user_id: str, friend_id:str, current_user: Annotated[User, Depends(get_current_active_user)]):
     """
     THIS IS A PLACEHOLDER. 
     """
+    if not current_user:
+        raise("400", "Unauthorized")
+    if current_user.user_id == user_id:
+        current_user.accept_friend_request(friend_id)
+        return HTTPException(200, detail="Success")
+    else:
+        raise HTTPException(400, detail="Unauthorized")
+
     
 @app.put("/api/user/{user_id}/decline_friend_request")
 async def update_profile_img(user_id: str, friend_id:str, current_user: Annotated[User, Depends(get_current_active_user)]):
