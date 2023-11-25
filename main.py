@@ -915,7 +915,7 @@ async def update_username(user_id: str, current_user: Annotated[User, Depends(ge
     else:
         raise HTTPException(400, detail="Unauthorized")
 
-@app.get("/api/user/{user_id}/change_username")
+@app.get("/api/user/{user_id}/change_bio")
 async def update_bio(user_id: str, current_user: Annotated[User, Depends(get_current_active_user)], new_bio:str):
     if not current_user:
         raise("400", "Unauthorized")
