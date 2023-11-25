@@ -18,7 +18,7 @@ def setup_logging():
     logging.basicConfig(level=logging.INFO, format=log_format)
 
     # Create a file handler
-    file_handler = RotatingFileHandler('versions.log', maxBytes=10000, backupCount=3)
+    file_handler = RotatingFileHandler('logging/versions.log', maxBytes=10000, backupCount=3)
     file_handler.setLevel(logging.ERROR)
     file_handler.setFormatter(logging.Formatter(log_format))
 
