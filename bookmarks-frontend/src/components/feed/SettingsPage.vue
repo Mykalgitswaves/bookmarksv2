@@ -34,15 +34,15 @@
         <div class="settings-info-form-container">
             <div>
                 <div class="flex items-center">
-                <h2 class="text-xl font-semibold mb-5 mt-5 mr-5">Public information</h2>
-                <button
-                        type="button"
-                        class="edit-btn"
-                        @click="isEditingProfileForm = true"
-                    >
-                        <IconEdit/>
-                        edit
-                </button>
+                    <h2 class="text-xl font-semibold mb-5 mt-5 mr-5">Public information</h2>
+                    <button
+                            type="button"
+                            class="edit-btn"
+                            @click="isEditingProfileForm = true"
+                        >
+                            <IconEdit/>
+                            edit
+                    </button>
                 </div>
 
                 <div class="settings-info-form" :class="{'loading': !userData.loaded}">
@@ -69,10 +69,10 @@
             </div>
             <div>
                 <h2 class="text-xl font-semibold mb-5 mt-5">Associated accounts</h2>
-                <div class="settings-info-form">
+                <div class="settings-info-form" :class="{'loading': !userData.loaded}">
                     <label for="user-social-instagram">
                         <p class="text-sm text-slate-600 mb-2">instagram</p>
-                        <input type="text" id="user-social-instagram" class="w-100 py-1 rounded-md">
+                        <input type="text" id="user-social-instagram" class="settings-info-form-input">
                     </label>
 
                     <label for="user-social-twitter">
