@@ -136,6 +136,12 @@ class User():
         """
         driver.update_bio(new_bio=new_bio,user_id=self.user_id)
         self.bio=new_bio
+    def update_password(self,new_password,driver):
+        """
+        Updates a users password
+        """
+        driver.update_password(new_password,self.id)
+        self.hashed_password = new_password 
 
     def get_posts(self,driver):
         output = driver.pull_all_reviews_by_user(self.username)
@@ -2910,6 +2916,23 @@ class Neo4jDriver():
         """
         
         tx.run(query,user_id=user_id,new_bio=new_bio)
+
+    def update_password(self,new_password:str, user_id:str):
+        """
+        Updates the password of a user
+        """
+        with self.driver.session() as session:
+            result = session.execute_write(self.update_password_query, new_password=new_password, user_id=user_id)  
+        return(result)
+    
+    @staticmethod
+    def update_password_query(tx, new_password, user_id):
+        query = """
+        match (u:User {id:$user_id})
+        set u.password = $new_password
+        """
+        
+        tx.run(query,user_id=user_id,new_password=new_password)
 
     def close(self):
         self.driver.close()
