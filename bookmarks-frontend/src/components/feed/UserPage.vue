@@ -11,20 +11,23 @@
         </div>
         <div class="user-profile-subheader">
             <p></p>
-            <div>
+            
                 <button 
                     class="btn bg-indigo-500 text-white hover:bg-indigo-700"
                     type="button"
                 >
-                    add friend
+                   + add friend
                 </button>
-                <button 
-                    class="btn bg-indigo-500 text-white hover:bg-indigo-700"
+
+                <button        
+                    class="block mt-2 text-indigo-600"
                     type="button"
                 >
-                    add friend
+                    <span v-for="(friend, index) in mutualPlaceholder" :key="index">
+                     {{ friend + commanator(index, mutualPlaceholder.length) }} 
+                    </span>
+                    are mutual friends
                 </button>
-            </div>
         </div>
     </section>    
 </template>
@@ -34,8 +37,10 @@ import { db } from '../../services/db';
 import { urls } from '../../services/urls';
 import { useRoute } from 'vue-router';
 import { ref } from 'vue';
-import path from '../svg/placeholderImg.png'
+import path from '../svg/placeholderImg.png';
+import { helpersCtrl } from '../../services/helpers';
 
+const { commanator } = helpersCtrl;
 const route = useRoute();
 const { user } = route.params;
 const userData = ref(null);
@@ -48,6 +53,8 @@ async function getUserData() {
 
 getUserData();
 
+const mutualPlaceholder = ['michael', 'kyle', 'cole']
+
 </script>
 
 <style scoped>
@@ -56,5 +63,9 @@ getUserData();
     justify-content: center;
     flex-direction: column;
     align-items: center;
+    margin-bottom: 24px;
+}
+.user-profile-subheader {
+
 }
 </style>
