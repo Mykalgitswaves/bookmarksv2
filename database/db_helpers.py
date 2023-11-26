@@ -22,10 +22,7 @@ class User():
                  following=[],
                  profile_img_url="",
                  bio="",
-                 friend_of_current_user=False,
-                 friend_request_sent_by_current_user=False,
-                 friend_request_received_by_current_user=False,
-                 followed_by_current_user=False):
+                 relationship_to_current_user='self'):
         self.user_id = user_id
         self.posts = post_ids
         self.friends = friends
@@ -41,10 +38,7 @@ class User():
         self.following=following
         self.profile_img_url=profile_img_url
         self.bio = bio
-        self.friend_of_current_user=friend_of_current_user
-        self.friend_request_sent_by_current_user=friend_request_sent_by_current_user
-        self.friend_request_received_by_current_user=friend_request_received_by_current_user
-        self.followed_by_current_user=followed_by_current_user
+        self.relationship_to_current_user = relationship_to_current_user
 
     def add_favorite_genre(self, genre_id,driver):
         """
@@ -159,6 +153,14 @@ class User():
     
     def decline_friend_request(self,friend_id,driver):
         result = driver.decline_friend_request(friend_id,self.user_id)
+        return(result)
+    
+    def remove_friend(self,friend_id,driver):
+        result = driver.remove_friend(self.user_id,friend_id)
+        return(result)
+
+    def follow_user(self,followed_user_id,driver):
+        result = driver.follow_user(self.user_id,followed_user_id)
         return(result)
     
     def get_posts(self,driver):
@@ -3052,22 +3054,64 @@ class Neo4jDriver():
         else:
             return HTTPException(200, 'Success')
 
+    def remove_friend(self,from_user_id:str, to_user_id:str):
+        """
+        remove a friend relationship
+        """
+        with self.driver.session() as session:
+            result = session.execute_write(self.remove_friend_query, from_user_id=from_user_id,to_user_id=to_user_id)  
+        return(result)
+    
+    @staticmethod
+    def remove_friend_query(tx, from_user_id:str, to_user_id:str):
+        query = """
+        match (fromUser:User {id:$from_user_id})
+        match (toUser:User {id:$to_user_id})
+        MATCH (fromUser)<-[friendRelationship:HAS_FRIEND]->(toUser)
+        delete friendRelationship
+        RETURN Case when toUser is not null then true else false end as foundRelationship
+        """
+        
+        result = tx.run(query,from_user_id=from_user_id,to_user_id=to_user_id)
+        response = result.single()
+        if not response:
+            return HTTPException(400,"User or Friend Request Not Found")
+        else:
+            return HTTPException(200, 'Success')
+
+    def follow_user(self,from_user_id:str, to_user_id:str):
+        """
+        Follows a user of the to_user has a critic accound
+        """
+        with self.driver.session() as session:
+            result = session.execute_write(self.follow_user_query, from_user_id=from_user_id,to_user_id=to_user_id)  
+        return(result)
+    
+    @staticmethod
+    def follow_user_query(tx, from_user_id:str, to_user_id:str):
+        query = """
+        match (fromUser:User {id:$from_user_id})
+        match (toUser:User {id:$to_user_id, user_type:"critic"})
+        merge (fromUser)-[followRel:FOLLOWS]->(toUser)
+        RETURN Case when followRel is not null then true else false end as foundRelationship
+        """
+        
+        result = tx.run(query,from_user_id=from_user_id,to_user_id=to_user_id)
+        response = result.single()
+        if not response:
+            return HTTPException(400,"User or Friend Request Not Found")
+        else:
+            return HTTPException(200, 'Success')
+
+    
     def close(self):
         self.driver.close()
 
 if __name__ == "__main__":
     driver = Neo4jDriver()
-    # comment = Comment(comment_id = "",
-    #                   post_id = "5d6fa774-79d3-4730-93ae-13be9f323521",
-    #                   replied_to="75e86244-f545-4a49-9aac-50f64a8776f9",
-    #                   text="second reply in thread",
-    #                   username="kyle_test@aol.com")
-    # comment.create_comment(driver)
-    # driver.add_liked_comment("michaelfinal.png@gmail.com","c64a7a98-3120-43fd-9aad-368b412494fe")
-    # driver.add_liked_comment("kyle_test@aol.com","c64a7a98-3120-43fd-9aad-368b412494fe")
-    # driver.get_all_comments_for_post("5d6fa774-79d3-4730-93ae-13be9f323521","kyle_test@aol.com",0,10)
-    # driver.add_liked_post("michaelfinal.png@gmail.com","4dc66647-efae-4ff8-b810-2f7a8b618254")
-    # driver.get_all_replies_for_comment("7fa1b7fc-62d4-4c4f-b00b-87fa3802bf37","michaelfinal.png@gmail.com")
-    driver.send_friend_request("a0f86d40-4915-4773-8aa1-844d1bfd0b41","dfa501ff-0f58-485f-94e9-50ba5dd10396")
-    # driver.decline_friend_request("a0f86d40-4915-4773-8aa1-844d1bfd0b41","dfa501ff-0f58-485f-94e9-50ba5dd10396")
+
+    # driver.send_friend_request("a0f86d40-4915-4773-8aa1-844d1bfd0b41","dfa501ff-0f58-485f-94e9-50ba5dd10396")
+    # driver.accept_friend_request("a0f86d40-4915-4773-8aa1-844d1bfd0b41","dfa501ff-0f58-485f-94e9-50ba5dd10396")
+    # driver.remove_friend("a0f86d40-4915-4773-8aa1-844d1bfd0b41","dfa501ff-0f58-485f-94e9-50ba5dd10396")
+    driver.follow_user("a0f86d40-4915-4773-8aa1-844d1bfd0b41","dfa501ff-0f58-485f-94e9-50ba5dd10396")
     driver.close()
