@@ -1032,12 +1032,46 @@ async def follow_user(user_id: str, followed_user_id:str, current_user: Annotate
         return result
     else:
         raise result
+    
+@app.put("/api/user/{user_id}/unfollow")
+async def unfollow_user(user_id: str, unfollowed_user_id:str, current_user: Annotated[User, Depends(get_current_active_user)]):
+    """
+    Follows a user
+    """
+    if not current_user:
+        raise("400", "Unauthorized")
+    if current_user.user_id == user_id:
+        result = current_user.unfollow_user(unfollowed_user_id)
+        return result
+    else:
+        raise result
 
 @app.put("/api/user/{user_id}/block")
-async def update_profile_img(user_id: str, blocked_user_id:str, current_user: Annotated[User, Depends(get_current_active_user)]):
+async def block_user(user_id: str, blocked_user_id:str, current_user: Annotated[User, Depends(get_current_active_user)]):
     """
-    THIS IS A PLACEHOLDER. 
+    Blocks a user
     """
+    if not current_user:
+        raise("400", "Unauthorized")
+    if current_user.user_id == user_id:
+        result = current_user.block_user(blocked_user_id)
+        return result
+    else:
+        raise result
+
+@app.put("/api/user/{user_id}/unblock")
+async def unblock_user(user_id: str, unblocked_user_id:str, current_user: Annotated[User, Depends(get_current_active_user)]):
+    """
+    Blocks a user
+    """
+    if not current_user:
+        raise("400", "Unauthorized")
+    if current_user.user_id == user_id:
+        result = current_user.unblock_user(unblocked_user_id)
+        return result
+    else:
+        raise result
+
 
 @app.get("/api/user/{user_id}/friend_requests")
 async def update_profile_img(user_id: str, current_user: Annotated[User, Depends(get_current_active_user)]):

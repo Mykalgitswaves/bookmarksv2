@@ -163,6 +163,18 @@ class User():
         result = driver.follow_user(self.user_id,followed_user_id)
         return(result)
     
+    def unfollow_user(self,unfollowed_user_id,driver):
+        result = driver.unfollow_user(self.user_id,unfollowed_user_id)
+        return(result)
+    
+    def block_user(self,blocked_user_id,driver):
+        result = driver.block_user(self.user_id,blocked_user_id)
+        return(result)
+
+    def unblock_user(self,unblocked_user_id,driver):
+        result = driver.unblock_user(self.user_id,unblocked_user_id)
+        return(result)
+    
     def get_posts(self,driver):
         output = driver.pull_all_reviews_by_user(self.username)
         return(output)
@@ -3081,7 +3093,7 @@ class Neo4jDriver():
 
     def follow_user(self,from_user_id:str, to_user_id:str):
         """
-        Follows a user of the to_user has a critic accound
+        Follows a user if the to_user has a critic account
         """
         with self.driver.session() as session:
             result = session.execute_write(self.follow_user_query, from_user_id=from_user_id,to_user_id=to_user_id)  
@@ -3103,6 +3115,81 @@ class Neo4jDriver():
         else:
             return HTTPException(200, 'Success')
 
+    def unfollow_user(self,from_user_id:str, to_user_id:str):
+        """
+        unfollows a user if the to_user has a critic account
+        """
+        with self.driver.session() as session:
+            result = session.execute_write(self.unfollow_user_query, from_user_id=from_user_id,to_user_id=to_user_id)  
+        return(result)
+    
+    @staticmethod
+    def unfollow_user_query(tx, from_user_id:str, to_user_id:str):
+        query = """
+        match (fromUser:User {id:$from_user_id})
+        match (toUser:User {id:$to_user_id, user_type:"critic"})
+        match (fromUser)-[followRel:FOLLOWS]->(toUser)
+        delete followRel
+        RETURN Case when toUser is not null then true else false end as foundRelationship
+        """
+        
+        result = tx.run(query,from_user_id=from_user_id,to_user_id=to_user_id)
+        response = result.single()
+        if not response:
+            return HTTPException(400,"User or Friend Request Not Found")
+        else:
+            return HTTPException(200, 'Success')
+
+    def block_user(self,from_user_id:str, to_user_id:str):
+        """
+        blocks a user, deletes all existing relationships to the user
+        """
+        with self.driver.session() as session:
+            result = session.execute_write(self.block_user_query, from_user_id=from_user_id,to_user_id=to_user_id)  
+        return(result)
+    
+    @staticmethod
+    def block_user_query(tx, from_user_id:str, to_user_id:str):
+        query = """
+        match (fromUser:User {id:$from_user_id})
+        match (toUser:User {id:$to_user_id})
+        optional match (fromUser)-[anyRel]-(toUser)
+        delete anyRel
+        merge (fromUser)-[blockRel:BLOCKED]->(toUser)
+        RETURN Case when blockRel is not null then true else false end as foundRelationship
+        """
+        
+        result = tx.run(query,from_user_id=from_user_id,to_user_id=to_user_id)
+        response = result.single()
+        if not response:
+            return HTTPException(400,"User or Friend Request Not Found")
+        else:
+            return HTTPException(200, 'Success')
+
+    def unblock_user(self,from_user_id:str, to_user_id:str):
+        """
+        unblocks a user
+        """
+        with self.driver.session() as session:
+            result = session.execute_write(self.unblock_user_query, from_user_id=from_user_id,to_user_id=to_user_id)  
+        return(result)
+    
+    @staticmethod
+    def unblock_user_query(tx, from_user_id:str, to_user_id:str):
+        query = """
+        match (fromUser:User {id:$from_user_id})
+        match (toUser:User {id:$to_user_id})
+        match (fromUser)-[blockRel:BLOCKED]->(toUser)
+        delete blockRel
+        RETURN Case when toUser is not null then true else false end as foundRelationship
+        """
+        
+        result = tx.run(query,from_user_id=from_user_id,to_user_id=to_user_id)
+        response = result.single()
+        if not response:
+            return HTTPException(400,"User or Friend Request Not Found")
+        else:
+            return HTTPException(200, 'Success')
     
     def close(self):
         self.driver.close()
@@ -3113,5 +3200,5 @@ if __name__ == "__main__":
     # driver.send_friend_request("a0f86d40-4915-4773-8aa1-844d1bfd0b41","dfa501ff-0f58-485f-94e9-50ba5dd10396")
     # driver.accept_friend_request("a0f86d40-4915-4773-8aa1-844d1bfd0b41","dfa501ff-0f58-485f-94e9-50ba5dd10396")
     # driver.remove_friend("a0f86d40-4915-4773-8aa1-844d1bfd0b41","dfa501ff-0f58-485f-94e9-50ba5dd10396")
-    driver.follow_user("a0f86d40-4915-4773-8aa1-844d1bfd0b41","dfa501ff-0f58-485f-94e9-50ba5dd10396")
+    driver.unfollow_user("a0f86d40-4915-4773-8aa1-844d1bfd0b41","dfa501ff-0f58-485f-94e9-50ba5dd10396")
     driver.close()
