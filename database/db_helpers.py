@@ -45,6 +45,7 @@ class User():
         self.friend_request_sent_by_current_user=friend_request_sent_by_current_user
         self.friend_request_received_by_current_user=friend_request_received_by_current_user
         self.followed_by_current_user=followed_by_current_user
+
     def add_favorite_genre(self, genre_id,driver):
         """
         Adds a favorite genre relationship to the database
@@ -59,6 +60,7 @@ class User():
             self.genres.append(genre_id)
         else:
             raise Exception("This relationship already exists")
+        
     def add_favorite_author(self, author_id, driver):
         """
         Adds a favorite author relationship to the database
@@ -73,6 +75,7 @@ class User():
             self.authors.append(author_id)
         else:
             raise Exception("This relationship already exists")
+        
     def add_liked_post(self, review_id, driver):
         """
         Adds a liked review relationship to the database
@@ -87,6 +90,7 @@ class User():
             self.liked_reviews.append(review_id)
         else:
             raise Exception("This relationship already exists")
+        
     def add_to_read(self, book_id, driver):
         """
         Adds a book to the user's to read list in db. Deletes all other relationships to this book
@@ -101,6 +105,7 @@ class User():
             self.want_to_read.append(book_id)
         else:
             raise Exception("This relationship already exists")
+        
     def add_is_reading(self, book_id, driver):
         """
         Adds a book to the user's currently reading list in db. Deletes all other relationships to this book
@@ -115,6 +120,7 @@ class User():
             self.reading.append(book_id)
         else:
             raise Exception("This relationship already exists")
+        
     def update_username(self,new_username,driver):
         """
         Updates the username of a user
@@ -124,27 +130,37 @@ class User():
             self.username=new_username
         
         return result
+    
     def update_bio(self,new_bio,driver):
         """
         Updates the bio of a user
         """
         driver.update_bio(new_bio=new_bio,user_id=self.user_id)
         self.bio=new_bio
+
     def update_password(self,new_password,driver):
         """
         Updates a users password
         """
         driver.update_password(new_password,self.id)
         self.hashed_password = new_password 
+
     def send_friend_request(self,friend_id,driver):
         result = driver.send_friend_request(self.user_id,friend_id)
         return result
+    
     def unsend_friend_request(self,friend_id,driver):
         result = driver.unsend_friend_request(self.user_id,friend_id)
         return result
+    
     def accept_friend_request(self,friend_id,driver):
-        result = driver.accept_friend_request(self.user_id,friend_id)
+        result = driver.accept_friend_request(friend_id,self.user_id)
         return(result)
+    
+    def decline_friend_request(self,friend_id,driver):
+        result = driver.decline_friend_request(friend_id,self.user_id)
+        return(result)
+    
     def get_posts(self,driver):
         output = driver.pull_all_reviews_by_user(self.username)
         return(output)
@@ -2940,6 +2956,7 @@ class Neo4jDriver():
         merge (fromUser)-[friendRequest:REQUESTED_FRIEND]->(toUser)
         ON CREATE SET friendRequest.newlyCreated = true
         ON MATCH SET friendRequest.newlyCreated = false
+        set friendRequest.status = (CASE WHEN friendRequest.status = 'declined' THEN 'declined' ELSE 'pending' END)
         RETURN friendRequest.newlyCreated AS relationshipCreated
         """
         
@@ -2977,10 +2994,63 @@ class Neo4jDriver():
         response = result.single()
         if not response:
             return HTTPException(400,"User Not Found")
-        elif response['relationshipCreated']:
+        elif response['foundRelationship']:
             return HTTPException(200, 'Friend Request Unsent')
         else:
             return HTTPException(199,'Friend Request Not Found')
+        
+    def accept_friend_request(self,from_user_id:str, to_user_id:str):
+        """
+        accepts a friend request from a user to another user
+        """
+        with self.driver.session() as session:
+            result = session.execute_write(self.accept_friend_request_query, from_user_id=from_user_id,to_user_id=to_user_id)  
+        return(result)
+    
+    @staticmethod
+    def accept_friend_request_query(tx, from_user_id:str, to_user_id:str):
+        query = """
+        match (fromUser:User {id:$from_user_id})
+        match (toUser:User {id:$to_user_id})
+        MATCH (fromUser)-[friendRequest:REQUESTED_FRIEND {status:"pending"}]->(toUser)
+        optional match (fromUser)-[friendExists:HAS_FRIEND]-(toUser)
+        merge (fromUser)-[friendRelationship:HAS_FRIEND]-(toUser)
+        delete friendRequest
+        RETURN friendRelationship
+        """
+        
+        result = tx.run(query,from_user_id=from_user_id,to_user_id=to_user_id)
+        response = result.single()
+        if not response:
+            return HTTPException(400,"User or Friend Request Not Found")
+        else:
+            return HTTPException(200, 'Success')
+
+        
+    def decline_friend_request(self,from_user_id:str, to_user_id:str):
+        """
+        declines a friend request from a user to another user
+        """
+        with self.driver.session() as session:
+            result = session.execute_write(self.decline_friend_request_query, from_user_id=from_user_id,to_user_id=to_user_id)  
+        return(result)
+    
+    @staticmethod
+    def decline_friend_request_query(tx, from_user_id:str, to_user_id:str):
+        query = """
+        match (fromUser:User {id:$from_user_id})
+        match (toUser:User {id:$to_user_id})
+        MATCH (fromUser)-[friendRequest:REQUESTED_FRIEND]->(toUser)
+        set friendRequest.status = 'declined'
+        RETURN friendRequest
+        """
+        
+        result = tx.run(query,from_user_id=from_user_id,to_user_id=to_user_id)
+        response = result.single()
+        if not response:
+            return HTTPException(400,"User or Friend Request Not Found")
+        else:
+            return HTTPException(200, 'Success')
 
     def close(self):
         self.driver.close()
@@ -2998,5 +3068,6 @@ if __name__ == "__main__":
     # driver.get_all_comments_for_post("5d6fa774-79d3-4730-93ae-13be9f323521","kyle_test@aol.com",0,10)
     # driver.add_liked_post("michaelfinal.png@gmail.com","4dc66647-efae-4ff8-b810-2f7a8b618254")
     # driver.get_all_replies_for_comment("7fa1b7fc-62d4-4c4f-b00b-87fa3802bf37","michaelfinal.png@gmail.com")
-    driver.unsend_friend_request("a0f86d40-4915-4773-8aa1-844d1bfd0b41","13b3a431-498f-4145-a144-e8b24b7d2a39")
+    driver.send_friend_request("a0f86d40-4915-4773-8aa1-844d1bfd0b41","dfa501ff-0f58-485f-94e9-50ba5dd10396")
+    # driver.decline_friend_request("a0f86d40-4915-4773-8aa1-844d1bfd0b41","dfa501ff-0f58-485f-94e9-50ba5dd10396")
     driver.close()

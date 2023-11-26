@@ -982,22 +982,29 @@ async def unsend_friend_request(user_id: str, friend_id:str, current_user: Annot
 @app.put("/api/user/{user_id}/accept_friend_request")
 async def accept_friend_request(user_id: str, friend_id:str, current_user: Annotated[User, Depends(get_current_active_user)]):
     """
-    THIS IS A PLACEHOLDER. 
+    Accepts a friend request, checks that the request exists 
     """
     if not current_user:
         raise("400", "Unauthorized")
     if current_user.user_id == user_id:
-        current_user.accept_friend_request(friend_id)
-        return HTTPException(200, detail="Success")
+        result = current_user.accept_friend_request(friend_id)
+        return result
     else:
-        raise HTTPException(400, detail="Unauthorized")
+        raise result
 
     
 @app.put("/api/user/{user_id}/decline_friend_request")
-async def update_profile_img(user_id: str, friend_id:str, current_user: Annotated[User, Depends(get_current_active_user)]):
+async def decline_friend_request(user_id: str, friend_id:str, current_user: Annotated[User, Depends(get_current_active_user)]):
     """
-    THIS IS A PLACEHOLDER. 
+    Declines a friend request, checks that the request exists
     """
+    if not current_user:
+        raise("400", "Unauthorized")
+    if current_user.user_id == user_id:
+        result = current_user.decline_friend_request(friend_id)
+        return result
+    else:
+        raise result
     
 @app.put("/api/user/{user_id}/remove_friend")
 async def update_profile_img(user_id: str, friend_id:str, current_user: Annotated[User, Depends(get_current_active_user)]):
