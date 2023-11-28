@@ -1,6 +1,28 @@
 /* Forms on the settings page */
+
+/* Layouts Layouts Layouts Layouts */
+
 .settings-section {
     max-width: 880px;
+}
+
+.section-wrapper {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    max-width: 880px;
+}
+
+.user-profile-header {
+    display: flex;
+    justify-content: center;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 24px;
+}
+.user-profile-subheader {
+    display: grid;
+    justify-content: center;
 }
 
 .edit-profile-picture {
@@ -27,6 +49,16 @@
     box-shadow: rgba(124,58,237, .8) 0px 0px 0px 4px;
 }
 
+/* For pencil button on user profile image */
+.edit-profile-picture .e-p-p-btn {
+    position: absolute;
+    bottom: 2px;
+    right: -20px;
+    color: #4f46e5;
+    padding: 2px;
+    border-radius: 25%;
+    border: 1px solid #4f46e5; 
+}
 
 .settings-info-form-container {
     display: grid;
@@ -65,6 +97,46 @@
     cursor: not-allowed;
 }
 
+
+.user-profile-subheader-nav {
+    display: grid;
+    grid-template-columns: .5fr .5fr;
+    width: 100%;
+    column-gap: 20px;
+    white-space: nowrap;
+    justify-content: center;
+    margin-top: 25px;
+}
+
+/* Buttons Buttons Buttons Buttons */
+
+.user-profile-subheader-nav button {
+    font-size: 16px;
+    color: #334155;
+    padding-bottom: 8px;
+    width: 150px;
+    border-bottom: 3px solid #f3f4f6;
+    transition: all 250ms ease; 
+}
+
+.user-profile-subheader-nav button:hover {
+    color: #1e293b;
+    border-color: #94a3b8;
+}
+
+.add-friend-btn {
+    max-width: 180px;
+    display: flex;
+    align-items: center;
+    justify-self: center;
+    color: #fff;
+    background-color: #4f46e5;
+    transition: all 250ms ease; 
+}
+.add-friend-btn:hover {
+    background-color: #3730a3;
+}
+
 .edit-btn {
     display: flex;
     column-gap: 6px;
@@ -81,4 +153,17 @@
 
 .edit-btn svg {
     transform: scale(.9);
+}
+
+.mutuals-btn {
+    display: flex;
+    align-items: center;
+    justify-self: center;
+    color: #4f46e5;
+    text-decoration: underline;
+    transition: all 250ms ease-in;
+}
+
+.mutuals-btn:hover {
+    transform: scale(1.05);
 }

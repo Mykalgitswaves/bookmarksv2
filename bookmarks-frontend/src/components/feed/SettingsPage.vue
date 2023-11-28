@@ -35,14 +35,6 @@
             <div>
                 <div class="flex items-center">
                     <h2 class="text-xl font-semibold mb-5 mt-5 mr-5">Public information</h2>
-                    <button
-                            type="button"
-                            class="edit-btn"
-                            @click="isEditingProfileForm = true"
-                        >
-                            <IconEdit/>
-                            edit
-                    </button>
                 </div>
 
                 <div class="settings-info-form" :class="{'loading': !userData.loaded}">
@@ -53,7 +45,7 @@
                             id="user-name"
                             class="settings-info-form-input"
                             v-model="userData.username"
-                            :disabled="!isEditingProfileForm">
+                        >
                     </label>
 
                     <label for="email">

@@ -62,7 +62,7 @@ const router = createRouter({
           ]
         },
         {
-          path: 'user/:user',
+          path: 'user/:user_profile',
           component: UserPage,
         },
         {
