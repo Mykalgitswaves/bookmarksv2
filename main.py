@@ -937,10 +937,11 @@ async def update_profile_img(request: Request, user_id: str, current_user: Annot
     """
     THIS IS A PLACEHOLDER. 
     """
-    if not request and user_id:
+    img = await request.json()
+    if not img and user_id:
         raise("400", "Bad request brah, missing params")
     else:
-       breakpoint()
+       """TODO Michael add this logic in for driver query to set userimg cdn link on profile."""
        
     
 @app.put("/api/user/{user_id}/update_password")

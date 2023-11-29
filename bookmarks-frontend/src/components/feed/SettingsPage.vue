@@ -126,7 +126,7 @@
             // 
             console.log(cdnUrl, 'Make sre it worksiguess');
 
-            db.post(urls.user.setUserImgCdnUrl(route.params.user), cdnUrl).then(() => {
+            db.post(urls.user.setUserImgCdnUrl(route.params.user), {'cdn_url': cdnUrl}).then(() => {
                 loadingImageSave = false;
             });
         });
