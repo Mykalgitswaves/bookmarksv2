@@ -933,7 +933,7 @@ async def update_email(user_id: str, current_user: Annotated[User, Depends(get_c
 
 
 @app.post("/api/user/{user_id}/update_profile_img")
-async def update_profile_img(request: Request, user_id: str, current_user: Annotated[User, Depends(get_current_active_user)], new_profile_img:str):
+async def update_profile_img(request: Request, user_id: str, current_user: Annotated[User, Depends(get_current_active_user)]):
     """
     THIS IS A PLACEHOLDER. 
     """
