@@ -6,7 +6,13 @@ import VueCookies from 'vue-cookies'
 
 // https://vitejs.dev/config/
 export default defineConfig({
-  plugins: [vue(), VueCookies],
+  plugins: [vue({
+    template: {
+      compilerOptions: {
+        isCustomElement: (tag) => tag.startsWith("lr-")
+      }
+    }
+  }), VueCookies],
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url))

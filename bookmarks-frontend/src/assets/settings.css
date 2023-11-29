@@ -1,7 +1,19 @@
+/* uploadCare widget */
+
+.my-config {
+    --darkmode: 0;
+    --h-accent: 223;
+    --s-accent: 100%;
+    --l-accent: 61%;
+}
+
+.upload-care-component {
+    margin-top: 14px;
+}
+
 /* Forms on the settings page */
 
 /* Layouts Layouts Layouts Layouts */
-
 .settings-section {
     max-width: 880px;
 }

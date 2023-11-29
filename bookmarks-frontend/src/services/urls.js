@@ -12,7 +12,8 @@ export const urls = {
     login: baseUrl + 'api/login/',
     author: baseUrl + 'api/author/',
     user: {
-        getUser: (user_id) => (baseUrl + `api/user/${user_id}/get_user`)
+        getUser: (user_id) => (baseUrl + `api/user/${user_id}/get_user`),
+        setUserImgCdnUrl: (user_id) => (baseUrl + `api/user/${user_id}/update_profile_img`)
     },
     create: {
         searchBook: (text) => (`${baseUrl}api/search/book/${text}`)

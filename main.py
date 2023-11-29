@@ -932,11 +932,16 @@ async def update_email(user_id: str, current_user: Annotated[User, Depends(get_c
     """
 
 
-@app.put("/api/user/{user_id}/update_profile_img")
-async def update_profile_img(user_id: str, current_user: Annotated[User, Depends(get_current_active_user)], new_profile_img:str):
+@app.post("/api/user/{user_id}/update_profile_img")
+async def update_profile_img(request: Request, user_id: str, current_user: Annotated[User, Depends(get_current_active_user)], new_profile_img:str):
     """
     THIS IS A PLACEHOLDER. 
     """
+    if not request and user_id:
+        raise("400", "Bad request brah, missing params")
+    else:
+       breakpoint()
+       
     
 @app.put("/api/user/{user_id}/update_password")
 async def update_password(user_id: str, current_user: Annotated[User, Depends(get_current_active_user)], new_password:str):
