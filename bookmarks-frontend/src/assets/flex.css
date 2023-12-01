@@ -25,3 +25,7 @@
 .self-start {
     align-self: start;
 }
+
+.j-self-end {
+    justify-self: end;
+}

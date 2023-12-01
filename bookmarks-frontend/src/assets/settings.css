@@ -42,7 +42,8 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
+    justify-content: space-around;
+    height: 186px;
 }
 
 .edit-profile-picture img {
@@ -72,16 +73,7 @@
     border: 1px solid #4f46e5; 
 }
 
-.settings-info-form-container {
-    display: grid;
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    column-gap: 20px;
-    align-items: end;
-}
-
 .settings-info-form.loading {
-    background-color: #e4e4e7;
     filter: blur(2px);
 }
 
@@ -89,7 +81,7 @@
     display: grid;
     grid-template-columns: 1fr;
     row-gap: 15px;
-    max-width: 600px;
+    /* max-width: 600px; */
     margin-top: 8px;
     padding: 20px;
     border-radius: 8px;
@@ -153,10 +145,32 @@
     display: flex;
     column-gap: 6px;
     color: #1e293b;
-    text-decoration: underline;
     justify-self: end;
     padding: 6px;
     border-radius: 6px;
+}
+
+.edit-btn.filled {
+    border-color: #94a3b8;
+    background-color: #94a3b8;
+    color: #fff;
+}
+
+.edit-btn.filled:hover {
+    color: #94a3b8;
+}
+
+.save-btn {
+    background-color: #14b8a6;
+    width: 100px;
+    color: #fff;
+    padding: 10px 4px;
+    border-radius: 6px;
+    transition: all 250ms ease;
+}
+
+.save-btn:hover {
+    background-color: #065f46;
 }
 
 .edit-btn:hover {
@@ -178,4 +192,21 @@
 
 .mutuals-btn:hover {
     transform: scale(1.05);
+}
+
+.settings-info-bio {
+    margin: 24px 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 20px;
+    border-radius: 8px;
+    background-color: #fafafa;
+}
+
+.settings-info-bio textarea {
+    border: 1px solid #cbd5e1; 
+     /* Set a minimum width of 80% of the viewport width */
+    border-radius: 4px;
+    resize: none;
 }

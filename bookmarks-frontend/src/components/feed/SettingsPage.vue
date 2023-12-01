@@ -2,28 +2,19 @@
     <BackBtn/>
     <section class="settings-section">
         <div class="edit-profile-picture">
-            <img :src="cdnUrl || path" alt="" :class="{'image-loading': loadingImageSave}">
+            <img v-show="!isEditingProfileImage" :src="cdnUrl || path" alt="" :class="{'image-loading': loadingImageSave}">
             <button
                 v-if="!isEditingProfileImage"
                 type="button"
-                class=" text-sm text-indigo-600 underline"
+                class="edit-btn text-indigo-600 underline"
                 @click="isEditingProfileImage = true"
             >
                     Change profile photo                
             </button>
-
-            <button
-                v-if="isEditingProfileImage"
-                type="button"
-                class="edit-btn profile-image"
-                @click="isEditingProfileImage = false"
+            <div
+                v-show="isEditingProfileImage"
+                class="upload-care-component"
             >
-                
-                    <IconExit/>
-                    cancel
-            </button>
-
-            <div class="upload-care-component">
                 <lr-config
                     ctx-name="my-uploader"
                     pubkey="f4cae066507591578e32"
@@ -46,60 +37,51 @@
                     use-event
                 ></lr-data-output>
             </div>
+
+            <button
+                v-if="isEditingProfileImage"
+                type="button"
+                class="edit-btn"
+                @click="isEditingProfileImage = false"
+            >
+                <IconExit/>
+                cancel
+            </button>
         </div>
 
-        <div class="settings-info-form-container">
-            <div>
-                <div class="flex items-center">
-                    <h2 class="text-xl font-semibold mb-5 mt-5 mr-5">Public information</h2>
-                </div>
+        <p class="text-xl font-semibold mb-2">Bio</p>
+        <div class="settings-info-bio">
+            <textarea name="bio" id="" cols="30" rows="3" :disabled="isEditing" v-model="userData.bio"></textarea>
+            <button type="button" class="save-btn mt-5 ">save</button>
+        </div> 
 
-                <div class="settings-info-form" :class="{'loading': !userData.loaded}">
-                    <label for="user-name">
-                        <p class="text-sm text-slate-600 mb-2">username</p>
-                        <input
-                            type="text"
-                            id="user-name"
-                            class="settings-info-form-input"
-                            v-model="userData.username"
-                        >
-                    </label>
-
-                    <label for="email">
-                        <p class="text-sm text-slate-600 mb-2">email</p>
-                        <input type="email" id="user-email" class="w-100 py-1 px-2 rounded-md">
-                    </label>
-
-                    <label for="password">
-                        <p class="text-sm text-slate-600 mb-2"
-                        >password</p>
-                        <input type="text" id="user-password" class="w-100 py-1 px-2 rounded-md">
-                    </label>
-                </div>
+        <div>
+            <div class="flex items-center">
+                <h2 class="text-xl font-semibold mb-5 mt-5 mr-5">Public information</h2>
             </div>
-            <div>
-                <h2 class="text-xl font-semibold mb-5 mt-5">Associated accounts</h2>
-                <div class="settings-info-form" :class="{'loading': !userData.loaded}">
-                    <label for="user-social-instagram">
-                        <p class="text-sm text-slate-600 mb-2">instagram</p>
-                        <input type="text" id="user-social-instagram" class="settings-info-form-input">
-                    </label>
 
-                    <label for="user-social-twitter">
-                        <p class="text-sm text-slate-600 mb-2">twitter</p>
-                        <input type="text" id="user-social-twitter" class="w-100 py-1 rounded-md">
-                    </label>
+            <div class="settings-info-form" :class="{'loading': !userData.loaded}">
+                <FormInputCluster 
+                    :input-id="'user-name'" 
+                    :name="'username'" 
+                    :value="userData.username"/>
 
-                    <label for="user-social-medium">
-                        <p class="text-sm text-slate-600 mb-2">medium</p>
-                        <input type="text" id="user-social-medium" class="w-100 py-1 rounded-md">
-                    </label>
-                </div>
+                <label for="email">
+                    <p class="text-sm text-slate-600 mb-2">email</p>
+                    <input type="email" id="user-email" class="w-100 py-1 px-2 rounded-md">
+                </label>
+
+                <label for="password">
+                    <p class="text-sm text-slate-600 mb-2"
+                    >password</p>
+                    <input type="text" id="user-password" class="w-100 py-1 px-2 rounded-md">
+                </label>
             </div>
         </div>
     </section>
     <div class="mobile-menu-spacer sm:hidden"></div>
 </template>
+
 <script setup>
     import BackBtn from './partials/back-btn.vue';
     import IconExit from '../svg/icon-exit.vue';
@@ -109,9 +91,10 @@
     import { db } from '../../services/db';
     import { urls } from '../../services/urls';
     import * as LR from "@uploadcare/blocks";
-
+    import FormInputCluster from './settings/FormInputCluster.vue';
+    
     // To tell us when our stuff is saved dude.
-    let cdnUrl;
+    let cdnUrl = ref('');
     let loadingImageSave = false;
 
     //upload care stuff dont fuck with
@@ -122,11 +105,11 @@
         const dataOutput = document.querySelector('lr-data-output');
         dataOutput.addEventListener('lr-data-output', (e) => {
             loadingImageSave = true;
-            cdnUrl = e.detail.data.files[0].cdnUrl;
+            cdnUrl.value = e.detail.data.files[0].cdnUrl;
             // 
             console.log(cdnUrl, 'Make sre it worksiguess');
 
-            db.post(urls.user.setUserImgCdnUrl(route.params.user), {'cdn_url': cdnUrl}).then(() => {
+            db.post(urls.user.setUserImgCdnUrl(route.params.user), {'cdn_url': cdnUrl.value}).then(() => {
                 loadingImageSave = false;
             });
         });
@@ -138,7 +121,8 @@
         username: '',
         full_name: '',
         password: '',
-        email: ''
+        email: '',
+        bio: ''
     });
 
     const route = useRoute();
@@ -148,10 +132,9 @@
         await db.get(urls.user.getUser(route.params.user)).then((res) => {
             userData.value = res.data
             userData.value.loaded = true;
+            cdnUrl.value = userData.value.profile_img_url
         });
     }
 
     getUserSettings();
-
-    cdnUrl = userData.value.profile_img_url
 </script>

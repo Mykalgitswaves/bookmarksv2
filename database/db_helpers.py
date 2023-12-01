@@ -1651,6 +1651,7 @@ class Neo4jDriver():
             email=response['u']['email'] or '',
             full_name=response['u']['fullname'] or '',
             created_date=response['u']['created_date'],
+            profile_img_url=response['u']['profile_img_url'],
         )
         return user
 
@@ -2887,6 +2888,24 @@ class Neo4jDriver():
     ###########        USER QUERIES
     ###########
     ###################################################################################################################
+    def update_user_profile_image(self, user_id:str, img:str):
+        """
+        Updates user profile img from uploadCare cdn link
+        """
+        with self.driver.session() as session:
+            result = session.execute_write(self.update_user_profile_image_query, user_id=user_id, img=img)
+        return(result)
+    @staticmethod
+    def update_user_profile_image_query(tx, user_id, img):
+        """
+        More nerd shit on here
+        """
+        query = """
+            match(u:User {id:$user_id})
+            set u.profile_img_url = $img
+            return u.profile_img_url
+        """
+        tx.run(query, user_id=user_id, img=img)
 
     def update_username(self,new_username:str, user_id:str):
         """

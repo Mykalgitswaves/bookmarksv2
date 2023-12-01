@@ -942,7 +942,8 @@ async def update_profile_img(request: Request, user_id: str, current_user: Annot
         raise("400", "Bad request brah, missing params")
     else:
        """TODO Michael add this logic in for driver query to set userimg cdn link on profile."""
-       
+       driver.update_user_profile_image(user_id=user_id, img=img['cdn_url'])
+       return JSONResponse(content={"data": jsonable_encoder(img['cdn_url'])})
     
 @app.put("/api/user/{user_id}/update_password")
 async def update_password(user_id: str, current_user: Annotated[User, Depends(get_current_active_user)], new_password:str):
