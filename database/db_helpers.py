@@ -1651,7 +1651,9 @@ class Neo4jDriver():
             email=response['u']['email'] or '',
             full_name=response['u']['fullname'] or '',
             created_date=response['u']['created_date'],
-            profile_img_url=response['u']['profile_img_url'],
+            profile_img_url=response['u']['profile_img_url'] or '',
+            bio=response['u']['bio'] or '',
+
         )
         return user
 
@@ -2933,7 +2935,7 @@ class Neo4jDriver():
                     detail="Username is already taken"
                 )
             
-    def update_bio(self,new_bio:str, user_id:str):
+    def update_bio(self, new_bio, user_id):
         """
         Updates the bio of a user
         """
@@ -2949,6 +2951,23 @@ class Neo4jDriver():
         """
         
         tx.run(query,user_id=user_id,new_bio=new_bio)
+
+    def update_email(self, new_email, user_id):
+        """
+        Updates the email of a user
+        """
+        with self.driver.session() as session:
+            result = session.execute_write(self.update_email_query, new_email=new_email, user_id=user_id)  
+        return(result)
+    
+    @staticmethod
+    def update_email_query(tx, new_email, user_id):
+        query = """
+        match (u:User {id:$user_id})
+        set u.email = $new_email
+        """
+        
+        tx.run(query,user_id=user_id,new_email=new_email)
 
     def update_password(self,new_password:str, user_id:str):
         """

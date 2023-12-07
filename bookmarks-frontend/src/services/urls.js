@@ -13,7 +13,10 @@ export const urls = {
     author: baseUrl + 'api/author/',
     user: {
         getUser: (user_id) => (baseUrl + `api/user/${user_id}/get_user`),
-        setUserImgCdnUrl: (user_id) => (baseUrl + `api/user/${user_id}/update_profile_img`)
+        setUserImgCdnUrl: (user_id) => (baseUrl + `api/user/${user_id}/update_profile_img`),
+        updateUsername: (user_id) => (baseUrl + `api/user/${user_id}/update_username`),
+        updateBio: (user_id) => (baseUrl +  `api/user/${user_id}/update_bio`),
+        updateEmail: (user_id) => (baseUrl + `api/user/${user_id}/update_email`), 
     },
     create: {
         searchBook: (text) => (`${baseUrl}api/search/book/${text}`)

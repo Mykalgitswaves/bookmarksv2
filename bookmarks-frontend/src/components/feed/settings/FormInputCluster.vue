@@ -3,7 +3,7 @@
         <p class="text-sm text-slate-600 mb-2">{{ props.name }}</p>
         <div class="flex gap-5">
             <input
-                type="text"
+                :type="props.inputType"
                 id="user-name"
                 class="settings-info-form-input"
                 v-model="data"
@@ -20,17 +20,27 @@
             <button
                 v-if="showSaveField"
                 type="button"
-                class="save-btn "
-                @click="showSaveField = false"
+                class="save-btn"
+                :class="{'disabled': props.isSaveDisabled}"
+                :disabled="props.isSaveDisabled"
+                @click="emit('new-value-saved', data)"
             >
                 Save  
+            </button>
+            <button
+                v-if="showSaveField"
+                type="button"
+                class="cancel-btn"
+                @click="showSaveField = false"
+            >
+                Cancel  
             </button>
         </div>
     </label>    
 </template>
 <script setup>
 import IconEdit from '../../svg/icon-edit.vue';
-import { ref, watch } from 'vue';
+import { ref, watchEffect } from 'vue';
 
 const props = defineProps({
     name: {
@@ -42,14 +52,23 @@ const props = defineProps({
     },
     inputId: {
         type: String,
-    }
+    },
+    inputType: {
+       type: String,
+       required: true
+    },
+    isSaveDisabled: {
+        type: Boolean,
+        default: false,
+    },
 })
 
-const showSaveField = ref(false);
-const data = ref('');
+const emit = defineEmits(['new-value-saved']);
 
-// to do add logic for saving here.
-watch(() => props.value, (newValue) => {
-    console.log(newValue)
+const showSaveField = ref(false);
+const data = ref(props.value)
+
+watchEffect(() => {
+    emit('updated:string', data.value)
 })
 </script>

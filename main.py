@@ -906,31 +906,41 @@ async def get_complete_user(user_id: str, current_user: Annotated[User, Depends(
         return JSONResponse(content={"data": jsonable_encoder(user)})
     
 @app.put("/api/user/{user_id}/update_username")
-async def update_username(user_id: str, current_user: Annotated[User, Depends(get_current_active_user)], new_username:str):
+async def update_username(request: Request, user_id: str, current_user: Annotated[User, Depends(get_current_active_user)]):
     if not current_user:
         raise("400", "Unauthorized")
     if current_user.user_id == user_id:
+        new_username = await request.json()
+        breakpoint()
         result = current_user.update_username(new_username=new_username)
         return result
     else:
         raise HTTPException(400, detail="Unauthorized")
 
 @app.put("/api/user/{user_id}/update_bio")
-async def update_bio(user_id: str, current_user: Annotated[User, Depends(get_current_active_user)], new_bio:str):
+async def update_bio(request: Request, user_id: str, current_user: Annotated[User, Depends(get_current_active_user)]):
     if not current_user:
         raise("400", "Unauthorized")
     if current_user.user_id == user_id:
-        current_user.update_bio(new_bio=new_bio)
+        new_bio = await request.json()
+        driver.update_bio(user_id=user_id, new_bio=new_bio)
         return HTTPException(200, detail="Success")
     else:
         raise HTTPException(400, detail="Unauthorized")
 
 @app.put("/api/user/{user_id}/update_email")
-async def update_email(user_id: str, current_user: Annotated[User, Depends(get_current_active_user)], new_email:str):
+async def update_email(request: Request, user_id: str, current_user: Annotated[User, Depends(get_current_active_user)]):
     """
     THIS IS A PLACEHOLDER. DO WE NEED EMAIL VERIFICATION?
     """
-
+    if not current_user:
+        raise("400", "Unauthorized")
+    if current_user.user_id == user_id:
+        new_email = await request.json()
+        driver.update_email(user_id=user_id, new_email=new_email)
+        return HTTPException(200, detail="Success")
+    else:
+        raise HTTPException(400, detail="Unauthorized")
 
 @app.post("/api/user/{user_id}/update_profile_img")
 async def update_profile_img(request: Request, user_id: str, current_user: Annotated[User, Depends(get_current_active_user)]):
@@ -946,13 +956,14 @@ async def update_profile_img(request: Request, user_id: str, current_user: Annot
        return JSONResponse(content={"data": jsonable_encoder(img['cdn_url'])})
     
 @app.put("/api/user/{user_id}/update_password")
-async def update_password(user_id: str, current_user: Annotated[User, Depends(get_current_active_user)], new_password:str):
+async def update_password(request: Request, user_id: str, current_user: Annotated[User, Depends(get_current_active_user)]):
     """
     Changes the users password.
     """
     if not current_user:
         raise("400", "Unauthorized")
-    if current_user.user_id == user_id:
+    if current_user.user_id == user_id and request:
+        new_password = await request.json()
         current_user.update_password(get_password_hash(new_password))
         return HTTPException(200, detail="Success")
     else:

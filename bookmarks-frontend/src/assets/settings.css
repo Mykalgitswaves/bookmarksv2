@@ -169,8 +169,26 @@
     transition: all 250ms ease;
 }
 
+.save-btn.disabled, .save-btn.disabled:hover {
+    background-color: #e2e8f0;
+    color: #0f172a;
+}
+
 .save-btn:hover {
     background-color: #065f46;
+}
+
+.cancel-btn {
+    width: 100px;
+    padding: 10px 4px;
+    border-radius: 6px;
+    transition: all 250ms ease;
+    background-color: #64748b;
+    color: #fff;
+}
+
+.cancel-btn:hover {
+    background-color: #1e293b;
 }
 
 .edit-btn:hover {

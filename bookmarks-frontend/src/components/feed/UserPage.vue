@@ -4,7 +4,7 @@
     <section class="section-wrapper">
         <div class="user-profile-header">
             <div class="edit-profile-picture">
-                <img :src="path" class="" alt="">
+                <img :src="userData?.cdnUrl || path" class="" alt="">
                 <button
                     v-if="route.params.user === route.params.user_profile"
                     type="button"
@@ -18,7 +18,7 @@
                 {{ userData?.username || 'loading' }}
             </h2>
         </div>
-        <div class="user-profile-subheader">
+        <div class="user-profile-subheader" v-if="userData.loaded">
             <p></p>
             
                 <button 
@@ -52,6 +52,9 @@
                     </button>
                 </div>
         </div>
+        <div>
+            <LoadingIndicatorBook/>
+        </div> 
         <component :is="componentMapping[currentSelection]"/>
     </section>
     <div class="mobile-menu-spacer sm:hidden"></div>
@@ -60,24 +63,38 @@
 import BackBtn from './partials/back-btn.vue';
 import { db } from '../../services/db';
 import { urls } from '../../services/urls';
+import { ref, reactive } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { ref } from 'vue';
 import path from '../svg/placeholderImg.png';
 
 import IconEdit from '../svg/icon-edit.vue';
 import IconLink from '../svg/icon-link.vue';
 import IconPlus from '../svg/icon-plus.vue';
 import AboutMe from './userpage/UserPageAboutMe.vue'
+import LoadingIndicatorBook from '../feed/partials/LoadingIndicatorBook.vue';
 
 const route = useRoute();
 const router = useRouter();
 const { user_profile } = route.params;
-console.log(user_profile)
-const userData = ref(null);
+const userData = reactive({
+        loaded: false,
+        username: '',
+        full_name: '',
+        password: '',
+        email: '',
+        bio: '',
+        cdnUrl: ''
+    });
 
 async function getUserData() {
     await db.get(urls.user.getUser(user_profile), null, true).then((res) => {
-        userData.value = res.data;
+        userData.loaded = true
+        userData.username = res.data.username
+        userData.full_name = res.data.full_name
+        userData.email = res.data.email
+        userData.bio = res.data.bio
+        userData.loaded = true;
+        userData.cdnUrl = res.data.profile_img_url
     });
 };
 
