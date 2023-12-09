@@ -14,14 +14,14 @@
                     <IconEdit />
                 </button>
             </div>
-            <h2 class="font-medium text-slate-600 text-xl mt-4">
-                {{ userData?.username || 'loading' }}
+            <h2 v-if="userData.loaded" class="font-medium text-slate-600 text-xl mt-4">
+                {{ userData?.username }}
             </h2>
         </div>
-        <div class="user-profile-subheader" v-if="userData.loaded">
-            <p></p>
-            
+        <div class="user-profile-subheader">
+                <LoadingIndicatorBook v-if="!userData.loaded"/>
                 <button 
+                    v-if="userData.loaded"
                     class="btn add-friend-btn"
                     type="button"
                 >
@@ -30,6 +30,7 @@
                 </button>
 
                 <button        
+                v-if="userData.loaded"
                     class="mutuals-btn mt-2"
                     type="button"
                 >
@@ -39,22 +40,22 @@
                         and {{ mutualPlaceholder.length }} others
                     </span>
                 </button>
-
                 <div class="user-profile-subheader-nav">
-                    <button
-                        type="button"
-                        @click="currentSelection = 'about_me'"
-                    >
-                        About me
-                    </button>
-                    <button>
-                        Bookshelves
-                    </button>
-                </div>
+            <button
+                type="button"
+                @click="currentSelection = 'about_me'"
+            >
+                About me
+            </button>
+            <button>
+                Bookshelves
+            </button>
         </div>
-        <div>
-            <LoadingIndicatorBook/>
-        </div> 
+        </div>
+        
+                
+        
+        
         <component :is="componentMapping[currentSelection]"/>
     </section>
     <div class="mobile-menu-spacer sm:hidden"></div>

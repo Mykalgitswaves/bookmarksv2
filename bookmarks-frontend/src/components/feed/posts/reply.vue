@@ -1,10 +1,13 @@
 <template>
     <p class="comment-username reply">{{ props.reply.username }}:</p>
-    <div class="reply comment" 
-    :class="{
-        'liked': is_liked,
-        'op': props.reply?.posted_by_current_user 
-    }">
+    
+    <div 
+        class="reply comment" 
+        :class="{
+            'liked': is_liked,
+            'op': props.reply?.posted_by_current_user 
+        }"
+    >
         <div class="comment-inner">
             <p v-if="props.reply">{{ props.reply?.text }}</p>
 
