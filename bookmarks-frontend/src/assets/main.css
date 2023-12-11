@@ -28,6 +28,10 @@
   --media-screen-min-tablet: 768px;
 }
 
+.login-wrapper {
+  height: 600px;
+}
+
 
 .content-enter-active,
 .content-leave-active {

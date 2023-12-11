@@ -14,6 +14,7 @@ export const urls = {
     user: {
         getUser: (user_id) => (baseUrl + `api/user/${user_id}/get_user`),
         setUserImgCdnUrl: (user_id) => (baseUrl + `api/user/${user_id}/update_profile_img`),
+        getUserAbout: (user_id) => (baseUrl + `api/user/${user_id}/user_about`),
         updateUsername: (user_id) => (baseUrl + `api/user/${user_id}/update_username`),
         updateBio: (user_id) => (baseUrl +  `api/user/${user_id}/update_bio`),
         updateEmail: (user_id) => (baseUrl + `api/user/${user_id}/update_email`), 

@@ -1,5 +1,6 @@
 <!-- eslint-disable vue/no-parsing-error -->
 <template>
+  <section class="login-wrapper">
   <h1 class="text-center text-4xl font-medium mb-16">Log in</h1>
 
   <form
@@ -55,6 +56,7 @@
     </button>
   </RouterLink>
 </div>
+</section>
 </template>
 
 <script setup>

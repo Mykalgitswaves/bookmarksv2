@@ -109,10 +109,11 @@
     import * as LR from "@uploadcare/blocks";
     import FormInputCluster from './settings/FormInputCluster.vue';
     
+    const route = useRoute();
     // To tell us when our stuff is saved dude.
     let cdnUrl = ref('');
     let loadingImageSave = false;
-
+    const isEditingProfileImage = ref(false);
     //upload care stuff dont fuck with
     LR.registerBlocks(LR);
 
@@ -129,9 +130,9 @@
                 loadingImageSave = false;
             });
         });
+        isEditingProfileImage.value = !!route.query.set_image
     })
 
-    const isEditingProfileImage = ref(false);
     const userData = reactive({
         loaded: false,
         username: '',
@@ -140,8 +141,6 @@
         email: '',
         bio: ''
     });
-
-    const route = useRoute();
 
     // Call user endpoint for data
     async function getUserSettings() {

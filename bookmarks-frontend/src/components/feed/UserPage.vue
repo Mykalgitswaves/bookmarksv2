@@ -9,17 +9,22 @@
                     v-if="route.params.user === route.params.user_profile"
                     type="button"
                     class="e-p-p-btn"
-                    @click="router.push(pathToSettings)"
+                    @click="router.push(pathToSettings + '?set_image=yes')"
                 >
                     <IconEdit />
                 </button>
             </div>
-            <h2 v-if="userData.loaded" class="font-medium text-slate-600 text-xl mt-4">
-                {{ userData?.username }}
-            </h2>
+            <div class="u-p-h-text-info">
+                <h2 class="font-medium text-slate-600 text-xl">
+                    {{ userData?.username }}
+                </h2>
+                <p class="text-center fancy text-lg text-indigo-600">{{ userData?.bio }}</p>
+            </div>
         </div>
         <div class="user-profile-subheader">
-                <LoadingIndicatorBook v-if="!userData.loaded"/>
+            <div class="flex items-between gap-5" 
+                v-if="userData.relationship_to_current_user !== 'self'"
+            >
                 <button 
                     v-if="userData.loaded"
                     class="btn add-friend-btn"
@@ -40,23 +45,28 @@
                         and {{ mutualPlaceholder.length }} others
                     </span>
                 </button>
-                <div class="user-profile-subheader-nav">
-            <button
-                type="button"
-                @click="currentSelection = 'about_me'"
-            >
-                About me
-            </button>
-            <button>
-                Bookshelves
-            </button>
-        </div>
-        </div>
-        
+            </div>
+            
+            <div class="user-profile-subheader-nav">
+                <button
+                    type="button"
+                    :class="{ 'current-selection': currentSelection === 'about_me' }"
+                    @click="currentSelection = 'about_me'"
+                >
+                    About me
+                </button>
                 
+                <button
+                    type="button"
+                    :class="{ 'current-selection': currentSelection === 'bookshelves' }"
+                    @click="currentSelection = 'bookshelves'"
+                >
+                    Bookshelves
+                </button>
+            </div>
+        </div>   
         
-        
-        <component :is="componentMapping[currentSelection]"/>
+        <component :is="componentMapping[currentSelection].component" :props="componentMapping[currentSelection].props"/>
     </section>
     <div class="mobile-menu-spacer sm:hidden"></div>
 </template>
@@ -64,7 +74,7 @@
 import BackBtn from './partials/back-btn.vue';
 import { db } from '../../services/db';
 import { urls } from '../../services/urls';
-import { ref, reactive } from 'vue';
+import { ref, reactive, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import path from '../svg/placeholderImg.png';
 
@@ -77,15 +87,29 @@ import LoadingIndicatorBook from '../feed/partials/LoadingIndicatorBook.vue';
 const route = useRoute();
 const router = useRouter();
 const { user_profile } = route.params;
+const pathToSettings = `/feed/${user_profile}/settings`
+
 const userData = reactive({
         loaded: false,
-        username: '',
+        username: 'loading',
         full_name: '',
         password: '',
         email: '',
-        bio: '',
+        bio: '...',
         cdnUrl: ''
     });
+
+const mutualPlaceholder = ['michael', 'kyle', 'cole']
+const currentSelection = ref('about_me')
+
+const componentMapping = reactive({
+    'about_me': {
+        component: AboutMe,
+        props: {
+            'user': user_profile
+        }
+    }
+});
 
 async function getUserData() {
     await db.get(urls.user.getUser(user_profile), null, true).then((res) => {
@@ -96,21 +120,21 @@ async function getUserData() {
         userData.bio = res.data.bio
         userData.loaded = true;
         userData.cdnUrl = res.data.profile_img_url
+        userData.relationship_to_current_user = res.data.relationship_to_current_user
     });
 };
 
-getUserData();
 
-const mutualPlaceholder = ['michael', 'kyle', 'cole']
-const currentSelection = ref('about_me')
+function getUserBio() {
+    return userData.relationship_to_current_user === 'self' ?
+        (userData?.bio ?? 'Make sure to set your bio') :
+        userData?.bio
+}
 
-const componentMapping = {
-    'about_me': AboutMe,
-}; 
-
-        
-const pathToSettings = `/feed/${user_profile}/settings`
-
+onMounted(() => {
+    getUserData(); 
+    userData.bio = getUserBio()
+})
          
 </script>
 

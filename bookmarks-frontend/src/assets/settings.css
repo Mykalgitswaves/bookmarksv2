@@ -32,6 +32,12 @@
     align-items: center;
     margin-bottom: 24px;
 }
+
+.u-p-h-text-info {
+    min-height: 30px;
+    margin-top: 12px;
+}
+
 .user-profile-subheader {
     display: grid;
     justify-content: center;
@@ -68,12 +74,19 @@
 /* For pencil button on user profile image */
 .edit-profile-picture .e-p-p-btn {
     position: absolute;
-    bottom: 2px;
+    top: 2px;
     right: -20px;
     color: #4f46e5;
     padding: 2px;
     border-radius: 25%;
     border: 1px solid #4f46e5; 
+    transition: all 150ms ease;
+
+    &:hover {
+        background-color: #f1f5f9;
+        transform: scale(1.03);
+    }
+
 }
 
 .settings-info-form.loading {
@@ -129,6 +142,10 @@
 .user-profile-subheader-nav button:hover {
     color: #1e293b;
     border-color: #94a3b8;
+}
+
+.user-profile-subheader-nav button.current-selection {
+    border-color: #6366f1;
 }
 
 .add-friend-btn {
@@ -240,15 +257,16 @@
     --primary-d: hsl(var(--hue), 90%, 45%);
     --white: hsl(var(--hue), 10%, 100%);
     --white-d: hsl(var(--hue), 10%, 45%);
-    font-size: calc(16px + (24 - 16) * (100vw - 320px) / (1280 - 320));
+    /* font-size: calc(16px + (24 - 16) * (100vw - 320px) / (1280 - 320)); */
 }
 
 .book-wrapper {
     color: var(--fg);
     font: 1em/1.5 sans-serif;
-    height: 175px;
+    height: fit-content;
     display: grid;
     place-items: center;
+    margin-top: 40px;
 }
 
 .book,
@@ -533,4 +551,13 @@
         background-color: var(--white);
         transform: translate3d(0,0,1px) rotateY(0);
     }
+}
+
+.user-about-settings-wrap {
+    display: grid;
+    width: 100%;
+    max-width: 500px;
+    margin-top: 35px;
+    row-gap: 24px;
+    align-self: center;
 }

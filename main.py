@@ -1090,6 +1090,16 @@ async def unblock_user(user_id: str, unblocked_user_id:str, current_user: Annota
     else:
         raise result
 
+@app.get("/api/user/{user_id}/user_about")
+async def get_user_about(user_id:str, current_user: Annotated[User, Depends(get_current_active_user)]):
+    """
+    Used for about me data called on user page. 
+    """
+    if not current_user:
+        raise("400", "Unauthorized")
+    if current_user and user_id:
+        user = driver.get_user_about_me(user_id=user_id)
+        return JSONResponse(content={"data": jsonable_encoder(user)})
 
 @app.get("/api/user/{user_id}/friend_requests")
 async def update_profile_img(user_id: str, current_user: Annotated[User, Depends(get_current_active_user)]):

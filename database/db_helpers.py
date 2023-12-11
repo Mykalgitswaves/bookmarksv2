@@ -2985,7 +2985,45 @@ class Neo4jDriver():
         """
         
         tx.run(query,user_id=user_id,new_password=new_password)
-        
+    
+    ###################################################################################################################
+    ###########
+    ###########        About me QUERIES
+    ###########
+    ###################################################################################################################
+    
+    def get_user_about_me(self, user_id):
+        with self.driver.session() as session:
+            result = session.execute_read(self.get_user_about_me_query, user_id=user_id)
+        return(result)
+    
+    @staticmethod
+    def get_user_about_me_query(tx, user_id):
+        query = """
+            match(u:User {id: $user_id})
+            optional match(u)-[LIKES]->(g:Genre)
+            optional match(u)-[rr:LIKES]-(a:Author)
+
+            return g, a
+        """
+        result = tx.run(query, user_id=user_id)
+
+        genres = set()
+        authors = set()
+
+        for response in result:
+            if response['g']:
+                genres.add(
+                    (response['g']['name'], response['g']['id'])
+                )
+            
+            if response['a']:
+                authors.add(
+                    (response['a']['name'], response['a']['id'])
+                )
+
+        return { "genres": genres, "authors": authors }
+
     ###################################################################################################################
     ###########
     ###########        Friend/Follow/Block QUERIES

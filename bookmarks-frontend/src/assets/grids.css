@@ -14,6 +14,14 @@
     justify-items: center;
     align-items: center;
   }
+
+.grid-pills.settings {
+  margin-top: 12px;
+  padding: 8px;
+  grid-template-columns: repeat(auto-fill, minmax(12ch, 1fr));
+  align-self: center;
+  gap: 8px;
+}
   
   .grid-pills > * {
     line-height: 2ch;

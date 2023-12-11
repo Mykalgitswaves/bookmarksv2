@@ -1,5 +1,5 @@
 <template>
-  <main class="w-screen bg-white relative">
+  <main class="bg-white relative">
     <RouterView />
   </main>
 </template>
