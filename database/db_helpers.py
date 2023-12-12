@@ -139,9 +139,9 @@ class User():
         driver.update_password(new_password,self.id)
         self.hashed_password = new_password 
 
-    def send_friend_request(self,friend_id,driver):
-        result = driver.send_friend_request(self.user_id,friend_id)
-        return result
+    def send_friend_request(self,friend_id, driver):
+            result = driver.send_friend_request(self.user_id,friend_id)
+            return result
     
     def unsend_friend_request(self,friend_id,driver):
         result = driver.unsend_friend_request(self.user_id,friend_id)
