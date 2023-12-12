@@ -1,6 +1,6 @@
 <template>
     <div v-if="data" class="user-about-settings-wrap">
-        <h2 class="text-slate-600">Your favorite genres</h2>
+        <h2 v-if="data?.genres?.length" class="text-slate-600">Your favorite genres</h2>
 
         <div  class="grid-pills settings">
             <div 
@@ -13,7 +13,7 @@
             </div>
         </div>
 
-        <h2 class="text-slate-600">Your favorite authors</h2>
+        <h2 v-if="data?.authors?.length" class="text-slate-600">Your favorite authors</h2>
 
         <div 
             v-for="author in data?.authors" :key="author[1]"
@@ -24,12 +24,15 @@
             {{ author[0] }}
         </div>
     </div>
+    
+    <LoadingIndicatorBook v-else/>
 </template>
 <script setup>
 import { ref, watchEffect } from 'vue';
 import { useRoute } from 'vue-router';
 import { db } from '../../../services/db';
 import { urls } from '../../../services/urls';
+import LoadingIndicatorBook from '../partials/LoadingIndicatorBook.vue';
 
 const route = useRoute();
 const { user_profile } = route.params;

@@ -17,7 +17,12 @@ export const urls = {
         getUserAbout: (user_id) => (baseUrl + `api/user/${user_id}/user_about`),
         updateUsername: (user_id) => (baseUrl + `api/user/${user_id}/update_username`),
         updateBio: (user_id) => (baseUrl +  `api/user/${user_id}/update_bio`),
-        updateEmail: (user_id) => (baseUrl + `api/user/${user_id}/update_email`), 
+        updateEmail: (user_id) => (baseUrl + `api/user/${user_id}/update_email`),
+        sendAnonFriendRequest: (user_id, friend_id) => (baseUrl + `api/user/${user_id}/send_friend_request/${friend_id}`),
+        unsendAnonFriendRequest: (user_id, friend_id) => (baseUrl + `api/user/${user_id}/unsend_friend_request/${friend_id}`),
+        unfriendFriend: (user_id, friend_id) => (baseUrl + `api/user/${user_id}/remove_friend/${friend_id}`),
+        followUser: (user_id, friend_id) => (baseUrl + `api/user/${user_id}/follow/${friend_id}`),
+        unfollowUser: (user_id, friend_id) => (baseUrl + `api/user/${user_id}/unfollow/${friend_id}`)
     },
     create: {
         searchBook: (text) => (`${baseUrl}api/search/book/${text}`)

@@ -148,17 +148,9 @@
     border-color: #6366f1;
 }
 
-.add-friend-btn {
-    display: flex;
-    align-items: center;
-    justify-self: center;
-    color: #fff;
-    background-color: #4f46e5;
-    transition: all 250ms ease; 
-}
-.add-friend-btn:hover {
-    background-color: #3730a3;
-}
+/* Used for loading animation */
+
+
 
 .edit-btn {
     display: flex;

@@ -1629,21 +1629,21 @@ class Neo4jDriver():
             return(None)
     
 
-    def get_user_for_settings(self, user_id):
+    def get_user_for_settings(self, user_id, relationship_to_current_user):
         """
         gets id of user and returns full user object
         """
         with self.driver.session() as session:
-            result = session.execute_read(self.get_user_for_settings_query, user_id)
+            result = session.execute_read(self.get_user_for_settings_query, user_id, relationship_to_current_user)
         return(result)
     
     @staticmethod
-    def get_user_for_settings_query(tx, user_id):
+    def get_user_for_settings_query(tx, user_id, relationship_to_current_user):
         query = """
             match(u:User {id:$user_id}) 
             return u
         """
-        result = tx.run(query, user_id=user_id)
+        result = tx.run(query, user_id=user_id, relationship_to_current_user=relationship_to_current_user)
         response = result.single()
         user = User(
             user_id=response['u']['id'],
@@ -1653,7 +1653,7 @@ class Neo4jDriver():
             created_date=response['u']['created_date'],
             profile_img_url=response['u']['profile_img_url'] or '',
             bio=response['u']['bio'] or '',
-
+            relationship_to_current_user=response['u']['relationship_to_current_user'] or relationship_to_current_user,
         )
         return user
 

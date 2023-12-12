@@ -902,7 +902,12 @@ async def get_complete_user(user_id: str, current_user: Annotated[User, Depends(
     if not current_user:
         raise("400", "Unauthorized")
     if current_user and user_id:
-        user = driver.get_user_for_settings(user_id=user_id)
+        if current_user.user_id != user_id:
+            relationship_to_current_user = 'anonymous'
+        elif current_user.user_id == user_id:
+            relationship_to_current_user = 'self'
+
+        user = driver.get_user_for_settings(user_id=user_id, relationship_to_current_user=relationship_to_current_user)
         return JSONResponse(content={"data": jsonable_encoder(user)})
     
 @app.put("/api/user/{user_id}/update_username")
@@ -969,7 +974,7 @@ async def update_password(request: Request, user_id: str, current_user: Annotate
     else:
         raise HTTPException(400, detail="Unauthorized")
 
-@app.put("/api/user/{user_id}/send_friend_request")
+@app.put("/api/user/{user_id}/send_friend_request/{friend_id}")
 async def send_friend_request(user_id: str, friend_id:str, current_user: Annotated[User, Depends(get_current_active_user)]):
     """
     This send a friend request from user_id -> friend_id 
@@ -983,7 +988,7 @@ async def send_friend_request(user_id: str, friend_id:str, current_user: Annotat
         raise HTTPException(400, detail="Unauthorized")
 
 
-@app.put("/api/user/{user_id}/unsend_friend_request")
+@app.put("/api/user/{user_id}/unsend_friend_request/{friend_id}")
 async def unsend_friend_request(user_id: str, friend_id:str, current_user: Annotated[User, Depends(get_current_active_user)]):
     """
     Unsends a friend request from user_id to friend_id
@@ -997,7 +1002,7 @@ async def unsend_friend_request(user_id: str, friend_id:str, current_user: Annot
         raise HTTPException(400, detail="Unauthorized")
 
     
-@app.put("/api/user/{user_id}/accept_friend_request")
+@app.put("/api/user/{user_id}/accept_friend_request/{friend_id}")
 async def accept_friend_request(user_id: str, friend_id:str, current_user: Annotated[User, Depends(get_current_active_user)]):
     """
     Accepts a friend request, checks that the request exists 
@@ -1011,7 +1016,7 @@ async def accept_friend_request(user_id: str, friend_id:str, current_user: Annot
         raise result
 
     
-@app.put("/api/user/{user_id}/decline_friend_request")
+@app.put("/api/user/{user_id}/decline_friend_request/{friend_id}")
 async def decline_friend_request(user_id: str, friend_id:str, current_user: Annotated[User, Depends(get_current_active_user)]):
     """
     Declines a friend request, checks that the request exists
@@ -1024,7 +1029,7 @@ async def decline_friend_request(user_id: str, friend_id:str, current_user: Anno
     else:
         raise result
     
-@app.put("/api/user/{user_id}/remove_friend")
+@app.put("/api/user/{user_id}/remove_friend/{friend_id}")
 async def remove_friend(user_id: str, friend_id:str, current_user: Annotated[User, Depends(get_current_active_user)]):
     """
     Removes a friend 
@@ -1038,7 +1043,7 @@ async def remove_friend(user_id: str, friend_id:str, current_user: Annotated[Use
         raise result
 
 
-@app.put("/api/user/{user_id}/follow")
+@app.put("/api/user/{user_id}/follow/{followed_user_id}")
 async def follow_user(user_id: str, followed_user_id:str, current_user: Annotated[User, Depends(get_current_active_user)]):
     """
     Follows a user
@@ -1051,7 +1056,7 @@ async def follow_user(user_id: str, followed_user_id:str, current_user: Annotate
     else:
         raise result
     
-@app.put("/api/user/{user_id}/unfollow")
+@app.put("/api/user/{user_id}/unfollow/{unfollowed_user_id}")
 async def unfollow_user(user_id: str, unfollowed_user_id:str, current_user: Annotated[User, Depends(get_current_active_user)]):
     """
     Follows a user

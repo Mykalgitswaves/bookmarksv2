@@ -22,30 +22,10 @@
             </div>
         </div>
         <div class="user-profile-subheader">
-            <div class="flex items-between gap-5" 
-                v-if="userData.relationship_to_current_user !== 'self'"
-            >
-                <button 
-                    v-if="userData.loaded"
-                    class="btn add-friend-btn"
-                    type="button"
-                >
-                <IconPlus class="mr-2"/>
-                add friend
-                </button>
-
-                <button        
-                v-if="userData.loaded"
-                    class="mutuals-btn mt-2"
-                    type="button"
-                >
-                    <IconLink class="mt-2"/>
-                    {{ mutualPlaceholder[0] }}&nbsp;
-                    <span v-if="mutualPlaceholder.length > 1">
-                        and {{ mutualPlaceholder.length }} others
-                    </span>
-                </button>
-            </div>
+            <FriendButton 
+                v-if="userData?.relationship_to_current_user !== 'self'"
+                :current-option="userData?.relationship_to_current_user || 'loading'"
+            />    
             
             <div class="user-profile-subheader-nav">
                 <button
@@ -55,7 +35,7 @@
                 >
                     About me
                 </button>
-                
+
                 <button
                     type="button"
                     :class="{ 'current-selection': currentSelection === 'bookshelves' }"
@@ -83,6 +63,7 @@ import IconLink from '../svg/icon-link.vue';
 import IconPlus from '../svg/icon-plus.vue';
 import AboutMe from './userpage/UserPageAboutMe.vue'
 import LoadingIndicatorBook from '../feed/partials/LoadingIndicatorBook.vue';
+import FriendButton from './userpage/UserFriendButton.vue';
 
 const route = useRoute();
 const router = useRouter();
@@ -95,7 +76,7 @@ const userData = reactive({
         full_name: '',
         password: '',
         email: '',
-        bio: '...',
+        bio: '',
         cdnUrl: ''
     });
 
