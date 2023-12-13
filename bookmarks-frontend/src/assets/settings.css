@@ -120,11 +120,12 @@
 
 .user-profile-subheader-nav {
     display: grid;
-    grid-template-columns: .5fr .5fr;
+    grid-template-columns: repeat(3, 1fr);
     width: 100%;
-    column-gap: 20px;
+    column-gap: 10px;
     white-space: nowrap;
     justify-content: center;
+    align-content: space-between;
     margin-top: 25px;
 }
 
@@ -134,9 +135,10 @@
     font-size: 16px;
     color: #334155;
     padding-bottom: 8px;
-    width: 150px;
+    width: clamp(80px, 100% ,150px);
     border-bottom: 3px solid #f3f4f6;
     transition: all 250ms ease; 
+    justify-content: center;
 }
 
 .user-profile-subheader-nav button:hover {
@@ -550,6 +552,6 @@
     width: 100%;
     max-width: 500px;
     margin-top: 35px;
-    row-gap: 24px;
+    row-gap: 10px;
     align-self: center;
 }

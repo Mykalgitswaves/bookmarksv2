@@ -23,7 +23,7 @@
         </div>
         <div class="user-profile-subheader">
             <FriendButton 
-                v-if="userData?.relationship_to_current_user !== 'self'"
+                v-if="user !== user_profile"
                 :current-option="userData?.relationship_to_current_user || 'loading'"
             />    
             
@@ -35,13 +35,33 @@
                 >
                     About me
                 </button>
+                
+                <button
+                    type="button"
+                    class="bookshelves-btn flex items-center"
+                    :class="{ 
+                        'current-selection': currentSelection === 'reviews',
+                        'disabled': true
+                    }"
+                    disabled="true"
+                    @click="currentSelection = 'reviews'"
+                >
+                    Reviews
+                    <IconLock class="ml-2" />
+                </button>
 
                 <button
                     type="button"
-                    :class="{ 'current-selection': currentSelection === 'bookshelves' }"
+                    class="bookshelves-btn flex items-center"
+                    :class="{ 
+                        'current-selection': currentSelection === 'bookshelves',
+                        'disabled': true
+                    }"
+                    disabled="true"
                     @click="currentSelection = 'bookshelves'"
-                >
+                >   
                     Bookshelves
+                    <IconLock class="ml-2" />
                 </button>
             </div>
         </div>   
@@ -59,15 +79,13 @@ import { useRoute, useRouter } from 'vue-router';
 import path from '../svg/placeholderImg.png';
 
 import IconEdit from '../svg/icon-edit.vue';
-import IconLink from '../svg/icon-link.vue';
-import IconPlus from '../svg/icon-plus.vue';
+import IconLock from '../svg/icon-lock.vue';
 import AboutMe from './userpage/UserPageAboutMe.vue'
-import LoadingIndicatorBook from '../feed/partials/LoadingIndicatorBook.vue';
 import FriendButton from './userpage/UserFriendButton.vue';
 
 const route = useRoute();
 const router = useRouter();
-const { user_profile } = route.params;
+const { user, user_profile } = route.params;
 const pathToSettings = `/feed/${user_profile}/settings`
 
 const userData = reactive({
@@ -119,6 +137,11 @@ onMounted(() => {
          
 </script>
 
-<style scoped>
-
+<style scoped lang="scss">
+    
+    .bookshelves-btn.disabled {
+        pointer-events: none;
+        cursor: not-allowed;
+    }
+    
 </style>
