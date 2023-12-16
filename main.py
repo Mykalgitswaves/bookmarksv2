@@ -928,7 +928,7 @@ async def update_bio(user_id: str, current_user: Annotated[User, Depends(get_cur
 @app.put("/api/user/{user_id}/update_email")
 async def update_email(user_id: str, current_user: Annotated[User, Depends(get_current_active_user)], new_email:str):
     """
-    THIS IS A PLACEHOLDER. DO WE NEED EMAIL VERIFICATION?
+    THIS IS A PLACEHOLDER. DO WE NEED EMAIL VERIFICATION? Later
     """
 
 
