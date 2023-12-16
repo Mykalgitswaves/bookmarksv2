@@ -40,13 +40,20 @@ const goToPage = (page) => {
 </script>
 <style scoped lang="scss">
     .pagination {
+        display: grid;
         margin-top: 14px;
-        display: flex;
-        justify-content: center;
-        column-gap: 18px;
         color: #4f46e5;
         font-size: 18px;
+        justify-content: center;
 
+
+        button {
+            transition: all 250ms ease;
+        }
+
+        button:hover:not([disabled]) {
+            background-color: #e0e7ff;
+        }
         .disabled {
             color: #a8a29e;
         }
