@@ -902,56 +902,79 @@ async def get_complete_user(user_id: str, current_user: Annotated[User, Depends(
     if not current_user:
         raise("400", "Unauthorized")
     if current_user and user_id:
-        user = driver.get_user_for_settings(user_id=user_id)
+        if current_user.user_id != user_id:
+            relationship_to_current_user = 'anonymous'
+        elif current_user.user_id == user_id:
+            relationship_to_current_user = 'self'
+
+        user = driver.get_user_for_settings(user_id=user_id, relationship_to_current_user=relationship_to_current_user)
         return JSONResponse(content={"data": jsonable_encoder(user)})
     
 @app.put("/api/user/{user_id}/update_username")
-async def update_username(user_id: str, current_user: Annotated[User, Depends(get_current_active_user)], new_username:str):
+async def update_username(request: Request, user_id: str, current_user: Annotated[User, Depends(get_current_active_user)]):
     if not current_user:
         raise("400", "Unauthorized")
     if current_user.user_id == user_id:
+        new_username = await request.json()
+        breakpoint()
         result = current_user.update_username(new_username=new_username)
         return result
     else:
         raise HTTPException(400, detail="Unauthorized")
 
 @app.put("/api/user/{user_id}/update_bio")
-async def update_bio(user_id: str, current_user: Annotated[User, Depends(get_current_active_user)], new_bio:str):
+async def update_bio(request: Request, user_id: str, current_user: Annotated[User, Depends(get_current_active_user)]):
     if not current_user:
         raise("400", "Unauthorized")
     if current_user.user_id == user_id:
-        current_user.update_bio(new_bio=new_bio)
+        new_bio = await request.json()
+        driver.update_bio(user_id=user_id, new_bio=new_bio)
         return HTTPException(200, detail="Success")
     else:
         raise HTTPException(400, detail="Unauthorized")
 
 @app.put("/api/user/{user_id}/update_email")
-async def update_email(user_id: str, current_user: Annotated[User, Depends(get_current_active_user)], new_email:str):
+async def update_email(request: Request, user_id: str, current_user: Annotated[User, Depends(get_current_active_user)]):
     """
     THIS IS A PLACEHOLDER. DO WE NEED EMAIL VERIFICATION? Later
     """
+    if not current_user:
+        raise("400", "Unauthorized")
+    if current_user.user_id == user_id:
+        new_email = await request.json()
+        driver.update_email(user_id=user_id, new_email=new_email)
+        return HTTPException(200, detail="Success")
+    else:
+        raise HTTPException(400, detail="Unauthorized")
 
-
-@app.put("/api/user/{user_id}/update_profile_img")
-async def update_profile_img(user_id: str, current_user: Annotated[User, Depends(get_current_active_user)], new_profile_img:str):
+@app.post("/api/user/{user_id}/update_profile_img")
+async def update_profile_img(request: Request, user_id: str, current_user: Annotated[User, Depends(get_current_active_user)]):
     """
     THIS IS A PLACEHOLDER. 
     """
+    img = await request.json()
+    if not img and user_id:
+        raise("400", "Bad request brah, missing params")
+    else:
+       """TODO Michael add this logic in for driver query to set userimg cdn link on profile."""
+       driver.update_user_profile_image(user_id=user_id, img=img['cdn_url'])
+       return JSONResponse(content={"data": jsonable_encoder(img['cdn_url'])})
     
 @app.put("/api/user/{user_id}/update_password")
-async def update_password(user_id: str, current_user: Annotated[User, Depends(get_current_active_user)], new_password:str):
+async def update_password(request: Request, user_id: str, current_user: Annotated[User, Depends(get_current_active_user)]):
     """
     Changes the users password.
     """
     if not current_user:
         raise("400", "Unauthorized")
-    if current_user.user_id == user_id:
+    if current_user.user_id == user_id and request:
+        new_password = await request.json()
         current_user.update_password(get_password_hash(new_password))
         return HTTPException(200, detail="Success")
     else:
         raise HTTPException(400, detail="Unauthorized")
 
-@app.put("/api/user/{user_id}/send_friend_request")
+@app.put("/api/user/{user_id}/send_friend_request/{friend_id}")
 async def send_friend_request(user_id: str, friend_id:str, current_user: Annotated[User, Depends(get_current_active_user)]):
     """
     This send a friend request from user_id -> friend_id 
@@ -959,13 +982,13 @@ async def send_friend_request(user_id: str, friend_id:str, current_user: Annotat
     if not current_user:
         raise("400", "Unauthorized")
     if current_user.user_id == user_id:
-        result = current_user.send_friend_request(friend_id)
+        result = current_user.send_friend_request(friend_id=friend_id, driver=driver)
         return result
     else:
         raise HTTPException(400, detail="Unauthorized")
 
 
-@app.put("/api/user/{user_id}/unsend_friend_request")
+@app.put("/api/user/{user_id}/unsend_friend_request/{friend_id}")
 async def unsend_friend_request(user_id: str, friend_id:str, current_user: Annotated[User, Depends(get_current_active_user)]):
     """
     Unsends a friend request from user_id to friend_id
@@ -979,7 +1002,7 @@ async def unsend_friend_request(user_id: str, friend_id:str, current_user: Annot
         raise HTTPException(400, detail="Unauthorized")
 
     
-@app.put("/api/user/{user_id}/accept_friend_request")
+@app.put("/api/user/{user_id}/accept_friend_request/{friend_id}")
 async def accept_friend_request(user_id: str, friend_id:str, current_user: Annotated[User, Depends(get_current_active_user)]):
     """
     Accepts a friend request, checks that the request exists 
@@ -993,7 +1016,7 @@ async def accept_friend_request(user_id: str, friend_id:str, current_user: Annot
         raise result
 
     
-@app.put("/api/user/{user_id}/decline_friend_request")
+@app.put("/api/user/{user_id}/decline_friend_request/{friend_id}")
 async def decline_friend_request(user_id: str, friend_id:str, current_user: Annotated[User, Depends(get_current_active_user)]):
     """
     Declines a friend request, checks that the request exists
@@ -1006,7 +1029,7 @@ async def decline_friend_request(user_id: str, friend_id:str, current_user: Anno
     else:
         raise result
     
-@app.put("/api/user/{user_id}/remove_friend")
+@app.put("/api/user/{user_id}/remove_friend/{friend_id}")
 async def remove_friend(user_id: str, friend_id:str, current_user: Annotated[User, Depends(get_current_active_user)]):
     """
     Removes a friend 
@@ -1020,7 +1043,7 @@ async def remove_friend(user_id: str, friend_id:str, current_user: Annotated[Use
         raise result
 
 
-@app.put("/api/user/{user_id}/follow")
+@app.put("/api/user/{user_id}/follow/{followed_user_id}")
 async def follow_user(user_id: str, followed_user_id:str, current_user: Annotated[User, Depends(get_current_active_user)]):
     """
     Follows a user
@@ -1033,7 +1056,7 @@ async def follow_user(user_id: str, followed_user_id:str, current_user: Annotate
     else:
         raise result
     
-@app.put("/api/user/{user_id}/unfollow")
+@app.put("/api/user/{user_id}/unfollow/{unfollowed_user_id}")
 async def unfollow_user(user_id: str, unfollowed_user_id:str, current_user: Annotated[User, Depends(get_current_active_user)]):
     """
     Follows a user
@@ -1072,6 +1095,16 @@ async def unblock_user(user_id: str, unblocked_user_id:str, current_user: Annota
     else:
         raise result
 
+@app.get("/api/user/{user_id}/user_about")
+async def get_user_about(user_id:str, current_user: Annotated[User, Depends(get_current_active_user)]):
+    """
+    Used for about me data called on user page. 
+    """
+    if not current_user:
+        raise("400", "Unauthorized")
+    if current_user and user_id:
+        user = driver.get_user_about_me(user_id=user_id)
+        return JSONResponse(content={"data": jsonable_encoder(user)})
 
 @app.get("/api/user/{user_id}/friend_requests")
 async def update_profile_img(user_id: str, current_user: Annotated[User, Depends(get_current_active_user)]):

@@ -1,81 +1,92 @@
 <template>
-    <div>
-        <p class="text-slate-600 text-2xl font-semibold mb-5">Readers who also loved 
-            <span class="text-indigo-600">Book Name</span>
-        </p>
+    <BackBtn/>
+    <section class="social-wrapper">
+        <h1 class="text-2xl text-slate-800 font-medium">
+            <span class="text-indigo-500 underline mr-2">{{ friend_requests.length }}</span> Pending requests
+        </h1>
 
-        <div class="grid-row-readers">
-            <div 
-                class="reader" 
-                v-for="(user, index) in paginatedUsers"
+        <div class="friend-requests">
+            
+            <FriendRequest 
+                v-for="(user, index) in current_requests" 
                 :key="index"
-            >   
-                    <div class="mb-5">
-                        <p class="text-slate-700 font-medium">{{ user.username }}</p>
-                        <p class="text-slate-500 reviews">{{ user.review_ids.length }} reviews</p>
-                    </div>
-                    
-                    <button 
-                        class="bg-indigo-900 px-2 py-2 rounded-sm text-white"
-                        type="button"
-                        alt="follow user"
-                        @click="followUser(index)"
-                        >
-                        <span v-if="followedAuthors[index]">Unfollow</span><span v-else>Follow</span>
-                    </button>
-            </div>
+                :num="index"
+                :user="user"
+            />
         </div>
-    </div>
+
+        <SocialPagination :current-page="currentPage" :total-pages="totalPages" @page-changed="handlePageChange"/>
+    </section>
 </template>
 <script setup>
-import { ref, computed } from 'vue';
-import { db } from '../../../services/db'; 
-import { users } from '../../../fixtureData/dummyUsers.js';
+    import BackBtn from '../partials/back-btn.vue';
+    import FriendRequest from './FriendRequest.vue';
+    import SocialPagination from './SocialPagination.vue';
+    import { ref, computed } from 'vue';
+    import { users } from '../../../fixtureData/dummyUsers.js';
 
-let followedAuthors = {}
-const paginationIndex = ref(0);
-// 5 per page
-const itemsPerPage = (users.length / 1.5);
+    const friend_requests =  users;
 
-const paginatedUsers = computed(() => {
-    return users.slice(paginationIndex.value, paginationIndex.value + itemsPerPage)
-})
+    const currentPage = ref(0);
+    const reqsPerPage = 4
+    const totalPages = ref(Math.ceil(friend_requests.length / reqsPerPage));
 
-// To be replaced with an actual post function that will trigger a reload of the component instance.
-function followUser(index) {
-    followedAuthors = followedAuthors[index]
-    console.log(followedAuthors)
-}
+    const current_requests = computed(() => { 
+        const startingIndex = currentPage.value * reqsPerPage;
+        const endingIndex = startingIndex + reqsPerPage;
+        console.log(friend_requests.slice(startingIndex, endingIndex));
 
+        return friend_requests.slice(startingIndex, endingIndex);
+    });
+
+    function handlePageChange(page) {
+        currentPage.value = page;
+    }
 </script>
-<style scoped>
+<style scoped lang="scss">
+    .social-wrapper {
+        margin-top: 24px;
+        margin-left: 12px;
+        margin-right: 12px;
+        max-width: 880px;
+    }
 
-.grid-row-readers {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-    justify-content: space-between;
-    align-items: center;
-    gap: 1rem;
-}
+    .friend-requests {
+        display: grid;
+        grid-template-rows: repeat(auto-fit, 80px);
+        grid-auto-flow: row;
+        row-gap: 12px;
+        margin-top: 20px;
+        margin-bottom: 20px;
+        height: 350px;
+    }
 
-.reader {
-    padding: 1rem;
-    border-radius: 4px;
-    display: flex;
-    flex-direction: column;
-    transition: background 200ms ease-in-out;
-    align-items: start;
-    background: var(--background-container-gradient);
-}
+    /* Maybe save maybe trash #TODO: Figure out this shit */
+    /* .grid-row-readers {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+        justify-content: space-between;
+        align-items: center;
+        gap: 1rem;
+    }
 
-.reader:hover {
-    background: var(--hover-container-gradient);
-    transition: all 200ms ease-in-out;
-}
+    .reader {
+        padding: 1rem;
+        border-radius: 4px;
+        display: flex;
+        flex-direction: column;
+        transition: background 200ms ease-in-out;
+        align-items: start;
+        background: var(--background-container-gradient);
+    }
+
+    .reader:hover {
+        background: var(--hover-container-gradient);
+        transition: all 200ms ease-in-out;
+    }
 
 
-.reader button {
-    width: 100%;
-}
-
+    .reader button {
+        width: 100%;
+    } */
 </style>

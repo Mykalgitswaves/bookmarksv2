@@ -4,55 +4,69 @@
     <section class="section-wrapper">
         <div class="user-profile-header">
             <div class="edit-profile-picture">
-                <img :src="path" class="" alt="">
+                <img :src="userData?.cdnUrl || path" class="" alt="">
                 <button
                     v-if="route.params.user === route.params.user_profile"
                     type="button"
                     class="e-p-p-btn"
-                    @click="router.push(pathToSettings)"
+                    @click="router.push(pathToSettings + '?set_image=yes')"
                 >
                     <IconEdit />
                 </button>
             </div>
-            <h2 class="font-medium text-slate-600 text-xl mt-4">
-                {{ userData?.username || 'loading' }}
-            </h2>
+            <div class="u-p-h-text-info">
+                <h2 class="font-medium text-slate-600 text-xl">
+                    {{ userData?.username }}
+                </h2>
+                <p class="text-center fancy text-lg text-indigo-600">{{ userData?.bio }}</p>
+            </div>
         </div>
         <div class="user-profile-subheader">
-            <p></p>
+            <FriendButton 
+                v-if="user !== user_profile"
+                :current-option="userData?.relationship_to_current_user || 'loading'"
+            />    
             
-                <button 
-                    class="btn add-friend-btn"
+            <div class="user-profile-subheader-nav">
+                <button
                     type="button"
+                    :class="{ 'current-selection': currentSelection === 'about_me' }"
+                    @click="currentSelection = 'about_me'"
                 >
-                <IconPlus class="mr-2"/>
-                add friend
+                    About me
+                </button>
+                
+                <button
+                    type="button"
+                    class="bookshelves-btn flex items-center"
+                    :class="{ 
+                        'current-selection': currentSelection === 'reviews',
+                        'disabled': true
+                    }"
+                    disabled="true"
+                    @click="currentSelection = 'reviews'"
+                >
+                    Reviews
+                    <IconLock class="ml-2" />
                 </button>
 
-                <button        
-                    class="mutuals-btn mt-2"
+                <button
                     type="button"
-                >
-                    <IconLink class="mt-2"/>
-                    {{ mutualPlaceholder[0] }}&nbsp;
-                    <span v-if="mutualPlaceholder.length > 1">
-                        and {{ mutualPlaceholder.length }} others
-                    </span>
+                    class="bookshelves-btn flex items-center"
+                    :class="{ 
+                        'current-selection': currentSelection === 'bookshelves',
+                        'disabled': true
+                    }"
+                    disabled="true"
+                    @click="currentSelection = 'bookshelves'"
+                >   
+                    Bookshelves
+                    <IconLock class="ml-2" />
                 </button>
-
-                <div class="user-profile-subheader-nav">
-                    <button
-                        type="button"
-                        @click="currentSelection = 'about_me'"
-                    >
-                        About me
-                    </button>
-                    <button>
-                        Bookshelves
-                    </button>
-                </div>
-        </div>
-        <component :is="componentMapping[currentSelection]"/>
+            </div>
+        </div>   
+        
+        <component :is="componentMapping[currentSelection].component" :props="componentMapping[currentSelection].props"/>
     </section>
     <div class="mobile-menu-spacer sm:hidden"></div>
 </template>
@@ -60,42 +74,74 @@
 import BackBtn from './partials/back-btn.vue';
 import { db } from '../../services/db';
 import { urls } from '../../services/urls';
+import { ref, reactive, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { ref } from 'vue';
 import path from '../svg/placeholderImg.png';
 
 import IconEdit from '../svg/icon-edit.vue';
-import IconLink from '../svg/icon-link.vue';
-import IconPlus from '../svg/icon-plus.vue';
+import IconLock from '../svg/icon-lock.vue';
 import AboutMe from './userpage/UserPageAboutMe.vue'
+import FriendButton from './userpage/UserFriendButton.vue';
 
 const route = useRoute();
 const router = useRouter();
-const { user_profile } = route.params;
-console.log(user_profile)
-const userData = ref(null);
+const { user, user_profile } = route.params;
+const pathToSettings = `/feed/${user_profile}/settings`
 
-async function getUserData() {
-    await db.get(urls.user.getUser(user_profile), null, true).then((res) => {
-        userData.value = res.data;
+const userData = reactive({
+        loaded: false,
+        username: 'loading',
+        full_name: '',
+        password: '',
+        email: '',
+        bio: '',
+        cdnUrl: ''
     });
-};
-
-getUserData();
 
 const mutualPlaceholder = ['michael', 'kyle', 'cole']
 const currentSelection = ref('about_me')
 
-const componentMapping = {
-    'about_me': AboutMe,
-}; 
+const componentMapping = reactive({
+    'about_me': {
+        component: AboutMe,
+        props: {
+            'user': user_profile
+        }
+    }
+});
 
-        
-const pathToSettings = `/feed/${user_profile}/settings`
+async function getUserData() {
+    await db.get(urls.user.getUser(user_profile), null, true).then((res) => {
+        userData.loaded = true
+        userData.username = res.data.username
+        userData.full_name = res.data.full_name
+        userData.email = res.data.email
+        userData.bio = res.data.bio
+        userData.loaded = true;
+        userData.cdnUrl = res.data.profile_img_url
+        userData.relationship_to_current_user = res.data.relationship_to_current_user
+    });
+};
 
+
+function getUserBio() {
+    return userData.relationship_to_current_user === 'self' ?
+        (userData?.bio ?? 'Make sure to set your bio') :
+        userData?.bio
+}
+
+onMounted(() => {
+    getUserData(); 
+    userData.bio = getUserBio()
+})
          
 </script>
 
-<style scoped>
-
+<style scoped lang="scss">
+    
+    .bookshelves-btn.disabled {
+        pointer-events: none;
+        cursor: not-allowed;
+    }
+    
 </style>

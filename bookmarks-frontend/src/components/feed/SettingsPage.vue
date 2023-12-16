@@ -2,116 +2,186 @@
     <BackBtn/>
     <section class="settings-section">
         <div class="edit-profile-picture">
-            <img :src="path" alt="">
+            <img v-show="!isEditingProfileImage" :src="cdnUrl || path" alt="" :class="{'image-loading': loadingImageSave}">
             <button
                 v-if="!isEditingProfileImage"
                 type="button"
-                class=" text-sm text-indigo-600 underline"
+                class="edit-btn text-indigo-600 underline"
                 @click="isEditingProfileImage = true"
             >
                     Change profile photo                
             </button>
+            <div
+                v-show="isEditingProfileImage"
+                class="upload-care-component"
+            >
+                <lr-config
+                    ctx-name="my-uploader"
+                    pubkey="f4cae066507591578e32"
+                    :maxLocalFileSizeBytes="10000000"
+                    :multiple="false"
+                    :imgOnly="true"
+                ></lr-config>
+
+                <lr-file-uploader-minimal
+                    css-src="https://cdn.jsdelivr.net/npm/@uploadcare/blocks@0.25.0/web/lr-file-uploader-minimal.min.css"
+                    ctx-name="my-uploader"
+                    class="my-config"
+                ></lr-file-uploader-minimal>
+                
+                <lr-data-output
+                    ctx-name="my-uploader"
+                    use-console
+                    use-input
+                    use-group
+                    use-event
+                ></lr-data-output>
+            </div>
 
             <button
                 v-if="isEditingProfileImage"
                 type="button"
-                class="edit-btn profile-image"
+                class="edit-btn"
                 @click="isEditingProfileImage = false"
             >
-                
-                    <IconExit/>
-                    cancel
+                <IconExit/>
+                cancel
             </button>
-
-            <div>
-                <input 
-                    v-if="isEditingProfileImage"
-                    type="file"
-                />
-            </div>
         </div>
 
-        <div class="settings-info-form-container">
-            <div>
-                <div class="flex items-center">
-                    <h2 class="text-xl font-semibold mb-5 mt-5 mr-5">Public information</h2>
-                </div>
+        <p class="text-xl font-semibold mb-2">Bio</p>
+        <div class="settings-info-bio">
+            <textarea name="bio" id="" cols="30" rows="3" :disabled="isEditing" v-model="userData.bio"></textarea>
+            <button 
+                type="button"
+                class="save-btn mt-5"
+                @click="updateFieldName(userData.bio, 'bio')"
+            >
+                save
+            </button>
+        </div> 
 
-                <div class="settings-info-form" :class="{'loading': !userData.loaded}">
-                    <label for="user-name">
-                        <p class="text-sm text-slate-600 mb-2">username</p>
-                        <input
-                            type="text"
-                            id="user-name"
-                            class="settings-info-form-input"
-                            v-model="userData.username"
-                        >
-                    </label>
-
-                    <label for="email">
-                        <p class="text-sm text-slate-600 mb-2">email</p>
-                        <input type="email" id="user-email" class="w-100 py-1 px-2 rounded-md">
-                    </label>
-
-                    <label for="password">
-                        <p class="text-sm text-slate-600 mb-2"
-                        >password</p>
-                        <input type="text" id="user-password" class="w-100 py-1 px-2 rounded-md">
-                    </label>
-                </div>
+        <div>
+            <div class="flex items-center">
+                <h2 class="text-xl font-semibold mb-5 mt-5 mr-5">Public information</h2>
             </div>
-            <div>
-                <h2 class="text-xl font-semibold mb-5 mt-5">Associated accounts</h2>
-                <div class="settings-info-form" :class="{'loading': !userData.loaded}">
-                    <label for="user-social-instagram">
-                        <p class="text-sm text-slate-600 mb-2">instagram</p>
-                        <input type="text" id="user-social-instagram" class="settings-info-form-input">
-                    </label>
 
-                    <label for="user-social-twitter">
-                        <p class="text-sm text-slate-600 mb-2">twitter</p>
-                        <input type="text" id="user-social-twitter" class="w-100 py-1 rounded-md">
-                    </label>
+            <div class="settings-info-form" :class="{'loading': !userData.loaded}">
+                <FormInputCluster 
+                    input-id="user-name" 
+                    name="username" 
+                    type="text"   
+                    :value="userData.username"
+                    @new-value-saved="($event) => updateFieldName($event, 'user-name')"
+                />
 
-                    <label for="user-social-medium">
-                        <p class="text-sm text-slate-600 mb-2">medium</p>
-                        <input type="text" id="user-social-medium" class="w-100 py-1 rounded-md">
-                    </label>
-                </div>
+                <FormInputCluster 
+                    input-id="email" 
+                    name="email" 
+                    type="email"    
+                    :value="userData.email"
+                    :is-save-disabled="!isEmailDisabled"
+                    @updated:string="($event) => inputContainsEmail($event)"
+                    @new-value-saved="($event) => updateFieldName($event, 'email')"
+                />
+
+                <FormInputCluster 
+                    input-id="password" 
+                    name="password" 
+                    type="password"    
+                    :value="userData.password"
+                    @new-value-saved="($event) => updateFieldName($event, 'password')"
+                />
             </div>
         </div>
     </section>
     <div class="mobile-menu-spacer sm:hidden"></div>
 </template>
+
 <script setup>
     import BackBtn from './partials/back-btn.vue';
-    import IconEdit from '../svg/icon-edit.vue';
     import IconExit from '../svg/icon-exit.vue';
     import path from '../svg/placeholderImg.png'
-    import { ref } from 'vue';
+    import { ref, onMounted, reactive } from 'vue';
     import { useRoute } from 'vue-router'
     import { db } from '../../services/db';
     import { urls } from '../../services/urls';
+    import * as LR from "@uploadcare/blocks";
+    import FormInputCluster from './settings/FormInputCluster.vue';
     
+    const route = useRoute();
+    // To tell us when our stuff is saved dude.
+    let cdnUrl = ref('');
+    let loadingImageSave = false;
     const isEditingProfileImage = ref(false);
-    const isEditingProfileForm = ref(false);
-    const userData = ref({
+    //upload care stuff dont fuck with
+    LR.registerBlocks(LR);
+
+    // More uploadCare, Needs to be onMounted so query selector doesn't return null.
+    onMounted(() => {
+        const dataOutput = document.querySelector('lr-data-output');
+        dataOutput.addEventListener('lr-data-output', (e) => {
+            loadingImageSave = true;
+            cdnUrl.value = e.detail.data.files[0].cdnUrl;
+            // 
+            console.log(cdnUrl, 'Make sre it worksiguess');
+
+            db.post(urls.user.setUserImgCdnUrl(route.params.user), {'cdn_url': cdnUrl.value}).then(() => {
+                loadingImageSave = false;
+            });
+        });
+        isEditingProfileImage.value = !!route.query.set_image
+    })
+
+    const userData = reactive({
         loaded: false,
         username: '',
         full_name: '',
         password: '',
-        email: ''
+        email: '',
+        bio: ''
     });
-
-    const route = useRoute();
 
     // Call user endpoint for data
     async function getUserSettings() {
         await db.get(urls.user.getUser(route.params.user)).then((res) => {
-            userData.value = res.data
-            userData.value.loaded = true;
+            userData.username = res.data.username
+            userData.full_name = res.data.full_name
+            userData.email = res.data.email
+            userData.bio = res.data.bio
+            userData.loaded = true;
+            cdnUrl.value = res.data.profile_img_url
         });
     }
 
     getUserSettings();
+
+    const urlsMapping = {
+        "username": urls.user.updateUsername,
+        "email": urls.user.updateEmail,
+        "bio": urls.user.updateBio
+    }
+    
+    let isEmailDisabled = ref(false)
+    // probs should be done on backend and emails should be verified somewhere else.
+    // #TODO: ^ Make this better before we deploy.
+    const inputContainsEmail = (input) => {
+        if(input.length){
+            const email_suffix = /@.*\.com$/
+            isEmailDisabled.value = email_suffix.test(input);
+        } else {
+            isEmailDisabled.value = false
+        }
+    }
+
+    // Changes to forms,functions
+    function updateFieldName(newDataToSave, keyForMapping) {
+        // Need this to say whether or not email save is disabled
+        userData[keyForMapping] = newDataToSave;
+        db.put(urlsMapping[keyForMapping](route.params.user), newDataToSave, true).then((res) => {
+            userData[keyForMapping] = res.data;
+        });
+    }
+
+    
 </script>

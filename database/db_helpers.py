@@ -139,9 +139,9 @@ class User():
         driver.update_password(new_password,self.id)
         self.hashed_password = new_password 
 
-    def send_friend_request(self,friend_id,driver):
-        result = driver.send_friend_request(self.user_id,friend_id)
-        return result
+    def send_friend_request(self,friend_id, driver):
+            result = driver.send_friend_request(self.user_id,friend_id)
+            return result
     
     def unsend_friend_request(self,friend_id,driver):
         result = driver.unsend_friend_request(self.user_id,friend_id)
@@ -1629,21 +1629,21 @@ class Neo4jDriver():
             return(None)
     
 
-    def get_user_for_settings(self, user_id):
+    def get_user_for_settings(self, user_id, relationship_to_current_user):
         """
         gets id of user and returns full user object
         """
         with self.driver.session() as session:
-            result = session.execute_read(self.get_user_for_settings_query, user_id)
+            result = session.execute_read(self.get_user_for_settings_query, user_id, relationship_to_current_user)
         return(result)
     
     @staticmethod
-    def get_user_for_settings_query(tx, user_id):
+    def get_user_for_settings_query(tx, user_id, relationship_to_current_user):
         query = """
             match(u:User {id:$user_id}) 
             return u
         """
-        result = tx.run(query, user_id=user_id)
+        result = tx.run(query, user_id=user_id, relationship_to_current_user=relationship_to_current_user)
         response = result.single()
         user = User(
             user_id=response['u']['id'],
@@ -1651,6 +1651,9 @@ class Neo4jDriver():
             email=response['u']['email'] or '',
             full_name=response['u']['fullname'] or '',
             created_date=response['u']['created_date'],
+            profile_img_url=response['u']['profile_img_url'] or '',
+            bio=response['u']['bio'] or '',
+            relationship_to_current_user=response['u']['relationship_to_current_user'] or relationship_to_current_user,
         )
         return user
 
@@ -2887,6 +2890,24 @@ class Neo4jDriver():
     ###########        USER QUERIES
     ###########
     ###################################################################################################################
+    def update_user_profile_image(self, user_id:str, img:str):
+        """
+        Updates user profile img from uploadCare cdn link
+        """
+        with self.driver.session() as session:
+            result = session.execute_write(self.update_user_profile_image_query, user_id=user_id, img=img)
+        return(result)
+    @staticmethod
+    def update_user_profile_image_query(tx, user_id, img):
+        """
+        More nerd shit on here
+        """
+        query = """
+            match(u:User {id:$user_id})
+            set u.profile_img_url = $img
+            return u.profile_img_url
+        """
+        tx.run(query, user_id=user_id, img=img)
 
     def update_username(self,new_username:str, user_id:str):
         """
@@ -2914,7 +2935,7 @@ class Neo4jDriver():
                     detail="Username is already taken"
                 )
             
-    def update_bio(self,new_bio:str, user_id:str):
+    def update_bio(self, new_bio, user_id):
         """
         Updates the bio of a user
         """
@@ -2930,6 +2951,23 @@ class Neo4jDriver():
         """
         
         tx.run(query,user_id=user_id,new_bio=new_bio)
+
+    def update_email(self, new_email, user_id):
+        """
+        Updates the email of a user
+        """
+        with self.driver.session() as session:
+            result = session.execute_write(self.update_email_query, new_email=new_email, user_id=user_id)  
+        return(result)
+    
+    @staticmethod
+    def update_email_query(tx, new_email, user_id):
+        query = """
+        match (u:User {id:$user_id})
+        set u.email = $new_email
+        """
+        
+        tx.run(query,user_id=user_id,new_email=new_email)
 
     def update_password(self,new_password:str, user_id:str):
         """
@@ -2947,7 +2985,45 @@ class Neo4jDriver():
         """
         
         tx.run(query,user_id=user_id,new_password=new_password)
-        
+    
+    ###################################################################################################################
+    ###########
+    ###########        About me QUERIES
+    ###########
+    ###################################################################################################################
+    
+    def get_user_about_me(self, user_id):
+        with self.driver.session() as session:
+            result = session.execute_read(self.get_user_about_me_query, user_id=user_id)
+        return(result)
+    
+    @staticmethod
+    def get_user_about_me_query(tx, user_id):
+        query = """
+            match(u:User {id: $user_id})
+            optional match(u)-[LIKES]->(g:Genre)
+            optional match(u)-[rr:LIKES]-(a:Author)
+
+            return g, a
+        """
+        result = tx.run(query, user_id=user_id)
+
+        genres = set()
+        authors = set()
+
+        for response in result:
+            if response['g']:
+                genres.add(
+                    (response['g']['name'], response['g']['id'])
+                )
+            
+            if response['a']:
+                authors.add(
+                    (response['a']['name'], response['a']['id'])
+                )
+
+        return { "genres": genres, "authors": authors }
+
     ###################################################################################################################
     ###########
     ###########        Friend/Follow/Block QUERIES

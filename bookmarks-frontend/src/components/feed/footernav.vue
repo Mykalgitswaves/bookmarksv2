@@ -126,7 +126,7 @@ footer {
     display: flex;
     justify-content: space-around;
     padding: 1rem;
-    background: linear-gradient(45deg, rgba(235, 241, 255, 0.5), rgba(255,255,255,0));
+    background: linear-gradient(45deg, rgba(235, 241, 255, 1), rgba(255,255,255,0.8));
     backdrop-filter: blur(5px);
     transition-duration: 250ms;
     transition-timing-function: ease-in-out;

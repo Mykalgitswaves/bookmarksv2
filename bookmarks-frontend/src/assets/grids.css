@@ -8,12 +8,19 @@
 /* Used for genres on sign up and auth */
 
 .grid-pills {
-    gap: 1ch;
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(12ch, 1fr));
-    justify-items: center;
-    align-items: center;
-  }
+  gap: 1ch;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(12ch, 1fr));
+  justify-items: center;
+  align-items: center;
+}
+
+.grid-pills.settings {
+  padding: 8px;
+  grid-template-columns: repeat(auto-fill, minmax(12ch, 1fr));
+  align-self: center;
+  gap: 8px;
+}
   
   .grid-pills > * {
     line-height: 2ch;
