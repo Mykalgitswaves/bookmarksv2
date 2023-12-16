@@ -3030,6 +3030,57 @@ class Neo4jDriver():
     ###########
     ###################################################################################################################
 
+    def block_user(self,from_user_id:str, to_user_id:str):
+        """
+        blocks a user, deletes all existing relationships to the user
+        """
+        with self.driver.session() as session:
+            result = session.execute_write(self.block_user_query, from_user_id=from_user_id,to_user_id=to_user_id)  
+        return(result)
+    
+    @staticmethod
+    def block_user_query(tx, from_user_id:str, to_user_id:str):
+        query = """
+        match (fromUser:User {id:$from_user_id})
+        match (toUser:User {id:$to_user_id})
+        optional match (fromUser)-[anyRel]-(toUser)
+        delete anyRel
+        merge (fromUser)-[blockRel:BLOCKED]->(toUser)
+        RETURN Case when blockRel is not null then true else false end as foundRelationship
+        """
+        
+        result = tx.run(query,from_user_id=from_user_id,to_user_id=to_user_id)
+        response = result.single()
+        if not response:
+            return HTTPException(400,"User or Friend Request Not Found")
+        else:
+            return HTTPException(200, 'Success')
+
+    def unblock_user(self,from_user_id:str, to_user_id:str):
+        """
+        unblocks a user
+        """
+        with self.driver.session() as session:
+            result = session.execute_write(self.unblock_user_query, from_user_id=from_user_id,to_user_id=to_user_id)  
+        return(result)
+    
+    @staticmethod
+    def unblock_user_query(tx, from_user_id:str, to_user_id:str):
+        query = """
+        match (fromUser:User {id:$from_user_id})
+        match (toUser:User {id:$to_user_id})
+        match (fromUser)-[blockRel:BLOCKED]->(toUser)
+        delete blockRel
+        RETURN Case when toUser is not null then true else false end as foundRelationship
+        """
+        
+        result = tx.run(query,from_user_id=from_user_id,to_user_id=to_user_id)
+        response = result.single()
+        if not response:
+            return HTTPException(400,"User or Friend Request Not Found")
+        else:
+            return HTTPException(200, 'Success')
+        
     def send_friend_request(self,from_user_id:str, to_user_id:str):
         """
         Sends a friend request from a user to another user
@@ -3043,21 +3094,20 @@ class Neo4jDriver():
         query = """
         match (fromUser:User {id:$from_user_id})
         match (toUser:User {id:$to_user_id})
-        merge (fromUser)-[friendRequest:REQUESTED_FRIEND]->(toUser)
-        ON CREATE SET friendRequest.newlyCreated = true
-        ON MATCH SET friendRequest.newlyCreated = false
-        set friendRequest.status = (CASE WHEN friendRequest.status = 'declined' THEN 'declined' ELSE 'pending' END)
-        RETURN friendRequest.newlyCreated AS relationshipCreated
+        with toUser, fromUser
+        where not exists ((fromUser)-[:BLOCKED]-(toUser))
+            and not exists ((fromUser)-[:FRIENDED]-(toUser))
+            create (fromUser)-[friend_request:FRIENDED {status:"pending"}]->(toUser)
+        return toUser.id, friend_request.status
         """
         
         result = tx.run(query,from_user_id=from_user_id,to_user_id=to_user_id)
         response = result.single()
+
         if not response:
-            return HTTPException(400,"User Not Found")
-        elif response['relationshipCreated']:
-            return HTTPException(200, 'Friend Request Sent')
+            return HTTPException(400,"Request Not Sent")
         else:
-            return HTTPException(199,'Friend Request Already Exists')
+            return HTTPException(199,'Friend Request Sent')
             
     
     def unsend_friend_request(self,from_user_id:str, to_user_id:str):
@@ -3073,21 +3123,18 @@ class Neo4jDriver():
         query = """
         match (fromUser:User {id:$from_user_id})
         match (toUser:User {id:$to_user_id})
-        OPTIONAL MATCH (fromUser)-[friendRequest:REQUESTED_FRIEND]->(toUser)
-        WITH friendRequest, 
-            CASE WHEN friendRequest IS NOT NULL THEN true ELSE false END AS foundRelationship
+        OPTIONAL MATCH (fromUser)-[friend_request:FRIENDED {status:"pending"}]->(toUser)
         DELETE friendRequest
-        RETURN foundRelationship
+        RETURN toUser
         """
         
         result = tx.run(query,from_user_id=from_user_id,to_user_id=to_user_id)
         response = result.single()
         if not response:
-            return HTTPException(400,"User Not Found")
-        elif response['foundRelationship']:
-            return HTTPException(200, 'Friend Request Unsent')
+            return HTTPException(400,"Unsend request did not go through")
         else:
-            return HTTPException(199,'Friend Request Not Found')
+            return HTTPException(200, 'Friend Request Unsent')
+
         
     def accept_friend_request(self,from_user_id:str, to_user_id:str):
         """
@@ -3102,11 +3149,9 @@ class Neo4jDriver():
         query = """
         match (fromUser:User {id:$from_user_id})
         match (toUser:User {id:$to_user_id})
-        MATCH (fromUser)-[friendRequest:REQUESTED_FRIEND {status:"pending"}]->(toUser)
-        optional match (fromUser)-[friendExists:HAS_FRIEND]-(toUser)
-        merge (fromUser)-[friendRelationship:HAS_FRIEND]-(toUser)
-        delete friendRequest
-        RETURN friendRelationship
+        MATCH (fromUser)-[friend_request:FRIENDED {status:"pending"}]->(toUser)
+        set friend_request.status = "friends"
+        RETURN friend_request
         """
         
         result = tx.run(query,from_user_id=from_user_id,to_user_id=to_user_id)
@@ -3130,8 +3175,8 @@ class Neo4jDriver():
         query = """
         match (fromUser:User {id:$from_user_id})
         match (toUser:User {id:$to_user_id})
-        MATCH (fromUser)-[friendRequest:REQUESTED_FRIEND]->(toUser)
-        set friendRequest.status = 'declined'
+        MATCH (fromUser)-[friend_request:FRIENDED {status:"pending"}]->(toUser)
+        set friend_request.status = "declined"
         RETURN friendRequest
         """
         
@@ -3216,56 +3261,6 @@ class Neo4jDriver():
         else:
             return HTTPException(200, 'Success')
 
-    def block_user(self,from_user_id:str, to_user_id:str):
-        """
-        blocks a user, deletes all existing relationships to the user
-        """
-        with self.driver.session() as session:
-            result = session.execute_write(self.block_user_query, from_user_id=from_user_id,to_user_id=to_user_id)  
-        return(result)
-    
-    @staticmethod
-    def block_user_query(tx, from_user_id:str, to_user_id:str):
-        query = """
-        match (fromUser:User {id:$from_user_id})
-        match (toUser:User {id:$to_user_id})
-        optional match (fromUser)-[anyRel]-(toUser)
-        delete anyRel
-        merge (fromUser)-[blockRel:BLOCKED]->(toUser)
-        RETURN Case when blockRel is not null then true else false end as foundRelationship
-        """
-        
-        result = tx.run(query,from_user_id=from_user_id,to_user_id=to_user_id)
-        response = result.single()
-        if not response:
-            return HTTPException(400,"User or Friend Request Not Found")
-        else:
-            return HTTPException(200, 'Success')
-
-    def unblock_user(self,from_user_id:str, to_user_id:str):
-        """
-        unblocks a user
-        """
-        with self.driver.session() as session:
-            result = session.execute_write(self.unblock_user_query, from_user_id=from_user_id,to_user_id=to_user_id)  
-        return(result)
-    
-    @staticmethod
-    def unblock_user_query(tx, from_user_id:str, to_user_id:str):
-        query = """
-        match (fromUser:User {id:$from_user_id})
-        match (toUser:User {id:$to_user_id})
-        match (fromUser)-[blockRel:BLOCKED]->(toUser)
-        delete blockRel
-        RETURN Case when toUser is not null then true else false end as foundRelationship
-        """
-        
-        result = tx.run(query,from_user_id=from_user_id,to_user_id=to_user_id)
-        response = result.single()
-        if not response:
-            return HTTPException(400,"User or Friend Request Not Found")
-        else:
-            return HTTPException(200, 'Success')
     
     def close(self):
         self.driver.close()
@@ -3277,5 +3272,6 @@ if __name__ == "__main__":
     # driver.accept_friend_request("a0f86d40-4915-4773-8aa1-844d1bfd0b41","dfa501ff-0f58-485f-94e9-50ba5dd10396")
     # driver.remove_friend("a0f86d40-4915-4773-8aa1-844d1bfd0b41","dfa501ff-0f58-485f-94e9-50ba5dd10396")
     # driver.unfollow_user("a0f86d40-4915-4773-8aa1-844d1bfd0b41","dfa501ff-0f58-485f-94e9-50ba5dd10396")
-    driver.follow_user("a0f86d40-4915-4773-8aa1-844d1bfd0b41","dfa501ff-0f58-485f-94e9-50ba5dd10396")
+    # driver.follow_user("a0f86d40-4915-4773-8aa1-844d1bfd0b41","dfa501ff-0f58-485f-94e9-50ba5dd10396")
+    # driver.block_user()
     driver.close()
