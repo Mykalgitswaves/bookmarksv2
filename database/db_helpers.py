@@ -3225,8 +3225,9 @@ class Neo4jDriver():
         query = """
         match (fromUser:User {id:$from_user_id})
         match (toUser:User {id:$to_user_id, user_type:"critic"})
-        merge (fromUser)-[followRel:FOLLOWS]->(toUser)
-        RETURN Case when followRel is not null then true else false end as foundRelationship
+        where not exists ((fromUser)-[:BLOCKED]-(toUser))
+            merge (fromUser)-[followRel:FOLLOWS]->(toUser)
+        RETURN followRel
         """
         
         result = tx.run(query,from_user_id=from_user_id,to_user_id=to_user_id)
