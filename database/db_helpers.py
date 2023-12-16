@@ -3200,15 +3200,15 @@ class Neo4jDriver():
         query = """
         match (fromUser:User {id:$from_user_id})
         match (toUser:User {id:$to_user_id})
-        MATCH (fromUser)<-[friendRelationship:HAS_FRIEND]->(toUser)
+        MATCH (fromUser)-[friendRelationship:FRIENDED {status:"friends"}]->(toUser)
         delete friendRelationship
-        RETURN Case when toUser is not null then true else false end as foundRelationship
+        RETURN toUser
         """
         
         result = tx.run(query,from_user_id=from_user_id,to_user_id=to_user_id)
         response = result.single()
         if not response:
-            return HTTPException(400,"User or Friend Request Not Found")
+            return HTTPException(400,"User or Friend relationship not found")
         else:
             return HTTPException(200, 'Success')
 
