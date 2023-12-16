@@ -4,28 +4,18 @@
             <button
                 type="button"
                 class="btn"
-                :class="{ disabled: currentPage - 1 < 0}"
-                :disabled="currentPage - 1 < 0" 
-                @click="goToPage(currentPage - 1)"
-            >
-                Previous
-            </button>
-
-            <button
-                type="button"
-                class="btn"
-                :class="{ disabled: currentPage + 1 >= totalPages}"
-                :disabled="currentPage + 1 >= totalPages"
+                :class="{ disabled: currentPage + 1 > totalPages}"
+                :disabled="currentPage + 1 > totalPages"
                 @click="goToPage(currentPage + 1)"
             >
-                Next
+                View more
             </button>
         </div>
     </div>
   </template>
   
 <script setup>
-import { ref, computed } from 'vue';
+import { ref } from 'vue';
 
 const props = defineProps({  
     currentPage: {
