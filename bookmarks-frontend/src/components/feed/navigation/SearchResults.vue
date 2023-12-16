@@ -1,6 +1,6 @@
 <template>
     <div class="h-auto flex-col gap-5 ml-5" v-if="store.data">
-        <div v-if="f['authors']">
+        <div v-if="f['authors'] && authors?.length > 0">
             <div class="mb-2 flex flex-col">
                 <p class="text-slate-600 text-lg mb-2">
                     <span class="text-indigo-500 text-2xl mr-2">{{ authors.length }}</span> Authors
@@ -18,7 +18,7 @@
             </div>
         </div>
 
-        <div v-if="f['users']" class="my-5">
+        <div v-if="f['users'] && users?.length > 0" class="my-5">
             <p class="text-slate-600 text-lg mb-2">
                 <span class="text-indigo-500 text-2xl mr-2 ">{{ users.length }}</span> Users
             </p>
@@ -34,7 +34,7 @@
             </div>
         </div>
         
-        <div v-if="f['books']">
+        <div v-if="f['books'] && books?.length > 0">
             <p class="text-slate-600 text-lg mb-2">
                 <span class="text-indigo-500 text-2xl mr-2">{{ books.length }}</span>
                 Books
@@ -60,7 +60,7 @@
             </div>
         </div>
 
-        <div v-if="f['genres']">
+        <div v-if="f['genres']&& books_by_genre?.length > 0">
             <p class="text-indigo-500 mb-2">
                 Books by genre {{ books_by_genre.length }}
             </p>
@@ -75,7 +75,7 @@
             </button>            
         </div>
 
-        <div v-if="f['books_by_authors']">
+        <div v-if="f['books_by_authors'] && books_by_author?.length > 0">
             <p class="text-indigo-500 mb-2">
                 Books by author {{ books_by_author.length }}
             </p>

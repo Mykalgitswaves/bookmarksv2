@@ -27,21 +27,19 @@
 
     const friend_requests =  users;
 
-    const currentPage = ref(0);
-    const reqsPerPage = 4
+    const currentPage = ref(1);
+    const reqsPerPage = 4;
     const totalPages = ref(Math.ceil(friend_requests.length / reqsPerPage));
 
     const current_requests = computed(() => { 
-        const startingIndex = currentPage.value * reqsPerPage;
-        const endingIndex = startingIndex + reqsPerPage;
-        console.log(friend_requests.slice(startingIndex, endingIndex));
-
+        const startingIndex = 0;
+        const endingIndex = reqsPerPage * currentPage.value;
         return friend_requests.slice(startingIndex, endingIndex);
     });
 
     function handlePageChange(page) {
         currentPage.value = page;
-    }
+    };
 </script>
 <style scoped lang="scss">
     .social-wrapper {
@@ -58,7 +56,7 @@
         row-gap: 12px;
         margin-top: 20px;
         margin-bottom: 20px;
-        height: 350px;
+        min-height: 350px;
     }
 
     /* Maybe save maybe trash #TODO: Figure out this shit */
