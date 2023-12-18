@@ -3261,7 +3261,41 @@ class Neo4jDriver():
             return HTTPException(400,"User or Friend Request Not Found")
         else:
             return HTTPException(200, 'Success')
+        
 
+    ###################################################################################################################
+    ###########
+    ###########        Friend/Follow/Block List QUERIES
+    ###########
+    ###################################################################################################################
+
+    def get_friend_list(self,user_id:str, current_user_id:str):
+        """
+        unfollows a user if the to_user has a critic account
+        """
+        with self.driver.session() as session:
+            result = session.execute_write(self.get_friend_list_query, user_id=user_id, current_user_id=current_user_id)  
+        return(result)
+    
+    @staticmethod
+    def get_friend_list_query(tx, user_id:str, current_user_id:str):
+        query = """
+        match (user:User {id:$user_id})
+        match (currentUser:User {id:$current_user_id})
+        match (user)-[friendRel:FRIENDED {status:"friends"}]-(toUser)
+        OPTIONAL MATCH (currentUser)-[friendStatus:FRIENDED]->(toUser)
+        OPTIONAL MATCH (currentUser)-[blockStatus:BLOCKED]->(toUser)
+        OPTIONAL MATCH (currentUser)-[followStatus:FOLLOWS]->(toUser)
+        RETURN toUser, 
+            friendRel.status AS friendStatus, 
+            friendStatus.status AS currentUserFriendStatus, 
+            blockStatus AS currentUserBlockStatus, 
+            followStatus AS currentUserFollowStatus
+        """
+        
+        result = tx.run(query,user_id=user_id, current_user_id=current_user_id)
+        for response in result:
+            print(response.data())
     
     def close(self):
         self.driver.close()
