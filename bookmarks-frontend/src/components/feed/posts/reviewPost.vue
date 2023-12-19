@@ -81,7 +81,7 @@ import IconBrain from '../../svg/icon-brain.vue';
 
 const props = defineProps({
     book: {
-        type: Number,
+        type: Number || String,
         required: true,
     },
     title: {
@@ -141,10 +141,9 @@ const props = defineProps({
 
 const isLiked = ref(false);
 const postLikes = ref(props.likes);
-
+console.log(props)
 const router = useRouter();
 const route = useRoute();
-console.log(props.book)
 const { user } = route.params
 
 async function likePost() {

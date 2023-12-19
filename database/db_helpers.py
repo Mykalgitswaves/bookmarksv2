@@ -2504,12 +2504,7 @@ class Neo4jDriver():
         result = tx.run(query, username=username, skip=skip, limit=limit)
         # results = [record for record in result.data()]
         
-        output = {"Milestone":[],
-                  "RecommendationFriend":[],
-                  "Comparison":[],
-                  "Update":[],
-                  "Review":[]}
-        
+        output = []        
         for response in result:
             post = response['p']
             if response['labels(p)'] == ["Milestone"]:
@@ -2524,15 +2519,15 @@ class Neo4jDriver():
                 
                 milestone.liked_by_current_user = response['liked_by_current_user']
                 milestone.posted_by_current_user = response['posted_by_current_user']
-                output['Milestone'].append(milestone)                                                       
+                milestone.type = 'milestone'
+                output.append(milestone)                                                       
             
             elif response['labels(p)'] == ['Comparison']:
-                if output['Comparison']:
-                    if output['Comparison'][-1].id == post["id"]:
-                        output['Comparison'][-1].compared_books.append(response['b']['id'])
-                        output['Comparison'][-1].book_title.append(response['b']['title'])
-                        output['Comparison'][-1].book_small_img.append(response['b']['small_img_url'])
-                        continue
+                if output[-1].id == post["id"]:
+                    output[-1].compared_books.append(response['b']['id'])
+                    output[-1].book_title.append(response['b']['title'])
+                    output[-1].book_small_img.append(response['b']['small_img_url'])
+                    continue
                 
                 comparison = ComparisonPost(post_id=post["id"],
                                             compared_books=[response['b']['id']],
@@ -2550,7 +2545,8 @@ class Neo4jDriver():
                 
                 comparison.liked_by_current_user = response['liked_by_current_user']
                 comparison.posted_by_current_user = response['posted_by_current_user']
-                output['Comparison'].append(comparison)
+                comparison.type = 'comparison'
+                output.append(comparison)
 
 
             elif response['labels(p)'] == ["Update"]:
@@ -2569,26 +2565,28 @@ class Neo4jDriver():
                 
                 update.liked_by_current_user = response['liked_by_current_user']
                 update.posted_by_current_user = response['posted_by_current_user']
-                output['Update'].append(update)
+                update.type = 'update'
+                output.append(update)
 
             elif response['labels(p)'] == ["Review"]:
-                review = ReviewPost(post_id=post["id"],
-                                                    book=response['b']['id'],
-                                                    book_title=response['b']['title'],
-                                                    created_date=post["created_date"],
-                                                    questions=post['questions'],
-                                                    question_ids=post['question_ids'],
-                                                    responses=post['responses'],
-                                                    spoilers=post['spoilers'],
-                                                    user_id=response['u.id'],
-                                                    book_small_img=response['b']['small_img_url'],
-                                                    user_username=response['u.username'],
-                                                    num_comments=response["num_comments"]
-                                                    )
+                review = ReviewPost(
+                            post_id=post["id"],
+                            book=response['b']['id'],
+                            book_title=response['b']['title'],
+                            created_date=post["created_date"],
+                            questions=post['questions'],
+                            question_ids=post['question_ids'],
+                            responses=post['responses'],
+                            spoilers=post['spoilers'],
+                            user_id=response['u.id'],
+                            book_small_img=response['b']['small_img_url'],
+                            user_username=response['u.username'],
+                            num_comments=response["num_comments"]
+                        )
                 review.liked_by_current_user = response['liked_by_current_user']
                 review.posted_by_current_user = response['posted_by_current_user']
-                output['Review'].append(review)
-
+                review.type = 'review'
+                output.append(review)
         return(output)
     
     def set_post_as_deleted(self,post_id):
@@ -3303,10 +3301,11 @@ class Neo4jDriver():
 if __name__ == "__main__":
     driver = Neo4jDriver()
 
-    driver.send_friend_request("a0f86d40-4915-4773-8aa1-844d1bfd0b41","dfa501ff-0f58-485f-94e9-50ba5dd10396")
-    # driver.accept_friend_request("a0f86d40-4915-4773-8aa1-844d1bfd0b41","dfa501ff-0f58-485f-94e9-50ba5dd10396")
+    # driver.send_friend_request("a0f86d40-4915-4773-8aa1-844d1bfd0b41","dfa501ff-0f58-485f-94e9-50ba5dd10396")
+    driver.unblock_user("a0f86d40-4915-4773-8aa1-844d1bfd0b41","dfa501ff-0f58-485f-94e9-50ba5dd10396")
     # driver.remove_friend("a0f86d40-4915-4773-8aa1-844d1bfd0b41","dfa501ff-0f58-485f-94e9-50ba5dd10396")
     # driver.unfollow_user("a0f86d40-4915-4773-8aa1-844d1bfd0b41","dfa501ff-0f58-485f-94e9-50ba5dd10396")
-    # driver.follow_user("a0f86d40-4915-4773-8aa1-844d1bfd0b41","dfa501ff-0f58-485f-94e9-50ba5dd10396")
+    # driver.follow_user("a0f86d40-4915-4773-8aa1-844d1bfd0b41", "dfa501ff-0f58-485f-94e9-50ba5dd10396")
+    # driver.follow_user("dfa501ff-0f58-485f-94e9-50ba5dd10396", "a0f86d40-4915-4773-8aa1-844d1bfd0b41")
     # driver.block_user()
     driver.close()

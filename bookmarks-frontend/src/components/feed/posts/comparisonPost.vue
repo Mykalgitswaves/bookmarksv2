@@ -129,6 +129,9 @@ const props = defineProps({
     user_id: {
         type: String,
         required: true
+    },
+    likes: {
+        type: Number
     }
 })
 
@@ -140,7 +143,7 @@ const route = useRoute();
 const router = useRouter();
 const user = route.params.user;
 
-console.log(props.book)
+console.log(props)
 
 async function AddLikeOrUnlike(id){
     const user_id = route.params.user
