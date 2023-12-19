@@ -100,10 +100,9 @@
 
       <div v-if="!toggleCreateReviewType">
         <TransitionGroup name="content" tag="div">
-          <div v-if="feedData && loaded">
+          <div v-if="feedData?.length">
             <div
-              v-for="(post, index) in feedData"
-              :key="index" 
+              v-for="post in feedData" :key="post.id" 
               class="center-cards"
             >
               <component
@@ -119,8 +118,7 @@
     <div class="mobile-menu-spacer sm:hidden"></div>
 </template>
 <script setup>
-import { ref,  computed, watch, onMounted } from 'vue';
-import { useRoute } from "vue-router";
+import { ref, watch, onMounted } from 'vue';
 import { db } from '@/services/db.js';
 import { urls } from '@/services/urls.js';
 import { filterOptions } from './filters.js';
@@ -132,14 +130,8 @@ import createReviewPost from './createPosts/createReviewPost.vue';
 import createUpdatePost from './createPosts/createUpdatePost.vue';
 import createComparisonPost from './createPosts/createComparisonPost.vue';
 import IconAddPost from '../svg/icon-add-post.vue';
-import ComparisonPost from './posts/comparisonPost.vue';
-import ReviewPost from './posts/reviewPost.vue';
-import UpdatePost from './posts/updatePost.vue';
-
 
 // const store = searchResultStore();
-const route = useRoute();
-const user = route.params.user;
 const toggleCreateReviewType = ref(false);
 const selectDropdown = ref(false);
 const bookData = ref(null);
@@ -165,7 +157,6 @@ async function loadWorks() {
 onMounted(() => {
     // loadReviews()
     loadWorks();
-    
 });
 
 let postTypeMapping = ref('');
@@ -195,17 +186,9 @@ async function postToEndpoint() {
   });
 }
 
-const books = computed(() => (bookData.value ? bookData.value.data : ''))
-
 watch(emittedPostData, () => {
   isPostableData.value = true;
-})
-
-watch(feedData, (newV) => {
-  if(newV) {
-    loaded.value = true
-  }
-})
+});
 
 </script>
 
