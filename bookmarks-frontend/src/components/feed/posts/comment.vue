@@ -22,83 +22,84 @@
 
         <div class="comment-inner">
             <p class="comment-text">{{ props.comment.text }}</p>
-            <div class="comment-footer">
-                <button 
-                    class=""
-                    type="button"
-                    @click="isReplying = !isReplying"
-                >
-                    <span v-if="!isReplying" class="flex items-center">
-                        <IconComment />
-                        <span class="text-sm ml-2 underline">reply</span>
-                    </span>
+        </div>
+        <div class="comment-footer">
+            <button 
+                class=""
+                type="button"
+                @click="isReplying = !isReplying"
+            >
+                <span v-if="!isReplying" class="flex items-center">
+                    <IconComment />
+                    <span class="text-sm ml-2 underline">reply</span>
+                </span>
 
-                    <IconExit v-if="isReplying" />
-                </button>
+                <IconExit v-if="isReplying" />
+            </button>
 
-                <button 
-                    class="ml-5 flex items-center justify-end"
-                    type="button"
-                    :disabled="liking"
-                    @click="likeComment()"
+            <button 
+                class="ml-5 flex items-center justify-end"
+                type="button"
+                :disabled="liking"
+                @click="likeComment()"
+            >
+                <IconLike/>
+                <span 
+                    class="ml-2 text-sm"
+                    :class="{'text-indigo-500': is_liked}"    
                 >
-                    <IconLike/>
-                    <span 
-                        class="ml-2 text-sm"
-                        :class="{'text-indigo-500': is_liked}"    
+                    {{ commentLikes }} 
+                </span>
+            </button>
+
+            <button 
+                v-if="isOpOfComment && !isOpOfPost"
+                type="button"
+                class="ml-5"
+                @click="deleteComment(props.comment.id)"
+            >
+                <IconTrash/>
+            </button>
+
+            <button
+                v-if="isOpOfPost" 
+                class="ml-5 "
+                type="button"
+                @click="flyoutToggle = !flyoutToggle"
+            >
+                <IconMore/>
+            </button>
+            
+            <div
+                :class="{'popout-comment shadow-lg': flyoutToggle}"
+            >
+                <div v-if="flyoutToggle" class="flyout">
+                    <button 
+                        type="button"
+                        @click="pinComment(); flyoutToggle = false"
                     >
-                        {{ commentLikes }} 
-                    </span>
-                </button>
+                        <IconPin/>
+                        <span class="ml-2" v-if="!isPinned">
+                            pin
+                        </span>
+                        <span class="ml-2" v-else>
+                            unpin
+                        </span>
+                    </button>
 
-                <button 
-                    v-if="isOpOfComment && !isOpOfPost"
-                    type="button"
-                    class="ml-5"
-                    @click="deleteComment(props.comment.id)"
-                >
-                    <IconTrash/>
-                </button>
-
-                <button
-                    v-if="isOpOfPost" 
-                    class="ml-5 "
-                    type="button"
-                    @click="flyoutToggle = !flyoutToggle"
-                >
-                    <IconMore/>
-                </button>
-
-                <div
-                    :class="{'popout-comment shadow-lg': flyoutToggle}"
-                >
-                    <div v-if="flyoutToggle" class="flyout">
-                        <button 
-                            type="button"
-                            @click="pinComment(); flyoutToggle = false"
-                        >
-                            <IconPin/>
-                            <span class="ml-2" v-if="!isPinned">
-                                pin
-                            </span>
-                            <span class="ml-2" v-else>
-                                unpin
-                            </span>
-                        </button>
-
-                        <button 
-                            v-if="props.comment.posted_by_current_user"
-                            type="button"
-                            :disabled="deleting"
-                            @click="deleteComment(props.comment.id)"
-                        >
-                            <IconTrash/>
-                            <span class="ml-2">
-                                {{ deleteStatus }}
-                            </span>
-                        </button>
-                    </div>
+                    <button 
+                        v-if="props.comment.posted_by_current_user"
+                        type="button"
+                        :disabled="deleting"
+                        @click="deleteComment(props.comment.id)"
+                    >
+                        <IconTrash/>
+                        <span class="ml-2">
+                            {{ deleteStatus }}
+                        </span>
+                    </button>
                 </div>
+
             </div>
         </div>
 
