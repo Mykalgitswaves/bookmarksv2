@@ -52,7 +52,9 @@
           </div>
 
           <div v-if="p" class="grid content-center px-2 my-5">
-            <p class="label-text">The trouble with most of us is that we would rather be ruined by praise than saved by criticism.</p>   
+            <p class="text-sm italic text-slate-600">
+                "The trouble with most of us is that we would rather be ruined by praise than saved by criticism."
+            </p>   
             <div class="make-comments-container main">
                 <label for="post-comment-form">
                     <textarea 
@@ -74,7 +76,13 @@
             </div>
           </div>
 
-          <Comments v-if="p" :comments="comments" :pinned-comments="pinnedComments" :post-id="p.id" :op-user-uuid="op_user_uuid" @comment-deleted="commentDeleted"/>
+          <Comments v-if="p" 
+            :comments="comments" 
+            :pinned-comments="pinnedComments" 
+            :post-id="p.id" 
+            :op-user-uuid="op_user_uuid" 
+            @comment-deleted="commentDeleted"
+        />
 
           <div class="mobile-menu-spacer sm:hidden"></div>
     </transition-group>
