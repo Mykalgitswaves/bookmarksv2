@@ -178,6 +178,13 @@ class User():
     def get_posts(self,driver):
         output = driver.pull_all_reviews_by_user(self.username)
         return(output)
+    
+    def get_friend_request_list(self,driver):
+        friend_request_list = driver.get_friend_request_list(self)
+        return(friend_request_list)
+    
+    def get_blocked_users_list(self,driver):
+        blocked_users_list = driver.get_blocked_users_list(self)
 
 class Review():
     def __init__(self, 
@@ -533,6 +540,10 @@ class Comment():
         self.id = comment_id
         self.created_date = created_date
 
+class FriendRequest():
+    def __init__(self, from_user:User, created_date:str) -> None:
+        self.from_user = from_user
+        self.created_date = created_date
 
 class Neo4jDriver():
     def __init__(self):
@@ -3276,10 +3287,10 @@ class Neo4jDriver():
 
     def get_friend_list(self,user_id:str, current_user_id:str):
         """
-        unfollows a user if the to_user has a critic account
+        Returns all the friends of user and their relationships to current_user
         """
         with self.driver.session() as session:
-            result = session.execute_write(self.get_friend_list_query, user_id=user_id, current_user_id=current_user_id)  
+            result = session.execute_read(self.get_friend_list_query, user_id=user_id, current_user_id=current_user_id)  
         return(result)
     
     @staticmethod
@@ -3287,20 +3298,129 @@ class Neo4jDriver():
         query = """
         match (user:User {id:$user_id})
         match (currentUser:User {id:$current_user_id})
-        match (user)-[friendRel:FRIENDED {status:"friends"}]-(toUser)
-        OPTIONAL MATCH (currentUser)-[friendStatus:FRIENDED]-(toUser)
-        OPTIONAL MATCH (currentUser)-[blockStatus:BLOCKED]-(toUser)
-        OPTIONAL MATCH (currentUser)-[followStatus:FOLLOWS]-(toUser)
-        RETURN toUser, 
-            friendRel.status AS friendStatus, 
-            friendStatus.status AS currentUserFriendStatus, 
-            blockStatus AS currentUserBlockStatus, 
-            followStatus AS currentUserFollowStatus
+        match (user)-[friendRel:FRIENDED {status:"friends"}]-(toUser:User {disabled:False})
+        OPTIONAL MATCH (currentUser)<-[incomingFriendStatus:FRIENDED]-(toUser)
+        OPTIONAL MATCH (currentUser)-[outgoingFriendStatus:FRIENDED]->(toUser)
+        OPTIONAL MATCH (currentUser)<-[incomingBlockStatus:BLOCKED]-(toUser)
+        OPTIONAL MATCH (currentUser)-[outgoingBlockStatus:BLOCKED]->(toUser)
+        OPTIONAL MATCH (currentUser)<-[incomingFollowStatus:FOLLOWS]-(toUser)
+        OPTIONAL MATCH (currentUser)-[outgoingFollowStatus:FOLLOWS]->(toUser)
+        RETURN toUser, currentUser,
+            incomingFriendStatus.status AS incomingFriendStatus,
+            incomingBlockStatus,
+            incomingFollowStatus,
+            outgoingFriendStatus.status AS outgoingFriendStatus,
+            outgoingBlockStatus,
+            outgoingFollowStatus
         """
         
         result = tx.run(query,user_id=user_id, current_user_id=current_user_id)
+        friend_list = []
         for response in result:
-            print(response.data())
+            if 'profile_img_url' in response['toUser']:
+                profile_img_url = response['toUser']['profile_img_url']
+            else:
+                profile_img_url = None
+
+            if response['incomingFriendStatus'] == 'friends' or response['outgoingFriendStatus'] == 'friend':
+                relationship_to_current_user = 'friend'
+            elif response['incomingFriendStatus'] == 'pending':
+                relationship_to_current_user = 'anonymous_user_friend_requested'
+            elif response['outgoingFriendStatus'] == 'pending':
+                relationship_to_current_user = 'current_user_friend_requested'
+            elif response['incomingBlockStatus']:
+                relationship_to_current_user = 'current_user_blocked_by_anonymous_user'
+            elif response['outgoingBlockStatus']:
+                relationship_to_current_user = 'anonymous_user_blocked_by_current_user'
+            elif response['toUser']['id'] == current_user_id:
+                relationship_to_current_user = 'is_current_user'
+            else:
+                relationship_to_current_user = 'stranger'
+
+            friend = User(
+                user_id=response['toUser']['id'],
+                username=response['toUser']['username'],
+                created_date=response['toUser']['created_date'],
+                profile_img_url=profile_img_url,
+                relationship_to_current_user=relationship_to_current_user
+            )
+
+            friend_list.append(friend)
+        
+        return friend_list
+    
+    def get_friend_request_list(self,user:User):
+        """
+        Returns all incoming friend requests for a user
+        """
+        with self.driver.session() as session:
+            result = session.execute_read(self.get_friend_request_list_query, user=user)  
+        return(result)
+    
+    @staticmethod
+    def get_friend_request_list_query(tx, user:User):
+        query = """
+        match (user:User {id:$user_id})
+        match (user)<-[friendRel:FRIENDED {status:"pending"}]-(fromUser:User {disabled:False})
+        RETURN fromUser, friendRel.created_date as created_date
+        """
+        
+        result = tx.run(query,user_id=user.user_id)
+        friend_request_list = []
+        for response in result:
+            if 'profile_img_url' in response['fromUser']:
+                profile_img_url = response['fromUser']['profile_img_url']
+            else:
+                profile_img_url = None
+
+            from_user = User(
+                user_id=response['fromUser']['id'],
+                username=response['fromUser']['username'],
+                created_date=response['fromUser']['created_date'],
+                profile_img_url=profile_img_url,
+                relationship_to_current_user='anonymous_user_friend_requested'
+            )
+
+            friend_request = FriendRequest(from_user, response['created_date'])
+            friend_request_list.append(friend_request)
+        
+        return friend_request_list
+    
+    def get_blocked_users_list(self,user:User):
+        """
+        Returns all blocked users for a user
+        """
+        with self.driver.session() as session:
+            result = session.execute_read(self.get_blocked_users_list_query, user=user)  
+        return(result)
+    
+    @staticmethod
+    def get_blocked_users_list_query(tx, user:User):
+        query = """
+        match (user:User {id:$user_id})
+        match (user)-[friendRel:BLOCKED]->(blockedUser:User {disabled:False})
+        RETURN blockedUser
+        """
+        
+        result = tx.run(query,user_id=user.user_id)
+        blocked_user_list = []
+        for response in result:
+            if 'profile_img_url' in response['blockedUser']:
+                profile_img_url = response['blockedUser']['profile_img_url']
+            else:
+                profile_img_url = None
+
+            blocked_user = User(
+                user_id=response['blockedUser']['id'],
+                username=response['blockedUser']['username'],
+                created_date=response['blockedUser']['created_date'],
+                profile_img_url=profile_img_url,
+                relationship_to_current_user='current_user_blocked_by_anonymous_user'
+            )
+
+            blocked_user_list.append(blocked_user)
+        
+        return blocked_user_list
     
     def close(self):
         self.driver.close()
@@ -3314,6 +3434,6 @@ if __name__ == "__main__":
     # driver.unfollow_user("a0f86d40-4915-4773-8aa1-844d1bfd0b41","dfa501ff-0f58-485f-94e9-50ba5dd10396")
     # driver.follow_user("a0f86d40-4915-4773-8aa1-844d1bfd0b41","dfa501ff-0f58-485f-94e9-50ba5dd10396")
 
-    driver.get_friend_list("a0f86d40-4915-4773-8aa1-844d1bfd0b41","dfa501ff-0f58-485f-94e9-50ba5dd10396")
+    driver.get_friend_request_list(User(user_id="a0f86d40-4915-4773-8aa1-844d1bfd0b41"))
     # driver.block_user()
     driver.close()

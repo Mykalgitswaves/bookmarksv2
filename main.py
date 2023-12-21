@@ -1106,26 +1106,39 @@ async def get_user_about(user_id:str, current_user: Annotated[User, Depends(get_
         user = driver.get_user_about_me(user_id=user_id)
         return JSONResponse(content={"data": jsonable_encoder(user)})
 
-@app.get("/api/user/{user_id}/friend_requests")
-async def update_profile_img(user_id: str, current_user: Annotated[User, Depends(get_current_active_user)]):
-    """
-    THIS IS A PLACEHOLDER. 
-    """
-
 @app.get("/api/user/{user_id}/friends")
-async def update_profile_img(user_id: str, current_user: Annotated[User, Depends(get_current_active_user)]):
+async def get_friend_list(user_id: str, current_user: Annotated[User, Depends(get_current_active_user)]):
     """
-    THIS IS A PLACEHOLDER. 
+    Gets the friend list for the user as well as each friends relationship to the current user 
     """
+    if not current_user:    
+        raise("400", "Unauthorized")
+    if user_id:
+        friend_list = driver.get_friend_list(user_id=user_id,current_user_id=current_user.user_id)
+        return JSONResponse(content={"data": jsonable_encoder(friend_list)})
 
-@app.get("/api/user/{user_id}/followers")
-async def update_profile_img(user_id: str, current_user: Annotated[User, Depends(get_current_active_user)]):
+@app.get("/api/user/{user_id}/friend_requests")
+async def get_friend_request_list(user_id: str, current_user: Annotated[User, Depends(get_current_active_user)]):
     """
-    THIS IS A PLACEHOLDER. 
+    Gets all the friend requests for the current user
     """
+    if not current_user:    
+        raise("400", "Unauthorized")
+    if user_id == current_user.user_id:
+        friend_request_list = current_user.get_friend_request_list(driver)
+        return JSONResponse(content={"data": jsonable_encoder(friend_request_list)})
+    else:
+        raise("400", "Unauthorized")
     
 @app.get("/api/user/{user_id}/blocked_users")
-async def update_profile_img(user_id: str, current_user: Annotated[User, Depends(get_current_active_user)]):
+async def get_blocked_users_list(user_id: str, current_user: Annotated[User, Depends(get_current_active_user)]):
     """
-    THIS IS A PLACEHOLDER. 
+    Gets all the blocked users for the current user 
     """
+    if not current_user:    
+        raise("400", "Unauthorized")
+    if user_id == current_user.user_id:
+        friend_request_list = current_user.get_blocked_users_list(driver)
+        return JSONResponse(content={"data": jsonable_encoder(friend_request_list)})
+    else:
+        raise("400", "Unauthorized")
