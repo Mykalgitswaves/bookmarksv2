@@ -35,8 +35,8 @@
 
   .popout-comment {
     position: absolute;
-    top: 20px;
-    left: 40px;
+    top: 40px;
+    right: -20px;
     margin-top: .25rem;
     width: 130px;
     background-color: #fff;
@@ -227,6 +227,7 @@ ul:has(.comments-wrapper) {
   display: grid;
   grid-template-columns: 1fr;
   row-gap: 10px;
+  justify-items: center;
 }
 
 
@@ -234,17 +235,19 @@ ul:has(.comments-wrapper) {
   padding-left: 10px;
   border-left: 2px solid #f8fafc;
   height: 90%;
+  width: 100%;
+  max-width: 880px;
   display: grid;
 }
 
-.comment {
+.comment-inner {
   padding: 14px 2.25rem;
+  margin-bottom: 14px;
   border-radius: 8px;
   border: solid 1px #c4b5fd;
   transition-duration: 250ms;
   transition-timing-function: ease;
   width: 100%;
-  max-width: 880px;
   justify-self: center;
 }
 
@@ -263,6 +266,7 @@ ul:has(.comments-wrapper) {
   box-shadow: rgba(67,56,202, 0.26) 0px 1px 4px, rgb(238,242,255) 0px 0px 0px 3px;;
 }
 
+
 .pinned-comment-btn {
   position: absolute;
   top: -10px;
@@ -280,14 +284,6 @@ ul:has(.comments-wrapper) {
 
 .pinned-comment-btn:active {
   transform: scale(.98);
-}
-
-.comment-inner {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  justify-content: space-between;
-  justify-self: center;
 }
 
 .comment-text {
@@ -324,7 +320,12 @@ ul:has(.comments-wrapper) {
   position: relative;
   align-items: center;
   justify-content: end;
+  margin-right: 20px;
   margin-top: .5em;
+
+  .reply & {
+    margin-right: 40px;
+  }
 }
 
 .comment-username {

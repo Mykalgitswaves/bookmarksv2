@@ -10,29 +10,28 @@
     >
         <div class="comment-inner">
             <p v-if="props.reply">{{ props.reply?.text }}</p>
+        </div>
+        <div class="comment-footer">
+            <button 
+                class="ml-5 flex items-center justify-end"
+                type="button"
+                @click="likeComment()"
+            >
+                <IconLike/>
+                <span class="ml-2">
+                    {{ commentLikesFormatted }}
+                </span>
+            </button>
 
-            <div class="comment-footer">
-                <button 
-                    class="ml-5 flex items-center justify-end"
-                    type="button"
-                    @click="likeComment()"
-                >
-                    <IconLike/>
-                    <span class="ml-2">
-                        {{ commentLikesFormatted }}
-                    </span>
-                </button>
-
-                <button
-                    v-if="isOpOfPost || isOpOfComment"
-                    class="ml-5 flex items-center justify-end text-red-600"
-                    type="button"
-                    role="delete"
-                    @click="deleteReply()"
-                >
-                    <IconTrash/>
-                </button>
-            </div>
+            <button
+                v-if="isOpOfPost || isOpOfComment"
+                class="ml-5 flex items-center justify-end text-red-600"
+                type="button"
+                role="delete"
+                @click="deleteReply()"
+            >
+                <IconTrash/>
+            </button>
         </div>
     </div>
 </template>

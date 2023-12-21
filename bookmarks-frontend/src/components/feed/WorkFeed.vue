@@ -33,7 +33,11 @@
             type="button" 
             v-for="(option, index) in postOptions"
             :key="index"
-            @click="selectHandler(option); toggleCreateReviewType = true; selectDropdown = false"  
+            @click="
+              selectHandler(option);
+              toggleCreateReviewType = true;
+              selectDropdown = false
+            "  
           >
             {{ option }}
           </button>
@@ -44,7 +48,10 @@
         v-if="toggleCreateReviewType"
         type="button" 
         class="flex-center justify-center px-2 py-2 bg-red-600 rounded-md color-white" 
-        @click="toggleCreateReviewType = false; postTypeMapping = ''"
+        @click="
+          toggleCreateReviewType = false; 
+          postTypeMapping = ''
+        "
       >
           <IconExit/>
       </button>
@@ -92,63 +99,17 @@
       />
 
       <div v-if="!toggleCreateReviewType">
-
         <TransitionGroup name="content" tag="div">
-          <div v-if="reviewData && !filterOptions[0].is_active" class="center-cards">
-            <ComparisonPost 
-              v-for="post in reviewData?.data.Comparison"
-              :key="post.id"
-              :book="post.book"
-              :small_img_url="post.book_small_img"
-              :headlines="post.book_specific_headlines"
-              :book_title="post.book_title"
-              :comparisons="post.responses"
-              :comparators="post.comparators"
-              :comparator_ids="post.comparators"
-              :created_at="post.created_date"
-              :id="post.id"
-              :username="post.user_username"
-              :user_id="post.user_id"
-              :likes="post.likes"
-            />
-          </div>
-
-          <div v-if="reviewData && !filterOptions[1].is_active" class="center-cards">
-            <ReviewPost
-              v-for="post in reviewData?.data.Review" 
-              :key="post.id"
-              :id="post.id"
-              :book="post.book"
-              :title="post.book_title"
-              :headline="post.headline"
-              :question_ids="post.question_ids"
-              :questions="post.questions"
-              :responses="post.responses"
-              :spoilers="post.spoilers"
-              :username="post.user_username"
-              :small_img_url="post.book_small_img"
-              :likes="post.likes"
-              :liked_by_current_user="post.liked_by_current_user"
-              :user_id="post.user_id"
-              :num_comments="post.num_comments"
-            />
-          </div>
-          <div v-if="reviewData && !filterOptions[2].is_active" class="center-cards">
-            <UpdatePost
-              v-for="post in reviewData?.data.Update" 
-              :key="post.id"
-              :id="post.id"
-              :book="post.book"
-              :title="post.book_title"
-              :headline="post.headline"
-              :response="post.response"
-              :spoiler="post.spoiler"
-              :username="post.user_username"
-              :small_img_url="post.book_small_img"
-              :page="post.page"
-              :user_id="post.user_id"
-              :likes="post.likes"
-            />
+          <div v-if="feedData?.length">
+            <div
+              v-for="post in feedData" :key="post.id" 
+              class="center-cards"
+            >
+              <component
+                :is="feedComponentMapping[post?.type]?.component()"
+                v-bind="feedComponentMapping[post?.type]?.props(post)"
+              />
+            </div>
           </div>
         </TransitionGroup>
       </div>
@@ -157,14 +118,11 @@
     <div class="mobile-menu-spacer sm:hidden"></div>
 </template>
 <script setup>
-import { ref,  computed, watch, onMounted } from 'vue';
-import { useRoute } from "vue-router";
+import { ref, watch, onMounted } from 'vue';
 import { db } from '@/services/db.js';
 import { urls } from '@/services/urls.js';
 import { filterOptions } from './filters.js';
-import ComparisonPost from './posts/comparisonPost.vue';
-import ReviewPost from './posts/reviewPost.vue';
-import UpdatePost from './posts/updatePost.vue';
+import { feedComponentMapping } from './feedPostsService';
 import IconPlus from '../svg/icon-plus.vue'
 import IconExit from '../svg/icon-exit.vue';
 import IconFilter from '../svg/icon-filter.vue';
@@ -174,12 +132,11 @@ import createComparisonPost from './createPosts/createComparisonPost.vue';
 import IconAddPost from '../svg/icon-add-post.vue';
 
 // const store = searchResultStore();
-const route = useRoute();
-const user = route.params.user;
 const toggleCreateReviewType = ref(false);
 const selectDropdown = ref(false);
 const bookData = ref(null);
-const reviewData = ref(null);
+const feedData = ref(null);
+const loaded = ref(false)
 const isPostableData = ref(false);
 const postOptions = ['review', 'update', 'comparison'];
 const filterPopout = ref(false);
@@ -192,15 +149,15 @@ const mapping = {
 
 async function loadWorks() {
     bookData.value = await db.get(urls.booksByN, {'limit': 25}, true);
-    reviewData.value = await db.get(urls.reviews.getFeed(), true);
+    await db.get(urls.reviews.getFeed(), true).then((res) => {
+      feedData.value = res.data.filter((d) => d.type !== 'milestone');
+    });
 }
-
 
 onMounted(() => {
     // loadReviews()
     loadWorks();
-    
-})
+});
 
 let postTypeMapping = ref('');
 
@@ -220,7 +177,6 @@ const urlsMapping = {
   "comparison": urls.reviews.comparison,
 }
 
-
 async function postToEndpoint() {
   toggleCreateReviewType.value = false;
   return await db.post(urlsMapping[postTypeMapping.value], emittedPostData, true).then(() => {
@@ -230,15 +186,9 @@ async function postToEndpoint() {
   });
 }
 
-const books = computed(() => (bookData.value ? bookData.value.data : ''))
-
 watch(emittedPostData, () => {
   isPostableData.value = true;
-})
-
-watch(reviewData, (newV) => {
-  console.log(newV)
-})
+});
 
 </script>
 
