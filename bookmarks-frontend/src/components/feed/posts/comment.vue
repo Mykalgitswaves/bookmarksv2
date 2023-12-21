@@ -25,13 +25,11 @@
         </div>
         <div class="comment-footer">
             <button 
-                class=""
                 type="button"
                 @click="isReplying = !isReplying"
             >
                 <span v-if="!isReplying" class="flex items-center">
                     <IconComment />
-                    <span class="text-sm ml-2 underline">reply</span>
                 </span>
 
                 <IconExit v-if="isReplying" />

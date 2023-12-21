@@ -18,8 +18,8 @@
                 @click="likeComment()"
             >
                 <IconLike/>
-                <span class="ml-2">
-                    {{ commentLikesFormatted }}
+                <span class="ml-2 font-medium">
+                    {{ commentLikes }}
                 </span>
             </button>
 
@@ -81,14 +81,6 @@ if(user === props.reply.user_id) {
 const is_liked = ref(props.reply?.liked_by_current_user);
 const commentLikes = ref(props.reply?.likes);
 const emit = defineEmits(['deleted']);
-
-const commentLikesFormatted = computed(() => {
-    if(commentLikes.value === 1) {
-        return `${commentLikes.value} like` 
-    } else {
-        return `${commentLikes.value} likes`
-    }
-})
 
 async function likeComment() {
     if(is_liked.value === false){
