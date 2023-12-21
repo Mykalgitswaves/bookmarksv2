@@ -168,9 +168,13 @@
 
 .make-comments-container {
     display: flex;
+    flex-wrap: wrap;
+    align-items: center;
     column-gap: 20px;
+    row-gap: 10px;
     padding: 20px;
-    padding-left: 0;
+    padding-left: 10px;
+    padding-right: 10px;
     width: 100%;
     max-width: 880px;
     margin-top: 20px;
