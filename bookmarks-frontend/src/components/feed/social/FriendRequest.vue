@@ -8,24 +8,20 @@
 
         <div class="friend-request-btns">
             <button
-                type="button"
-                alt="yes"
-                class="friend-request-accept-btn"
+                v-for="button in buttons['anonymous']"
+                :type="button.type"
+                :alt="button.alt"
+                :class="button.class"
+                @click="button.click"
             >
-                <IconCheck/>
-            </button>
-            <button
-                type="button"
-                class="friend-request-reject-btn"
-            >
-                <IconExit/>
+                <component :is="button.icon" />
             </button>
         </div>
     </div>
 </template>
 <script setup>
-import IconCheck from '../../svg/icon-check.vue';
-import IconExit from '../../svg/icon-exit.vue';
+import { friendRequestButtons } from './friendRequestButton';
+const buttons = friendRequestButtons;
 
 const props = defineProps({
     num: {
