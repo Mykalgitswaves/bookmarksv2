@@ -186,6 +186,7 @@
 
 .make-comments-container label {
   width: 70%;
+  min-width: 280px;
 }
 
 .make-comments-container .label-text::first-letter {
