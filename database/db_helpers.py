@@ -648,8 +648,10 @@ class Neo4jDriver():
         query = """
                 match (uu:User {username: $username}) 
                 match (rr {id: $post_id}) 
-                merge (uu)-[ll:LIKES]->(rr)
-                set rr.likes = rr.likes + 1
+                with uu, rr
+                where not exists ((uu)-[:LIKES]-(rr))
+                    create (uu)-[ll:LIKES {created_date:datetime()}]->(rr)
+                    set rr.likes = rr.likes + 1
                 """
         result = tx.run(query, username=username, post_id=post_id)
     def add_to_read(self,user_id,book_id):
@@ -2205,9 +2207,11 @@ class Neo4jDriver():
     def add_liked_comment_query(tx, username, comment_id):
         query = """
                 match (uu:User {username: $username}) 
-                match (rr:Comment {id: $comment_id}) 
-                create (uu)-[ll:LIKES]->(rr)
-                set rr.likes = rr.likes + 1
+                match (rr:Comment {id: $comment_id})
+                with uu, rr
+                where not exists ((uu)-[:LIKES]-(rr))
+                    create (uu)-[ll:LIKES {created_date:datetime()}]->(rr)
+                    set rr.likes = rr.likes + 1
                 """
         result = tx.run(query, username=username, comment_id=comment_id)
     def get_all_replies_for_comment(self, comment_id, username):
@@ -2399,10 +2403,12 @@ class Neo4jDriver():
     def add_pinned_comment_query(tx, comment_id, post_id):
         query = """
                 match (pp {id: $post_id}) 
-                match (rr:Comment {id: $comment_id}) 
-                create (pp)-[ll:PINNED]->(rr)
-                set rr.pinned = True
-                return rr
+                match (rr:Comment {id: $comment_id})
+                with pp,rr
+                where not exists ((pp)-[ll:PINNED]->(rr)) 
+                    create (pp)-[ll:PINNED {created_date:datetime()}]->(rr)
+                    set rr.pinned = True
+                    return rr
                 """
         result = tx.run(query, comment_id=comment_id, post_id=post_id)
         
@@ -3097,7 +3103,7 @@ class Neo4jDriver():
         with toUser, fromUser
         where not exists ((fromUser)-[:BLOCKED]-(toUser))
             and not exists ((fromUser)-[:FRIENDED]-(toUser))
-            create (fromUser)-[friend_request:FRIENDED {status:"pending"}]->(toUser)
+            create (fromUser)-[friend_request:FRIENDED {status:"pending", created_date:datetime()}]->(toUser)
         return toUser.id, friend_request.status
         """
         
@@ -3151,6 +3157,7 @@ class Neo4jDriver():
         match (toUser:User {id:$to_user_id})
         MATCH (fromUser)-[friend_request:FRIENDED {status:"pending"}]->(toUser)
         set friend_request.status = "friends"
+        set friend_request.created_date = datetime()
         RETURN friend_request
         """
         
@@ -3176,8 +3183,8 @@ class Neo4jDriver():
         match (fromUser:User {id:$from_user_id})
         match (toUser:User {id:$to_user_id})
         MATCH (fromUser)-[friend_request:FRIENDED {status:"pending"}]->(toUser)
-        set friend_request.status = "declined"
-        RETURN friendRequest
+        del friend_request
+        RETURN toUser
         """
         
         result = tx.run(query,from_user_id=from_user_id,to_user_id=to_user_id)
@@ -3226,7 +3233,7 @@ class Neo4jDriver():
         match (fromUser:User {id:$from_user_id})
         match (toUser:User {id:$to_user_id, user_type:"critic"})
         where not exists ((fromUser)-[:BLOCKED]-(toUser))
-            merge (fromUser)-[followRel:FOLLOWS]->(toUser)
+            merge (fromUser)-[followRel:FOLLOWS {created_date:datetime()}]->(toUser)
         RETURN followRel
         """
         
@@ -3283,9 +3290,9 @@ class Neo4jDriver():
         match (user:User {id:$user_id})
         match (currentUser:User {id:$current_user_id})
         match (user)-[friendRel:FRIENDED {status:"friends"}]-(toUser)
-        OPTIONAL MATCH (currentUser)-[friendStatus:FRIENDED]->(toUser)
-        OPTIONAL MATCH (currentUser)-[blockStatus:BLOCKED]->(toUser)
-        OPTIONAL MATCH (currentUser)-[followStatus:FOLLOWS]->(toUser)
+        OPTIONAL MATCH (currentUser)-[friendStatus:FRIENDED]-(toUser)
+        OPTIONAL MATCH (currentUser)-[blockStatus:BLOCKED]-(toUser)
+        OPTIONAL MATCH (currentUser)-[followStatus:FOLLOWS]-(toUser)
         RETURN toUser, 
             friendRel.status AS friendStatus, 
             friendStatus.status AS currentUserFriendStatus, 
@@ -3303,10 +3310,12 @@ class Neo4jDriver():
 if __name__ == "__main__":
     driver = Neo4jDriver()
 
-    driver.send_friend_request("a0f86d40-4915-4773-8aa1-844d1bfd0b41","dfa501ff-0f58-485f-94e9-50ba5dd10396")
+    # driver.send_friend_request("a0f86d40-4915-4773-8aa1-844d1bfd0b41","dfa501ff-0f58-485f-94e9-50ba5dd10396")
     # driver.accept_friend_request("a0f86d40-4915-4773-8aa1-844d1bfd0b41","dfa501ff-0f58-485f-94e9-50ba5dd10396")
     # driver.remove_friend("a0f86d40-4915-4773-8aa1-844d1bfd0b41","dfa501ff-0f58-485f-94e9-50ba5dd10396")
     # driver.unfollow_user("a0f86d40-4915-4773-8aa1-844d1bfd0b41","dfa501ff-0f58-485f-94e9-50ba5dd10396")
     # driver.follow_user("a0f86d40-4915-4773-8aa1-844d1bfd0b41","dfa501ff-0f58-485f-94e9-50ba5dd10396")
+
+    driver.get_friend_list("a0f86d40-4915-4773-8aa1-844d1bfd0b41","dfa501ff-0f58-485f-94e9-50ba5dd10396")
     # driver.block_user()
     driver.close()
