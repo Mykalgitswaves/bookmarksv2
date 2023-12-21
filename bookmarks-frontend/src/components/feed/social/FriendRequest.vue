@@ -2,17 +2,18 @@
     <div class="friend-request">
         <img src="" alt="">
         <div class="friend-request-heading">
-            <h3 class="text-slate-800">{{ user.username }}</h3>
-            <p class="text-slate-600 text-small">{{ num }} mutual friends </p>
+            <h3 class="text-slate-800">{{ username }}</h3>
+            <p class="text-slate-600 text-small"> mutual friends </p>
         </div>
 
         <div class="friend-request-btns">
             <button
-                v-for="button in buttons['anonymous']"
+                v-for="(button, index) in buttons[rel_to_user]"
+                :key="index"
                 :type="button.type"
                 :alt="button.alt"
                 :class="button.class"
-                @click="button.click"
+                @click="button.click(...currentClickPayload(rel_to_user, user, username))"
             >
                 <component :is="button.icon" />
             </button>
@@ -20,17 +21,21 @@
     </div>
 </template>
 <script setup>
-import { friendRequestButtons } from './friendRequestButton';
+import { friendRequestButtons, currentClickPayload } from './friendRequestButton';
+import { computed } from 'vue';
+import { useRoute } from 'vue-router';
+const route = useRoute();
+const { user } = route.params
+const username = computed(() => props.userData.from_user.username);
+const rel_to_user = computed(() => props.userData.from_user.relationship_to_current_user);
 const buttons = friendRequestButtons;
 
 const props = defineProps({
-    num: {
-        type: Number,
-    },
-    user: {
+    userData: {
         type: Object,
+        required: true
     }
-})
+});
 
 </script>
 <style scoped lang="scss">

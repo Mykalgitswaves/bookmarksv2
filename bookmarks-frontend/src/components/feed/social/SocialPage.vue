@@ -2,16 +2,16 @@
     <BackBtn/>
     <section class="social-wrapper">
         <h1 class="text-2xl text-slate-800 font-medium">
-            <span class="text-indigo-500 underline mr-2">{{ friend_requests.length }}</span> Pending requests
+            <span class="text-indigo-500 underline mr-2">{{ totalRequests }}</span> Pending requests
         </h1>
 
         <div class="friend-requests">
             
             <FriendRequest 
-                v-for="(user, index) in current_requests" 
+                v-for="(user, index) in friend_requests" 
                 :key="index"
                 :num="index"
-                :user="user"
+                :userData="user"
             />
         </div>
 
@@ -22,20 +22,41 @@
     import BackBtn from '../partials/back-btn.vue';
     import FriendRequest from './FriendRequest.vue';
     import SocialPagination from './SocialPagination.vue';
-    import { ref, computed } from 'vue';
-    import { users } from '../../../fixtureData/dummyUsers.js';
+    import { ref, computed, onMounted } from 'vue';
+    // import { users } from '../../../fixtureData/dummyUsers.js';
+    import { useRoute } from 'vue-router'
+    import { db } from '../../../services/db';
+    import { urls } from '../../../services/urls';
+    const route = useRoute();
 
-    const friend_requests =  users;
-
+    const friend_requests =  ref(null);
     const currentPage = ref(1);
     const reqsPerPage = 4;
-    const totalPages = ref(Math.ceil(friend_requests.length / reqsPerPage));
+    const totalPages = ref(0);
+    const totalRequests = ref(0);
+    const current_requests = ref([]);
 
-    const current_requests = computed(() => { 
-        const startingIndex = 0;
-        const endingIndex = reqsPerPage * currentPage.value;
-        return friend_requests.slice(startingIndex, endingIndex);
+    onMounted(() => {
+        db.get(urls.user.getUsersFriendRequests(route.params.user)).then((res) => {
+            friend_requests.value = res.data
+        });
+
+        totalPages.value = computed(() => {
+            if (friend_requests.value?.length) {
+                Math.ceil(friend_requests.value.length / reqsPerPage);
+            }
+        });
+    
+        current_requests.value = computed(() => { 
+            const startingIndex = 0;
+            const endingIndex = reqsPerPage * currentPage.value;
+            if (!startingIndex && !endingIndex) {
+                return;
+            }
+            return friend_requests.value.slice(startingIndex, endingIndex);
+        })
     });
+
 
     function handlePageChange(page) {
         currentPage.value = page;
