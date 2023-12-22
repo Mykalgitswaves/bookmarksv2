@@ -1,12 +1,22 @@
 <template>
     <BackBtn/>
     <section class="social-wrapper">
-        <h1 class="text-2xl text-slate-800 font-medium">
-            <span class="text-indigo-500 underline mr-2">{{ totalRequests }}</span> Pending requests
-        </h1>
+        <div class="accordian-heading">
+            <h1 class="text-2xl text-slate-800 font-medium">
+                <span class="text-indigo-500 underline mr-2">{{ totalRequests }}</span> Pending requests
+            </h1>
+
+            <button 
+                type="button"
+                alt="expand-collapse"
+                class="accordian-heading-btn large"
+                @click=""
+            >
+                <IconChevron />
+            </button>
+        </div>
 
         <div class="friend-requests">
-            
             <FriendRequest 
                 v-for="(user, index) in friend_requests" 
                 :key="index"
@@ -27,6 +37,7 @@
     import { useRoute } from 'vue-router'
     import { db } from '../../../services/db';
     import { urls } from '../../../services/urls';
+    import IconChevron from '../../svg/icon-chevron.vue';
     const route = useRoute();
 
     const friend_requests =  ref(null);
@@ -39,6 +50,7 @@
     onMounted(() => {
         db.get(urls.user.getUsersFriendRequests(route.params.user)).then((res) => {
             friend_requests.value = res.data
+            totalRequests.value = friend_requests.value.length;
         });
 
         totalPages.value = computed(() => {
@@ -78,6 +90,13 @@
         margin-top: 20px;
         margin-bottom: 20px;
         min-height: 350px;
+    }
+
+
+    .accordian-heading {
+        display: flex;
+        flex-direction: row;
+        justify-content: space-between;
     }
 
     /* Maybe save maybe trash #TODO: Figure out this shit */

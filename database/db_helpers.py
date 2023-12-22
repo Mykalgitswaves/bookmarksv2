@@ -147,8 +147,8 @@ class User():
         result = driver.unsend_friend_request(self.user_id,friend_id)
         return result
     
-    def accept_friend_request(self,friend_id,driver):
-        result = driver.accept_friend_request(friend_id,self.user_id)
+    def accept_friend_request(self, friend_id, driver):
+        result = driver.accept_friend_request(friend_id, self.user_id)
         return(result)
     
     def decline_friend_request(self,friend_id,driver):
@@ -3117,12 +3117,11 @@ class Neo4jDriver():
         """
         
         result = tx.run(query,from_user_id=from_user_id,to_user_id=to_user_id)
-        response = result.single()
 
-        if not response:
+        if not result:
             return HTTPException(400,"Request Not Sent")
         else:
-            return HTTPException(199,'Friend Request Sent')
+            return HTTPException(200, "Friend request accepted")
             
     
     def unsend_friend_request(self,from_user_id:str, to_user_id:str):
@@ -3173,7 +3172,7 @@ class Neo4jDriver():
         result = tx.run(query,from_user_id=from_user_id,to_user_id=to_user_id)
         response = result.single()
         if not response:
-            return HTTPException(400,"User or Friend Request Not Found")
+            raise HTTPException(400,"User or Friend Request Not Found")
         else:
             return HTTPException(200, 'Success')
 

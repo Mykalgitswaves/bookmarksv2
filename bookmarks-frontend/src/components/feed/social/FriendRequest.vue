@@ -13,7 +13,7 @@
                 :type="button.type"
                 :alt="button.alt"
                 :class="button.class"
-                @click="button.click(...currentClickPayload(rel_to_user, user, username))"
+                @click="button.click(...currentClickPayload(rel_to_user, user, user_id))"
             >
                 <component :is="button.icon" />
             </button>
@@ -22,12 +22,13 @@
 </template>
 <script setup>
 import { friendRequestButtons, currentClickPayload } from './friendRequestButton';
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 import { useRoute } from 'vue-router';
 const route = useRoute();
 const { user } = route.params
 const username = computed(() => props.userData.from_user.username);
-const rel_to_user = computed(() => props.userData.from_user.relationship_to_current_user);
+const user_id = computed(() => props.userData.from_user.user_id);
+const rel_to_user = ref(props.userData.from_user.relationship_to_current_user);
 const buttons = friendRequestButtons;
 
 const props = defineProps({
