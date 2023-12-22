@@ -28,7 +28,7 @@
     const route = useRoute();
     const { user, user_profile } = route.params;
 </script>
-<style scoped lang="scss">
+<style scoped>
     @-moz-keyframes spin { 100% { -moz-transform: rotate(360deg); } }
     @-webkit-keyframes spin { 100% { -webkit-transform: rotate(360deg); } }
     @keyframes spin { 100% { -webkit-transform: rotate(360deg); transform:rotate(360deg); } } 
@@ -39,32 +39,33 @@
         justify-self: center;
         color: #fff;
         transition: all 250ms ease; 
-    
-    &.loading {
-        background-color: #525252;
-        
-        svg {
-            -webkit-animation:spin 1s linear infinite;
-            -moz-animation:spin 1s linear infinite;
-            animation:spin 1s linear infinite;
-        }
     }
     
-    &.add-friend {
+    .add-friend-btn.loading {
+        background-color: #525252;
+    }    
+
+    .add-friend-btn.loading svg {
+        -webkit-animation:spin 1s linear infinite;
+        -moz-animation:spin 1s linear infinite;
+        animation:spin 1s linear infinite;
+    }
+    
+    
+    .add-friend-btn.add-friend {
         background-color: #4f46e5;
     }
     
-    &.unsend {
+    .add-friend-btn.unsend {
         background-color: #3730a3;
     }
     
-    &.unfriend {
+    .add-friend-btn.unfriend {
         background-color: #b91c1c;
     }
-}
 
-.add-friend-btn:hover {
-    background-color: #3730a3;
-}
+    .add-friend-btn:hover {
+        background-color: #3730a3;
+    }
 
 </style>

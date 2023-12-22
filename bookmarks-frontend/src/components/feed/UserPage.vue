@@ -98,7 +98,6 @@ const userData = reactive({
         cdnUrl: ''
     });
 
-const mutualPlaceholder = ['michael', 'kyle', 'cole']
 const currentSelection = ref('about_me')
 
 const componentMapping = reactive({
@@ -137,7 +136,7 @@ onMounted(() => {
          
 </script>
 
-<style scoped lang="scss">
+<style scoped>
     
     .bookshelves-btn.disabled {
         pointer-events: none;

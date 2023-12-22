@@ -1,7 +1,6 @@
 <template>
     <BackBtn/>
     <section class="social-wrapper">
-
         <Accordian 
             :expanded="social_dropdowns['is-pending-requests-expanded']"
             @clicked-chevron="
