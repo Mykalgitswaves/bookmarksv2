@@ -1,22 +1,25 @@
 <template>
     <BackBtn/>
     <section class="social-wrapper">
-        <div class="accordian-heading">
-            <h1 class="text-2xl text-slate-800 font-medium">
-                <span class="text-indigo-500 underline mr-2">{{ totalRequests }}</span> Pending requests
-            </h1>
 
-            <button 
-                type="button"
-                alt="expand-collapse"
-                class="accordian-heading-btn large"
-                @click=""
-            >
-                <IconChevron />
-            </button>
-        </div>
+        <Accordian 
+            :expanded="social_dropdowns['is-pending-requests-expanded']"
+            @clicked-chevron="
+                ($event) => 
+                accordianFn('is-pending-requests-expanded', social_dropdowns, $event)
+                "
+        >
+            <template v-slot:heading-text>
+                <span class="text-indigo-500 underline mr-2">
+                    {{ totalRequests }}
+                </span> Pending requests
+            </template>
+        </Accordian>
 
-        <div class="friend-requests">
+        <div 
+            class="friend-requests"
+            v-if="social_dropdowns['is-pending-requests-expanded']"
+        >
             <FriendRequest 
                 v-for="(user, index) in friend_requests" 
                 :key="index"
@@ -32,12 +35,12 @@
     import BackBtn from '../partials/back-btn.vue';
     import FriendRequest from './FriendRequest.vue';
     import SocialPagination from './SocialPagination.vue';
-    import { ref, computed, onMounted } from 'vue';
+    import { ref, computed, onMounted, watchEffect, reactive } from 'vue';
     // import { users } from '../../../fixtureData/dummyUsers.js';
     import { useRoute } from 'vue-router'
     import { db } from '../../../services/db';
     import { urls } from '../../../services/urls';
-    import IconChevron from '../../svg/icon-chevron.vue';
+    import Accordian from '../partials/accordian.vue';
     const route = useRoute();
 
     const friend_requests =  ref(null);
@@ -47,6 +50,8 @@
     const totalRequests = ref(0);
     const current_requests = ref([]);
 
+    const social_dropdowns = {}
+
     onMounted(() => {
         db.get(urls.user.getUsersFriendRequests(route.params.user)).then((res) => {
             friend_requests.value = res.data
@@ -55,8 +60,9 @@
 
         totalPages.value = computed(() => {
             if (friend_requests.value?.length) {
-                Math.ceil(friend_requests.value.length / reqsPerPage);
+                return Math.ceil(friend_requests.value.length / reqsPerPage);
             }
+            return 0;
         });
     
         current_requests.value = computed(() => { 
@@ -73,8 +79,19 @@
     function handlePageChange(page) {
         currentPage.value = page;
     };
+
+    function accordianFn(keyword, mapObject, payload) {
+        mapObject[keyword] = payload;
+        console.log(mapObject[keyword], 'map', payload, 'payload');
+    }
+
+    watchEffect(() => {
+        // Used to set a default value for dropdowns?
+        social_dropdowns['is-pending-requests-expanded'] = () => 
+            (totalRequests.value.length > 0 ? true : false)
+    });
 </script>
-<style scoped lang="scss">
+<style scoped>
     .social-wrapper {
         margin-top: 24px;
         margin-left: 12px;
@@ -90,13 +107,6 @@
         margin-top: 20px;
         margin-bottom: 20px;
         min-height: 350px;
-    }
-
-
-    .accordian-heading {
-        display: flex;
-        flex-direction: row;
-        justify-content: space-between;
     }
 
     /* Maybe save maybe trash #TODO: Figure out this shit */
