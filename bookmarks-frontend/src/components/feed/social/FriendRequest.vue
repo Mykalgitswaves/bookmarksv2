@@ -39,7 +39,7 @@ const props = defineProps({
 });
 
 </script>
-<style scoped lang="scss">
+<style scoped>
     .friend-request {
         display: grid;
         grid-template-columns: min-content auto .35fr;
@@ -47,14 +47,14 @@ const props = defineProps({
         padding: 12px;
         border-radius: 8px; 
         border: 1px solid #f5f5f4;
+    }
 
-        img {
+    .friend-request img {
             border-radius: 50%;
             background: #d7d7d7;
             width: 50px;
             margin-right: 24px;
         }
-    }
     .friend-request-btns {
         display: grid;
         grid-template-columns: repeat(2, 40px);
@@ -74,22 +74,22 @@ const props = defineProps({
         justify-self: center;
         padding: 12px;
         transition: all 250ms ease;
-
-        &:hover {
-            background-color: #818cf8;
-        }
     }
 
-.friend-request-reject-btn {
+    .friend-request-accept-btn:hover {
+            background-color: #818cf8;
+    }
+
+    .friend-request-reject-btn {
         background-color: #dc2626;
         border-radius: 8px;
         color: #fff;
         justify-self: center;
         padding: 12px;
         transition: all 250ms ease;
+    }
 
-        &:hover {
+    .friend-request-reject-btn:hover {
             background-color: #b91c1c;
         }
-    }
 </style>
