@@ -38,24 +38,23 @@ const goToPage = (page) => {
     emit('page-changed', currentPage.value);
 };
 </script>
-<style scoped lang="scss">
+<style scoped>
     .pagination {
         display: grid;
         margin-top: 14px;
         color: #4f46e5;
         font-size: 18px;
         justify-content: center;
+    }
 
-
-        button {
+    .pagination button {
             transition: all 250ms ease;
         }
 
-        button:hover:not([disabled]) {
-            background-color: #e0e7ff;
-        }
-        .disabled {
-            color: #a8a29e;
-        }
+    .pagination button:hover:not([disabled]) {
+        background-color: #e0e7ff;
+    }
+    .pagination .disabled {
+        color: #a8a29e;
     }
 </style>
