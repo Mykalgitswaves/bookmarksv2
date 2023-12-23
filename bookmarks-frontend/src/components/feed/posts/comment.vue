@@ -5,8 +5,6 @@
         class="my-3 comment" 
         :class="{
             'is-replying': isReplying,
-            'liked': (is_liked || comment.liked_by_current_user),
-            'pinned': isPinned
         }"
     >
 
@@ -20,7 +18,13 @@
             <IconPin/>
         </button>  
 
-        <div class="comment-inner">
+        <div
+            class="comment-inner"
+            :class="{
+                'liked': (is_liked || comment.liked_by_current_user),
+                'pinned': isPinned
+            }"
+        >
             <p class="comment-text">{{ props.comment.text }}</p>
         </div>
         <div class="comment-footer">
