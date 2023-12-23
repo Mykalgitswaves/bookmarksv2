@@ -1142,3 +1142,16 @@ async def get_blocked_users_list(user_id: str, current_user: Annotated[User, Dep
         return JSONResponse(content={"data": jsonable_encoder(friend_request_list)})
     else:
         raise("400", "Unauthorized")
+    
+@app.get("/api/user/{user_id}/activity")
+async def get_activity_list(user_id: str, current_user: Annotated[User, Depends(get_current_active_user)], skip: int | None = Query(default=None), limit: int | None = Query(default=None)):
+    """
+    Gets all the recent activity for the user
+    """
+    if not current_user:    
+        raise("400", "Unauthorized")
+    if user_id == current_user.user_id:
+        activity_list = current_user.get_activity_list(driver, skip, limit)
+        return JSONResponse(content={"data": jsonable_encoder(activity_list)})
+    else:
+        raise("400", "Unauthorized")

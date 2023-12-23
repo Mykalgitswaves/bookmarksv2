@@ -185,6 +185,11 @@ class User():
     
     def get_blocked_users_list(self,driver):
         blocked_users_list = driver.get_blocked_users_list(self)
+        return(blocked_users_list)
+    
+    def get_activity_list(self,driver, skip, limit):
+        activity_list = driver.get_activity_list(self.id, skip, limit)
+        return(activity_list)
 
 class Review():
     def __init__(self, 
@@ -544,6 +549,147 @@ class FriendRequest():
     def __init__(self, from_user:User, created_date:str) -> None:
         self.from_user = from_user
         self.created_date = created_date
+
+class BaseActivityObject():
+    def __init__(self, 
+                 acting_user_id:str, 
+                 acting_user_username:str, 
+                 acting_user_profile_img_url:str, 
+                 created_date:str,
+                 activity_type:str) -> None:
+        
+        self.acting_user_id = acting_user_id
+        self.acting_user_username = acting_user_username
+        self.acting_user_profile_img_url = acting_user_profile_img_url
+        self.created_date = created_date
+        self.activity_type = activity_type
+
+class FriendActivity(BaseActivityObject):
+    def __init__(self, 
+                 acting_user_id:str, 
+                 acting_user_username:str, 
+                 acting_user_profile_img_url:str, 
+                 created_date:str, 
+                 activity_type:str) -> None:
+        
+        super().__init__(acting_user_id, 
+                         acting_user_username, 
+                         acting_user_profile_img_url, 
+                         created_date,
+                         activity_type)
+        
+class LikedPostActivity(BaseActivityObject):
+    def __init__(self, 
+                 acting_user_id:str, 
+                 acting_user_username:str, 
+                 acting_user_profile_img_url:str, 
+                 created_date:str, 
+                 activity_type:str,
+                 post_id:str,
+                 book_small_img_urls:list) -> None:
+        
+        super().__init__(acting_user_id, 
+                         acting_user_username, 
+                         acting_user_profile_img_url, 
+                         created_date,
+                         activity_type)
+        
+        self.post_id = post_id
+        self.book_small_img_urls = book_small_img_urls
+
+class LikedCommentActivity(BaseActivityObject):
+    def __init__(self, 
+                 acting_user_id:str, 
+                 acting_user_username:str, 
+                 acting_user_profile_img_url:str, 
+                 created_date:str, 
+                 activity_type:str,
+                 post_id:str,
+                 book_small_img_urls:list,
+                 comment_id:str,
+                 comment_text:str) -> None:
+        
+        super().__init__(acting_user_id, 
+                         acting_user_username, 
+                         acting_user_profile_img_url, 
+                         created_date,
+                         activity_type)
+        
+        self.post_id = post_id
+        self.book_small_img_urls = book_small_img_urls
+        self.comment_id = comment_id
+        self.comment_text = comment_text
+
+class CommentedOnPostActivity(BaseActivityObject):
+    def __init__(self, 
+                 acting_user_id:str, 
+                 acting_user_username:str, 
+                 acting_user_profile_img_url:str, 
+                 created_date:str, 
+                 activity_type:str,
+                 post_id:str,
+                 book_small_img_urls:list,
+                 comment_id:str,
+                 comment_text:str) -> None:
+        
+        super().__init__(acting_user_id, 
+                         acting_user_username, 
+                         acting_user_profile_img_url, 
+                         created_date,
+                         activity_type)
+        
+        self.post_id = post_id
+        self.book_small_img_urls = book_small_img_urls
+        self.comment_id = comment_id
+        self.comment_text = comment_text
+
+class RepliedToCommentActivity(BaseActivityObject):
+    def __init__(self, 
+                 acting_user_id:str, 
+                 acting_user_username:str, 
+                 acting_user_profile_img_url:str, 
+                 created_date:str, 
+                 activity_type:str,
+                 post_id:str,
+                 book_small_img_urls:list,
+                 comment_id:str,
+                 reply_id:str,
+                 reply_text:str) -> None:
+        
+        super().__init__(acting_user_id, 
+                         acting_user_username, 
+                         acting_user_profile_img_url, 
+                         created_date,
+                         activity_type)
+        
+        self.post_id = post_id
+        self.book_small_img_urls = book_small_img_urls
+        self.comment_id = comment_id
+        self.reply_id = reply_id
+        self.reply_text = reply_text
+
+class PinnedCommentActivity(BaseActivityObject):
+    def __init__(self, 
+                 acting_user_id:str, 
+                 acting_user_username:str, 
+                 acting_user_profile_img_url:str, 
+                 created_date:str, 
+                 activity_type:str,
+                 post_id:str,
+                 book_small_img_urls:list,
+                 comment_id:str,
+                 comment_text:str) -> None:
+        
+        super().__init__(acting_user_id, 
+                         acting_user_username, 
+                         acting_user_profile_img_url, 
+                         created_date,
+                         activity_type)
+        
+        self.post_id = post_id
+        self.book_small_img_urls = book_small_img_urls
+        self.comment_id = comment_id
+        self.comment_text = comment_text
 
 class Neo4jDriver():
     def __init__(self):
@@ -2416,7 +2562,7 @@ class Neo4jDriver():
                 match (pp {id: $post_id}) 
                 match (rr:Comment {id: $comment_id})
                 with pp,rr
-                where not exists ((pp)-[ll:PINNED]->(rr)) 
+                where not exists ((pp)-[:PINNED]->(rr)) 
                     create (pp)-[ll:PINNED {created_date:datetime()}]->(rr)
                     set rr.pinned = True
                     return rr
@@ -2598,7 +2744,8 @@ class Neo4jDriver():
                             user_id=response['u.id'],
                             book_small_img=response['b']['small_img_url'],
                             user_username=response['u.username'],
-                            num_comments=response["num_comments"]
+                            num_comments=response["num_comments"],
+                            likes=post['likes']
                         )
                 review.liked_by_current_user = response['liked_by_current_user']
                 review.posted_by_current_user = response['posted_by_current_user']
@@ -3404,6 +3551,7 @@ class Neo4jDriver():
         result = tx.run(query,user_id=user.user_id)
         blocked_user_list = []
         for response in result:
+            print(response.data())
             if 'profile_img_url' in response['blockedUser']:
                 profile_img_url = response['blockedUser']['profile_img_url']
             else:
@@ -3420,7 +3568,249 @@ class Neo4jDriver():
             blocked_user_list.append(blocked_user)
         
         return blocked_user_list
+
+    @timing_decorator
+    def get_activity_list(self, user_id:str, skip:int, limit:int):
+        """
+        Returns all activity related to a user
+        """
+        with self.driver.session() as session:
+            result = session.execute_read(self.get_activity_list_query, user_id=user_id, skip=skip, limit=limit)  
+        return(result)
     
+    @staticmethod
+    def get_activity_list_query(tx, user_id:str, skip:int, limit:int):
+        # NOTE: This query is an alternative to the one we are using, incase speed becomes an issue in the future this MAY be faster. We would have to do pagination on our end
+        # query = """
+        # // Match for recent friendships
+        # OPTIONAL MATCH (user:User {id: $user_id})-[f:FRIENDED {status: "friends"}]-(friend:User)
+        # RETURN user.id AS userId, friend.id AS acting_user_id, f.created_date AS date, 'friendship' AS activity
+        # ORDER BY f.created_date DESC
+        # limit 10
+
+        # UNION
+
+        # // OPTIONAL Match for recent likes on content (posts or any type)
+        # OPTIONAL MATCH (user:User {id: $user_id})-[:POSTED]->(content)<-[l:LIKES]-(liker:User)
+        # RETURN user.id AS userId, liker.id AS acting_user_id, l.created_date AS date, 'likeOnPost' AS activity
+        # ORDER BY l.created_date DESC
+        # limit 10
+
+        # UNION
+
+        # // OPTIONAL Match for recent likes on comments
+        # OPTIONAL MATCH (user:User {id: $user_id})-[:COMMENTED]->(comment)<-[l:LIKES]-(liker:User)
+        # RETURN user.id AS userId, liker.id AS acting_user_id, l.created_date AS date, 'likeOnComment' AS activity
+        # ORDER BY l.created_date DESC
+        # limit 10
+
+        # UNION
+
+        # // OPTIONAL Match for recent comments on posts
+        # OPTIONAL MATCH (user:User {id: $user_id})-[:POSTED]->(content)-[c:HAS_COMMENT]-(comment:Comment)<-[:COMMENTED]-(commenter:User)
+        # RETURN user.id AS userId, commenter.id AS acting_user_id, comment.created_date AS date, 'commentOnPost' AS activity
+        # ORDER BY comment.created_date DESC
+        # limit 10
+
+        # UNION
+
+        # // OPTIONAL Match for recent comments on comments
+        # OPTIONAL MATCH (user:User {id: $user_id})-[:COMMENTED]->(comment:Comment)<-[:REPLIED_TO]-(reply:Comment)<-[:COMMENTED]-(commenter:User)
+        # RETURN user.id AS userId, commenter.id AS acting_user_id, reply.created_date AS date, 'replyToComment' AS activity
+        # ORDER BY reply.created_date DESC
+        # limit 10
+
+        # UNION
+
+        # // OPTIONAL Match for pins for comments
+        # OPTIONAL MATCH (user:User {id: $user_id})-[:COMMENTED]->(comment:Comment)<-[pin:PINNED]-(post)<-[:POSTED]-(pinner:User)
+        # RETURN user.id AS userId, pinner.id AS acting_user_id, pin.created_date AS date, 'pinForComment' AS activity
+        # ORDER BY pin.created_date DESC
+        # limit 10 
+        # """
+
+        query = """
+        // Collecting friendships
+        OPTIONAL MATCH (user:User {id: $user_id})-[f:FRIENDED {status: "friends"}]-(friend:User)
+        WITH user, COLLECT({acting_user_id: friend.id, 
+                            acting_user_username:friend.username, 
+                            acting_user_profile_img_url:friend.profile_img_url, 
+                            created_date: f.created_date, 
+                            activity: 'friendship'}) AS friendships
+
+        // Collecting likes on content (posts or any type)
+        OPTIONAL MATCH (user)-[:POSTED]->(content)<-[l:LIKES]-(liker:User)
+        OPTIONAL MATCH (content)-[:POST_FOR_BOOK]->(book:Book)
+        WITH user, friendships, content, COLLECT(book.small_img_url) AS book_small_img_urls, liker, l
+        WITH user, friendships, COLLECT({acting_user_id: liker.id, 
+                                         acting_user_username:liker.username, 
+                                         acting_user_profile_img_url:liker.profile_img_url,
+                                         post_id:content.id,
+                                         book_small_img_urls:book_small_img_urls,
+                                         created_date: l.created_date, 
+                                         activity: 'liked_post'}) AS likesOnPosts
+
+        // Collecting likes on comments
+        OPTIONAL MATCH (user)-[:COMMENTED]->(comment)<-[l:LIKES]-(liker:User)
+        OPTIONAL MATCH (comment)<-[:HAS_COMMENT]-(content)-[:POST_FOR_BOOK]->(book:Book)
+        WITH user, friendships, likesOnPosts, content, COLLECT(book.small_img_url) AS book_small_img_urls, liker, l, comment
+        WITH user, friendships, likesOnPosts, COLLECT({acting_user_id: liker.id, 
+                                                       acting_user_username:liker.username, 
+                                                       acting_user_profile_img_url:liker.profile_img_url,
+                                                       post_id:content.id,
+                                                       comment_id:comment.id,
+                                                       comment_text:comment.text,
+                                                       book_small_img_urls:book_small_img_urls,
+                                                       created_date: l.created_date,
+                                                       activity: 'liked_comment'}) AS likesOnComments
+
+        // OPTIONAL Match for recent comments on posts
+        OPTIONAL MATCH (user)-[:POSTED]->(content)-[:HAS_COMMENT]-(comment:Comment)<-[:COMMENTED]-(commenter:User)
+        OPTIONAL MATCH (content)-[:POST_FOR_BOOK]->(book:Book)
+        WITH user, friendships, likesOnPosts, likesOnComments, content, COLLECT(book.small_img_url) AS book_small_img_urls, commenter, comment
+        WITH user, friendships, likesOnPosts, likesOnComments, COLLECT({acting_user_id: commenter.id, 
+                                                                        acting_user_username:commenter.username, 
+                                                                        acting_user_profile_img_url:commenter.profile_img_url,
+                                                                        post_id:content.id,
+                                                                        comment_id:comment.id,
+                                                                        comment_text:comment.text,
+                                                                        book_small_img_urls:book_small_img_urls,
+                                                                        created_date: comment.created_date, 
+                                                                        activity: 'commented_on_post'}) AS commentsOnPosts
+
+        // OPTIONAL Match for recent comments on comments
+        OPTIONAL MATCH (user)-[:COMMENTED]->(comment:Comment)<-[:REPLIED_TO]-(reply:Comment)<-[:COMMENTED]-(commenter:User)
+        OPTIONAL MATCH (comment)-[:HAS_COMMENT]-(content)-[:POST_FOR_BOOK]->(book:Book)
+        WITH user, friendships, likesOnPosts, likesOnComments, commentsOnPosts, content, COLLECT(book.small_img_url) AS book_small_img_urls, commenter, comment, reply
+        WITH user, friendships, likesOnPosts, likesOnComments, commentsOnPosts, COLLECT({acting_user_id: commenter.id, 
+                                                                                         acting_user_username:commenter.username, 
+                                                                                         acting_user_profile_img_url:commenter.profile_img_url,
+                                                                                         post_id:content.id,
+                                                                                         comment_id:comment.id,
+                                                                                         reply_id:reply.id,
+                                                                                         reply_text:reply.text,
+                                                                                         book_small_img_urls:book_small_img_urls,
+                                                                                         created_date: reply.created_date,  
+                                                                                         activity: 'replied_to_comment'}) AS repliesToComments
+
+        // OPTIONAL Match for pins for comments
+        OPTIONAL MATCH (user)-[:COMMENTED]->(comment:Comment)<-[pin:PINNED]-(content)<-[:POSTED]-(pinner:User)
+        OPTIONAL MATCH (content)-[:POST_FOR_BOOK]->(book:Book)
+        WITH user, friendships, likesOnPosts, likesOnComments, commentsOnPosts, repliesToComments, content, COLLECT(book.small_img_url) AS book_small_img_urls, pinner, comment, pin
+        WITH user, friendships, likesOnPosts, likesOnComments, commentsOnPosts, repliesToComments, COLLECT({acting_user_id: pinner.id, 
+                                                                                                            acting_user_username:pinner.username, 
+                                                                                                            acting_user_profile_img_url:pinner.profile_img_url,
+                                                                                                            post_id:content.id,
+                                                                                                            comment_id:comment.id,
+                                                                                                            comment_text:comment.text,
+                                                                                                            book_small_img_urls:book_small_img_urls,
+                                                                                                            created_date: pin.created_date,  
+                                                                                                            activity: 'pinned_comment'}) AS pinsForComments
+
+        // Filtering out null values from each activity type
+        WITH user, 
+            [x IN friendships WHERE x.acting_user_id IS NOT NULL] AS filteredFriendships,
+            [x IN likesOnPosts WHERE x.acting_user_id IS NOT NULL] AS filteredLikesOnPosts,
+            [x IN likesOnComments WHERE x.acting_user_id IS NOT NULL] AS filteredLikesOnComments,
+            [x IN commentsOnPosts WHERE x.acting_user_id IS NOT NULL] AS filteredCommentsOnPosts,
+            [x IN repliesToComments WHERE x.acting_user_id IS NOT NULL] AS filteredRepliesToComments,
+            [x IN pinsForComments WHERE x.acting_user_id IS NOT NULL] AS filteredPinsForComments
+
+        // Merging and sorting the results
+        WITH user, filteredFriendships + filteredLikesOnPosts + filteredLikesOnComments + filteredCommentsOnPosts + filteredRepliesToComments + filteredPinsForComments AS activities
+        UNWIND activities AS activity
+        RETURN activity
+        ORDER BY activity.created_date DESC
+        SKIP $skip
+        LIMIT $limit
+        """
+        
+        result = tx.run(query,user_id=user_id, skip=skip, limit=limit)
+        activity_list = []
+        for response in result:
+            activity = response['activity']
+            if activity['activity'] == 'friendship':
+                activity_list.append(
+                    FriendActivity(
+                        acting_user_id=activity['acting_user_id'],
+                        acting_user_profile_img_url=activity['acting_user_profile_img_url'],
+                        acting_user_username=activity['acting_user_username'],
+                        created_date=activity['created_date'],
+                        activity_type='friendship'
+                    )
+                )
+            elif activity['activity'] == 'liked_post':
+                activity_list.append(
+                    LikedPostActivity(
+                        acting_user_id=activity['acting_user_id'],
+                        acting_user_profile_img_url=activity['acting_user_profile_img_url'],
+                        acting_user_username=activity['acting_user_username'],
+                        created_date=activity['created_date'],
+                        activity_type='liked_post',
+                        post_id=activity['post_id'],
+                        book_small_img_urls=activity['book_small_img_urls']
+                    )
+                )
+            elif activity['activity'] == 'liked_comment':
+                activity_list.append(
+                    LikedCommentActivity(
+                        acting_user_id=activity['acting_user_id'],
+                        acting_user_profile_img_url=activity['acting_user_profile_img_url'],
+                        acting_user_username=activity['acting_user_username'],
+                        created_date=activity['created_date'],
+                        activity_type='liked_comment',
+                        post_id=activity['post_id'],
+                        book_small_img_urls=activity['book_small_img_urls'],
+                        comment_id=activity['comment_id'],
+                        comment_text=activity['comment_text']
+                    )
+                )
+            elif activity['activity'] == 'commented_on_post':
+                activity_list.append(
+                    CommentedOnPostActivity(
+                        acting_user_id=activity['acting_user_id'],
+                        acting_user_profile_img_url=activity['acting_user_profile_img_url'],
+                        acting_user_username=activity['acting_user_username'],
+                        created_date=activity['created_date'],
+                        activity_type='liked_post',
+                        post_id=activity['post_id'],
+                        book_small_img_urls=activity['book_small_img_urls'],
+                        comment_id=activity['comment_id'],
+                        comment_text=activity['comment_text']
+                    )
+                )
+            elif activity['activity'] == 'replied_to_comment':
+                activity_list.append(
+                    RepliedToCommentActivity(
+                        acting_user_id=activity['acting_user_id'],
+                        acting_user_profile_img_url=activity['acting_user_profile_img_url'],
+                        acting_user_username=activity['acting_user_username'],
+                        created_date=activity['created_date'],
+                        activity_type='liked_post',
+                        post_id=activity['post_id'],
+                        book_small_img_urls=activity['book_small_img_urls'],
+                        comment_id=activity['comment_id'],
+                        reply_id=activity['reply_id'],
+                        reply_text=activity['reply_text'],
+                    )
+                )
+            elif activity['activity'] == 'pinned_comment':
+                print(activity)
+                activity_list.append(
+                    PinnedCommentActivity(
+                        acting_user_id=activity['acting_user_id'],
+                        acting_user_profile_img_url=activity['acting_user_profile_img_url'],
+                        acting_user_username=activity['acting_user_username'],
+                        created_date=activity['created_date'],
+                        activity_type='pinned_comment',
+                        post_id=activity['post_id'],
+                        book_small_img_urls=activity['book_small_img_urls'],
+                        comment_id=activity['comment_id'],
+                        comment_text=activity['comment_text']
+                    )
+                )
+ 
+        return(activity_list)
     def close(self):
         self.driver.close()
 
@@ -3428,11 +3818,12 @@ if __name__ == "__main__":
     driver = Neo4jDriver()
 
     # driver.send_friend_request("a0f86d40-4915-4773-8aa1-844d1bfd0b41","dfa501ff-0f58-485f-94e9-50ba5dd10396")
-    # driver.accept_friend_request("a0f86d40-4915-4773-8aa1-844d1bfd0b41","dfa501ff-0f58-485f-94e9-50ba5dd10396")
+    # driver.accept_friend_request("21","a0f86d40-4915-4773-8aa1-844d1bfd0b41")
     # driver.remove_friend("a0f86d40-4915-4773-8aa1-844d1bfd0b41","dfa501ff-0f58-485f-94e9-50ba5dd10396")
     # driver.unfollow_user("a0f86d40-4915-4773-8aa1-844d1bfd0b41","dfa501ff-0f58-485f-94e9-50ba5dd10396")
     # driver.follow_user("a0f86d40-4915-4773-8aa1-844d1bfd0b41","dfa501ff-0f58-485f-94e9-50ba5dd10396")
-
-    driver.get_friend_request_list(User(user_id="a0f86d40-4915-4773-8aa1-844d1bfd0b41"))
+    # driver.add_liked_comment("michaelfinal.png@gmail.com","0c27e838-3ae0-46d2-ad1f-d8ffc40a3870")
+    # driver.get_blocked_users_list(User(user_id="a0f86d40-4915-4773-8aa1-844d1bfd0b41"))
+    driver.get_activity_list(user_id="dfa501ff-0f58-485f-94e9-50ba5dd10396")
     # driver.block_user()
     driver.close()
