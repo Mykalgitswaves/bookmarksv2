@@ -152,7 +152,7 @@ class User():
         return(result)
     
     def decline_friend_request(self,friend_id,driver):
-        result = driver.decline_friend_request(friend_id,self.user_id)
+        result = driver.decline_friend_request(friend_id, self.user_id)
         return(result)
     
     def remove_friend(self,friend_id,driver):
@@ -3338,7 +3338,7 @@ class Neo4jDriver():
         match (fromUser:User {id:$from_user_id})
         match (toUser:User {id:$to_user_id})
         MATCH (fromUser)-[friend_request:FRIENDED {status:"pending"}]->(toUser)
-        del friend_request
+        DELETE friend_request
         RETURN toUser
         """
         

@@ -1024,7 +1024,7 @@ async def decline_friend_request(user_id: str, friend_id:str, current_user: Anno
     if not current_user:
         raise("400", "Unauthorized")
     if current_user.user_id == user_id:
-        result = current_user.decline_friend_request(friend_id)
+        result = current_user.decline_friend_request(friend_id=friend_id, driver=driver)
         return result
     else:
         raise result

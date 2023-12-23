@@ -81,7 +81,6 @@
 
     function accordianFn(keyword, mapObject, payload) {
         mapObject[keyword] = payload;
-        console.log(mapObject[keyword], 'map', payload, 'payload');
     }
 
     watchEffect(() => {

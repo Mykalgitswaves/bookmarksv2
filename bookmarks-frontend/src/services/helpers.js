@@ -99,3 +99,8 @@ export const helpersCtrl = {
         };
     },
 }
+
+export function emit(element, eventName, eventData) {
+    const event = new CustomEvent(eventName, { detail: eventData });
+    element.dispatchEvent(event);
+}

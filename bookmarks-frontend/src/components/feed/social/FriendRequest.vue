@@ -7,23 +7,32 @@
         </div>
 
         <div class="friend-request-btns">
-            <button
+            <FriendBtn
                 v-for="(button, index) in buttons[rel_to_user]"
                 :key="index"
                 :type="button.type"
                 :alt="button.alt"
-                :class="button.class"
-                @click="button.click(...currentClickPayload(rel_to_user, user, user_id))"
-            >
-                <component :is="button.icon" />
-            </button>
+                :class="button.classes"
+                :click="button.click"
+                :text="button.text"
+                :payload-data="payloadData"
+                @rel-to-user-changed="($event) => relToUserChangedFn($event)"
+            >   
+                <template 
+                    v-if="button.icon" 
+                    v-slot:icon
+                >
+                    <component :is="button.icon" />
+                </template>
+            </FriendBtn>
         </div>
     </div>
 </template>
 <script setup>
-import { friendRequestButtons, currentClickPayload } from './friendRequestButton';
-import { computed, ref } from 'vue';
+import { friendRequestButtons } from './friendRequestButton';
+import { computed, ref, onMounted, reactive } from 'vue';
 import { useRoute } from 'vue-router';
+import FriendBtn from './FriendBtn.vue';
 const route = useRoute();
 const { user } = route.params
 const username = computed(() => props.userData.from_user.username);
@@ -36,6 +45,17 @@ const props = defineProps({
         type: Object,
         required: true
     }
+});
+
+function relToUserChangedFn(data) {
+    rel_to_user.value = data;
+}
+
+const payloadData = reactive({});
+
+onMounted(() => {
+    payloadData.user = user;
+    payloadData.user_id = user_id;
 });
 
 </script>
@@ -57,7 +77,7 @@ const props = defineProps({
         }
     .friend-request-btns {
         display: grid;
-        grid-template-columns: repeat(2, 40px);
+        grid-template-columns: repeat(2, minmax(40px, min-content));
         margin-right: 12px;
         column-gap: 1em;
         justify-content: flex-end;
@@ -90,6 +110,21 @@ const props = defineProps({
     }
 
     .friend-request-reject-btn:hover {
-            background-color: #b91c1c;
-        }
+        background-color: #b91c1c;
+    }
+
+    .friend-request-declined-text {
+        color: #b91c1c;
+        font-style: italic;
+        font-size: 12px;
+        padding-right: 12px;
+    }
+
+    .friend-request-reject-btn.block {
+        background-color: #991b1b;
+    }
+
+    .friend-request-reject-btn.block:hover {
+        background-color: #7f1d1d;
+    }
 </style>
