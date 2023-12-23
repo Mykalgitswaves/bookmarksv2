@@ -7,9 +7,12 @@ import IconExit from '../../svg/icon-exit.vue';
 // make sure to spread the function like below:
 // .click(...currentClickPayload(rel_to_user, curr_user_id, user_id ))
 export function currentClickPayload(rel_to_user, curr_user_id, user_id) {
-    if(rel_to_user === 'anonymous_user_friend_requested'){
+    if(
+        rel_to_user === 'anonymous_user_friend_requested' ||
+        rel_to_user === 'declined'
+    ){
         return [rel_to_user, curr_user_id, user_id];
-    }
+    } 
 }
 
 export const friendRequestButtons = {
@@ -34,6 +37,17 @@ export const friendRequestButtons = {
             text: 'Decline',
             class: 'friend-request-reject-btn',
             icon: IconExit
+        }
+    ],
+    'declined': [
+        {
+            type: 'button',
+            alt: 'declined',
+            text: 'declined',
+            class: 'text-sm text-red-600',
+        },
+        {
+            
         }
     ],
     'friends': [
