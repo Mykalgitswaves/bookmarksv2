@@ -49,7 +49,7 @@
     const totalRequests = ref(0);
     const current_requests = ref([]);
 
-    const social_dropdowns = {}
+    const social_dropdowns = reactive({})
 
     onMounted(() => {
         db.get(urls.user.getUsersFriendRequests(route.params.user)).then((res) => {
