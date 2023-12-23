@@ -9,7 +9,8 @@
             <button 
                 type="button"
                 alt="expand-collapse"
-                class="btn accordian-heading-btn large"
+                class="accordian-heading-btn"
+                :class="{'collapsed-chevron': props.expanded === true}"
                 @click="emit('clicked-chevron', !props.expanded)"
             >
                 <IconChevron />
@@ -33,4 +34,20 @@
         flex-direction: row;
         justify-content: space-between;
     }
+    
+    .accordian-heading-btn {
+        background-color: var(--slate-50);
+        transition: all 250ms ease-in;
+        padding: 4px;
+        border-radius: 4px;
+    }
+
+    .accordian-heading-btn:hover {
+        background-color: var(--slate-300);
+    }
+
+    .collapsed-chevron svg {
+        transform: rotate(180deg);
+    }
+
 </style>

@@ -254,14 +254,14 @@ ul:has(.comments-wrapper) {
   justify-self: center;
 }
 
-.comment.liked, .comment.reply.op.liked {
+.comment-inner.liked, .comment-inner.reply.op.liked {
   color: #4f46e5;
   border-color: #4f46e5;
   background-color: #f8fafc;
 }
 
 /*  Time for some animations? */
-.comment.pinned {
+.comment-inner.pinned {
   position: relative;
   border-color: #4f46e5;
   background-color: #f4f7ff;

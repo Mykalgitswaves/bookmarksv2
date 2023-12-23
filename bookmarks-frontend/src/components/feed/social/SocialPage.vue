@@ -25,9 +25,9 @@
                 :num="index"
                 :userData="user"
             />
+            <SocialPagination :current-page="currentPage" :total-pages="totalPages" @page-changed="handlePageChange"/>
         </div>
 
-        <SocialPagination :current-page="currentPage" :total-pages="totalPages" @page-changed="handlePageChange"/>
     </section>
 </template>
 <script setup>
@@ -49,7 +49,7 @@
     const totalRequests = ref(0);
     const current_requests = ref([]);
 
-    const social_dropdowns = {}
+    const social_dropdowns = reactive({})
 
     onMounted(() => {
         db.get(urls.user.getUsersFriendRequests(route.params.user)).then((res) => {

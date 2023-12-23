@@ -1,7 +1,7 @@
 <template>
     <button
     type="button"
-    class="flex ml-5 my-2 text-indigo-600 items-center md:ml-10 back-hover"
+    class="flex my-2 text-indigo-600 items-center md:ml-10 back-hover"
     @click="router.back()"
   >
     <IconBack/>

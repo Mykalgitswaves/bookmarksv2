@@ -26,6 +26,9 @@
 
 
   --media-screen-min-tablet: 768px;
+  
+  --slate-50: #f8fafc;
+  --slate-300: #cbd5e1;
 }
 
 .login-wrapper {
