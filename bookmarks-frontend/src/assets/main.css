@@ -7,6 +7,7 @@
 @import 'inputs.css';
 @import 'review-cards.css';
 @import 'settings.css';
+@import 'colors.css';
 
 @tailwind base;
 @tailwind components;
@@ -26,7 +27,7 @@
 
 
   --media-screen-min-tablet: 768px;
-  
+
   --slate-50: #f8fafc;
   --slate-300: #cbd5e1;
 }

@@ -59,7 +59,7 @@ export const friendRequestButtons = {
             click: () => null,
             type: 'button',
             alt: 'friends',
-            text: '',
+            text: 'Accepted',
             classes: 'text-indigo-600 font-italic',
             icon: null
         }

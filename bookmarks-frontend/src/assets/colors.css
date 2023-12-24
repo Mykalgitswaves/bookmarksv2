@@ -1,0 +1,205 @@
+:root {
+    --light-theme: {
+        /* Gray colors */
+        --gray-50: #f9fafb;
+        --gray-100: #f3f4f6;
+        --gray-200: #e5e7eb;
+        --gray-300: #d1d5db;
+        --gray-400: #9ca3af;
+        --gray-500: #6b7280;
+        --gray-600: #4b5563;
+        --gray-700: #374151;
+        --gray-800: #1f2937;
+        --gray-900: #111827;
+
+        /* Slate colors */
+        --slate-50: #f0f4f8;
+        --slate-100: #d9e2ec;
+        --slate-200: #bcccdc;
+        --slate-300: #9fb3c8;
+        --slate-400: #829ab1;
+        --slate-500: #627d98;
+        --slate-600: #486581;
+        --slate-700: #334e68;
+        --slate-800: #243b53;
+        --slate-900: #102a43;
+
+        /* Stone colors */
+        --stone-50: #fafaf9;
+        --stone-100: #f5f5f4;
+        --stone-200: #e5e5e5;
+        --stone-300: #d6d3d1;
+        --stone-400: #a8a29e;
+        --stone-500: #737373;
+        --stone-600: #525252;
+        --stone-700: #404040;
+        --stone-800: #262626;
+        --stone-900: #171717;
+        --stone-950: #0a0a0a;
+
+        /* Red colors */
+        --red-50: #fef2f2;
+        --red-100: #fee2e2;
+        --red-200: #fecaca;
+        --red-300: #fca5a5;
+        --red-400: #f87171;
+        --red-500: #ef4444;
+        --red-600: #dc2626;
+        --red-700: #b91c1c;
+        --red-800: #991b1b;
+        --red-900: #7f1d1d;
+
+        /* Green colors */
+        --green-50: #ecfdf5;
+        --green-100: #d1fae5;
+        --green-200: #a7f3d0;
+        --green-300: #6ee7b7;
+        --green-400: #34d399;
+        --green-500: #10b981;
+        --green-600: #059669;
+        --green-700: #047857;
+        --green-800: #065f46;
+        --green-900: #064e3b;
+
+        /* Blue colors */
+        --blue-50: #eff6ff;
+        --blue-100: #dbeafe;
+        --blue-200: #bfdbfe;
+        --blue-300: #93c5fd;
+        --blue-400: #60a5fa;
+        --blue-500: #3b82f6;
+        --blue-600: #2563eb;
+        --blue-700: #1d4ed8;
+        --blue-800: #1e40af;
+        --blue-900: #1e3a8a;
+
+        /* Indigo colors */
+        --indigo-50: #eef2ff;
+        --indigo-100: #e0e7ff;
+        --indigo-200: #c7d2fe;
+        --indigo-300: #a5b4fc;
+        --indigo-400: #818cf8;
+        --indigo-500: #6366f1;
+        --indigo-600: #4f46e5;
+        --indigo-700: #4338ca;
+        --indigo-800: #3730a3;
+        --indigo-900: #312e81;
+        --indigo-950: #1e1b4b;
+
+        /* Purple colors */
+        --purple-50: #f5f3ff;
+        --purple-100: #ede9fe;
+        --purple-200: #ddd6fe;
+        --purple-300: #c4b5fd;
+        --purple-400: #a78bfa;
+        --purple-500: #8b5cf6;
+        --purple-600: #7c3aed;
+        --purple-700: #6d28d9;
+        --purple-800: #5b21b6;
+        --purple-900: #4c1d95;
+    }
+
+    --dark-theme: {
+        /* Dark mode equivalents for Gray colors */
+        --gray-50: #1f2937;
+        --gray-100: #374151;
+        --gray-200: #4b5563;
+        --gray-300: #6b7280;
+        --gray-400: #9ca3af;
+        --gray-500: #d1d5db;
+        --gray-600: #e5e7eb;
+        --gray-700: #f3f4f6;
+        --gray-800: #f9fafb;
+        --gray-900: #ffffff; /* Adjusted to white for text readability */
+
+        /* Dark mode equivalents for Slate colors */
+        --slate-50: #102a43;
+        --slate-100: #243b53;
+        --slate-200: #334e68;
+        --slate-300: #486581;
+        --slate-400: #627d98;
+        --slate-500: #829ab1;
+        --slate-600: #9fb3c8;
+        --slate-700: #bcccdc;
+        --slate-800: #d9e2ec;
+        --slate-900: #f0f4f8;
+
+        /* Dark mode equivalents for Stone colors */
+        --stone-50: #171717;
+        --stone-100: #262626;
+        --stone-200: #404040;
+        --stone-300: #525252;
+        --stone-400: #737373;
+        --stone-500: #a8a29e;
+        --stone-600: #d6d3d1;
+        --stone-700: #e5e5e5;
+        --stone-800: #f5f5f4;
+        --stone-900: #fafaf9;
+        --stone-950: #ffffff; /* Adjusted to white for text readability */
+
+        /* Dark mode equivalents for Red colors */
+        --red-50: #7f1d1d;
+        --red-100: #991b1b;
+        --red-200: #b91c1c;
+        --red-300: #dc2626;
+        --red-400: #ef4444;
+        --red-500: #f87171;
+        --red-600: #fca5a5;
+        --red-700: #fecaca;
+        --red-800: #fee2e2;
+        --red-900: #fef2f2;
+
+        /* Dark mode equivalents for Green colors */
+        --green-50: #064e3b;
+        --green-100: #065f46;
+        --green-200: #047857;
+        --green-300: #059669;
+        --green-400: #10b981;
+        --green-500: #34d399;
+        --green-600: #6ee7b7;
+        --green-700: #a7f3d0;
+        --green-800: #d1fae5;
+        --green-900: #ecfdf5;
+
+        /* Dark mode equivalents for Blue colors */
+        --blue-50: #1e3a8a;
+        --blue-100: #1e40af;
+        --blue-200: #1d4ed8;
+        --blue-300: #2563eb;
+        --blue-400: #3b82f6;
+        --blue-500: #60a5fa;
+        --blue-600: #93c5fd;
+        --blue-700: #bfdbfe;
+        --blue-800: #dbeafe;
+        --blue-900: #eff6ff;
+
+        /* Dark mode equivalents for Indigo colors */
+        --indigo-50: #312e81;
+        --indigo-100: #3730a3;
+        --indigo-200: #4338ca;
+        --indigo-300: #4f46e5;
+        --indigo-400: #6366f1;
+        --indigo-500: #818cf8;
+        --indigo-600: #a5b4fc;
+        --indigo-700: #c7d2fe;
+        --indigo-800: #e0e7ff;
+        --indigo-900: #eef2ff;
+        --indigo-950: #ffffff; /* Adjusted to white for text readability */
+
+        /* Dark mode equivalents for Purple colors */
+        --purple-50: #4c1d95;
+        --purple-100: #5b21b6;
+        --purple-200: #6d28d9;
+        --purple-300: #7c3aed;
+        --purple-400: #8b5cf6;
+        --purple-500: #a78bfa;
+        --purple-600: #c4b5fd;
+        --purple-700: #ddd6fe;
+        --purple-800: #ede9fe;
+        --purple-900: #f5f3ff;
+    }
+
+    html[data-theme="dark"] {
+        --theme: var(--light-theme);
+    }
+}

@@ -25,9 +25,8 @@
                 :num="index"
                 :userData="user"
             />
-            <SocialPagination :current-page="currentPage" :total-pages="totalPages" @page-changed="handlePageChange"/>
+            <SocialPagination v-if="totalPages > currentPage" :current-page="currentPage" :total-pages="totalPages" @page-changed="handlePageChange"/>
         </div>
-
     </section>
 </template>
 <script setup>

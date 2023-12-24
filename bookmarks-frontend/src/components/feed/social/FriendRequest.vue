@@ -1,6 +1,12 @@
 <template>
-    <div class="friend-request">
-        <img src="" alt="">
+    <div class="friend-request"
+        :class="{
+            'friends': rel_to_user === 'friends',
+            'declined': rel_to_user === 'declined',
+            'blocked': rel_to_user === 'blocked'
+        }"
+    >
+        <img :src="profileImg || placeholder" alt="">
         <div class="friend-request-heading">
             <h3 class="text-slate-800">{{ username }}</h3>
             <p class="text-slate-600 text-small"> mutual friends </p>
@@ -28,11 +34,13 @@
         </div>
     </div>
 </template>
+
 <script setup>
 import { friendRequestButtons } from './friendRequestButton';
 import { computed, ref, onMounted, reactive } from 'vue';
 import { useRoute } from 'vue-router';
 import FriendBtn from './FriendBtn.vue';
+
 const route = useRoute();
 const { user } = route.params
 const username = computed(() => props.userData.from_user.username);
@@ -52,12 +60,12 @@ function relToUserChangedFn(data) {
 }
 
 const payloadData = reactive({});
+const profileImg = props.userData.profile_img_url;
 
 onMounted(() => {
     payloadData.user = user;
     payloadData.user_id = user_id;
 });
-
 </script>
 <style scoped>
     .friend-request {
@@ -67,6 +75,10 @@ onMounted(() => {
         padding: 12px;
         border-radius: 8px; 
         border: 1px solid #f5f5f4;
+    }
+
+    .friend-request.friends {
+        border-color: ;
     }
 
     .friend-request img {
