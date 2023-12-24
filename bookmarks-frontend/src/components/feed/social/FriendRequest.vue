@@ -9,7 +9,8 @@
         <img :src="profileImg || placeholder" alt="">
         <div class="friend-request-heading">
             <h3 class="text-slate-800">{{ username }}</h3>
-            <p class="text-slate-600 text-small"> mutual friends </p>
+
+            <p class="text-slate-600 text-small" v-if="rel_to_user !== 'blocked'"> mutual friends </p>
         </div>
 
         <div class="friend-request-btns">
