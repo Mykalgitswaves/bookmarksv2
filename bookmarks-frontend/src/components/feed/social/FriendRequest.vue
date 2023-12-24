@@ -74,16 +74,16 @@ onMounted(() => {
         height: min-content;
         padding: 12px;
         border-radius: 8px; 
-        border: 1px solid #f5f5f4;
+        border: 1px solid var(--stone-200);
     }
 
     .friend-request.friends {
-        border-color: ;
+        border-color: var(--indigo-300);
     }
 
     .friend-request img {
             border-radius: 50%;
-            background: #d7d7d7;
+            background: var(--slate-300);
             width: 50px;
             margin-right: 24px;
         }
@@ -100,43 +100,43 @@ onMounted(() => {
     }
 
     .friend-request-accept-btn {
-        background-color: #a5b4fc;
+        background-color: var(--indigo-400);
         border-radius: 8px;
-        color: #fff;
+        color: var(--gray-50);
         justify-self: center;
         padding: 12px;
         transition: all 250ms ease;
     }
 
     .friend-request-accept-btn:hover {
-            background-color: #818cf8;
+            background-color: var(--indigo-600);
     }
 
     .friend-request-reject-btn {
-        background-color: #dc2626;
+        background-color: var(--red-600);
         border-radius: 8px;
-        color: #fff;
+        color: var(--gray-50);
         justify-self: center;
         padding: 12px;
         transition: all 250ms ease;
     }
 
     .friend-request-reject-btn:hover {
-        background-color: #b91c1c;
+        background-color: var(--red-800);
     }
 
     .friend-request-declined-text {
-        color: #b91c1c;
+        color: var(--red-600);
         font-style: italic;
         font-size: 12px;
         padding-right: 12px;
     }
 
     .friend-request-reject-btn.block {
-        background-color: #991b1b;
+        background-color: var(--red-600);
     }
 
     .friend-request-reject-btn.block:hover {
-        background-color: #7f1d1d;
+        background-color: var(--red-800);
     }
 </style>

@@ -1,5 +1,4 @@
 :root {
-    --light-theme: {
         /* Gray colors */
         --gray-50: #f9fafb;
         --gray-100: #f3f4f6;
@@ -97,9 +96,9 @@
         --purple-700: #6d28d9;
         --purple-800: #5b21b6;
         --purple-900: #4c1d95;
-    }
+    
 
-    --dark-theme: {
+    html[data-theme="dark"] {
         /* Dark mode equivalents for Gray colors */
         --gray-50: #1f2937;
         --gray-100: #374151;
@@ -198,15 +197,6 @@
         --purple-800: #ede9fe;
         --purple-900: #f5f3ff;
     }
-   
 }
 
 /* Need some media prefers color scheme stuff so this works when users have a set preference. */
-
-html[data-theme="light"] {
-    --theme: var(--light-theme);
-}
-
-html[data-theme="dark"] {
-    --theme: var(--dark-theme);
-}
