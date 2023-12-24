@@ -201,6 +201,8 @@
    
 }
 
+/* Need some media prefers color scheme stuff so this works when users have a set preference. */
+
 html[data-theme="light"] {
     --theme: var(--light-theme);
 }
