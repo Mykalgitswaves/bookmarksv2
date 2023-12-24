@@ -198,8 +198,13 @@
         --purple-800: #ede9fe;
         --purple-900: #f5f3ff;
     }
+   
+}
 
-    html[data-theme="dark"] {
-        --theme: var(--light-theme);
-    }
+html[data-theme="light"] {
+    --theme: var(--light-theme);
+}
+
+html[data-theme="dark"] {
+    --theme: var(--dark-theme);
 }
