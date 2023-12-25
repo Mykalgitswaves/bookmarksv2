@@ -79,7 +79,18 @@ onMounted(() => {
     }
 
     .friend-request.friends {
-        border-color: var(--indigo-300);
+        border-color: var(--green-300);
+        background-color: var(--green-50);
+    }
+
+    .friend-request.blocked {
+        border-color: var(--red-200);
+        background-color: var(--red-50);
+    }
+
+    .friend-request.declined {
+        border-color: var(--stone-200);
+        background-color: var(--stone-50);
     }
 
     .friend-request img {
