@@ -12,12 +12,13 @@
 
         <div
             class="nav-button-group hover:bg-gray-200" 
-            @click="goToSearchPage()"
+            @click="goToSearchPage(user)"
+            aria-roledescription="navigation button"
         >
             <button 
                 class="footer-nav-button" 
                 type="button"
-                @click="goToSearchPage()"
+                @click="goToSearchPage(user)"
             >
                 <IconSearch/>
             </button>
@@ -26,13 +27,14 @@
 
         <div 
             class="nav-button-group hover:bg-gray-200" 
-            @click="goToFeedPage()"
+            @click="goToFeedPage(user)"
+            aria-roledescription="navigation button"
         >
             <button 
                 class="footer-nav-button" 
                 type="button"
                 alt="feed"
-                @click="goToFeedPage()"
+                @click="goToFeedPage(user)"
             >
                 <IconBook/>
             </button>
@@ -42,12 +44,13 @@
         <div 
             class="nav-button-group hover:bg-gray-200"
             v-show="!isSearchBarActive"
-            @click="goToSocialPage()"
+            @click="goToSocialPage(user)"
+            aria-roledescription="navigation button"
         >
             <button 
                 class="footer-nav-button"
                 type="button"
-                @click="goToSocialPage()"
+                @click="goToSocialPage(user)"
                 alt="feed"
             >
                 <IconSocial/>
@@ -57,12 +60,19 @@
 
         <div 
             class="nav-button-group hover:bg-gray-200"
-            v-show="!isSearchBarActive"    
+            v-show="!isSearchBarActive"
+            @click="goToUserPage(user)"
+            aria-roledescription="navigation button"
         >
-            <button class="footer-nav-button" alt="feed">
+            <button 
+                class="footer-nav-button"
+                alt="feed"
+                typ="button"
+                @click="goToUserPage(user)"
+            >
                 <IconExplore/>
             </button>
-            <p>Explore</p>
+            <p>Profile</p>
         </div>
     </footer>
 </template>
@@ -78,38 +88,25 @@ import IconExpand from '@/components/svg/icon-expand.vue';
 
 import { useRoute, useRouter }  from 'vue-router'
 import { computed, ref } from 'vue'
+import { goToSearchPage, goToFeedPage, goToSocialPage, goToUserPage } from './footernavService';
 
 const isSearchBarActive = ref(false);
 
 const route = useRoute();
-const router = useRouter();
-
-function goToSearchPage() {
-    router.push(`/feed/${route.params.user}/search/`);
-}
-
-function goToFeedPage() {
-    router.push(`/feed/${route.params.user}/all`);
-}
-
-function goToSocialPage() {
-    router.push(`/feed/${route.params.user}/social/`)
-}
-
-const activeBorderClasses = 'border-solid border-2 border-indigo-300';
+const { user } = route.params
 
 window.addEventListener('toggleSearchBar', () => {
     isSearchBarActive.value = !isSearchBarActive.value
     console.log('fired event ', isSearchBarActive.value)
-})
+});
 
 const minimized = ref(Boolean);
 const isMinimized = computed(() => minimized.value === true ? 'minimized' : '');
 
 function toggleMinimize() {
-    console.log('called')
     return minimized.value = !minimized.value
 }
+
 </script>
 
 <style scoped>
