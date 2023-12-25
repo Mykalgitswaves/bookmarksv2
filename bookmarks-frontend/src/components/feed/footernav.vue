@@ -86,7 +86,7 @@ import IconExplore from '@/components/svg/icon-explore.vue';
 import IconSearch from '@/components/svg/icon-search.vue';
 import IconExpand from '@/components/svg/icon-expand.vue';
 
-import { useRoute, useRouter }  from 'vue-router'
+import { useRoute }  from 'vue-router'
 import { computed, ref } from 'vue'
 import { goToSearchPage, goToFeedPage, goToSocialPage, goToUserPage } from './footernavService';
 
