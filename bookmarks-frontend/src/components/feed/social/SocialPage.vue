@@ -17,7 +17,7 @@
 
         <div 
             class="friend-requests"
-            v-if="social_dropdowns['is-pending-requests-expanded']"
+            v-if="friend_requests.length && social_dropdowns['is-pending-requests-expanded']"
         >
             <FriendRequest 
                 v-for="(user, index) in friend_requests" 
@@ -40,7 +40,13 @@
                 Recent activity
             </template>
         </Accordian>
-        <Activities/>
+        <div v-if="activities.length && social_dropdowns['is-activites-expanded']">
+            <Activities
+                v-for="activity in activities"
+                :key="activity.id"
+                :activity="activity"
+            />
+        </div>
     </section>
 </template>
 <script setup>
@@ -53,10 +59,12 @@
     import FriendRequest from './FriendRequest.vue';
     import SocialPagination from './SocialPagination.vue';
     import Accordian from '../partials/accordian.vue';
-    import Activities from './Activities.vue';
+    import Activities from './Activities/Activities.vue';
     
 
     const route = useRoute();
+    // Used for all dropdown toggles.
+    const social_dropdowns = reactive({});
 
     const friend_requests =  ref(null);
     const currentPage = ref(1);
@@ -65,7 +73,7 @@
     const totalRequests = ref(0);
     const current_requests = ref([]);
 
-    const social_dropdowns = reactive({})
+    const activities = ref(null);
 
     onMounted(() => {
         db.get(urls.user.getUsersFriendRequests(route.params.user)).then((res) => {
@@ -76,6 +84,7 @@
         db.get(urls.user.getActivitiesForUser(route.params.user)).then((res) => {
             // Change this logic in the future so that social dropdowns depends on what is returned from request calls. 
             social_dropdowns['is-activites-expanded'] = res.data.length;
+            activities.value = res.data;
         })
 
         totalPages.value = computed(() => {
