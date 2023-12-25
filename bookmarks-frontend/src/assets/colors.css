@@ -96,7 +96,9 @@
         --purple-700: #6d28d9;
         --purple-800: #5b21b6;
         --purple-900: #4c1d95;
-    
+
+        --surface-primary: #fff;
+    }
 
     html[data-theme="dark"] {
         /* Dark mode equivalents for Gray colors */
@@ -196,7 +198,7 @@
         --purple-700: #ddd6fe;
         --purple-800: #ede9fe;
         --purple-900: #f5f3ff;
+        --surface-primary: #131313;
     }
-}
 
 /* Need some media prefers color scheme stuff so this works when users have a set preference. */

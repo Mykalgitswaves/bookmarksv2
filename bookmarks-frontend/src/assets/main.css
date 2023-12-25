@@ -8,6 +8,7 @@
 @import 'review-cards.css';
 @import 'settings.css';
 @import 'colors.css';
+@import 'text-styles.css';
 
 @tailwind base;
 @tailwind components;

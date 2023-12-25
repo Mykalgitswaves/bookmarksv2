@@ -2,4 +2,10 @@
     --text-purple--base: #5A67D8;
   }
 
+.text-slate-800 {
+  color: var(--slate-800);
+}
 
+.text-slate-600 {
+  color: var(--slate-600);
+}

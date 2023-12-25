@@ -75,6 +75,7 @@ onMounted(() => {
         height: min-content;
         padding: 12px;
         border-radius: 8px; 
+        background-color: var(--surface-primary);
         border: 1px solid var(--stone-200);
     }
 

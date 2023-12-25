@@ -28,17 +28,34 @@
             <SocialPagination v-if="totalPages > currentPage" :current-page="currentPage" :total-pages="totalPages" @page-changed="handlePageChange"/>
         </div>
     </section>
+    <section class="social-wrapper">
+        <Accordian 
+            :expanded="social_dropdowns['is-activites-expanded']"
+            @clicked-chevron="
+                ($event) => 
+                accordianFn('is-activities-expanded', social_dropdowns, $event)
+                "
+        >
+            <template v-slot:heading-text>
+                Recent activity
+            </template>
+        </Accordian>
+        <Activities/>
+    </section>
 </template>
 <script setup>
-    import BackBtn from '../partials/back-btn.vue';
-    import FriendRequest from './FriendRequest.vue';
-    import SocialPagination from './SocialPagination.vue';
     import { ref, computed, onMounted, watchEffect, reactive } from 'vue';
-    // import { users } from '../../../fixtureData/dummyUsers.js';
     import { useRoute } from 'vue-router'
     import { db } from '../../../services/db';
     import { urls } from '../../../services/urls';
+
+    import BackBtn from '../partials/back-btn.vue';
+    import FriendRequest from './FriendRequest.vue';
+    import SocialPagination from './SocialPagination.vue';
     import Accordian from '../partials/accordian.vue';
+    import Activities from './Activities.vue';
+    
+
     const route = useRoute();
 
     const friend_requests =  ref(null);
@@ -55,6 +72,11 @@
             friend_requests.value = res.data
             totalRequests.value = friend_requests.value.length;
         });
+
+        db.get(urls.user.getActivitiesForUser(route.params.user)).then((res) => {
+            // Change this logic in the future so that social dropdowns depends on what is returned from request calls. 
+            social_dropdowns['is-activites-expanded'] = res.data.length;
+        })
 
         totalPages.value = computed(() => {
             if (friend_requests.value?.length) {
@@ -86,6 +108,7 @@
         // Used to set a default value for dropdowns?
         social_dropdowns['is-pending-requests-expanded'] = () => 
             (totalRequests.value.length > 0 ? true : false)
+        
     });
 </script>
 <style scoped>

@@ -23,6 +23,7 @@ export const urls = {
         unsendAnonFriendRequest: (user_id, friend_id) => (baseUrl + `api/user/${user_id}/unsend_friend_request/${friend_id}`),
         declineAnonFriendRequest: (user_id, friend_id) => (baseUrl + `api/user/${user_id}/decline_friend_request/${friend_id}`),
         blockAnonFriendRequest: (user_id) => (baseUrl + `api/user/${user_id}/block`),
+        getActivitiesForUser: (user_id) => (baseUrl + `api/user/${user_id}/activity`),
         unfriendFriend: (user_id, friend_id) => (baseUrl + `api/user/${user_id}/remove_friend/${friend_id}`),
         followUser: (user_id, friend_id) => (baseUrl + `api/user/${user_id}/follow/${friend_id}`),
         unfollowUser: (user_id, friend_id) => (baseUrl + `api/user/${user_id}/unfollow/${friend_id}`),
