@@ -10,22 +10,24 @@
         >
             <template v-slot:heading-text>
                 <span class="text-indigo-500 underline mr-2">
-                    {{ totalRequests }}
+                    {{ totalRequests || 'Loading' }}
                 </span> Pending requests
             </template>
         </Accordian>
 
         <div 
             class="friend-requests"
-            v-if="friend_requests.length && social_dropdowns['is-pending-requests-expanded']"
         >
-            <FriendRequest 
+            <div v-if="friend_requests?.length && social_dropdowns['is-pending-requests-expanded']">
+                <FriendRequest
                 v-for="(user, index) in friend_requests" 
                 :key="index"
                 :num="index"
                 :userData="user"
-            />
-            <SocialPagination v-if="totalPages > currentPage" :current-page="currentPage" :total-pages="totalPages" @page-changed="handlePageChange"/>
+                />
+                
+                <SocialPagination v-if="totalPages > currentPage" :current-page="currentPage" :total-pages="totalPages" @page-changed="handlePageChange"/>
+            </div>
         </div>
     </section>
     <section class="social-wrapper">
@@ -40,12 +42,14 @@
                 Recent activity
             </template>
         </Accordian>
-        <div v-if="activities.length && social_dropdowns['is-activites-expanded']">
-            <Activities
-                v-for="activity in activities"
-                :key="activity.id"
-                :activity="activity"
-            />
+        <div class="activities">
+            <div v-if="activities?.length && social_dropdowns['is-activites-expanded']">
+                <Activities
+                    v-for="activity in activities"
+                    :key="activity.id"
+                    :activity="activity"
+                />
+            </div>
         </div>
     </section>
 </template>
@@ -59,6 +63,7 @@
     import FriendRequest from './FriendRequest.vue';
     import SocialPagination from './SocialPagination.vue';
     import Accordian from '../partials/accordian.vue';
+    import { accordianFn } from '../partials/accordianService';
     import Activities from './Activities/Activities.vue';
     
 
@@ -83,8 +88,9 @@
 
         db.get(urls.user.getActivitiesForUser(route.params.user)).then((res) => {
             // Change this logic in the future so that social dropdowns depends on what is returned from request calls. 
-            social_dropdowns['is-activites-expanded'] = res.data.length;
-            activities.value = res.data;
+            // social_dropdowns['is-activites-expanded'] = res.data.length;
+            console.log(res)
+            activities.value = res;
         })
 
         totalPages.value = computed(() => {
@@ -109,10 +115,6 @@
         currentPage.value = page;
     };
 
-    function accordianFn(keyword, mapObject, payload) {
-        mapObject[keyword] = payload;
-    }
-
     watchEffect(() => {
         // Used to set a default value for dropdowns?
         social_dropdowns['is-pending-requests-expanded'] = () => 
@@ -135,7 +137,8 @@
         row-gap: 12px;
         margin-top: 20px;
         margin-bottom: 20px;
-        min-height: 350px;
+        min-height: fit-content;
+        max-height:  350px;
     }
 
     /* Maybe save maybe trash #TODO: Figure out this shit */

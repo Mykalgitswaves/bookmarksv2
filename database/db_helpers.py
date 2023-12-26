@@ -188,7 +188,7 @@ class User():
         return(blocked_users_list)
     
     def get_activity_list(self,driver, skip, limit):
-        activity_list = driver.get_activity_list(self.id, skip, limit)
+        activity_list = driver.get_activity_list(self.user_id, skip, limit)
         return(activity_list)
 
 class Review():
@@ -3725,7 +3725,8 @@ class Neo4jDriver():
         LIMIT $limit
         """
         
-        result = tx.run(query,user_id=user_id, skip=skip, limit=limit)
+        result = tx.run(query, user_id=user_id, skip=skip, limit=limit)
+
         activity_list = []
         for response in result:
             activity = response['activity']

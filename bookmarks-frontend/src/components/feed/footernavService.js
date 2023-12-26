@@ -1,9 +1,7 @@
-import { useRouter } from 'vue-router';
-
-const router = useRouter();
+import { router } from '../../router/index';
 
 export function goToSearchPage(user) {
-    router.push(`/feed/${user}/search/`);
+    router.push(`/feed/${user}/search`);
 }
 
 export function goToFeedPage(user) {
@@ -11,9 +9,9 @@ export function goToFeedPage(user) {
 }
 
 export function goToSocialPage(user) {
-    router.push(`/feed/${user}/social/`)
+    router.push(`/feed/${user}/social`)
 }
 
 export function goToUserPage(user) {
-    router.push(`/feed/${user}`)
+    router.push(`/feed/${user}/user/${user}`)
 }
