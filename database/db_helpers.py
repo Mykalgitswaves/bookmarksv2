@@ -3844,7 +3844,8 @@ class Neo4jDriver():
         MATCH (user:User {id: $user_id})
         WITH user
         MATCH (otherUser:User)
-        WHERE NOT (user)-[:FRIENDED {status:'friends'}]-(otherUser) 
+        WHERE NOT (user)-[:FRIENDED]-(otherUser)
+        and not (user)-[:BLOCKED]-(otherUser) 
         AND user.id <> otherUser.id
         OPTIONAL MATCH (user)-[:FRIENDED {status:'friends'}]-(friend:User)-[:FRIENDED {status:'friends'}]-(otherUser)
         WITH otherUser, COUNT(friend) AS mutualFriends
