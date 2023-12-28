@@ -1155,3 +1155,16 @@ async def get_activity_list(user_id: str, current_user: Annotated[User, Depends(
         return JSONResponse(content={"data": jsonable_encoder(activity_list)})
     else:
         raise("400", "Unauthorized")
+    
+@app.get("/api/user/{user_id}/suggested_friends")
+async def get_suggested_friends(user_id: str, current_user: Annotated[User, Depends(get_current_active_user)], n: int = 3):
+    """
+    Returns a list of n friends with the most mutual friends to the current user
+    """
+    if not current_user:    
+        raise("400", "Unauthorized")
+    if user_id == current_user.user_id:
+        suggested_friends = current_user.get_suggested_friends(driver, n)
+        return JSONResponse(content={"data": jsonable_encoder(suggested_friends)})
+    else:
+        raise("400", "Unauthorized")
