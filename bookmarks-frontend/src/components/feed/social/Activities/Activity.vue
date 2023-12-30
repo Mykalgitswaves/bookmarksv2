@@ -7,12 +7,10 @@
             <p>{{ activity?.acting_user_username }}</p>
 
         </div>
-        <div v-if="activity">
             <component
                 :is="activityMap[type].component" 
                 v-bind="activityMap[type].props(activity)" 
             />
-        </div>
     </div>
 </template>
 <script setup>

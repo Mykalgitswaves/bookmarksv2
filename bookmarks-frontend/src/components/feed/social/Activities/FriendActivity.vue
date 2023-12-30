@@ -7,9 +7,20 @@
     import { watchEffect } from 'vue';
 
     const props = defineProps({
-        activity: {
-            type: Object,
-            required: true
+        actingUserId: {
+            type: String,
+        },
+        actingUserProfileImg: {
+            type: String,
+        },
+        actingUserUsername: {
+            type: String,
+        },
+        activityType: {
+            type: String,
+        },
+        createdDate: {
+            type: Date,
         }
     })
     watchEffect(() => {

@@ -10,12 +10,12 @@
         >
             <template v-slot:heading-text>
                 <span class="text-indigo-500 underline mr-2">
-                    {{ totalRequests || 'Loading' }}
+                    {{ totalRequests }}
                 </span> Pending requests
             </template>
         </Accordian>
 
-        <div 
+        <div
             class="friend-requests"
         >
             <div v-if="friend_requests?.length && social_dropdowns['is-pending-requests-expanded']">
@@ -43,11 +43,11 @@
             </template>
         </Accordian>
         <div class="activities" v-if="activities?.length && social_dropdowns['is-activities-expanded']">
-                <Activity
-                    v-for="activity in activities"
-                    :key="activity.id"
-                    :activity="activity"
-                />
+            <Activity
+                v-for="activity in activities"
+                :key="activity.id"
+                :activity="activity"
+            />
         </div>
     </section>
 </template>
