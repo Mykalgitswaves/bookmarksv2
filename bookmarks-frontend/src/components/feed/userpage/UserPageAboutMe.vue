@@ -28,7 +28,7 @@
     <LoadingIndicatorBook v-else/>
 </template>
 <script setup>
-import { ref, watchEffect } from 'vue';
+import { ref, onMounted } from 'vue';
 import { useRoute } from 'vue-router';
 import { db } from '../../../services/db';
 import { urls } from '../../../services/urls';
@@ -38,9 +38,9 @@ const route = useRoute();
 const { user_profile } = route.params;
 const data = ref(null);
 
-watchEffect(() => {
+onMounted(() => {
     db.get(urls.user.getUserAbout(user_profile)).then((res) => {
-        data.value = res.data
+        data.value = res.data;
     });
 });
 </script>

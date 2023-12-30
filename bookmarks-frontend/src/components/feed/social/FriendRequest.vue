@@ -6,9 +6,16 @@
             'blocked': rel_to_user === 'blocked'
         }"
     >
-        <img :src="profileImg || placeholder" alt="">
+        <img 
+            v-if="profileImg"
+            class="small-profile-image" 
+            :src="profileImg" alt=""
+        >
+
+        <placeholder v-if="!profileImg" class="small-profile-image" />
+
         <div class="friend-request-heading">
-            <h3 class="text-slate-800">{{ username }}</h3>
+            <h3 class="text-slate-800 font-medium">{{ username }}</h3>
 
             <p class="text-slate-600 text-small" v-if="rel_to_user !== 'blocked'"> mutual friends </p>
         </div>
@@ -41,6 +48,7 @@ import { friendRequestButtons } from './friendRequestButton';
 import { computed, ref, onMounted, reactive } from 'vue';
 import { useRoute } from 'vue-router';
 import FriendBtn from './FriendBtn.vue';
+import placeholder from '../../svg/placeholderImage.vue';
 
 const route = useRoute();
 const { user } = route.params
@@ -61,7 +69,9 @@ function relToUserChangedFn(data) {
 }
 
 const payloadData = reactive({});
-const profileImg = props.userData.profile_img_url;
+const profileImg = computed(() => {
+    return props.userData?.profile_img_url;
+})
 
 onMounted(() => {
     payloadData.user = user;
@@ -77,6 +87,11 @@ onMounted(() => {
         border-radius: 8px; 
         background-color: var(--surface-primary);
         border: 1px solid var(--stone-200);
+        transition: var(--transition-short);
+    }
+
+    .friend-request:hover {
+        border-color: var(--stone-300);
     }
 
     .friend-request.friends {
@@ -93,13 +108,6 @@ onMounted(() => {
         border-color: var(--stone-200);
         background-color: var(--stone-50);
     }
-
-    .friend-request img {
-            border-radius: 50%;
-            background: var(--slate-300);
-            width: 50px;
-            margin-right: 24px;
-        }
     .friend-request-btns {
         display: grid;
         grid-template-columns: repeat(2, minmax(40px, min-content));
@@ -131,7 +139,7 @@ onMounted(() => {
         color: var(--gray-50);
         justify-self: center;
         padding: 12px;
-        transition: all 250ms ease;
+        transition: var(--transition-short);
     }
 
     .friend-request-reject-btn:hover {

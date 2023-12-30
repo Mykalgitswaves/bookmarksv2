@@ -125,7 +125,7 @@ async function getUserData() {
 
 function getUserBio() {
     return userData.relationship_to_current_user === 'self' ?
-        (userData?.bio ?? 'Make sure to set your bio') :
+        (userData?.bio !== '' ? userData?.bio : 'Make sure to set your bio') :
         userData?.bio
 }
 

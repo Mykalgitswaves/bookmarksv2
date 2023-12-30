@@ -5,5 +5,6 @@
 // We set social_dropdowns['is-pending-requests-expanded'] over template v-ifs to hide and show.
 
 export function accordianFn(keyword, mapObject, payload) {
+    console.log(mapObject[keyword], payload)
     mapObject[keyword] = payload;
 }

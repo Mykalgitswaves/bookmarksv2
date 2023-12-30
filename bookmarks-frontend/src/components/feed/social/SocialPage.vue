@@ -32,7 +32,7 @@
     </section>
     <section class="social-wrapper">
         <Accordian 
-            :expanded="social_dropdowns['is-activites-expanded']"
+            :expanded="social_dropdowns['is-activities-expanded']"
             @clicked-chevron="
                 ($event) => 
                 accordianFn('is-activities-expanded', social_dropdowns, $event)
@@ -42,14 +42,12 @@
                 Recent activity
             </template>
         </Accordian>
-        <div class="activities">
-            <div v-if="activities?.length && social_dropdowns['is-activites-expanded']">
-                <Activities
+        <div class="activities" v-if="activities?.length && social_dropdowns['is-activities-expanded']">
+                <Activity
                     v-for="activity in activities"
                     :key="activity.id"
                     :activity="activity"
                 />
-            </div>
         </div>
     </section>
 </template>
@@ -64,7 +62,7 @@
     import SocialPagination from './SocialPagination.vue';
     import Accordian from '../partials/accordian.vue';
     import { accordianFn } from '../partials/accordianService';
-    import Activities from './Activities/Activities.vue';
+    import Activity from './Activities/Activity.vue';
     
 
     const route = useRoute();
@@ -88,9 +86,8 @@
 
         db.get(urls.user.getActivitiesForUser(route.params.user)).then((res) => {
             // Change this logic in the future so that social dropdowns depends on what is returned from request calls. 
-            // social_dropdowns['is-activites-expanded'] = res.data.length;
-            console.log(res)
-            activities.value = res;
+            social_dropdowns['is-activites-expanded'] = !!res.data.length;
+            activities.value = res.data;
         })
 
         totalPages.value = computed(() => {
@@ -118,9 +115,11 @@
     watchEffect(() => {
         // Used to set a default value for dropdowns?
         social_dropdowns['is-pending-requests-expanded'] = () => 
-            (totalRequests.value.length > 0 ? true : false)
-        
+            (totalRequests.value > 0 ? true : false)
+        social_dropdowns['is-activities-expanded'] = () => 
+            (activities.value ? true : false)
     });
+
 </script>
 <style scoped>
     .social-wrapper {
@@ -141,6 +140,13 @@
         max-height:  350px;
     }
 
+
+    .activities {
+        display: grid;
+        grid-template-columns: 1fr;
+        row-gap: 20px;
+        margin-top: 20px;
+    }
     /* Maybe save maybe trash #TODO: Figure out this shit */
     /* .grid-row-readers {
         display: grid;

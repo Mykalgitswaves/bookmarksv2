@@ -346,3 +346,9 @@ ul:has(.comments-wrapper) {
   margin-right: -20px;
   margin-bottom: -8px;
 }
+
+.small-profile-image {
+  border-radius: 50%;
+  width: 50px;
+  margin-right: 24px;
+}
