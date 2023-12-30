@@ -1144,7 +1144,7 @@ async def get_blocked_users_list(user_id: str, current_user: Annotated[User, Dep
         raise("400", "Unauthorized")
     
 @app.get("/api/user/{user_id}/activity")
-async def get_activity_list(user_id: str, current_user: Annotated[User, Depends(get_current_active_user)], skip: int | None = Query(default=0), limit: int | None = Query(default=20)):
+async def get_activity_list(user_id: str, current_user: Annotated[User, Depends(get_current_active_user)], skip: int | None = Query(default=0), limit: int | None = Query(default=10)):
     """
     Gets all the recent activity for the user
     """

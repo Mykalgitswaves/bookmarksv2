@@ -55,7 +55,7 @@
     height: 186px;
 }
 
-.edit-profile-picture img {
+.edit-profile-picture .image {
     width: 150px;
     height: 150px;
     border-radius: 50%;
@@ -63,6 +63,7 @@
     border: solid 1px #fff;
     /* box-shadow: rgba(124,58,237, .24) 0px 0px 0px 2px, rgba(76,29,149, .68) 0px 4px 6px -1px, rgba(255, 255, 255, 0.08) 0px 1px 0px inset;; */
     box-shadow: rgba(124,58,237, .6) 0px 0px 0px 4px;
+    background-color: var(--indigo-300);
     transition: all 250ms ease;
 }
 

@@ -4,7 +4,9 @@
     <section class="section-wrapper">
         <div class="user-profile-header">
             <div class="edit-profile-picture">
-                <img :src="userData?.cdnUrl || path" class="" alt="">
+                <img v-if="userData?.cdnUrl" :src="userData?.cdnUrl" class="image" alt="">
+
+                <svgPlaceholder v-else class="image" />
                 <button
                     v-if="route.params.user === route.params.user_profile"
                     type="button"
@@ -76,7 +78,7 @@ import { db } from '../../services/db';
 import { urls } from '../../services/urls';
 import { ref, reactive, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import path from '../svg/placeholderImg.png';
+import svgPlaceholder from '../svg/placeholderImage.vue';
 
 import IconEdit from '../svg/icon-edit.vue';
 import IconLock from '../svg/icon-lock.vue';
