@@ -14,13 +14,18 @@ from database.db_helpers import (
     Neo4jDriver
 )
 
+from models import (
+    Node,
+    DoublyLinkedList
+)
+
 from database.api.books_api.search import BookSearch
 from database.api.books_api.add_book import pull_google_book
 from database.api.books_api.book_versions import search_versions_by_metadata
 from database.auth import verify_access_token
 
 from db_tasks import update_book_google_id, pull_book_and_versions
-import asyncio
+
 from fastapi import (
     FastAPI, 
     HTTPException, 
