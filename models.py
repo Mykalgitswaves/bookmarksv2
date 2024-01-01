@@ -1,3 +1,5 @@
+# https://favtutor.com/blogs/doubly-linked-list-python
+
 class Node:
     def __init__(self, data):
         self.item = data
