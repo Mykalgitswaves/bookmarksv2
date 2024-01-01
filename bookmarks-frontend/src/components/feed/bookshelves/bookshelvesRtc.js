@@ -1,6 +1,6 @@
 import { urls } from "../../../services/urls";
 import { helpersCtrl } from "../../../services/helpers";
-import { ref } from 'vue';
+import { ref, toRaw } from 'vue';
 
 const { getCookieByParam } = helpersCtrl
 
@@ -28,13 +28,14 @@ export const eventFunctionMapping = {
 export const ws = {
     client: getCookieByParam(['token']),
     socket: null, // Initialize socket variable
-    data: ref(null),
+    data: ref([]),
     newSocket: () => {
         ws.socket = new WebSocket(urls.rtc.bookshelf('new')); // Assign the socket to ws.socket
         return ws.socket;
     },
     
     createNewSocketConnection: () => {
+        if(!ws.socket){
             ws.newSocket(); // Create a new socket if it doesn't exist or if it's closed
         
             ws.socket.onopen = (e) => { 
@@ -42,12 +43,17 @@ export const ws = {
             };
 
             ws.socket.onmessage = (e) => {
+                const res = JSON.parse(e.data)
+                const data = JSON.parse(res.data)
+                if(res.type === "add"){
+                    ws.data.value.push(data);
+                } else if (res.type === "remove") {
+                    ws.data.value = ws.data.value.filter((d) => d !== ws.data.value[res.data])
+                }
                 // How we are watching data being sent from a websocket. v fast.
-                ws.data.value = JSON.parse(e.data);
                 console.log(ws.data.value)
             };
-
-            console.log(ws.socket)
+        }
     },
     
     unsubscribeFromSocketConnection() {
@@ -55,5 +61,5 @@ export const ws = {
         if (ws.socket && ws.socket.readyState !== WebSocket.CLOSED) {
             ws.socket.close();
         }
-    }
+    },
 }

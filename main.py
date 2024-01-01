@@ -1222,4 +1222,12 @@ async def bookshelf_connection(websocket: WebSocket, bookshelf_id: str):
 async def test_out_rtc_bookshelves(request: Request, bookshelf_id: str):
     data = await request.json()
     if data:
-        await ws_manager.send_data(bookshelf_id=bookshelf_id, data=jsonable_encoder(data))
+        res = {"data": data, "type": "add"} 
+        await ws_manager.send_data(bookshelf_id=bookshelf_id, data=res)
+
+@app.put("/api/bookshelves/{bookshelf_id}")
+async def test_remove_item_from_list(request: Request, bookshelf_id: str):
+    data = await request.json()
+    if data:
+        res = {"data": int(data), "type": "remove"} 
+        await ws_manager.send_data(bookshelf_id=bookshelf_id, data=res)
