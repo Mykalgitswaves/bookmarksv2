@@ -33,18 +33,31 @@ async def create_shelf_connection(websocket, path, client, bookshelf)
   user lands on component for editing a specific bookshelf.
 
     <script setup>
-        import { onMounted } from 'vue'
-        import { createNewSocketConnection }
+        import { onMounted } from 'vue';
+        import { 
+            createNewSocketConnection, unsubscribeFromSocketConnection 
+        } from './bookshelfRtc.js';
+
         const props = defineProps({
             bookshelf: {
                 type: Object
             },
         });
+
+        // Use this so that users on different devices logged in at the same time can also know when to refresh / get fresh state.
+        const client_id = Client.id
+
+        const { user } = route.params;
+        const { bookshelf } = route.params;
     // We'd need to have web sockets for creating a new socket connection?
         onMounted(() => {
             // Establish a connection
-            createNewSocketConnection(props.bookshelf)
-        })
+            createNewSocketConnection(props.bookshelf, client, user);
+        });
+        // Unmmount when userleaves component for bookshelf.
+        unMounted(() => {
+            unsubscribeFromSocketConnection(props.bookshelf);
+        });
     </script>
    // bookshelvesRTC.js
     <script>
@@ -54,7 +67,7 @@ async def create_shelf_connection(websocket, path, client, bookshelf)
                 function: (data) => (console.log(data.detail))
             },
             'closed': {
-                function: (data) => 
+                function: (data) => ()
             }
         }
 
@@ -64,22 +77,26 @@ async def create_shelf_connection(websocket, path, client, bookshelf)
         ]
 
         // We might need to pass this in user id as well
-        export function createNewSocketConnection(bookshelf){
+        export function createNewSocketConnection(bookshelf, client_id){
             const socket = new WebSocket(urls.rtc.bookshelf(bookshelf.id));
-            socket.addEventListener('open', function (event) { 
-                socket.send('Connection Established');
+            socket.addEventListener('open', function (bookshelf, client_id) { 
+                socket.send('connection opened at `${bookshelf}-${client_id}');
             });
         
-
+            // This might not work;
             BOOKSHELF_EVENT_TYPES.forEach((EVENT) => {
                 socket.addEventListener(EVENT, () => {
                     eventFunctionMapping[EVENT].function
                 });
-            })
+            });
         }
         
         const contactServer = () => {
             socket.send("Initialize");
+        }
+
+        export function unsubscribeFromSocketConnection() {
+        
         }
     </script>
     // we'd need somesort of url specifically for establishing websocket connections
@@ -92,3 +109,4 @@ async def create_shelf_connection(websocket, path, client, bookshelf)
         }
     </script>
 """
+

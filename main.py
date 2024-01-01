@@ -20,8 +20,18 @@ from database.api.books_api.book_versions import search_versions_by_metadata
 from database.auth import verify_access_token
 
 from db_tasks import update_book_google_id, pull_book_and_versions
-
-from fastapi import FastAPI, HTTPException, Depends, status, Request, BackgroundTasks
+import asyncio
+from fastapi import (
+    FastAPI, 
+    HTTPException, 
+    Depends, 
+    status, 
+    Request, 
+    BackgroundTasks, 
+    WebSocket, 
+    WebSocketException,
+    WebSocketDisconnect
+)
 from fastapi import Query
 from fastapi.responses import RedirectResponse, JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
@@ -29,7 +39,13 @@ from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm, HT
 from fastapi.encoders import jsonable_encoder
 from jose import JWTError, jwt
 from passlib.context import CryptContext
-from typing import Dict, List, Annotated
+from typing import (
+    Dict,
+    List,
+    Annotated,
+    Any,
+    Set,
+)
 from pydantic import BaseModel
 from datetime import datetime, timedelta
 
@@ -1168,3 +1184,42 @@ async def get_suggested_friends(user_id: str, current_user: Annotated[User, Depe
         return JSONResponse(content={"data": jsonable_encoder(suggested_friends)})
     else:
         raise("400", "Unauthorized")
+    
+# Websockets for bookshelves!
+BookshelfPayload = Any
+ActiveConnections = Dict[str, Set[WebSocket]]
+
+class WSManager:
+    def __init__(self):
+        self.active_connections: ActiveConnections = {}
+
+    async def connect(self, bookshelf_id: str, ws: WebSocket):
+        self.active_connections.setdefault(bookshelf_id, set()).add(ws)
+
+    async def disconnect(self, bookshelf_id: str, ws: WebSocket):
+        self.active_connections[bookshelf_id].remove(ws)
+
+    async def send_data(self, bookshelf_id: dict, data: BookshelfPayload):
+        for ws in self.active_connections.get(bookshelf_id, []):
+            await ws.send_json(data)
+
+ws_manager = WSManager()
+
+@app.websocket('/ws/bookshelf/{bookshelf_id}')
+async def bookshelf_connection(websocket: WebSocket, bookshelf_id: str):
+        await websocket.accept()
+        await ws_manager.connect(bookshelf_id, websocket)
+        try:
+            while True:
+                data = await websocket.receive_text()  # Change to receive_text() if receiving raw text
+                # Process the received data here (parse JSON, handle messages, etc.)
+                await ws_manager.send_data(data=data) 
+        except WebSocketDisconnect:
+            await ws_manager.disconnect(bookshelf_id, websocket)
+
+
+@app.post("/api/bookshelves/{bookshelf_id}")
+async def test_out_rtc_bookshelves(request: Request, bookshelf_id: str):
+    data = await request.json()
+    if data:
+        await ws_manager.send_data(bookshelf_id=bookshelf_id, data=jsonable_encoder({"type": 'post', "payload": data}))

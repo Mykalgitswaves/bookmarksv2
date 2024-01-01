@@ -15,3 +15,7 @@ export function goToSocialPage(user) {
 export function goToUserPage(user) {
     router.push(`/feed/${user}/user/${user}`)
 }
+
+export function goToBookshelvesPage(user) {
+    router.push(`/feed/${user}/bookshelves`);
+}

@@ -1,6 +1,57 @@
 :root {
+        --radius-sm: 8px;
+        --radius-md: 14px;
+
+        --row-gap-sm: 12px;
+
+        --btn-padding-sm: 8px 16px;
+
+        --margin-shim-sm: 8px;
+
+        --padding-sm: 14px;
+        --padding-md: 20px;
+
+        --padding-card-sm: 12px;
+
         /* Transitions */
-        --transition-short: all 200ms ease; 
+        --transition-short: all 150ms ease;
+
+        /* Text sizes */
+        --font-xs: 0.75rem;
+        --font-sm: 0.875rem;
+        --font-base: 1rem;
+        --font-lg: 1.125rem;
+        --font-xl: 1.2rem;
+        --font-2xl: 1.5rem;
+        --font-3xl: 2rem;
+        --font-4xl: 2.5rem;
+        --font-5xl: 3rem;
+        --font-6xl: 3.75rem;
+        --font-7xl: 4.5rem;
+        --font-8xl: 6rem;
+        --font-9xl: 8rem;
+
+        /* Line heights */
+        --line-xs: 1rem;
+        --line-sm: 1.5rem;
+        --line-base: 1.75rem;
+        --line-lg: 2rem;
+        --line-xl: 2rem;
+        --line-2xl: 2rem;
+        --line-3xl: 2.5rem;
+        --line-4xl: 3.5rem;
+        --line-5xl: 3.5rem;
+        --line-6xl: 1;
+        --line-7xl: 1;
+        --line-8xl: 1;
+        --line-9xl: 1;
+
+        /* Font styles */
+        --font-bold: bold;
+        --font-italic: italic;
+
+        /* Shadows */
+        --shadow-lg: rgba(0, 0, 0, 0.15) 0px 5px 15px 0px;
 
         /* Gray colors */
         --gray-50: #f9fafb;

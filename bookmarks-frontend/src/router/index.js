@@ -12,6 +12,7 @@ import SocialPage from '@/components/feed/social/SocialPage.vue';
 import CreateReviewPage from '@/components/feed/CreateReviewPage.vue';
 import SettingsPage from '@/components/feed/SettingsPage.vue';
 import UserPage from '@/components/feed/UserPage.vue';
+import BookshelvesPage from '@/components/feed/BookshelvesPage.vue';
 
 export const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -80,6 +81,10 @@ export const router = createRouter({
         {
           path: 'social',
           component: SocialPage
+        },
+        {
+          path: 'bookshelves/:bookshelf',
+          component: BookshelvesPage
         }
       ]
     },

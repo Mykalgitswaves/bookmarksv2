@@ -62,7 +62,7 @@ async function searchBooks(event) {
 }
 
 async function updateUser() {
-  const token = helpersCtrl.getCookieByParam('token');
+  const token = helpersCtrl.getCookieByParam(['token']);
   const books = toRaw(bookState.books)
   console.log(books)
   if(token && books) {
