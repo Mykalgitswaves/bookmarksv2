@@ -7,10 +7,11 @@
             <button 
                 type="button"
                 :disabled="posting"
-                class="btn bg-indigo-300"
+                class="btn "
                 @click="postToWS()"
             >
                 increment
+                <span class="block text-sm text-slate-500">click this to see data being passed from another client!</span>
             </button>
 
             <button 
@@ -19,6 +20,7 @@
                 @click="ws.createNewSocketConnection()"
             >
                 open connection and add listeners
+                <span class="block text-sm text-slate-500">click this first!</span>
             </button>
 
             <button 
@@ -27,6 +29,7 @@
                 @click="ws.unsubscribeFromSocketConnection"    
             >
                 Close connection
+                <span class="block text-sm text-slate-500">click this to end the connection!</span>
             </button>
         </div>
     </section>
@@ -36,7 +39,7 @@ import BackBtn from './partials/back-btn.vue';
 import {
     ws
 } from './bookshelves/bookshelvesRtc';
-import {onMounted, onUnmounted, ref} from 'vue';
+import {watchEffect, ref} from 'vue';
 import { useRoute } from 'vue-router';
 
 import { db } from '../../services/db';
@@ -53,12 +56,15 @@ async function postToWS() {
     posting.value = true;
     count.value++
     await db.post(urls.rtc.bookShelfTest(bookshelf),
-        JSON.stringify({
-            "user": user,
-            "count": count.value
-        }), false
+        JSON.stringify(count.value), false
     ).then(() => {
         posting.value = false;
-    })
+    });
 }
+
+watchEffect(() =>  {
+    if(ws.data?.value){
+        count.value = parseInt(ws.data.value)
+    }
+})
 </script>

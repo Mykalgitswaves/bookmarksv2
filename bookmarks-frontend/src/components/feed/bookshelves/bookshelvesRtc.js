@@ -1,5 +1,6 @@
 import { urls } from "../../../services/urls";
 import { helpersCtrl } from "../../../services/helpers";
+import { ref } from 'vue';
 
 const { getCookieByParam } = helpersCtrl
 
@@ -27,7 +28,7 @@ export const eventFunctionMapping = {
 export const ws = {
     client: getCookieByParam(['token']),
     socket: null, // Initialize socket variable
-    
+    data: ref(null),
     newSocket: () => {
         ws.socket = new WebSocket(urls.rtc.bookshelf('new')); // Assign the socket to ws.socket
         return ws.socket;
@@ -41,8 +42,9 @@ export const ws = {
             };
 
             ws.socket.onmessage = (e) => {
-                const data = JSON.parse(e.data);
-                console.log(data, 'onmessage');
+                // How we are watching data being sent from a websocket. v fast.
+                ws.data.value = JSON.parse(e.data);
+                console.log(ws.data.value)
             };
 
             console.log(ws.socket)
