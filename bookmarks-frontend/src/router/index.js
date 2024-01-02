@@ -13,6 +13,7 @@ import CreateReviewPage from '@/components/feed/CreateReviewPage.vue';
 import SettingsPage from '@/components/feed/SettingsPage.vue';
 import UserPage from '@/components/feed/UserPage.vue';
 import BookshelvesPage from '@/components/feed/BookshelvesPage.vue';
+import EditBookshelf from '@/components/feed/bookshelves/EditBookshelf.vue';
 
 export const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -83,8 +84,14 @@ export const router = createRouter({
           component: SocialPage
         },
         {
-          path: 'bookshelves/:bookshelf',
-          component: BookshelvesPage
+          path: 'bookshelves',
+          component: BookshelvesPage,
+          children: [
+            {
+              path: ':bookshelf',
+              component: EditBookshelf,
+            }
+          ]
         }
       ]
     },
