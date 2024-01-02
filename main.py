@@ -1193,10 +1193,12 @@ async def get_suggested_friends(user_id: str, current_user: Annotated[User, Depe
 # Websockets for bookshelves!
 BookshelfPayload = Any
 ActiveConnections = Dict[str, Set[WebSocket]]
+CollisionMeshDict = Dict[str, DoublyLinkedList]
 
 class WSManager:
     def __init__(self):
         self.active_connections: ActiveConnections = {}
+        self.collision_mesh: CollisionMeshDict = {}
 
     async def connect(self, bookshelf_id: str, ws: WebSocket):
         self.active_connections.setdefault(bookshelf_id, set()).add(ws)

@@ -1,69 +1,51 @@
 <template>
-    <div class="container searchbar ">
-            <label for="searchbar"><span class="hidden">Search</span>
-                <input
-                    name="searchbar"
-                    v-model="searchData"
-                    @keyup="debouncedSearchRequest($event)"
-                    class="border-solid border-2
-                    border-indigo-300 py-2 pl-2 rounded-md" 
-                    type="text" placeholder=" What are you looking for?"
+    <div class="container flex items-center space-between">
+        <div class="searchbar">
+                <label for="searchbar"><span class="hidden">Search</span>
+                    <input
+                        name="searchbar"
+                        v-model="searchData"
+                        @keyup="debouncedSearchRequest($event)"
+                        class="border-solid border-2
+                        border-indigo-300 py-2 pl-2 rounded-md" 
+                        type="text" placeholder=" What are you looking for?"
+                    />
+                </label>
+        </div>
+        <div class="btn-relative">
+            <button
+                class="btn"
+                type="button"
+                @click="isShowingFilters = !isShowingFilters"
+            >
+                <IconMenu/>
+            </button>
+
+            <div v-if="isShowingFilters" class="popout-flyout filter">
+                <SearchFilters 
+                :active-filter-mapping="activeFilterMapping"
+                @current-filter="($event) => currentFilter = $event"
                 />
-            </label>
-    </div>
-    <div class="filter-grid">
-        <button
-            class="my-2 px-4 py-2 bg-indigo-900 text-white btn-transition rounded-md "
-            :class="activeFilterMapping['reset'] ? 'active' : 'inactive'"
-            type="button"
-            name="resetFilters"
-            @click="currentFilter = 'reset'"
-        >
-            Reset
-        </button>
-
-        <button 
-            class="my-2 px-4 py-2 bg-indigo-900 text-white btn-transition  rounded-md "
-            :class="activeFilterMapping['authors'] ? 'active' : 'inactive'"
-            type="button"
-            name="authorsFilter"
-            @click="currentFilter = 'authors'"
-        >
-            Authors
-        </button>
-
-        <button 
-            class="my-2 px-4 py-2 bg-indigo-900 text-white btn-transition  rounded-md "
-            :class="activeFilterMapping['books'] ? 'active' : 'inactive'"
-            type="button"
-            name="booksFilters"
-            @click="currentFilter = 'books'"
-        >
-            Books
-        </button>
-
-        <button 
-            class="my-2 px-4 py-2 bg-indigo-900 text-white btn-transition  rounded-md "
-            :class="activeFilterMapping['users'] ? 'active' : 'inactive'"
-            type="button"
-            name="usersFilters"
-            @click="currentFilter = 'users'"
-        >
-            Users
-        </button>
+            </div>
+        </div>
     </div>
 </template>
 <script setup>
-import { ref, watch } from 'vue';
+import { ref, watch, reactive } from 'vue';
 import { searchResultStore } from '@/stores/searchBar.js'; 
 import { helpersCtrl } from '../../../services/helpers';
-const { debounce } = helpersCtrl
+const { debounce } = helpersCtrl;
+import IconMenu from '../../svg/icon-hmenu.vue';
+import SearchFilters from './searchfilters.vue';
+
 const responseBlob = ref(null);
+const isShowingFilters = ref(false);
 const searchData = ref('');
 const store = searchResultStore();
-const emit = defineEmits();
 
-const activeFilterMapping = ref({
+const emit = defineEmits(['store-updated']);
+
+const activeFilterMapping = reactive({
     "authors": true,
     "users": true,
     "books": true,
@@ -76,10 +58,21 @@ const currentFilter = ref('');
 
 // manually loop through each key in ref and turn to false.
 
-watch(currentFilter, (newValue) => { 
-    activeFilterMapping.value[newValue] = !activeFilterMapping.value[newValue];
-
-    emit('toggle-filter', activeFilterMapping.value);
+watch(currentFilter, (newValue) => {
+    if(newValue === 'reset') {
+        Object.keys(activeFilterMapping).forEach((key) => {
+            if(key !== "reset"){
+                activeFilterMapping[key] = true
+            } else {
+                // Set reset back to false then break
+                activeFilterMapping[key] = false;
+                return;
+            }
+        })
+    }
+    activeFilterMapping[newValue] = !activeFilterMapping[newValue];
+    console.log(activeFilterMapping)
+    emit('toggle-filter', activeFilterMapping);
 });
 
 
@@ -100,7 +93,6 @@ async function searchRequest() {
 }}
 
 const debouncedSearchRequest = debounce(searchRequest, 500, false)
-
 </script>
 
 <style scoped>
@@ -113,6 +105,7 @@ const debouncedSearchRequest = debounce(searchRequest, 500, false)
 
 .searchbar input {
     max-width: 300px;
+    min-width: 280px;
     width: 100%;
 }
 
@@ -121,21 +114,6 @@ const debouncedSearchRequest = debounce(searchRequest, 500, false)
     flex-wrap: wrap;
     gap: 10px;
     justify-content: space-between;
-    margin-top: 1ch;
     max-width: 400px;
-}
-
-.active {
-    background-color: #1e1b4b;
-    color: #e0e7ff;
-}
-
-.inactive {
-    background-color: #c7d2fe;
-    color: #1e1b4b;
-}
-
-.btn-transition {
-    transition: all 250ms ease-in-out;
 }
 </style>

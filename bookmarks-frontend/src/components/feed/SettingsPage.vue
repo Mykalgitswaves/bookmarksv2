@@ -2,7 +2,7 @@
     <BackBtn/>
     <section class="settings-section">
         <div class="edit-profile-picture">
-            <img v-show="!isEditingProfileImage" :src="cdnUrl || path" alt="" :class="{'image-loading': loadingImageSave}">
+            <img v-show="!isEditingProfileImage" class="image" :src="cdnUrl || path" alt="" :class="{'image-loading': loadingImageSave}">
             <button
                 v-if="!isEditingProfileImage"
                 type="button"

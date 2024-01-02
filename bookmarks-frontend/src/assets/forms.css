@@ -14,12 +14,20 @@
   .popout-flyout {
     position: absolute;
     top: 40px;
-    left: 10px;
     margin-top: .25rem;
     width: 250px;
-    background-color: #fff;
     border-radius: .25rem;
     overflow: clip;
+  }
+
+  .popout-flyout:not(.filter) {
+    left: 10px;
+    background-color: var(--surface-primary);
+  }
+
+  .popout-flyout.filter {
+    left: -20px;
+    width: 150px;
   }
   
   .popout-right {
@@ -47,7 +55,7 @@
 
   .popout-comment button {
     display: flex;
-    color: #4338ca;
+    color: var(--indigo-600);
     width: 100%;
     text-align: start;
     padding: 0.2rem 1rem;
@@ -56,21 +64,24 @@
   }
 
   .popout-comment button:hover {
-    background-color: #eef2ff;
+    background-color: var(--indigo-200);
   }
 
   .popout-flyout button {
     display: block;
     color: #4338ca;
-    width: 100%;
-    text-align: start;
     padding: 0.2rem 1rem;
     margin-top: .4rem;
     margin-bottom: .4rem;
   }
   
+  .popout-flyout button:not(.filter) {
+    text-align: start;
+    width: 100%;
+  }
+
   .popout-flyout button:hover {
-    background-color: #eef2ff;
+    background-color: var(--indigo-100);
   }
 
   /* -------------------------------------------  */
@@ -80,7 +91,7 @@
   .radio-group {
     display: flex;
     flex-direction: row;
-    border:  2px solid #818cf8;
+    border:  2px solid var(--indigo-400);
     border-radius: .5rem; 
     width: fit-content;
     overflow: clip;
@@ -90,23 +101,23 @@
     padding: .5ch 1ch;
     height: fit-content;
     width: fit-content;
-    background-color: #fff;
-    color: #52525b;
+    background-color: var(--surface-primary);
+    color: var(--slate-500);
   }
   
   
   .radio-select input {
     margin-right: 1ch;
-    accent-color: #818cf8;
+    accent-color: var(--indigo-400);
   }
   
   .radio-select input:checked {
-    accent-color: #3730a3;
+    accent-color: var(--indigo-600);
   }
   
   .radio-select:has(input:checked) {
-    background: #e0e7ff;
-    color: #1e1b4b;
+    background: var(--indigo-200);
+    color: var(--indigo-800);
   }
 
   /* -------------------------------------------  */
