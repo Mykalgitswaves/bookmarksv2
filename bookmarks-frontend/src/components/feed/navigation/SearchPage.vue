@@ -33,8 +33,9 @@ function filterHandler(activeFilter) {
         --padding: 
     }
     .search-page-wrapper {
-        height: 100%;
-        padding: 2rem 3rem;
+        height: fit-content;
+        min-height: 166px;
+        padding: 2rem var(--margin-md);
         background: var(--background-container-gradient);
         border-radius: 1rem;
         border: 1px var(--indigo-100) solid;

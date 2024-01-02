@@ -23,7 +23,4 @@
             type: Date,
         }
     })
-    watchEffect(() => {
-        console.log(props, 'Friend Ship friend ship activity')
-    })
 </script> 

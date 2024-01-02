@@ -1,53 +1,64 @@
 <template>
-    <BackBtn/>
-    <section class="social-wrapper">
-        <Accordian 
-            :expanded="social_dropdowns['is-pending-requests-expanded']"
-            @clicked-chevron="
-                ($event) => 
-                accordianFn('is-pending-requests-expanded', social_dropdowns, $event)
-                "
-        >
-            <template v-slot:heading-text>
-                <span class="text-indigo-500 underline mr-2">
-                    {{ totalRequests }}
-                </span> Pending requests
-            </template>
-        </Accordian>
+    <section class="section-wrapper">
+        <BackBtn/>
+        <div class="social">
+            <Accordian 
+                :expanded="social_dropdowns['is-pending-requests-expanded']"
+                @clicked-chevron="
+                    ($event) => 
+                    accordianFn('is-pending-requests-expanded', social_dropdowns, $event)
+                    "
+            >
+                <template v-slot:heading-text>
+                    <span v-if="totalRequests">
+                        <span class="text-indigo-500 underline mr-2">
+                             {{ totalRequests }}
+                        </span>
+                        Recent activities
+                    </span>
+                    <span v-else>No pending requests</span>
+                </template>
+            </Accordian>
 
-        <div
-            class="friend-requests"
-        >
-            <div v-if="friend_requests?.length && social_dropdowns['is-pending-requests-expanded']">
-                <FriendRequest
-                v-for="(user, index) in friend_requests" 
-                :key="index"
-                :num="index"
-                :userData="user"
-                />
-                
-                <SocialPagination v-if="totalPages > currentPage" :current-page="currentPage" :total-pages="totalPages" @page-changed="handlePageChange"/>
+            <div
+                class="friend-requests"
+            >
+                <div v-if="friend_requests?.length && social_dropdowns['is-pending-requests-expanded']">
+                    <FriendRequest
+                    v-for="(user, index) in friend_requests" 
+                    :key="index"
+                    :num="index"
+                    :userData="user"
+                    />
+                    
+                    <SocialPagination v-if="totalPages > currentPage" :current-page="currentPage" :total-pages="totalPages" @page-changed="handlePageChange"/>
+                </div>
             </div>
-        </div>
-    </section>
-    <section class="social-wrapper">
-        <Accordian 
-            :expanded="social_dropdowns['is-activities-expanded']"
-            @clicked-chevron="
-                ($event) => 
-                accordianFn('is-activities-expanded', social_dropdowns, $event)
-                "
-        >
-            <template v-slot:heading-text>
-                Recent activity
-            </template>
-        </Accordian>
-        <div class="activities" v-if="activities?.length && social_dropdowns['is-activities-expanded']">
-            <Activity
-                v-for="activity in activities"
-                :key="activity.id"
-                :activity="activity"
-            />
+
+            <Accordian 
+                :expanded="social_dropdowns['is-activities-expanded']"
+                @clicked-chevron="
+                    ($event) => 
+                    accordianFn('is-activities-expanded', social_dropdowns, $event)
+                    "
+            >
+                <template v-slot:heading-text>
+                    <span v-if="activities?.length">
+                        <span class="text-indigo-500 underline mr-2">
+                             {{ activities.length }}
+                        </span>
+                        Recent activities
+                    </span>
+                    <span v-else>No recent activity</span>
+                </template>
+            </Accordian>
+            <div class="activities" v-if="activities?.length && social_dropdowns['is-activities-expanded']">
+                <Activity
+                    v-for="activity in activities"
+                    :key="activity.id"
+                    :activity="activity"
+                />
+            </div>
         </div>
     </section>
 </template>
@@ -122,11 +133,20 @@
 
 </script>
 <style scoped>
-    .social-wrapper {
-        margin-top: 24px;
-        margin-left: 12px;
-        margin-right: 12px;
+    section.section-wrapper {
+        margin-right: auto;
+        margin-left: auto;
+    }
+    .social {
+        justify-items: center;
         max-width: 880px;
+        width: 100%;
+        padding-top: 24px;
+        padding-bottom: 24px;
+        padding-left: var(--padding-md);
+        padding-right: var(--padding-md);
+        border: 1px var(--slate-200) solid;
+        border-radius: var(--radius-md);
     }
 
     .friend-requests {
@@ -147,32 +167,5 @@
         row-gap: 20px;
         margin-top: 20px;
     }
-    /* Maybe save maybe trash #TODO: Figure out this shit */
-    /* .grid-row-readers {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-        justify-content: space-between;
-        align-items: center;
-        gap: 1rem;
-    }
-
-    .reader {
-        padding: 1rem;
-        border-radius: 4px;
-        display: flex;
-        flex-direction: column;
-        transition: background 200ms ease-in-out;
-        align-items: start;
-        background: var(--background-container-gradient);
-    }
-
-    .reader:hover {
-        background: var(--hover-container-gradient);
-        transition: all 200ms ease-in-out;
-    }
-
-
-    .reader button {
-        width: 100%;
-    } */
+    
 </style>

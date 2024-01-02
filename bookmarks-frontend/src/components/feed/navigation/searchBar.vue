@@ -1,5 +1,5 @@
 <template>
-    <div class="container searchbar-wrapper">
+    <div class="searchbar-wrapper">
         <div class="searchbar">
                 <label for="searchbar"><span class="hidden">Search</span>
                     <input
@@ -12,31 +12,23 @@
                     />
                 </label>
         </div>
-        
-        <div class="hide-on-mobile btn-relative">
+
+        <TransitionGroup name="content" tag="div" class="filter-container">
             <button
-                class="btn"
+                class="menu-btn"
                 type="button"
                 @click="isShowingFilters = !isShowingFilters"
             >
                 <IconMenu/>
             </button>
-
-            <div v-if="isShowingFilters" class="popout-flyout filter">
-                <SearchFilters 
-                :active-filter-mapping="activeFilterMapping"
-                @current-filter="($event) => currentFilter = $event"
-                />
-            </div>
-        </div>
-
-        <div class="hide-on-desktop spacing">
+            
             <SearchFilters
+                    v-if="!isShowingFilters"
                     class="filter-grid text-sm" 
                     :active-filter-mapping="activeFilterMapping"
                     @current-filter="($event) => currentFilter = $event"
             />
-        </div>
+        </TransitionGroup>
     </div>
 </template>
 <script setup>
@@ -59,6 +51,7 @@ const activeFilterMapping = reactive({
     "users": true,
     "books": true,
     "genres": true,
+    "books_by_author": true,
     "reset": false,
 });
 
@@ -106,14 +99,24 @@ const debouncedSearchRequest = debounce(searchRequest, 500, false)
 .hidden { display: none; visibility: hidden; }
 
 .searchbar-wrapper {
+    container-type: inline-size;
     display: flex;
     justify-content: space-between;
+    width: 100%;
+    flex-wrap: wrap;
+}
+
+@media (min-width: 850px) {
+    .searchbar-wrapper {
+        max-width: 850px;
+    }
 }
 
 /* Mobile media query */
 @media screen and (max-width: 768px) {
     .searchbar-wrapper {
-        display: block;
+        flex-direction: column;
+        align-items: start;
     }
 }
 
@@ -128,16 +131,34 @@ const debouncedSearchRequest = debounce(searchRequest, 500, false)
     width: 100%;
 }
 
+@container (max-width: 746px) {
+    .searchbar input {
+        width: calc(100vw - 20px);
+    }
+}
+
+.filter-container {
+    display: flex;
+}
+
+@container (max-width: 746px) {
+    .filter-container {
+        margin-top: var(--margin-md);
+    }   
+}
+
+.menu-btn {
+    padding: var(--btn-padding-base);
+    margin-right: var(--margin-md);
+}
+
 .filter-grid {
     display: flex;
     flex-wrap: wrap;
     gap: 10px;
     justify-content: space-between;
+    align-items: center;
     max-width: 400px;
 }
 
-/* Shit naming ik */
-.spacing {
-    margin-top: 20px;
-}
 </style>

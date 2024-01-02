@@ -39,6 +39,16 @@
         >
             Users
         </button>    
+
+        <button 
+            class="filter"
+            :class="activeFilterMapping['books_by_author'] ? 'active' : 'inactive'"
+            type="button"
+            name="usersFilters"
+            @click="emit('current-filter', 'books_by_author')"
+        >
+            Books by author
+        </button>    
     </div>
 </template>
 <script setup>
@@ -55,6 +65,7 @@ button {
     transition: var(--transition-short);
     border-radius: var(--radius-sm);
     padding: var(--btn-padding-base);
+    max-height: 40px;
 }
 
 .active {

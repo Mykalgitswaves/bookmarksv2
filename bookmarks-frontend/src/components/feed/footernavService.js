@@ -17,5 +17,9 @@ export function goToUserPage(user) {
 }
 
 export function goToBookshelvesPage(user) {
-    router.push(`/feed/${user}/bookshelves`);
+    router.push(`/feed/${user}/bookshelves/all`);
+}
+
+export function goToBookshelfPage(user, bookshelf_id) {
+    router.push(`/feed/${user}/bookshelves/${bookshelf_id}`);
 }

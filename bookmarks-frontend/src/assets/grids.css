@@ -31,3 +31,9 @@
   }
 
   /* -------------------------------------------  */
+
+  /* Kind of a utility class for more grid-related shit i guess? Hopefully these will auto respond to the content inside of them. Also in vars.css! */
+
+  .grid-auto-cols {
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  }

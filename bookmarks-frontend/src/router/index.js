@@ -14,6 +14,7 @@ import SettingsPage from '@/components/feed/SettingsPage.vue';
 import UserPage from '@/components/feed/UserPage.vue';
 import BookshelvesPage from '@/components/feed/BookshelvesPage.vue';
 import EditBookshelf from '@/components/feed/bookshelves/EditBookshelf.vue';
+import BookshelvesMain from '@/components/feed/bookshelves/BookshelvesMain.vue';
 
 export const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -90,6 +91,10 @@ export const router = createRouter({
             {
               path: ':bookshelf',
               component: EditBookshelf,
+            },
+            {
+              path: 'all',
+              component: BookshelvesMain,
             }
           ]
         }

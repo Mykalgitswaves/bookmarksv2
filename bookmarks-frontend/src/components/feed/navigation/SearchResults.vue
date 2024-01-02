@@ -77,7 +77,7 @@
             </button>            
         </div>
 
-        <div v-if="f['books_by_authors'] && books_by_author?.length > 0">
+        <div v-if="f['books_by_author'] && books_by_author?.length > 0">
             <p class="text-indigo-500 mb-2">
                 Books by author {{ books_by_author.length }}
             </p>
@@ -95,7 +95,7 @@
 </template>
 
 <script setup>
-import { toRefs, computed, ref, watch } from "vue"
+import { toRefs, computed, ref, reactive, watch } from "vue"
 import { useRouter, useRoute } from 'vue-router';
 import { searchResultStore } from '@/stores/searchBar.js';
 
@@ -113,17 +113,16 @@ const f = ref({
     "users": true,
     "books": true,
     "genres": true,
-    "books_by_authors": true,
+    "books_by_author": true,
     "reset": false
 });
-
 
 const { newData, filters } = toRefs(props) 
 
 const store = searchResultStore()
-const data = ref(null)
-data.value = newData.value;
+const data = ref(null);
 
+data.value = newData.value;
 
 const authors = computed(() => (store.data.authors ? store.data.authors : ['No authors for you']));
 const books = computed(() => (store.data.books ? store.data.books : ['No books for you']));
@@ -144,8 +143,8 @@ function toBookPage(book){
     return router.push(`/feed/${user}/works/${book.id}`)
 }
 
-function toUserPage(user){
-    return router.push(`/feed/${user}/users/${user}`);
+function toUserPage(user_id){
+    return router.push(`/feed/${user}/users/${user_id}`);
 }
 
 

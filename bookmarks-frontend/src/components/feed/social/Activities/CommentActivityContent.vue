@@ -43,8 +43,4 @@
             type: Boolean,
         }
     });
-
-    onMounted(() => {
-        console.log(props);
-    })
 </script>
