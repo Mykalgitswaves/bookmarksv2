@@ -259,3 +259,16 @@
     }
 
 /* Need some media prefers color scheme stuff so this works when users have a set preference. */
+@media screen and (min-width: 769px) {
+    .hide-on-desktop {
+        display: none;
+        pointer-events: none;
+    }
+}
+
+@media screen and (max-width: 768px) {
+    .hide-on-mobile {
+        display: none;
+        pointer-events: none;
+    }
+}

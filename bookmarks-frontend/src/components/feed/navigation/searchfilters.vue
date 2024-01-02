@@ -1,43 +1,45 @@
 <template>
-            <button
-                class="filter"
-                :class="activeFilterMapping['reset'] ? 'active' : 'inactive'"
-                type="button"
-                name="resetFilters"
-                @click="emit('current-filter', 'reset')"
-            >
-                Reset
-            </button>
+    <div :class="$attrs.class">
+        <button
+            class="filter"
+            :class="activeFilterMapping['reset'] ? 'active' : 'inactive'"
+            type="button"
+            name="resetFilters"
+            @click="emit('current-filter', 'reset')"
+        >
+            Reset
+        </button>
 
-            <button 
-                class="filter"
-                :class="activeFilterMapping['authors'] ? 'active' : 'inactive'"
-                type="button"
-                name="authorsFilter"
-                @click="emit('current-filter', 'authors')"
-            >
-                Authors
-            </button>
+        <button 
+            class="filter"
+            :class="activeFilterMapping['authors'] ? 'active' : 'inactive'"
+            type="button"
+            name="authorsFilter"
+            @click="emit('current-filter', 'authors')"
+        >
+            Authors
+        </button>
 
-            <button 
-                class="filter"
-                :class="activeFilterMapping['books'] ? 'active' : 'inactive'"
-                type="button"
-                name="booksFilters"
-                @click="emit('current-filter', 'books')"
-            >
-                Books
-            </button>
+        <button 
+            class="filter"
+            :class="activeFilterMapping['books'] ? 'active' : 'inactive'"
+            type="button"
+            name="booksFilters"
+            @click="emit('current-filter', 'books')"
+        >
+            Books
+        </button>
 
-            <button 
-                class="filter"
-                :class="activeFilterMapping['users'] ? 'active' : 'inactive'"
-                type="button"
-                name="usersFilters"
-                @click="emit('current-filter', 'users')"
-            >
-                Users
-            </button>    
+        <button 
+            class="filter"
+            :class="activeFilterMapping['users'] ? 'active' : 'inactive'"
+            type="button"
+            name="usersFilters"
+            @click="emit('current-filter', 'users')"
+        >
+            Users
+        </button>    
+    </div>
 </template>
 <script setup>
     const emit = defineEmits(['current-filter']);

@@ -1,5 +1,5 @@
 <template>
-    <div class="container flex items-center space-between">
+    <div class="container searchbar-wrapper">
         <div class="searchbar">
                 <label for="searchbar"><span class="hidden">Search</span>
                     <input
@@ -12,7 +12,8 @@
                     />
                 </label>
         </div>
-        <div class="btn-relative">
+        
+        <div class="hide-on-mobile btn-relative">
             <button
                 class="btn"
                 type="button"
@@ -27,6 +28,14 @@
                 @current-filter="($event) => currentFilter = $event"
                 />
             </div>
+        </div>
+
+        <div class="hide-on-desktop spacing">
+            <SearchFilters
+                    class="filter-grid" 
+                    :active-filter-mapping="activeFilterMapping"
+                    @current-filter="($event) => currentFilter = $event"
+            />
         </div>
     </div>
 </template>
@@ -56,8 +65,6 @@ const activeFilterMapping = reactive({
 // defaults to none.
 const currentFilter = ref('');
 
-// manually loop through each key in ref and turn to false.
-
 watch(currentFilter, (newValue) => {
     if(newValue === 'reset') {
         Object.keys(activeFilterMapping).forEach((key) => {
@@ -68,15 +75,15 @@ watch(currentFilter, (newValue) => {
                 activeFilterMapping[key] = false;
                 return;
             }
-        })
+        });
     }
+
     activeFilterMapping[newValue] = !activeFilterMapping[newValue];
-    console.log(activeFilterMapping)
     emit('toggle-filter', activeFilterMapping);
 });
 
 
-// Gets own specific search Request from here.
+// Gets own specific search Request from here so we can debounce it?.
 async function searchRequest() {
     if (searchData.value.length > 1) {
         try {
@@ -91,13 +98,25 @@ async function searchRequest() {
                 return console.error(err);
         }
 }}
-
+// Might want to do something else idk.
 const debouncedSearchRequest = debounce(searchRequest, 500, false)
 </script>
-
 <style scoped>
 
 .hidden { display: none; visibility: hidden; }
+
+.searchbar-wrapper {
+    display: flex;
+    justify-content: space-between;
+}
+
+/* Mobile media query */
+@media screen and (max-width: 768px) {
+    .searchbar-wrapper {
+        display: block;
+    }
+}
+
 .searchbar {
     color: #5A67D8;
     font-weight: 400;
@@ -115,5 +134,10 @@ const debouncedSearchRequest = debounce(searchRequest, 500, false)
     gap: 10px;
     justify-content: space-between;
     max-width: 400px;
+}
+
+/* Shit naming ik */
+.spacing {
+    margin-top: 20px;
 }
 </style>
