@@ -1,6 +1,6 @@
 <template>
             <button
-                class=" filter"
+                class="filter"
                 :class="activeFilterMapping['reset'] ? 'active' : 'inactive'"
                 type="button"
                 name="resetFilters"
@@ -10,7 +10,7 @@
             </button>
 
             <button 
-                class=" filter"
+                class="filter"
                 :class="activeFilterMapping['authors'] ? 'active' : 'inactive'"
                 type="button"
                 name="authorsFilter"
