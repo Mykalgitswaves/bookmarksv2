@@ -26,7 +26,7 @@
                 alt="feed"
                 @click="goToFeedPage(user)"
             >
-                <IconBook/>
+                <IconFeed/>
             </button>
             <p>Feed</p>
         </div>
@@ -60,7 +60,7 @@
                 typ="button"
                 @click="goToUserPage(user)"
             >
-                <IconExplore/>
+                <IconProfile/>
             </button>
             <p>Profile</p>
         </div>
@@ -77,7 +77,7 @@
                 typ="button"
                 @click="goToBookshelvesPage(user)"
             >
-                <IconExplore/>
+                <IconBookshelves/>
             </button>
             <p>Bookshelves</p>
         </div>
@@ -88,13 +88,13 @@
 <script setup>
 import IconBook from '@/components/svg/icon-book.vue'
 import IconSocial from '@/components/svg/icon-social.vue';
-import IconExplore from '@/components/svg/icon-explore.vue';
+import IconFeed from '@/components/svg/icon-feed.vue';
 // import searchBar from './navigation/searchBar.vue'
 import IconSearch from '@/components/svg/icon-search.vue';
-import IconExpand from '@/components/svg/icon-expand.vue';
-
+import IconProfile from '../svg/icon-profile-nav.vue';
 import { useRoute }  from 'vue-router'
-import { computed, ref } from 'vue'
+import IconBookshelves from '../svg/icon-bookshelves.vue'
+import { ref } from 'vue'
 import { goToSearchPage, 
     goToFeedPage,
     goToSocialPage,

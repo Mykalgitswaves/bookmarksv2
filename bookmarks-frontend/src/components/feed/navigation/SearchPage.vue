@@ -6,7 +6,8 @@
     />
       
     <SearchResult :new-data="newData" :filters="filters"/>
-  </div>  
+  </div>
+  <div class="mobile-menu-spacer sm:hidden"></div>
 </template>
 <script setup>
 import { ref, } from 'vue';

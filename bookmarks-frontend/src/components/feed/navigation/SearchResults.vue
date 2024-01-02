@@ -1,6 +1,4 @@
 <template>
-    <p v-if="store.data" class="pt-4 text-2xl font-medium text-slate-600 mb-5">Results</p>
-
     <div class="h-auto flex-col gap-5 ml-5" v-if="store.data">
         <div v-if="f['authors'] && authors?.length > 0">
             <div class="mb-2 flex flex-col">
