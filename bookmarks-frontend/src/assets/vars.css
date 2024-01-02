@@ -3,8 +3,12 @@
         --radius-md: 14px;
 
         --row-gap-sm: 12px;
-
+        
+        /* Consider a better name for this btn which is most
+        definitely not sm. -> stupid 😒 */
         --btn-padding-sm: 8px 16px;
+
+        --btn-padding-base: 8px 6px;
 
         --margin-shim-sm: 8px;
 

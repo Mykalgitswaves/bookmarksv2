@@ -32,7 +32,7 @@
 
         <div class="hide-on-desktop spacing">
             <SearchFilters
-                    class="filter-grid" 
+                    class="filter-grid text-sm" 
                     :active-filter-mapping="activeFilterMapping"
                     @current-filter="($event) => currentFilter = $event"
             />

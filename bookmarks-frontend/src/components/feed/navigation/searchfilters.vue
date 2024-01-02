@@ -53,6 +53,8 @@
 button {
     text-align: center;
     transition: var(--transition-short);
+    border-radius: var(--radius-sm);
+    padding: var(--btn-padding-base);
 }
 
 .active {
