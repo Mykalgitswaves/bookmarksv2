@@ -138,7 +138,8 @@
         margin-left: auto;
     }
     .social {
-        justify-items: center;
+        margin-right: auto;
+        margin-left: auto;
         max-width: 880px;
         width: 100%;
         padding-top: 24px;
