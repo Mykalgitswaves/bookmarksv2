@@ -1,5 +1,5 @@
 <template>
-  <div class="search-page-wrapper border-solid border-indigo-100 border-[1px]">
+  <div class="search-page-wrapper">
     <SearchBar 
         @store-updated="storeHandler" 
         @toggle-filter="filterHandler"
@@ -9,12 +9,9 @@
   </div>  
 </template>
 <script setup>
-
 import { ref, } from 'vue';
 import SearchResult from './SearchResults.vue';
 import SearchBar from './searchBar.vue';
-
-
 
 const newData = ref(null);
 
@@ -26,7 +23,6 @@ function storeHandler(newBook) {
 }
 
 function filterHandler(activeFilter) {
-    console.log(activeFilter)
     filters.value = activeFilter;
 }
 
@@ -41,6 +37,7 @@ function filterHandler(activeFilter) {
         padding: 2rem 3rem;
         background: var(--background-container-gradient);
         border-radius: 1rem;
+        border: 1px var(--indigo-100) solid;
         max-width: var(--section-max-width);
     }
 
