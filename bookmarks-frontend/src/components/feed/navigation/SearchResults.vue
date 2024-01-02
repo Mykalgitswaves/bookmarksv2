@@ -1,5 +1,5 @@
 <template>
-    <div class="h-auto flex-col gap-5 ml-5" v-if="store.data">
+    <div class="h-auto flex-col gap-5 mt-10" v-if="store.data">
         <div v-if="f['authors'] && authors?.length > 0">
             <div class="mb-2 flex flex-col">
                 <p class="text-slate-600 text-lg mb-2">

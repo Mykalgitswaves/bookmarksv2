@@ -699,6 +699,8 @@ async def create_milestone(request: Request, current_user: Annotated[User, Depen
 @app.get("/api/{user_id}/posts")
 async def get_user_posts(user_id: str, current_user: Annotated[User, Depends(get_current_active_user)]):
     if user_id and current_user:
+        #TODO: We need an endpoint for getting anonymous users data as well. 
+        # so I need to decouple this from current_user.
         return(JSONResponse(content={"data": jsonable_encoder(current_user.get_posts(driver))}))
 
 @app.get("/api/{user_id}/posts/{post_id}/post")

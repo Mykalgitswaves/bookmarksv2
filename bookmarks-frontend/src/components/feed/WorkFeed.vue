@@ -136,7 +136,6 @@ const toggleCreateReviewType = ref(false);
 const selectDropdown = ref(false);
 const bookData = ref(null);
 const feedData = ref(null);
-const loaded = ref(false)
 const isPostableData = ref(false);
 const postOptions = ['review', 'update', 'comparison'];
 const filterPopout = ref(false);
@@ -155,7 +154,6 @@ async function loadWorks() {
 }
 
 onMounted(() => {
-    // loadReviews()
     loadWorks();
 });
 
