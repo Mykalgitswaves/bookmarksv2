@@ -1,4 +1,7 @@
 # https://favtutor.com/blogs/doubly-linked-list-python
+from fastapi import (
+    HTTPException
+)
 
 class Node:
     def __init__(self, data):
@@ -9,51 +12,54 @@ class Node:
 class DoublyLinkedList:
     def __init__(self):
         self.start_node = None
-    # Insert Element to Empty list
-    def InsertToEmptyList(self, data):
-        if self.start_node is None:
-            new_node = Node(data)
-            self.start_node = new_node
-        else:
-            print("The list is empty")
     # Insert element at the end
     def InsertToEnd(self, data):
         # Check if the list is empty
+        new_node = Node(data)
         if self.start_node is None:
-            new_node = Node(data)
             self.start_node = new_node
             return
         n = self.start_node
+        if n.item == new_node.item:
+            raise HTTPException(400, 'Item already in list')
         # Iterate till the next reaches NULL
         while n.next is not None:
             n = n.next
-        new_node = Node(data)
+            if n.item == new_node.item:
+                raise HTTPException(400, 'Item already in list')
         n.next = new_node
         new_node.prev = n
-    # Delete the elements from the start
-    def DeleteAtStart(self):
-        if self.start_node is None:
-            print("The Linked list is empty, no element to delete")
-            return 
-        if self.start_node.next is None:
-            self.start_node = None
-            return
-        self.start_node = self.start_node.next
-        self.start_prev = None;
-    # Delete the elements from the end
-    def delete_at_end(self):
+    # Delete the element from data
+    def DeleteNode(self, data):
         # Check if the List is empty
         if self.start_node is None:
-            print("The Linked list is empty, no element to delete")
-            return 
-        if self.start_node.next is None:
-            self.start_node = None
-            return
+            raise HTTPException(400, 'Item not in list')
         n = self.start_node
+        if n.item == data:
+            self.start_node = n.next
+            self.start_node.prev = None
+            return
         while n.next is not None:
             n = n.next
-        n.prev.next = None
+            if n.item == data:
+                n.prev.next = n.next
+                if n.next:
+                    n.next.prev = n.prev
+                else:
+                    pass # Case when tail --> Increase query simplicity
+                return
+        return HTTPException(400,'Item not in list')
+        
     def reorder_node(self, node_data, prev_node_data, next_node_data):
+        """
+        Edge cases to consider:
+            1)
+                prev_node_data and next_node_data are not adjacent. This means we are trying to insert between to non adjacent nodes
+            2)
+                prev_node_data or next_node_data dont exist. This is ok in the instance that we are move to the head OR tail.
+            3)
+                node_data doesnt exist
+        """
         if self.start_node is None:
             print("The list is empty")
             return
