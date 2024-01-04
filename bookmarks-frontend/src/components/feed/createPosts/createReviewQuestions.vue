@@ -15,7 +15,11 @@
             </button>
 
                 <ul class="container questions" v-if="!activeQuestionCat[index]">
-                    <li v-for="(question, i) in questionType[1]" :key="i" @click="store.addOrUpdateQuestion(question)">
+                    <li 
+                        v-for="(question, i) in questionType[1]" 
+                        :key="i"
+                        @click="store.addOrUpdateQuestion(question)"
+                    >
                         <div class="my-3 text-lg question-border px-5 py-5 cursor-pointer w-100 box-btn">
                             <button type="button"
                                 class="text-start"
@@ -30,9 +34,8 @@
 
                             <button
                                 v-if="props.isViewingReview"
-                                disabled=""
                                 class="text-red-600 w-20 box-btn-remove"
-                                
+                                @click="store.deleteQuestion(question)"
                             >
                                 <IconRemove />
                             </button>
