@@ -1,25 +1,11 @@
 <template>
-  <nav class=" relative">
-    <div class="navbar-p">
-      <Logo />
-      <div class="flex reverse"> 
-        <button class="ml-5 text-indigo-800"
-          type="button"
-          alt="settings"
-          @click="router.push(pathToSettings)"
-        >
-          <IconSettings />
-        </button>
-      </div>
-    </div>
-  </nav>
+  <MobileMenu/>
 </template>
 
 <script setup>
     import Logo from '../svg/icon-logo.vue';
-    import IconSettings from '../svg/icon-settings.vue';
     import { useRoute, useRouter } from 'vue-router'
-
+    import MobileMenu from './partials/mobile-menu.vue';
     const route = useRoute();
     const router = useRouter();
     const { user } = route.params;

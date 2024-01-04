@@ -1,6 +1,6 @@
 <template>
   <div>
-    <div class="flex gap-5 space-between">
+    <div class="flex gap-5">
       <div class="btn-relative">
         <button 
           v-if="postTypeMapping === ''"
