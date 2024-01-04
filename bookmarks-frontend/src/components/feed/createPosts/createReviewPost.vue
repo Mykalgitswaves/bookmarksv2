@@ -49,7 +49,7 @@
     </div>
 </template>
 <script setup>
-import { ref, defineEmits, toRaw, watch, computed } from 'vue'
+import { ref, defineEmits, watch, computed } from 'vue'
 import { postData } from '../../../../postsData.js';
 import { createQuestionStore } from '../../../stores/createPostStore';
 import { helpersCtrl } from '../../../services/helpers';

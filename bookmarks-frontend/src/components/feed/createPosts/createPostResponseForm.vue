@@ -119,16 +119,19 @@ const props = defineProps({
         type: Boolean,
         required: false,
         default: false,
+    },
+    indexOfQ: {
+        type: Number,
     }
 })
 
 const q  = toRaw(props.q)
 
 const store = createQuestionStore();
-const emit = defineEmits();
+const emit = defineEmits(['store-changed']);
 
 function alertQuestionWatch(question) {
     store.addOrUpdateQuestion(question)
-    emit('store-changed')
+    emit('store-changed', props.indexOfQ);
 }
 </script>
