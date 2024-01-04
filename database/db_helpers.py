@@ -2738,6 +2738,7 @@ class Neo4jDriver():
             elif response['labels(p)'] == ["Update"]:
                 update = UpdatePost(post_id=post["id"],
                                                    book=response['b']['id'],
+                                                   headline=post['headline'],
                                                    book_title=response['b']['title'],
                                                    created_date=post["created_date"],
                                                    page=post['page'],
@@ -2758,6 +2759,7 @@ class Neo4jDriver():
                 review = ReviewPost(
                             post_id=post["id"],
                             book=response['b']['id'],
+                            headline=post['headline'],
                             book_title=response['b']['title'],
                             created_date=post["created_date"],
                             questions=post['questions'],
