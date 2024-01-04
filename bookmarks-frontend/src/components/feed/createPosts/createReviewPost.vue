@@ -35,6 +35,8 @@
             v-if="currentPostTopic === 'questions'"
             :question-map="questionMapping"
             :is-viewing-review="false"
+            :question-count="count"
+            @question-added="($event) => currentPostTopic = 'review'"
         />
 
         <YourReviewQuestions 

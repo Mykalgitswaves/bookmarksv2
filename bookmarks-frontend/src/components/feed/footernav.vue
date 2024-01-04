@@ -47,6 +47,23 @@
             </button>
             <p>Social</p>
         </div>
+        
+        <div 
+            class="nav-button-group hover:bg-gray-200"
+            v-show="!isSearchBarActive"
+            @click="goToBookshelvesPage(user)"
+            aria-roledescription="navigation button"
+        >
+            <button 
+                class="footer-nav-button"
+                alt="feed"
+                typ="button"
+                @click="goToBookshelvesPage(user)"
+            >
+                <IconBookshelves/>
+            </button>
+            <p>Bookshelves</p>
+        </div>
 
         <div 
             class="nav-button-group hover:bg-gray-200"
@@ -63,23 +80,6 @@
                 <IconProfile/>
             </button>
             <p>Profile</p>
-        </div>
-
-        <div 
-            class="nav-button-group hover:bg-gray-200"
-            v-show="!isSearchBarActive"
-            @click="goToBookshelvesPage(user)"
-            aria-roledescription="navigation button"
-        >
-            <button 
-                class="footer-nav-button"
-                alt="feed"
-                typ="button"
-                @click="goToBookshelvesPage(user)"
-            >
-                <IconBookshelves/>
-            </button>
-            <p>Bookshelves</p>
         </div>
     </footer>
 </template>
