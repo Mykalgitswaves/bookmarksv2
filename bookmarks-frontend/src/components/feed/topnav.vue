@@ -3,13 +3,7 @@
 </template>
 
 <script setup>
-    import Logo from '../svg/icon-logo.vue';
-    import { useRoute, useRouter } from 'vue-router'
-    import MobileMenu from './partials/mobile-menu.vue';
-    const route = useRoute();
-    const router = useRouter();
-    const { user } = route.params;
-    const pathToSettings = `/feed/${user}/settings`
+  import MobileMenu from './partials/mobile-menu.vue';
 
 </script>
 
