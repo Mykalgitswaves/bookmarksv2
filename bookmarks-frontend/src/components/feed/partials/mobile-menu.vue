@@ -8,7 +8,11 @@
         <IconMenu />
     </button>
 
-    <div id="nav_menu_sidebar" class="d_hidden nav-menu-sidebar" v-if="isShowingMenu">
+    <div id="nav_menu_sidebar" 
+        v-if="isShowingMenu" 
+        class="d_hidden nav-menu-sidebar" 
+        ref="mobileMenu"
+    >
         <h3 class="n-m-s--header">Biblio</h3>
         <div class="n-m-s--content">
             <button 
@@ -24,17 +28,28 @@
 </nav> 
 </template>
 <script setup>
-import { ref } from 'vue';
+import { onMounted, onUnmounted, ref, watch } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import IconSettings from '../../svg/icon-settings.vue';
 import IconMenu from '../../svg/icon-hmenu.vue';
-
+import { autoCloseElementWithRef } from  './autoclose';
 const router = useRouter();
 const route = useRoute();
 const { user } = route.params;
 const pathToSettings = `/feed/${user}/settings`
 
 const isShowingMenu = ref(false);
+const mobileMenu = ref(null);
+// Handle all event listeners for clicking in and out of menu to auto close it.
+
+onMounted(() => {
+    
+});
+
+onUnmounted(() => {
+
+})
+
 </script>
 <style scoped>
 .nav-menu {

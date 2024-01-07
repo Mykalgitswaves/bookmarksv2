@@ -1563,11 +1563,12 @@ class Neo4jDriver():
                 output.append(recommendation)
             
             elif response['labels(p)'] == ['Comparison']:
-                if output[-1].id == post["id"]:
-                    output[-1].compared_books.append(response['b']['id'])
-                    output[-1].book_title.append(response['b']['title'])
-                    output[-1].book_small_img.append(response['b']['small_img_url'])
-                    continue
+                if output:
+                    if output[-1].id == post["id"]:
+                        output[-1].compared_books.append(response['b']['id'])
+                        output[-1].book_title.append(response['b']['title'])
+                        output[-1].book_small_img.append(response['b']['small_img_url'])
+                        continue
 
                 comparison = ComparisonPost(post_id=post["id"],
                                 compared_books=[response['b']['id']],
@@ -2709,12 +2710,13 @@ class Neo4jDriver():
                 output.append(milestone)                                                       
             
             elif response['labels(p)'] == ['Comparison']:
-                if output[-1].id == post["id"]:
-                    output[-1].compared_books.append(response['b']['id'])
-                    output[-1].book_title.append(response['b']['title'])
-                    output[-1].book_small_img.append(response['b']['small_img_url'])
-                    continue
-                
+                if output:
+                    if output[-1].id == post["id"]:
+                        output[-1].compared_books.append(response['b']['id'])
+                        output[-1].book_title.append(response['b']['title'])
+                        output[-1].book_small_img.append(response['b']['small_img_url'])
+                        continue
+                    
                 comparison = ComparisonPost(post_id=post["id"],
                                             compared_books=[response['b']['id']],
                                             user_username=response['u.username'],

@@ -34,5 +34,10 @@
         display: flex;
         flex-direction: row;
         padding: 12px;
+        min-height: 80px;
+    }
+
+    .activity {
+
     }
 </style>

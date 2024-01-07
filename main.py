@@ -599,10 +599,11 @@ async def create_comparison(request: Request,
 
     for book_id, small_image_url, title in books_metadata:
         db_book = driver.get_id_by_google_id(book_id)
+        breakpoint()
         if db_book:
             book_ids.append(db_book['id'])
             small_image_urls.append(db_book['small_img_url'])
-            titles.append(db_book['titles'])
+            titles.append(db_book['title'])
         else:
             book_ids.append(book_id)
             small_image_urls.append(small_image_url)

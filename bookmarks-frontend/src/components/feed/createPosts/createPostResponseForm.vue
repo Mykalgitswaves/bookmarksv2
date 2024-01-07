@@ -33,37 +33,17 @@
             cols="" rows="7"
             v-model="q.comparison"
         />
-        
-        <div v-if="props.isComparison">
-            <div class="comparator-headlines">
-                <label for="book1headline">
-                    <input id="book1headline" type="text" v-model="q.comparator_a_headline">
-                </label>
 
-                <label for="book2headline">
-                    <input id="book2headline" type="text" v-model="q.comparator_b_headline">
-                </label>
-            </div>
-
-            <div class="is_ai my-5">
-                <label for="generate_ai">
-                    <input id="generate_ai" type="checkbox" value="true" v-model="q.is_ai_generated">
-                        <IconAi/>
-                        <span class="text-gray-600">Generate headlines based of my content with LLM's</span>
-                </label>
-            </div>
-        </div>
-
-        <div class="flex gap-5 space-between items-end">
+        <div class="flex gap-5 space-between items-end mt-10">
             <div class="self-start">
                 <label :for="q.id" class="flex items-center">
-                    <span class="mr-2">Spoilers</span>
                     <input :id="q.id" 
                         type="checkbox"
                         v-model="q.is_spoiler"
                         value="true"
                         @change="emit('is-spoiler-event', q)"
                     >
+                    <span class="ml-2">Spoilers</span>
                 </label>
             </div>
 

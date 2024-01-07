@@ -28,6 +28,12 @@
     padding: 1ch;
 }
 
+.summary-update.comparison textarea {
+  margin-left: auto;
+  margin-right: auto;
+  max-width: 880px;
+}
+
 .select-1 label {
     display: block;
     margin-bottom: 4px;
@@ -125,16 +131,31 @@ input[type="checkbox"] {
   }
 
   .comparator-headlines {
-    display: grid;
+    display: flex;
     column-gap: 20px;
-    grid-template-columns: 50% 50%;
-    align-items: end;
+    flex-basis: 80%;
+    flex-wrap: wrap;
+    justify-content: space-around;
+    max-width: 880px;
   }
+
+  .comparator-headlines > * {
+    flex-basis: 40%;
+    min-width: 280px;
+    margin: 10px 0;
+  }
+
+  .comparator-headlines label {
+    display: flex;
+    width: 100%;
+    flex-direction: column;
+    row-gap: 10px;
+  }
+
 
   .comparator-headlines input {
     display: block;
-    width: 100%;
-    max-width: 290px;
+    
     border: solid 2px #c7d2fe;
     padding: 10px 8px;
     border-radius: 4px;

@@ -51,7 +51,7 @@ export const feedComponentMapping = {
             headline: data.headline,
             response: data.response,
             spoiler: data.spoiler,
-            username: data.username,
+            username: data.user_username,
             small_img_url: data.book_small_img,
             page: data.page,
             user_id: data.user_id,

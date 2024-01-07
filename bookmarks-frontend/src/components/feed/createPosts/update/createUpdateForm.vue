@@ -1,4 +1,8 @@
 <template>
+    <h1 class="create-post-heading-text">Creating an update for <span class="create-post-haeding-book-title">
+        {{ book?.title }}</span>
+    </h1>
+
     <div class="container grid">
         <CreatePostHeadline @headline-changed="headlineHandler" :review-type="'update'"/>
         
@@ -74,5 +78,4 @@ function headlineHandler(e) {
 watch(update, () => {
     return emit('update-complete', helpersCtrl.formatUpdateData(update));
 });
-
 </script>

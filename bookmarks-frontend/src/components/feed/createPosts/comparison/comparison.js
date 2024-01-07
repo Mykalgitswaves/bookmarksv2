@@ -1,4 +1,3 @@
-import { reactive } from 'vue';
 import { postData } from "../../../../../postsData";
 import { helpersCtrl } from "../../../../services/helpers";
 
@@ -31,20 +30,6 @@ export class Comparison {
     };
 };
 
-// POOPthon 
-// post_id='',
-// book=book_ids,
-// user_username=current_user.username,
-// headline=response['headline'],
-// comparators=response['comparators'],
-// comparator_ids=response['comparator_ids'],
-// responses=response['responses'],
-// book_specific_responses=response['book_specific_responses'],
-// book_title=response['title'],
-// book_small_img=response['small_img_url'])
-
-        //  change topics to list of dictionarys,
-        // headline book a headlinebook b
 /**
 * @param { store } array from pinia, send this your questions
 * @param { headlineArray } list from createComparisonQuestion Component, contains headlines
