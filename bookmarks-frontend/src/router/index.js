@@ -14,6 +14,7 @@ import UserPage from '@/components/feed/UserPage.vue';
 import BookshelvesPage from '@/components/feed/BookshelvesPage.vue';
 import EditBookshelf from '@/components/feed/bookshelves/EditBookshelf.vue';
 import BookshelvesMain from '@/components/feed/bookshelves/BookshelvesMain.vue';
+import CreateBookshelfForm from '@/components/feed/bookshelves/CreateBookshelf.vue';
 import CreatePostPage from '@/components/feed/CreatePostPage.vue';
 
 export const router = createRouter({
@@ -102,6 +103,10 @@ export const router = createRouter({
             {
               path: 'all',
               component: BookshelvesMain,
+            },
+            {
+              path: 'create',
+              component: CreateBookshelfForm
             }
           ]
         }

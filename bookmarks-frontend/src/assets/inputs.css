@@ -16,6 +16,16 @@
     border-radius: 4px;
 }
 
+.title-input input {
+  display: block;
+  margin-top: var(--margin-sm);
+  margin-bottom: var(--margin-sm);
+  width: 100%;
+  padding: 10px 4px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--indigo-300);
+}
+
 .input-number input[type="number"].short {
     width: 100px;
 }
@@ -32,6 +42,17 @@
   margin-left: auto;
   margin-right: auto;
   max-width: 880px;
+}
+
+.summary-update.bookshelf textarea {
+  margin-left: auto;
+  margin-right: auto;
+  margin-top: var(--margin-sm);
+  margin-bottom: var(--margin-sm);
+  border-width: 1px;
+  border-radius: var(--radius-sm);
+  max-width: 880px;
+  border-color: var(--indigo-300);
 }
 
 .select-1 label {

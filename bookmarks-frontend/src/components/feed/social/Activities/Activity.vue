@@ -36,10 +36,10 @@
         display: flex;
         align-items: center;        
         padding: 12px;
-        flex-wrap: wrap;
         border: 1px var(--stone-200) solid;
         border-radius: var(--radius-sm);
         transition: all 250ms ease;
+        height: min-content;
     }
 
     .activity:hover {

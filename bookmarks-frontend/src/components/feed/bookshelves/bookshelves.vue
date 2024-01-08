@@ -27,7 +27,7 @@
             v-if="is_admin"
             type="button"
             class="create-bookshelf-btn"
-            @click=""
+            @click="createNewBookshelf()"
         >
             <IconAddPostVue/>
             create
@@ -36,9 +36,10 @@
 </template>
 <script setup>
     import { goToBookshelfPage } from '../footernavService';
-    import { useRoute } from 'vue-router';
+    import { useRoute, useRouter } from 'vue-router';
     import IconAddPostVue from '../../svg/icon-add-post.vue';
     const route = useRoute();
+    const router = useRouter();
     const { user } = route.params;
 
     const props = defineProps({
@@ -51,6 +52,10 @@
             required: true
         }
     })
+
+    function createNewBookshelf(){
+        router.push(`/feed/${user}/bookshelves/create`);
+    }
 </script>
 <style scoped>
 .bookshelves {

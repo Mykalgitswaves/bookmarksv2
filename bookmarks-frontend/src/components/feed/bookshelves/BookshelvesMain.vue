@@ -27,7 +27,6 @@
 
     const bookshelves = [
         {name: 'new', id: 'new', },
-        {name: 'new', id: 'new', }
     ]
 
 </script>
