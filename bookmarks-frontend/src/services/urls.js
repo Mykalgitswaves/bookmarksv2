@@ -62,7 +62,7 @@ export const urls = {
     },
     rtc: {
         bookshelf: (bookshelf_id) => (wsUrl + `ws/bookshelf/${bookshelf_id}`),
-        createBookshelf: (user_id) => (baseUrl + `api/${user_id}/bookshelves/create`),
+        createBookshelf: () => (baseUrl + `api/bookshelf/create`),
         bookShelfTest: (bookshelf_id) => (baseUrl + `api/bookshelves/${bookshelf_id}`)
     }
 }

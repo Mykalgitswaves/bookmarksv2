@@ -54,6 +54,9 @@ from typing import (
 from pydantic import BaseModel
 from datetime import datetime, timedelta
 
+import random
+import string
+
 """
 
 Connect to database
@@ -1241,3 +1244,22 @@ async def test_remove_item_from_list(request: Request, bookshelf_id: str):
     if data:
         res = {"data": int(data), "type": "remove"} 
         await ws_manager.send_data(bookshelf_id=bookshelf_id, data=res)
+
+# TODO: Make the driver stuff for creating bookshelves and saving them to our DB.
+@app.post("/api/bookshelf/create")
+async def create_bookshelf(request: Request, current_user: Annotated[User, Depends(get_current_active_user)]):
+    if not current_user:
+        raise HTTPException(status_code=500, detail="Unauthorized")
+    
+    data = await request.json()
+    if data:
+        name = data['bookshelf_name']
+        title = data['bookshelf_description']
+        # For now since we don't have bookshelf classes we will skip the 
+        # part of this endpoint that creates a real one. and instead 
+        # return an arbitrary string to use to redirect the front end.
+        if name and title:
+            rand_string = ''.join(random.choices(string.ascii_lowercase, k=5))
+            return {"bookshelf_id": rand_string}
+    else:
+        raise HTTPException(status_code=400, detail="missing name or title")

@@ -20,25 +20,47 @@
             >
                 Create
             </button>
+
+            <transition name="content">
+                <div 
+                    v-if="isShowingErrorMessage" 
+                    class="error-message"
+                >
+                    <p>{{ error_message }}</p>
+                </div>
+            </transition>
         </div>
     </section>
 </template>
 <script setup>
-    import { reactive, toRaw } from 'vue';
+    import { ref, reactive, toRaw } from 'vue';
     import { useRoute, useRouter } from 'vue-router'
     import { urls } from '../../../services/urls';
     import { db } from '../../../services/db';
     const route = useRoute();
     const router = useRouter();
     const model = reactive({});
+    const error_message = ref('');
+    const isShowingErrorMessage = ref(false);
+
+    function failureFn(err){
+        error_message.value = err.detail
+        isShowingErrorMessage.value = true;
+        setTimeout(() => {
+            isShowingErrorMessage.value = false;
+        }, 3000);
+    }
+
+    function successFn(data){
+        const bookshelf_id = data?.bookshelf_id;
+        router.push(`/feed/${route.params.user}/bookshelves/${bookshelf_id}`);
+    }
 
     async function createAndNavigateToBookshelf(model){
         let payload = toRaw(model);
-        db.post(urls.rtc.createBookshelf(route.params.user), payload, true).then((res) => {
-            console.log(res.data);
-            // router.push()
-        })
+        await db.post(urls.rtc.createBookshelf(), payload, true, successFn, failureFn)
     }
+    
 </script>
 <style scoped>
     .section-wrapper {
@@ -72,5 +94,14 @@
     .create-bookshelf-btn:hover {
         background-color: var(--stone-300);
         color: var(--stone-700);
+    }
+
+    .error-message {
+        margin-top: var(--margin-md);
+        background-color: var(--red-300);
+        color: var(--red-800);
+        padding: var(--padding-sm);
+        border: 1px solid var(--red-400);
+        border-radius: var(--radius-md);
     }
 </style>

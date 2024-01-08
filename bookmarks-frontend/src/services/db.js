@@ -59,7 +59,7 @@ export const db = {
         } catch(err) { return console.error(err); }
     },
     // Can use raw params not strinfigied,can even pass in proxy
-    post: async (url, params, debug, successRouterFunction) => {
+    post: async (url, params, debug, successRouterFunction, failureFunction) => {
         const token = helpersCtrl.getCookieByParam(['token']);
         console.log(token)
         // Check if you are passing in proxy and if you are convert it to a raw object before posting to database.
@@ -84,9 +84,14 @@ export const db = {
             // Success state
             if(response.ok) {
                 if(successRouterFunction) {
-                    return data && successRouterFunction
+                    successRouterFunction(data)
                 }
                 return data
+            }
+            if(!response.ok){
+                if(failureFunction){
+                    failureFunction(data)
+                }
             }
             
         } catch(err) {
