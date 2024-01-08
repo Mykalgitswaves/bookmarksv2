@@ -1,6 +1,78 @@
 :root {
+        --radius-sm: 8px;
+        --radius-md: 14px;
+        
+        --row-gap-sm: 12px;
+        
+        /* Consider a better name for this btn which is most
+        definitely not sm. -> stupid 😒 */
+        --btn-padding-sm: 8px 16px;
+        --btn-padding-base: 8px 6px;
+
+        --margin-shim-sm: 8px;
+
+        /* 
+            Doing it this way in case i need to ever make global changes. 
+            Also probs good to have a standard unit of measurement 
+        */
+
+        --spacing-sm: 14px;
+        --padding-sm: var(--spacing-sm);
+        --margin-sm: var(--spacing-sm);
+
+        --spacing-md: 20px;
+        --padding-md: var(--spacing-md);
+        --margin-md: var(--spacing-md);
+
+        --padding-card-sm: 12px;
+
+        /* Sections */
+        --section-max-width: 880px;
+
+        /* grid */
+        --grid-auto-cols: repeat(auto-fit, minmax(1fr, 120px));
+
+
         /* Transitions */
-        --transition-short: all 200ms ease; 
+        --transition-short: all 150ms ease;
+        --transition-medium: all 250 ease;
+
+        /* Text sizes */
+        --font-xs: 0.75rem;
+        --font-sm: 0.875rem;
+        --font-base: 1rem;
+        --font-lg: 1.125rem;
+        --font-xl: 1.2rem;
+        --font-2xl: 1.5rem;
+        --font-3xl: 2rem;
+        --font-4xl: 2.5rem;
+        --font-5xl: 3rem;
+        --font-6xl: 3.75rem;
+        --font-7xl: 4.5rem;
+        --font-8xl: 6rem;
+        --font-9xl: 8rem;
+
+        /* Line heights */
+        --line-xs: 1rem;
+        --line-sm: 1.5rem;
+        --line-base: 1.75rem;
+        --line-lg: 2rem;
+        --line-xl: 2rem;
+        --line-2xl: 2rem;
+        --line-3xl: 2.5rem;
+        --line-4xl: 3.5rem;
+        --line-5xl: 3.5rem;
+        --line-6xl: 1;
+        --line-7xl: 1;
+        --line-8xl: 1;
+        --line-9xl: 1;
+
+        /* Font styles */
+        --font-bold: bold;
+        --font-italic: italic;
+
+        /* Shadows */
+        --shadow-lg: rgba(0, 0, 0, 0.15) 0px 5px 15px 0px;
 
         /* Gray colors */
         --gray-50: #f9fafb;
@@ -205,3 +277,16 @@
     }
 
 /* Need some media prefers color scheme stuff so this works when users have a set preference. */
+@media screen and (min-width: 769px) {
+    .hide-on-desktop {
+        display: none;
+        pointer-events: none;
+    }
+}
+
+@media screen and (max-width: 768px) {
+    .hide-on-mobile {
+        display: none;
+        pointer-events: none;
+    }
+}

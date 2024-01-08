@@ -1,89 +1,82 @@
 <template>
-    <div class="container searchbar ">
-            <label for="searchbar"><span class="hidden">Search</span>
-                <input
-                    name="searchbar"
-                    v-model="searchData"
-                    @keyup="debouncedSearchRequest($event)"
-                    class="border-solid border-2
-                    border-indigo-300 py-2 pl-2 rounded-md" 
-                    type="text" placeholder=" What are you looking for?"
-                />
-            </label>
-    </div>
-    <div class="filter-grid">
-        <button
-            class="my-2 px-4 py-2 bg-indigo-900 text-white btn-transition rounded-md "
-            :class="activeFilterMapping['reset'] ? 'active' : 'inactive'"
-            type="button"
-            name="resetFilters"
-            @click="currentFilter = 'reset'"
-        >
-            Reset
-        </button>
+    <div class="searchbar-wrapper">
+        <div class="searchbar">
+                <label for="searchbar"><span class="hidden">Search</span>
+                    <input
+                        name="searchbar"
+                        v-model="searchData"
+                        @keyup="debouncedSearchRequest($event)"
+                        class="border-solid border-2
+                        border-indigo-300 py-2 pl-2 rounded-md" 
+                        type="text" placeholder=" What are you looking for?"
+                    />
+                </label>
+        </div>
 
-        <button 
-            class="my-2 px-4 py-2 bg-indigo-900 text-white btn-transition  rounded-md "
-            :class="activeFilterMapping['authors'] ? 'active' : 'inactive'"
-            type="button"
-            name="authorsFilter"
-            @click="currentFilter = 'authors'"
-        >
-            Authors
-        </button>
-
-        <button 
-            class="my-2 px-4 py-2 bg-indigo-900 text-white btn-transition  rounded-md "
-            :class="activeFilterMapping['books'] ? 'active' : 'inactive'"
-            type="button"
-            name="booksFilters"
-            @click="currentFilter = 'books'"
-        >
-            Books
-        </button>
-
-        <button 
-            class="my-2 px-4 py-2 bg-indigo-900 text-white btn-transition  rounded-md "
-            :class="activeFilterMapping['users'] ? 'active' : 'inactive'"
-            type="button"
-            name="usersFilters"
-            @click="currentFilter = 'users'"
-        >
-            Users
-        </button>
+        <TransitionGroup name="content" tag="div" class="filter-container">
+            <button
+                class="menu-btn"
+                type="button"
+                @click="isShowingFilters = !isShowingFilters"
+            >
+                <IconMenu/>
+            </button>
+            
+            <SearchFilters
+                    v-if="!isShowingFilters"
+                    class="filter-grid text-sm" 
+                    :active-filter-mapping="activeFilterMapping"
+                    @current-filter="($event) => currentFilter = $event"
+            />
+        </TransitionGroup>
     </div>
 </template>
 <script setup>
-import { ref, watch } from 'vue';
+import { ref, watch, reactive } from 'vue';
 import { searchResultStore } from '@/stores/searchBar.js'; 
 import { helpersCtrl } from '../../../services/helpers';
-const { debounce } = helpersCtrl
+const { debounce } = helpersCtrl;
+import IconMenu from '../../svg/icon-hmenu.vue';
+import SearchFilters from './searchfilters.vue';
+
 const responseBlob = ref(null);
+const isShowingFilters = ref(false);
 const searchData = ref('');
 const store = searchResultStore();
-const emit = defineEmits();
 
-const activeFilterMapping = ref({
+const emit = defineEmits(['store-updated']);
+
+const activeFilterMapping = reactive({
     "authors": true,
     "users": true,
     "books": true,
     "genres": true,
+    "books_by_author": true,
     "reset": false,
 });
 
 // defaults to none.
 const currentFilter = ref('');
 
-// manually loop through each key in ref and turn to false.
+watch(currentFilter, (newValue) => {
+    if(newValue === 'reset') {
+        Object.keys(activeFilterMapping).forEach((key) => {
+            if(key !== "reset"){
+                activeFilterMapping[key] = true
+            } else {
+                // Set reset back to false then break
+                activeFilterMapping[key] = false;
+                return;
+            }
+        });
+    }
 
-watch(currentFilter, (newValue) => { 
-    activeFilterMapping.value[newValue] = !activeFilterMapping.value[newValue];
-
-    emit('toggle-filter', activeFilterMapping.value);
+    activeFilterMapping[newValue] = !activeFilterMapping[newValue];
+    emit('toggle-filter', activeFilterMapping);
 });
 
 
-// Gets own specific search Request from here.
+// Gets own specific search Request from here so we can debounce it?.
 async function searchRequest() {
     if (searchData.value.length > 1) {
         try {
@@ -98,14 +91,35 @@ async function searchRequest() {
                 return console.error(err);
         }
 }}
-
+// Might want to do something else idk.
 const debouncedSearchRequest = debounce(searchRequest, 500, false)
-
 </script>
-
 <style scoped>
 
 .hidden { display: none; visibility: hidden; }
+
+.searchbar-wrapper {
+    container-type: inline-size;
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+    flex-wrap: wrap;
+}
+
+@media (min-width: 850px) {
+    .searchbar-wrapper {
+        max-width: 850px;
+    }
+}
+
+/* Mobile media query */
+@media screen and (max-width: 768px) {
+    .searchbar-wrapper {
+        flex-direction: column;
+        align-items: start;
+    }
+}
+
 .searchbar {
     color: #5A67D8;
     font-weight: 400;
@@ -113,7 +127,29 @@ const debouncedSearchRequest = debounce(searchRequest, 500, false)
 
 .searchbar input {
     max-width: 300px;
+    min-width: 280px;
     width: 100%;
+}
+
+@container (max-width: 746px) {
+    .searchbar input {
+        width: calc(100vw - 20px);
+    }
+}
+
+.filter-container {
+    display: flex;
+}
+
+@container (max-width: 746px) {
+    .filter-container {
+        margin-top: var(--margin-md);
+    }   
+}
+
+.menu-btn {
+    padding: var(--btn-padding-base);
+    margin-right: var(--margin-md);
 }
 
 .filter-grid {
@@ -121,21 +157,8 @@ const debouncedSearchRequest = debounce(searchRequest, 500, false)
     flex-wrap: wrap;
     gap: 10px;
     justify-content: space-between;
-    margin-top: 1ch;
+    align-items: center;
     max-width: 400px;
 }
 
-.active {
-    background-color: #1e1b4b;
-    color: #e0e7ff;
-}
-
-.inactive {
-    background-color: #c7d2fe;
-    color: #1e1b4b;
-}
-
-.btn-transition {
-    transition: all 250ms ease-in-out;
-}
 </style>

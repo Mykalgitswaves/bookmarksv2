@@ -175,7 +175,7 @@ class User():
         result = driver.unblock_user(self.user_id,unblocked_user_id)
         return(result)
     
-    def get_posts(self,driver):
+    def get_posts(self, driver):
         output = driver.pull_all_reviews_by_user(self.username)
         return(output)
     
@@ -188,7 +188,7 @@ class User():
         return(blocked_users_list)
     
     def get_activity_list(self,driver, skip, limit):
-        activity_list = driver.get_activity_list(self.user_id, skip, limit)
+        activity_list = driver.get_activity_list(self.username, self.user_id, skip, limit)
         return(activity_list)
     
     def get_suggested_friends(self,driver,n):
@@ -1530,90 +1530,98 @@ class Neo4jDriver():
         result = tx.run(query, username=username)
         results = [record for record in result.data()]
         
-        output = {"Milestone":[],
-                  "RecommendationFriend":[],
-                  "Comparison":[],
-                  "Update":[],
-                  "Review":[]}
-        
+        output = []
         for response in results:
             post = response['p']
             if response['labels(p)'] == ["Milestone"]:
-                output['Milestone'].append(MilestonePost(post_id=post["id"],
-                                                         book="",
-                                                         created_date=post["created_date"],
-                                                         num_books=post["num_books"],
-                                                         user_username=username,
-                                                         likes=post['likes'],
-                                                         liked_by_current_user=response['liked_by_current_user'],
-                                                         num_comments=response['num_comments']))                                                        
+                post = MilestonePost(post_id=post["id"],
+                    book="",
+                    created_date=post["created_date"],
+                    num_books=post["num_books"],
+                    user_username=username,
+                    likes=post['likes'],
+                    liked_by_current_user=response['liked_by_current_user'],
+                    num_comments=response['num_comments']
+                )
+                post.type = "milestone"
+                output.append(post)
+                                                                                                           
                 
             elif response['labels(p)'] == ["RecommendationFriend"]:
-                output['RecommendationFriend'].append(RecommendationFriend(post_id=post["id"],
-                                                                           book=response['b']['id'],
-                                                                           created_date=post["created_date"],
-                                                                           to_user_username=response['uu']['username'],
-                                                                           from_user_text=post['from_user_text'],
-                                                                           to_user_text=post['to_user_text'],
-                                                                           user_username=username,
-                                                                           likes=post["likes"],
-                                                                           liked_by_current_user=response['liked_by_current_user'],
-                                                                           num_comments=response['num_comments']))
+                recommendation = RecommendationFriend(post_id=post["id"],
+                                    book=response['b']['id'],
+                                    created_date=post["created_date"],
+                                    to_user_username=response['uu']['username'],
+                                    from_user_text=post['from_user_text'],
+                                    to_user_text=post['to_user_text'],
+                                    user_username=username,
+                                    likes=post["likes"],
+                                    liked_by_current_user=response['liked_by_current_user'],
+                                    num_comments=response['num_comments']
+                                )
+                recommendation.type = "friend_recommendation"
+                output.append(recommendation)
             
             elif response['labels(p)'] == ['Comparison']:
-                if output['Comparison']:
-                    if output['Comparison'][-1].id == post["id"]:
-                        output['Comparison'][-1].compared_books.append(response['b']['id'])
-                        output['Comparison'][-1].book_title.append(response['b']['title'])
-                        output['Comparison'][-1].book_small_img.append(response['b']['small_img_url'])
+                if output:
+                    if output[-1].id == post["id"]:
+                        output[-1].compared_books.append(response['b']['id'])
+                        output[-1].book_title.append(response['b']['title'])
+                        output[-1].book_small_img.append(response['b']['small_img_url'])
                         continue
 
-                output['Comparison'].append(ComparisonPost(post_id=post["id"],
-                                            compared_books=[response['b']['id']],
-                                            user_username=username,
-                                            comparators=post['comparators'],
-                                            created_date=post['created_date'],
-                                            comparator_ids=post['comparator_ids'],
-                                            responses=post['responses'],
-                                            book_specific_headlines=post['book_specific_headlines'],
-                                            book_title=[response['b']['title']],
-                                            book_small_img=[response['b']['small_img_url']],
-                                            likes=post['likes'],
-                                            liked_by_current_user=response['liked_by_current_user'],
-                                            num_comments=response['num_comments']))
-
+                comparison = ComparisonPost(post_id=post["id"],
+                                compared_books=[response['b']['id']],
+                                user_username=username,
+                                comparators=post['comparators'],
+                                created_date=post['created_date'],
+                                comparator_ids=post['comparator_ids'],
+                                responses=post['responses'],
+                                book_specific_headlines=post['book_specific_headlines'],
+                                book_title=[response['b']['title']],
+                                book_small_img=[response['b']['small_img_url']],
+                                likes=post['likes'],
+                                liked_by_current_user=response['liked_by_current_user'],
+                                num_comments=response['num_comments']
+                            )
+                comparison.type = "comparison"
+                output.append(comparison)
 
             elif response['labels(p)'] == ["Update"]:
-                output['Update'].append(UpdatePost(post_id=post["id"],
-                                                   book=response['b']['id'],
-                                                   book_title=response['b']['title'],
-                                                   created_date=post["created_date"],
-                                                   page=post['page'],
-                                                   response=post['response'],
-                                                   spoiler=post['spoiler'],
-                                                   book_small_img=response['b']['small_img_url'],
-                                                   user_username=username,
-                                                   likes=post['likes'],
-                                                   liked_by_current_user=response['liked_by_current_user'],
-                                                   num_comments=response['num_comments']))
+                update = UpdatePost(post_id=post["id"],
+                                book=response['b']['id'],
+                                book_title=response['b']['title'],
+                                created_date=post["created_date"],
+                                page=post['page'],
+                                response=post['response'],
+                                spoiler=post['spoiler'],
+                                book_small_img=response['b']['small_img_url'],
+                                user_username=username,
+                                likes=post['likes'],
+                                liked_by_current_user=response['liked_by_current_user'],
+                                num_comments=response['num_comments']
+                            )
+                update.type = "update"
+                output.append(update)
 
             elif response['labels(p)'] == ["Review"]:
                     
-                    output['Review'].append(ReviewPost(post_id=post["id"],
-                                                       book=response['b']['id'],
-                                                       book_title=response['b']['title'],
-                                                       created_date=post["created_date"],
-                                                       questions=post['questions'],
-                                                       question_ids=post['question_ids'],
-                                                       responses=post['responses'],
-                                                       spoilers=post['spoilers'],
-                                                       book_small_img=response['b']['small_img_url'],
-                                                       user_username=username,
-                                                       liked_by_current_user=response['liked_by_current_user'],
-                                                       num_comments=response['num_comments'],
-                                                       likes=post['likes']
-                                                      ))
-
+                    review = ReviewPost(post_id=post["id"],
+                                book=response['b']['id'],
+                                book_title=response['b']['title'],
+                                created_date=post["created_date"],
+                                questions=post['questions'],
+                                question_ids=post['question_ids'],
+                                responses=post['responses'],
+                                spoilers=post['spoilers'],
+                                book_small_img=response['b']['small_img_url'],
+                                user_username=username,
+                                liked_by_current_user=response['liked_by_current_user'],
+                                num_comments=response['num_comments'],
+                                likes=post['likes']
+                            )
+                    review.type = "review"
+                    output.append(review)
         return(output)
         
     def search_for_param(self, param, skip, limit):
@@ -2702,12 +2710,13 @@ class Neo4jDriver():
                 output.append(milestone)                                                       
             
             elif response['labels(p)'] == ['Comparison']:
-                if output[-1].id == post["id"]:
-                    output[-1].compared_books.append(response['b']['id'])
-                    output[-1].book_title.append(response['b']['title'])
-                    output[-1].book_small_img.append(response['b']['small_img_url'])
-                    continue
-                
+                if output:
+                    if output[-1].id == post["id"]:
+                        output[-1].compared_books.append(response['b']['id'])
+                        output[-1].book_title.append(response['b']['title'])
+                        output[-1].book_small_img.append(response['b']['small_img_url'])
+                        continue
+                    
                 comparison = ComparisonPost(post_id=post["id"],
                                             compared_books=[response['b']['id']],
                                             user_username=response['u.username'],
@@ -2731,6 +2740,7 @@ class Neo4jDriver():
             elif response['labels(p)'] == ["Update"]:
                 update = UpdatePost(post_id=post["id"],
                                                    book=response['b']['id'],
+                                                   headline=post['headline'],
                                                    book_title=response['b']['title'],
                                                    created_date=post["created_date"],
                                                    page=post['page'],
@@ -2751,6 +2761,7 @@ class Neo4jDriver():
                 review = ReviewPost(
                             post_id=post["id"],
                             book=response['b']['id'],
+                            headline=post['headline'],
                             book_title=response['b']['title'],
                             created_date=post["created_date"],
                             questions=post['questions'],
@@ -3586,16 +3597,16 @@ class Neo4jDriver():
         return blocked_user_list
 
     @timing_decorator
-    def get_activity_list(self, user_id:str, skip:int, limit:int):
+    def get_activity_list(self, username:str, user_id:str, skip:int, limit:int):
         """
         Returns all activity related to a user
         """
         with self.driver.session() as session:
-            result = session.execute_read(self.get_activity_list_query, user_id=user_id, skip=skip, limit=limit)  
+            result = session.execute_read(self.get_activity_list_query, username=username, user_id=user_id, skip=skip, limit=limit)  
         return(result)
     
     @staticmethod
-    def get_activity_list_query(tx, user_id:str, skip:int, limit:int):
+    def get_activity_list_query(tx, username:str, user_id:str, skip:int, limit:int):
         # NOTE: This query is an alternative to the one we are using, incase speed becomes an issue in the future this MAY be faster. We would have to do pagination on our end
         # query = """
         # // Match for recent friendships
@@ -3747,15 +3758,16 @@ class Neo4jDriver():
         for response in result:
             activity = response['activity']
             if activity['activity'] == 'friendship':
-                activity_list.append(
-                    FriendActivity(
-                        acting_user_id=activity['acting_user_id'],
-                        acting_user_profile_img_url=activity['acting_user_profile_img_url'],
-                        acting_user_username=activity['acting_user_username'],
-                        created_date=activity['created_date'],
-                        activity_type='friendship'
-                    )
+                friend_activity = FriendActivity(
+                    acting_user_id=activity['acting_user_id'],
+                    acting_user_profile_img_url=activity['acting_user_profile_img_url'],
+                    acting_user_username=activity['acting_user_username'],
+                    created_date=activity['created_date'],
+                    activity_type='friendship'
                 )
+                # Added this since we need to know who the current user is.
+                friend_activity.current_username = username
+                activity_list.append(friend_activity)
             elif activity['activity'] == 'liked_post':
                 activity_list.append(
                     LikedPostActivity(

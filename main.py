@@ -14,6 +14,11 @@ from database.db_helpers import (
     Neo4jDriver
 )
 
+from models import (
+    Node,
+    DoublyLinkedList
+)
+
 from database.api.books_api.search import BookSearch
 from database.api.books_api.add_book import pull_google_book
 from database.api.books_api.book_versions import search_versions_by_metadata
@@ -21,7 +26,17 @@ from database.auth import verify_access_token
 
 from db_tasks import update_book_google_id, pull_book_and_versions
 
-from fastapi import FastAPI, HTTPException, Depends, status, Request, BackgroundTasks
+from fastapi import (
+    FastAPI, 
+    HTTPException, 
+    Depends, 
+    status, 
+    Request, 
+    BackgroundTasks, 
+    WebSocket, 
+    WebSocketException,
+    WebSocketDisconnect
+)
 from fastapi import Query
 from fastapi.responses import RedirectResponse, JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
@@ -29,7 +44,13 @@ from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm, HT
 from fastapi.encoders import jsonable_encoder
 from jose import JWTError, jwt
 from passlib.context import CryptContext
-from typing import Dict, List, Annotated
+from typing import (
+    Dict,
+    List,
+    Annotated,
+    Any,
+    Set,
+)
 from pydantic import BaseModel
 from datetime import datetime, timedelta
 
@@ -578,10 +599,11 @@ async def create_comparison(request: Request,
 
     for book_id, small_image_url, title in books_metadata:
         db_book = driver.get_id_by_google_id(book_id)
+        breakpoint()
         if db_book:
             book_ids.append(db_book['id'])
             small_image_urls.append(db_book['small_img_url'])
-            titles.append(db_book['titles'])
+            titles.append(db_book['title'])
         else:
             book_ids.append(book_id)
             small_image_urls.append(small_image_url)
@@ -678,6 +700,8 @@ async def create_milestone(request: Request, current_user: Annotated[User, Depen
 @app.get("/api/{user_id}/posts")
 async def get_user_posts(user_id: str, current_user: Annotated[User, Depends(get_current_active_user)]):
     if user_id and current_user:
+        #TODO: We need an endpoint for getting anonymous users data as well. 
+        # so I need to decouple this from current_user.
         return(JSONResponse(content={"data": jsonable_encoder(current_user.get_posts(driver))}))
 
 @app.get("/api/{user_id}/posts/{post_id}/post")
@@ -1168,3 +1192,52 @@ async def get_suggested_friends(user_id: str, current_user: Annotated[User, Depe
         return JSONResponse(content={"data": jsonable_encoder(suggested_friends)})
     else:
         raise("400", "Unauthorized")
+    
+# Websockets for bookshelves!
+BookshelfPayload = Any
+ActiveConnections = Dict[str, Set[WebSocket]]
+CollisionMeshDict = Dict[str, DoublyLinkedList]
+
+class WSManager:
+    def __init__(self):
+        self.active_connections: ActiveConnections = {}
+        self.collision_mesh: CollisionMeshDict = {}
+
+    async def connect(self, bookshelf_id: str, ws: WebSocket):
+        self.active_connections.setdefault(bookshelf_id, set()).add(ws)
+
+    async def disconnect(self, bookshelf_id: str, ws: WebSocket):
+        self.active_connections[bookshelf_id].remove(ws)
+
+    async def send_data(self, bookshelf_id: dict, data: BookshelfPayload):
+        for ws in self.active_connections.get(bookshelf_id, []):
+            await ws.send_json(data)
+
+ws_manager = WSManager()
+
+@app.websocket('/ws/bookshelf/{bookshelf_id}')
+async def bookshelf_connection(websocket: WebSocket, bookshelf_id: str):
+        await websocket.accept()
+        await ws_manager.connect(bookshelf_id, websocket)
+        try:
+            while True:
+                data = await websocket.receive_text()  # Change to receive_text() if receiving raw text
+                # Process the received data here (parse JSON, handle messages, etc.)
+                await ws_manager.send_data(data=data) 
+        except WebSocketDisconnect:
+            await ws_manager.disconnect(bookshelf_id, websocket)
+
+
+@app.post("/api/bookshelves/{bookshelf_id}")
+async def test_out_rtc_bookshelves(request: Request, bookshelf_id: str):
+    data = await request.json()
+    if data:
+        res = {"data": data, "type": "add"} 
+        await ws_manager.send_data(bookshelf_id=bookshelf_id, data=res)
+
+@app.put("/api/bookshelves/{bookshelf_id}")
+async def test_remove_item_from_list(request: Request, bookshelf_id: str):
+    data = await request.json()
+    if data:
+        res = {"data": int(data), "type": "remove"} 
+        await ws_manager.send_data(bookshelf_id=bookshelf_id, data=res)

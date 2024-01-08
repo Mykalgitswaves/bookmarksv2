@@ -101,7 +101,7 @@ def update_book_google_id(google_id:str, driver):
                 "img_url":thumbnail,
                 "pages":pageCount,
                 "publication_year":publishedDate,
-                "lang ": language,
+                "lang": language,
                 "google_id": google_id
             }
         
@@ -112,7 +112,7 @@ def update_book_google_id(google_id:str, driver):
                         b.google_id = $google_id,
                         b.description = $description,
                         b.isbn13 = $isbn13,
-                        b.isbn10 = $isbn10
+                        b.isbn10 = $isbn10,
                         b.img_url = $img_url,
                         b.lang = $lang,
                         b.originalPublicationYear = $publication_year,

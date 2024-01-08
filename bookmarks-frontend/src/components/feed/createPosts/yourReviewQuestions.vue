@@ -4,8 +4,7 @@
             <div class="my-3 text-lg question-border px-5 py-5 cursor-pointer w-100 box-btn justify-between">
                 <button type="button"
                     class="text-start"
-                    @click="createPostResponseFormArr[i] = !createPostResponseFormArr[i]"
-                    :ref="(el) => createPostResponseFormArr.push(el)"
+                    @click="createPostResponseFormDict[i] = !createPostResponseFormDict[i]"
                 >
                         <span v-if="!props.isComparison" class="block">{{ question.q }}?</span>
                         <span v-if="!props.isComparison" class="block text-slate-400 text-start" :key="question.response">
@@ -19,11 +18,12 @@
             </div>
 
             <CreatePostResponseForm 
-                v-if="!createPostResponseFormArr[i]" 
+                v-if="!createPostResponseFormDict[i]" 
                 :q="question" 
                 :is-comparison="props.isComparison"  
                 :is-viewing-question="true" 
-                @store-changed="storeChangeHandler()"
+                :index-of-q="i"
+                @store-changed="storeChangeHandler($event)"
             />
         </li>
     </ul>
@@ -31,7 +31,7 @@
     
 </template>
 <script setup>
-import { ref, computed, watch } from 'vue';
+import { reactive, computed, watch } from 'vue';
 import { createQuestionStore } from '../../../stores/createPostStore';
 import CreatePostResponseForm from './createPostResponseForm.vue';
 import IconRemove from '../../svg/icon-remove.vue';
@@ -53,7 +53,6 @@ const props = defineProps({
 });
 
 const store = createQuestionStore();
-
 const questions = computed(() => { 
     if (props.questions?.length) {
         return props.questions;
@@ -64,16 +63,25 @@ const questions = computed(() => {
     }
 });
 
-const createPostResponseFormArr = ref([]);
+const createPostResponseFormDict = reactive({});
 
-const emit = defineEmits();
+const emit = defineEmits(['question-form-completed']);
 
-function storeChangeHandler() {
+function storeChangeHandler(indexOfQ) {
+    // take the current question and close the response form once you add it!
+    createPostResponseFormDict[indexOfQ] = !createPostResponseFormDict[indexOfQ];
     emit('question-form-completed');
 };
 
+watch(questions, (newValue) => {
+    /**  
+     * Grab the index of the newest question that was added to yourReviewQuestions
+     * and set a value to the dictionary of `false` so you can open and close
+    */
+    const index = questions.value.indexOf(newValue);
+    createPostResponseFormDict[index] = false;
+});
 </script>
-
 <style scoped>
 .justify-between {
     display: flex;

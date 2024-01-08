@@ -9,9 +9,13 @@ import WorkPage from '@/components/feed/WorkPage.vue'
 import AuthorPage from '@/components/feed/authors/AuthorPage.vue';
 import SearchPage from '@/components/feed/navigation/SearchPage.vue';
 import SocialPage from '@/components/feed/social/SocialPage.vue';
-import CreateReviewPage from '@/components/feed/CreateReviewPage.vue';
 import SettingsPage from '@/components/feed/SettingsPage.vue';
 import UserPage from '@/components/feed/UserPage.vue';
+import BookshelvesPage from '@/components/feed/BookshelvesPage.vue';
+import EditBookshelf from '@/components/feed/bookshelves/EditBookshelf.vue';
+import BookshelvesMain from '@/components/feed/bookshelves/BookshelvesMain.vue';
+import CreateBookshelfForm from '@/components/feed/bookshelves/CreateBookshelf.vue';
+import CreatePostPage from '@/components/feed/CreatePostPage.vue';
 
 export const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -33,41 +37,48 @@ export const router = createRouter({
     },
     {
       // We need router here.
-      path: '/feed/:user',
       name: 'feed',
+      path: '/feed/:user',
       component: LoggedInView,
       children: [
         {
+          name: 'home-feed',
           path: 'all',
           component: WorkFeed,
         },
         {
+          name: 'post-page',
           path: 'post/:post',
           component: commentsPage,
         },
         {
+          name: 'settings',
           path: 'settings',
           component: SettingsPage
         },
         {
           // canonical
+          name: 'work-page',
           path: 'works/:work',
           component: WorkPage,
           children: [
             {
               //feed/:user_uuid/work/:work_uuid/version/:versiun_uuid
+              name: 'work-versions-page',
               path: 'version/:version_uuid',
               component: WorkPage
             }
           ]
         },
         {
+          name: 'user-profile-page',
           path: 'user/:user_profile',
           component: UserPage,
         },
         {
-          path: 'create/review/:reviewType/work/:work1',
-          component: CreateReviewPage
+          name: 'create-post',
+          path: 'create/:reviewType',
+          component: CreatePostPage,
         },
         {
           path: 'authors/:author',
@@ -80,6 +91,24 @@ export const router = createRouter({
         {
           path: 'social',
           component: SocialPage
+        },
+        {
+          path: 'bookshelves',
+          component: BookshelvesPage,
+          children: [
+            {
+              path: ':bookshelf',
+              component: EditBookshelf,
+            },
+            {
+              path: 'all',
+              component: BookshelvesMain,
+            },
+            {
+              path: 'create',
+              component: CreateBookshelfForm
+            }
+          ]
         }
       ]
     },

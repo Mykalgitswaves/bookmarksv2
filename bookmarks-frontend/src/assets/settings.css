@@ -19,10 +19,8 @@
 }
 
 .section-wrapper {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    max-width: 880px;
+   margin-left: auto;
+   margin-right: auto;
 }
 
 .user-profile-header {

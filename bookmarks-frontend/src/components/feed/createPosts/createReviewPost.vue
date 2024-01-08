@@ -1,53 +1,61 @@
 <template>
-    <div v-if="!book">
-        <p class="text-2xl mb-2 mt-5 font-semibold">The content monster is hungry for your thoughts 🍪. <br/>
-            <span class="text-indigo-500">Start by picking a book </span>
-        </p>
+    <section>
+        <BackBtn/>
+        <div v-if="!book">
+            <p class="text-2xl mb-2 mt-5 font-semibold">The content monster is hungry for your thoughts 🍪. <br/>
+                <span class="text-indigo-500">Start by picking a book </span>
+            </p>
 
-        <SearchBooks @book-to-parent="bookHandler"/>
-    </div>
-
-    <div v-if="book" class="container">
-        <div class="my-5">
-            <p class="mb-2">You're reviewing <span class=" block italic text-indigo-500 font-semibold">{{ book.title }}</span></p>
+            <SearchBooks @book-to-parent="bookHandler"/>
         </div>
 
-        <CreatePostHeadline @headline-changed="headlineHandler" />
+        <div v-if="book" class="container">
+            <div class="my-5">
+                <p class="create-post-heading-text">You're reviewing
+                    <span class=" create-post-heading-book-title">
+                        {{ book.title }}
+                    </span>
+                </p>
+            </div>
 
-        <p class="text-2xl font-medium my-5 text-slate-600">Add and answer questions.</p>
+            <CreatePostHeadline @headline-changed="headlineHandler" />
 
-        <div class="grid-two-btn-container">
+            <p class="text-2xl font-medium my-5 text-slate-600">Add and answer questions.</p>
+
+            <div class="grid-two-btn-container">
+                
+                <button
+                    type="button" 
+                    class="btn border-indigo-500 text-indigo-500 text-lg"
+                    @click="currentPostTopic = 'questions'"
+                >Pick Questions</button>
+
+                <button 
+                    type="button"
+                    class="btn border-indigo-500 text-indigo-500 text-lg"
+                    @click="currentPostTopic = 'review'"
+                >Your Review ({{ count }})</button>
+            </div>
             
-            <button
-                type="button" 
-                class="btn border-indigo-500 text-indigo-500 text-lg"
-                @click="currentPostTopic = 'questions'"
-            >Pick Questions</button>
+            <CreateReviewQuestions 
+                v-if="currentPostTopic === 'questions'"
+                :question-map="questionMapping"
+                :is-viewing-review="false"
+                :question-count="count"
+                @question-added="($event) => currentPostTopic = 'review'"
+            />
 
-            <button 
-                type="button"
-                class="btn border-indigo-500 text-indigo-500 text-lg"
-                @click="currentPostTopic = 'review'"
-            >Your Review ({{ count }})</button>
+            <YourReviewQuestions 
+                v-if="currentPostTopic === 'review'"
+                :is-viewing-review="true"
+                :is-comparison="false"
+                @question-form-completed="hasQuestionDataHandler()"
+            />
         </div>
-        
-        <CreateReviewQuestions 
-            v-if="currentPostTopic === 'questions'"
-            :question-map="questionMapping"
-            :is-viewing-review="false"
-        />
-
-        <YourReviewQuestions 
-            v-if="currentPostTopic === 'review'"
-            :is-viewing-review="true"
-            :is-comparison="false"
-            @question-form-completed="hasQuestionDataHandler()"
-        />
-        <div class="mobile-menu-spacer sm:hidden"></div>
-    </div>
+    </section>
 </template>
 <script setup>
-import { ref, defineEmits, toRaw, watch, computed } from 'vue'
+import { ref, defineEmits, watch, computed } from 'vue'
 import { postData } from '../../../../postsData.js';
 import { createQuestionStore } from '../../../stores/createPostStore';
 import { helpersCtrl } from '../../../services/helpers';
@@ -88,11 +96,10 @@ const questionMapping = {
 }
 
 // functions
-const emit = defineEmits();
+const emit = defineEmits(['is-postable-data']);
 
 function hasQuestionDataHandler(){
     entries.value = store.arr
-    console.log('entries has been changed', entries.value)
 }
 
 function bookHandler(e) {
@@ -176,7 +183,6 @@ textarea {
 }
 
 .border-indigo-500 {
-    border: solid 2px;
-    border-color: rgb(99 102 241);
+    border: solid 2px var(--indigo-500);
 }
 </style>

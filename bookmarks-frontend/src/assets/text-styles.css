@@ -9,3 +9,77 @@
 .text-slate-600 {
   color: var(--slate-600);
 }
+
+/* Apply classes using CSS variables */
+.t-xs {
+  font-size: var(--font-xs);
+  line-height: var(--line-xs);
+}
+
+.t-sm {
+  font-size: var(--font-sm);
+  line-height: var(--line-sm);
+}
+
+.t-base {
+  font-size: var(--font-base);
+  line-height: var(--line-base);
+}
+
+.t-lg {
+  font-size: var(--font-lg);
+  line-height: var(--line-lg);
+}
+
+.t-xl {
+  font-size: var(--font-xl);
+  line-height: var(--line-xl);
+}
+
+.t-2xl {
+  font-size: var(--font-2xl);
+  line-height: var(--line-2xl);
+}
+
+.t-3xl {
+  font-size: var(--font-3xl);
+  line-height: var(--line-3xl);
+}
+
+.t-4xl {
+  font-size: var(--font-4xl);
+  line-height: var(--line-4xl);
+}
+
+.t-5xl {
+  font-size: var(--font-5xl);
+  line-height: var(--line-5xl);
+}
+
+.t-6xl {
+  font-size: var(--font-6xl);
+  line-height: var(--line-6xl);
+}
+
+.t-7xl {
+  font-size: var(--font-7xl);
+  line-height: var(--line-7xl);
+}
+
+.t-8xl {
+  font-size: var(--font-8xl);
+  line-height: var(--line-8xl);
+}
+
+.t-9xl {
+  font-size: var(--font-9xl);
+  line-height: var(--line-9xl);
+}
+
+.bold {
+  font-weight: var(--font-bold);
+}
+
+.italic {
+  font-style: var(--font-italic);
+}

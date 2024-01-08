@@ -1,9 +1,8 @@
 <template>
   <div>
-    <div class="flex gap-5 space-between">
+    <div class="flex gap-5">
       <div class="btn-relative">
         <button 
-          v-if="postTypeMapping === ''"
           class="flex-center justify-center px-2 py-2 rounded-md color-white bg-indigo-600"
           type="button"
           @click="selectDropdown = !selectDropdown"
@@ -14,17 +13,6 @@
           
         </button>
 
-        <button
-          v-if="toggleCreateReviewType"
-          type="button"
-          class="flex-center justify-center px-3 py-2 rounded-md "
-          :class="isPostableData ? 'bg-indigo-600 color-white' : 'bg-slate-200 text-slate-600'"
-          @click="postToEndpoint()"
-        >
-          <IconAddPost/>
-          Post
-        </button>
-
         <div 
           v-if="selectDropdown" 
           class="popout-flyout shadow-lg"
@@ -33,28 +21,12 @@
             type="button" 
             v-for="(option, index) in postOptions"
             :key="index"
-            @click="
-              selectHandler(option);
-              toggleCreateReviewType = true;
-              selectDropdown = false
-            "  
+            @click="navigate(createPostBaseRoute, option)"  
           >
             {{ option }}
           </button>
         </div>
       </div>
-      
-      <button 
-        v-if="toggleCreateReviewType"
-        type="button" 
-        class="flex-center justify-center px-2 py-2 bg-red-600 rounded-md color-white" 
-        @click="
-          toggleCreateReviewType = false; 
-          postTypeMapping = ''
-        "
-      >
-          <IconExit/>
-      </button>
 
 
         <div class="btn-relative">
@@ -118,7 +90,8 @@
     <div class="mobile-menu-spacer sm:hidden"></div>
 </template>
 <script setup>
-import { ref, watch, onMounted } from 'vue';
+import { ref, onMounted } from 'vue';
+import { useRoute } from 'vue-router';
 import { db } from '@/services/db.js';
 import { urls } from '@/services/urls.js';
 import { filterOptions } from './filters.js';
@@ -126,26 +99,16 @@ import { feedComponentMapping } from './feedPostsService';
 import IconPlus from '../svg/icon-plus.vue'
 import IconExit from '../svg/icon-exit.vue';
 import IconFilter from '../svg/icon-filter.vue';
-import createReviewPost from './createPosts/createReviewPost.vue';
-import createUpdatePost from './createPosts/createUpdatePost.vue';
-import createComparisonPost from './createPosts/createComparisonPost.vue';
-import IconAddPost from '../svg/icon-add-post.vue';
-
-// const store = searchResultStore();
+import { navigate } from './createPostService';
 const toggleCreateReviewType = ref(false);
 const selectDropdown = ref(false);
 const bookData = ref(null);
 const feedData = ref(null);
-const loaded = ref(false)
-const isPostableData = ref(false);
 const postOptions = ['review', 'update', 'comparison'];
 const filterPopout = ref(false);
-
-const mapping = {
-  "review": createReviewPost,
-  "update": createUpdatePost,
-  "comparison": createComparisonPost,
-}
+const route = useRoute();
+const { user } = route.params; 
+const createPostBaseRoute = `/feed/${user}/create`;
 
 async function loadWorks() {
     bookData.value = await db.get(urls.booksByN, {'limit': 25}, true);
@@ -155,41 +118,8 @@ async function loadWorks() {
 }
 
 onMounted(() => {
-    // loadReviews()
     loadWorks();
 });
-
-let postTypeMapping = ref('');
-
-function selectHandler(option) {
-  postTypeMapping.value = option;
-}
-
-let emittedPostData = ref(null);
-
-function handlePost(e) {
-  emittedPostData.value = e;
-}
-
-const urlsMapping = {
-  "review": urls.reviews.review,
-  "update": urls.reviews.update,
-  "comparison": urls.reviews.comparison,
-}
-
-async function postToEndpoint() {
-  toggleCreateReviewType.value = false;
-  return await db.post(urlsMapping[postTypeMapping.value], emittedPostData, true).then(() => {
-    postTypeMapping.value = '';
-    // Set to null after request is sent.
-    emittedPostData.value = null;
-  });
-}
-
-watch(emittedPostData, () => {
-  isPostableData.value = true;
-});
-
 </script>
 
 <style scoped>

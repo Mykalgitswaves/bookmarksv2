@@ -1,15 +1,5 @@
 <template>
-    <footer :class="isMinimized" class="lg:border-solid border-indigo-100 border-[1px]">
-        <div class="nav-button-group hidden-on-mobile">
-            <button 
-                class="footer-nav-button"
-                type="button"
-                @click="toggleMinimize()"
-            >
-                <IconExpand/>
-            </button>
-        </div>
-
+    <footer class="lg:border-solid border-indigo-100 border-[1px]">
         <div
             class="nav-button-group hover:bg-gray-200" 
             @click="goToSearchPage(user)"
@@ -36,7 +26,7 @@
                 alt="feed"
                 @click="goToFeedPage(user)"
             >
-                <IconBook/>
+                <IconFeed/>
             </button>
             <p>Feed</p>
         </div>
@@ -57,6 +47,23 @@
             </button>
             <p>Social</p>
         </div>
+        
+        <div 
+            class="nav-button-group hover:bg-gray-200"
+            v-show="!isSearchBarActive"
+            @click="goToBookshelvesPage(user)"
+            aria-roledescription="navigation button"
+        >
+            <button 
+                class="footer-nav-button"
+                alt="feed"
+                typ="button"
+                @click="goToBookshelvesPage(user)"
+            >
+                <IconBookshelves/>
+            </button>
+            <p>Bookshelves</p>
+        </div>
 
         <div 
             class="nav-button-group hover:bg-gray-200"
@@ -70,7 +77,7 @@
                 typ="button"
                 @click="goToUserPage(user)"
             >
-                <IconExplore/>
+                <IconProfile/>
             </button>
             <p>Profile</p>
         </div>
@@ -81,14 +88,19 @@
 <script setup>
 import IconBook from '@/components/svg/icon-book.vue'
 import IconSocial from '@/components/svg/icon-social.vue';
-import IconExplore from '@/components/svg/icon-explore.vue';
+import IconFeed from '@/components/svg/icon-feed.vue';
 // import searchBar from './navigation/searchBar.vue'
 import IconSearch from '@/components/svg/icon-search.vue';
-import IconExpand from '@/components/svg/icon-expand.vue';
-
+import IconProfile from '../svg/icon-profile-nav.vue';
 import { useRoute }  from 'vue-router'
-import { computed, ref } from 'vue'
-import { goToSearchPage, goToFeedPage, goToSocialPage, goToUserPage } from './footernavService';
+import IconBookshelves from '../svg/icon-bookshelves.vue'
+import { ref } from 'vue'
+import { goToSearchPage, 
+    goToFeedPage,
+    goToSocialPage,
+    goToUserPage,
+    goToBookshelvesPage
+} from './footernavService';
 
 const isSearchBarActive = ref(false);
 
@@ -97,15 +109,7 @@ const { user } = route.params
 
 window.addEventListener('toggleSearchBar', () => {
     isSearchBarActive.value = !isSearchBarActive.value
-    console.log('fired event ', isSearchBarActive.value)
 });
-
-const minimized = ref(Boolean);
-const isMinimized = computed(() => minimized.value === true ? 'minimized' : '');
-
-function toggleMinimize() {
-    return minimized.value = !minimized.value
-}
 
 </script>
 
@@ -135,8 +139,6 @@ footer .nav-button-group {
 }
 
 
-footer.minimized .nav-button-group p { display: none;}
-
 .searchbar {
     display: flex;
     flex-direction: column;
@@ -160,33 +162,20 @@ footer.minimized .nav-button-group p { display: none;}
 }
 
 .nav-button-group p {
-    display: none;
-}
-
-@media only screen and (max-width: 1000px) {
-    .nav-button-group p {
-        display: none;
-        visibility: hidden;
-    }
-
-
-    .hidden-on-mobile { 
-        display: none !important;
-        visibility: hidden;
-    }
+    font-size: var(--font-xs);
 }
 
 @media only screen and (min-width: 768px) {
     footer {
         position: sticky;
-        top: calc(30vh);
+        top: 15vh;
         width: min-content;
         max-width: 200px;
-        height: calc(100% - 274px);
+        height: calc(100% - 100px);
         display: flex;
         flex-direction: column;
         justify-content: start;
-        gap: 1.5rem;
+        gap: 2.5rem;
         align-items: center;
         background: linear-gradient(45deg, rgba(235, 241, 255, 0.5), rgba(255,255,255,0));
         backdrop-filter: blur(5px);
@@ -208,11 +197,9 @@ footer.minimized .nav-button-group p { display: none;}
     .nav-button-group {
         position: sticky;
         top: 3rem;
-        display: flex;
-        justify-content: space-between;
+        display: grid;
+        justify-content: center;
         border-radius: .5rem;
-        width: 100%;
-        height: 40px;
     }
 
     .nav-button-group:first-of-type :hover {
@@ -232,6 +219,7 @@ footer.minimized .nav-button-group p { display: none;}
 
 @media only screen and (min-width: 1130px) {
     .nav-button-group p {
+            font-size: var(--font-sm);
             display: block;
             visibility: visible;
             padding: 0 1ch;

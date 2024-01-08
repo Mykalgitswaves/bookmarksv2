@@ -63,6 +63,7 @@ export const activityMap = {
     'friendActivity': { 
         component: FriendActivity,
         props: (data) => ({
+            current_username: data.current_username,
             actingUserId: data.acting_user_id,
             actingUserProfileImg: data.acting_user_profile_img_url,
             actingUserUsername: data.acting_user_username,
@@ -82,5 +83,23 @@ export function getFormattedActivityType(activityString) {
        return 'liked_post'
     } else {
         return 'pinned_comment'
+    }
+}
+
+export const activityService = {
+    'liked_post': {
+        string: 'liked a post', 
+        click: (user, post_id, router) => router.push(`/feed/${user}/post/${post_id}`)
+    },
+    'pinned_comment': {
+        string: 'pinned a comment', 
+        click: (user, post_id, router) => router.push(`/feed/${user}/post/${post_id}`)
+    },
+    'commented_on_post': {
+        string: 'commented on a post',
+        click: (user, post_id, router) => router.push(`/feed/${user}/post/${post_id}`)
+    },
+    'friendship': {
+        string: 'became friends with'
     }
 }

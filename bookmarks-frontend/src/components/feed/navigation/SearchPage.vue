@@ -1,22 +1,18 @@
 <template>
-  <div class="search-page-wrapper border-solid border-indigo-100 border-[1px]">
+  <div class="search-page-wrapper">
     <SearchBar 
         @store-updated="storeHandler" 
         @toggle-filter="filterHandler"
     />
-
-      <p class="pt-4 text-2xl font-medium text-slate-600 mb-5">Search Results</p>
       
-      <SearchResult :new-data="newData" :filters="filters"/>
-  </div>  
+    <SearchResult :new-data="newData" :filters="filters"/>
+  </div>
+  <div class="mobile-menu-spacer sm:hidden"></div>
 </template>
 <script setup>
-
 import { ref, } from 'vue';
 import SearchResult from './SearchResults.vue';
 import SearchBar from './searchBar.vue';
-
-
 
 const newData = ref(null);
 
@@ -28,7 +24,6 @@ function storeHandler(newBook) {
 }
 
 function filterHandler(activeFilter) {
-    console.log(activeFilter)
     filters.value = activeFilter;
 }
 
@@ -39,10 +34,15 @@ function filterHandler(activeFilter) {
         --padding: 
     }
     .search-page-wrapper {
-        height: 100%;
-        padding: 2rem 3rem;
-        background: var(--background-container-gradient);
+        height: fit-content;
+        min-height: 166px;
+        padding: 2rem var(--margin-md);
+        background-color: var(--surface-primary);
         border-radius: 1rem;
+        border: 1px var(--indigo-100) solid;
+        max-width: var(--section-max-width);
+        margin-right: auto;
+        margin-left: auto;
     }
 
     @media screen and (min-width: 768px) {

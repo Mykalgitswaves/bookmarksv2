@@ -43,13 +43,10 @@
                     class="bookshelves-btn flex items-center"
                     :class="{ 
                         'current-selection': currentSelection === 'reviews',
-                        'disabled': true
                     }"
-                    disabled="true"
                     @click="currentSelection = 'reviews'"
                 >
-                    Reviews
-                    <IconLock class="ml-2" />
+                    My reviews
                 </button>
 
                 <button
@@ -84,6 +81,7 @@ import IconEdit from '../svg/icon-edit.vue';
 import IconLock from '../svg/icon-lock.vue';
 import AboutMe from './userpage/UserPageAboutMe.vue'
 import FriendButton from './userpage/UserFriendButton.vue';
+import MyReviews from './userpage/MyReviews.vue';
 
 const route = useRoute();
 const router = useRouter();
@@ -108,6 +106,9 @@ const componentMapping = reactive({
         props: {
             'user': user_profile
         }
+    },
+    'reviews': {
+        component: MyReviews,
     }
 });
 
