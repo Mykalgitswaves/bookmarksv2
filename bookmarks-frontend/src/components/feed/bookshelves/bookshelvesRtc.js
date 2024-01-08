@@ -1,6 +1,7 @@
 import { urls } from "../../../services/urls";
 import { helpersCtrl } from "../../../services/helpers";
 import { ref } from 'vue';
+import { db } from "../../../services/db";
 
 const { getCookieByParam } = helpersCtrl
 
@@ -62,4 +63,13 @@ export const ws = {
             ws.socket.close();
         }
     },
+}
+
+
+export async function getBookshelf(bookshelf_id){
+    await db.get(urls.rtc.bookShelfTest(bookshelf_id))
+}
+
+export function goToBookshelfSettingsPage(router, user_id, bookshelf_id){
+    router.push(`/feed/${user_id}/bookshelves/${bookshelf_id}/edit`)
 }

@@ -13,6 +13,7 @@ import SettingsPage from '@/components/feed/SettingsPage.vue';
 import UserPage from '@/components/feed/UserPage.vue';
 import BookshelvesPage from '@/components/feed/BookshelvesPage.vue';
 import EditBookshelf from '@/components/feed/bookshelves/EditBookshelf.vue';
+import EditBookshelfSettings from '@/components/feed/bookshelves/EditBookshelfSettings.vue'
 import BookshelvesMain from '@/components/feed/bookshelves/BookshelvesMain.vue';
 import CreateBookshelfForm from '@/components/feed/bookshelves/CreateBookshelf.vue';
 import CreatePostPage from '@/components/feed/CreatePostPage.vue';
@@ -99,6 +100,10 @@ export const router = createRouter({
             {
               path: ':bookshelf',
               component: EditBookshelf,
+            },
+            {
+              path: ':bookshelf/edit',
+              component: EditBookshelfSettings,
             },
             {
               path: 'all',
