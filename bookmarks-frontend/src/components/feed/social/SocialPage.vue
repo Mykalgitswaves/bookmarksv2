@@ -25,10 +25,10 @@
             >
                 <div v-if="friend_requests?.length && social_dropdowns['is-pending-requests-expanded']">
                     <FriendRequest
-                    v-for="(user, index) in friend_requests" 
-                    :key="index"
-                    :num="index"
-                    :userData="user"
+                        v-for="(user, index) in friend_requests" 
+                        :key="index"
+                        :num="index"
+                        :userData="user"
                     />
                     
                     <SocialPagination v-if="totalPages > currentPage" :current-page="currentPage" :total-pages="totalPages" @page-changed="handlePageChange"/>

@@ -1,0 +1,17 @@
+.activity-book-images {
+    display: flex;
+    justify-content: end;
+    cursor: pointer;
+    width: fit-content;
+    transition: all 250ms ease;
+    border-radius: var(--radius-sm);
+    overflow-x: clip;
+}
+
+.activity-book-images:hover {
+    transform: scale(1.01);
+}
+
+.activity-book-image {
+    height: 80px;
+}

@@ -35,6 +35,7 @@
 
         /* Transitions */
         --transition-short: all 150ms ease;
+        --transition-medium: all 250 ease;
 
         /* Text sizes */
         --font-xs: 0.75rem;

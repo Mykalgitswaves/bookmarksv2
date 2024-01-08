@@ -24,15 +24,12 @@
             {{ author[0] }}
         </div>
     </div>
-
-    <LoadingIndicatorBook v-else/>
 </template>
 <script setup>
 import { ref, onMounted } from 'vue';
 import { useRoute } from 'vue-router';
 import { db } from '../../../services/db';
 import { urls } from '../../../services/urls';
-import LoadingIndicatorBook from '../partials/LoadingIndicatorBook.vue';
 
 const route = useRoute();
 const { user_profile } = route.params;

@@ -1,4 +1,5 @@
 @import 'vars.css';
+@import 'text-styles.css';
 @import 'forms.css';
 @import 'grids.css';
 @import 'helpers.css';
@@ -8,7 +9,7 @@
 @import 'inputs.css';
 @import 'review-cards.css';
 @import 'settings.css';
-@import 'text-styles.css';
+@import 'activities.css';
 
 @tailwind base;
 @tailwind components;

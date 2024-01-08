@@ -188,7 +188,7 @@ class User():
         return(blocked_users_list)
     
     def get_activity_list(self,driver, skip, limit):
-        activity_list = driver.get_activity_list(self.user_id, skip, limit)
+        activity_list = driver.get_activity_list(self.username, self.user_id, skip, limit)
         return(activity_list)
     
     def get_suggested_friends(self,driver,n):
@@ -3597,16 +3597,16 @@ class Neo4jDriver():
         return blocked_user_list
 
     @timing_decorator
-    def get_activity_list(self, user_id:str, skip:int, limit:int):
+    def get_activity_list(self, username:str, user_id:str, skip:int, limit:int):
         """
         Returns all activity related to a user
         """
         with self.driver.session() as session:
-            result = session.execute_read(self.get_activity_list_query, user_id=user_id, skip=skip, limit=limit)  
+            result = session.execute_read(self.get_activity_list_query, username=username, user_id=user_id, skip=skip, limit=limit)  
         return(result)
     
     @staticmethod
-    def get_activity_list_query(tx, user_id:str, skip:int, limit:int):
+    def get_activity_list_query(tx, username:str, user_id:str, skip:int, limit:int):
         # NOTE: This query is an alternative to the one we are using, incase speed becomes an issue in the future this MAY be faster. We would have to do pagination on our end
         # query = """
         # // Match for recent friendships
@@ -3758,15 +3758,16 @@ class Neo4jDriver():
         for response in result:
             activity = response['activity']
             if activity['activity'] == 'friendship':
-                activity_list.append(
-                    FriendActivity(
-                        acting_user_id=activity['acting_user_id'],
-                        acting_user_profile_img_url=activity['acting_user_profile_img_url'],
-                        acting_user_username=activity['acting_user_username'],
-                        created_date=activity['created_date'],
-                        activity_type='friendship'
-                    )
+                friend_activity = FriendActivity(
+                    acting_user_id=activity['acting_user_id'],
+                    acting_user_profile_img_url=activity['acting_user_profile_img_url'],
+                    acting_user_username=activity['acting_user_username'],
+                    created_date=activity['created_date'],
+                    activity_type='friendship'
                 )
+                # Added this since we need to know who the current user is.
+                friend_activity.current_username = username
+                activity_list.append(friend_activity)
             elif activity['activity'] == 'liked_post':
                 activity_list.append(
                     LikedPostActivity(
