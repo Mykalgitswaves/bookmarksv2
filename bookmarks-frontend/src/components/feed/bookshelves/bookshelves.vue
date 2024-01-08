@@ -104,9 +104,15 @@
 .create-bookshelf-btn {
     display: flex;
     column-gap: 4px;
-    background-color: var(--indigo-200);
-    padding: var(--padding-sm);
+    background-color: var(--indigo-500);
+    color: var(--gray-50);
+    padding: 8px var(--padding-sm);
     border-radius: var(--radius-sm);
     margin-bottom: var(--margin-sm);
+    transition: var(--transition-short);
+}
+
+.create-bookshelf-btn:hover {
+    background-color: var(--indigo-600);
 }
 </style>

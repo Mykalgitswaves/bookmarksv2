@@ -37,10 +37,12 @@ function filterHandler(activeFilter) {
         height: fit-content;
         min-height: 166px;
         padding: 2rem var(--margin-md);
-        background: var(--background-container-gradient);
+        background-color: var(--surface-primary);
         border-radius: 1rem;
         border: 1px var(--indigo-100) solid;
         max-width: var(--section-max-width);
+        margin-right: auto;
+        margin-left: auto;
     }
 
     @media screen and (min-width: 768px) {
