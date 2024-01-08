@@ -1,6 +1,7 @@
 <template>
     <section class="section-wrapper">
         <BackBtn/>
+
         <div class="social">
             <Accordian 
                 :expanded="social_dropdowns['is-pending-requests-expanded']"
@@ -61,6 +62,7 @@
             </div>
         </div>
     </section>
+    <div class="mobile-menu-spacer :sm"></div>
 </template>
 <script setup>
     import { ref, computed, onMounted, watchEffect, reactive } from 'vue';
@@ -138,6 +140,7 @@
         margin-left: auto;
     }
     .social {
+        margin-top: var(--margin-sm);
         margin-right: auto;
         margin-left: auto;
         max-width: 880px;
