@@ -25,16 +25,16 @@
                 Add readers
             </button>
         </div>
-        <BookshelfBooks :books="[{}, {}]"/>
+        <BookshelfBooks :books="books"/>
     </section>    
 </template>
 <script setup>
-    import { ref, computed, onMounted } from 'vue'
+    import { ref, onMounted } from 'vue'
     import { useRoute, useRouter } from 'vue-router';
     import BookshelfBooks from './BookshelfBooks.vue';
     import IconEdit from '../../svg/icon-edit.vue'
     import PlaceholderImage from '../../svg/placeholderImage.vue';
-    import { getBookshelf, goToBookshelfSettingsPage } from './bookshelvesRtc';
+    import { getBookshelf, goToBookshelfSettingsPage, books } from './bookshelvesRtc';
     const route = useRoute();
     const router = useRouter();
 

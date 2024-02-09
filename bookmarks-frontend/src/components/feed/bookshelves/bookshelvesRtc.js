@@ -1,6 +1,6 @@
 import { urls } from "../../../services/urls";
-import { helpersCtrl } from "../../../services/helpers";
-import { ref } from 'vue';
+import { helpersCtrl, throttle } from "../../../services/helpers";
+import { ref, reactive } from 'vue';
 import { db } from "../../../services/db";
 
 const { getCookieByParam } = helpersCtrl
@@ -72,4 +72,70 @@ export async function getBookshelf(bookshelf_id){
 
 export function goToBookshelfSettingsPage(router, user_id, bookshelf_id){
     router.push(`/feed/${user_id}/bookshelves/${bookshelf_id}/edit`)
+}
+
+export const books = reactive([
+{   
+    id: '1',
+    smallImgUrl: 'http://books.google.com/books/content?id=TIJ5EAAAQBAJ&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api',
+    title: 'Brave New World',
+    author: "Aldous Huxley",
+    order: 0,
+},
+{
+    id: '2',
+    smallImgUrl: 'http://books.google.com/books/content?id=TIJ5EAAAQBAJ&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api',
+    title: 'Infinite Jest',
+    author: "David Foster Wallace",
+    order: 1,
+}
+])
+
+export function addEventListenersFn(element){
+    let dragged;
+    element.addEventListener('dragstart', (e) => {
+        dragged = e.target.innerHTML;
+        console.log(dragged, 'drag start')
+        e.target.style.opacity = '0.4';
+        e.target.classList.add('dragging');
+        e.dataTransfer.effectAllowed = 'move';
+        e.dataTransfer.setData('text/html', element.innerHTML);
+    })
+
+    element.addEventListener('dragend', (e) => {
+        e.stopPropagation();
+
+        e.target.style.opacity = '1.0';
+        e.target.classList.remove('dragging');
+        console.log(dragged, e)
+        
+        return false;
+    });
+
+    element.addEventListener('drop', (e) => {
+        e.preventDefault();
+        // move dragged element to the selected drop target
+        if (dragged !== undefined && dragged !== e.target) {
+            debugger;
+            // Swap innerHTML of dragged and dropped elements
+            const tempHTML = e.target.closest('#bookId')
+            console.log(tempHTML)
+            e.target.outerHTML = dragged;
+            dragged = tempHTML.outerHTML;
+        }
+    })
+
+    element.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        e.target.classList.add('dragged-over');
+    });
+
+    element.addEventListener('dragleave', (e) => {
+        e.target.classList.remove('dragged-over');
+    });
+}
+
+export function removeEventListenersFn(element) {
+    element.removeEventListeners('dragstart');
+    element.removeEventListeners('dragend');
 }
