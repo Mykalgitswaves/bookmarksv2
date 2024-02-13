@@ -11,6 +11,22 @@ export const helpersCtrl = {
             return ', '
         }
     },
+    // Takes a list of strings and concatenates them with commas depending on the index.
+    commanatoredString: (list) => {
+        let error = () => { throw new Error("commanatoredString needs a list with values! No empty ones brah");}
+        
+        if (!list || !list.length) {
+            return error();
+        }
+        
+        let result = '';
+        
+        list.forEach((i, name) => {
+            result += `${name + commanator(i, list)}`
+        });
+
+        return result
+    },
     getCookieByParam: (cookieName) => {
         const cookiesArray = document.cookie.split('; ');
         //iterate through cookieArray

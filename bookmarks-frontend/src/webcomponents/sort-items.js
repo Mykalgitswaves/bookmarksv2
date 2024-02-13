@@ -60,7 +60,6 @@ export class SortItem extends LitElement {
             } else if (index <= draggedFromIndex && index > draggedToIndex) {
                 item.order = index - 1;
             }
-            return this.render()
         });
         // Update the order of the dragged element
         this.order = insertBeforeElement === null ? 

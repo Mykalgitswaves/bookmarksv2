@@ -55,7 +55,8 @@
 
         <Component 
             :is="bookShelfComponentMap[currentView.value].component()"
-            v-bind="bookShelfComponentMap[currentView.value].events" 
+            v-bind="bookShelfComponentMap[currentView.value].props"
+            v-on="bookShelfComponentMap[currentView.value].events" 
         />
     </section>    
     <div class="mobile-menu-spacer sm:hidden"></div>
@@ -64,13 +65,15 @@
     import { ref, onMounted, reactive } from 'vue'
     import { useRoute, useRouter } from 'vue-router';
     import IconEdit from '../../svg/icon-edit.vue'
+    import BookshelfBooks from './BookshelfBooks.vue';
+    import SearchBooks from '../createPosts/searchBooks.vue';
     import PlaceholderImage from '../../svg/placeholderImage.vue';
     import { 
         getBookshelf, 
         goToBookshelfSettingsPage,
-        bookShelfComponentMap
     } from './bookshelvesRtc';
     import { setReactiveProperty } from '../../../services/helpers';
+    import { helpersCtrl } from '../../../services/helpers'
     const route = useRoute();
     const router = useRouter();
     const bookshelf = ref(null);
@@ -78,14 +81,53 @@
     const books = ref([]);
 
     const currentView = reactive({value: 'edit-books'});
-
+    const { commanatoredString } = helpersCtrl;
+    
+    /**
+     * @param {book} emitted book from search component.
+     * @returns {book} Will submit a put request of the specific book. 
+     */
     function addBook(book){
-        books.value.push(book);
+        let props = {
+            order: books.value.length++, 
+            name: book.id,
+            bookTitle: book.title,
+            author: commanatoredString(book.authorNames),
+            imgUrl: book.imgUrl
+        };
+        books.value.push(props);
+        // TODO add in endpoint put call for attaching a book to a bookshelf.
+        setReactiveProperty(currentView, 'value', 'edit-books');
     }
 
-    onMounted(() => {
-        bookshelf.value = getBookshelf(route.params.bookshelf);
-    });
+    // Needed for handling <Component> source of truth for what user is looking at. 
+    const bookShelfComponentMap = {
+    "edit-books": {
+        heading: (bookshelfName) => "Edit books",
+        buttonText: 'Add books',
+        component: () => BookshelfBooks,
+        props: {
+            'books': books,
+        },
+        events: {
+
+        }
+    },
+    "add-books": {
+        heading: (bookshelfName) => (`Add books to ${bookshelfName}`),
+        buttonText: 'Edit books',
+        component: () => SearchBooks,
+        props: {},
+        events: {
+            'book-to-parent': addBook
+        } 
+    }
+}
+
+onMounted(() => {
+    // Probably could do a better way to generate link in this file. We can figure out later i guess?
+    bookshelf.value = getBookshelf(route.params.bookshelf);
+});
 </script>
 <style scoped>
 
