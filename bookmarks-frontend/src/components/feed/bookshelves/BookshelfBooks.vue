@@ -28,16 +28,7 @@ onMounted(() => {
             imgUrl: item.imgUrl
         };
 
-        // let book = new SortItem(item.order, item.id, item.bookTitle, item.author, item.imgUrl);
         bookElements.value.push(props);
-
-        // constructor(order, name, bookTitle, author, imgUrl) {
-        // super();
-        // this.order = order;
-        // this.name = name;
-        // this.bookTitle = bookTitle;
-        // this.author = author;
-        // this.imgUrl = imgUrl;
     });
 });
 </script>

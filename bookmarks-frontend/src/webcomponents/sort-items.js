@@ -26,32 +26,27 @@ export class SortItem extends LitElement {
 
     onDragOver(event) {
         event.preventDefault();
-        if (!event.target.classList.contains('dragged-over')) {
-            event.target.classList.add('dragged-over');
+        if (!event.target.renderRoot.firstElementChild.classList.contains('dragged-over')) {
+            event.target.renderRoot.firstElementChild.classList.add('dragged-over');
         }
     }
 
     onDragLeave(event) {
         event.preventDefault();
-        event.target.classList.remove('dragged-over');
+        event.target.renderRoot.firstElementChild.classList.remove('dragged-over');
     }
 
-    onDrop(event){
+    onDrop(event) {
         event.preventDefault();
-        event.target.classList.remove('dragged-over');
+        event.target.renderRoot.firstElementChild.classList.remove('dragged-over');
 
         const draggedFromIndex = parseInt(event.dataTransfer.getData("order"), 10);
         const draggedToIndex = parseInt(this.order, 10);
 
         const parent = event.currentTarget.parentNode;
-        const insertBeforeElement = parent.children[draggedToIndex + 1] || null;
+        const insertBeforeElement = parent.children[draggedToIndex + 1] || parent.children[draggedToIndex];
 
-        // If the dragged element is the last one, append it to the end of the parent
-        if (insertBeforeElement === null) {
-            parent.appendChild(SortItem.instances[draggedFromIndex]);
-        } else {
-            parent.insertBefore(SortItem.instances[draggedFromIndex], insertBeforeElement);
-        }
+        parent.insertBefore(SortItem.instances[draggedFromIndex], insertBeforeElement);
 
         // Update the order of all elements after the dragged element
         SortItem.instances.forEach((item, index) => {
@@ -61,12 +56,9 @@ export class SortItem extends LitElement {
                 item.order = index - 1;
             }
         });
-        // Update the order of the dragged element
-        this.order = insertBeforeElement === null ? 
-            parent.children.length - 1 :
-            draggedToIndex;
+
+        this.order = draggedToIndex;
     }
-    
   
     static get styles() {
         return css`
