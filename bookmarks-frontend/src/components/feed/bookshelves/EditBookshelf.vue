@@ -23,17 +23,29 @@
                 <button
                     type="button"
                     class="btn add-readers-btn"
-                    @click="setReactiveProperty(currentView, 'value', 'edit-books')"
                 >
                     Add readers
                 </button>
-                <button
-                    type="button"
-                    class="btn add-readers-btn ml-5"
-                    @click="setReactiveProperty(currentView, 'value', 'add-books')"
-                >
-                    Add books
-                </button>
+
+                <div>
+                    <button
+                        v-if="currentView.value === 'edit-books'"
+                        type="button"
+                        class="btn add-readers-btn ml-5"
+                        @click="setReactiveProperty(currentView, 'value', 'add-books')"
+                    >
+                        {{ bookShelfComponentMap[currentView.value].buttonText }}
+                    </button>
+
+                    <button
+                        v-if="currentView.value === 'add-books'"
+                        type="button"
+                        class="btn add-readers-btn ml-5"
+                        @click="setReactiveProperty(currentView, 'value', 'edit-books')"
+                    >
+                        {{ bookShelfComponentMap[currentView.value].buttonText }}
+                    </button>
+                </div>
             </div>
         </div>
 

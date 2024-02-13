@@ -159,6 +159,7 @@ export const items = [
 export const bookShelfComponentMap = {
     "edit-books": {
         heading: (bookshelfName) => "Edit books",
+        buttonText: 'Add books',
         component: () => BookshelfBooks,
         events: {
 
@@ -166,6 +167,7 @@ export const bookShelfComponentMap = {
     },
     "add-books": {
         heading: (bookshelfName) => (`Add books to ${bookshelfName}`),
+        buttonText: 'Edit books',
         component: () => SearchBooks,
         events: {
             '@book-added': '(book) => addBook(book)'
