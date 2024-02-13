@@ -16,65 +16,55 @@
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue';
 import { addEventListenersFn, removeEventListenersFn } from './bookshelvesRtc';
-import IconGrabber from '../../svg/icon-grabber.vue';
+
 
 const props = defineProps({
     book: {
         type: Object,
         required: true,
-    }
-})
-
-const bookRef = ref(null);
-
-onMounted(() => {
-    console.log(bookRef)
-    addEventListenersFn(bookRef.value);
+    },
 });
 
-onUnmounted(() => {
-    removeEventListenersFn(bookRef.value)
-})
 </script>
 <style scoped lang="scss">
-    .bs-b--book {
-        display: grid;
-        padding: var(--padding-sm);
-        border-radius: var(--radius-sm);
-        grid-template-columns: 40px 40px auto 24px;
-        align-items: center;
-        column-gap: 4px;
-        transition-duration: 200ms;
-        cursor: grab;
+    // .bs-b--book {
+    //     display: grid;
+    //     padding: var(--padding-sm);
+    //     border-radius: var(--radius-sm);
+    //     grid-template-columns: 40px 40px auto 24px;
+    //     align-items: center;
+    //     column-gap: 4px;
+    //     transition-duration: 200ms;
+    //     cursor: grab;
 
-        &:hover {
-            background-color: var(--stone-100);
-        }
-        &.dragging {
-            border-top: 8px solid var(--indigo-600);
-        }
-        &.dragged-over {
-            border: 1px dotted var(--indigo-300);
-        }
-    }   
+    //     &:hover {
+    //         background-color: var(--stone-100);
+    //     }
+    //     &.dragging {
+    //         border-top: 8px solid var(--indigo-600);
+    //     }
+    //     &.dragged-over {
+    //         border: 1px dotted var(--indigo-300);
+    //     }
+    // }   
 
-    .bs-b--book .sort {
-        text-align: center;
-        font-size: var(--font-lg);
-        color: var(--stone-500);
-        font-weight: 300;
-    }
+    // .bs-b--book .sort {
+    //     text-align: center;
+    //     font-size: var(--font-lg);
+    //     color: var(--stone-500);
+    //     font-weight: 300;
+    // }
 
-    .bs-b--book img {
-        border-radius: var(--radius-sm);
-        justify-self: center;
-    }
-    .bs-b--book .meta {
-        padding-left: var(--padding-sm);
-        .title { color: var(--stone-800); font-size: var(--font-lg)}
-        .author {
-            color: var(--stone-500);
-            font-size: var(--font-sm);
-        }
-    }
+    // .bs-b--book img {
+    //     border-radius: var(--radius-sm);
+    //     justify-self: center;
+    // }
+    // .bs-b--book .meta {
+    //     padding-left: var(--padding-sm);
+    //     .title { color: var(--stone-800); font-size: var(--font-lg)}
+    //     .author {
+    //         color: var(--stone-500);
+    //         font-size: var(--font-sm);
+    //     }
+    // }
 </style>

@@ -23,7 +23,7 @@
     </Bookshelves>
 </template>
 <script setup>
-    import  Bookshelves from './bookshelves.vue'; 
+    import Bookshelves from './bookshelves.vue'; 
 
     const bookshelves = [
         {name: 'new', id: 'new', },

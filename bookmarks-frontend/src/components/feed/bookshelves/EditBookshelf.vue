@@ -18,15 +18,25 @@
                 <PlaceholderImage class="extra small-profile-image"/>
                 <p class="no-collaborators-note">No collaborators added to this bookshelf yet</p>
             </div>
-            <button
-                type="button"
-                class="btn add-readers-btn"
-            >
-                Add readers
-            </button>
+
+            <div class="mt-2 flex space-between">
+                <button
+                    type="button"
+                    class="btn add-readers-btn"
+                >
+                    Add readers
+                </button>
+                <button
+                    type="button"
+                    class="btn add-readers-btn ml-5"
+                >
+                    Add books
+                </button>
+            </div>
         </div>
-        <BookshelfBooks :books="books"/>
+        <BookshelfBooks />
     </section>    
+    <div class="mobile-menu-spacer sm:hidden"></div>
 </template>
 <script setup>
     import { ref, onMounted } from 'vue'
@@ -34,7 +44,7 @@
     import BookshelfBooks from './BookshelfBooks.vue';
     import IconEdit from '../../svg/icon-edit.vue'
     import PlaceholderImage from '../../svg/placeholderImage.vue';
-    import { getBookshelf, goToBookshelfSettingsPage, books } from './bookshelvesRtc';
+    import { getBookshelf, goToBookshelfSettingsPage } from './bookshelvesRtc';
     const route = useRoute();
     const router = useRouter();
 

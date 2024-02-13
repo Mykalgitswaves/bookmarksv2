@@ -17,6 +17,8 @@
   "dependencies": {
     "@uploadcare/blocks": "0.25.0",
     "@uploadcare/upload-client": "^6.10.0",
+    "@webcomponents/webcomponentsjs": "^2.8.0",
+    "webc-lib": "./src/webcomponents/webc-lib.js",
     "pinia": "^2.0.36",
     "vue": "^3.3.2",
     "vue-cookies": "^1.8.3",

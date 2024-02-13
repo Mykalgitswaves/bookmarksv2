@@ -74,23 +74,6 @@ export function goToBookshelfSettingsPage(router, user_id, bookshelf_id){
     router.push(`/feed/${user_id}/bookshelves/${bookshelf_id}/edit`)
 }
 
-export const books = reactive([
-{   
-    id: '1',
-    smallImgUrl: 'http://books.google.com/books/content?id=TIJ5EAAAQBAJ&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api',
-    title: 'Brave New World',
-    author: "Aldous Huxley",
-    order: 0,
-},
-{
-    id: '2',
-    smallImgUrl: 'http://books.google.com/books/content?id=TIJ5EAAAQBAJ&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api',
-    title: 'Infinite Jest',
-    author: "David Foster Wallace",
-    order: 1,
-}
-])
-
 export function addEventListenersFn(element){
     let dragged;
     element.addEventListener('dragstart', (e) => {
@@ -139,3 +122,34 @@ export function removeEventListenersFn(element) {
     element.removeEventListeners('dragstart');
     element.removeEventListeners('dragend');
 }
+
+export const items = [
+    {
+        id: '1',
+        order: 0,
+        bookTitle: 'Brave New World',
+        author: "Aldous Huxley",
+        imgUrl: "http://books.google.com/books/content?id=TIJ5EAAAQBAJ&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
+    },
+    {
+        id: '2',
+        order: 1,
+        bookTitle: 'Infinite Jest',
+        author: "David Foster Wallace",
+        imgUrl: 'http://upload.wikimedia.org/wikipedia/en/4/4f/Infinite_jest_cover.jpg',
+    },
+    {
+        id: '3',
+        order: 2,
+        bookTitle: 'The sirens of Titan',
+        author: "Kurt Vonnegut",
+        imgUrl: 'http://pictures.abebooks.com/isbn/9780385333498-us.jpg',
+    },
+    {
+        id: '4',
+        order: 3,
+        bookTitle: 'The Odyssey',
+        author: "Homer",
+        imgUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/9/93/Giuseppe_Bottani_-_Athena_revealing_Ithaca_to_Ulysses.jpg/440px-Giuseppe_Bottani_-_Athena_revealing_Ithaca_to_Ulysses.jpg',
+    }
+];

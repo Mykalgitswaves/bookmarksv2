@@ -21,5 +21,6 @@ module.exports = {
   ],
   parserOptions: {
     ecmaVersion: 'latest'
-  }
+  },
+  transpileDependencies: [/node_modules(?:\/|\\)lit-element|lit-html/],
 }

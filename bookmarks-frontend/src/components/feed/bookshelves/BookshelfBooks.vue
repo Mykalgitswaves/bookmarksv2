@@ -1,30 +1,45 @@
 <template>
-    <ul class="bookshelf-books">
-        <BookshelfBook 
-            v-for="book in books"
-            :key="book?.order"
-            :book="book"
-            @up="(order) => bookUpwards(order)"
-            @down="(order) => bookDownwards(order)"
-        />
+    <ul class="bookshelf-books" ref="books" v-if="bookElements.length">
+        <sort-item
+            v-for="item in bookElements"
+            :key="item.order"
+            :order="item.order" 
+            :name="item.name"
+            :bookTitle="item.bookTitle"
+            :author="item.author"
+            :imgUrl="item.imgUrl"
+        ></sort-item>
     </ul>
 </template>
 <script setup>
-import BookshelfBook from './BookshelfBook.vue';
+import { items } from './bookshelvesRtc';
+import { ref, onMounted } from 'vue';
 
-const props = defineProps({
-    books: {
-        type: Array,
-    }
-})
+const books = ref(null);
+const bookElements = ref([]);
 
-function bookUpwards(order) {
-    console.log(order);
-}
+onMounted(() => {
+    items.forEach((item) => {
+        let props = {
+            order: item.order, 
+            name: item.id,
+            bookTitle: item.bookTitle,
+            author: item.author,
+            imgUrl: item.imgUrl
+        };
 
-function bookDownwards(order){
-    console.log(order);
-}
+        // let book = new SortItem(item.order, item.id, item.bookTitle, item.author, item.imgUrl);
+        bookElements.value.push(props);
+
+        // constructor(order, name, bookTitle, author, imgUrl) {
+        // super();
+        // this.order = order;
+        // this.name = name;
+        // this.bookTitle = bookTitle;
+        // this.author = author;
+        // this.imgUrl = imgUrl;
+    });
+});
 </script>
 <style scoped lang="scss">
     .bookshelf-books {
