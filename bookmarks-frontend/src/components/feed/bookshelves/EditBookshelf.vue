@@ -23,36 +23,57 @@
                 <button
                     type="button"
                     class="btn add-readers-btn"
+                    @click="setReactiveProperty(currentView, 'value', 'edit-books')"
                 >
                     Add readers
                 </button>
                 <button
                     type="button"
                     class="btn add-readers-btn ml-5"
+                    @click="setReactiveProperty(currentView, 'value', 'add-books')"
                 >
                     Add books
                 </button>
             </div>
         </div>
-        <BookshelfBooks />
+
+        <h3 class="bookshelf-books-heading">
+            {{ bookShelfComponentMap[currentView.value].heading('untitled') }}
+        </h3>
+
+        <Component 
+            :is="bookShelfComponentMap[currentView.value].component()"
+            v-bind="bookShelfComponentMap[currentView.value].events" 
+        />
     </section>    
     <div class="mobile-menu-spacer sm:hidden"></div>
 </template>
 <script setup>
-    import { ref, onMounted } from 'vue'
+    import { ref, onMounted, reactive } from 'vue'
     import { useRoute, useRouter } from 'vue-router';
-    import BookshelfBooks from './BookshelfBooks.vue';
     import IconEdit from '../../svg/icon-edit.vue'
     import PlaceholderImage from '../../svg/placeholderImage.vue';
-    import { getBookshelf, goToBookshelfSettingsPage } from './bookshelvesRtc';
+    import { 
+        getBookshelf, 
+        goToBookshelfSettingsPage,
+        bookShelfComponentMap
+    } from './bookshelvesRtc';
+    import { setReactiveProperty } from '../../../services/helpers';
     const route = useRoute();
     const router = useRouter();
-
     const bookshelf = ref(null);
+    
+    const books = ref([]);
+
+    const currentView = reactive({value: 'edit-books'});
+
+    function addBook(book){
+        books.value.push(book);
+    }
 
     onMounted(() => {
         bookshelf.value = getBookshelf(route.params.bookshelf);
-    })
+    });
 </script>
 <style scoped>
 
@@ -108,5 +129,12 @@
 
     .add-readers-btn:hover {
         transform: scale(1.02);
+    }
+
+    .bookshelf-books-heading {
+        font-size: var(--font-xl);
+        font-weight: 500;   
+        margin-top: var(--padding-sm);
+        color: var(--stone-600);
     }
 </style>

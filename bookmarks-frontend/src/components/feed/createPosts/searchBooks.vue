@@ -45,7 +45,7 @@ const props = defineProps({
   }
 })
 
-const emit = defineEmits()
+const emit = defineEmits(['book-to-parent'])
 const { debounce } = helpersCtrl;
 const searchResultsArray = ref(null);
 const book = ref(null);

@@ -2,6 +2,8 @@ import { urls } from "../../../services/urls";
 import { helpersCtrl, throttle } from "../../../services/helpers";
 import { ref, reactive } from 'vue';
 import { db } from "../../../services/db";
+import BookshelfBooks from './BookshelfBooks.vue';
+import SearchBooks from '../createPosts/searchBooks.vue';
 
 const { getCookieByParam } = helpersCtrl
 
@@ -153,3 +155,20 @@ export const items = [
         imgUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/9/93/Giuseppe_Bottani_-_Athena_revealing_Ithaca_to_Ulysses.jpg/440px-Giuseppe_Bottani_-_Athena_revealing_Ithaca_to_Ulysses.jpg',
     }
 ];
+
+export const bookShelfComponentMap = {
+    "edit-books": {
+        heading: (bookshelfName) => "Edit books",
+        component: () => BookshelfBooks,
+        events: {
+
+        }
+    },
+    "add-books": {
+        heading: (bookshelfName) => (`Add books to ${bookshelfName}`),
+        component: () => SearchBooks,
+        events: {
+            '@book-added': '(book) => addBook(book)'
+        } 
+    }
+}

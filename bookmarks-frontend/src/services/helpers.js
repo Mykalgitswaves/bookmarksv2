@@ -154,3 +154,16 @@ export function throttle (callback, limit) {
         }
     }
 }
+
+/** 
+* @param {reactiveObject} - a vue reactive object.
+* @param {key} - a string, should be 'value'.
+* @param {value} - any, the actual value you want to set
+*/
+export const setReactiveProperty = (reactiveObject, key, value) => {
+    let error = () => { throw new Error("A object, key and value is required"); }
+
+    return (!reactiveObject || !key || !value) ? 
+        error() :
+        reactiveObject[key] = value
+}
