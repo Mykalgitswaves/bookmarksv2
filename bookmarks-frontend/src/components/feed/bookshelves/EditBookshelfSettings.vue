@@ -10,12 +10,14 @@
                 />
 
                 <p class="text-sm text-slate-600">Description</p>
+                
                 <textarea 
                     name="description" id="" cols="30" rows="3"
                     placeholder=""
                     :disabled="isEditing"
-                    v-model="data.shelfDescription">
-                </textarea>
+                    v-model="data.shelfDescription"
+                ></textarea>
+
                 <button 
                     type="button"
                     class="save-btn mt-5"

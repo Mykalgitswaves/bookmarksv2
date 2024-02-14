@@ -58,7 +58,7 @@
 
     async function createAndNavigateToBookshelf(model){
         let payload = toRaw(model);
-        await db.post(urls.rtc.createBookshelf(), payload, true, successFn, failureFn)
+        await db.post(urls.rtc.createBookshelf(), payload, true, successFn, failureFn);
     }
     
 </script>
