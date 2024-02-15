@@ -4,6 +4,7 @@ from fastapi import (
 )
 
 from database.db_helpers import User
+import uuid
 
 class Node:
     def __init__(self, data):
@@ -147,10 +148,10 @@ class DoublyLinkedList:
             current = current.next
         return items
     
-class Bookshelf():
-    """
+"""
     Bookshelves rely on a DoublyLinkedList implementation to handle logic. 
     data (a book) being sent to a bookshelf for an insertion should look like this:
+
         book = {
             order: int 
             name: str,
@@ -161,17 +162,18 @@ class Bookshelf():
 
     When we reorder we need to send references to previous nodes and next nodes and the current node we want to see?
 
-    # TODO test that size actually works on DoublyLinkedList implementation
-    
+    # TODO test that size actually works on DoublyLinkedList implementation.
     # TODO test that this shit is actually doable.
-    """
+"""
+class Bookshelf():
     def __init__(
-        self, id: str, created_date: str, image_url: str, created_by: str, title: str, description: str,
+        self, created_date: str, created_by: str, title: str, description: str,
     ) -> None:
-        
+        self.id = str(uuid.uuid4())
+        self.image_url: str
         self.books = DoublyLinkedList
-        self.followers = [str] # list of str's id.
-        self.authors = [str] # list of str's id.
+        self.followers = set() # list of str's id.
+        self.authors = set() # list of str's id.
 
         def add_book_to_shelf(self, data):
             book = Node(data=data)
@@ -185,3 +187,16 @@ class Bookshelf():
         
         def get_books(self):
             return self.books.to_array()
+        
+        def add_follower(self, user_id):
+            self.followers.add(user_id)
+        
+        def add_author(self, user_id):
+            # can only be 5 authors
+            if len(self.authors) > 5:
+                raise("400", "Bookshelves have a maximum of 5 authors")
+            else:
+                self.authors.add(user_id)
+
+        def remove_author(self, user_id):
+            self.authors.discard(user_id)

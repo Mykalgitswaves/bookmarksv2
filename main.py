@@ -16,7 +16,8 @@ from database.db_helpers import (
 
 from models import (
     Node,
-    DoublyLinkedList
+    DoublyLinkedList,
+    Bookshelf
 )
 
 from database.api.books_api.search import BookSearch
@@ -56,7 +57,7 @@ from datetime import datetime, timedelta
 
 import random
 import string
-
+import uuid
 """
 
 Connect to database
@@ -1252,14 +1253,17 @@ async def create_bookshelf(request: Request, current_user: Annotated[User, Depen
         raise HTTPException(status_code=500, detail="Unauthorized")
     
     data = await request.json()
-    if data:
+    if data and data['bookshelf_name'] and data['bookshelf_description']:
         name = data['bookshelf_name']
-        title = data['bookshelf_description']
-        # For now since we don't have bookshelf classes we will skip the 
-        # part of this endpoint that creates a real one. and instead 
-        # return an arbitrary string to use to redirect the front end.
-        if name and title:
-            rand_string = ''.join(random.choices(string.ascii_lowercase, k=5))
-            return {"bookshelf_id": rand_string}
+        description = data['bookshelf_description']
+        if name and description:
+            bookshelf = Bookshelf(
+                created_date=datetime.utcnow(),
+                created_by=current_user.id,
+                title=name,
+                description=description,
+            )
+            
+            return {"bookshelf_id": bookshelf.id}
     else:
         raise HTTPException(status_code=400, detail="missing name or title")
