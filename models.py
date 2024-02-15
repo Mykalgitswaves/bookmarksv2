@@ -7,18 +7,20 @@ from database.db_helpers import User
 import uuid
 import pytest
 
+# TODO Rename item to book and Node to Item?
 class Node:
     def __init__(self, data):
         self.item = data
         self.next = None
         self.prev = None
 # Class for doubly Linked List
+
 class DoublyLinkedList:
     def __init__(self):
         self.start_node = None
         self.size = int(0)
     # Insert element at the end
-    def InsertToEnd(self, data):
+    def InsertToEnd(self, data) -> None:
         # Check if the list is empty
         new_node = Node(data)
         if self.start_node is None:
@@ -37,7 +39,7 @@ class DoublyLinkedList:
         new_node.prev = n
         self.size += 1
     # Delete the element from data
-    def DeleteNode(self, data):
+    def DeleteNode(self, data) -> None:
         # Check if the List is empty
         if self.start_node is None:
             raise HTTPException(400, 'Item not in list')
@@ -59,7 +61,7 @@ class DoublyLinkedList:
                 return
         return HTTPException(400,'Item not in list')
         
-    def reorder_node(self, node_data, prev_node_data, next_node_data):
+    def reorder_node(self, node_data, prev_node_data, next_node_data) -> None:
         """
         Edge cases to consider:
             1)
@@ -141,7 +143,7 @@ class DoublyLinkedList:
                 n = n.next
         print("\n")
 
-    def to_array(self):
+    def to_array(self) -> list:
         items = []
         current = self.start_node
         while current:
