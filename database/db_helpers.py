@@ -707,6 +707,20 @@ class SuggestedFriend():
         self.user_profile_img_url = user_profile_img_url
         self.n_mutual_friends = n_mutual_friends
 
+
+
+
+# A bookshelf needs to store indexed books that can be reordered.
+# Books should be set by 
+#   books[book_id] = {
+#       id: 
+#       order:
+#       img_url:
+#       ...
+#   }
+# So by setting a book on a bookshelf you are creating a lightweight copy of the book, withenough information to not have to call the entire book object
+# The ds that can accomplish this can just be a regular map. We can sort the map on the front end? 
+
 class Neo4jDriver():
     def __init__(self):
         with open("config.json","r") as f:

@@ -1,7 +1,9 @@
 # https://favtutor.com/blogs/doubly-linked-list-python
 from fastapi import (
-    HTTPException
+    HTTPException,
 )
+
+from database.db_helpers import User
 
 class Node:
     def __init__(self, data):
@@ -12,12 +14,14 @@ class Node:
 class DoublyLinkedList:
     def __init__(self):
         self.start_node = None
+        self.size = int(0)
     # Insert element at the end
     def InsertToEnd(self, data):
         # Check if the list is empty
         new_node = Node(data)
         if self.start_node is None:
             self.start_node = new_node
+            self.size += 1
             return
         n = self.start_node
         if n.item == new_node.item:
@@ -29,6 +33,7 @@ class DoublyLinkedList:
                 raise HTTPException(400, 'Item already in list')
         n.next = new_node
         new_node.prev = n
+        self.size += 1
     # Delete the element from data
     def DeleteNode(self, data):
         # Check if the List is empty
@@ -38,6 +43,7 @@ class DoublyLinkedList:
         if n.item == data:
             self.start_node = n.next
             self.start_node.prev = None
+            self.size -= 1
             return
         while n.next is not None:
             n = n.next
@@ -45,6 +51,7 @@ class DoublyLinkedList:
                 n.prev.next = n.next
                 if n.next:
                     n.next.prev = n.prev
+                    self.size -= 1
                 else:
                     pass # Case when tail --> Increase query simplicity
                 return
@@ -132,4 +139,49 @@ class DoublyLinkedList:
                 n = n.next
         print("\n")
 
+    def to_array(self):
+        items = []
+        current = self.start_node
+        while current:
+            items.append(current)
+            current = current.next
+        return items
     
+class Bookshelf():
+    """
+    Bookshelves rely on a DoublyLinkedList implementation to handle logic. 
+    data (a book) being sent to a bookshelf for an insertion should look like this:
+        book = {
+            order: int 
+            name: str,
+            book_title: str,
+            author: [str],
+            imgUrl: str
+        }
+
+    When we reorder we need to send references to previous nodes and next nodes and the current node we want to see?
+
+    # TODO test that size actually works on DoublyLinkedList implementation
+    
+    # TODO test that this shit is actually doable.
+    """
+    def __init__(
+        self, id: str, created_date: str, image_url: str, created_by: str, title: str, description: str,
+    ) -> None:
+        
+        self.books = DoublyLinkedList
+        self.followers = [str] # list of str's id.
+        self.authors = [str] # list of str's id.
+
+        def add_book_to_shelf(self, data):
+            book = Node(data=data)
+            self.books.insert_to_end(book)
+            
+        def reorder_book(self, node_data, previous_node_data, next_node_data):
+            if previous_node_data and next_node_data:
+                self.books.reorder_node(node_data, previous_node_data, next_node_data)
+            else:
+                self.books.insert_to_end(node_data)
+        
+        def get_books(self):
+            return self.books.to_array()
