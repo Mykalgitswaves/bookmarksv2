@@ -171,7 +171,7 @@ class Bookshelf():
     ) -> None:
         self.id = str(uuid.uuid4())
         self.image_url: str
-        self.books = DoublyLinkedList
+        self.books = DoublyLinkedList()
         self.followers = set() # list of str's id.
         self.authors = set() # list of str's id.
 
