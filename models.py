@@ -209,6 +209,10 @@ class Bookshelf():
 # TODO Add tests for Bookshelves either here or in a seperate file.
 # These tests should test the bookshelf methods and books dll implementation.
 class BookshelfTest():
+    # Constants to use in diff tests.
+    BOOKSHELF = Bookshelf()
+    USER_1 = 'CASHMONEY_1'
+    USER_2 = 'CASHMONEY_2'
     BOOK = {
             'order': 1,
             'id': 'G42069_NICE',
@@ -216,7 +220,6 @@ class BookshelfTest():
             'author': ['David Foster Wallace'],
             'imgUrl': ''
         }
-    BOOKSHELF = Bookshelf()
     def test_create_bookshelf():
         """
         Create an empty bookshelf without any books. ensure that you can add a book to a bookshelf, add an author, remove an author, add a follower, remove a follower. 
