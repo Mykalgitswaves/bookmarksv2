@@ -200,3 +200,6 @@ class Bookshelf():
 
         def remove_author(self, user_id):
             self.authors.discard(user_id)
+
+
+# TODO Add tests for Bookshelves either here or in a seperate file.
