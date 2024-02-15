@@ -1259,11 +1259,11 @@ async def create_bookshelf(request: Request, current_user: Annotated[User, Depen
         if name and description:
             bookshelf = Bookshelf(
                 created_date=datetime.utcnow(),
-                created_by=current_user.id,
+                created_by=current_user.user_id,
                 title=name,
                 description=description,
             )
-            
+            breakpoint()
             return {"bookshelf_id": bookshelf.id}
     else:
         raise HTTPException(status_code=400, detail="missing name or title")
