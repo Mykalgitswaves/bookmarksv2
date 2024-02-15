@@ -212,7 +212,7 @@ class Bookshelf():
 # These tests should test the bookshelf methods and books dll implementation.
 class BookshelfTest():
     # Constants to use in diff tests.
-    BOOKSHELF = Bookshelf()
+    BOOKSHELF = None
     USER_1 = 'CASHMONEY_1'
     USER_2 = 'CASHMONEY_2'
     BOOK = {
@@ -222,11 +222,14 @@ class BookshelfTest():
             'author': ['David Foster Wallace'],
             'imgUrl': ''
         }
-    def test_create_bookshelf():
+    def test_populate_empty_bookshelf():
         """
         Create an empty bookshelf without any books. ensure that you can add a book to a bookshelf, add an author, remove an author, add a follower, remove a follower. 
             Only an author can add books to a shelf
         """
+        BOOKSHELF = Bookshelf(
+            
+        )
     def test_add_books_to_shelf_and_reorder():
         """
         Populate a bookshelf and try to reorder books on it. 
