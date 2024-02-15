@@ -5,6 +5,7 @@ from fastapi import (
 
 from database.db_helpers import User
 import uuid
+import pytest
 
 class Node:
     def __init__(self, data):
@@ -175,10 +176,13 @@ class Bookshelf():
         self.followers = set() # list of str's id.
         self.authors = set() # list of str's id.
 
-    def add_book_to_shelf(self, data):
-        book = Node(data=data)
-        self.books.insert_to_end(book)
-        
+    def add_book_to_shelf(self, data, user_id):
+        if user_id in self.authors and data:
+            book = Node(data=data)
+            self.books.insert_to_end(book)
+        else:
+            raise("500", "Only authors can add books to bookshelves")
+
     def reorder_book(self, node_data, previous_node_data, next_node_data):
         if previous_node_data and next_node_data:
             self.books.reorder_node(node_data, previous_node_data, next_node_data)
@@ -203,3 +207,26 @@ class Bookshelf():
 
 
 # TODO Add tests for Bookshelves either here or in a seperate file.
+# These tests should test the bookshelf methods and books dll implementation.
+class BookshelfTest():
+    BOOK = {
+            'order': 1,
+            'id': 'G42069_NICE',
+            'book_title': "Infinite Jest",
+            'author': ['David Foster Wallace'],
+            'imgUrl': ''
+        }
+    BOOKSHELF = Bookshelf()
+    def test_create_bookshelf():
+        """
+        Create an empty bookshelf without any books. ensure that you can add a book to a bookshelf, add an author, remove an author, add a follower, remove a follower. 
+            Only an author can add books to a shelf
+        """
+    def test_add_books_to_shelf_and_reorder():
+        """
+        Populate a bookshelf and try to reorder books on it. 
+        """
+    def get_books_from_shelf():
+        """
+        Ensure that we are able to get books from a shelf.
+        """
