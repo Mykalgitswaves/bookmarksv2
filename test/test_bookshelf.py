@@ -152,20 +152,34 @@ class TestBookshelf:
         assert self.bookshelf.get_books()[2].id == self.books[0].id
         
         # SHOULD WORK CASES:
-        # 1) If you reorder to the end of a shelf. 
-        # 2) If you reorder to the beginning of a shelf. 
+        # ✅ 1) If you reorder to the end of a shelf. 
+        # ✅ 2) If you reorder to the beginning of a shelf. 
         # 3) If you delete at the end with multiple books in shelf.
         # 4) If you delete at the begining with multiple books in shelf.
 
         # 1 reorder to end of list
-        # self.bookshelf.reorder_book(
-        #     target_id=self.books[0].id,
-        #     previous_book_id=self.books[3].id,
-        #     next_book_id=None
-        # )
+        self.bookshelf.reorder_book(
+            target_id=self.books[0].id,
+            previous_book_id=self.books[3].id,
+            next_book_id=None,
+            author_id=self.user
+        )
 
-        # assert self.bookshelf.get_books()[3].id == self.books[0].id
-        
+        assert self.bookshelf.get_books()[3].id == self.books[0].id
+
+        updated_list = self.bookshelf.books.to_array()
+        # 2 reorder to the beginning of a shelf
+        # Moves Book #1 at the end of list to position 0 at beginning of list.
+
+        self.bookshelf.reorder_book(
+            target_id=updated_list[3].id,
+            previous_book_id=None,
+            next_book_id=updated_list[0].id,
+            author_id=self.user
+        )
+
+        assert self.bookshelf.get_books()[0].id == self.books[0].id
+
         # SHOULD BREAK CASES:
         # 1) Try to insert between two non adjacent books.
         # 2) Try to insert where one of the adjacent books doesnt exist in the linked list.

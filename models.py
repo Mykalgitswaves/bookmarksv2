@@ -92,12 +92,16 @@ class DoublyLinkedList:
             print("The list is empty")
             return
         
-    def reorder_node_to_end(self, book_id, prev_book_id) -> None:
+    def reorder_node_to_beginning(self, book_id, next_book_id) -> None:
         self.is_node_data_valid(book_id=book_id)
-        
+    
+        if not next_book_id:
+            print("No next book id provided")
+            return
+
         current = self.start_node
 
-        # One thing in the list
+        # Find the node to be reordered
         while current and current.book.id != book_id:
             current = current.next
 
@@ -105,19 +109,80 @@ class DoublyLinkedList:
             print("Node to reorder not found")
             return
         
-        # If node has been found and is already the end (possible if we are in a shelf with few books)
-        if current.book.id == book_id and current.next == None:
+        # If the node is already at the beginning of the list
+        if not current.prev:
             return
         
-         # Detach the node from its current position
+        # Detach the node from its current position
         if current.prev:
             current.prev.next = current.next
 
         if current.next:
             current.next.prev = current.prev
         
-        # TODO finish this function.
-    
+        # Find the node with the next book ID
+        next_node = self.start_node
+        while next_node:
+            if next_node.book.id != next_book_id:
+                next_node = next_node.next
+            else:
+                break
+        
+        if not next_node:
+            print("The provided next book id wasn't found")
+            return
+        
+        # Reorder the node
+        current.prev = None
+        current.next = next_node
+        next_node.prev = current
+        self.start_node = current
+
+    def reorder_node_to_end(self, book_id, prev_book_id) -> None:
+        self.is_node_data_valid(book_id=book_id)
+        
+        if not prev_book_id:
+            print("No previous book id provided")
+            return
+
+        current = self.start_node
+
+        # Find the node to be reordered
+        while current and current.book.id != book_id:
+            current = current.next
+
+        if not current:
+            print("Node to reorder not found")
+            return
+        
+        # If the node is already at the end of the list
+        if not current.next:
+            return
+        
+        # Detach the node from its current position
+        if current.prev:
+            current.prev.next = current.next
+
+        if current.next:
+            current.next.prev = current.prev
+        
+        # Find the node with the previous book ID
+        prev_node = self.start_node
+        while prev_node:
+            if prev_node.book.id != prev_book_id:
+                prev_node = prev_node.next
+            else:
+                break
+        
+        if not prev_node:
+            print("The provided previous book id wasn't found")
+            return
+        
+        # Reorder the node
+        current.next = None
+        current.prev = prev_node
+        prev_node.next = current
+
     def reorder_node(self, book_id, prev_book_id, next_book_id) -> None:
         """
         Edge cases to consider:
@@ -262,12 +327,15 @@ class Bookshelf():
             # Reordering to the end. 
             elif previous_book_id != None and next_book_id == None:
                 self.books.reorder_node_to_end(
-                    book_id=target_id
+                    book_id=target_id,
+                    prev_book_id=previous_book_id,
                 )
             # Reordering to the beginning.
             elif next_book_id != None and previous_book_id == None:
-                # TODO add in this logic next.
-                return
+                self.books.reorder_node_to_beginning(
+                    book_id=target_id,
+                    next_book_id=next_book_id,
+                )
         else:
             raise("400", "Only authors can reorder bookshelves")
 
