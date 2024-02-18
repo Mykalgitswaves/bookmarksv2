@@ -5,35 +5,12 @@ import models
 import pytest
 from pydantic import BaseModel
 from models import Bookshelf, Node
+from helpers import timing_decorator
 from fastapi import (
     HTTPException,
 )
-BOOKS = [
-{
-        'id': '1',
-        'bookTitle': 'Brave New World',
-        'author': "Aldous Huxley",
-        'imgUrl': "http://books.google.com/books/content?id=TIJ5EAAAQBAJ&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
-    },
-    {
-        'id': '2',
-        'bookTitle': 'Infinite Jest',
-        'author': "David Foster Wallace",
-        'imgUrl': 'http://upload.wikimedia.org/wikipedia/en/4/4f/Infinite_jest_cover.jpg',
-    },
-    {
-        'id': '3',
-        'bookTitle': 'The sirens of Titan',
-        'author': "Kurt Vonnegut",
-        'imgUrl': 'http://pictures.abebooks.com/isbn/9780385333498-us.jpg',
-    },
-    {
-        'id': '4',
-        'bookTitle': 'The Odyssey',
-        'author': "Homer",
-        'imgUrl': 'https://upload.wikimedia.org/wikipedia/commons/thumb/9/93/Giuseppe_Bottani_-_Athena_revealing_Ithaca_to_Ulysses.jpg/440px-Giuseppe_Bottani_-_Athena_revealing_Ithaca_to_Ulysses.jpg',
-    }
-]
+
+from books_fixture import BOOKS
 
 class BookshelfBook(BaseModel):
     id: str
@@ -185,3 +162,45 @@ class TestBookshelf:
             user_id=self.user,
             book=books[0]
         ).status_code == 400
+
+@pytest.mark.usefixtures("setup_class")
+class TestSpeedOfDLL:
+    def test_speed_dll_of_get_books(self):
+        # Regular implementation of our DLL, no hash map.
+        for book in self.books:
+            self.bookshelf.add_book_to_shelf(book=book, user_id=self.user)
+        
+        assert len(self.bookshelf.get_books()) == 100
+        # Speed for adding 100 books then retrieving them.
+
+        # Total time taken to add all books: 0.002669 seconds
+        # Total time taken to retrieve all books with get_books: 0.000011 seconds to execute
+
+    def test_speed_dll_of_reorder_books(self):
+        books = self.bookshelf.get_books()
+        # reorder_book took 0.000019 seconds to execute
+        
+        
+        # Move to the end
+        self.bookshelf.reorder_book(
+            target_id=books[99].id,
+            previous_book_id=None,
+            next_book_id=books[1].id,
+            author_id=self.user
+        )
+        # reorder_book took 0.000021 seconds to execute
+        self.bookshelf.reorder_book(
+            target_id=books[0].id,
+            previous_book_id=books[99].id,
+            next_book_id=None,
+            author_id=self.user
+        )
+
+        # reorder_book took 0.000014 seconds to execute
+        self.bookshelf.reorder_book(
+            target_id=books[0].id,
+            previous_book_id=books[49].id,
+            next_book_id=books[50].id,
+            author_id=self.user
+        )
+        # self.bookshelf.reorder_book()

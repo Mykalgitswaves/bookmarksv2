@@ -7,7 +7,7 @@ from database.db_helpers import User
 import uuid
 import pytest
 import datetime
-
+from helpers import timing_decorator
 # Delete the element from data
     # We arent using this rn, shouldn't be necessary
     # def InsertToBeginning(self, data) -> None:
@@ -29,6 +29,7 @@ class Node:
         self.prev = None
 # Class for doubly Linked List
 # TODO change `item` to book_id
+        
 class DoublyLinkedList:
     def __init__(self):
         self.start_node = None
@@ -293,6 +294,115 @@ class DoublyLinkedList:
     # TODO test that size actually works on DoublyLinkedList implementation.
     # TODO test that this shit is actually doable.
 """
+# Possible optimization of first one.
+class HashMapDLL:
+    def __init__(self):
+        self.start_node = None
+        self.node_map = {}
+
+    def insert_to_end(self, book) -> None:
+        if book.id in self.node_map:
+            raise HTTPException(400, "This book is already added")
+        
+        new_node = Node(book=book)
+        if self.start_node is None:
+            self.start_node = new_node
+        else:
+            current = self.start_node
+            while current.next:
+                current = current.next
+            current.next = new_node
+            new_node.prev = current
+        
+        self.node_map[book.id] = new_node
+
+    def delete_node(self, book_id) -> None:
+        if book_id not in self.node_map:
+            raise HTTPException(400, 'Book not in list')
+
+        node_to_delete = self.node_map[book_id]
+        if node_to_delete.prev:
+            node_to_delete.prev.next = node_to_delete.next
+        else:
+            self.start_node = node_to_delete.next
+
+        if node_to_delete.next:
+            node_to_delete.next.prev = node_to_delete.prev
+
+        del self.node_map[book_id]
+
+    def reorder_node(self, book_id, prev_book_id, next_book_id):
+        if book_id not in self.node_map:
+            raise HTTPException(400, "Node to reorder not found")
+        
+        current_node = self.node_map[book_id]
+
+        if prev_book_id:
+            prev_node = self.node_map.get(prev_book_id)
+            if not prev_node:
+                raise HTTPException(400, "Previous node not found")
+            if prev_node.next != current_node:
+                raise HTTPException(401, "Reordered nodes must be adjacent")
+        else:
+            prev_node = None
+
+        if next_book_id:
+            next_node = self.node_map.get(next_book_id)
+            if not next_node:
+                raise HTTPException(400, "Next node not found")
+            if next_node.prev != current_node:
+                raise HTTPException(401, "Reordered nodes must be adjacent")
+        else:
+            next_node = None
+
+        if prev_node:
+            prev_node.next = current_node.next
+        else:
+            self.start_node = current_node.next
+
+        if next_node:
+            next_node.prev = current_node.prev
+
+        if current_node.next:
+            current_node.next.prev = prev_node
+        if current_node.prev:
+            current_node.prev.next = next_node
+
+        current_node.prev = next_node
+        current_node.next = prev_node
+
+    def are_nodes_adjacent(self, prev_node, next_node) -> bool:
+        return prev_node.next == next_node and next_node.prev == prev_node
+
+    def is_node_data_valid(self, book_id):
+        if book_id is None:
+            raise HTTPException(401, "Node data is required to reorder")
+
+        if book_id not in self.node_map:
+            raise HTTPException(400, "The node is not in the list")
+
+    def display(self):
+        if self.start_node is None:
+            raise HTTPException(400, "The list is empty")
+        else:
+            current = self.start_node
+            while current:
+                print("Element is: ", current.book)
+                current = current.next
+        print("\n")
+
+    def to_array(self) -> list:
+        books = []
+        current = self.start_node
+        while current:
+            books.append(current.book)
+            current = current.next
+        return books
+
+
+
+
+
 class Bookshelf():
     def __init__(
         self, created_by: str, title: str, description: str,
@@ -308,6 +418,7 @@ class Bookshelf():
         # Need this dude
         self.authors.add(self.created_by)
 
+    @timing_decorator
     def add_book_to_shelf(self, book, user_id):
         # Cannot have more than 100 books in your shelf for an arbitrary reason???
         # TODO test how many books possible before performance drop off.
@@ -315,7 +426,8 @@ class Bookshelf():
             return self.books.insert_to_end(book)
         else:
             return HTTPException(500, "Only authors can add books to bookshelves")
-
+        
+    @timing_decorator
     def reorder_book(self, target_id, previous_book_id, next_book_id, author_id):
         if author_id in self.authors:
             # Reordering in the middle.
@@ -339,13 +451,15 @@ class Bookshelf():
                 )
         else:
             return HTTPException(400, "Only authors can reorder bookshelves")
-
+        
+    @timing_decorator
     def remove_book(self, book_id, author_id):
         if author_id in self.authors:
             self.books.delete_node(book_id=book_id)
         else: 
             return HTTPException(500, "Must be an author to delete books from a shelf")
         
+    @timing_decorator  
     def get_books(self):
         return self.books.to_array()
     
