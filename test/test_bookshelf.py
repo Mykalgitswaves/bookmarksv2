@@ -5,7 +5,9 @@ import models
 import pytest
 from pydantic import BaseModel
 from models import Bookshelf, Node
-
+from fastapi import (
+    HTTPException,
+)
 BOOKS = [
 {
         'id': '1',
@@ -62,8 +64,8 @@ class TestBookshelf:
         # ✅ 4) If you delete at the begining with multiple books in shelf.
     
     # SHOULD BREAK CASES:
-        # 1) Try to insert between two non adjacent books.
-        # 2) Try to insert where one of the adjacent books doesnt exist in the linked list.
+        # ✅ 1) Try to insert between two non adjacent books.
+        # ✅ 2) Try to insert where one of the adjacent books doesnt exist in the linked list.
         # 3) Try to insert a duplicate book
         # 4) Reordering to the same position
     def test_can_add_book_to_shelf(self):
@@ -161,9 +163,25 @@ class TestBookshelf:
         refilled_book_shelf = self.bookshelf.get_books()
         assert len(refilled_book_shelf) == 4
         # Should not be able to reorder between two non adjacent books in a dll.
-        self.bookshelf.reorder_book(
+        assert self.bookshelf.reorder_book(
             target_id=refilled_book_shelf[0].id,
             previous_book_id=refilled_book_shelf[1].id,
             next_book_id=refilled_book_shelf[3].id,
             author_id=self.user
-        )
+        ).status_code == 401
+
+        # Try to reorder where one of the id's doesnt exist in the linked list.
+        assert self.bookshelf.reorder_book(
+            target_id=refilled_book_shelf[0].id,
+            previous_book_id=refilled_book_shelf[1].id,
+            next_book_id='5',
+            author_id=self.user
+        ).status_code == 400
+        
+    def test_insert_duplicate_book(self):
+        books = self.bookshelf.get_books()
+        # Should not be able to add the same book twice
+        assert self.bookshelf.add_book_to_shelf(
+            user_id=self.user,
+            book=books[0]
+        ).status_code == 400

@@ -8,39 +8,7 @@ import uuid
 import pytest
 import datetime
 
-# TODO Rename item to book and Node to Item?
-class Node:
-    def __init__(self, book):
-        self.book = book
-        self.next = None
-        self.prev = None
-# Class for doubly Linked List
-# TODO change `item` to book_id
-class DoublyLinkedList:
-    def __init__(self):
-        self.start_node = None
-
-
-    # Insert element at the end
-    def insert_to_end(self, book) -> None:
-        # Check if the list is empty
-        new_node = Node(book=book)
-        if self.start_node is None:
-            self.start_node = new_node
-            
-            return
-        n = self.start_node
-        if n.book.id == new_node.book.id:
-            raise HTTPException(400, 'book already in list')
-        # Iterate till the next reaches NULL
-        while n.next is not None:
-            n = n.next
-            if n.book.id == new_node.book.id:
-                raise HTTPException(400, 'book already in list')
-        n.next = new_node
-        new_node.prev = n
-
-    # Delete the element from data
+# Delete the element from data
     # We arent using this rn, shouldn't be necessary
     # def InsertToBeginning(self, data) -> None:
     #     new_node = Node(data)
@@ -53,10 +21,52 @@ class DoublyLinkedList:
     #         self.start_node.next = n
     #         n.prev = self.start_node
 
+# TODO Rename item to book and Node to Item?
+class Node:
+    def __init__(self, book):
+        self.book = book
+        self.next = None
+        self.prev = None
+# Class for doubly Linked List
+# TODO change `item` to book_id
+class DoublyLinkedList:
+    def __init__(self):
+        self.start_node = None
+
+    # Insert element at the end
+    def insert_to_end(self, book) -> None:
+        # TODO make this more efficient by implementing it with a hash map.
+        if self.start_node is not None:
+            current = self.start_node
+            while current:
+                if current.book.id == book.id:
+                    return HTTPException(400, "This book is already added")
+                else:
+                    current = current.next
+
+        if self.start_node is None:
+            new_node = Node(book=book)
+            self.start_node = new_node
+            
+            return
+        
+        new_node = Node(book=book)
+
+        n = self.start_node
+        if n.book.id == new_node.book.id:
+            return HTTPException(400, 'book already in list')
+        # Iterate till the next reaches NULL
+        while n.next is not None:
+            n = n.next
+            if n.book.id == new_node.book.id:
+                return HTTPException(400, 'book already in list')
+        n.next = new_node
+        new_node.prev = n
+
     def delete_node(self, book_id) -> None:
         # Check if the List is empty
         if self.start_node is None:
-            raise HTTPException(400, 'book not in list')
+            return HTTPException(400, 'book not in list')
         n = self.start_node
 
         # Deletion for one book!
@@ -86,18 +96,16 @@ class DoublyLinkedList:
     
     def is_node_data_valid(self, book_id):
         if book_id is None:
-            raise("401", "Node data is required to reorder")
+            return HTTPException(401, "Node data is required to reorder")
 
         if self.start_node is None:
-            print("The list is empty")
-            return
+            return HTTPException(400, "The list is empty")
         
     def reorder_node_to_beginning(self, book_id, next_book_id) -> None:
         self.is_node_data_valid(book_id=book_id)
     
         if not next_book_id:
-            print("No next book id provided")
-            return
+            return HTTPException(400, "No next book id provided")
 
         current = self.start_node
 
@@ -106,8 +114,7 @@ class DoublyLinkedList:
             current = current.next
 
         if not current:
-            print("Node to reorder not found")
-            return
+            return HTTPException(400, "Node to reorder not found")
         
         # If the node is already at the beginning of the list
         if not current.prev:
@@ -129,8 +136,7 @@ class DoublyLinkedList:
                 break
         
         if not next_node:
-            print("The provided next book id wasn't found")
-            return
+            return HTTPException(400, "The provided next book id wasn't found")
         
         # Reorder the node
         current.prev = None
@@ -142,8 +148,7 @@ class DoublyLinkedList:
         self.is_node_data_valid(book_id=book_id)
         
         if not prev_book_id:
-            print("No previous book id provided")
-            return
+            return HTTPException(400, "No previous book id provided")
 
         current = self.start_node
 
@@ -152,7 +157,7 @@ class DoublyLinkedList:
             current = current.next
 
         if not current:
-            print("Node to reorder not found")
+            return HTTPException(400, "Node to reorder not found")
             return
         
         # If the node is already at the end of the list
@@ -175,15 +180,14 @@ class DoublyLinkedList:
                 break
         
         if not prev_node:
-            print("The provided previous book id wasn't found")
-            return
+            return HTTPException(400, "The provided previous book id wasn't found")
         
         # Reorder the node
         current.next = None
         current.prev = prev_node
         prev_node.next = current
 
-    def reorder_node(self, book_id, prev_book_id, next_book_id) -> None:
+    def reorder_node(self, book_id, prev_book_id, next_book_id):
         """
         Edge cases to consider:
             1)
@@ -202,8 +206,7 @@ class DoublyLinkedList:
             current = current.next
 
         if not current:
-            print("Node to reorder not found")
-            return
+            return HTTPException(400, "Node to reorder not found")
 
         # Node has been found, now handle reordering it to the same position
         # TODO: Double check this, it is likely broken.
@@ -229,7 +232,7 @@ class DoublyLinkedList:
                 prev_node = prev_node.next
 
             if not prev_node:
-                raise("400", "Previous node not found")
+                return HTTPException(400, "Previous node not found")
 
         if next_book_id is not None:
             next_node = self.start_node
@@ -237,10 +240,10 @@ class DoublyLinkedList:
                 next_node = next_node.next
 
             if not next_node:
-                raise("400", "next node not found")
+                return HTTPException(400, "next node not found")
      
         if not self.are_nodes_adjacent(prev_node, next_node):
-            raise("401", "Reordered nodes must be adjacent")
+            return HTTPException(401, "Reordered nodes must be adjacent")
         
         # PERFORMING THE REORDER STARTING HERE v
         # Place the node at the new position
@@ -258,8 +261,7 @@ class DoublyLinkedList:
     # Traversing and Displaying each element of the list
     def display(self):
         if self.start_node is None:
-            print("The list is empty")
-            return
+            return HTTPException(400, "The list is empty")
         else:
             n = self.start_node
             while n is not None:
@@ -280,7 +282,6 @@ class DoublyLinkedList:
     data (a book) being sent to a bookshelf for an insertion should look like this:
 
         book = {
-            order: int 
             name: str,
             book_title: str,
             author: [str],
@@ -311,39 +312,39 @@ class Bookshelf():
         # Cannot have more than 100 books in your shelf for an arbitrary reason???
         # TODO test how many books possible before performance drop off.
         if user_id in self.authors:
-            self.books.insert_to_end(book)
+            return self.books.insert_to_end(book)
         else:
-            raise("500", "Only authors can add books to bookshelves")
+            return HTTPException(500, "Only authors can add books to bookshelves")
 
     def reorder_book(self, target_id, previous_book_id, next_book_id, author_id):
         if author_id in self.authors:
             # Reordering in the middle.
             if previous_book_id and next_book_id:
-                self.books.reorder_node(
+                return self.books.reorder_node(
                     book_id=target_id,
                     prev_book_id=previous_book_id,
                     next_book_id=next_book_id
                 )
             # Reordering to the end. 
             elif previous_book_id != None and next_book_id == None:
-                self.books.reorder_node_to_end(
+                return self.books.reorder_node_to_end(
                     book_id=target_id,
                     prev_book_id=previous_book_id,
                 )
             # Reordering to the beginning.
             elif next_book_id != None and previous_book_id == None:
-                self.books.reorder_node_to_beginning(
+                return self.books.reorder_node_to_beginning(
                     book_id=target_id,
                     next_book_id=next_book_id,
                 )
         else:
-            raise("400", "Only authors can reorder bookshelves")
+            return HTTPException(400, "Only authors can reorder bookshelves")
 
     def remove_book(self, book_id, author_id):
         if author_id in self.authors:
             self.books.delete_node(book_id=book_id)
         else: 
-            raise("500", "Must be an author to delete books from a shelf")
+            return HTTPException(500, "Must be an author to delete books from a shelf")
         
     def get_books(self):
         return self.books.to_array()
@@ -354,7 +355,7 @@ class Bookshelf():
     def add_author(self, user_id):
         # can only be 5 authors
         if len(self.authors) > 5:
-            raise("400", "Bookshelves have a maximum of 5 authors")
+            return HTTPException(400, "Bookshelves have a maximum of 5 authors")
         else:
             self.authors.add(user_id)
 
@@ -393,6 +394,8 @@ I have a list: [
         imgUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/9/93/Giuseppe_Bottani_-_Athena_revealing_Ithaca_to_Ulysses.jpg/440px-Giuseppe_Bottani_-_Athena_revealing_Ithaca_to_Ulysses.jpg',
     }
 ]
+
+IN RETROSPECT THIS WAS RLLY DUMB DISREGARD.
 
 I reorder id #1 to the id#4 position (moving whats at index 0 to whats at index 3), can i do this with our current ds. The answer is NO. Nodes should not have to be adjacent for us to reorder. By using a Map (or dict in the case of python) we can have reordering at constant time.
 
