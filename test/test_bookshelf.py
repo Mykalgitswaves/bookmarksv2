@@ -102,24 +102,32 @@ class BookshelfBook(BaseModel):
 
 BOOKS = [BookshelfBook(**book) for book in BOOKS]
 
-
-
 @pytest.fixture(scope="class")
 def setup_class(request):
     request.cls.books = BOOKS
-    request.cls.bookshelf = None
     request.cls.user = 'michaelfinal.png@gmail.com'
     request.cls.shelf_title = '100 favorite books'
     request.cls.shelf_description = 'For your leisure?'
+    request.cls.bookshelf = Bookshelf(
+        created_by=request.cls.user,
+        title=request.cls.shelf_title,
+        description=request.cls.shelf_description
+    )
 
 @pytest.mark.usefixtures("setup_class")
 class TestBookshelf:
+    # SHOULD WORK CASES:
+        # ✅ 1) If you reorder to the end of a shelf. 
+        # ✅ 2) If you reorder to the beginning of a shelf. 
+        # ✅ 3) If you delete at the end with multiple books in shelf.
+        # ✅ 4) If you delete at the begining with multiple books in shelf.
+    
+    # SHOULD BREAK CASES:
+        # 1) Try to insert between two non adjacent books.
+        # 2) Try to insert where one of the adjacent books doesnt exist in the linked list.
+        # 3) Try to insert a duplicate book
+        # 4) Reordering to the same position
     def test_can_add_book_to_shelf(self):
-        self.bookshelf = Bookshelf(
-            created_by=self.user,
-            title=self.shelf_title,
-            description=self.shelf_description
-        )
         # Grab stringified data from books list
         data = self.books[0]
         # Add book to shelf turns data into a node.
@@ -134,6 +142,7 @@ class TestBookshelf:
         self.bookshelf.remove_book(author_id=self.user, book_id=data.id)
         assert len(self.bookshelf.books.to_array()) == 0
 
+    def test_reordering_books(self):
         # Adding multiple and reordering.
         for book in self.books:
             self.bookshelf.add_book_to_shelf(book=book, user_id=self.user)
@@ -150,12 +159,6 @@ class TestBookshelf:
         )
 
         assert self.bookshelf.get_books()[2].id == self.books[0].id
-        
-        # SHOULD WORK CASES:
-        # ✅ 1) If you reorder to the end of a shelf. 
-        # ✅ 2) If you reorder to the beginning of a shelf. 
-        # 3) If you delete at the end with multiple books in shelf.
-        # 4) If you delete at the begining with multiple books in shelf.
 
         # 1 reorder to end of list
         self.bookshelf.reorder_book(
@@ -178,12 +181,43 @@ class TestBookshelf:
             author_id=self.user
         )
 
-        assert self.bookshelf.get_books()[0].id == self.books[0].id
+        updated_list = self.bookshelf.get_books()
 
-        # SHOULD BREAK CASES:
-        # 1) Try to insert between two non adjacent books.
-        # 2) Try to insert where one of the adjacent books doesnt exist in the linked list.
-        # 3) Try to insert a duplicate book
-        # 4) Reordering to the same position
-
+        assert updated_list[0].id == self.books[0].id
     
+    def test_remove_books(self):
+        # Try to remove the first book in our list containing multiple books.
+        book_list = self.bookshelf.get_books()
+        assert len(book_list) == 4
+        
+        self.bookshelf.remove_book(book_id=book_list[0].id, author_id=self.user)
+        updated_list = self.bookshelf.get_books()
+
+        assert len(updated_list) == 3
+        # Assert that the updated list has the second element now in the first position.
+        assert updated_list[0].id == self.books[1].id
+
+        # Save this before removing to assert that the new last book in list is not this.
+        temp_removed_id = updated_list[2].id
+
+        # Remove the last item in the list.
+        self.bookshelf.remove_book(book_id=updated_list[2].id, author_id=self.user)
+        updated_list = self.bookshelf.get_books()
+
+        assert len(updated_list) == 2
+        assert not temp_removed_id == updated_list[1].id
+
+    def test_error_cases(self):
+        # Start by removing all books from a bookshelf.
+        book_ids_to_remove  = [b.id for b in self.bookshelf.get_books()]
+        for id in book_ids_to_remove:
+            self.bookshelf.remove_book(book_id=id, author_id=self.user)
+
+        assert len(self.bookshelf.get_books()) == 0
+        
+        # Now re-add all books to bookshelf.
+        for book in self.books:
+            self.bookshelf.add_book_to_shelf(book=book, user_id=self.user)
+        
+        refilled_book_shelf = self.bookshelf.get_books()
+        assert len(refilled_book_shelf) == 4
