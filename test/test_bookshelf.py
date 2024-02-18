@@ -43,8 +43,8 @@ class TestBookshelf:
     # SHOULD BREAK CASES:
         # ✅ 1) Try to insert between two non adjacent books.
         # ✅ 2) Try to insert where one of the adjacent books doesnt exist in the linked list.
-        # 3) Try to insert a duplicate book
-        # 4) Reordering to the same position
+        # ✅ 3) Try to insert a duplicate book
+        # ✅ 4) Reordering to the same position
     def test_can_add_book_to_shelf(self):
         # Grab stringified data from books list
         data = self.books[0]
