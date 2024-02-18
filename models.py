@@ -95,6 +95,29 @@ class DoublyLinkedList:
     def reorder_node_to_end(self, book_id, prev_book_id) -> None:
         self.is_node_data_valid(book_id=book_id)
         
+        current = self.start_node
+
+        # One thing in the list
+        while current and current.book.id != book_id:
+            current = current.next
+
+        if not current:
+            print("Node to reorder not found")
+            return
+        
+        # If node has been found and is already the end (possible if we are in a shelf with few books)
+        if current.book.id == book_id and current.next == None:
+            return
+        
+         # Detach the node from its current position
+        if current.prev:
+            current.prev.next = current.next
+
+        if current.next:
+            current.next.prev = current.prev
+        
+        # TODO finish this function.
+    
     def reorder_node(self, book_id, prev_book_id, next_book_id) -> None:
         """
         Edge cases to consider:
@@ -142,7 +165,6 @@ class DoublyLinkedList:
 
             if not prev_node:
                 raise("400", "Previous node not found")
-
 
         if next_book_id is not None:
             next_node = self.start_node
@@ -221,14 +243,33 @@ class Bookshelf():
         self.authors.add(self.created_by)
 
     def add_book_to_shelf(self, book, user_id):
+        # Cannot have more than 100 books in your shelf for an arbitrary reason???
+        # TODO test how many books possible before performance drop off.
         if user_id in self.authors:
             self.books.insert_to_end(book)
         else:
             raise("500", "Only authors can add books to bookshelves")
 
     def reorder_book(self, target_id, previous_book_id, next_book_id, author_id):
-        if author_id in self.authors and previous_book_id and next_book_id:
-            self.books.reorder_node(book_id=target_id, prev_book_id=previous_book_id, next_book_id=next_book_id)
+        if author_id in self.authors:
+            # Reordering in the middle.
+            if previous_book_id and next_book_id:
+                self.books.reorder_node(
+                    book_id=target_id,
+                    prev_book_id=previous_book_id,
+                    next_book_id=next_book_id
+                )
+            # Reordering to the end. 
+            elif previous_book_id != None and next_book_id == None:
+                self.books.reorder_node_to_end(
+                    book_id=target_id
+                )
+            # Reordering to the beginning.
+            elif next_book_id != None and previous_book_id == None:
+                # TODO add in this logic next.
+                return
+        else:
+            raise("400", "Only authors can reorder bookshelves")
 
     def remove_book(self, book_id, author_id):
         if author_id in self.authors:
