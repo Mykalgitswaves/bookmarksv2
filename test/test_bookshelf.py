@@ -146,7 +146,7 @@ class TestBookshelf:
         assert len(updated_list) == 2
         assert not temp_removed_id == updated_list[1].id
 
-    def test_error_cases(self):
+    def test_reorder_non_adjacent_books(self):
         # Start by removing all books from a bookshelf.
         book_ids_to_remove  = [b.id for b in self.bookshelf.get_books()]
         for id in book_ids_to_remove:
@@ -160,3 +160,10 @@ class TestBookshelf:
         
         refilled_book_shelf = self.bookshelf.get_books()
         assert len(refilled_book_shelf) == 4
+        # Should not be able to reorder between two non adjacent books in a dll.
+        self.bookshelf.reorder_book(
+            target_id=refilled_book_shelf[0].id,
+            previous_book_id=refilled_book_shelf[1].id,
+            next_book_id=refilled_book_shelf[3].id,
+            author_id=self.user
+        )
