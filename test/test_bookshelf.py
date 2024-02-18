@@ -6,67 +6,6 @@ import pytest
 from pydantic import BaseModel
 from models import Bookshelf, Node
 
-"""
-class BookshelfTest():
-    # Constants to use in diff tests.
-    BOOKSHELF = None
-    USER_1 = 'CASHMONEY_1'
-    USER_2 = 'CASHMONEY_2'
-    BOOK = {
-            'order': 1,
-            'id': 'G42069_NICE',
-            'book_title': "Infinite Jest",
-            'author': ['David Foster Wallace'],
-            'imgUrl': ''
-        }
-    def test_populate_empty_bookshelf():
-
-        Create an empty bookshelf without any books. ensure that you can add a book to a bookshelf, add an author, remove an author, add a follower, remove a follower. 
-            Only an author can add books to a shelf
-
-        BOOKSHELF = Bookshelf(
-
-        )
-    def test_add_books_to_shelf_and_reorder():
-
-        Populate a bookshelf and try to reorder books on it. 
-
-    def get_books_from_shelf():
-
-
-
-I have a list: [
-{
-        id: '1',
-        order: 0,
-        bookTitle: 'Brave New World',
-        author: "Aldous Huxley",
-        imgUrl: "http://books.google.com/books/content?id=TIJ5EAAAQBAJ&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
-    },
-    {
-        id: '2',
-        order: 1,
-        bookTitle: 'Infinite Jest',
-        author: "David Foster Wallace",
-        imgUrl: 'http://upload.wikimedia.org/wikipedia/en/4/4f/Infinite_jest_cover.jpg',
-    },
-    {
-        id: '3',
-        order: 2,
-        bookTitle: 'The sirens of Titan',
-        author: "Kurt Vonnegut",
-        imgUrl: 'http://pictures.abebooks.com/isbn/9780385333498-us.jpg',
-    },
-    {
-        id: '4',
-        order: 3,
-        bookTitle: 'The Odyssey',
-        author: "Homer",
-        imgUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/9/93/Giuseppe_Bottani_-_Athena_revealing_Ithaca_to_Ulysses.jpg/440px-Giuseppe_Bottani_-_Athena_revealing_Ithaca_to_Ulysses.jpg',
-    }
-]
-"""
-
 BOOKS = [
 {
         'id': '1',
