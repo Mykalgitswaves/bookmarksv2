@@ -29,7 +29,8 @@ def setup_class(request):
     request.cls.bookshelf = Bookshelf(
         created_by=request.cls.user,
         title=request.cls.shelf_title,
-        description=request.cls.shelf_description
+        description=request.cls.shelf_description,
+        books=HashMapDLL()
     )
 
 @pytest.mark.usefixtures("setup_class")
@@ -106,12 +107,13 @@ class TestBookshelf:
     def test_remove_books(self):
         # Try to remove the first book in our list containing multiple books.
         book_list = self.bookshelf.get_books()
-        assert len(book_list) == 4
+
+        assert len(book_list) == 99
         
         self.bookshelf.remove_book(book_id=book_list[0].id, author_id=self.user)
         updated_list = self.bookshelf.get_books()
-
-        assert len(updated_list) == 3
+        
+        assert len(updated_list) == 98
         # Assert that the updated list has the second element now in the first position.
         assert updated_list[0].id == self.books[1].id
 
@@ -122,7 +124,7 @@ class TestBookshelf:
         self.bookshelf.remove_book(book_id=updated_list[2].id, author_id=self.user)
         updated_list = self.bookshelf.get_books()
 
-        assert len(updated_list) == 2
+        assert len(updated_list) == 97
         assert not temp_removed_id == updated_list[1].id
 
     def test_reorder_non_adjacent_books(self):

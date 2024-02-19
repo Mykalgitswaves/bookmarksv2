@@ -64,7 +64,7 @@ class DoublyLinkedList:
         n.next = new_node
         new_node.prev = n
 
-    def delete_node(self, book_id) -> None:
+    def delete_node(self, book_id):
         # Check if the List is empty
         if self.start_node is None:
             return HTTPException(400, 'book not in list')
@@ -302,7 +302,7 @@ class HashMapDLL:
 
     def insert_to_end(self, book) -> None:
         if book.id in self.node_map:
-            raise HTTPException(400, "This book is already added")
+            return HTTPException(400, "This book is already added")
         
         new_node = Node(book=book)
         if self.start_node is None:
@@ -316,19 +316,22 @@ class HashMapDLL:
         
         self.node_map[book.id] = new_node
 
-    def delete_node(self, book_id) -> None:
+    def delete_node(self, book_id):
         if book_id not in self.node_map:
-            raise HTTPException(400, 'Book not in list')
+            return HTTPException(400, 'Book not in list')
 
         node_to_delete = self.node_map[book_id]
+        breakpoint()
         if node_to_delete.prev:
             node_to_delete.prev.next = node_to_delete.next
         else:
+            # If the node to delete is the start node
             self.start_node = node_to_delete.next
 
         if node_to_delete.next:
             node_to_delete.next.prev = node_to_delete.prev
-
+        # Remove the node from the map
+        
         del self.node_map[book_id]
 
     def reorder_node_to_beginning(self, book_id, next_book_id):
@@ -402,40 +405,27 @@ class HashMapDLL:
 
     def reorder_node(self, book_id, prev_book_id, next_book_id):
         if book_id not in self.node_map:
-            raise HTTPException(400, "Node to reorder not found")
+            return HTTPException(400, "Node to reorder not found")
         
         current_node = self.node_map[book_id]
+        next_node = self.node_map.get(next_book_id)
+        prev_node = self.node_map.get(prev_book_id)
 
-        if prev_book_id:
-            prev_node = self.node_map.get(prev_book_id)
-            if not prev_node:
-                raise HTTPException(400, "Previous node not found")
-            if prev_node.next != current_node:
-                raise HTTPException(401, "Reordered nodes must be adjacent")
-        else:
-            prev_node = None
+        if not self.are_nodes_adjacent(prev_node, next_node):
+            return HTTPException(401, "Reordered nodes must be adjacent")
+        
+        if not prev_node:
+            return HTTPException(400, "Previous node not found")
 
-        if next_book_id:
-            next_node = self.node_map.get(next_book_id)
-            if not next_node:
-                raise HTTPException(400, "Next node not found")
-            if next_node.prev != current_node:
-                raise HTTPException(401, "Reordered nodes must be adjacent")
-        else:
-            next_node = None
-
-        if prev_node:
-            prev_node.next = current_node.next
-        else:
-            self.start_node = current_node.next
-
-        if next_node:
-            next_node.prev = current_node.prev
+        if not next_node:
+            return HTTPException(400, "Next node not found")
+            
+        # Detach the node from its current position
+        if current_node.prev:
+            current_node.prev.next = current_node.next
 
         if current_node.next:
-            current_node.next.prev = prev_node
-        if current_node.prev:
-            current_node.prev.next = next_node
+            current_node.next.prev = current_node.prev
 
         current_node.prev = next_node
         current_node.next = prev_node
