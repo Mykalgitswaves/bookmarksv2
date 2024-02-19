@@ -331,6 +331,75 @@ class HashMapDLL:
 
         del self.node_map[book_id]
 
+    def reorder_node_to_beginning(self, book_id, next_book_id):
+        # If next_book_id is not provided, the node will be moved to the start of the list
+        self.is_node_data_valid(book_id=book_id)
+    
+        if not next_book_id:
+            return HTTPException(400, "No next book id provided")
+
+        current = self.node_map[book_id]
+
+        if not current:
+            return HTTPException(400, "Node to reorder not found")
+        
+        # If the node is already at the beginning of the list
+        if not current.prev:
+            return
+        
+        # Detach the node from its current position
+        if current.prev:
+            current.prev.next = current.next
+
+        if current.next:
+            current.next.prev = current.prev
+        
+        # Find the node with the next book ID
+        next_node = self.node_map.get(next_book_id)
+        
+        if not next_node:
+            return HTTPException(400, "The provided next book id wasn't found")
+        
+        # Reorder the node
+        current.prev = None
+        current.next = next_node
+        next_node.prev = current
+        self.start_node = current
+
+    def reorder_node_to_end(self, book_id, prev_book_id):
+        # If prev_book_id is not provided, the node will be moved to the end of the list
+        
+        if not prev_book_id:
+            return HTTPException(400, "No previous book id provided")
+
+        current = self.node_map[book_id]
+
+
+        if not current:
+            return HTTPException(400, "Node to reorder not found")
+                
+        # If the node is already at the end of the list
+        if not current.next:
+            return
+        
+        # Detach the node from its current position
+        if current.prev:
+            current.prev.next = current.next
+
+        if current.next:
+            current.next.prev = current.prev
+        
+        # Find the node with the previous book ID
+        prev_node = self.node_map.get(prev_book_id)
+        
+        if not prev_node:
+            return HTTPException(400, "The provided previous book id wasn't found")
+        
+        # Reorder the node
+        current.next = None
+        current.prev = prev_node
+        prev_node.next = current
+
     def reorder_node(self, book_id, prev_book_id, next_book_id):
         if book_id not in self.node_map:
             raise HTTPException(400, "Node to reorder not found")
@@ -405,14 +474,14 @@ class HashMapDLL:
 
 class Bookshelf():
     def __init__(
-        self, created_by: str, title: str, description: str,
+        self, created_by: str, title: str, description: str, books=None
     ) -> None:
         self.created_by = created_by
         self.title = title
         self.description = description
         self.id = str(uuid.uuid4())
         self.image_url: str
-        self.books = DoublyLinkedList()
+        self.books = DoublyLinkedList() if books is None else books
         self.followers = set() # list of str's id.
         self.authors = set() # list of str's id.
         # Need this dude

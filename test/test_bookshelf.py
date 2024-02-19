@@ -4,7 +4,7 @@ sys.path.append('../')
 import models
 import pytest
 from pydantic import BaseModel
-from models import Bookshelf, Node
+from models import Bookshelf, Node, HashMapDLL
 from helpers import timing_decorator
 from fastapi import (
     HTTPException,
@@ -138,7 +138,7 @@ class TestBookshelf:
             self.bookshelf.add_book_to_shelf(book=book, user_id=self.user)
         
         refilled_book_shelf = self.bookshelf.get_books()
-        assert len(refilled_book_shelf) == 4
+        assert len(refilled_book_shelf) == 100
         # Should not be able to reorder between two non adjacent books in a dll.
         assert self.bookshelf.reorder_book(
             target_id=refilled_book_shelf[0].id,
@@ -165,7 +165,7 @@ class TestBookshelf:
 
 @pytest.mark.usefixtures("setup_class")
 class TestSpeedOfDLL:
-    def test_speed_dll_of_get_books(self):
+    def test_speed_of_get_books(self):
         # Regular implementation of our DLL, no hash map.
         for book in self.books:
             self.bookshelf.add_book_to_shelf(book=book, user_id=self.user)
@@ -176,11 +176,9 @@ class TestSpeedOfDLL:
         # Total time taken to add all books: 0.002669 seconds
         # Total time taken to retrieve all books with get_books: 0.000011 seconds to execute
 
-    def test_speed_dll_of_reorder_books(self):
+    def test_speed_of_reorder_books(self):
         books = self.bookshelf.get_books()
         # reorder_book took 0.000019 seconds to execute
-        
-        
         # Move to the end
         self.bookshelf.reorder_book(
             target_id=books[99].id,
@@ -203,4 +201,48 @@ class TestSpeedOfDLL:
             next_book_id=books[50].id,
             author_id=self.user
         )
-        # self.bookshelf.reorder_book()
+
+@pytest.mark.usefixtures("setup_class")
+class TestSpeedOfHMDLL:
+    BOOKSHELF = None
+    def test_speed_of_get_books(self):
+        self.BOOKSHELF = Bookshelf(
+            created_by=self.user,
+            title=self.shelf_title,
+            description=self.shelf_description,
+            books=HashMapDLL()
+        )
+
+        # Although, this is kind of irrelevant - since it isn't likely to happen this fast.
+        # 0.682 seconds
+        for book in self.books:
+            self.BOOKSHELF.add_book_to_shelf(book=book, user_id=self.user)
+        
+        # get_books took 0.000009 seconds to execute
+        books = self.BOOKSHELF.get_books()
+
+        # reorder_book took 0.000003 seconds to execute
+        # Move to start.
+        self.BOOKSHELF.reorder_book(
+            target_id=books[99].id,
+            previous_book_id=None,
+            next_book_id=books[1].id,
+            author_id=self.user
+        )
+        # reorder_book took 0.000010 seconds to execute
+        # Start to end
+        self.bookshelf.reorder_book(
+            target_id=books[0].id,
+            previous_book_id=books[99].id,
+            next_book_id=None,
+            author_id=self.user
+        )
+
+        # reorder_book took 0.000003 seconds to execute
+        # Start to middle
+        self.bookshelf.reorder_book(
+            target_id=books[0].id,
+            previous_book_id=books[49].id,
+            next_book_id=books[50].id,
+            author_id=self.user
+        )
