@@ -2,15 +2,16 @@ import { html, LitElement, css } from 'lit';
 
 export class SortItem extends LitElement {
     static instances = [];
+    static selectedInstances = [];
     
-    constructor(order, name, bookTitle, author, imgUrl) {
+    constructor(order, id, bookTitle, author, imgUrl) {
         super();
         this.order = order;
-        this.name = name;
+        this._id = id;
         this.bookTitle = bookTitle;
         this.author = author;
         this.imgUrl = imgUrl;
-        this.draggedElement = SortItem.instances.find((i) => i.name === this.name);
+        this.draggedElement = this;
 
         this.addEventListener('dragstart', this.onDragStart.bind(this));
         this.addEventListener('dragover', this.onDragOver.bind(this));
@@ -21,7 +22,8 @@ export class SortItem extends LitElement {
 
     onDragStart(event) {
         event.dataTransfer.setData("order", this.order);
-        event.dataTransfer.setData("name", this.name);
+        event.dataTransfer.setData("id", this._id);
+        this.scrollIntoView({ behavior: "smooth", block: "end", inline: "nearest" });
     }
 
     onDragOver(event) {
@@ -39,23 +41,43 @@ export class SortItem extends LitElement {
     onDrop(event) {
         event.preventDefault();
         event.target.renderRoot.firstElementChild.classList.remove('dragged-over');
-
         const draggedFromIndex = parseInt(event.dataTransfer.getData("order"), 10);
         const draggedToIndex = parseInt(this.order, 10);
-
-        const parent = event.currentTarget.parentNode;
-        const insertBeforeElement = parent.children[draggedToIndex + 1] || parent.children[draggedToIndex];
-
-        parent.insertBefore(SortItem.instances[draggedFromIndex], insertBeforeElement);
-
-        // Update the order of all elements after the dragged element
-        SortItem.instances.forEach((item, index) => {
-            if (index >= draggedFromIndex && index < draggedToIndex) {
-                item.order = index + 1;
-            } else if (index <= draggedFromIndex && index > draggedToIndex) {
-                item.order = index - 1;
-            }
+ 
+        const reordered = new CustomEvent("reordered", {
+            detail: { 
+                book_id: SortItem.instances[draggedFromIndex],
+                prev_book_id: SortItem.instances[draggedToIndex - 1],
+                next_book_id: SortItem.instances[draggedToIndex],
+            },
+            bubbles: true,
         });
+
+        event.target.dispatchEvent(reordered);
+        const parent = event.currentTarget.parentNode;
+        const insertBeforeElement = parent.children[draggedToIndex];
+
+        if (draggedToIndex === SortItem.instances.length - 1) {
+            // Dragging to end
+            debugger;
+            parent.appendChild(SortItem.instances[draggedFromIndex]);
+        } else if (draggedToIndex === 0){
+            debugger;
+            // Dragging to beginning.
+            parent.insertBefore(SortItem.instances[draggedFromIndex], SortItem.instances[0]);
+        } else {
+            debugger;
+            parent.insertBefore(SortItem.instances[draggedFromIndex], insertBeforeElement);
+        }
+        
+        // Update the order of all elements after the dragged element
+        // SortItem.instances.forEach((item, index) => {
+        //     if (index >= draggedFromIndex && index < draggedToIndex) {
+        //         item.order = index + 1;
+        //     } else if (index <= draggedFromIndex && index > draggedToIndex) {
+        //         item.order = index - 1;
+        //     }
+        // });
 
         this.order = draggedToIndex;
     }
@@ -93,7 +115,7 @@ export class SortItem extends LitElement {
                 border-top: 8px solid var(--indigo-600);
             }
             &.dragged-over {
-                border: 2px dotted var(--indigo-600);
+                border-top: 2px dotted var(--indigo-600);
             }
         }   
     
@@ -141,9 +163,9 @@ export class SortItem extends LitElement {
             <p class="author">${ this.author }</p>
             </div>
 
-            <div id="dragger">  
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24"><path d="M9 13a1 1 0 1 1 0-2 1 1 0 0 1 0 2Zm7-1a1 1 0 1 1-2 0 1 1 0 0 1 2 0ZM9 8a1 1 0 1 1 0-2 1 1 0 0 1 0 2Zm7-1a1 1 0 1 1-2 0 1 1 0 0 1 2 0ZM9 18a1 1 0 1 1 0-2 1 1 0 0 1 0 2Zm6 0a1 1 0 1 1 0-2 1 1 0 0 1 0 2Z"></path></svg>
-            </div>
+            <label for="select-${this._id}">  
+                <input class="select" type="checkbox" id="select-${this._id}" value="${ this._id }"/>
+            </label>
         </div>
         `;
     }

@@ -305,12 +305,14 @@ class HashMapDLL:
             return HTTPException(400, "This book is already added")
         
         new_node = Node(book=book)
+
         if self.start_node is None:
             self.start_node = new_node
         else:
             current = self.start_node
             while current.next:
                 current = current.next
+
             current.next = new_node
             new_node.prev = current
         
@@ -321,7 +323,7 @@ class HashMapDLL:
             return HTTPException(400, 'Book not in list')
 
         node_to_delete = self.node_map[book_id]
-        breakpoint()
+
         if node_to_delete.prev:
             node_to_delete.prev.next = node_to_delete.next
         else:
