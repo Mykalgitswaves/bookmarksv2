@@ -372,3 +372,49 @@ class TestPosts:
 
         hard_delete_response = requests.post(f"{self.endpoint}/api/admin/delete_post_and_comments", json=delete_data)
         assert hard_delete_response.status_code == 200, "Hard delete of test milestone"
+
+    def test_comments(self):
+        """
+        Test case to verify get posts works
+        """
+        headers = {"Authorization": f"{self.token_type} {self.access_token}"}
+
+        data = {
+            "num_books": 10
+        }
+        
+        response = requests.post(f"{self.endpoint}/api/posts/create_milestone", headers=headers, json=data)
+        assert response.status_code == 200, "Testing create milestone not in DB"
+        
+        milestone_id = response.json()["data"]["id"]
+
+        data = {
+            "post_id": milestone_id,
+            "text":"Test Comment",
+            "replied_to":None
+        }
+
+        response = requests.post(f"{self.endpoint}/api/posts/comment/create", headers=headers, json=data)
+
+        print(response.json())
+        assert response.status_code == 200, "Testing create comment"
+        
+        comment_id = response.json()["data"]["id"]
+
+        response = requests.get(f"{self.endpoint}/api/posts/post/{milestone_id}/comments", headers=headers)
+
+        print(response.json())
+        assert response.status_code == 200, "Testing get comments"
+        assert len(response.json()['data']['comments']) > 0, "Testing get comments"
+
+        response = requests.put(f"{self.endpoint}/api/posts/comment/{comment_id}/delete", headers=headers)
+        assert response.status_code == 200, "Testing delete comment"\
+
+        delete_data = {
+            "post_id": milestone_id,
+            "admin_credentials": self.admin_credentials
+        }
+
+        hard_delete_response = requests.post(f"{self.endpoint}/api/admin/delete_post_and_comments", json=delete_data)
+        assert hard_delete_response.status_code == 200, "Hard delete of test milestone"
+

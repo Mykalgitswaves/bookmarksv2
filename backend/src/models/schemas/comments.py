@@ -12,8 +12,12 @@ class CommentCreate(BaseModel):
 class Comment(CommentCreate):
     id: str
     created_date: datetime.datetime
+    liked_by_current_user: bool = False
     posted_by_current_user: bool = False
     deleted: bool = False
+    pinned: bool = False
+    likes: int = 0
+    num_replies: int = 0
 
     @validator('created_date', pre=True, allow_reuse=True)
     def parse_neo4j_datetime(cls, v):

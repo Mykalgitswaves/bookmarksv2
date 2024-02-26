@@ -1,5 +1,5 @@
 import fastapi
-from fastapi import HTTPException, Depends, BackgroundTasks, Request
+from fastapi import HTTPException, Depends, BackgroundTasks, Request, Query
 from fastapi.encoders import jsonable_encoder
 from fastapi.responses import JSONResponse
 from typing import Annotated
@@ -38,7 +38,7 @@ async def create_review(request: Request,
 
     """
     if not current_user:
-        raise HTTPException("401","Unauthorized")
+        raise HTTPException(401,"Unauthorized")
 
     response = await request.json()
     if "_value" in response:
@@ -95,7 +95,7 @@ async def create_update(request: Request,
 
     """
     if not current_user:
-        raise HTTPException("401","Unauthorized")
+        raise HTTPException(401,"Unauthorized")
 
     response = await request.json()
     if "_value" in response:
@@ -150,14 +150,14 @@ async def create_comparison(request: Request,
     """
     
     if not current_user:
-        raise HTTPException("401","Unauthorized")
+        raise HTTPException(401,"Unauthorized")
 
     response = await request.json()
     if "_value" in response:
         response = response['_value']
 
     if response["book_ids"][0] == response["book_ids"][1]:
-        raise HTTPException("400","Comparisons require two unique books, please select another book for your post.")
+        raise HTTPException(400,"Comparisons require two unique books, please select another book for your post.")
     
     books = []
     
@@ -210,7 +210,7 @@ async def create_recommendation_friend(request: Request,
      }
     """
     if not current_user:
-        raise HTTPException("401","Unauthorized")
+        raise HTTPException(401,"Unauthorized")
 
     response = await request.json()
     if "_value" in response:
@@ -256,7 +256,7 @@ async def create_milestone(request: Request,
      }
     """
     if not current_user:
-        raise HTTPException("401","Unauthorized")
+        raise HTTPException(401,"Unauthorized")
 
     response = await request.json()
     if "_value" in response:
@@ -279,15 +279,15 @@ async def update_post_to_deleted(post_id: str,
     Set the deleted field for a post and all comments to true
     """
     if not current_user:
-        raise HTTPException("401","Unauthorized")
+        raise HTTPException(401,"Unauthorized")
    
     if post_id:
         response = post_repo.update_post_to_deleted(post_id, current_user.username)
         
         if response:
-            return HTTPException("200","Post deleted")
+            return HTTPException(200,"Post deleted")
         else:
-            raise HTTPException("401","Unauthorized")
+            raise HTTPException(401,"Unauthorized")
         
 @router.get("/me",
             name="post:get_current_user_posts")
@@ -330,21 +330,20 @@ async def create_comment(request: Request,
     Value 'replied_to' should be None if comment is not a reply to another comment
     """
     if not current_user:
-        raise HTTPException("401","Unauthorized")
+        raise HTTPException(401,"Unauthorized")
 
     response = await request.json()
 
     comment = CommentCreate(
                             post_id=response['post_id'],
                             username=current_user.username,
-                            user_id=current_user.user_id,
                             replied_to=response['replied_to'],
                             text=response['text'])
     
     comment = comment_repo.create_comment(comment)
 
     if not comment:
-        raise HTTPException("410"," Gone - This chapter closes, yet its essence endures beyond the veil")
+        raise HTTPException(410," Gone - This chapter closes, yet its essence endures beyond the veil")
     
     comment.posted_by_current_user = True
 
@@ -359,7 +358,33 @@ async def set_comment_as_deleted(comment_id:str,
     Set the deleted field for a comment and all replies to true
     """
     if not current_user:
-        raise HTTPException("401","Unauthorized")
+        raise HTTPException(401,"Unauthorized")
    
     if comment_id:
-        comment_repo.update_comment_to_deleted(comment_id)
+        response = comment_repo.update_comment_to_deleted(comment_id, current_user.username)
+
+        if response:
+            return HTTPException(200,"Post deleted")
+        else:
+            raise HTTPException(401,"Unauthorized")
+
+
+@router.get("/post/{post_id}/comments")
+async def get_comments_for_post(post_id: str, 
+                                current_user: Annotated[User, Depends(get_current_active_user)],
+                                comment_repo: CommentCRUDRepositoryGraph = Depends(get_repository(repo_type=CommentCRUDRepositoryGraph)), 
+                                skip: int = Query(default=0), 
+                                limit: int = Query(default=10)):
+    """
+    Gets the comments on a post
+    Uses skip and limit for pagination
+    """
+    if not current_user:
+        raise HTTPException(401,"Unauthorized")
+    if post_id:
+        comments = comment_repo.get_all_comments_for_post(post_id=post_id,
+                                                    username=current_user.username,
+                                                    skip=skip,
+                                                    limit=limit)
+  
+        return JSONResponse(content={"data": jsonable_encoder({"comments": comments['comments'], "pinned_comments": comments['pinned_comments']})})
