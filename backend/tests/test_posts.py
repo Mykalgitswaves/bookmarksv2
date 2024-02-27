@@ -99,7 +99,7 @@ class TestPosts:
         
         print(response.json())
         review_id = response.json()["data"]["id"]
-        soft_delete_response = requests.put(f"{self.endpoint}/api/posts/{review_id}/delete", headers=headers)
+        soft_delete_response = requests.put(f"{self.endpoint}/api/posts/post/{review_id}/delete", headers=headers)
         assert soft_delete_response.status_code == 200, "Testing soft delete review"
 
         delete_data = {
@@ -132,7 +132,7 @@ class TestPosts:
         
         print(response.json())
         review_id = response.json()["data"]["id"]
-        soft_delete_response = requests.put(f"{self.endpoint}/api/posts/{review_id}/delete", headers=headers)
+        soft_delete_response = requests.put(f"{self.endpoint}/api/posts/post/{review_id}/delete", headers=headers)
         assert soft_delete_response.status_code == 200, "Testing soft delete review"
 
         delete_data = {
@@ -167,7 +167,7 @@ class TestPosts:
         
         print(response.json())
         update_id = response.json()["data"]["id"]
-        soft_delete_response = requests.put(f"{self.endpoint}/api/posts/{update_id}/delete", headers=headers)
+        soft_delete_response = requests.put(f"{self.endpoint}/api/posts/post/{update_id}/delete", headers=headers)
         assert soft_delete_response.status_code == 200, "Testing soft delete update"
 
         delete_data = {
@@ -199,7 +199,7 @@ class TestPosts:
         
         print(response.json())
         update_id = response.json()["data"]["id"]
-        soft_delete_response = requests.put(f"{self.endpoint}/api/posts/{update_id}/delete", headers=headers)
+        soft_delete_response = requests.put(f"{self.endpoint}/api/posts/post/{update_id}/delete", headers=headers)
         assert soft_delete_response.status_code == 200, "Testing soft delete update"
 
         delete_data = {
@@ -234,7 +234,7 @@ class TestPosts:
         
         print(response.json())
         comparison_id = response.json()["data"]["id"]
-        soft_delete_response = requests.put(f"{self.endpoint}/api/posts/{comparison_id}/delete", headers=headers)
+        soft_delete_response = requests.put(f"{self.endpoint}/api/posts/post/{comparison_id}/delete", headers=headers)
         assert soft_delete_response.status_code == 200, "Testing soft delete comparison"
 
         delete_data = {
@@ -268,7 +268,7 @@ class TestPosts:
         
         print(response.json())
         recommendation_friend_id = response.json()["data"]["id"]
-        soft_delete_response = requests.put(f"{self.endpoint}/api/posts/{recommendation_friend_id}/delete", headers=headers)
+        soft_delete_response = requests.put(f"{self.endpoint}/api/posts/post/{recommendation_friend_id}/delete", headers=headers)
         assert soft_delete_response.status_code == 200, "Testing soft delete recommendation_friend"
 
         delete_data = {
@@ -299,7 +299,7 @@ class TestPosts:
         
         print(response.json())
         recommendation_friend_id = response.json()["data"]["id"]
-        soft_delete_response = requests.put(f"{self.endpoint}/api/posts/{recommendation_friend_id}/delete", headers=headers)
+        soft_delete_response = requests.put(f"{self.endpoint}/api/posts/post/{recommendation_friend_id}/delete", headers=headers)
         assert soft_delete_response.status_code == 200, "Testing soft delete recommendation_friend"
 
         delete_data = {
@@ -325,7 +325,7 @@ class TestPosts:
         
         print(response.json())
         milestone_id = response.json()["data"]["id"]
-        soft_delete_response = requests.put(f"{self.endpoint}/api/posts/{milestone_id}/delete", headers=headers)
+        soft_delete_response = requests.put(f"{self.endpoint}/api/posts/post/{milestone_id}/delete", headers=headers)
         assert soft_delete_response.status_code == 200, "Testing soft delete milestone"
 
         delete_data = {
@@ -375,7 +375,7 @@ class TestPosts:
 
     def test_comments(self):
         """
-        Test case to verify get posts works
+        Test case to verify create and get comments and replies works
         """
         headers = {"Authorization": f"{self.token_type} {self.access_token}"}
 
@@ -407,6 +407,22 @@ class TestPosts:
         assert response.status_code == 200, "Testing get comments"
         assert len(response.json()['data']['comments']) > 0, "Testing get comments"
 
+        data = {
+            "post_id": milestone_id,
+            "text":"Test Comment",
+            "replied_to":comment_id
+        }
+
+        response = requests.post(f"{self.endpoint}/api/posts/comment/create", headers=headers, json=data)
+
+        print(response.json())
+        assert response.status_code == 200, "Testing create comment with reply"
+
+        response = requests.get(f"{self.endpoint}/api/posts/comment/{comment_id}/replies", headers=headers)
+        assert response.status_code == 200, "Testing get replies"
+        assert len(response.json()['data']) > 0, "Testing get replies"
+
+
         response = requests.put(f"{self.endpoint}/api/posts/comment/{comment_id}/delete", headers=headers)
         assert response.status_code == 200, "Testing delete comment"\
 
@@ -418,3 +434,110 @@ class TestPosts:
         hard_delete_response = requests.post(f"{self.endpoint}/api/admin/delete_post_and_comments", json=delete_data)
         assert hard_delete_response.status_code == 200, "Hard delete of test milestone"
 
+    def test_likes(self):
+        """
+        Test case to verify like and unlike works for posts and comments
+        """
+        headers = {"Authorization": f"{self.token_type} {self.access_token}"}
+
+        data = {
+            "num_books": 10
+        }
+        
+        response = requests.post(f"{self.endpoint}/api/posts/create_milestone", headers=headers, json=data)
+        assert response.status_code == 200, "Testing create milestone not in DB"
+        
+        milestone_id = response.json()["data"]["id"]
+
+        data = {
+            "post_id": milestone_id,
+            "text":"Test Comment",
+            "replied_to":None
+        }
+
+        response = requests.post(f"{self.endpoint}/api/posts/comment/create", headers=headers, json=data)
+
+        print(response.json())
+        assert response.status_code == 200, "Testing create comment"
+        
+        comment_id = response.json()["data"]["id"]
+
+        response = requests.put(f"{self.endpoint}/api/posts/post/{milestone_id}/like", headers=headers)
+        assert response.status_code == 200, "Testing like post"
+
+        response = requests.put(f"{self.endpoint}/api/posts/post/{milestone_id}/remove_like", headers=headers)
+        assert response.status_code == 200, "Testing remove_like post"
+
+        response = requests.put(f"{self.endpoint}/api/posts/comment/{comment_id}/like", headers=headers)
+        assert response.status_code == 200, "Testing like comment"
+
+        response = requests.put(f"{self.endpoint}/api/posts/comment/{comment_id}/remove_like", headers=headers)
+        assert response.status_code == 200, "Testing remove_like comment"
+
+        delete_data = {
+            "post_id": milestone_id,
+            "admin_credentials": self.admin_credentials
+        }
+
+        hard_delete_response = requests.post(f"{self.endpoint}/api/admin/delete_post_and_comments", json=delete_data)
+        assert hard_delete_response.status_code == 200, "Hard delete of test milestone"
+
+    def test_pin_comment(self):
+        """
+        Test case to verify pin and unpin works for comments
+        """
+        headers = {"Authorization": f"{self.token_type} {self.access_token}"}
+
+        data = {
+            "num_books": 10
+        }
+        
+        response = requests.post(f"{self.endpoint}/api/posts/create_milestone", headers=headers, json=data)
+        assert response.status_code == 200, "Testing create milestone not in DB"
+        
+        milestone_id = response.json()["data"]["id"]
+
+        data = {
+            "post_id": milestone_id,
+            "text":"Test Comment",
+            "replied_to":None
+        }
+
+        response = requests.post(f"{self.endpoint}/api/posts/comment/create", headers=headers, json=data)
+
+        print(response.json())
+        assert response.status_code == 200, "Testing create comment"
+
+        comment_id = response.json()["data"]["id"]
+
+        response = requests.put(f"{self.endpoint}/api/posts/post/{milestone_id}/pin/{comment_id}", headers=headers)
+        assert response.status_code == 200, "Testing pin comment"
+
+        response = requests.get(f"{self.endpoint}/api/posts/post/{milestone_id}/pinned_comments", headers=headers)
+        assert response.status_code == 200, "Testing getting a pinned comment"
+        assert len(response.json()['data']) > 0, "Testing getting a pinned comment"
+
+        response = requests.put(f"{self.endpoint}/api/posts/post/{milestone_id}/remove_pin/{comment_id}", headers=headers)
+        assert response.status_code == 200, "Testing remove pin"
+
+        response = requests.get(f"{self.endpoint}/api/posts/post/{milestone_id}/pinned_comments", headers=headers)
+        assert response.status_code == 200, "Testing pinned comment removed"
+        assert len(response.json()['data']) == 0, "Testing pinned comment removed"
+
+        delete_data = {
+            "post_id": milestone_id,
+            "admin_credentials": self.admin_credentials
+        }
+
+        hard_delete_response = requests.post(f"{self.endpoint}/api/admin/delete_post_and_comments", json=delete_data)
+        assert hard_delete_response.status_code == 200, "Hard delete of test milestone"
+
+    def test_feed(self):
+        """
+        tests the general feed endpoint
+        """
+        headers = {"Authorization": f"{self.token_type} {self.access_token}"}
+
+        response = requests.get(f"{self.endpoint}/api/posts", headers=headers)
+        assert response.status_code == 200, "Testing feed"
+        assert len(response.json()['data']) > 0, "Testing feed"

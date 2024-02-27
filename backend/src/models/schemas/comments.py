@@ -9,6 +9,13 @@ class CommentCreate(BaseModel):
     user_id: str = ""
     replied_to:str | None = None
 
+class LikedComment(BaseModel):
+    username: str
+    comment_id: str
+
+class PinnedComment(LikedComment):
+    post_id: str
+
 class Comment(CommentCreate):
     id: str
     created_date: datetime.datetime

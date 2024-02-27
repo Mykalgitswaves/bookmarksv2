@@ -11,7 +11,8 @@ from src.models.schemas.posts import (
     RecommendationFriendCreate,
     RecommendationFriend,
     MilestoneCreate,
-    MilestonePost
+    MilestonePost,
+    LikedPost
 )
 from src.models.schemas.books import BookPreview
 
@@ -275,6 +276,147 @@ class PostCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
                         id=response['m.id']
         )
         return(milestone_result)
+    
+    def create_post_like(self, liked_post:LikedPost):
+        """
+        Creates a like relationship between a user and a post
+        Args:
+            liked_post: LikedPost object to be pushed to DB
+        Returns:
+            None
+        """
+        with self.driver.session() as session:
+            result = session.execute_write(self.create_post_like_query, liked_post)
+        return(result)
+    
+    @staticmethod
+    def create_post_like_query(tx, liked_post):
+        query = """
+                match (uu:User {username: $username}) 
+                match (rr {id: $post_id}) 
+                with uu, rr
+                where not exists ((uu)-[:LIKES]-(rr))
+                    create (uu)-[ll:LIKES {created_date:datetime()}]->(rr)
+                    set rr.likes = rr.likes + 1
+                return rr.likes as likes
+                """
+        result = tx.run(query, username=liked_post.username, post_id=liked_post.post_id)
+        response = result.single()
+        return response is not None
+    
+    def get_feed(self, current_user, skip:int, limit:int): 
+        with self.driver.session() as session:
+            result = session.execute_read(self.get_feed_query, current_user.username, skip, limit)
+        return(result)
+    
+    @staticmethod
+    def get_feed_query(tx, username, skip, limit):
+        query = """ 
+                    MATCH (p {deleted:false})
+                    WHERE p:Milestone OR p:Review OR p:Comparison OR p:Update
+                    match (p)<-[pr:POSTED]-(u:User)
+                    optional match (cu:User {username:$username})-[lr:LIKES]->(p)
+                    optional match (p)-[br:POST_FOR_BOOK]-(b)
+                    optional match (comments:Comment {deleted:false})<-[:HAS_COMMENT]-(p)
+                    RETURN p, labels(p), u.username, b, u.id,
+                    CASE WHEN lr IS NOT NULL THEN true ELSE false END AS liked_by_current_user,
+                    CASE WHEN u.username = $username THEN true ELSE false END AS posted_by_current_user,
+                    count(comments) as num_comments
+                    order by p.created_date desc
+                    skip $skip
+                    limit $limit
+                    """
+        result = tx.run(query, username=username, skip=skip, limit=limit)
+        # results = [record for record in result.data()]
+        
+        output = []        
+        for response in result:
+            post = response['p']
+            if response['labels(p)'] == ["Milestone"]:
+                milestone = MilestonePost(id=post["id"],
+                                          created_date=post["created_date"],
+                                          num_books=post["num_books"],
+                                          user_id=response['u.id'],
+                                          user_username=response['u.username'],
+                                          likes=post['likes'],
+                                          num_comments=response["num_comments"])
+                
+                milestone.liked_by_current_user = response['liked_by_current_user']
+                milestone.posted_by_current_user = response['posted_by_current_user']
+                output.append(milestone)                                                       
+            
+            elif response['labels(p)'] == ['Comparison']:
+                if output:
+                    if output[-1].id == post["id"]:
+                        output[-1].compared_books.append(
+                            BookPreview(id=response['b']['id'],
+                                        title=response['b']['title'],
+                                        small_img_url=response['b']['small_img_url'])
+                        )
+                        continue
+                    
+                comparison = ComparisonPost(id=post["id"],
+                                            compared_books=[
+                                                BookPreview(id=response['b']['id'],
+                                                            title=response['b']['title'],
+                                                            small_img_url=response['b']['small_img_url'])
+                                            ],
+                                            user_username=response['u.username'],
+                                            user_id=response['u.id'],
+                                            comparators=post['comparators'],
+                                            created_date=post['created_date'],
+                                            comparator_ids=post['comparator_ids'],
+                                            responses=post['responses'],
+                                            book_specific_headlines=post['book_specific_headlines'],
+                                            likes=post['likes'],
+                                            num_comments=response["num_comments"])
+                
+                comparison.liked_by_current_user = response['liked_by_current_user']
+                comparison.posted_by_current_user = response['posted_by_current_user']
+                output.append(comparison)
+
+
+            elif response['labels(p)'] == ["Update"]:
+                update = UpdatePost(id=post["id"],
+                                    book=BookPreview(id=response['b']['id'],
+                                            title=response['b']['title'],
+                                            small_img_url=response['b']['small_img_url']),
+                                    headline=post['headline'],
+                                    created_date=post["created_date"],
+                                    page=post['page'],
+                                    response=post['response'],
+                                    spoiler=post['spoiler'],
+                                    user_id=response['u.id'],
+                                    user_username=response['u.username'],
+                                    likes=post['likes'],
+                                    num_comments=response["num_comments"])
+                
+                update.liked_by_current_user = response['liked_by_current_user']
+                update.posted_by_current_user = response['posted_by_current_user']
+                output.append(update)
+
+            elif response['labels(p)'] == ["Review"]:
+                review = ReviewPost(
+                            id=post["id"],
+                            book=BookPreview(id=response['b']['id'],
+                                             title=response['b']['title'],
+                                             small_img_url=response['b']['small_img_url']),
+                            headline=post['headline'],
+                            created_date=post["created_date"],
+                            questions=post['questions'],
+                            question_ids=post['question_ids'],
+                            responses=post['responses'],
+                            spoilers=post['spoilers'],
+                            user_id=response['u.id'],
+                            user_username=response['u.username'],
+                            num_comments=response["num_comments"],
+                            likes=post['likes']
+                        )
+                review.liked_by_current_user = response['liked_by_current_user']
+                review.posted_by_current_user = response['posted_by_current_user']
+                
+                output.append(review)
+        return(output)
     
     def get_all_reviews_by_username(self, username): 
         with self.driver.session() as session:
@@ -647,5 +789,35 @@ class PostCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
                 detach delete pp, postComment
                 """
         result = tx.run(query, post_id=post_id)
+        response = result.single()
+        return response is not None
+    
+    def delete_post_like(self, liked_post:LikedPost):
+        """
+        removes a liked post for a user
+        
+        Args:
+            username: users PK
+            post_id: post's PK
+        Returns:
+            None
+        """
+        with self.driver.session() as session:
+            result = session.execute_write(self.delete_post_like_query, liked_post)    
+        return result
+    
+    @staticmethod
+    def delete_post_like_query(tx, liked_post):
+        query = """
+                match (uu:User {username: $username}) 
+                match (rr {id: $post_id}) 
+                match (uu)-[ll:LIKES]->(rr)
+                delete ll
+                WITH rr
+                WHERE rr.likes > 0
+                SET rr.likes = rr.likes - 1
+                return rr.likes as likes
+                """
+        result = tx.run(query, username=liked_post.username, post_id=liked_post.post_id)
         response = result.single()
         return response is not None

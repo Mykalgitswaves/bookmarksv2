@@ -6,8 +6,8 @@ from typing import Annotated
 
 from src.api.utils.database import get_repository
 from src.models.schemas.users import User
-from src.models.schemas.posts import ReviewCreate, UpdateCreate, ComparisonCreate, RecommendationFriendCreate, MilestoneCreate
-from src.models.schemas.comments import Comment, CommentCreate
+from src.models.schemas.posts import ReviewCreate, UpdateCreate, ComparisonCreate, RecommendationFriendCreate, MilestoneCreate, LikedPost
+from src.models.schemas.comments import Comment, CommentCreate, LikedComment, PinnedComment
 from src.models.schemas.books import BookPreview
 from src.securities.authorizations.verify import get_current_active_user
 from src.database.graph.crud.posts import PostCRUDRepositoryGraph
@@ -17,6 +17,20 @@ from src.api.background_tasks.google_books import google_books_background_tasks
 
 
 router = fastapi.APIRouter(prefix="/posts", tags=["post"])
+
+@router.get("/",
+            name="post:get_all_posts")
+async def get_all_posts(current_user: Annotated[User, Depends(get_current_active_user)],
+                        skip: int = Query(default=0), 
+                        limit: int = Query(default=10),
+                        post_repo: PostCRUDRepositoryGraph = Depends(get_repository(repo_type=PostCRUDRepositoryGraph))):
+    """
+    Pagination for all posts to replace feed. Currently just returns all posts from all users, no curated algo. 
+    """
+    # skip: int | None = Query(default=None), limit: int | None = Query(default=None)
+    if current_user:
+        feed = post_repo.get_feed(current_user, skip, limit)
+        return(JSONResponse(content={"data": jsonable_encoder(feed)}))
 
 @router.post("/create_review",
             name="post:create_review")
@@ -270,7 +284,7 @@ async def create_milestone(request: Request,
 
     return JSONResponse(content={"data": jsonable_encoder(milestone)})
 
-@router.put("/{post_id}/delete",
+@router.put("/post/{post_id}/delete",
             name="post:delete")
 async def update_post_to_deleted(post_id: str, 
                                  current_user: Annotated[User, Depends(get_current_active_user)],
@@ -286,6 +300,52 @@ async def update_post_to_deleted(post_id: str,
         
         if response:
             return HTTPException(200,"Post deleted")
+        else:
+            raise HTTPException(401,"Unauthorized")
+        
+@router.put("/post/{post_id}/like",
+            name="post:like")
+async def like_post(post_id: str, 
+                    current_user: Annotated[User, Depends(get_current_active_user)],
+                    post_repo: PostCRUDRepositoryGraph = Depends(get_repository(repo_type=PostCRUDRepositoryGraph))):
+    """
+    Adds a like to a post. Take the following format.
+    """
+    try:
+        liked_post = LikedPost(username=current_user.username, post_id=post_id)
+    except:
+        raise HTTPException(401,"Invalid Params")
+    
+    if not current_user:
+        raise HTTPException(401,"Unauthorized")
+
+    if post_id:
+        response = post_repo.create_post_like(liked_post)
+        if response:
+            return HTTPException(200,"Post liked")
+        else:
+            raise HTTPException(401,"Unauthorized")
+        
+@router.put("/post/{post_id}/remove_like",
+            name="post:remove_like")
+async def remove_like_post(post_id:str, 
+                           current_user: Annotated[User, Depends(get_current_active_user)],
+                           post_repo: PostCRUDRepositoryGraph = Depends(get_repository(repo_type=PostCRUDRepositoryGraph))):
+    """
+    remove a like to a post. 
+    """
+    try:
+        liked_post = LikedPost(username=current_user.username, post_id=post_id)
+    except:
+        raise HTTPException(401,"Invalid Params")
+    
+    if not current_user:
+        raise HTTPException(401,"Unauthorized")
+   
+    if post_id:
+        response = post_repo.delete_post_like(liked_post)
+        if response:
+            return HTTPException(200,"Post like removed")
         else:
             raise HTTPException(401,"Unauthorized")
         
@@ -368,6 +428,134 @@ async def set_comment_as_deleted(comment_id:str,
         else:
             raise HTTPException(401,"Unauthorized")
 
+@router.put("/comment/{comment_id}/like",
+            name="comment:like")
+async def like_comment(comment_id: str, 
+                    current_user: Annotated[User, Depends(get_current_active_user)],
+                    comment_repo: CommentCRUDRepositoryGraph = Depends(get_repository(repo_type=CommentCRUDRepositoryGraph))):
+    """
+    Adds a like to a Comment. 
+    """
+
+    try:
+        liked_comment = LikedComment(username=current_user.username, comment_id=comment_id)
+    except:
+        raise HTTPException(401,"Invalid Params")
+    
+    if not current_user:
+        raise HTTPException(401,"Unauthorized")
+
+    if comment_id:
+        response = comment_repo.create_comment_like(liked_comment)
+        if response:
+            return HTTPException(200,"Post liked")
+        else:
+            raise HTTPException(401,"Unauthorized")
+        
+@router.put("/comment/{comment_id}/remove_like",
+            name="comment:remove_like")
+async def remove_like_comment(comment_id:str, 
+                              current_user: Annotated[User, Depends(get_current_active_user)],
+                              comment_repo: CommentCRUDRepositoryGraph = Depends(get_repository(repo_type=CommentCRUDRepositoryGraph))):
+    """
+    remove a like to a comment.
+    """
+    try:
+        liked_comment = LikedComment(username=current_user.username, comment_id=comment_id)
+    except:
+        raise HTTPException(401,"Invalid Params")
+    
+    if not current_user:
+        raise HTTPException(401,"Unauthorized")
+    
+    if comment_id:
+        response = comment_repo.delete_comment_like(liked_comment)
+        if response:
+            return HTTPException(200,"Post like removed")
+        else:
+            raise HTTPException(401,"Unauthorized")
+        
+@router.get("/post/{post_id}/pinned_comments",
+            name="post:get_pinned_comments")
+async def get_pinned_comments_for_post(post_id: str, 
+                                       current_user: Annotated[User, Depends(get_current_active_user)], 
+                                       skip: int = Query(default=0), 
+                                       limit: int = Query(default=10),
+                                       comment_repo: CommentCRUDRepositoryGraph = Depends(get_repository(repo_type=CommentCRUDRepositoryGraph))):
+    """
+    Gets the pinned comments on a post
+    Uses skip and limit for pagination
+    """
+    if not current_user:
+        raise HTTPException("401","Unauthorized")
+    
+    if post_id:
+        comments = comment_repo.get_all_pinned_comments_for_post(post_id=post_id,
+                                                                 username=current_user.username,
+                                                                 skip=skip,
+                                                                 limit=limit)
+        
+        return JSONResponse(content={"data": jsonable_encoder(comments)})
+        
+@router.put("/post/{post_id}/pin/{comment_id}",
+            name="comment:pin")
+async def pin_comment(comment_id: str, 
+                      post_id: str, 
+                      current_user: Annotated[User, Depends(get_current_active_user)],
+                      comment_repo: CommentCRUDRepositoryGraph = Depends(get_repository(repo_type=CommentCRUDRepositoryGraph))):
+    """
+    Adds a pin to a comment. Take the following format.
+    {
+    "comment_id":str,
+    "post_id":str
+    }
+    """
+    if not current_user:
+        raise HTTPException(401,"Unauthorized")
+    
+    try:
+        pinned_comment = PinnedComment(username=current_user.username, comment_id=comment_id, post_id=post_id)
+    except:
+        raise HTTPException(401,"Invalid Params")
+    
+    if pinned_comment:
+        response = comment_repo.create_comment_pin(pinned_comment)
+
+        if response:
+            return HTTPException(200,"Comment pinned")
+        else:
+            raise HTTPException(401,"Unauthorized")
+        
+@router.put("/post/{post_id}/remove_pin/{comment_id}",
+            name="comment:remove_pin")
+async def remove_pin_comment(post_id: str,  
+                             comment_id: str, 
+                             current_user: Annotated[User, Depends(get_current_active_user)],
+                             comment_repo: CommentCRUDRepositoryGraph = Depends(get_repository(repo_type=CommentCRUDRepositoryGraph))): 
+    """
+    remove a pin from a comment. Take the following format.
+    {
+    "comment_id":str,
+    "post_id":str
+    }
+    """
+    
+    if not current_user:
+        raise HTTPException(401,"Unauthorized")
+    
+    try:
+        pinned_comment = PinnedComment(username=current_user.username, comment_id=comment_id, post_id=post_id)
+    except:
+        raise HTTPException(401,"Invalid Params")
+    
+    if pinned_comment:
+        response = comment_repo.delete_comment_pin(pinned_comment)
+
+        if response:
+            return HTTPException(200,"Comment pin removed")
+        else:
+            raise HTTPException(401,"Unauthorized")
+
 
 @router.get("/post/{post_id}/comments")
 async def get_comments_for_post(post_id: str, 
@@ -388,3 +576,20 @@ async def get_comments_for_post(post_id: str,
                                                     limit=limit)
   
         return JSONResponse(content={"data": jsonable_encoder({"comments": comments['comments'], "pinned_comments": comments['pinned_comments']})})
+
+@router.get("/comment/{comment_id}/replies",
+            name="comment:get_replies") # /api/posts/comments/{comment_id}/replies
+async def get_all_replies_for_comment(comment_id: str, 
+                                      current_user: Annotated[User, Depends(get_current_active_user)],
+                                      comment_repo: CommentCRUDRepositoryGraph = Depends(get_repository(repo_type=CommentCRUDRepositoryGraph))):
+    """
+    Returns a list of comments for a specific reply.
+    """
+    if not current_user:
+        raise HTTPException(401, "Unauthorized")
+    if comment_id:
+        replies = comment_repo.get_all_replies_for_comment(comment_id=comment_id, username=current_user.username)
+        return(JSONResponse(content={"data": jsonable_encoder(replies)}))
+    
+
+

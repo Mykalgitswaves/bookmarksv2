@@ -7,6 +7,10 @@ class PostCreate(BaseModel):
     book: BookPreview
     user_username: str
 
+class LikedPost(BaseModel):
+    username: str
+    post_id: str
+
 class Post(BaseModel):
     id: str
     book: BookPreview
@@ -41,7 +45,7 @@ class ReviewPost(Post):
     responses = list
     spoilers = list
     headline: str = ""
-    type = "review"
+    type: str = "review"
     
 class UpdateCreate(PostCreate):
     page: int
@@ -55,7 +59,7 @@ class UpdatePost(Post):
     response: str
     spoiler: bool
     headline: str = ""
-    type = "update"
+    type: str = "update"
 
 class ComparisonCreate(BaseModel):
     user_username: str
@@ -81,7 +85,7 @@ class ComparisonPost(BaseModel):
     posted_by_current_user: bool = False
     num_comments: int = 0
     deleted: bool = False
-    type = "comparison"
+    type: str = "comparison"
 
     @validator('created_date', pre=True, allow_reuse=True)
     def parse_neo4j_datetime(cls, v):
@@ -100,7 +104,7 @@ class RecommendationFriend(Post):
     to_user_username: str
     from_user_text: str
     to_user_text: str
-    type = "friend_recommendation"
+    type: str = "friend_recommendation"
 
 class MilestoneCreate(BaseModel):
     user_username: str
@@ -118,7 +122,7 @@ class MilestonePost(BaseModel):
     posted_by_current_user: bool = False
     num_comments: int = 0
     deleted: bool = False
-    type = "milestone"
+    type: str = "milestone"
 
     @validator('created_date', pre=True, allow_reuse=True)
     def parse_neo4j_datetime(cls, v):
