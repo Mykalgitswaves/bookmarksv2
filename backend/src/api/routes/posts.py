@@ -62,25 +62,32 @@ async def create_review(request: Request,
     small_img_url = response['small_img_url']
     title = response['title']
 
-    db_book = BookPreview(id=book_id, 
-                          title=title, 
-                          small_img_url=small_img_url)
+    try:
+        db_book = BookPreview(id=book_id, 
+                            title=title, 
+                            small_img_url=small_img_url)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
     
     if book_id[0] == "g":
         canonical_book = book_repo.get_canonical_book_by_google_id(book_id) 
         if canonical_book:
             db_book = canonical_book
 
-
-    review = ReviewCreate(
-                    book=db_book,
-                    user_username=current_user.username,
-                    headline=response['headline'],
-                    questions=response['questions'],
-                    question_ids=response['ids'],
-                    responses=response['responses'],
-                    spoilers=response['spoilers']
-            )
+    try:
+        review = ReviewCreate(
+                        book=db_book,
+                        user_username=current_user.username,
+                        headline=response['headline'],
+                        questions=response['questions'],
+                        question_ids=response['ids'],
+                        responses=response['responses'],
+                        spoilers=response['spoilers']
+                )
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    
     review = post_repo.create_review(review)
 
     if db_book.id[0] == "g":
@@ -119,23 +126,29 @@ async def create_update(request: Request,
     small_img_url = response['small_img_url']
     title = response['title']
 
-    db_book = BookPreview(id=book_id, 
-                          title=title, 
-                          small_img_url=small_img_url)
+    try:
+        db_book = BookPreview(id=book_id, 
+                            title=title, 
+                            small_img_url=small_img_url)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
     
     if book_id[0] == "g":
         canonical_book = book_repo.get_canonical_book_by_google_id(book_id) 
         if canonical_book:
             db_book = canonical_book
-        
-    update = UpdateCreate(
-                        book=db_book,
-                        user_username=current_user.username,
-                        headline=response['headline'],
-                        page=response['page'],
-                        response=response['response'],
-                        spoiler=response['is_spoiler'])
     
+    try:
+        update = UpdateCreate(
+                            book=db_book,
+                            user_username=current_user.username,
+                            headline=response['headline'],
+                            page=response['page'],
+                            response=response['response'],
+                            spoiler=response['is_spoiler'])
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+        
     update = post_repo.create_update(update)
 
     if db_book.id[0] == "g":
@@ -179,26 +192,29 @@ async def create_comparison(request: Request,
 
     for book_id, small_img_url, title in books_metadata:
         canonical_book = book_repo.get_canonical_book_by_google_id(book_id) 
-        if canonical_book:
-            db_book = canonical_book
         
-        if db_book:
-            books.append(db_book)
+        if canonical_book:
+            books.append(canonical_book)
         else:
-            books.append(BookPreview(id=book_id, 
-                          title=title, 
-                          small_img_url=small_img_url)
-            )
+            try:
+                books.append(BookPreview(id=book_id, 
+                            title=title, 
+                            small_img_url=small_img_url)
+                )
+            except ValueError as e:
+                raise HTTPException(status_code=400, detail=str(e))
             
-
-    comparison = ComparisonCreate(
-                                compared_books=books,
-                                user_username=current_user.username,
-                                comparators=response['comparator_topics'],
-                                comparator_ids=response['comparator_ids'],
-                                responses=response['responses'],
-                                book_specific_headlines=response['book_specific_headlines'])
-    
+    try:
+        comparison = ComparisonCreate(
+                                    compared_books=books,
+                                    user_username=current_user.username,
+                                    comparators=response['comparator_topics'],
+                                    comparator_ids=response['comparator_ids'],
+                                    responses=response['responses'],
+                                    book_specific_headlines=response['book_specific_headlines'])
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+        
     comparison = post_repo.create_comparison(comparison)
 
     for book in books:
@@ -234,22 +250,28 @@ async def create_recommendation_friend(request: Request,
     small_img_url = response['small_img_url']
     title = response['title']
 
-    db_book = BookPreview(id=book_id, 
-                          title=title, 
-                          small_img_url=small_img_url)
+    try:
+        db_book = BookPreview(id=book_id, 
+                            title=title, 
+                            small_img_url=small_img_url)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
     
     if book_id[0] == "g":
         canonical_book = book_repo.get_canonical_book_by_google_id(book_id) 
         if canonical_book:
             db_book = canonical_book
 
-    recommendation = RecommendationFriendCreate(
-                                          book=db_book,
-                                          user_username=current_user.username,
-                                          to_user_username=response['to_user_username'],
-                                          from_user_text=response['from_user_text'],
-                                          to_user_text=response['to_user_text'],
-                                          )
+    try:
+        recommendation = RecommendationFriendCreate(
+                                            book=db_book,
+                                            user_username=current_user.username,
+                                            to_user_username=response['to_user_username'],
+                                            from_user_text=response['from_user_text'],
+                                            to_user_text=response['to_user_text'],
+                                            )
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
     
     recommendation = post_repo.create_recommendation_post(recommendation)
 
@@ -276,9 +298,12 @@ async def create_milestone(request: Request,
     if "_value" in response:
         response = response['_value']
     
-    milestone = MilestoneCreate(
-                              user_username=current_user.username,
-                              num_books=response['num_books'])
+    try:
+        milestone = MilestoneCreate(
+                                user_username=current_user.username,
+                                num_books=response['num_books'])
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
     
     milestone = post_repo.create_milestone(milestone)
 
@@ -313,8 +338,8 @@ async def like_post(post_id: str,
     """
     try:
         liked_post = LikedPost(username=current_user.username, post_id=post_id)
-    except:
-        raise HTTPException(401,"Invalid Params")
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
     
     if not current_user:
         raise HTTPException(401,"Unauthorized")
@@ -336,8 +361,8 @@ async def remove_like_post(post_id:str,
     """
     try:
         liked_post = LikedPost(username=current_user.username, post_id=post_id)
-    except:
-        raise HTTPException(401,"Invalid Params")
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
     
     if not current_user:
         raise HTTPException(401,"Unauthorized")
@@ -369,6 +394,9 @@ async def get_user_posts(user_id:str,
 async def get_post(post_id: str, 
                    current_user: Annotated[User, Depends(get_current_active_user)],
                    post_repo: PostCRUDRepositoryGraph = Depends(get_repository(repo_type=PostCRUDRepositoryGraph))):
+    """
+    Get a specific post by id
+    """
     if post_id and current_user:
         data = post_repo.get_post(post_id=post_id, username=current_user.username)
         if data:
@@ -394,11 +422,14 @@ async def create_comment(request: Request,
 
     response = await request.json()
 
-    comment = CommentCreate(
-                            post_id=response['post_id'],
-                            username=current_user.username,
-                            replied_to=response['replied_to'],
-                            text=response['text'])
+    try:
+        comment = CommentCreate(
+                                post_id=response['post_id'],
+                                username=current_user.username,
+                                replied_to=response['replied_to'],
+                                text=response['text'])
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
     
     comment = comment_repo.create_comment(comment)
 
@@ -439,8 +470,8 @@ async def like_comment(comment_id: str,
 
     try:
         liked_comment = LikedComment(username=current_user.username, comment_id=comment_id)
-    except:
-        raise HTTPException(401,"Invalid Params")
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
     
     if not current_user:
         raise HTTPException(401,"Unauthorized")
@@ -462,8 +493,8 @@ async def remove_like_comment(comment_id:str,
     """
     try:
         liked_comment = LikedComment(username=current_user.username, comment_id=comment_id)
-    except:
-        raise HTTPException(401,"Invalid Params")
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
     
     if not current_user:
         raise HTTPException(401,"Unauthorized")
@@ -515,8 +546,8 @@ async def pin_comment(comment_id: str,
     
     try:
         pinned_comment = PinnedComment(username=current_user.username, comment_id=comment_id, post_id=post_id)
-    except:
-        raise HTTPException(401,"Invalid Params")
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
     
     if pinned_comment:
         response = comment_repo.create_comment_pin(pinned_comment)
@@ -545,8 +576,8 @@ async def remove_pin_comment(post_id: str,
     
     try:
         pinned_comment = PinnedComment(username=current_user.username, comment_id=comment_id, post_id=post_id)
-    except:
-        raise HTTPException(401,"Invalid Params")
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
     
     if pinned_comment:
         response = comment_repo.delete_comment_pin(pinned_comment)
