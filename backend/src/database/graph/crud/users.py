@@ -312,6 +312,67 @@ class UserCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
         response = result.single()
         return response is not None
     
+    def update_email(self, new_email, user_id):
+        """
+        Updates the email of a user
+        """
+        with self.driver.session() as session:
+            result = session.execute_write(self.update_email_query, new_email=new_email, user_id=user_id)  
+        return(result)
+    
+    @staticmethod
+    def update_email_query(tx, new_email, user_id):
+        query = """
+        match (u:User {id:$user_id})
+        set u.email = $new_email
+        return u
+        """
+        
+        result = tx.run(query,user_id=user_id,new_email=new_email)
+        response = result.single()
+        return response is not None
+    
+    def update_user_profile_image(self, user_id:str, profile_img_url:str):
+        """
+        Updates user profile img from uploadCare cdn link
+        """
+        with self.driver.session() as session:
+            result = session.execute_write(self.update_user_profile_image_query, user_id=user_id, profile_img_url=profile_img_url)
+        return(result)
+    @staticmethod
+    def update_user_profile_image_query(tx, user_id, profile_img_url):
+        """
+        More nerd shit on here
+        """
+        query = """
+            match(u:User {id:$user_id})
+            set u.profile_img_url = $profile_img_url
+            return u.profile_img_url
+        """
+        result = tx.run(query, user_id=user_id, profile_img_url=profile_img_url)
+        response = result.single()
+        return response is not None
+    
+    def update_password(self,new_password:str, user_id:str):
+        """
+        Updates the password of a user
+        """
+        with self.driver.session() as session:
+            result = session.execute_write(self.update_password_query, new_password=new_password, user_id=user_id)  
+        return(result)
+    
+    @staticmethod
+    def update_password_query(tx, new_password, user_id):
+        query = """
+        match (u:User {id:$user_id})
+        set u.password = $new_password
+        return u
+        """
+        
+        result = tx.run(query,user_id=user_id,new_password=new_password)
+        response = result.single()
+        return response is not None
+
     def delete_user_by_username(self, username: str) -> bool:
         with self.driver.session() as session:
             response = session.execute_write(self.delete_user_by_username_query, username=username)

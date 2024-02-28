@@ -975,7 +975,7 @@ async def update_email(request: Request, user_id: str, current_user: Annotated[U
     else:
         raise HTTPException(400, detail="Unauthorized")
 
-@app.post("/api/user/{user_id}/update_profile_img")
+@app.post("/api/user/{user_id}/update_profile_img") # This is now a Put request
 async def update_profile_img(request: Request, user_id: str, current_user: Annotated[User, Depends(get_current_active_user)]):
     """
     THIS IS A PLACEHOLDER. 

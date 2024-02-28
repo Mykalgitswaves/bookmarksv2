@@ -66,14 +66,58 @@ class TestUserSettings:
         # Set the headers with authorization token
         headers = {"Authorization": f"{self.token_type} {self.access_token}"}
         
-        # Send a PUT request to update the username of the user
+        # Send a PUT request to update the bio of the user
         response = requests.put(f"{self.endpoint}/api/user/{self.user_id}/update_bio", headers=headers, json="This is a test bio.")
-        assert response.status_code == 200, "Testing Update Username"
+        assert response.status_code == 200, "Testing Update bio"
         
         response = requests.get(f"{self.endpoint}/api/user/{self.user_id}/get_user", headers=headers)
         print(response.json())
         assert response.status_code == 200, "Testing Get User Settings"
         assert response.json()["data"]["bio"] == "This is a test bio.", "Testing Bio Update"
+
+    def test_update_email(self):
+        """
+        Test case for updating the bio of the user.
+        """
+        # Set the headers with authorization token
+        headers = {"Authorization": f"{self.token_type} {self.access_token}"}
+        
+        # Send a PUT request to update the email of the user
+        response = requests.put(f"{self.endpoint}/api/user/{self.user_id}/update_email", headers=headers, json="test_email@test.com")
+        print(response.json())
+        assert response.status_code == 200, "Testing Update email"
+        response = requests.get(f"{self.endpoint}/api/user/{self.user_id}/get_user", headers=headers)
+        print(response.json())
+        assert response.status_code == 200, "Testing Get User Settings"
+        assert response.json()["data"]["email"] == "test_email@test.com", "Testing email Update"
+
+    def test_update_profile_img_url(self):
+        """
+        Test case for updating the bio of the user.
+        """
+        # Set the headers with authorization token
+        headers = {"Authorization": f"{self.token_type} {self.access_token}"}
+        
+        # Send a PUT request to update the profile_img_url of the user
+        response = requests.put(f"{self.endpoint}/api/user/{self.user_id}/update_profile_img", headers=headers, json={"cdn_url":"www.imagecrab.com/test_image.jpg"})
+        print(response.json())
+        assert response.status_code == 200, "Testing Update profile_img_url"
+        response = requests.get(f"{self.endpoint}/api/user/{self.user_id}/get_user", headers=headers)
+        print(response.json())
+        assert response.status_code == 200, "Testing Get User Settings"
+        assert response.json()["data"]["profile_img_url"] == "www.imagecrab.com/test_image.jpg", "Testing profile_img_url Update"
+
+    def test_update_password(self):
+        """
+        Test case for updating the bio of the user.
+        """
+        # Set the headers with authorization token
+        headers = {"Authorization": f"{self.token_type} {self.access_token}"}
+        
+        # Send a PUT request to update the password of the user
+        response = requests.put(f"{self.endpoint}/api/user/{self.user_id}/update_password", headers=headers, json="NewPassword123!")
+        print(response.json())
+        assert response.status_code == 200, "Testing Update password"
 
     def test_update_username(self):
         """

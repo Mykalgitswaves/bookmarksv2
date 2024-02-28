@@ -61,3 +61,15 @@ class UserSettings(User):
 
 class UserUsername(BaseModel):
     username: str
+
+class UserBio(BaseModel):
+    bio: str
+
+class UserEmail(BaseModel):
+    email: EmailStr
+
+class UserProfileImg(BaseModel):
+    profile_img_url: str
+
+class UserPassword(BaseModel):
+    password: str

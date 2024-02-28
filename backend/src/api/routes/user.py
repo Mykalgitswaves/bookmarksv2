@@ -4,11 +4,12 @@ from fastapi.encoders import jsonable_encoder
 from fastapi.responses import JSONResponse
 from typing import Annotated
 
-from src.models.schemas.users import UserInResponse, User, UserUsername
+from src.models.schemas.users import UserInResponse, User, UserUsername, UserBio, UserEmail, UserProfileImg, UserPassword
 from src.api.utils.database import get_repository
 from src.database.graph.crud.users import UserCRUDRepositoryGraph
 from src.securities.authorizations.verify import get_current_active_user
 
+from src.securities.hashing.password import pwd_generator
 from src.securities.authorizations.jwt import jwt_generator
 from src.models.schemas.token import Token
 
@@ -90,6 +91,10 @@ async def update_username(request: Request,
                           user_id: str, 
                           current_user: Annotated[User, Depends(get_current_active_user)],
                           user_repo: UserCRUDRepositoryGraph = Depends(get_repository(repo_type=UserCRUDRepositoryGraph))):
+    """
+    Updates a users email and refreshes the access token
+    """
+    
     if not current_user:
         raise("400", "Unauthorized")
     if current_user.id == user_id:
@@ -126,14 +131,103 @@ async def update_bio(request: Request,
                      user_id: str, 
                      current_user: Annotated[User, Depends(get_current_active_user)],
                      user_repo: UserCRUDRepositoryGraph = Depends(get_repository(repo_type=UserCRUDRepositoryGraph))):
+    """
+    Updates a users bio
+    """
     if not current_user:
         raise("400", "Unauthorized")
     if current_user.id == user_id:
         new_bio = await request.json()
-        response = user_repo.update_bio(user_id=user_id, new_bio=new_bio)
+
+        try:
+            new_bio = UserBio(bio=new_bio)
+        except ValueError as e:
+            raise HTTPException(status_code=400, detail=str(e))
+
+        response = user_repo.update_bio(user_id=user_id, new_bio=new_bio.bio)
         if response:
             return HTTPException(200, detail="Success")
         else:
             raise HTTPException(401, detail="Unauthorized")
+    else:
+        raise HTTPException(400, detail="Unauthorized")
+    
+@router.put("/{user_id}/update_email",
+            name="user:update_email")
+async def update_email(request: Request, 
+                       user_id: str, 
+                       current_user: Annotated[User, Depends(get_current_active_user)],
+                       user_repo: UserCRUDRepositoryGraph = Depends(get_repository(repo_type=UserCRUDRepositoryGraph))):
+    """
+    Updates a user email. TODO: Send a confirmation email to the new email address.
+    """
+    if not current_user:
+        raise("400", "Unauthorized")
+    if current_user.id == user_id:
+        new_email = await request.json()
+        try:
+            new_email = UserEmail(email=new_email)
+        except ValueError as e:
+            raise HTTPException(status_code=400, detail=str(e))
+        
+        response = user_repo.update_email(user_id=user_id, new_email=new_email.email)
+        if response:
+            return HTTPException(200, detail="Success")
+        else:
+            raise HTTPException(401, detail="Unauthorized")
+    else:
+        raise HTTPException(400, detail="Unauthorized")
+    
+@router.put("/{user_id}/update_profile_img")
+async def update_profile_img(request: Request, 
+                             user_id: str, 
+                             current_user: Annotated[User, Depends(get_current_active_user)],
+                             user_repo: UserCRUDRepositoryGraph = Depends(get_repository(repo_type=UserCRUDRepositoryGraph))):
+    """
+    Updates a users profile image
+    """
+    profile_img_url = await request.json()
+    if not profile_img_url and user_id:
+        raise(400, "Bad request brah, missing params")
+    elif current_user.id != user_id:
+        raise(400, "Unauthorized")
+    else:
+        try:
+                profile_img_url = UserProfileImg(profile_img_url=profile_img_url['cdn_url'])
+        except ValueError as e:
+            raise HTTPException(status_code=400, detail=str(e))
+        
+        response = user_repo.update_user_profile_image(user_id=user_id, profile_img_url=profile_img_url.profile_img_url)
+        if response:       
+            return JSONResponse(content={"data": jsonable_encoder(profile_img_url.profile_img_url)})
+        else:
+            raise HTTPException(401, detail="Unauthorized")
+        
+@router.put("/{user_id}/update_password",
+            name="user:update_password")
+async def update_password(request: Request, 
+                          user_id: str, 
+                          current_user: Annotated[User, Depends(get_current_active_user)],
+                          user_repo: UserCRUDRepositoryGraph = Depends(get_repository(repo_type=UserCRUDRepositoryGraph))):
+    """
+    Changes the users password. TODO: Add password length and complexity requirements.
+    """
+    if not current_user:
+        raise("400", "Unauthorized")
+    if current_user.id == user_id and request:
+        new_password = await request.json()
+
+        try:
+            new_password = UserPassword(password=new_password)
+        except ValueError as e:
+            raise HTTPException(status_code=400, detail=str(e))
+        
+
+        response = user_repo.update_password(new_password = pwd_generator.generate_hashed_password(new_password.password), user_id=user_id)
+        if response:
+            return HTTPException(200, detail="Success")
+        else:
+            raise HTTPException(401, detail="Unauthorized")
+        
     else:
         raise HTTPException(400, detail="Unauthorized")
