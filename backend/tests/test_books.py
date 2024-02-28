@@ -114,3 +114,23 @@ class TestBooks:
         assert versions_response.status_code == 200, "Testing book versions by google id"
         assert len(versions_response.json()["data"]) > 0, "Testing book versions by google id"
         assert any(book['google_id'] == self.google_book_id_not_in_db_with_versions_version_id for book in versions_response.json()["data"]), "Correct version found"
+
+    def test_get_book_versions_by_metadata(self):
+        """
+        Testing the book versions by metadata search
+        """
+        book_title = "Foundation"
+        book_authors = [
+          "Isaac Asimov",
+        ]
+        book_id = "gIwywDY4P6gsC"
+        data = {
+            "book_title": book_title,
+            "book_authors": book_authors
+        }
+
+        response = requests.get(f"{self.endpoint}/api/books/{book_id}/versions/metadata", json=data)
+        print(response.json())
+        assert response.status_code == 200, "Testing book versions by metadata"
+        assert len(response.json()["data"]) > 0, "Testing book versions by metadata"
+

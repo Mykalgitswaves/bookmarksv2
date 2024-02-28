@@ -20,6 +20,10 @@ class BookSearchResult(BaseModel):
     small_img_url: str | None = None
     publication_year: str | None = None
 
+class BookMetadataSearch(BaseModel):
+    book_title: str
+    book_authors: list[str]
+    
 class Book(BaseModel):
     id: str | None
     title: str

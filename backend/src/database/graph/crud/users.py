@@ -1,5 +1,6 @@
+from fastapi import HTTPException
 from src.database.graph.crud.base import BaseCRUDRepositoryGraph
-from src.models.schemas.users import UserCreate, User, UserLogin, UserWithPassword
+from src.models.schemas.users import UserCreate, User, UserLogin, UserWithPassword, UserSettings
 
 class UserCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
     def create_user(self, user_create: UserCreate) -> User:
@@ -176,6 +177,35 @@ class UserCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
         result = tx.run(query, username=username)
         response = result.single()
         return response
+    
+    def get_user_for_settings(self, user_id, relationship_to_current_user):
+        """
+        gets id of user and returns full user object
+        """
+        with self.driver.session() as session:
+            result = session.execute_read(self.get_user_for_settings_query, user_id, relationship_to_current_user)
+        return(result)
+    
+    @staticmethod
+    def get_user_for_settings_query(tx, user_id, relationship_to_current_user):
+        query = """
+            match(u:User {id:$user_id}) 
+            return u
+        """
+        result = tx.run(query, user_id=user_id, relationship_to_current_user=relationship_to_current_user)
+        response = result.single()
+        user = UserSettings(
+            id=response['u']['id'],
+            username=response['u']['username'],
+            email=response['u']['email'] or '',
+            disabled=response['u']['disabled'] or False,
+            full_name=response['u']['fullname'] or '',
+            created_date=response['u']['created_date'],
+            profile_img_url=response['u']['profile_img_url'] or '',
+            bio=response['u']['bio'] or '',
+            relationship_to_current_user=response['u']['relationship_to_current_user'] or relationship_to_current_user,
+        )
+        return user
 
     def update_user_full_name(self, username: str, full_name: str) -> User:
         with self.driver.session() as session:
@@ -233,6 +263,52 @@ class UserCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
                 """
         
         result = tx.run(query, username=username, author_id=author_id)
+        response = result.single()
+        return response is not None
+    
+    def update_username(self,new_username:str, user_id:str):
+        """
+        Updates the username of a user
+        """
+        with self.driver.session() as session:
+            result = session.execute_write(self.update_username_query, new_username=new_username, user_id=user_id)  
+        return(result)
+    
+    @staticmethod
+    def update_username_query(tx, new_username, user_id):
+        query = """
+        match (u:User {id:$user_id})
+        set u.username = $new_username
+        """
+        try:
+            tx.run(query,user_id=user_id,new_username=new_username)
+            return HTTPException(
+                status_code=200,
+                detail="Username change successfully"
+            )
+        except:
+            return HTTPException(
+                    status_code=401,
+                    detail="Username is already taken"
+                )
+    
+    def update_bio(self, new_bio, user_id):
+        """
+        Updates the bio of a user
+        """
+        with self.driver.session() as session:
+            result = session.execute_write(self.update_bio_query, new_bio=new_bio, user_id=user_id)  
+        return(result)
+    
+    @staticmethod
+    def update_bio_query(tx, new_bio, user_id):
+        query = """
+        match (u:User {id:$user_id})
+        set u.bio = $new_bio
+        return u
+        """
+        
+        result = tx.run(query,user_id=user_id,new_bio=new_bio)
         response = result.single()
         return response is not None
     

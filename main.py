@@ -915,7 +915,7 @@ async def get_book_versions_from_db(book_id: str):
     
     return JSONResponse(content={"data": jsonable_encoder(versions)})
         
-@app.get("/api/books/{book_id}/versions/metadata")
+@app.get("/api/books/{book_id}/versions/metadata") # Updated this to use a request object
 async def get_book_versions_from_metadata_search(book_id: str, book_title:str, book_authors:list):
     """
     Endpoint for getting versions of a book from a metadata search
@@ -944,7 +944,7 @@ async def update_username(request: Request, user_id: str, current_user: Annotate
         raise("400", "Unauthorized")
     if current_user.user_id == user_id:
         new_username = await request.json()
-        breakpoint()
+        
         result = current_user.update_username(new_username=new_username)
         return result
     else:

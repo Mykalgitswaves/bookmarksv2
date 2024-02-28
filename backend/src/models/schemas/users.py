@@ -53,3 +53,11 @@ class UserWithPassword(BaseModel):
 class UserInResponse(User):
     token: str
     token_type: str = 'bearer'
+
+class UserSettings(User):
+    full_name : str | None
+    bio : str | None
+    relationship_to_current_user : str | None
+
+class UserUsername(BaseModel):
+    username: str

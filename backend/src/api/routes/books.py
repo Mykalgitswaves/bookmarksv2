@@ -1,15 +1,16 @@
 import fastapi
-from fastapi import HTTPException, Depends, BackgroundTasks
+from fastapi import HTTPException, Depends, BackgroundTasks, Request
 from fastapi.encoders import jsonable_encoder
 from fastapi.responses import JSONResponse
 from typing import Annotated
 
 from src.models.schemas.users import UserInResponse, User
-from src.models.schemas.books import Book, BookSearchInput, BookId
+from src.models.schemas.books import Book, BookSearchInput, BookId, BookMetadataSearch
 from src.api.utils.database import get_repository
 from src.database.graph.crud.books import BookCRUDRepositoryGraph
 from src.securities.authorizations.verify import get_current_active_user
 from src.book_apis.google_books.pull_books import google_books_pull
+from src.book_apis.google_books.search import google_books_search
 from src.api.background_tasks.google_books import google_books_background_tasks
 
 router = fastapi.APIRouter(prefix="/books", tags=["books"])
@@ -59,6 +60,24 @@ def get_book_versions_from_db(book_id: str,
         versions = book_repo.get_book_versions_by_google_id(book_id=book_id)
     else:
         versions = book_repo.get_book_versions(book_id=book_id)
+    
+    return JSONResponse(content={"data": jsonable_encoder(versions)})
+
+@router.get("/{book_id}/versions/metadata",
+            name="book:get_book_versions_from_metadata_search")
+async def get_book_versions_from_metadata_search(book_id: str, 
+                                                 request: Request):
+    """
+    Endpoint for getting versions of a book from a metadata search
+    """
+    response = await request.json()
+    try:
+        book_search = BookMetadataSearch(**response)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    
+    versions = google_books_search.search_versions_by_metadata(book_title=book_search.book_title,
+                                                               book_authors=book_search.book_authors)
     
     return JSONResponse(content={"data": jsonable_encoder(versions)})
 
