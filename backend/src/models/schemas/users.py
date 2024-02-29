@@ -59,6 +59,13 @@ class UserSettings(User):
     bio : str | None
     relationship_to_current_user : str | None
 
+class UserAboutMe(BaseModel):
+    genres: set[tuple[str, str]] = set()
+    authors: set[tuple[str, str]] = set()
+
+class UserId(BaseModel):
+    id: str
+
 class UserUsername(BaseModel):
     username: str
 

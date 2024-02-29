@@ -1,10 +1,11 @@
 import fastapi
-from fastapi import HTTPException, Depends, Request, status
+from fastapi import HTTPException, Depends, Request, status, Query
 from fastapi.encoders import jsonable_encoder
 from fastapi.responses import JSONResponse
 from typing import Annotated
 
-from src.models.schemas.users import UserInResponse, User, UserUsername, UserBio, UserEmail, UserProfileImg, UserPassword
+from src.models.schemas.users import UserInResponse, User, UserUsername, UserBio, UserEmail, UserProfileImg, UserPassword, UserId, UserWithRelationship
+from src.models.schemas.social import FriendRequestCreate, BlockUserCreate, FollowUserCreate, FriendDelete
 from src.api.utils.database import get_repository
 from src.database.graph.crud.users import UserCRUDRepositoryGraph
 from src.securities.authorizations.verify import get_current_active_user
@@ -231,3 +232,275 @@ async def update_password(request: Request,
         
     else:
         raise HTTPException(400, detail="Unauthorized")
+    
+@router.put("/{friend_id}/send_friend_request",
+            name="user:send_friend_request")
+async def send_friend_request(friend_id:str, 
+                              current_user: Annotated[User, Depends(get_current_active_user)],
+                              user_repo: UserCRUDRepositoryGraph = Depends(get_repository(repo_type=UserCRUDRepositoryGraph))):
+    """
+    This send a friend request from user_id -> friend_id 
+    """
+    if not current_user:
+        raise HTTPException(400, "Unauthorized")
+    
+    try:
+        friend_request = FriendRequestCreate(from_user_id=current_user.id, to_user_id=friend_id)
+    except ValueError as e:
+        raise HTTPException(400, detail=str(e))
+    
+    result = user_repo.create_friend_request(friend_request=friend_request)
+    if result:
+        return HTTPException(200, detail="Success")
+    else:
+        raise HTTPException(401, detail="Unauthorized")
+    
+    
+@router.put("/{friend_id}/unsend_friend_request",
+            name="user:unsend_friend_request")
+async def unsend_friend_request(friend_id:str, 
+                                current_user: Annotated[User, Depends(get_current_active_user)],
+                                user_repo: UserCRUDRepositoryGraph = Depends(get_repository(repo_type=UserCRUDRepositoryGraph))):
+    """
+    Unsends a friend request from user_id to friend_id
+    """
+    if not current_user:
+        raise("400", "Unauthorized")
+    try:
+        friend_request = FriendRequestCreate(from_user_id=current_user.id, to_user_id=friend_id)
+    except ValueError as e:
+        raise HTTPException(400, detail=str(e))
+    
+    result = user_repo.delete_friend_request(friend_request=friend_request)
+    if result:
+        return HTTPException(200, detail="Success")
+    else:
+        raise HTTPException(401, detail="Unauthorized")
+    
+    
+@router.put("/{friend_id}/accept_friend_request",
+            name="user:accept_friend_request")
+async def accept_friend_request(friend_id:str, 
+                                current_user: Annotated[User, Depends(get_current_active_user)],
+                                user_repo: UserCRUDRepositoryGraph = Depends(get_repository(repo_type=UserCRUDRepositoryGraph))):
+    """
+    Accepts a friend request, checks that the request exists 
+    """
+    if not current_user:
+        raise("400", "Unauthorized")
+
+    try:
+        friend_request = FriendRequestCreate(from_user_id=friend_id, to_user_id=current_user.id)
+    except ValueError as e:
+        raise HTTPException(400, detail=str(e))
+    
+    result = user_repo.update_friend_request_to_accepted(friend_request)
+    if result:
+        return HTTPException(200, detail="Success")
+    else:
+        raise HTTPException(401, detail="Unauthorized")
+    
+    
+@router.put("/{friend_id}/decline_friend_request",
+            name="user:decline_friend_request")
+async def decline_friend_request(friend_id:str, 
+                                 current_user: Annotated[User, Depends(get_current_active_user)],
+                                 user_repo: UserCRUDRepositoryGraph = Depends(get_repository(repo_type=UserCRUDRepositoryGraph))):
+    """
+    Declines a friend request, checks that the request exists
+    """
+    if not current_user:
+        raise("400", "Unauthorized")
+    try:
+        friend_request = FriendRequestCreate(from_user_id=friend_id, to_user_id=current_user.id)
+    except ValueError as e:
+        raise HTTPException(400, detail=str(e))
+            
+    result = user_repo.update_friend_request_to_declined(friend_request)
+    if result:
+        return HTTPException(200, detail="Success")
+    else:
+        raise HTTPException(401, detail="Unauthorized")
+    
+@router.put("/{friend_id}/remove_friend",
+            name="user:remove_friend")
+async def remove_friend(friend_id:str, 
+                        current_user: Annotated[User, Depends(get_current_active_user)],
+                        user_repo: UserCRUDRepositoryGraph = Depends(get_repository(repo_type=UserCRUDRepositoryGraph))):
+    """
+    Removes a friend 
+    """
+    if not current_user:
+        raise("400", "Unauthorized")
+    try:
+        friend_delete = FriendDelete(from_user_id=current_user.id, to_user_id=friend_id)
+    except ValueError as e:
+        raise HTTPException(400, detail=str(e))
+    
+    result = user_repo.delete_friend_relationship(friend_delete)
+    if result:
+        return HTTPException(200, detail="Success")
+    else:
+        raise HTTPException(401, detail="Unauthorized")
+
+@router.put("/{followed_user_id}/follow",
+            name="user:follow_user")
+async def follow_user(followed_user_id:str, 
+                      current_user: Annotated[User, Depends(get_current_active_user)],
+                      user_repo: UserCRUDRepositoryGraph = Depends(get_repository(repo_type=UserCRUDRepositoryGraph))):
+    """
+    Follows a user
+    """
+    if not current_user:
+        raise("400", "Unauthorized")
+    try:
+        follow_user = FollowUserCreate(from_user_id=current_user.id, to_user_id=followed_user_id)
+    except ValueError as e:
+        raise HTTPException(400, detail=str(e))
+    result = user_repo.create_follow_relationship(follow_user)
+    if result:
+        return HTTPException(200, detail="Success")
+    else:
+        raise HTTPException(401, detail="Unauthorized")
+    
+@router.put("/{unfollowed_user_id}/unfollow",
+            name="user:unfollow_user")
+async def unfollow_user(unfollowed_user_id:str, 
+                        current_user: Annotated[User, Depends(get_current_active_user)],
+                        user_repo: UserCRUDRepositoryGraph = Depends(get_repository(repo_type=UserCRUDRepositoryGraph))):
+    """
+    Follows a user
+    """
+    if not current_user:
+        raise("400", "Unauthorized")
+    try:
+        unfollow_user = FollowUserCreate(from_user_id=current_user.id, to_user_id=unfollowed_user_id)
+    except ValueError as e:
+        raise HTTPException(400, detail=str(e))
+    result = user_repo.delete_follow_relationship(unfollow_user)
+    if result:
+        return HTTPException(200, detail="Success")
+    else:
+        raise HTTPException(401, detail="Unauthorized")
+    
+@router.put("/{blocked_user_id}/block",
+            name="user:block_user")
+async def block_user(blocked_user_id:str, 
+                     current_user: Annotated[User, Depends(get_current_active_user)],
+                     user_repo: UserCRUDRepositoryGraph = Depends(get_repository(repo_type=UserCRUDRepositoryGraph))):
+    """
+    Blocks a user
+    """
+    if not current_user:
+        raise("400", "Unauthorized")
+    try:
+        block_user = BlockUserCreate(from_user_id=current_user.id, to_user_id=blocked_user_id)
+    except ValueError as e:
+        raise HTTPException(400, detail=str(e))
+    
+    result = user_repo.create_blocked_relationship(block_user)
+    if result:
+        return HTTPException(200, detail="Success")
+    else:
+        raise HTTPException(401, detail="Unauthorized")
+    
+@router.put("/{unblocked_user_id}/unblock",
+            name="user:unblock_user")
+async def unblock_user(unblocked_user_id:str, 
+                       current_user: Annotated[User, Depends(get_current_active_user)],
+                       user_repo: UserCRUDRepositoryGraph = Depends(get_repository(repo_type=UserCRUDRepositoryGraph))):
+    """
+    Blocks a user
+    """
+    if not current_user:
+        raise("400", "Unauthorized")
+    try:
+        unblock_user = BlockUserCreate(from_user_id=current_user.id, to_user_id=unblocked_user_id)
+    except ValueError as e:
+        raise HTTPException(400, detail=str(e))
+    result = user_repo.delete_blocked_relationship(unblock_user)
+    if result:
+        return HTTPException(200, detail="Success")
+    else:
+        raise HTTPException(401, detail="Unauthorized")
+    
+@router.get("/{user_id}/user_about",
+            name="user:user_about")
+async def get_user_about(user_id:str, 
+                         current_user: Annotated[User, Depends(get_current_active_user)],
+                         user_repo: UserCRUDRepositoryGraph = Depends(get_repository(repo_type=UserCRUDRepositoryGraph))):
+    """
+    Used for about me data called on user page. 
+    """
+    try:
+        user_id = UserId(id=user_id)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    
+    if not current_user:
+        raise("400", "Unauthorized")
+    if current_user and user_id:
+        user = user_repo.get_user_about_me(user_id=user_id.id)
+        return JSONResponse(content={"data": jsonable_encoder(user)})
+    
+@router.get("/{user_id}/friends",
+            name="user:friends")
+async def get_friend_list(user_id: str, 
+                          current_user: Annotated[User, Depends(get_current_active_user)],
+                          user_repo: UserCRUDRepositoryGraph = Depends(get_repository(repo_type=UserCRUDRepositoryGraph))):
+    """
+    Gets the friend list for the user as well as each friends relationship to the current user 
+    """
+    if not current_user:    
+        raise("400", "Unauthorized")
+    if user_id:
+        friend_list = user_repo.get_friend_list(user_id=user_id,current_user_id=current_user.id)
+        return JSONResponse(content={"data": jsonable_encoder(friend_list)})
+    
+@router.get("/{user_id}/friend_requests",
+            name="user:friend_requests")
+async def get_friend_request_list(user_id: str, 
+                                  current_user: Annotated[User, Depends(get_current_active_user)],
+                                  user_repo: UserCRUDRepositoryGraph = Depends(get_repository(repo_type=UserCRUDRepositoryGraph))):
+    """
+    Gets all the friend requests for the current user
+    """
+    if not current_user:    
+        raise("400", "Unauthorized")
+    if user_id == current_user.id:
+        friend_request_list = user_repo.get_friend_request_list(user_id)
+        return JSONResponse(content={"data": jsonable_encoder(friend_request_list)})
+    else:
+        raise("400", "Unauthorized")
+    
+@router.get("/{user_id}/blocked_users")
+async def get_blocked_users_list(user_id: str, 
+                                 current_user: Annotated[User, Depends(get_current_active_user)],
+                                 user_repo: UserCRUDRepositoryGraph = Depends(get_repository(repo_type=UserCRUDRepositoryGraph))):
+    """
+    Gets all the blocked users for the current user 
+    """
+    if not current_user:    
+        raise("400", "Unauthorized")
+    if user_id == current_user.id:
+        friend_request_list = user_repo.get_blocked_users_list(user_id)
+        return JSONResponse(content={"data": jsonable_encoder(friend_request_list)})
+    else:
+        raise("400", "Unauthorized")
+    
+@router.get("/{user_id}/activity")
+async def get_activity_list(user_id: str, 
+                            current_user: Annotated[User, Depends(get_current_active_user)],
+                            user_repo: UserCRUDRepositoryGraph = Depends(get_repository(repo_type=UserCRUDRepositoryGraph)), 
+                            skip: int | None = Query(default=0), 
+                            limit: int | None = Query(default=10)):
+    """
+    Gets all the recent activity for the user
+    """
+    if not current_user:    
+        raise("400", "Unauthorized")
+    if user_id == current_user.id:
+        activity_list = user_repo.get_activity_list(current_user.username, user_id, skip, limit)
+        return JSONResponse(content={"data": jsonable_encoder(activity_list)})
+    else:
+        raise("400", "Unauthorized")
