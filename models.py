@@ -659,4 +659,4 @@ class ShelfSocketQueue(BaseModel):
             raise IndexError("Queue is empty")
 
     def is_empty(self) -> bool:
-        return len(self.items) == 0
+        return len(self.instructions) == 0
