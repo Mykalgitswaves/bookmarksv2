@@ -17,7 +17,10 @@ from database.db_helpers import (
 from models import (
     Node,
     DoublyLinkedList,
-    Bookshelf
+    Bookshelf,
+    BookshelfBook,
+    BookshelfResponse,
+    ShelfSocketQueue,
 )
 
 from database.api.books_api.search import BookSearch
@@ -365,6 +368,7 @@ async def put_users_me_authors(request: Request, current_user: Annotated[User, D
 @app.get("/books")
 async def get_books(skip: int = 0, limit: int = 3):
     """
+bookshelf = Bookshelf()
     Used for initial fetch 
     """
     result = driver.pull_n_books(skip, limit)
@@ -373,6 +377,7 @@ async def get_books(skip: int = 0, limit: int = 3):
 @app.get("/books/n")
 async def get_books_by_n(request: Request, skip: int=0, limit:int=5, by_n=True):
     """
+    bookshelf = Bookshelf()
     Used to grab a certain amount of books
     """
     request_limit = int(request.query_params['limit'])
@@ -382,6 +387,7 @@ async def get_books_by_n(request: Request, skip: int=0, limit:int=5, by_n=True):
 @app.get("/books/{text}")
 async def get_books_by_title(text: str, skip: int=0, limit: int=3):
     """
+    bookshelf = Bookshelf()
     Search a damn book
     """
     result = driver.pull_search2_books(text=text, skip=skip, limit=limit)
@@ -1213,7 +1219,7 @@ class WSManager:
     async def disconnect(self, bookshelf_id: str, ws: WebSocket):
         self.active_connections[bookshelf_id].remove(ws)
 
-    async def send_data(self, bookshelf_id: dict, data: BookshelfPayload):
+    async def send_data(self, bookshelf_id: str, data: BookshelfPayload):
         for ws in self.active_connections.get(bookshelf_id, []):
             await ws.send_json(data)
 
@@ -1225,9 +1231,9 @@ async def bookshelf_connection(websocket: WebSocket, bookshelf_id: str):
         await ws_manager.connect(bookshelf_id, websocket)
         try:
             while True:
-                data = await websocket.receive_text()  # Change to receive_text() if receiving raw text
-                # Process the received data here (parse JSON, handle messages, etc.)
-                await ws_manager.send_data(data=data) 
+                data = await websocket.receive_json()
+                ws_queue.add_data_to_queue(data)
+                await ws_manager.send_data(data=data, bookshelf_id=bookshelf_id) 
         except WebSocketDisconnect:
             await ws_manager.disconnect(bookshelf_id, websocket)
 
@@ -1238,6 +1244,37 @@ async def test_out_rtc_bookshelves(request: Request, bookshelf_id: str):
     if data:
         res = {"data": data, "type": "add"} 
         await ws_manager.send_data(bookshelf_id=bookshelf_id, data=res)
+
+@app.get("/api/bookshelves/{bookshelf_id}")
+async def get_books_from_bookshelf(bookshelf_id: str, current_user: Annotated[User, Depends(get_current_active_user)]):
+    books = driver.pull_n_books(0, 10)
+    BOOKSHELF = Bookshelf(
+            created_by=current_user.username, 
+            title="$Book$",
+            description="Books to make more cash money"
+        )
+    
+    for index, book in enumerate(books):
+        _book = BookshelfBook(
+            id=book.id,
+            order=index,
+            bookTitle=book.title,
+            author='placeholder',
+            imgUrl=book.small_img_url,
+            tags=[]
+        )
+        BOOKSHELF.add_book_to_shelf(book=_book, user_id=current_user.username)
+    _books = BOOKSHELF.get_books()
+
+    BS = BookshelfResponse(
+        title=BOOKSHELF.title,
+        description=BOOKSHELF.description,
+        books=_books,
+        authors=BOOKSHELF.authors,
+        followers=BOOKSHELF.followers,
+    )
+
+    return JSONResponse(content={"bookshelf": jsonable_encoder(BS)})
 
 @app.put("/api/bookshelves/{bookshelf_id}")
 async def test_remove_item_from_list(request: Request, bookshelf_id: str):

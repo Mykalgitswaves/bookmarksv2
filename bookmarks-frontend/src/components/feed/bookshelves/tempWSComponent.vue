@@ -114,3 +114,26 @@ watchEffect(() =>  {
      
 }
 </style>
+
+<!-- const bookShelfComponentMap = {
+    "edit-books": {
+        heading: (bookshelfName) => "Edit books",
+        buttonText: 'Add books',
+        component: () => BookshelfBooks,
+        props: {
+            'books': books.value,
+        },
+        events: {
+
+        }
+    },
+    "add-books": {
+        heading: (bookshelfName) => (`Add books to ${bookshelfName}`),
+        buttonText: 'Edit books',
+        component: () => SearchBooks,
+        props: {},
+        events: {
+            'book-to-parent': addBook
+        } 
+    }
+} -->

@@ -31,10 +31,6 @@
 
 </script>
 <style scoped>
-
-
-
-
 .bookshelf:hover {
     background-color: var(--stone-100);
 }

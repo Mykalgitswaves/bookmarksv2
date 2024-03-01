@@ -31,39 +31,51 @@ export const ws = {
     client: getCookieByParam(['token']),
     socket: null, // Initialize socket variable
     data: ref([]),
-    newSocket: () => {
-        ws.socket = new WebSocket(urls.rtc.bookshelf('new')); // Assign the socket to ws.socket
+    connection_address: '',
+    newSocket: (connection_address) => {
+        ws.connection_address = connection_address;
+        ws.socket = new WebSocket(urls.rtc.bookshelf(connection_address)); // Assign the socket to ws.socket
         return ws.socket;
     },
     
-    createNewSocketConnection: () => {
+    createNewSocketConnection: (connection_address) => {
         if(!ws.socket){
-            ws.newSocket(); // Create a new socket if it doesn't exist or if it's closed
+            ws.newSocket(connection_address); // Create a new socket if it doesn't exist or if it's closed
         
             ws.socket.onopen = (e) => { 
                 console.log('socket opened at', ws.socket, e)
             };
 
             ws.socket.onmessage = (e) => {
-                const res = JSON.parse(e.data)
-                const data = JSON.parse(res.data)
-                if(res.type === "add"){
+                const data = JSON.parse(e.data)
+                if(e.type === "message"){
                     ws.data.value.push(data);
-                } else if (res.type === "remove") {
-                    ws.data.value = ws.data.value.filter((d) => d !== ws.data.value[res.data])
-                }
-                // How we are watching data being sent from a websocket. v fast.
-                console.log(ws.data.value)
-            };
+                    // How we are watching data being sent from a websocket. v fast.
+                    console.log(ws.data.value);
+                };
+                
+                setInterval(() => {
+                    
+                }, 500);
+            }
         }
     },
-    
+
     unsubscribeFromSocketConnection() {
         // We need to make sure websocket exists and the socket is not closed before we close.
         if (ws.socket && ws.socket.readyState !== WebSocket.CLOSED) {
             ws.socket.close();
+            ws.connection_address = null;
         }
     },
+
+    sendData(data) {
+        if(ws.socket && ws.socket.readyState === WebSocket.OPEN){
+            ws.socket.send(JSON.stringify(data));
+        } else {
+            console.error("WebSocket connection is not open.");
+        }
+    }
 }
 
 
@@ -210,3 +222,20 @@ export const items = [
         imgUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/9/93/Giuseppe_Bottani_-_Athena_revealing_Ithaca_to_Ulysses.jpg/440px-Giuseppe_Bottani_-_Athena_revealing_Ithaca_to_Ulysses.jpg',
     }
 ];
+
+
+export function convertListToMap(list, key) {
+    let result = new Map();
+    list.forEach((data) => {
+        result.set(data[key], data);
+    })
+    return result;
+}
+
+export async function get_bookshelf(shelfName) {
+    let result = {};
+    let bookshelfPromise = await db.get(urls.rtc.bookShelfTest(shelfName)).then((res) => { result = res });
+    Promise.resolve(bookshelfPromise).then(() => {
+        return result
+    });
+}

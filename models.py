@@ -2,12 +2,14 @@
 from fastapi import (
     HTTPException,
 )
-
+from pydantic import BaseModel
 from database.db_helpers import User
 import uuid
 import pytest
 import datetime
 from helpers import timing_decorator
+from typing import List, Generic, TypeVar, Dict
+
 # Delete the element from data
     # We arent using this rn, shouldn't be necessary
     # def InsertToBeginning(self, data) -> None:
@@ -29,7 +31,14 @@ class Node:
         self.prev = None
 # Class for doubly Linked List
 # TODO change `item` to book_id
-        
+
+class BookshelfBook(BaseModel):
+    id: str
+    order: int
+    bookTitle: str
+    author: str
+    imgUrl: str
+
 class DoublyLinkedList:
     def __init__(self):
         self.start_node = None
@@ -466,14 +475,14 @@ class HashMapDLL:
 
 class Bookshelf():
     def __init__(
-        self, created_by: str, title: str, description: str, books=None
+        self, created_by: str, title: str, description: str
     ) -> None:
         self.created_by = created_by
         self.title = title
         self.description = description
         self.id = str(uuid.uuid4())
         self.image_url: str
-        self.books = DoublyLinkedList() if books is None else books
+        self.books = DoublyLinkedList()
         self.followers = set() # list of str's id.
         self.authors = set() # list of str's id.
         # Need this dude
@@ -624,3 +633,30 @@ class BooksMap():
 
         self.is_removing = False
 """
+
+class BookshelfResponse(BaseModel): 
+    title: str
+    description: str
+    books: list[BookshelfBook]
+    authors: list[str]
+    followers: list[str]
+
+
+
+class ShelfSocketQueue(BaseModel):
+    instructions: List[dict]
+
+    def __init__(self):
+        self.instructions = []
+
+    def enqueue(self, data:dict):
+        self.instructions.append(data)
+
+    def dequeue(self) -> dict:
+        if not self.is_empty():
+            return self.instructions.pop(0)
+        else:
+            raise IndexError("Queue is empty")
+
+    def is_empty(self) -> bool:
+        return len(self.items) == 0
