@@ -547,7 +547,7 @@ class Bookshelf():
     def remove_author(self, user_id):
         self.authors.discard(user_id)
 
-    def dequeue_into_booskhelf(self):
+    def dequeue_into_bookshelf(self):
         while not self.queue.is_empty():
             self.reorder_book(**self.queue.dequeue())
 

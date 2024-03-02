@@ -1240,6 +1240,7 @@ async def bookshelf_connection(websocket: WebSocket, bookshelf_id: str):
                     TempBookshelfDict[bookshelf_id].queue.enqueue(data=data)
                     TempBookshelfDict[bookshelf_id].dequeue_into_bookshelf()
                     await ws_manager.send_data(data=data, bookshelf_id=bookshelf_id)
+                    # Let everyone know to update!
                     await ws_manager.broadcast(bookshelf_id=bookshelf_id)
         except WebSocketDisconnect:
             await ws_manager.disconnect(bookshelf_id, websocket)
