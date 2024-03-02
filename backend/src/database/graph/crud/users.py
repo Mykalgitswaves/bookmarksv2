@@ -58,8 +58,8 @@ class UserCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
     @staticmethod
     def create_friend_request_query(tx, friend_request):
         query = """
-        match (fromUser:User {id:$from_user_id})
-        match (toUser:User {id:$to_user_id})
+        match (fromUser:User {id:$from_user_id, disabled:False})
+        match (toUser:User {id:$to_user_id, disabled:False})
         with toUser, fromUser
         where not exists ((fromUser)-[:BLOCKED]-(toUser))
             and not exists ((fromUser)-[:FRIENDED]-(toUser))
@@ -421,7 +421,10 @@ class UserCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
                 relationship_to_current_user='anonymous_user_friend_requested'
             )
 
-            friend_request = FriendRequest(from_user, response['created_date'])
+            friend_request = FriendRequest(
+                from_user=from_user, 
+                created_date=response['created_date'])
+            
             friend_request_list.append(friend_request)
         
         return friend_request_list
@@ -943,7 +946,7 @@ class UserCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
         match (fromUser:User {id:$from_user_id})
         match (toUser:User {id:$to_user_id})
         MATCH (fromUser)-[friend_request:FRIENDED {status:"pending"}]->(toUser)
-        DELETE friend_request
+        set friend_request.status = "declined"
         RETURN toUser
         """
         
@@ -979,10 +982,10 @@ class UserCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
     @staticmethod
     def delete_friend_request_query(tx, friend_request):
         query = """
-        match (fromUser:User {id:$from_user_id})
-        match (toUser:User {id:$to_user_id})
-        OPTIONAL MATCH (fromUser)-[friend_request:FRIENDED {status:"pending"}]->(toUser)
-        DELETE friendRequest
+        match (fromUser:User {id:$from_user_id, disabled:False})
+        match (toUser:User {id:$to_user_id, disabled:False})
+        MATCH (fromUser)-[friend_request:FRIENDED {status:"pending"}]->(toUser)
+        DELETE friend_request
         RETURN toUser
         """
         

@@ -1,5 +1,5 @@
 from pydantic import BaseModel, validator
-from datetime import datetime
+import datetime
 from neo4j.time import DateTime as Neo4jDateTime
 
 class FriendRequestCreate(BaseModel):
@@ -39,7 +39,7 @@ class BlockedUser(BaseModel):
 
 class FriendRequest(BaseModel):
     from_user: FriendUser
-    created_date: datetime
+    created_date: datetime.datetime
 
     @validator('created_date', pre=True, allow_reuse=True)
     def parse_neo4j_datetime(cls, v):
@@ -64,7 +64,7 @@ class BaseActivity(BaseModel):
     acting_user_id: str 
     acting_user_username: str
     acting_user_profile_img_url: str | None = None
-    created_date: datetime
+    created_date: datetime.datetime
 
     @validator('created_date', pre=True, allow_reuse=True)
     def parse_neo4j_datetime(cls, v):
