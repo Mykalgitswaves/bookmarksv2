@@ -52,24 +52,27 @@
         <h3 class="bookshelf-books-heading">
             {{ bookShelfComponentMap[currentView.value].heading('untitled') }}
         </h3>
-        <BookshelfBooks 
-            v-if="dataLoaded"
-            :books="books" 
-            @send-bookdata-socket="
-                (bookdata) => ws.sendData(bookdata)
-            "
-        />
-        <!-- <Component 
-            v-if="dataLoaded"
-            :is="bookShelfComponentMap[currentView.value].component()"
-            v-bind="bookShelfComponentMap[currentView.value].props"
-            v-on="bookShelfComponentMap[currentView.value].events" 
-        /> -->
+
+        <div v-if="dataLoaded">
+            <BookshelfBooks 
+                v-if="currentView.value === 'edit-books'"
+                :books="books" 
+                :is-reordering="isReordering"
+                @send-bookdata-socket="
+                    (bookdata) => reorder_books(bookdata)
+                "
+            />
+
+            <SearchBooks 
+                v-if="currentView.value === 'add-books'"
+                @book-to-parent="(book) => addBook(book)"  
+            />
+        </div>
     </section>    
     <div class="mobile-menu-spacer sm:hidden"></div>
 </template>
 <script setup>
-import { ref, onMounted, reactive, onUnmounted } from 'vue'
+import { ref, onMounted, reactive, onBeforeUnmount } from 'vue'
 import { useRoute, useRouter } from 'vue-router';
 import IconEdit from '../../svg/icon-edit.vue'
 import BookshelfBooks from './BookshelfBooks.vue';
@@ -85,47 +88,66 @@ import { helpersCtrl } from '../../../services/helpers'
 import { urls } from '../../../services/urls';
 import { db } from '../../../services/db';
 
-    const route = useRoute();
-    const router = useRouter();
+const route = useRoute();
+const router = useRouter();
+const dataLoaded = ref(false);
+const bookshelf = ref(null);
+const books = ref([]);
+const isReordering = ref(false);
+//  Used to send and reorder data!
+function reorder_books(bookData) {
+    // Used to keep this shit from breaking.
+    isReordering.value = true;
 
-    const dataLoaded = ref(false);
-    const bookshelf = ref(null);
-    const books = ref([]);
-
-    const currentView = reactive({value: 'edit-books'});
-    const { commanatoredString } = helpersCtrl;
-
-    const bookShelfComponentMap = {
-        "edit-books": {
-            heading: (bookshelfName) => "Edit books",
-            buttonText: 'Add books',
-            component: () => BookshelfBooks,
-            props: {
-                'books': books.value,
-            },
-            events: {
-
-            }
-        },
-        "add-books": {
-            heading: (bookshelfName) => (`Add books to ${bookshelfName}`),
-            buttonText: 'Edit books',
-            component: () => SearchBooks,
-            props: {},
-            events: {
-                'book-to-parent': addBook
-            } 
-        }
-    };
-
-    async function get_combos() {
-        await db.get(urls.rtc.bookShelfTest('new')).then((res) => { 
-        bookshelf.value = res.bookshelf
-        books.value = res.bookshelf.books
-        dataLoaded.value = true;
-     });
+    let curr = books.value.find(b => b.id === bookData.book_id);
+    let prev = books.value.find(b => b.id === bookData.prev_book_id);
+    let next = books.value.find(b => b.id === bookData.next_book_id);
+    // Early out if we cant find the books.
+    if(!curr || (!prev && !next)) {
+        return;
     }
 
+    let indexOfPrev = books.value.indexOf(prev);
+    let indexOfNext = books.value.indexOf(next);
+    let indexOfCurr = books.value.indexOf(curr);
+    // Remove current.
+    books.value.splice(indexOfCurr, indexOfCurr + 1);
+    
+    if (indexOfNext === indexOfPrev + 2) {
+        books.value.splice(indexOfPrev, 0, curr.value);
+    } else if (indexOfNext && !indexOfPrev){
+        // Inserting to beginning of list
+        books.value.unshift(curr.value);
+    } else if (indexOfPrev && !indexOfNext) {
+        // inserting to end of list
+        books.value.push(curr.value);
+    }
+
+    ws.sendData(bookData);
+    isReordering.value = false;
+}
+
+const currentView = reactive({value: 'edit-books'});
+const { commanatoredString } = helpersCtrl;
+
+const bookShelfComponentMap = {
+    "edit-books": {
+        heading: () => "Edit books",
+        buttonText: 'Add books',
+    },
+    "add-books": {
+        heading: (bookshelfName) => (`Add books to ${bookshelfName}`),
+        buttonText: 'Edit books',
+    }
+};
+
+async function get_combos() {
+    await db.get(urls.rtc.bookShelfTest('new')).then((res) => { 
+    bookshelf.value = res.bookshelf
+    books.value = res.bookshelf.books
+    dataLoaded.value = true;
+    });
+}
 
 function addBook(book){
     let props = {
@@ -148,9 +170,13 @@ onMounted(() => {
     ws.createNewSocketConnection(route.params.bookshelf);
 });
 
-onUnmounted(() => {
+onBeforeUnmount(() => {
     ws.unsubscribeFromSocketConnection();
 });
+// Need to send close frame for websocket
+window.onbeforeunload = () => {
+    ws.unsubscribeFromSocketConnection();
+};
 </script>
 <style scoped>
 

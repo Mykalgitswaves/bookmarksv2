@@ -14,13 +14,15 @@ from database.db_helpers import (
     Neo4jDriver
 )
 
+import asyncio
+
 from models import (
     Node,
     DoublyLinkedList,
     Bookshelf,
     BookshelfBook,
     BookshelfResponse,
-    ShelfSocketQueue,
+    BookshelfQueue,
 )
 
 from database.api.books_api.search import BookSearch
@@ -1206,13 +1208,12 @@ async def get_suggested_friends(user_id: str, current_user: Annotated[User, Depe
 # Websockets for bookshelves!
 BookshelfPayload = Any
 ActiveConnections = Dict[str, Set[WebSocket]]
-CollisionMeshDict = Dict[str, DoublyLinkedList]
+TempBookshelfDict = {}
 
 class WSManager:
     def __init__(self):
         self.active_connections: ActiveConnections = {}
-        self.collision_mesh: CollisionMeshDict = {}
-
+        
     async def connect(self, bookshelf_id: str, ws: WebSocket):
         self.active_connections.setdefault(bookshelf_id, set()).add(ws)
 
@@ -1232,8 +1233,10 @@ async def bookshelf_connection(websocket: WebSocket, bookshelf_id: str):
         try:
             while True:
                 data = await websocket.receive_json()
-                ws_queue.add_data_to_queue(data)
-                await ws_manager.send_data(data=data, bookshelf_id=bookshelf_id) 
+                if data:
+                    TempBookshelfDict[bookshelf_id].queue.enqueue(data=data)
+                    TempBookshelfDict[bookshelf_id].dequeue_into_booskhelf()
+                    await ws_manager.send_data(data=data, bookshelf_id=bookshelf_id)
         except WebSocketDisconnect:
             await ws_manager.disconnect(bookshelf_id, websocket)
 
@@ -1264,6 +1267,7 @@ async def get_books_from_bookshelf(bookshelf_id: str, current_user: Annotated[Us
             tags=[]
         )
         BOOKSHELF.add_book_to_shelf(book=_book, user_id=current_user.username)
+    TempBookshelfDict[bookshelf_id] = BOOKSHELF
     _books = BOOKSHELF.get_books()
 
     BS = BookshelfResponse(
@@ -1300,7 +1304,6 @@ async def create_bookshelf(request: Request, current_user: Annotated[User, Depen
                 title=name,
                 description=description,
             )
-            breakpoint()
             return {"bookshelf_id": bookshelf.id}
     else:
         raise HTTPException(status_code=400, detail="missing name or title")

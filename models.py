@@ -487,6 +487,7 @@ class Bookshelf():
         self.authors = set() # list of str's id.
         # Need this dude
         self.authors.add(self.created_by)
+        self.queue = BookshelfQueue()
 
     @timing_decorator
     def add_book_to_shelf(self, book, user_id):
@@ -546,6 +547,9 @@ class Bookshelf():
     def remove_author(self, user_id):
         self.authors.discard(user_id)
 
+    def dequeue_into_booskhelf(self):
+        while not self.queue.is_empty:
+            self.add_book_to_shelf(self.queue.dequeue())
 
 """
 I have a list: [
@@ -643,11 +647,8 @@ class BookshelfResponse(BaseModel):
 
 
 
-class ShelfSocketQueue(BaseModel):
-    instructions: List[dict]
-
-    def __init__(self):
-        self.instructions = []
+class BookshelfQueue(BaseModel):
+    instructions: List[dict] = []
 
     def enqueue(self, data:dict):
         self.instructions.append(data)
@@ -660,3 +661,4 @@ class ShelfSocketQueue(BaseModel):
 
     def is_empty(self) -> bool:
         return len(self.instructions) == 0
+    

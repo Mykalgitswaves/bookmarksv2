@@ -41,6 +41,9 @@ const props = defineProps({
         required: false,
         default: [],
     },
+    isReordering: {
+        type: Boolean,
+    }
 });
 
 const emit = defineEmits(['send-bookdata-socket']);
@@ -55,9 +58,7 @@ const bookdata = reactive({
     next_book_id: null,
 });
 
-const currentBook = computed(() => 
-    props.books.find((book) => bookdata.book_id === book.id)
-);
+const currentBook = ref({});
 
 const selectedBookToBeMoved = computed(() => 
     `#${currentBook.value.order} ${currentBook.value.bookTitle}`
@@ -66,6 +67,7 @@ const selectedBookToBeMoved = computed(() =>
 function setSort(nameData) {
     console.assert(nameData !== (null || undefined))
     bookdata.book_id = nameData;
+    sortTarget.value = props.books.find(b = b.id === nameData.id);
 };
 
 function swappedWithHandler(book_data) {

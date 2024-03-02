@@ -32,6 +32,7 @@ export const ws = {
     socket: null, // Initialize socket variable
     data: ref([]),
     connection_address: '',
+
     newSocket: (connection_address) => {
         ws.connection_address = connection_address;
         ws.socket = new WebSocket(urls.rtc.bookshelf(connection_address)); // Assign the socket to ws.socket
@@ -39,43 +40,38 @@ export const ws = {
     },
     
     createNewSocketConnection: (connection_address) => {
-        if(!ws.socket){
+        if (!ws.socket) {
             ws.newSocket(connection_address); // Create a new socket if it doesn't exist or if it's closed
         
             ws.socket.onopen = (e) => { 
-                console.log('socket opened at', ws.socket, e)
+                console.log('Socket opened at', ws.socket, e)
             };
 
             ws.socket.onmessage = (e) => {
-                const data = JSON.parse(e.data)
-                if(e.type === "message"){
-                    ws.data.value.push(data);
-                    // How we are watching data being sent from a websocket. v fast.
-                    console.log(ws.data.value);
-                };
-                
-                setInterval(() => {
-                    
-                }, 500);
-            }
+                const data = JSON.parse(e.data);
+                ws.data.value.push(data);
+                // How we are watching data being sent from a websocket..
+                console.log(ws.data.value);
+            };
         }
     },
 
     unsubscribeFromSocketConnection() {
         // We need to make sure websocket exists and the socket is not closed before we close.
         if (ws.socket && ws.socket.readyState !== WebSocket.CLOSED) {
-            ws.socket.close();
-            ws.connection_address = null;
+            ws.socket.close(1000);
+            ws.connection_address = '';
         }
     },
 
     sendData(data) {
-        if(ws.socket && ws.socket.readyState === WebSocket.OPEN){
+        if (ws.socket && ws.socket.readyState === WebSocket.OPEN) {
             ws.socket.send(JSON.stringify(data));
+            console.log(data);
         } else {
             console.error("WebSocket connection is not open.");
         }
-    }
+    },
 }
 
 
@@ -96,7 +92,7 @@ export function addEventListenersFn(element){
         e.target.classList.add('dragging');
         e.dataTransfer.effectAllowed = 'move';
         e.dataTransfer.setData('text/html', element.innerHTML);
-    })
+    });
 
     element.addEventListener('dragend', (e) => {
         e.stopPropagation();
@@ -112,10 +108,8 @@ export function addEventListenersFn(element){
         e.preventDefault();
         // move dragged element to the selected drop target
         if (dragged !== undefined && dragged !== e.target) {
-            debugger;
             // Swap innerHTML of dragged and dropped elements
-            const tempHTML = e.target.closest('#bookId')
-            console.log(tempHTML)
+            const tempHTML = e.target.closest('#bookId');
             e.target.outerHTML = dragged;
             dragged = tempHTML.outerHTML;
         }
