@@ -1235,7 +1235,7 @@ async def bookshelf_connection(websocket: WebSocket, bookshelf_id: str):
                 data = await websocket.receive_json()
                 if data:
                     TempBookshelfDict[bookshelf_id].queue.enqueue(data=data)
-                    TempBookshelfDict[bookshelf_id].dequeue_into_booskhelf()
+                    TempBookshelfDict[bookshelf_id].dequeue_into_bookshelf()
                     await ws_manager.send_data(data=data, bookshelf_id=bookshelf_id)
         except WebSocketDisconnect:
             await ws_manager.disconnect(bookshelf_id, websocket)
