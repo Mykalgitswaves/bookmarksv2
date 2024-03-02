@@ -1,20 +1,22 @@
 <template>
     <ul class="bookshelf-books" ref="books" v-if="books.length">
-        <li v-for="book in books" :key="index" class="bs-b-wrapper">
+        <li v-for="(book, index) in books" :key="index" class="bs-b-wrapper">
             <SortableBook
-                :order="book.order"
-                :id="book.id"
-                :bookTitle="book.bookTitle"
-                :author="book.author"
-                :imgUrl="book.imgUrl"
-                :sort-target="currentBook"
+                :order="index"
+                :id="book?.id"
+                :bookTitle="book?.bookTitle"
+                :author="book?.author"
+                :imgUrl="book?.imgUrl"
+                :next-book="books[index + 1]"
+                :prev-book="books[index - 1]"
+                :current-book="currentBook"
                 @set-sort="(data) => setSort(data)"
-                @swapped-with="(book_data) => swappedWithHandler(book_data)"
+                @swapped-with="(data) => swappedWithHandler(data)"
             />
         </li>
     </ul>
 
-    <teleport v-if="sortTarget !== null" to="body">
+    <teleport v-if="currentBook !== null" to="body">
         <div class="sorting-footer">
             <h3 
                 v-if="currentBook"
@@ -48,9 +50,6 @@ const props = defineProps({
 
 const emit = defineEmits(['send-bookdata-socket']);
 
-// need this to handle multiple sorts at a time.
-const sortTarget = ref(null);
-
 // This is what will be sent via websocket over the wire.
 const bookdata = reactive({
     book_id: null,
@@ -58,37 +57,52 @@ const bookdata = reactive({
     next_book_id: null,
 });
 
-const currentBook = ref({});
+const currentBook = ref(null);
 
 const selectedBookToBeMoved = computed(() => 
     `#${currentBook.value.order} ${currentBook.value.bookTitle}`
 );
 
-function setSort(nameData) {
-    console.assert(nameData !== (null || undefined))
-    bookdata.book_id = nameData;
-    sortTarget.value = props.books.find(b = b.id === nameData.id);
+// Used to set the current target
+function setCurrentBook(booKData) {
+    currentBook.value = props.books.find((b)=> b.id === booKData);
+}
+
+// early step of swap, sets currentBook.
+function setSort(bookData) {
+    console.assert(bookData !== (null || undefined));
+    bookdata.book_id = bookData;
+    setCurrentBook(bookData);
 };
 
+// When someone cancels.
+function resetSort() {
+    currentBook.value = null;
+    //  Reset all properties of this object.
+    bookdata.value = {
+        book_id: null,
+        prev_book_id: null,
+        next_book_id: null,
+    };
+};
+
+// Setting up data needed for EditBookshelf's reorder function.
 function swappedWithHandler(book_data) {
-    console.log(book_data);
     let prev = props.books.find((book) => 
         book.order === book_data.order - 1
     );
+
     let next = props.books.find((book) => 
         book.order === book_data.order + 1
     );
 
     bookdata.prev_book_id = prev ? prev.id : null;
     bookdata.next_book_id = next ? next.id : null;
+
     emit('send-bookdata-socket', bookdata);
 };
-
-function resetSort() {
-    sortTarget.value = null;
-    Object.keys(bookdata).forEach((key) => bookdata[key] = null);
-}
 </script>
+
 <style scoped lang="scss">
     .bookshelf-books {
         display: grid;

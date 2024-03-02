@@ -98,31 +98,37 @@ const isReordering = ref(false);
 function reorder_books(bookData) {
     // Used to keep this shit from breaking.
     isReordering.value = true;
-
     let curr = books.value.find(b => b.id === bookData.book_id);
     let prev = books.value.find(b => b.id === bookData.prev_book_id);
     let next = books.value.find(b => b.id === bookData.next_book_id);
+
     // Early out if we cant find the books.
     if(!curr || (!prev && !next)) {
+        isReordering.value = false;
         return;
     }
 
     let indexOfPrev = books.value.indexOf(prev);
     let indexOfNext = books.value.indexOf(next);
     let indexOfCurr = books.value.indexOf(curr);
+
     // Remove current.
-    books.value.splice(indexOfCurr, indexOfCurr + 1);
-    
+    books.value.splice(indexOfCurr, 1);
+
+    // Somewhere we need to set the new order of items in a list.
     if (indexOfNext === indexOfPrev + 2) {
-        books.value.splice(indexOfPrev, 0, curr.value);
+        books.value.splice(indexOfPrev, 0, curr);
     } else if (indexOfNext && !indexOfPrev){
         // Inserting to beginning of list
-        books.value.unshift(curr.value);
+        books.value.unshift(curr);
     } else if (indexOfPrev && !indexOfNext) {
         // inserting to end of list
-        books.value.push(curr.value);
+        books.value.push(curr);
     }
 
+    // Set the new order on each book object.
+    books.value.forEach((b, index) => b.order = index)
+    
     ws.sendData(bookData);
     isReordering.value = false;
 }

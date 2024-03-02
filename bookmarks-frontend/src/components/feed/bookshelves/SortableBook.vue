@@ -1,9 +1,9 @@
 <template>
     <button 
-        v-if="sortTarget && order % 2 == 1"
+        v-if="currentBook && order % 2 == 1 && prevBook"
         class="swap-btn-target"
         type="button"
-        @click="swapWith(-1)"
+        @click="swapWith(prevBook)"
     >
         <IconHitTarget />
     </button>
@@ -12,7 +12,7 @@
         for="bs-books"
         class="bs-b--book" 
         :class="{
-            'is-sorting': (!isSorted && sortTarget), 
+            'is-sorting': (!isSorted && currentBook), 
             'sort-target': isSorted,        
         }"
         @click="emit('set-sort', id)"
@@ -29,7 +29,7 @@
         </div>
 
         <input
-            v-if="sortTarget?.id === id"
+            v-if="currentBook?.id === id"
             id="bs-books" 
             :name="`bs-books-${id}`"
             type="radio"
@@ -39,14 +39,13 @@
     </label>
 
     <button 
-        v-if="sortTarget && order % 2 == 1"
+        v-if="currentBook && order % 2 == 1 && nextBook"
         class="swap-btn-target"
         type="button"
-        @click="swapWith(1)"
+        @click="swapWith(nextBook)"
     >
         <IconHitTarget class="one-80-deg"/>
     </button>
-
 </template>
 <script setup>
 import { computed } from 'vue';
@@ -68,9 +67,15 @@ const props = defineProps({
     imgUrl: {
         type: String,
     },
-    sortTarget: {
+    currentBook: {
         type: Object,
     },
+    nextBook: {
+        type: Object
+    },
+    prevBook: {
+        type: Object
+    }
 });
 
 const emit = defineEmits(['set-sort']);
@@ -79,22 +84,26 @@ const isSorted = computed(() => {
     return !!props.sortTarget?.id === props.id;
 });
 
-function swapWith(num){   
+function swapWith(book) {
+    // Pass in book object so we can don't have to perform finds in next function.
+    // However, now we will need to know whether book is going up or down. 
+    // If book is going up, then we should take next book + next book?
+    let target = props.nextBook === book ? props.nextBook : props.prevBook; 
+
     let data = {
         id: props.id,
-        order: props.order + num,
+        target,
+        order: target.order
     };
 
     emit('swapped-with', data);
-}
+};
 
 </script>
 <styles scoped lang="scss">
     .bs-b-book-input {
         border: 1px solid var(--stone-100);
     }
-
-    
 
     .bs-b--book {
         position: relative;

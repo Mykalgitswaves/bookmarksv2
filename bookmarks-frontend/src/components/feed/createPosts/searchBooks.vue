@@ -40,8 +40,8 @@ const props = defineProps({
   isComparison: {
     type: Boolean,
     default: false,
-  }
-})
+  },
+});
 
 const emit = defineEmits(['book-to-parent'])
 const { debounce } = helpersCtrl;
