@@ -122,7 +122,10 @@ async def setup_user_authors(request:Request,
                        Returns HTTPException with status code 404 if the author or user is not found.
     """
     # Create an instance of SetupUserAuthors from the request JSON data
-    setup_user_authors = SetupUserAuthors(**(await request.json()))
+    try:
+        setup_user_authors = SetupUserAuthors(**(await request.json()))
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
 
     try:
         # Iterate through the authors in the setup_user_authors object

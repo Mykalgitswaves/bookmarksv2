@@ -4,7 +4,7 @@ import json
 
 class Config(BaseSettings):
     #Uvicorn Configs
-    HOST: str = "localhost"
+    HOST: str
     PORT: int
     API_PREFIX: str
     RELOAD: bool = True
