@@ -76,7 +76,7 @@ async def get_complete_user(user_id: str,
                             current_user: Annotated[User, Depends(get_current_active_user)],
                             user_repo: UserCRUDRepositoryGraph = Depends(get_repository(repo_type=UserCRUDRepositoryGraph))):
     if not current_user:
-        raise("400", "Unauthorized")
+        raise(400, "Unauthorized")
     if current_user and user_id:
         if current_user.id != user_id:
             relationship_to_current_user = 'anonymous'
@@ -97,7 +97,7 @@ async def update_username(request: Request,
     """
     
     if not current_user:
-        raise("400", "Unauthorized")
+        raise(400, "Unauthorized")
     if current_user.id == user_id:
         new_username = await request.json()
         
@@ -136,7 +136,7 @@ async def update_bio(request: Request,
     Updates a users bio
     """
     if not current_user:
-        raise("400", "Unauthorized")
+        raise(400, "Unauthorized")
     if current_user.id == user_id:
         new_bio = await request.json()
 
@@ -163,7 +163,7 @@ async def update_email(request: Request,
     Updates a user email. TODO: Send a confirmation email to the new email address.
     """
     if not current_user:
-        raise("400", "Unauthorized")
+        raise(400, "Unauthorized")
     if current_user.id == user_id:
         new_email = await request.json()
         try:
@@ -214,7 +214,7 @@ async def update_password(request: Request,
     Changes the users password. TODO: Add password length and complexity requirements.
     """
     if not current_user:
-        raise("400", "Unauthorized")
+        raise(400, "Unauthorized")
     if current_user.id == user_id and request:
         new_password = await request.json()
 
@@ -265,7 +265,7 @@ async def unsend_friend_request(friend_id:str,
     Unsends a friend request from user_id to friend_id
     """
     if not current_user:
-        raise("400", "Unauthorized")
+        raise(400, "Unauthorized")
     try:
         friend_request = FriendRequestCreate(from_user_id=current_user.id, to_user_id=friend_id)
     except ValueError as e:
@@ -287,7 +287,7 @@ async def accept_friend_request(friend_id:str,
     Accepts a friend request, checks that the request exists 
     """
     if not current_user:
-        raise("400", "Unauthorized")
+        raise(400, "Unauthorized")
 
     try:
         friend_request = FriendRequestCreate(from_user_id=friend_id, to_user_id=current_user.id)
@@ -310,7 +310,7 @@ async def decline_friend_request(friend_id:str,
     Declines a friend request, checks that the request exists
     """
     if not current_user:
-        raise("400", "Unauthorized")
+        raise(400, "Unauthorized")
     try:
         friend_request = FriendRequestCreate(from_user_id=friend_id, to_user_id=current_user.id)
     except ValueError as e:
@@ -331,7 +331,7 @@ async def remove_friend(friend_id:str,
     Removes a friend 
     """
     if not current_user:
-        raise("400", "Unauthorized")
+        raise(400, "Unauthorized")
     try:
         friend_delete = FriendDelete(from_user_id=current_user.id, to_user_id=friend_id)
     except ValueError as e:
@@ -352,7 +352,7 @@ async def follow_user(followed_user_id:str,
     Follows a user
     """
     if not current_user:
-        raise("400", "Unauthorized")
+        raise(400, "Unauthorized")
     try:
         follow_user = FollowUserCreate(from_user_id=current_user.id, to_user_id=followed_user_id)
     except ValueError as e:
@@ -372,7 +372,7 @@ async def unfollow_user(unfollowed_user_id:str,
     Follows a user
     """
     if not current_user:
-        raise("400", "Unauthorized")
+        raise(400, "Unauthorized")
     try:
         unfollow_user = FollowUserCreate(from_user_id=current_user.id, to_user_id=unfollowed_user_id)
     except ValueError as e:
@@ -392,7 +392,7 @@ async def block_user(blocked_user_id:str,
     Blocks a user
     """
     if not current_user:
-        raise("400", "Unauthorized")
+        raise(400, "Unauthorized")
     try:
         block_user = BlockUserCreate(from_user_id=current_user.id, to_user_id=blocked_user_id)
     except ValueError as e:
@@ -413,7 +413,7 @@ async def unblock_user(unblocked_user_id:str,
     Blocks a user
     """
     if not current_user:
-        raise("400", "Unauthorized")
+        raise(400, "Unauthorized")
     try:
         unblock_user = BlockUserCreate(from_user_id=current_user.id, to_user_id=unblocked_user_id)
     except ValueError as e:
@@ -438,7 +438,7 @@ async def get_user_about(user_id:str,
         raise HTTPException(status_code=400, detail=str(e))
     
     if not current_user:
-        raise("400", "Unauthorized")
+        raise(400, "Unauthorized")
     if current_user and user_id:
         user = user_repo.get_user_about_me(user_id=user_id.id)
         return JSONResponse(content={"data": jsonable_encoder(user)})
@@ -452,7 +452,7 @@ async def get_friend_list(user_id: str,
     Gets the friend list for the user as well as each friends relationship to the current user 
     """
     if not current_user:    
-        raise("400", "Unauthorized")
+        raise(400, "Unauthorized")
     if user_id:
         friend_list = user_repo.get_friend_list(user_id=user_id,current_user_id=current_user.id)
         return JSONResponse(content={"data": jsonable_encoder(friend_list)})
@@ -466,12 +466,12 @@ async def get_friend_request_list(user_id: str,
     Gets all the friend requests for the current user
     """
     if not current_user:    
-        raise("400", "Unauthorized")
+        raise(400, "Unauthorized")
     if user_id == current_user.id:
         friend_request_list = user_repo.get_friend_request_list(user_id)
         return JSONResponse(content={"data": jsonable_encoder(friend_request_list)})
     else:
-        raise("400", "Unauthorized")
+        raise(400, "Unauthorized")
     
 @router.get("/{user_id}/blocked_users")
 async def get_blocked_users_list(user_id: str, 
@@ -481,12 +481,12 @@ async def get_blocked_users_list(user_id: str,
     Gets all the blocked users for the current user 
     """
     if not current_user:    
-        raise("400", "Unauthorized")
+        raise(400, "Unauthorized")
     if user_id == current_user.id:
         friend_request_list = user_repo.get_blocked_users_list(user_id)
         return JSONResponse(content={"data": jsonable_encoder(friend_request_list)})
     else:
-        raise("400", "Unauthorized")
+        raise(400, "Unauthorized")
     
 @router.get("/{user_id}/activity")
 async def get_activity_list(user_id: str, 
@@ -498,9 +498,27 @@ async def get_activity_list(user_id: str,
     Gets all the recent activity for the user
     """
     if not current_user:    
-        raise("400", "Unauthorized")
+        raise(400, "Unauthorized")
     if user_id == current_user.id:
         activity_list = user_repo.get_activity_list(current_user.username, user_id, skip, limit)
         return JSONResponse(content={"data": jsonable_encoder(activity_list)})
     else:
-        raise("400", "Unauthorized")
+        raise(400, "Unauthorized")
+    
+@router.get("/{user_id}/suggested_friends",
+            name="user:suggested_friends")
+async def get_suggested_friends(user_id: str, 
+                                current_user: Annotated[User, Depends(get_current_active_user)], 
+                                n: int = 3,
+                                user_repo: UserCRUDRepositoryGraph = Depends(get_repository(repo_type=UserCRUDRepositoryGraph))):
+    """
+    Returns a list of n friends with the most mutual friends to the current user
+    """
+    if not current_user:    
+        raise(400, "Unauthorized")
+    if user_id == current_user.user_id:
+        user_id = UserId(id=user_id)
+        suggested_friends = current_user.get_suggested_friends(driver, n)
+        return JSONResponse(content={"data": jsonable_encoder(suggested_friends)})
+    else:
+        raise(400, "Unauthorized")

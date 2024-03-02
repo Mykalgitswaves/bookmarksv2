@@ -14,7 +14,8 @@ from src.models.schemas.social import (
     LikedCommentActivity,
     CommentedOnPostActivity,
     RepliedToCommentActivity,
-    PinnedCommentActivity)
+    PinnedCommentActivity,
+    SuggestedFriend)
 
 class UserCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
     def create_user(self, user_create: UserCreate) -> User:
@@ -705,6 +706,39 @@ class UserCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
                 )
  
         return(activity_list)
+    
+    def get_suggested_friends(self,user_id:str,n:int):
+        """
+        Returns a list of n suggested friends for the user_id
+        """
+        with self.driver.session() as session:
+            result = session.execute_read(self.get_suggested_friends_query, user_id=user_id, n=n)  
+        return(result)
+    
+    @staticmethod
+    def get_suggested_friends_query(tx, user_id, n):
+        query = """
+        MATCH (user:User {id: $user_id})
+        WITH user
+        MATCH (otherUser:User)
+        WHERE NOT (user)-[:FRIENDED]-(otherUser)
+        and not (user)-[:BLOCKED]-(otherUser) 
+        AND user.id <> otherUser.id
+        OPTIONAL MATCH (user)-[:FRIENDED {status:'friends'}]-(friend:User)-[:FRIENDED {status:'friends'}]-(otherUser)
+        WITH otherUser, COUNT(friend) AS mutualFriends
+        ORDER BY mutualFriends DESC, RAND()
+        LIMIT $n
+        RETURN otherUser.id, otherUser.username, otherUser.profile_img_url, mutualFriends
+        """
+        
+        result = tx.run(query,user_id=user_id, n=n)
+        suggested_friends = [
+            SuggestedFriend(user_id=response['otherUser.id'],
+                            user_username=response['otherUser.username'],
+                            user_profile_img_url=response['otherUser.profile_img_url'],
+                            n_mutual_friends=response['mutualFriends']) for response in result
+        ]
+        return(suggested_friends)
 
     def update_user_full_name(self, username: str, full_name: str) -> User:
         with self.driver.session() as session:
