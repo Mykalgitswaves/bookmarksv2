@@ -518,7 +518,7 @@ async def get_suggested_friends(user_id: str,
         raise(400, "Unauthorized")
     if user_id == current_user.user_id:
         user_id = UserId(id=user_id)
-        suggested_friends = current_user.get_suggested_friends(driver, n)
+        suggested_friends = user_repo.get_suggested_friends(user_id=user_id.id, n=n)
         return JSONResponse(content={"data": jsonable_encoder(suggested_friends)})
     else:
         raise(400, "Unauthorized")
