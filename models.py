@@ -548,8 +548,8 @@ class Bookshelf():
         self.authors.discard(user_id)
 
     def dequeue_into_booskhelf(self):
-        while not self.queue.is_empty:
-            self.add_book_to_shelf(self.queue.dequeue())
+        while not self.queue.is_empty():
+            self.reorder_book(**self.queue.dequeue())
 
 """
 I have a list: [

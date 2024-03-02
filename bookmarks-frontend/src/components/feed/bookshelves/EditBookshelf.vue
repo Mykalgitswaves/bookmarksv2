@@ -98,8 +98,8 @@ const isReordering = ref(false);
 function reorder_books(bookData) {
     // Used to keep this shit from breaking.
     isReordering.value = true;
-    let curr = books.value.find(b => b.id === bookData.book_id);
-    let prev = books.value.find(b => b.id === bookData.prev_book_id);
+    let curr = books.value.find(b => b.id === bookData.target_id);
+    let prev = books.value.find(b => b.id === bookData.previous_book_id);
     let next = books.value.find(b => b.id === bookData.next_book_id);
 
     // Early out if we cant find the books.

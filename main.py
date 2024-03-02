@@ -1223,6 +1223,9 @@ class WSManager:
     async def send_data(self, bookshelf_id: str, data: BookshelfPayload):
         for ws in self.active_connections.get(bookshelf_id, []):
             await ws.send_json(data)
+    async def broadcast(self, bookshelf_id: str):
+        for ws in self.active_connections.get(bookshelf_id, []):
+            await ws.send_message('shelf {bookshelf_id} reordered')
 
 ws_manager = WSManager()
 
@@ -1237,6 +1240,7 @@ async def bookshelf_connection(websocket: WebSocket, bookshelf_id: str):
                     TempBookshelfDict[bookshelf_id].queue.enqueue(data=data)
                     TempBookshelfDict[bookshelf_id].dequeue_into_bookshelf()
                     await ws_manager.send_data(data=data, bookshelf_id=bookshelf_id)
+                    await ws_manager.broadcast(bookshelf_id=bookshelf_id)
         except WebSocketDisconnect:
             await ws_manager.disconnect(bookshelf_id, websocket)
 
@@ -1252,7 +1256,7 @@ async def test_out_rtc_bookshelves(request: Request, bookshelf_id: str):
 async def get_books_from_bookshelf(bookshelf_id: str, current_user: Annotated[User, Depends(get_current_active_user)]):
     books = driver.pull_n_books(0, 10)
     BOOKSHELF = Bookshelf(
-            created_by=current_user.username, 
+            created_by=current_user.user_id, 
             title="$Book$",
             description="Books to make more cash money"
         )
@@ -1266,10 +1270,10 @@ async def get_books_from_bookshelf(bookshelf_id: str, current_user: Annotated[Us
             imgUrl=book.small_img_url,
             tags=[]
         )
-        BOOKSHELF.add_book_to_shelf(book=_book, user_id=current_user.username)
+        BOOKSHELF.add_book_to_shelf(book=_book, user_id=current_user.user_id)
     TempBookshelfDict[bookshelf_id] = BOOKSHELF
     _books = BOOKSHELF.get_books()
-
+    
     BS = BookshelfResponse(
         title=BOOKSHELF.title,
         description=BOOKSHELF.description,
@@ -1277,7 +1281,6 @@ async def get_books_from_bookshelf(bookshelf_id: str, current_user: Annotated[Us
         authors=BOOKSHELF.authors,
         followers=BOOKSHELF.followers,
     )
-
     return JSONResponse(content={"bookshelf": jsonable_encoder(BS)})
 
 @app.put("/api/bookshelves/{bookshelf_id}")

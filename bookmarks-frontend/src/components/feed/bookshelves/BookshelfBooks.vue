@@ -35,6 +35,7 @@
 </template>
 <script setup>
 import { ref, computed, reactive } from 'vue';
+import { useRoute } from 'vue-router';
 import SortableBook from './SortableBook.vue';
 
 const props = defineProps({
@@ -47,14 +48,16 @@ const props = defineProps({
         type: Boolean,
     }
 });
-
+const route = useRoute();
+const { user } = route.params;
 const emit = defineEmits(['send-bookdata-socket']);
 
 // This is what will be sent via websocket over the wire.
 const bookdata = reactive({
-    book_id: null,
-    prev_book_id: null,
+    target_id: null,
+    previous_book_id: null,
     next_book_id: null,
+    author_id: user,
 });
 
 const currentBook = ref(null);
@@ -71,7 +74,7 @@ function setCurrentBook(booKData) {
 // early step of swap, sets currentBook.
 function setSort(bookData) {
     console.assert(bookData !== (null || undefined));
-    bookdata.book_id = bookData;
+    bookdata.target_id = bookData;
     setCurrentBook(bookData);
 };
 
@@ -80,9 +83,10 @@ function resetSort() {
     currentBook.value = null;
     //  Reset all properties of this object.
     bookdata.value = {
-        book_id: null,
-        prev_book_id: null,
+        target_id: null,
+        previous_book_id: null,
         next_book_id: null,
+        author_id: user
     };
 };
 
@@ -96,7 +100,7 @@ function swappedWithHandler(book_data) {
         book.order === book_data.order + 1
     );
 
-    bookdata.prev_book_id = prev ? prev.id : null;
+    bookdata.previous_book_id = prev ? prev.id : null;
     bookdata.next_book_id = next ? next.id : null;
 
     emit('send-bookdata-socket', bookdata);
