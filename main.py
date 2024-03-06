@@ -23,6 +23,9 @@ from models import (
     BookshelfBook,
     BookshelfResponse,
     BookshelfQueue,
+    memoize, 
+    generate_bookshelf,
+    generate_bookshelf_response_object
 )
 
 from database.api.books_api.search import BookSearch
@@ -57,12 +60,14 @@ from typing import (
     Any,
     Set,
 )
+
 from pydantic import BaseModel
 from datetime import datetime, timedelta
 
 import random
 import string
 import uuid
+
 """
 
 Connect to database
@@ -1206,25 +1211,36 @@ async def get_suggested_friends(user_id: str, current_user: Annotated[User, Depe
         raise("400", "Unauthorized")
     
 # Websockets for bookshelves!
-BookshelfPayload = Any
-ActiveConnections = Dict[str, Set[WebSocket]]
-TempBookshelfDict = {}
+BookshelfPayload = Any        
 
 class WSManager:
     def __init__(self):
-        self.active_connections: ActiveConnections = {}
+        self.ac = {}
+        self.cache = {}
+        self.errors = {
+            'INVALID_DATA_ERROR': {'error': 'Cannot reorder. Current, next or previous data was not provided.'},
+            'FAILED_TO_REORDER': {'error': 'Reorder failed, change was not processed.'},
+        }
+
         
     async def connect(self, bookshelf_id: str, ws: WebSocket):
-        self.active_connections.setdefault(bookshelf_id, set()).add(ws)
+        self.ac[bookshelf_id] = set()
+        self.ac[bookshelf_id].add(ws)
 
     async def disconnect(self, bookshelf_id: str, ws: WebSocket):
-        self.active_connections[bookshelf_id].remove(ws)
+        self.ac[bookshelf_id].remove(ws)
+            
+        if self.cache[bookshelf_id]: 
+            # If cache exists and there is no one else in the pool 
+            # clear the cache also should add a way to save to db.
+            del self.cache[bookshelf_id]
 
     async def send_data(self, bookshelf_id: str, data: BookshelfPayload):
-        for ws in self.active_connections.get(bookshelf_id, []):
+        for ws in self.ac.get(bookshelf_id, []):
             await ws.send_json(data)
+
     async def broadcast(self, bookshelf_id: str):
-        for ws in self.active_connections.get(bookshelf_id, []):
+        for ws in self.ac.get(bookshelf_id, []):
             await ws.send_message('shelf {bookshelf_id} reordered')
 
 ws_manager = WSManager()
@@ -1234,14 +1250,34 @@ async def bookshelf_connection(websocket: WebSocket, bookshelf_id: str):
         await websocket.accept()
         await ws_manager.connect(bookshelf_id, websocket)
         try:
-            while True:
-                data = await websocket.receive_json()
-                if data:
-                    TempBookshelfDict[bookshelf_id].queue.enqueue(data=data)
-                    TempBookshelfDict[bookshelf_id].dequeue_into_bookshelf()
-                    await ws_manager.send_data(data=data, bookshelf_id=bookshelf_id)
-                    # Let everyone know to update!
-                    await ws_manager.broadcast(bookshelf_id=bookshelf_id)
+            while True and ws_manager.cache[bookshelf_id]:
+                    data = await websocket.receive_json()
+                    # Make sure you have the correct information to complete a reorder
+                    if (
+                        (data.get("next_book_id") or data.get("prev_book_id"))
+                        and data.get("target_id") and data.get("author_id")
+                    ):
+                        lock = asyncio.Lock()
+                        async with lock:
+                            try:
+                                # Lock out the bookshelf on the client while reorder is happening.
+                                ws_manager.send_data(data={"state": "locked"}, bookshelf_id=bookshelf_id)
+                                await ws_manager.cache[bookshelf_id].reorder_book(**data)
+                                books = await ws_manager.cache[bookshelf_id].get_books()
+                                assert type(books) == List()
+                                await ws_manager.send_data(data={"state": "unlocked", "data": books}, bookshelf_id=bookshelf_id)
+                                # Something happened and the reorder got fucked up.
+                            except:
+                                # This can trigger a get request from the client and reset our cache object!
+                                await ws_manager.send_data(data={"state": "error", 
+                                    "data": ws_manager.errors.FAILED_TO_REORDER},
+                                    bookshelf_id=bookshelf_id
+                                )
+                    else:
+                        ws_manager.send_data(data={"state": "error", 
+                            "data": ws_manager.errors.INVALID_DATA_ERROR },
+                            bookshelf_id=bookshelf_id
+                        )
         except WebSocketDisconnect:
             await ws_manager.disconnect(bookshelf_id, websocket)
 
@@ -1255,33 +1291,17 @@ async def test_out_rtc_bookshelves(request: Request, bookshelf_id: str):
 
 @app.get("/api/bookshelves/{bookshelf_id}")
 async def get_books_from_bookshelf(bookshelf_id: str, current_user: Annotated[User, Depends(get_current_active_user)]):
-    books = driver.pull_n_books(0, 10)
-    BOOKSHELF = Bookshelf(
-            created_by=current_user.user_id, 
-            title="$Book$",
-            description="Books to make more cash money"
-        )
-    
-    for index, book in enumerate(books):
-        _book = BookshelfBook(
-            id=book.id,
-            order=index,
-            bookTitle=book.title,
-            author='placeholder',
-            imgUrl=book.small_img_url,
-            tags=[]
-        )
-        BOOKSHELF.add_book_to_shelf(book=_book, user_id=current_user.user_id)
-    TempBookshelfDict[bookshelf_id] = BOOKSHELF
-    _books = BOOKSHELF.get_books()
-    
-    BS = BookshelfResponse(
-        title=BOOKSHELF.title,
-        description=BOOKSHELF.description,
-        books=_books,
-        authors=BOOKSHELF.authors,
-        followers=BOOKSHELF.followers,
+    # For now not using live data pulled from db since we dont have these objects stored there.
+    _bookshelf = generate_bookshelf(
+        driver=driver,
+        user_id=current_user.user_id,
     )
+
+    BS = generate_bookshelf_response_object(bookshelf=_bookshelf)
+
+    # Set this in the cache for websocket.
+    ws_manager.cache[bookshelf_id] = _bookshelf
+
     return JSONResponse(content={"bookshelf": jsonable_encoder(BS)})
 
 @app.put("/api/bookshelves/{bookshelf_id}")

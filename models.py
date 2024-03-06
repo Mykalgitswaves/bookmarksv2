@@ -3,7 +3,6 @@ from fastapi import (
     HTTPException,
 )
 from pydantic import BaseModel
-from database.db_helpers import User
 import uuid
 import pytest
 import datetime
@@ -470,9 +469,6 @@ class HashMapDLL:
         return books
 
 
-
-
-
 class Bookshelf():
     def __init__(
         self, created_by: str, title: str, description: str
@@ -551,92 +547,6 @@ class Bookshelf():
         while not self.queue.is_empty():
             self.reorder_book(**self.queue.dequeue())
 
-"""
-I have a list: [
-{
-        id: '1',
-        order: 0,
-        bookTitle: 'Brave New World',
-        author: "Aldous Huxley",
-        imgUrl: "http://books.google.com/books/content?id=TIJ5EAAAQBAJ&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
-    },
-    {
-        id: '2',
-        order: 1,
-        bookTitle: 'Infinite Jest',
-        author: "David Foster Wallace",
-        imgUrl: 'http://upload.wikimedia.org/wikipedia/en/4/4f/Infinite_jest_cover.jpg',
-    },
-    {
-        id: '3',
-        order: 2,
-        bookTitle: 'The sirens of Titan',
-        author: "Kurt Vonnegut",
-        imgUrl: 'http://pictures.abebooks.com/isbn/9780385333498-us.jpg',
-    },
-    {
-        id: '4',
-        order: 3,
-        bookTitle: 'The Odyssey',
-        author: "Homer",
-        imgUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/9/93/Giuseppe_Bottani_-_Athena_revealing_Ithaca_to_Ulysses.jpg/440px-Giuseppe_Bottani_-_Athena_revealing_Ithaca_to_Ulysses.jpg',
-    }
-]
-
-IN RETROSPECT THIS WAS RLLY DUMB DISREGARD.
-
-I reorder id #1 to the id#4 position (moving whats at index 0 to whats at index 3), can i do this with our current ds. The answer is NO. Nodes should not have to be adjacent for us to reorder. By using a Map (or dict in the case of python) we can have reordering at constant time.
-
-from collections import OrderedDict
-import asyncio
-# Note this implementation relies on having the size of the bookshelf.
-
-class BooksMap():
-    def __init__(self):
-       self.books = {}
-       self.size = 0
-       self.is_removing = False
-
-    def add_book_to_map(self, book):
-        # You need a book dude.
-        assert book is not None
-        # If the map has no books
-        if self.size == 0:
-            self.books[0] = book
-            self.size += 1
-        # How to add a book to the end of the dict
-        else:
-            self.books[self.size + 1] = book
-            self.size += 1
-
-    def reorder_books(self, book_1, book_2):
-        # Do book 1 and book 2 exist and are they in self.books?
-        # Are book_1 and book_2 the same book? If so, do nothing.
-        while self.is_removing == True:
-
-        if book_1 and book_2 == None:
-            raise("400", "Can't reorder fake books dude.")
-        
-        if self.books[book_1.order] or self.books[book_2.order] == None:
-            raise("400", "Books need to exist to reorder.")
-        
-        if book_1.order == book_2.order:
-            return
-        
-        book_2_temp = book_2
-        self.books[book_2.order] = book_1
-        self.books[book_1.order] = book_2_temp
-
-    def remove_book(self, book):
-        # lock, remove, reshuffle, then unlock
-        self.is_removing = True
-        
-        del self.books[book.order]
-        self.size -= 1
-        self.books = OrderedDict(sorted(self.books.items(), key=lambda book: book[0]))
-
-        self.is_removing = False
-"""
 
 class BookshelfResponse(BaseModel): 
     title: str
@@ -662,3 +572,47 @@ class BookshelfQueue(BaseModel):
     def is_empty(self) -> bool:
         return len(self.instructions) == 0
     
+
+def memoize(function):
+    cache = dict()
+
+    def memoized_func(*args):
+        if args in cache:
+            return cache[args]
+        result = function(*args)
+        cache[args] = result
+        return result
+    breakpoint()
+    return memoized_func
+
+def generate_bookshelf(driver, user_id):
+    books = driver.pull_n_books(0, 10)
+    BOOKSHELF = Bookshelf(
+            created_by=user_id, 
+            title="$Book$",
+            description="Books to make more cash money"
+        )
+    
+    for index, book in enumerate(books):
+        _book = BookshelfBook(
+            id=book.id,
+            order=index,
+            bookTitle=book.title,
+            author='placeholder',
+            imgUrl=book.small_img_url,
+            tags=[]
+        )
+        BOOKSHELF.add_book_to_shelf(book=_book, user_id=user_id)
+    return BOOKSHELF
+
+# Used to create a public facing object of bookshelf for front end.
+def generate_bookshelf_response_object(bookshelf): 
+    _books = bookshelf.get_books()
+    
+    return BookshelfResponse(
+        title=bookshelf.title,
+        description=bookshelf.description,
+        books=_books,
+        authors=bookshelf.authors,
+        followers=bookshelf.followers,
+    )

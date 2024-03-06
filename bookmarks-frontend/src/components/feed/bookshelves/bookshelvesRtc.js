@@ -30,8 +30,11 @@ export const eventFunctionMapping = {
 export const ws = {
     client: getCookieByParam(['token']),
     socket: null, // Initialize socket variable
-    data: ref([]),
+    books: ref([]),
     connection_address: '',
+    current_state: '', // Use current state to lock out ui or inform users that reorders are occuring. 
+    // This is set by the on message function. We can get really granular here and our ws manager in 
+    // fastapi can help us with some parralellization issues.
 
     newSocket: (connection_address) => {
         ws.connection_address = connection_address;
@@ -49,7 +52,22 @@ export const ws = {
 
             ws.socket.onmessage = (e) => {
                 const data = JSON.parse(e.data);
-                ws.data.value.push(data);
+                // cases.
+                if(data?.state === 'locked'){
+                    console.log('locked while reordering', data);
+                    ws.current_state = 'locked'
+                // unlocked means we are also returning reordered data 
+                } else if (data?.state === 'unlocked') {
+                    console.log('unlocked', data)
+                    ws.current_state = 'unlocked';
+                    // make sure we have bookshelves saved 
+                    if(data.data.length){
+                        ws.books.value = data.data;
+                    }
+                } else if(data.state === 'error'){
+                    // TODO: Add a fetch bookshelf to reset cache and front end from database.
+                    
+                }
                 // How we are watching data being sent from a websocket..
                 console.log(ws.data.value);
             };
