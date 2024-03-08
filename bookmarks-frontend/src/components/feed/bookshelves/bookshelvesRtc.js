@@ -33,13 +33,12 @@ export const ws = {
     // This is set by the on message function. We can get really granular here and our ws manager in 
     // fastapi can help us with some parralellization issues.
 
-    newSocket: (connection_address) => {
+    newSocket: async (connection_address) => {
         ws.connection_address = connection_address;
         ws.socket = new WebSocket(urls.rtc.bookshelf(connection_address)); // Assign the socket to ws.socket
-        return ws.socket;
     },
     
-    createNewSocketConnection: (connection_address) => {
+    createNewSocketConnection: async (connection_address) => {
         if (!ws.socket) {
             ws.newSocket(connection_address); // Create a new socket if it doesn't exist or if it's closed
         
