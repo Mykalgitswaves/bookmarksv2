@@ -192,25 +192,23 @@ function enterReorderMode(){
     isReorderModeEnabled.value = true;
     // Probably need a way to edit this so we dont keep things open for long. Can add in an edit btn to the ux
     ws.createNewSocketConnection(route.params.bookshelf);
-    
-    document.addEventListener('ws-loaded-data', () => {
-        console.log('ws data has arrived')
-        // Make this the new data!
-        books.value = ws.books;
-    });
 }
 
 // This may be tricky to lock out the ws connection, people might try and reconnect to soon after disconnecting.
 function cancelledReorder() {
     isReorderModeEnabled.value = false;
     ws.unsubscribeFromSocketConnection();
-    document.removeEventListener('ws-loaded-data');
 }
 
 onMounted(() => {
     // Probably could do a better way to generate link in this file. We can figure out later i guess?
     bookshelf.value = getBookshelf(route.params.bookshelf);
     get_combos();
+    document.addEventListener('ws-loaded-data', () => {
+        console.log('ws data has arrived')
+        // Make this the new data!
+        books.value = ws.books;
+    });
 });
 
 // Need this for regular navigation.
