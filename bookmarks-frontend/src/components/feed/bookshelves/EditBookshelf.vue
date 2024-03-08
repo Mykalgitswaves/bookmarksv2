@@ -49,18 +49,30 @@
             </div>
         </div>
 
-        <h3 class="bookshelf-books-heading">
-            {{ bookShelfComponentMap[currentView.value].heading('untitled') }}
-        </h3>
+        <div class="flex items-center space-between">
+            <h3 class="bookshelf-books-heading">
+                {{ bookShelfComponentMap[currentView.value].heading('untitled') }}
+            </h3>
+            
+            <button
+                v-if="currentView.value === 'edit-books' && !isReorderModeEnabled"
+                class="btn reorder-btn"
+                @click="enterReorderMode()"
+            >
+                <IconReorder class="ninety-deg"/>
+            </button>
+        </div>
 
         <div v-if="dataLoaded">
             <BookshelfBooks 
                 v-if="currentView.value === 'edit-books'"
-                :books="books" 
+                :books="books"
+                :can-reorder="isReorderModeEnabled"
                 :is-reordering="isReordering"
                 @send-bookdata-socket="
                     (bookdata) => reorder_books(bookdata)
                 "
+                @cancelled-reorder="cancelledReorder()"
             />
 
             <SearchBooks 
@@ -72,9 +84,10 @@
     <div class="mobile-menu-spacer sm:hidden"></div>
 </template>
 <script setup>
-import { ref, onMounted, reactive, onBeforeUnmount } from 'vue'
+import { ref, onMounted, reactive, onBeforeUnmount, provide } from 'vue'
 import { useRoute, useRouter } from 'vue-router';
-import IconEdit from '../../svg/icon-edit.vue'
+import IconEdit from '../../svg/icon-edit.vue';
+import IconReorder from '../../svg/icon-reorder.vue';
 import BookshelfBooks from './BookshelfBooks.vue';
 import SearchBooks from '../createPosts/searchBooks.vue';
 import PlaceholderImage from '../../svg/placeholderImage.vue';
@@ -94,6 +107,12 @@ const dataLoaded = ref(false);
 const bookshelf = ref(null);
 const books = ref([]);
 const isReordering = ref(false);
+const isReorderModeEnabled = ref(false);
+
+// Make it possible for the client to send information to the server via ws connection.
+const isLocked = ref(ws.current_state);
+provide('is-locked', isLocked.value);
+
 //  Used to send and reorder data!
 function reorder_books(bookData) {
     // Used to keep this shit from breaking.
@@ -138,7 +157,7 @@ const { commanatoredString } = helpersCtrl;
 
 const bookShelfComponentMap = {
     "edit-books": {
-        heading: () => "Edit books",
+        heading: () => "Reorder books",
         buttonText: 'Add books',
     },
     "add-books": {
@@ -163,25 +182,47 @@ function addBook(book){
         author: commanatoredString(book.authorNames),
         imgUrl: book.imgUrl
     };
+
     books.value.push(props);
     // TODO add in endpoint put call for attaching a book to a bookshelf.
     setReactiveProperty(currentView, 'value', 'edit-books');
+}
+
+function enterReorderMode(){
+    isReorderModeEnabled.value = true;
+    // Probably need a way to edit this so we dont keep things open for long. Can add in an edit btn to the ux
+    ws.createNewSocketConnection(route.params.bookshelf);
+    
+    document.addEventListener('ws-loaded-data', () => {
+        console.log('ws data has arrived')
+        // Make this the new data!
+        books.value = ws.books;
+    });
+}
+
+// This may be tricky to lock out the ws connection, people might try and reconnect to soon after disconnecting.
+function cancelledReorder() {
+    isReorderModeEnabled.value = false;
+    ws.unsubscribeFromSocketConnection();
+    document.removeEventListener('ws-loaded-data');
 }
 
 onMounted(() => {
     // Probably could do a better way to generate link in this file. We can figure out later i guess?
     bookshelf.value = getBookshelf(route.params.bookshelf);
     get_combos();
-    // Probably need a way to edit this so we dont keep things open for long. Can add in an edit btn to the ux
-    ws.createNewSocketConnection(route.params.bookshelf);
 });
 
+// Need this for regular navigation.
 onBeforeUnmount(() => {
     ws.unsubscribeFromSocketConnection();
+    document.removeEventListener('ws-loaded-data');
 });
+
 // Need to send close frame for websocket
 window.onbeforeunload = () => {
     ws.unsubscribeFromSocketConnection();
+    document.removeEventListener('ws-loaded-data');
 };
 </script>
 <style scoped>
@@ -252,5 +293,11 @@ window.onbeforeunload = () => {
         font-weight: 500;   
         margin-top: var(--padding-sm);
         color: var(--stone-600);
+    }
+
+    .reorder-btn {
+        border: 1px solid var(--stone-200);
+        padding: var(--padding-sm);
+        margin-top: var(--padding-md);
     }
 </style>

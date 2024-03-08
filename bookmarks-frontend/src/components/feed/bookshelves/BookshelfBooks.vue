@@ -16,13 +16,18 @@
         </li>
     </ul>
 
-    <teleport v-if="currentBook !== null" to="body">
+    <teleport v-if="currentBook !== null || canReorder" to="body">
         <div class="sorting-footer">
-            <h3 
-                v-if="currentBook"
-                class="s-f--current-book"
-            >
+            <div v-if="currentBook" class="s-f-book">
+                <img :src="currentBook.imgUrl" class="s-f--current-book-img" alt="">
+
+                <h3 class="s-f--current-book">
                 {{ selectedBookToBeMoved }}
+                </h3>
+            </div>
+
+            <h3 v-else>
+                Click on a book to reorder
             </h3>
 
             <div class="sorting-footer-controls">
@@ -46,11 +51,15 @@ const props = defineProps({
     },
     isReordering: {
         type: Boolean,
+    },
+    canReorder: {
+        type: Boolean,
     }
 });
+
 const route = useRoute();
 const { user } = route.params;
-const emit = defineEmits(['send-bookdata-socket']);
+const emit = defineEmits(['send-bookdata-socket', 'cancelled-reorder']);
 
 // This is what will be sent via websocket over the wire.
 const bookdata = reactive({
@@ -73,9 +82,11 @@ function setCurrentBook(booKData) {
 
 // early step of swap, sets currentBook.
 function setSort(bookData) {
-    console.assert(bookData !== (null || undefined));
-    bookdata.target_id = bookData;
-    setCurrentBook(bookData);
+    if(props.canReorder){
+        console.assert(bookData !== (null || undefined));
+        bookdata.target_id = bookData;
+        setCurrentBook(bookData);
+    }
 };
 
 // When someone cancels.
@@ -88,6 +99,7 @@ function resetSort() {
         next_book_id: null,
         author_id: user
     };
+    emit('cancelled-reorder')
 };
 
 // Setting up data needed for EditBookshelf's reorder function.
@@ -125,6 +137,23 @@ function swappedWithHandler(book_data) {
     .s-f-c--btn:hover {
         background-color: var(--red-200);
         transition: 250ms ease;
+    }
+
+
+    .s-f-book {
+        display: flex;
+        column-gap: 14px;
+        align-items: center;
+    }
+
+    .s-f--current-book {
+        font-size: var(--font-xl);
+        font-weight: 500;
+    }
+
+    .s-f--current-book-img {
+        width: 40px;
+        border-radius: var(--radius-sm);
     }
 
     .bs-b-wrapper {

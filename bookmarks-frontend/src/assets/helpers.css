@@ -85,3 +85,7 @@
   .one-80-deg {
     transform: rotate(180deg);
   }
+
+  .ninety-deg {
+    transform: rotate(90deg);
+  }

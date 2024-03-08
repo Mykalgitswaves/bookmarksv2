@@ -15,22 +15,19 @@ export const eventFunctionMapping = {
     }
 }
 
-// const BOOKSHELF_EVENT_TYPES = [
-//     'opened',
-//     'closed'
-// ]
 
-// const event = {
-//     "type": "post",
-// }
-// const urlParams = new URLSearchParams(window.location.search);
-// const bookshelf_id = urlParams.get('bookshelf');
+// what we use to tell the client a change happenend.
+const wsDataLoaded = new CustomEvent('ws-loaded-data', {
+    detail: {
+      value: 'true'  
+    }
+});
 
 // This might not work;
 export const ws = {
     client: getCookieByParam(['token']),
     socket: null, // Initialize socket variable
-    books: ref([]),
+    books: [],
     connection_address: '',
     current_state: '', // Use current state to lock out ui or inform users that reorders are occuring. 
     // This is set by the on message function. We can get really granular here and our ws manager in 
@@ -62,14 +59,16 @@ export const ws = {
                     ws.current_state = 'unlocked';
                     // make sure we have bookshelves saved 
                     if(data.data.length){
-                        ws.books.value = data.data;
+                        ws.books = data.data;
+                        // Used to reload data.
+                        document.dispatchEvent(wsDataLoaded);
                     }
                 } else if(data.state === 'error'){
                     // TODO: Add a fetch bookshelf to reset cache and front end from database.
-                    
+                    ws.state = e.data.state;
+                    ws.data = async () => await getBookshelf(ws.connection_address)();
                 }
                 // How we are watching data being sent from a websocket..
-                console.log(ws.data.value);
             };
         }
     },

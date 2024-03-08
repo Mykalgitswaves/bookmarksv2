@@ -1259,23 +1259,21 @@ async def bookshelf_connection(websocket: WebSocket, bookshelf_id: str):
                     ):
                         lock = asyncio.Lock()
                         async with lock:
+                            # Lock out the bookshelf on the client while reorder is happening.
+                            await ws_manager.send_data(data={"state": "locked"}, bookshelf_id=bookshelf_id)
                             try:
-                                # Lock out the bookshelf on the client while reorder is happening.
-                                ws_manager.send_data(data={"state": "locked"}, bookshelf_id=bookshelf_id)
-                                await ws_manager.cache[bookshelf_id].reorder_book(**data)
-                                books = await ws_manager.cache[bookshelf_id].get_books()
-                                assert type(books) == List()
-                                await ws_manager.send_data(data={"state": "unlocked", "data": books}, bookshelf_id=bookshelf_id)
-                                # Something happened and the reorder got fucked up.
+                                ws_manager.cache[bookshelf_id].reorder_book(**data)
+                                books = jsonable_encoder(ws_manager.cache[bookshelf_id].get_books())
+                                if books:
+                                    await ws_manager.send_data(data={"state": "unlocked", "data": books}, bookshelf_id=bookshelf_id)
                             except:
-                                # This can trigger a get request from the client and reset our cache object!
-                                await ws_manager.send_data(data={"state": "error", 
-                                    "data": ws_manager.errors.FAILED_TO_REORDER},
-                                    bookshelf_id=bookshelf_id
-                                )
+                                await ws_manager.send_data(data={
+                                    "state": "error", 
+                                    "data": ws_manager.errors['FAILED_TO_REORDER']
+                                })
                     else:
-                        ws_manager.send_data(data={"state": "error", 
-                            "data": ws_manager.errors.INVALID_DATA_ERROR },
+                        await ws_manager.send_data(data={"state": "error", 
+                            "data": ws_manager.errors['INVALID_DATA_ERROR'] },
                             bookshelf_id=bookshelf_id
                         )
         except WebSocketDisconnect:

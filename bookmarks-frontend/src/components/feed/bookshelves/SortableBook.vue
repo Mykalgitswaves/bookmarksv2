@@ -11,6 +11,7 @@
     <label
         for="bs-books"
         class="bs-b--book" 
+        :disabled="isLocked"
         :class="{
             'is-sorting': (!isSorted && currentBook), 
             'sort-target': isSorted,        
@@ -33,6 +34,7 @@
             id="bs-books" 
             :name="`bs-books-${id}`"
             type="radio"
+            :disabled="isLocked"
             :value="name"
             @click="emit('set-sort', id)"
         />
@@ -48,7 +50,7 @@
     </button>
 </template>
 <script setup>
-import { computed } from 'vue';
+import { computed, inject } from 'vue';
 import IconHitTarget from '../../svg/icon-hit-target.vue';
 
 const props = defineProps({
@@ -81,7 +83,9 @@ const props = defineProps({
 const emit = defineEmits(['set-sort']);
 
 const isSorted = computed(() => {
-    return !!props.sortTarget?.id === props.id;
+    if(props.sortTarget){
+        return !!props.sortTarget.id === props.id;
+    }
 });
 
 function swapWith(book) {
@@ -98,6 +102,8 @@ function swapWith(book) {
 
     emit('swapped-with', data);
 };
+
+const isLocked = computed(() => inject('is-locked'))
 
 </script>
 <styles scoped lang="scss">
