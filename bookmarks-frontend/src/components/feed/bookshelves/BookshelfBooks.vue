@@ -115,6 +115,7 @@ function swappedWithHandler(book_data) {
     bookdata.previous_book_id = prev ? prev.id : null;
     bookdata.next_book_id = next ? next.id : null;
 
+
     emit('send-bookdata-socket', bookdata);
 };
 </script>

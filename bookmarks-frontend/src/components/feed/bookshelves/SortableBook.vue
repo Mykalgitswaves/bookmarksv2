@@ -1,57 +1,43 @@
 <template>
-    <button 
-        v-if="currentBook && order % 2 == 1 && prevBook"
-        class="swap-btn-target"
-        type="button"
-        @click="swapWith(prevBook)"
-    >
-        <IconHitTarget />
-    </button>
-
     <label
-        for="bs-books"
-        class="bs-b--book" 
-        :disabled="isLocked"
-        :class="{
-            'is-sorting': (!isSorted && currentBook), 
-            'sort-target': isSorted,        
-        }"
-        @click="emit('set-sort', id)"
+      for="bs-books"
+      :class="['bs-b--book', { 'is-sorting': !isSorted && currentBook, 'sort-target': isSorted }]"
+      :disabled="(!isSorted && isLocked)"
+      @click="emit('set-sort', id)"
     >
-        <div class="sort">
-            {{ order + 1 }}
-        </div>
+      <div class="sort">{{ order + 1 }}</div>
 
-        <img class="img" :src="imgUrl" alt="">
+      <img class="img" :src="imgUrl" alt="" />
 
-        <div class="meta">
-            <p class="title">{{ bookTitle }}</p>
-            <p class="author">{{ author }}</p>
-        </div>
+      <div class="meta">
+        <p class="title">{{ bookTitle }}</p>
+        <p class="author">{{ author }}</p>
+      </div>
 
-        <input
-            v-if="currentBook?.id === id"
-            id="bs-books" 
-            :name="`bs-books-${id}`"
-            type="radio"
-            :disabled="isLocked"
-            :value="name"
-            @click="emit('set-sort', id)"
-        />
+      <input
+        v-if="currentBook?.id === id"
+        id="bs-books"
+        :name="`bs-books-${id}`"
+        type="radio"
+        :disabled="(!isSorted && isLocked)"
+        :value="name"
+        :checked="isSorted"
+        @click="emit('set-sort', id)"
+      />
     </label>
 
-    <button 
-        v-if="currentBook && order % 2 == 1 && nextBook"
-        class="swap-btn-target"
-        type="button"
-        @click="swapWith(nextBook)"
+    <button
+      v-if="currentBook && id !== currentBook.id"
+      class="swap-btn-target"
+      type="button"
+      @click="swapWith(nextBook)"
     >
-        <IconHitTarget class="one-80-deg"/>
+      {{ nextBook?.order }}
     </button>
 </template>
 <script setup>
-import { computed, inject } from 'vue';
-import IconHitTarget from '../../svg/icon-hit-target.vue';
+import { computed } from 'vue';
+import { wsCurrentState } from './bookshelvesRtc';
 
 const props = defineProps({
     order: {
@@ -83,27 +69,34 @@ const props = defineProps({
 const emit = defineEmits(['set-sort']);
 
 const isSorted = computed(() => {
-    if(props.sortTarget){
-        return !!props.sortTarget.id === props.id;
+    if(props.currentBook){
+        return props.currentBook.id === props.id;
     }
 });
 
 function swapWith(book) {
     // Pass in book object so we can don't have to perform finds in next function.
     // However, now we will need to know whether book is going up or down. 
-    // If book is going up, then we should take next book + next book?
-    let target = props.nextBook === book ? props.nextBook : props.prevBook; 
+    // If book is going up, then we should take next book + next book
 
-    let data = {
-        id: props.id,
-        target,
-        order: target.order
-    };
+    if(book.order){
+        let data = {
+            id: props.id,
+            target: book,
+            order: book.order
+        };
 
-    emit('swapped-with', data);
+        emit('swapped-with', data);
+    }
 };
 
-const isLocked = computed(() => inject('is-locked'))
+function shouldShowSwap(book) {
+    if (!props.currentBook) {
+        return false; // If there's no current book, don't show the swap button
+    }
+}
+
+const isLocked = computed(() => wsCurrentState.value === 'locked');
 
 </script>
 <styles scoped lang="scss">
@@ -129,10 +122,14 @@ const isLocked = computed(() => inject('is-locked'))
 
         &.sort-target {
             border: 1px solid var(--indigo-500);
+            .sort, .img, .meta {
+                opacity: 1 !important;
+            }
         }
 
-        &.is-sorting:not(&.sort-target) {
+        &.is-sorting {
             grid-template-columns: 40px 40px auto min-content;
+
             .sort, .img, .meta {
                 opacity: .45;
             }
@@ -140,6 +137,10 @@ const isLocked = computed(() => inject('is-locked'))
 
         &.selected-to-swap-target {
             border: 1px solid var(--green-500);
+        }
+
+        input:checked {
+            fill: var(--indigo-500);
         }
     }   
 

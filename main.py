@@ -616,7 +616,6 @@ async def create_comparison(request: Request,
 
     for book_id, small_image_url, title in books_metadata:
         db_book = driver.get_id_by_google_id(book_id)
-        breakpoint()
         if db_book:
             book_ids.append(db_book['id'])
             small_image_urls.append(db_book['small_img_url'])
@@ -957,7 +956,6 @@ async def update_username(request: Request, user_id: str, current_user: Annotate
         raise("400", "Unauthorized")
     if current_user.user_id == user_id:
         new_username = await request.json()
-        breakpoint()
         result = current_user.update_username(new_username=new_username)
         return result
     else:
@@ -1243,6 +1241,25 @@ class WSManager:
         for ws in self.ac.get(bookshelf_id, []):
             await ws.send_message('shelf {bookshelf_id} reordered')
 
+    async def reorder_books_and_send_updated_data(self, bookshelf_id, data):
+        try:
+            self.cache[bookshelf_id].reorder_book(**data)
+            books = jsonable_encoder(self.cache[bookshelf_id].get_books())
+            print('inside of reorder books and send data dude')
+            await self.send_data(data={
+                "state": "unlocked", "data": books }, bookshelf_id=bookshelf_id)
+        except:
+            await self.send_data(data={
+                "state": "error", 
+                "data": self.errors['FAILED_TO_REORDER']
+            }, bookshelf_id=bookshelf_id)
+
+    async def invalid_data_error(self, bookshelf_id):
+        await ws_manager.send_data(data={"state": "error", 
+            "data": ws_manager.errors['INVALID_DATA_ERROR'] },
+            bookshelf_id=bookshelf_id
+        )
+
 ws_manager = WSManager()
 
 @app.websocket('/ws/bookshelf/{bookshelf_id}')
@@ -1250,7 +1267,7 @@ async def bookshelf_connection(websocket: WebSocket, bookshelf_id: str):
         await websocket.accept()
         await ws_manager.connect(bookshelf_id, websocket)
         try:
-            while True and ws_manager.cache[bookshelf_id]:
+            while True and bookshelf_id in ws_manager.cache:
                     data = await websocket.receive_json()
                     # Make sure you have the correct information to complete a reorder
                     if (
@@ -1261,21 +1278,14 @@ async def bookshelf_connection(websocket: WebSocket, bookshelf_id: str):
                         async with lock:
                             # Lock out the bookshelf on the client while reorder is happening.
                             await ws_manager.send_data(data={"state": "locked"}, bookshelf_id=bookshelf_id)
-                            try:
-                                ws_manager.cache[bookshelf_id].reorder_book(**data)
-                                books = jsonable_encoder(ws_manager.cache[bookshelf_id].get_books())
-                                if books:
-                                    await ws_manager.send_data(data={"state": "unlocked", "data": books}, bookshelf_id=bookshelf_id)
-                            except:
-                                await ws_manager.send_data(data={
-                                    "state": "error", 
-                                    "data": ws_manager.errors['FAILED_TO_REORDER']
-                                })
+                            # Create task to trun this.
+                            print('here?')
+                            await ws_manager.reorder_books_and_send_updated_data(bookshelf_id=bookshelf_id, data=data)
+                            
                     else:
-                        await ws_manager.send_data(data={"state": "error", 
-                            "data": ws_manager.errors['INVALID_DATA_ERROR'] },
-                            bookshelf_id=bookshelf_id
-                        )
+                        await ws_manager.invalid_data_error(bookshelf_id=bookshelf_id)
+
+
         except WebSocketDisconnect:
             await ws_manager.disconnect(bookshelf_id, websocket)
 

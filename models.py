@@ -101,7 +101,7 @@ class DoublyLinkedList:
         return HTTPException(400,'book not in list')
     
     def are_nodes_adjacent(self, prev_node, next_node) -> bool:
-        return prev_node.next.book.id == next_node.book.id and next_node.prev.book.id == prev_node.book.id
+        return prev_node.next.book.bookTitle == next_node.book.bookTitle and next_node.prev.book.bookTitle == prev_node.book.bookTitle
     
     def is_node_data_valid(self, book_id):
         if book_id is None:
@@ -209,20 +209,48 @@ class DoublyLinkedList:
         # Check validation first
         self.is_node_data_valid(book_id=book_id)
         
+        print('made it past is node data valid')
+        
         # Find the node to be moved
         current = self.start_node
         while current and current.book.id != book_id:
             current = current.next
 
         if not current:
-            return HTTPException(400, "Node to reorder not found")
+            raise HTTPException(400, "Node to reorder not found")
 
         # Node has been found, now handle reordering it to the same position
         # TODO: Double check this, it is likely broken.
         if current.next and current.prev and current.next.book.id == next_book_id and current.prev.book.id == prev_book_id:
-            return
+            raise HTTPException(400, "Node was moved to the same fucking place")
 
-        # Detach the node from its current position
+        # Find the new previous and next nodes
+        prev_node = None
+        next_node = self.start_node
+        print('find the new and prev nodes start')
+
+        if prev_book_id is not None:
+            prev_node = self.start_node
+            while prev_node and prev_node.book.id != prev_book_id:
+                prev_node = prev_node.next
+
+            if not prev_node:
+                raise HTTPException(400, "Previous node not found")
+
+        if next_book_id is not None:
+            next_node = self.start_node
+            while next_node and next_node.book.id != next_book_id:
+                next_node = next_node.next
+
+            if not next_node:
+                raise HTTPException(400, "next node not found")
+        print('find the new and prev nodes end')
+
+        if not self.are_nodes_adjacent(prev_node, next_node):
+            raise HTTPException(401, "Reordered nodes must be adjacent")
+
+        print('are nodes adjacent.')
+         # Detach the node from its current position
         if current.prev:
             current.prev.next = current.next
         else:
@@ -231,34 +259,11 @@ class DoublyLinkedList:
         if current.next:
             current.next.prev = current.prev
 
-        # Find the new previous and next nodes
-        prev_node = None
-        next_node = self.start_node
-
-        if prev_book_id is not None:
-            prev_node = self.start_node
-            while prev_node and prev_node.book.id != prev_book_id:
-                prev_node = prev_node.next
-
-            if not prev_node:
-                return HTTPException(400, "Previous node not found")
-
-        if next_book_id is not None:
-            next_node = self.start_node
-            while next_node and next_node.book.id != next_book_id:
-                next_node = next_node.next
-
-            if not next_node:
-                return HTTPException(400, "next node not found")
-     
-        if not self.are_nodes_adjacent(prev_node, next_node):
-            return HTTPException(401, "Reordered nodes must be adjacent")
-        
         # PERFORMING THE REORDER STARTING HERE v
         # Place the node at the new position
         current.prev = prev_node
         current.next = next_node
-
+        print('performing swap start')
         if prev_node:
             prev_node.next = current
         else:
@@ -266,7 +271,7 @@ class DoublyLinkedList:
 
         if next_node:
             next_node.prev = current
-
+        print('performing swap end')
     # Traversing and Displaying each element of the list
     def display(self):
         if self.start_node is None:
@@ -582,7 +587,7 @@ def memoize(function):
         result = function(*args)
         cache[args] = result
         return result
-    breakpoint()
+    
     return memoized_func
 
 def generate_bookshelf(driver, user_id):

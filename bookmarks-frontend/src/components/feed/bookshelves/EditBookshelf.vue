@@ -82,19 +82,26 @@
         </div>
     </section>    
     <div class="mobile-menu-spacer sm:hidden"></div>
+
+    <Transition name="content">
+        <ErrorToast v-if="error.isShowing" :message="error.message" :refresh="true"/>
+    </Transition>
+
 </template>
 <script setup>
-import { ref, onMounted, reactive, onBeforeUnmount, provide } from 'vue'
+import { ref, onMounted, reactive, onBeforeUnmount } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import IconEdit from '../../svg/icon-edit.vue';
 import IconReorder from '../../svg/icon-reorder.vue';
 import BookshelfBooks from './BookshelfBooks.vue';
 import SearchBooks from '../createPosts/searchBooks.vue';
 import PlaceholderImage from '../../svg/placeholderImage.vue';
+import ErrorToast from '../../shared/ErrorToast.vue';
 import { 
     getBookshelf, 
     goToBookshelfSettingsPage,
     ws,
+    removeWsEventListener,
 } from './bookshelvesRtc';
 import { setReactiveProperty } from '../../../services/helpers';
 import { helpersCtrl } from '../../../services/helpers'
@@ -109,46 +116,60 @@ const books = ref([]);
 const isReordering = ref(false);
 const isReorderModeEnabled = ref(false);
 
-// Make it possible for the client to send information to the server via ws connection.
-const isLocked = ref(ws.current_state);
-provide('is-locked', isLocked.value);
+const error = ref({
+    message: '',
+    isShowing: false
+});
 
 //  Used to send and reorder data!
 function reorder_books(bookData) {
-    // Used to keep this shit from breaking.
     isReordering.value = true;
-    let curr = books.value.find(b => b.id === bookData.target_id);
-    let prev = books.value.find(b => b.id === bookData.previous_book_id);
-    let next = books.value.find(b => b.id === bookData.next_book_id);
 
-    // Early out if we cant find the books.
-    if(!curr || (!prev && !next)) {
+    const { target_id, previous_book_id, next_book_id } = bookData;
+
+    // Find the current, previous, and next books
+    const curr = books.value.find(b => b.id === target_id);
+    const prev = previous_book_id ? books.value.find(b => b.id === previous_book_id) : null;
+    const next = next_book_id ? books.value.find(b => b.id === next_book_id) : null;
+
+    // Early exit if we can't find the current book or both previous and next books
+    if (!curr || (!prev && !next)) {
         isReordering.value = false;
         return;
     }
 
-    let indexOfPrev = books.value.indexOf(prev);
-    let indexOfNext = books.value.indexOf(next);
-    let indexOfCurr = books.value.indexOf(curr);
-
-    // Remove current.
+    // Remove current book from the list
+    const indexOfCurr = books.value.indexOf(curr);
     books.value.splice(indexOfCurr, 1);
 
-    // Somewhere we need to set the new order of items in a list.
-    if (indexOfNext === indexOfPrev + 2) {
-        books.value.splice(indexOfPrev, 0, curr);
-    } else if (indexOfNext && !indexOfPrev){
-        // Inserting to beginning of list
-        books.value.unshift(curr);
-    } else if (indexOfPrev && !indexOfNext) {
-        // inserting to end of list
-        books.value.push(curr);
-    }
+    // Find the index where the current book should be inserted
+    let insertIndex = 0; // Default to beginning of the list
+    if (prev && next) {
+        // If both previous and next books exist, insert between them
+        const indexOfPrev = books.value.indexOf(prev);
+        const indexOfNext = books.value.indexOf(next);
+        insertIndex = indexOfPrev + 1;
+        if (indexOfNext === indexOfPrev + 1) {
+            // If next book is right after previous book, insert after previous book
+            insertIndex = indexOfPrev + 1;
+        } else {
+            // If there's a gap between previous and next books, insert before next book
+            insertIndex = indexOfNext;
+        }
+    } else if (prev) {
+        // If only previous book exists, insert after previous book
+        insertIndex = books.value.indexOf(prev) + 1;
+    } // If only next book exists, insert before next book (default to beginning of the list)
 
-    // Set the new order on each book object.
-    books.value.forEach((b, index) => b.order = index)
-    
+    // Insert the current book at the determined index
+    books.value.splice(insertIndex, 0, curr);
+
+    // Update the order of each book
+    books.value.forEach((b, index) => b.order = index);
+
+    // Send data to server
     ws.sendData(bookData);
+
     isReordering.value = false;
 }
 
@@ -188,10 +209,10 @@ function addBook(book){
     setReactiveProperty(currentView, 'value', 'edit-books');
 }
 
-function enterReorderMode(){
+async function enterReorderMode(){
     isReorderModeEnabled.value = true;
     // Probably need a way to edit this so we dont keep things open for long. Can add in an edit btn to the ux
-    ws.createNewSocketConnection(route.params.bookshelf);
+    await ws.createNewSocketConnection(route.params.bookshelf);
 }
 
 // This may be tricky to lock out the ws connection, people might try and reconnect to soon after disconnecting.
@@ -201,6 +222,7 @@ function cancelledReorder() {
 }
 
 onMounted(() => {
+    
     // Probably could do a better way to generate link in this file. We can figure out later i guess?
     bookshelf.value = getBookshelf(route.params.bookshelf);
     get_combos();
@@ -209,18 +231,27 @@ onMounted(() => {
         // Make this the new data!
         books.value = ws.books;
     });
+
+    document.addEventListener('ws-connection-error', (e) => {
+        error.value.message = e.detail.message;
+        error.value.isShowing = true;
+        // Hide toast manually after three seconds.
+        setTimeout(() => {
+            error.value.isShowing = false;
+        }, 5000);
+    });
 });
 
 // Need this for regular navigation.
 onBeforeUnmount(() => {
     ws.unsubscribeFromSocketConnection();
-    document.removeEventListener('ws-loaded-data');
+    removeWsEventListener();
 });
 
 // Need to send close frame for websocket
 window.onbeforeunload = () => {
     ws.unsubscribeFromSocketConnection();
-    document.removeEventListener('ws-loaded-data');
+    removeWsEventListener();
 };
 </script>
 <style scoped>

@@ -1,20 +1,9 @@
 import { urls } from "../../../services/urls";
-import { helpersCtrl, throttle } from "../../../services/helpers";
-import { ref, reactive } from 'vue';
+import { helpersCtrl } from "../../../services/helpers";
+import { ref } from 'vue';
 import { db } from "../../../services/db";
 
-
 const { getCookieByParam } = helpersCtrl
-
-export const eventFunctionMapping = {
-    'opened': {
-        function: (data) => (console.log(data.detail))
-    },
-    'closed': {
-        function: (data) => (console.log(data.detail))
-    }
-}
-
 
 // what we use to tell the client a change happenend.
 const wsDataLoaded = new CustomEvent('ws-loaded-data', {
@@ -23,7 +12,18 @@ const wsDataLoaded = new CustomEvent('ws-loaded-data', {
     }
 });
 
-// This might not work;
+export const wsConnectionError = new CustomEvent('ws-connection-error', {
+    detail: {
+        message: 'An error happened, please try reordering again.'
+    }
+});
+
+// Want to clean up after the element is removed from v-dom.
+export const removeWsEventListener = () => {
+    document.removeEventListener('ws-loaded-data', wsDataLoaded);
+    document.removeEventListener('ws-connection-error', wsConnectionError);
+}
+
 export const ws = {
     client: getCookieByParam(['token']),
     socket: null, // Initialize socket variable
@@ -85,11 +85,15 @@ export const ws = {
             ws.socket.send(JSON.stringify(data));
             console.log(data);
         } else {
-            console.error("WebSocket connection is not open.");
+            console.error("WebSocket connection is not open, reconnecting.");
+            ws.createNewSocketConnection(ws.connection_address);
+            document.dispatchEvent(wsConnectionError);
         }
     },
 }
 
+// Used to let client know state without having to import entire ws object.
+export const wsCurrentState = ref(ws.current_state);
 
 export async function getBookshelf(bookshelf_id){
     await db.get(urls.rtc.bookShelfTest(bookshelf_id))
@@ -99,140 +103,10 @@ export function goToBookshelfSettingsPage(router, user_id, bookshelf_id){
     router.push(`/feed/${user_id}/bookshelves/${bookshelf_id}/edit`)
 }
 
-export function addEventListenersFn(element){
-    let dragged;
-    element.addEventListener('dragstart', (e) => {
-        dragged = e.target.innerHTML;
-        console.log(dragged, 'drag start')
-        e.target.style.opacity = '0.4';
-        e.target.classList.add('dragging');
-        e.dataTransfer.effectAllowed = 'move';
-        e.dataTransfer.setData('text/html', element.innerHTML);
-    });
-
-    element.addEventListener('dragend', (e) => {
-        e.stopPropagation();
-
-        e.target.style.opacity = '1.0';
-        e.target.classList.remove('dragging');
-        console.log(dragged, e)
-        
-        return false;
-    });
-
-    element.addEventListener('drop', (e) => {
-        e.preventDefault();
-        // move dragged element to the selected drop target
-        if (dragged !== undefined && dragged !== e.target) {
-            // Swap innerHTML of dragged and dropped elements
-            const tempHTML = e.target.closest('#bookId');
-            e.target.outerHTML = dragged;
-            dragged = tempHTML.outerHTML;
-        }
-    })
-
-    element.addEventListener('dragover', (e) => {
-        e.preventDefault();
-        e.target.classList.add('dragged-over');
-    });
-
-    element.addEventListener('dragleave', (e) => {
-        e.target.classList.remove('dragged-over');
-    });
-}
-
 export function removeEventListenersFn(element) {
     element.removeEventListeners('dragstart');
     element.removeEventListeners('dragend');
 }
-
-export const items = [
-    {
-        id: 'G001',
-        order: 0,
-        bookTitle: 'Brave New World',
-        author: "Aldous Huxley",
-        imgUrl: "http://books.google.com/books/content?id=TIJ5EAAAQBAJ&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
-    },
-    {
-        id: 'G002',
-        order: 1,
-        bookTitle: 'Infinite Jest',
-        author: "David Foster Wallace",
-        imgUrl: 'http://upload.wikimedia.org/wikipedia/en/4/4f/Infinite_jest_cover.jpg',
-    },
-    {
-        id: 'G003',
-        order: 2,
-        bookTitle: 'The sirens of Titan',
-        author: "Kurt Vonnegut",
-        imgUrl: 'http://pictures.abebooks.com/isbn/9780385333498-us.jpg',
-    },
-    {
-        id: 'G004',
-        order: 3,
-        bookTitle: 'The Odyssey',
-        author: "Homer",
-        imgUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/9/93/Giuseppe_Bottani_-_Athena_revealing_Ithaca_to_Ulysses.jpg/440px-Giuseppe_Bottani_-_Athena_revealing_Ithaca_to_Ulysses.jpg',
-    },
-    {
-        id: 'G001',
-        order: 0,
-        bookTitle: 'Brave New World',
-        author: "Aldous Huxley",
-        imgUrl: "http://books.google.com/books/content?id=TIJ5EAAAQBAJ&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
-    },
-    {
-        id: 'G002',
-        order: 1,
-        bookTitle: 'Infinite Jest',
-        author: "David Foster Wallace",
-        imgUrl: 'http://upload.wikimedia.org/wikipedia/en/4/4f/Infinite_jest_cover.jpg',
-    },
-    {
-        id: 'G003',
-        order: 2,
-        bookTitle: 'The sirens of Titan',
-        author: "Kurt Vonnegut",
-        imgUrl: 'http://pictures.abebooks.com/isbn/9780385333498-us.jpg',
-    },
-    {
-        id: 'G004',
-        order: 3,
-        bookTitle: 'The Odyssey',
-        author: "Homer",
-        imgUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/9/93/Giuseppe_Bottani_-_Athena_revealing_Ithaca_to_Ulysses.jpg/440px-Giuseppe_Bottani_-_Athena_revealing_Ithaca_to_Ulysses.jpg',
-    },
-    {
-        id: 'G001',
-        order: 0,
-        bookTitle: 'Brave New World',
-        author: "Aldous Huxley",
-        imgUrl: "http://books.google.com/books/content?id=TIJ5EAAAQBAJ&printsec=frontcover&img=1&zoom=1&edge=curl&source=gbs_api",
-    },
-    {
-        id: 'G002',
-        order: 1,
-        bookTitle: 'Infinite Jest',
-        author: "David Foster Wallace",
-        imgUrl: 'http://upload.wikimedia.org/wikipedia/en/4/4f/Infinite_jest_cover.jpg',
-    },
-    {
-        id: 'G003',
-        order: 2,
-        bookTitle: 'The sirens of Titan',
-        author: "Kurt Vonnegut",
-        imgUrl: 'http://pictures.abebooks.com/isbn/9780385333498-us.jpg',
-    },
-    {
-        id: 'G004',
-        order: 3,
-        bookTitle: 'The Odyssey',
-        author: "Homer",
-        imgUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/9/93/Giuseppe_Bottani_-_Athena_revealing_Ithaca_to_Ulysses.jpg/440px-Giuseppe_Bottani_-_Athena_revealing_Ithaca_to_Ulysses.jpg',
-    }
-];
-
 
 export function convertListToMap(list, key) {
     let result = new Map();
