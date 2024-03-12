@@ -360,7 +360,7 @@ class UserCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
             else:
                 profile_img_url = None
 
-            if response['incomingFriendStatus'] == 'friends' or response['outgoingFriendStatus'] == 'friend':
+            if response['incomingFriendStatus'] == 'friends' or response['outgoingFriendStatus'] == 'friends':
                 relationship_to_current_user = 'friend'
             elif response['incomingFriendStatus'] == 'pending':
                 relationship_to_current_user = 'anonymous_user_friend_requested'
@@ -1006,7 +1006,7 @@ class UserCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
         query = """
         match (fromUser:User {id:$from_user_id})
         match (toUser:User {id:$to_user_id})
-        MATCH (fromUser)-[friendRelationship:FRIENDED {status:"friends"}]->(toUser)
+        MATCH (fromUser)-[friendRelationship:FRIENDED {status:"friends"}]-(toUser)
         delete friendRelationship
         RETURN toUser
         """

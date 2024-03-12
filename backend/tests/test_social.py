@@ -84,8 +84,98 @@ class TestSocial:
         friend_headers = {"Authorization": f"{self.token_type_friend} {self.access_token_friend}"}
         response = requests.get(f"{self.endpoint}/api/user/{self.user_id_friend}/friend_requests", headers=friend_headers)
         assert response.status_code == 200, "Testing Get Friend Requests"
-        friends_list = response.json()
+        friends_list = response.json()['data']
         print(friends_list)
         assert len(friends_list) == 1, "Testing Get Friend Requests"
 
+        response = requests.put(f"{self.endpoint}/api/user/{self.user_id}/accept_friend_request", headers=friend_headers)
+        assert response.status_code == 200, "Testing Accept Friend Request"
+
+        response = requests.get(f"{self.endpoint}/api/user/{self.user_id}/friends", headers=headers)
+        assert response.status_code == 200, "Testing Get Friends"
+        friends_list = response.json()['data']
+        print(friends_list)
+        assert len(friends_list) == 1, "Testing Get Friends"
+
+        response = requests.put(f"{self.endpoint}/api/user/{self.user_id}/remove_friend", headers=friend_headers)
+        assert response.status_code == 200, "Testing remove friend"
+
+        response = requests.get(f"{self.endpoint}/api/user/{self.user_id}/friends", headers=headers)
+        assert response.status_code == 200, "Testing Get Friends"
+        friends_list = response.json()['data']
+        print(friends_list)
+        assert len(friends_list) == 0, "Testing Get Friends"
+
+    def test_decline_friend_request(self):
+        """
+        Test case for sending and accepting friend requests.
+        """
+        # Set the headers with authorization token
+        headers = {"Authorization": f"{self.token_type} {self.access_token}"}
+        
+        response = requests.put(f"{self.endpoint}/api/user/{self.user_id_friend}/send_friend_request", headers=headers)
+        assert response.status_code == 200, "Testing Send Friend Request"
+
+        friend_headers = {"Authorization": f"{self.token_type_friend} {self.access_token_friend}"}
+        response = requests.get(f"{self.endpoint}/api/user/{self.user_id_friend}/friend_requests", headers=friend_headers)
+        assert response.status_code == 200, "Testing Get Friend Requests"
+        friends_list = response.json()['data']
+        print(friends_list)
+        assert len(friends_list) == 1, "Testing Get Friend Requests"
+
+        response = requests.put(f"{self.endpoint}/api/user/{self.user_id}/decline_friend_request", headers=friend_headers)
+        assert response.status_code == 200, "Testing decline Friend Request"
+
+        response = requests.get(f"{self.endpoint}/api/user/{self.user_id}/friends", headers=headers)
+        assert response.status_code == 200, "Testing Get Friends"
+        friends_list = response.json()['data']
+        print(friends_list)
+        assert len(friends_list) == 0, "Testing Get Friends"
+
+    def test_block_user(self):
+        """
+        Test case for blocking and unblocking users.
+        """ 
+        # Set the headers with authorization token
+        headers = {"Authorization": f"{self.token_type} {self.access_token}"}
+        
+        response = requests.put(f"{self.endpoint}/api/user/{self.user_id_friend}/block", headers=headers)
+        assert response.status_code == 200, "Testing Block User"
+
+        response = requests.get(f"{self.endpoint}/api/user/{self.user_id}/blocked_users", headers=headers)
+        assert response.status_code == 200, "Testing Get Blocked Users"
+        blocked_users_list = response.json()['data']
+        print(blocked_users_list)
+        assert len(blocked_users_list) == 1, "Testing Get Blocked Users"
+
+        response = requests.put(f"{self.endpoint}/api/user/{self.user_id_friend}/unblock", headers=headers)
+        assert response.status_code == 200, "Testing Unblock User"
+
+        response = requests.get(f"{self.endpoint}/api/user/{self.user_id}/blocked_users", headers=headers)
+        assert response.status_code == 200, "Testing Get Blocked Users"
+        blocked_users_list = response.json()['data']
+        print(blocked_users_list)
+        assert len(blocked_users_list) == 0, "Testing Get Blocked Users"
+
+    def test_user_about(self):
+        """
+        Tests the user about endpoint
+        """
+
+        headers = {"Authorization": f"{self.token_type} {self.access_token}"}
+        response = requests.get(f"{self.endpoint}/api/user/{self.user_id}/user_about", headers=headers)
+        assert response.status_code == 200, "Testing User About"
+        user_about = response.json()['data']
+        print(user_about)
+
+    def test_user_activities(self):
+        """
+        Tests the user activities endpoint
+        """
+
+        headers = {"Authorization": f"{self.token_type} {self.access_token}"}
+        response = requests.get(f"{self.endpoint}/api/user/{self.user_id}/activity", headers=headers)
+        assert response.status_code == 200, "Testing User Activities"
+        user_activities = response.json()['data']
+        print(user_activities)
 
