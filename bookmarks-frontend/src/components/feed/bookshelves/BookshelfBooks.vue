@@ -105,7 +105,7 @@ function resetSort() {
 // Setting up data needed for EditBookshelf's reorder function.
 function swappedWithHandler(book_data) {
     let prev = props.books.find((book) => 
-        book.order === book_data.order - 1
+        book.order === book_data.order
     );
 
     let next = props.books.find((book) => 
