@@ -1,5 +1,14 @@
 <template>
     <ul class="bookshelf-books" ref="books" v-if="books.length">
+        <li class="bs-b-wrapper">
+            <button
+                v-if="currentBook"
+                class="swap-btn-target"
+                type="button"
+                @click="swapToBeginningOfList"
+                >0</button>
+        </li>
+
         <li v-for="(book, index) in books" :key="index" class="bs-b-wrapper">
             <SortableBook
                 :order="index"
@@ -13,6 +22,15 @@
                 @set-sort="(data) => setSort(data)"
                 @swapped-with="(data) => swappedWithHandler(data)"
             />
+        </li>
+        <!-- For swapping to end of the list. -->
+        <li class="bs-b-wrapper">
+            <button
+                v-if="currentBook"
+                class="swap-btn-target"
+                type="button"
+                @click="swapToEndOfList"
+            >{{ books.length }}</button>
         </li>
     </ul>
 
@@ -99,8 +117,33 @@ function resetSort() {
         next_book_id: null,
         author_id: user
     };
+
     emit('cancelled-reorder')
 };
+
+// Specific function for swapping to end of list.
+function swapToEndOfList() {
+    bookdata.value = {
+        target_id: currentBook.value.id,
+        previous_book_id: props.books[props.books.length - 1].id,
+        next_book_id: null,
+        author_id: user
+    }
+
+    console.log(bookdata.value)
+    emit('send-bookdata-socket', bookdata.value);
+}
+
+function swapToBeginningOfList() {
+    bookdata.value = {
+        target_id: currentBook.value.id,
+        previous_book_id: null,
+        next_book_id: props.books[0].id,
+        author_id: user
+    }
+    console.log(bookdata.value, 'bookadta value from swapToBeginningOfList fn')
+    emit('send-bookdata-socket', bookdata.value);
+}
 
 // Setting up data needed for EditBookshelf's reorder function.
 function swappedWithHandler(book_data) {

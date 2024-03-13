@@ -95,10 +95,14 @@ function shouldShowSwap() {
     if (!props.currentBook) {
         return false; // If there's no current book, don't show the swap button
     }
-    
+
     // Hide the one before the current book.
     if(props.currentBook?.order - 1 === props.order){
         return false;;
+    }
+
+    if(!props.nextBook){
+        return false;
     }
 
     return (props.currentBook && props.id !== props.currentBook.id) && (props.prevBook?.order !== props.currentBook?.order - 1)

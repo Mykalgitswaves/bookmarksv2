@@ -112,6 +112,7 @@ class DoublyLinkedList:
         
     def reorder_node_to_beginning(self, book_id, next_book_id) -> None:
         self.is_node_data_valid(book_id=book_id)
+        print('reordering this shit to the beginning')
     
         if not next_book_id:
             return HTTPException(400, "No next book id provided")
@@ -352,6 +353,7 @@ class HashMapDLL:
     def reorder_node_to_beginning(self, book_id, next_book_id):
         # If next_book_id is not provided, the node will be moved to the start of the list
         self.is_node_data_valid(book_id=book_id)
+        print('reorder node to beginning')
     
         if not next_book_id:
             return HTTPException(400, "No next book id provided")
@@ -386,7 +388,7 @@ class HashMapDLL:
 
     def reorder_node_to_end(self, book_id, prev_book_id):
         # If prev_book_id is not provided, the node will be moved to the end of the list
-        
+        print('reorder node to end start')
         if not prev_book_id:
             return HTTPException(400, "No previous book id provided")
 
@@ -501,6 +503,7 @@ class Bookshelf():
         
     @timing_decorator
     def reorder_book(self, target_id, previous_book_id, next_book_id, author_id):
+        print(author_id, previous_book_id, next_book_id, target_id)
         if author_id in self.authors:
             # Reordering in the middle.
             if previous_book_id and next_book_id:

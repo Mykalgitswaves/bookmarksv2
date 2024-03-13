@@ -72,7 +72,7 @@
                 @send-bookdata-socket="
                     (bookdata) => reorder_books(bookdata)
                 "
-                @cancelled-reorder="cancelledReorder()"
+                @cancelled-reorder="cancelledReorder"
             />
 
             <SearchBooks 
@@ -128,6 +128,8 @@ function reorder_books(bookData) {
 
     const { target_id, previous_book_id, next_book_id } = bookData;
 
+    console.log('past destructuring of bookdata', bookData)
+
     // Find the current, previous, and next books
     const curr = books.value.find(b => b.id === target_id);
     const prev = previous_book_id ? books.value.find(b => b.id === previous_book_id) : null;
@@ -138,42 +140,38 @@ function reorder_books(bookData) {
         isReordering.value = false;
         return;
     }
-    // Remove current book from the list
 
+    // Remove current book from the list
     const indexOfCurr = books.value.indexOf(curr);
     books.value.splice(indexOfCurr, 1);
 
     // Find the index where the current book should be inserted
-    let insertIndex = 0; // Default to beginning of the list
-
+    // Inserting to the beginning of the list is the default!
+    let insertIndex = 0; 
+    
+    // Common case, sorting to middle of list. (IE not the beginning or end) 
     if (prev && next) {
         // If both previous and next books exist, insert between them
         const indexOfPrev = books.value.indexOf(prev);
         const indexOfNext = books.value.indexOf(next);
         insertIndex = indexOfPrev;
-        if (indexOfNext === indexOfPrev + 1) {
-            // If next book is right after previous book, insert after previous book
-            insertIndex = indexOfPrev;
-        } else {
-            // If there's a gap between previous and next books, insert before next book
-            error.value.message = 'You can only swap between books'
-            error.value.isShowing = true;
-            // Hide toast manually after three seconds.
-            setTimeout(() => {
-                error.value.isShowing = false;
-            }, 5000);
-        }
-    } else if (prev) {
+        console.assert(indexOfNext === indexOfPrev + 1);
+        // If next book is right after previous book, insert after previous book
+        insertIndex = indexOfPrev;
+    // Inserting to the end of the list. 
+    } else if (prev && !next) {
+        // For the last book in the list reorder.
         // If only previous book exists, insert after previous book
-        insertIndex = books.value.indexOf(prev) + 1;
-    } // If only next book exists, insert before next book (default to beginning of the list)
+        insertIndex = books.value.length;
+    }
 
     // Insert the current book at the determined index
     books.value.splice(insertIndex, 0, curr);
-
+    console.log('made it to the end of reorder_books', books.value);
     // Update the order of each book
     books.value.forEach((b, index) => b.order = index);
-
+    // reordering
+    console.log('right before sending ws data to server.')
     // Send data to server
     ws.sendData(bookData);
 
@@ -225,6 +223,7 @@ async function enterReorderMode(){
 // This may be tricky to lock out the ws connection, people might try and reconnect to soon after disconnecting.
 function cancelledReorder() {
     isReorderModeEnabled.value = false;
+    isReordering.value = false;
     ws.unsubscribeFromSocketConnection();
 }
 
