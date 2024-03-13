@@ -122,7 +122,7 @@ const error = ref({
 });
 
 //  Used to send and reorder data!
-// @kyle #TODO: Fix fix fix please please please. 
+// #TODO: Fix fix fix please please please. @kylearbide
 function reorder_books(bookData) {
     isReordering.value = true;
 
@@ -138,24 +138,30 @@ function reorder_books(bookData) {
         isReordering.value = false;
         return;
     }
-
     // Remove current book from the list
+
     const indexOfCurr = books.value.indexOf(curr);
     books.value.splice(indexOfCurr, 1);
 
     // Find the index where the current book should be inserted
     let insertIndex = 0; // Default to beginning of the list
+
     if (prev && next) {
         // If both previous and next books exist, insert between them
         const indexOfPrev = books.value.indexOf(prev);
         const indexOfNext = books.value.indexOf(next);
-        insertIndex = indexOfPrev + 1;
+        insertIndex = indexOfPrev;
         if (indexOfNext === indexOfPrev + 1) {
             // If next book is right after previous book, insert after previous book
-            insertIndex = indexOfPrev + 1;
+            insertIndex = indexOfPrev;
         } else {
             // If there's a gap between previous and next books, insert before next book
-            insertIndex = indexOfNext;
+            error.value.message = 'You can only swap between books'
+            error.value.isShowing = true;
+            // Hide toast manually after three seconds.
+            setTimeout(() => {
+                error.value.isShowing = false;
+            }, 5000);
         }
     } else if (prev) {
         // If only previous book exists, insert after previous book

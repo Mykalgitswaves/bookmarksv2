@@ -1,4 +1,5 @@
 <template>
+    
     <label
       for="bs-books"
       :class="['bs-b--book', { 'is-sorting': !isSorted && currentBook, 'sort-target': isSorted }]"
@@ -27,7 +28,7 @@
     </label>
 
     <button
-      v-if="currentBook && id !== currentBook.id"
+      v-if="shouldShowSwap()"
       class="swap-btn-target"
       type="button"
       @click="swapWith(nextBook)"
@@ -90,10 +91,17 @@ function swapWith(book) {
     }
 };
 
-function shouldShowSwap(book) {
+function shouldShowSwap() {
     if (!props.currentBook) {
         return false; // If there's no current book, don't show the swap button
     }
+    
+    // Hide the one before the current book.
+    if(props.currentBook?.order - 1 === props.order){
+        return false;;
+    }
+
+    return (props.currentBook && props.id !== props.currentBook.id) && (props.prevBook?.order !== props.currentBook?.order - 1)
 }
 
 const isLocked = computed(() => wsCurrentState.value === 'locked');

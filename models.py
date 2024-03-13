@@ -36,7 +36,7 @@ class BookshelfBook(BaseModel):
     order: int
     bookTitle: str
     author: str
-    imgUrl: str
+    imgUrl: str | None
 
 class DoublyLinkedList:
     def __init__(self):
@@ -101,7 +101,7 @@ class DoublyLinkedList:
         return HTTPException(400,'book not in list')
     
     def are_nodes_adjacent(self, prev_node, next_node) -> bool:
-        return prev_node.next.book.bookTitle == next_node.book.bookTitle and next_node.prev.book.bookTitle == prev_node.book.bookTitle
+        return prev_node.next.book.id == next_node.book.id and next_node.prev.book.id == prev_node.book.id
     
     def is_node_data_valid(self, book_id):
         if book_id is None:
@@ -591,7 +591,7 @@ def memoize(function):
     return memoized_func
 
 def generate_bookshelf(driver, user_id):
-    books = driver.pull_n_books(0, 10)
+    books = driver.pull_n_books(10, 10)
     BOOKSHELF = Bookshelf(
             created_by=user_id, 
             title="$Book$",
@@ -604,7 +604,7 @@ def generate_bookshelf(driver, user_id):
             order=index,
             bookTitle=book.title,
             author='placeholder',
-            imgUrl=book.small_img_url,
+            imgUrl=book.small_img_url or None,
             tags=[]
         )
         BOOKSHELF.add_book_to_shelf(book=_book, user_id=user_id)
