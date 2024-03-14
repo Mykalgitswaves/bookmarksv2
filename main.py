@@ -1215,6 +1215,7 @@ class WSManager:
     def __init__(self):
         self.ac = {}
         self.cache = {}
+        self.locks = {}
         self.errors = {
             'INVALID_DATA_ERROR': {'error': 'Cannot reorder. Current, next or previous data was not provided.'},
             'FAILED_TO_REORDER': {'error': 'Reorder failed, change was not processed.'},
@@ -1222,16 +1223,26 @@ class WSManager:
 
         
     async def connect(self, bookshelf_id: str, ws: WebSocket):
-        self.ac[bookshelf_id] = set()
+        if bookshelf_id not in self.ac:
+            self.ac[bookshelf_id] = set()
         self.ac[bookshelf_id].add(ws)
+        self.locks[bookshelf_id] = asyncio.Lock()
+        if bookshelf_id in self.cache:
+            books = jsonable_encoder(self.cache[bookshelf_id].get_books())
+            print('inside of reorder books and send data dude')
+            await self.send_data(data={
+                "state": "unlocked", "data": books }, bookshelf_id=bookshelf_id)
+        else:
+            # This should redirect back to the get endpoint for the bookshelf
+            pass
 
     async def disconnect(self, bookshelf_id: str, ws: WebSocket):
         self.ac[bookshelf_id].remove(ws)
             
-        if self.cache[bookshelf_id]: 
-            # If cache exists and there is no one else in the pool 
-            # clear the cache also should add a way to save to db.
-            del self.cache[bookshelf_id]
+        # if self.cache[bookshelf_id]: 
+        #     # If cache exists and there is no one else in the pool 
+        #     # clear the cache also should add a way to save to db.
+        #     del self.cache[bookshelf_id]
 
     async def send_data(self, bookshelf_id: str, data: BookshelfPayload):
         for ws in self.ac.get(bookshelf_id, []):
@@ -1245,7 +1256,7 @@ class WSManager:
         try:
             self.cache[bookshelf_id].reorder_book(**data)
             books = jsonable_encoder(self.cache[bookshelf_id].get_books())
-            print('inside of reorder books and send data dude')
+            print('Books reordered and constructed for sending.')
             await self.send_data(data={
                 "state": "unlocked", "data": books }, bookshelf_id=bookshelf_id)
         except:
@@ -1274,12 +1285,10 @@ async def bookshelf_connection(websocket: WebSocket, bookshelf_id: str):
                         (data.get("next_book_id") or data.get("prev_book_id"))
                         and data.get("target_id") and data.get("author_id")
                     ):
-                        lock = asyncio.Lock()
-                        async with lock:
+                        async with ws_manager.locks[bookshelf_id]:
                             # Lock out the bookshelf on the client while reorder is happening.
                             await ws_manager.send_data(data={"state": "locked"}, bookshelf_id=bookshelf_id)
                             # Create task to trun this.
-                            print('here?')
                             await ws_manager.reorder_books_and_send_updated_data(bookshelf_id=bookshelf_id, data=data)
                             
                     else:
@@ -1300,15 +1309,18 @@ async def test_out_rtc_bookshelves(request: Request, bookshelf_id: str):
 @app.get("/api/bookshelves/{bookshelf_id}")
 async def get_books_from_bookshelf(bookshelf_id: str, current_user: Annotated[User, Depends(get_current_active_user)]):
     # For now not using live data pulled from db since we dont have these objects stored there.
-    _bookshelf = generate_bookshelf(
-        driver=driver,
-        user_id=current_user.user_id,
-    )
+    if bookshelf_id in ws_manager.cache:
+        _bookshelf = ws_manager.cache[bookshelf_id]
+    else:
+        _bookshelf = generate_bookshelf(
+            driver=driver,
+            user_id=current_user.user_id,
+        )
+
+        # Set this in the cache for websocket.
+        ws_manager.cache[bookshelf_id] = _bookshelf
 
     BS = generate_bookshelf_response_object(bookshelf=_bookshelf)
-
-    # Set this in the cache for websocket.
-    ws_manager.cache[bookshelf_id] = _bookshelf
 
     return JSONResponse(content={"bookshelf": jsonable_encoder(BS)})
 
