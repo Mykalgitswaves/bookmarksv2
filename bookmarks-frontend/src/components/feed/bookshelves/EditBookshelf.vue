@@ -69,6 +69,7 @@
                 :books="books"
                 :can-reorder="isReorderModeEnabled"
                 :is-reordering="isReordering"
+                :unset-current-book="unsetKey"
                 @send-bookdata-socket="
                     (bookdata) => reorder_books(bookdata)
                 "
@@ -115,6 +116,7 @@ const bookshelf = ref(null);
 const books = ref([]);
 const isReordering = ref(false);
 const isReorderModeEnabled = ref(false);
+let unsetKey = 0;
 
 const error = ref({
     message: '',
@@ -176,6 +178,7 @@ function reorder_books(bookData) {
     ws.sendData(bookData);
 
     isReordering.value = false;
+    unsetKey++;
 }
 
 const currentView = reactive({value: 'edit-books'});

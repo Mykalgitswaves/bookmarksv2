@@ -57,7 +57,7 @@
     </teleport>
 </template>
 <script setup>
-import { ref, computed, reactive } from 'vue';
+import { ref, computed, reactive, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import SortableBook from './SortableBook.vue';
 
@@ -72,6 +72,10 @@ const props = defineProps({
     },
     canReorder: {
         type: Boolean,
+    },
+    unsetCurrentBook: {
+        type: Number,
+        required: true,
     }
 });
 
@@ -88,6 +92,12 @@ const bookdata = reactive({
 });
 
 const currentBook = ref(null);
+
+watch(() => props.unsetCurrentBook, (newVal) => {
+    if(newVal){
+        currentBook.value = null;
+    }
+});
 
 const selectedBookToBeMoved = computed(() => 
     `#${currentBook.value.order} ${currentBook.value.bookTitle}`
