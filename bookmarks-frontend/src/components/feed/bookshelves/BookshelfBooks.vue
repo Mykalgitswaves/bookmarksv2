@@ -2,7 +2,7 @@
     <ul class="bookshelf-books" ref="books" v-if="books.length">
         <li class="bs-b-wrapper">
             <button
-                v-if="currentBook"
+                v-if="currentBook && currentBook.id !== books[0].id"
                 class="swap-btn-target"
                 type="button"
                 @click="swapToBeginningOfList"
@@ -23,14 +23,15 @@
                 @swapped-with="(data) => swappedWithHandler(data)"
             />
         </li>
+        
         <!-- For swapping to end of the list. -->
         <li class="bs-b-wrapper">
             <button
-                v-if="currentBook"
+                v-if="currentBook && currentBook.id !== books[books.length - 1].id"
                 class="swap-btn-target"
                 type="button"
                 @click="swapToEndOfList"
-            >{{ books.length }}</button>
+            >{{ books.length  }}</button>
         </li>
     </ul>
 
