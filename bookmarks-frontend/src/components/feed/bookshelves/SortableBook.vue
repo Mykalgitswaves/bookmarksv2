@@ -31,9 +31,9 @@
       v-if="shouldShowSwap()"
       class="swap-btn-target"
       type="button"
-      @click="swapWith(nextBook)"
+      @click="swapWith(index)"
     >
-      {{ nextBook?.order }}
+      {{ index }}
     </button>
 </template>
 <script setup>
@@ -64,6 +64,9 @@ const props = defineProps({
     },
     prevBook: {
         type: Object
+    },
+    index: {
+        type: Number
     }
 });
 
@@ -75,20 +78,15 @@ const isSorted = computed(() => {
     }
 });
 
-function swapWith(book) {
-    // Pass in book object so we can don't have to perform finds in next function.
-    // However, now we will need to know whether book is going up or down. 
-    // If book is going up, then we should take next book + next book
+function swapWith(index) {
+    // Pass in an index of the book you want to swap with!
 
-    if(book.order){
-        let data = {
-            id: props.id,
-            target: book,
-            order: book.order
-        };
+    let data = {
+        id: props.id,
+        target_index: index,
+    };
 
-        emit('swapped-with', data);
-    }
+    emit('swapped-with', data);
 };
 
 function shouldShowSwap() {
@@ -101,11 +99,13 @@ function shouldShowSwap() {
         return false;;
     }
 
+    // because its the end of the list we handle that case outside of this component.
     if(!props.nextBook){
         return false;
     }
 
-    return (props.currentBook && props.id !== props.currentBook.id) && (props.prevBook?.order !== props.currentBook?.order - 1)
+    // Show the swap button if the current book is not the same as the book we're looking at
+    return !!(props.id !== props.currentBook.id)
 }
 
 const isLocked = computed(() => wsCurrentState.value === 'locked');

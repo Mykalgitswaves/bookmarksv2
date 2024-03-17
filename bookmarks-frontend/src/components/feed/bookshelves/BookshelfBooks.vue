@@ -19,11 +19,12 @@
                 :next-book="books[index + 1]"
                 :prev-book="books[index - 1]"
                 :current-book="currentBook"
+                :index="index"
                 @set-sort="(data) => setSort(data)"
                 @swapped-with="(data) => swappedWithHandler(data)"
             />
         </li>
-        
+
         <!-- For swapping to end of the list. -->
         <li class="bs-b-wrapper">
             <button
@@ -77,7 +78,7 @@ const props = defineProps({
     unsetCurrentBook: {
         type: Number,
         required: true,
-    }
+    },
 });
 
 const route = useRoute();
@@ -158,17 +159,12 @@ function swapToBeginningOfList() {
 
 // Setting up data needed for EditBookshelf's reorder function.
 function swappedWithHandler(book_data) {
-    let prev = props.books.find((book) => 
-        book.order === book_data.order
-    );
+    let prev = props.books[book_data.target_index]
 
-    let next = props.books.find((book) => 
-        book.order === book_data.order + 1
-    );
+    let next = props.books[book_data.target_index + 1]
 
     bookdata.previous_book_id = prev ? prev.id : null;
     bookdata.next_book_id = next ? next.id : null;
-
 
     emit('send-bookdata-socket', bookdata);
 };
