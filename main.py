@@ -763,7 +763,7 @@ async def create_comment(request: Request, current_user: Annotated[User, Depends
 
     return JSONResponse(content={"data": jsonable_encoder(comment)})
 
-@app.put("/api/review/{post_id}/like") # NOT SURE IF THIS MAKES ANY SENSE @MICHAEL
+@app.put("/api/review/{post_id}/like") # /api/posts/post/{post_id}/like
 async def like_post(post_id: str, current_user: Annotated[User, Depends(get_current_active_user)]):
     """
     Adds a like to a post. Take the following format.
@@ -786,7 +786,7 @@ async def like_comment(comment_id:str, current_user: Annotated[User, Depends(get
     if comment_id:
         driver.add_liked_comment(current_user.username, comment_id)
 
-@app.get("/api/review/{post_id}/comments")
+@app.get("/api/review/{post_id}/comments") # /api/posts/post/{post_id}/comments
 async def get_comments_for_post(post_id: str, current_user: Annotated[User, Depends(get_current_active_user)], skip: int | None = Query(default=None), limit: int | None = Query(default=None)):
     """
     Gets the comments on a post
@@ -802,7 +802,7 @@ async def get_comments_for_post(post_id: str, current_user: Annotated[User, Depe
   
         return JSONResponse(content={"data": jsonable_encoder({"comments": comments['comments'], "pinned_comments": comments['pinned_comments']})})
 
-@app.get("/api/review/comments/{comment_id}/replies")
+@app.get("/api/review/comments/{comment_id}/replies") # /api/posts/comment/{comment_id}/replies
 async def get_all_replies_for_comment(comment_id: str, current_user: Annotated[User, Depends(get_current_active_user)]):
     """
     Returns a list of comments for a specific reply.
@@ -813,7 +813,7 @@ async def get_all_replies_for_comment(comment_id: str, current_user: Annotated[U
         replies = driver.get_all_replies_for_comment(comment_id=comment_id, username=current_user.username)
         return(JSONResponse(content={"data": jsonable_encoder(replies)}))
     
-@app.put("/api/review/{comment_id}/pin/{post_id}")
+@app.put("/api/review/{comment_id}/pin/{post_id}") #/api/posts/post/{post_id}/pin/{comment_id}
 async def pin_comment(comment_id: str, post_id: str, current_user: Annotated[User, Depends(get_current_active_user)]): #@MICHAEL DO WE NEED TO VALIDATE THAT THE CURRENT USER IS THE POST AUTHOR HERE
     """
     Adds a pin to a comment. Take the following format.
@@ -828,7 +828,7 @@ async def pin_comment(comment_id: str, post_id: str, current_user: Annotated[Use
 
     driver.add_pinned_comment(comment_id, post_id)
 
-@app.put("/api/review/{comment_id}/remove_like") # NOT SURE IF THIS MAKES ANY SENSE @MICHAEL
+@app.put("/api/review/{comment_id}/remove_like") # /api/posts/comment/{comment_id}/remove_like
 async def remove_like_comment(comment_id:str, current_user: Annotated[User, Depends(get_current_active_user)]):
     """
     remove a like to a comment.
@@ -840,7 +840,7 @@ async def remove_like_comment(comment_id:str, current_user: Annotated[User, Depe
     if comment_id:
         driver.remove_liked_comment(current_user.username, comment_id)
 
-@app.post("/api/review/{post_id}/remove_like") # NOT SURE IF THIS MAKES ANY SENSE @MICHAEL
+@app.post("/api/review/{post_id}/remove_like") # /api/posts/post/{post_id}/remove_like Also changed this to a put request and removed Request
 async def remove_like_post(request: Request, post_id:str, current_user: Annotated[User, Depends(get_current_active_user)]):
     """
     remove a like to a post. 
@@ -852,7 +852,7 @@ async def remove_like_post(request: Request, post_id:str, current_user: Annotate
     if post_id:
         driver.remove_liked_post(current_user,post_id)
 
-@app.put("/api/review/post/{post_id}/comment/{comment_id}/remove_pin")
+@app.put("/api/review/post/{post_id}/comment/{comment_id}/remove_pin") #/api/posts/post/{post_id}/remove_pin/{comment_id}
 async def remove_pin_comment(post_id: str,  comment_id: str, current_user: Annotated[User, Depends(get_current_active_user)]): #@MICHAEL DO WE NEED TO VALIDATE THAT THE CURRENT USER IS THE POST AUTHOR HERE
     """
     remove a pin from a comment. Take the following format.
@@ -867,7 +867,7 @@ async def remove_pin_comment(post_id: str,  comment_id: str, current_user: Annot
 
     driver.remove_pinned_comment(comment_id, post_id)
 
-@app.get("/api/posts")
+@app.get("/api/posts") # /api/posts
 async def get_all_posts(current_user: Annotated[User, Depends(get_current_active_user)]):
     """
     Pagination for all posts to replace feed. Currently just returns all posts from all users, no curated algo. 
@@ -877,7 +877,7 @@ async def get_all_posts(current_user: Annotated[User, Depends(get_current_active
         feed = driver.get_feed(current_user, 0, 100)
         return(JSONResponse(content={"data": jsonable_encoder(feed)}))
     
-@app.put("/api/review/{comment_id}/delete")
+@app.put("/api/review/{comment_id}/delete") # /api/posts/comment/{comment_id}/delete
 async def set_comment_as_deleted(comment_id:str, current_user: Annotated[User, Depends(get_current_active_user)]):
     """
     Set the deleted field for a comment and all replies to true
@@ -888,7 +888,7 @@ async def set_comment_as_deleted(comment_id:str, current_user: Annotated[User, D
     if comment_id:
         driver.set_comment_as_deleted(comment_id)
 
-@app.put("/api/review/{post_id}/delete")
+@app.put("/api/review/{post_id}/delete") # /api/posts/post/{post_id}/delete
 async def set_post_as_deleted(post_id:str, current_user: Annotated[User, Depends(get_current_active_user)]):
     """
     Set the deleted field for a post and all comments to true
@@ -899,7 +899,7 @@ async def set_post_as_deleted(post_id:str, current_user: Annotated[User, Depends
     if post_id:
         driver.set_post_as_deleted(post_id)
 
-@app.get("/api/review/{post_id}/pinned_comments")
+@app.get("/api/review/{post_id}/pinned_comments") # /api/posts/post/{post_id}/pinned_comments
 async def get_pinned_comments_for_post(post_id: str, current_user: Annotated[User, Depends(get_current_active_user)], skip: int | None = Query(default=None), limit: int | None = Query(default=None)):
     """
     Gets the pinned comments on a post
@@ -927,7 +927,7 @@ async def get_book_versions_from_db(book_id: str):
     
     return JSONResponse(content={"data": jsonable_encoder(versions)})
         
-@app.get("/api/books/{book_id}/versions/metadata")
+@app.get("/api/books/{book_id}/versions/metadata") # Updated this to use a request object
 async def get_book_versions_from_metadata_search(book_id: str, book_title:str, book_authors:list):
     """
     Endpoint for getting versions of a book from a metadata search
@@ -986,7 +986,7 @@ async def update_email(request: Request, user_id: str, current_user: Annotated[U
     else:
         raise HTTPException(400, detail="Unauthorized")
 
-@app.post("/api/user/{user_id}/update_profile_img")
+@app.post("/api/user/{user_id}/update_profile_img") # This is now a Put request
 async def update_profile_img(request: Request, user_id: str, current_user: Annotated[User, Depends(get_current_active_user)]):
     """
     THIS IS A PLACEHOLDER. 
