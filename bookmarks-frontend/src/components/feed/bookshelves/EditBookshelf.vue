@@ -129,6 +129,7 @@ function reorder_books(bookData) {
     isReordering.value = true;
     // Send data to server
     ws.sendData(bookData);
+    console.log(bookData, 'bookData'); 
     isReordering.value = false;
     // Forget what this is used for.
     unsetKey++;
@@ -201,10 +202,11 @@ onMounted(() => {
         setTimeout(() => {
             error.value.isShowing = false;
         }, 5000);
-        
-        // Get the most recent data from the server.
-        get_combos();
-        // books.value = ws.books;
+
+        if(ws.socket.readyState === 3) {
+            console.log('socket is closed, reconnecting');
+            ws.createNewSocketConnection(route.params.bookshelf);
+        }
     });
 });
 

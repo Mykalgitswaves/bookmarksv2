@@ -86,12 +86,12 @@ const { user } = route.params;
 const emit = defineEmits(['send-bookdata-socket', 'cancelled-reorder']);
 
 // This is what will be sent via websocket over the wire.
-const bookdata = reactive({
+let bookdata = {
     target_id: null,
     previous_book_id: null,
     next_book_id: null,
     author_id: user,
-});
+};
 
 const currentBook = ref(null);
 
@@ -106,8 +106,8 @@ const selectedBookToBeMoved = computed(() =>
 );
 
 // Used to set the current target
-function setCurrentBook(booKData) {
-    currentBook.value = props.books.find((b)=> b.id === booKData);
+function setCurrentBook(bookData) {
+    currentBook.value = props.books.find((b)=> b.id === bookData);
 }
 
 // early step of swap, sets currentBook.
@@ -123,7 +123,7 @@ function setSort(bookData) {
 function resetSort() {
     currentBook.value = null;
     //  Reset all properties of this object.
-    bookdata.value = {
+    bookdata = {
         target_id: null,
         previous_book_id: null,
         next_book_id: null,
@@ -135,25 +135,25 @@ function resetSort() {
 
 // Specific function for swapping to end of list.
 function swapToEndOfList() {
-    bookdata.value = {
+    bookdata = {
         target_id: currentBook.value.id,
         previous_book_id: props.books[props.books.length - 1].id,
         next_book_id: null,
         author_id: user
     }
 
-    emit('send-bookdata-socket', bookdata.value);
+    emit('send-bookdata-socket', bookdata);
 }
 
 function swapToBeginningOfList() {
-    bookdata.value = {
+    bookdata = {
         target_id: currentBook.value.id,
         previous_book_id: null,
         next_book_id: props.books[0].id,
         author_id: user
     }
 
-    emit('send-bookdata-socket', bookdata.value);
+    emit('send-bookdata-socket', bookdata);
 }
 
 // Setting up data needed for EditBookshelf's reorder function.

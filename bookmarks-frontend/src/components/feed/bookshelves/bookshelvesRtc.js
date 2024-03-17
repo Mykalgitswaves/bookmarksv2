@@ -69,6 +69,15 @@ export const ws = {
                 }
                 // How we are watching data being sent from a websocket..
             };
+
+            ws.socket.onclose = (e) => {
+                console.log('Socket closed', e);
+                if(ws.socket){
+                    ws.socket.close(1000);
+                    ws.connection_address = '';
+                    ws.socket = null;
+                }
+            }
         }
     },
 
@@ -77,6 +86,7 @@ export const ws = {
         if (ws.socket && ws.socket.readyState !== WebSocket.CLOSED) {
             ws.socket.close(1000);
             ws.connection_address = '';
+            ws.socket = null;
         }
     },
 
