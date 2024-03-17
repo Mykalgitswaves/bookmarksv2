@@ -1280,9 +1280,10 @@ async def bookshelf_connection(websocket: WebSocket, bookshelf_id: str):
         try:
             while True and bookshelf_id in ws_manager.cache:
                     data = await websocket.receive_json()
+                    print(data)
                     # Make sure you have the correct information to complete a reorder
                     if (
-                        (data.get("next_book_id") or data.get("prev_book_id"))
+                        (data.get("next_book_id") or data.get("previous_book_id"))
                         and data.get("target_id") and data.get("author_id")
                     ):
                         async with ws_manager.locks[bookshelf_id]:
