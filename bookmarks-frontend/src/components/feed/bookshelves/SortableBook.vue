@@ -1,10 +1,10 @@
 <template>
-    
     <label
-      for="bs-books"
-      :class="['bs-b--book', { 'is-sorting': !isSorted && currentBook, 'sort-target': isSorted }]"
-      :disabled="(!isSorted && isLocked)"
-      @click="emit('set-sort', id)"
+        ref="input"
+        for="bs-books"
+        :class="['bs-b--book', { 'is-sorting': !isSorted && currentBook, 'sort-target': isSorted }]"
+        :disabled="(!isSorted && isLocked)"
+        @click="emit('set-sort', id)"
     >
       <div class="sort">{{ order + 1 }}</div>
 
@@ -37,7 +37,7 @@
     </button>
 </template>
 <script setup>
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 import { wsCurrentState } from './bookshelvesRtc';
 
 const props = defineProps({
@@ -69,7 +69,7 @@ const props = defineProps({
         type: Number
     }
 });
-
+const input = ref('input');
 const emit = defineEmits(['set-sort']);
 
 const isSorted = computed(() => {
@@ -80,13 +80,14 @@ const isSorted = computed(() => {
 
 function swapWith(index) {
     // Pass in an index of the book you want to swap with!
-
+    
     let data = {
         id: props.id,
         target_index: index,
     };
-
+    
     emit('swapped-with', data);
+    input.value.scrollIntoView({ behavior: 'smooth', block: 'center' });
 };
 
 function shouldShowSwap() {
