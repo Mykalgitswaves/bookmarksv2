@@ -5,8 +5,8 @@
                 v-if="currentBook && currentBook.id !== books[0].id"
                 class="swap-btn-target"
                 type="button"
-                @click="swapToBeginningOfList"
-                >0</button>
+                @click="swapToBeginningOfList()"
+                >Start</button>
         </li>
 
         <li v-for="(book, index) in books" :key="index" class="bs-b-wrapper">
@@ -31,8 +31,8 @@
                 v-if="currentBook && currentBook.id !== books[books.length - 1].id"
                 class="swap-btn-target"
                 type="button"
-                @click="swapToEndOfList"
-            >{{ books.length  }}</button>
+                @click="swapToEndOfList()"
+            >End</button>
         </li>
     </ul>
 
@@ -102,7 +102,7 @@ watch(() => props.unsetCurrentBook, (newVal) => {
 });
 
 const selectedBookToBeMoved = computed(() => 
-    `#${currentBook.value.order} ${currentBook.value.bookTitle}`
+    `#${currentBook.value?.order ?? ''} ${currentBook.value?.bookTitle}`
 );
 
 // Used to set the current target
@@ -142,7 +142,6 @@ function swapToEndOfList() {
         author_id: user
     }
 
-    console.log(bookdata.value)
     emit('send-bookdata-socket', bookdata.value);
 }
 
@@ -153,7 +152,7 @@ function swapToBeginningOfList() {
         next_book_id: props.books[0].id,
         author_id: user
     }
-    console.log(bookdata.value, 'bookadta value from swapToBeginningOfList fn')
+
     emit('send-bookdata-socket', bookdata.value);
 }
 

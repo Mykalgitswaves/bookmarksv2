@@ -181,10 +181,10 @@ function cancelledReorder() {
     isReorderModeEnabled.value = false;
     isReordering.value = false;
     ws.unsubscribeFromSocketConnection();
+    get_combos();
 }
 
 onMounted(() => {
-    
     // Probably could do a better way to generate link in this file. We can figure out later i guess?
     bookshelf.value = getBookshelf(route.params.bookshelf);
     get_combos();
@@ -201,6 +201,9 @@ onMounted(() => {
         setTimeout(() => {
             error.value.isShowing = false;
         }, 5000);
+        
+        // Get the most recent data from the server.
+        get_combos();
         // books.value = ws.books;
     });
 });

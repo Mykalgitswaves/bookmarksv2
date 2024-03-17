@@ -222,8 +222,6 @@ class DoublyLinkedList:
         # Check validation first
         self.is_node_data_valid(book_id=book_id)
         
-        print('Reordering to middle')
-        
         # Find the node to be moved
         current = self.start_node
         while current and current.book.id != book_id:
@@ -301,8 +299,11 @@ class DoublyLinkedList:
     def to_array(self) -> list:
         books = []
         current = self.start_node
+        index = 0
         while current:
+            current.book.order = index
             books.append(current.book)
+            index += 1
             current = current.next
         return books
     
