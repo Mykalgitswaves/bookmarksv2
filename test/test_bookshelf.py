@@ -48,6 +48,7 @@ class TestBookshelf:
         # ✅ 4) Reordering to the same position
     def test_can_add_book_to_shelf(self):
         # Grab stringified data from books list
+        
         data = self.books[0]
         # Add book to shelf turns data into a node.
         self.bookshelf.add_book_to_shelf(user_id=self.user, book=data)

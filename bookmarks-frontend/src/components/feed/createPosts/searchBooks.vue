@@ -36,14 +36,12 @@ import { helpersCtrl } from '../../../services/helpers';
 const props = defineProps({
   labelAbove: {
     type: String,
-    required: false
   },
   isComparison: {
     type: Boolean,
-    required: false,
     default: false,
-  }
-})
+  },
+});
 
 const emit = defineEmits(['book-to-parent'])
 const { debounce } = helpersCtrl;

@@ -183,3 +183,27 @@ export const setReactiveProperty = (reactiveObject, key, value) => {
         error() :
         reactiveObject[key] = value
 }
+
+function isNumber(number){
+    return Number.isFinite(parseFloat(number))
+}
+
+export function isEven(number) {
+    if(isNumber(number)){
+        return number % 2 == 0;
+    } else {
+        console.error('please provide a valid number', number, 'is not valid');
+    }
+}
+
+export function isOdd(number) {
+    if(isNumber(number)){
+        return Math.abs(number % 2) == 1
+    } else {
+        console.error('please provide a valid number', number, 'is not valid');
+    }
+}
+
+export function last(list){
+    return list[list.length - 1]
+}

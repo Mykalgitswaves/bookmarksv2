@@ -18,11 +18,13 @@
     "@uploadcare/blocks": "0.25.0",
     "@uploadcare/upload-client": "^6.10.0",
     "@webcomponents/webcomponentsjs": "^2.8.0",
-    "webc-lib": "./src/webcomponents/webc-lib.js",
+    "lit": "^3.1.2",
     "pinia": "^2.0.36",
+    "sass": "^1.71.1",
     "vue": "^3.3.2",
     "vue-cookies": "^1.8.3",
-    "vue-router": "^4.2.0"
+    "vue-router": "^4.2.0",
+    "webc-lib": "./src/webcomponents/webc-lib.js"
   },
   "devDependencies": {
     "@rushstack/eslint-patch": "^1.2.0",

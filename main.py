@@ -14,10 +14,18 @@ from database.db_helpers import (
     Neo4jDriver
 )
 
+import asyncio
+
 from models import (
     Node,
     DoublyLinkedList,
-    Bookshelf
+    Bookshelf,
+    BookshelfBook,
+    BookshelfResponse,
+    BookshelfQueue,
+    memoize, 
+    generate_bookshelf,
+    generate_bookshelf_response_object
 )
 
 from database.api.books_api.search import BookSearch
@@ -52,12 +60,14 @@ from typing import (
     Any,
     Set,
 )
+
 from pydantic import BaseModel
 from datetime import datetime, timedelta
 
 import random
 import string
 import uuid
+
 """
 
 Connect to database
@@ -365,6 +375,7 @@ async def put_users_me_authors(request: Request, current_user: Annotated[User, D
 @app.get("/books")
 async def get_books(skip: int = 0, limit: int = 3):
     """
+bookshelf = Bookshelf()
     Used for initial fetch 
     """
     result = driver.pull_n_books(skip, limit)
@@ -373,6 +384,7 @@ async def get_books(skip: int = 0, limit: int = 3):
 @app.get("/books/n")
 async def get_books_by_n(request: Request, skip: int=0, limit:int=5, by_n=True):
     """
+    bookshelf = Bookshelf()
     Used to grab a certain amount of books
     """
     request_limit = int(request.query_params['limit'])
@@ -382,6 +394,7 @@ async def get_books_by_n(request: Request, skip: int=0, limit:int=5, by_n=True):
 @app.get("/books/{text}")
 async def get_books_by_title(text: str, skip: int=0, limit: int=3):
     """
+    bookshelf = Bookshelf()
     Search a damn book
     """
     result = driver.pull_search2_books(text=text, skip=skip, limit=limit)
@@ -603,7 +616,6 @@ async def create_comparison(request: Request,
 
     for book_id, small_image_url, title in books_metadata:
         db_book = driver.get_id_by_google_id(book_id)
-        breakpoint()
         if db_book:
             book_ids.append(db_book['id'])
             small_image_urls.append(db_book['small_img_url'])
@@ -944,7 +956,6 @@ async def update_username(request: Request, user_id: str, current_user: Annotate
         raise("400", "Unauthorized")
     if current_user.user_id == user_id:
         new_username = await request.json()
-        
         result = current_user.update_username(new_username=new_username)
         return result
     else:
@@ -1198,24 +1209,67 @@ async def get_suggested_friends(user_id: str, current_user: Annotated[User, Depe
         raise("400", "Unauthorized")
     
 # Websockets for bookshelves!
-BookshelfPayload = Any
-ActiveConnections = Dict[str, Set[WebSocket]]
-CollisionMeshDict = Dict[str, DoublyLinkedList]
+BookshelfPayload = Any        
 
 class WSManager:
     def __init__(self):
-        self.active_connections: ActiveConnections = {}
-        self.collision_mesh: CollisionMeshDict = {}
+        self.ac = {}
+        self.cache = {}
+        self.locks = {}
+        self.errors = {
+            'INVALID_DATA_ERROR': {'error': 'Cannot reorder. Current, next or previous data was not provided.'},
+            'FAILED_TO_REORDER': {'error': 'Reorder failed, change was not processed.'},
+        }
 
+        
     async def connect(self, bookshelf_id: str, ws: WebSocket):
-        self.active_connections.setdefault(bookshelf_id, set()).add(ws)
+        if bookshelf_id not in self.ac:
+            self.ac[bookshelf_id] = set()
+        self.ac[bookshelf_id].add(ws)
+        self.locks[bookshelf_id] = asyncio.Lock()
+        if bookshelf_id in self.cache:
+            books = jsonable_encoder(self.cache[bookshelf_id].get_books())
+            print('inside of reorder books and send data dude')
+            await self.send_data(data={
+                "state": "unlocked", "data": books }, bookshelf_id=bookshelf_id)
+        else:
+            # This should redirect back to the get endpoint for the bookshelf
+            pass
 
     async def disconnect(self, bookshelf_id: str, ws: WebSocket):
-        self.active_connections[bookshelf_id].remove(ws)
+        self.ac[bookshelf_id].remove(ws)
+            
+        # if self.cache[bookshelf_id]: 
+        #     # If cache exists and there is no one else in the pool 
+        #     # clear the cache also should add a way to save to db.
+        #     del self.cache[bookshelf_id]
 
-    async def send_data(self, bookshelf_id: dict, data: BookshelfPayload):
-        for ws in self.active_connections.get(bookshelf_id, []):
+    async def send_data(self, bookshelf_id: str, data: BookshelfPayload):
+        for ws in self.ac.get(bookshelf_id, []):
             await ws.send_json(data)
+
+    async def broadcast(self, bookshelf_id: str):
+        for ws in self.ac.get(bookshelf_id, []):
+            await ws.send_message('shelf {bookshelf_id} reordered')
+
+    async def reorder_books_and_send_updated_data(self, bookshelf_id, data):
+        try:
+            self.cache[bookshelf_id].reorder_book(**data)
+            books = jsonable_encoder(self.cache[bookshelf_id].get_books())
+            print('Books reordered and constructed for sending.')
+            await self.send_data(data={
+                "state": "unlocked", "data": books }, bookshelf_id=bookshelf_id)
+        except:
+            await self.send_data(data={
+                "state": "error", 
+                "data": self.errors['FAILED_TO_REORDER']
+            }, bookshelf_id=bookshelf_id)
+
+    async def invalid_data_error(self, bookshelf_id):
+        await ws_manager.send_data(data={"state": "error", 
+            "data": ws_manager.errors['INVALID_DATA_ERROR'] },
+            bookshelf_id=bookshelf_id
+        )
 
 ws_manager = WSManager()
 
@@ -1224,10 +1278,24 @@ async def bookshelf_connection(websocket: WebSocket, bookshelf_id: str):
         await websocket.accept()
         await ws_manager.connect(bookshelf_id, websocket)
         try:
-            while True:
-                data = await websocket.receive_text()  # Change to receive_text() if receiving raw text
-                # Process the received data here (parse JSON, handle messages, etc.)
-                await ws_manager.send_data(data=data) 
+            while True and bookshelf_id in ws_manager.cache:
+                    data = await websocket.receive_json()
+                    print(data)
+                    # Make sure you have the correct information to complete a reorder
+                    if (
+                        (data.get("next_book_id") or data.get("previous_book_id"))
+                        and data.get("target_id") and data.get("author_id")
+                    ):
+                        async with ws_manager.locks[bookshelf_id]:
+                            # Lock out the bookshelf on the client while reorder is happening.
+                            await ws_manager.send_data(data={"state": "locked"}, bookshelf_id=bookshelf_id)
+                            # Create task to trun this.
+                            await ws_manager.reorder_books_and_send_updated_data(bookshelf_id=bookshelf_id, data=data)
+                            
+                    else:
+                        await ws_manager.invalid_data_error(bookshelf_id=bookshelf_id)
+
+
         except WebSocketDisconnect:
             await ws_manager.disconnect(bookshelf_id, websocket)
 
@@ -1238,6 +1306,24 @@ async def test_out_rtc_bookshelves(request: Request, bookshelf_id: str):
     if data:
         res = {"data": data, "type": "add"} 
         await ws_manager.send_data(bookshelf_id=bookshelf_id, data=res)
+
+@app.get("/api/bookshelves/{bookshelf_id}")
+async def get_books_from_bookshelf(bookshelf_id: str, current_user: Annotated[User, Depends(get_current_active_user)]):
+    # For now not using live data pulled from db since we dont have these objects stored there.
+    if bookshelf_id in ws_manager.cache:
+        _bookshelf = ws_manager.cache[bookshelf_id]
+    else:
+        _bookshelf = generate_bookshelf(
+            driver=driver,
+            user_id=current_user.user_id,
+        )
+
+        # Set this in the cache for websocket.
+        ws_manager.cache[bookshelf_id] = _bookshelf
+
+    BS = generate_bookshelf_response_object(bookshelf=_bookshelf)
+
+    return JSONResponse(content={"bookshelf": jsonable_encoder(BS)})
 
 @app.put("/api/bookshelves/{bookshelf_id}")
 async def test_remove_item_from_list(request: Request, bookshelf_id: str):
@@ -1263,7 +1349,6 @@ async def create_bookshelf(request: Request, current_user: Annotated[User, Depen
                 title=name,
                 description=description,
             )
-            breakpoint()
             return {"bookshelf_id": bookshelf.id}
     else:
         raise HTTPException(status_code=400, detail="missing name or title")

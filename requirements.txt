@@ -107,7 +107,6 @@ python-dotenv==1.0.0
 python-jose==3.3.0
 python-multipart==0.0.6
 pytz==2023.3
-pywin32==305
 PyYAML==6.0
 pyzmq==25.0.2
 referencing==0.30.2
@@ -134,6 +133,7 @@ threadpoolctl==3.2.0
 tiktoken==0.5.1
 tokenizers==0.13.3
 tornado==6.2
+torch==2.0.1
 tqdm==4.65.0
 traitlets==5.9.0
 transformers==4.31.0
@@ -148,6 +148,5 @@ watchfiles==0.19.0
 wcwidth==0.2.6
 websockets==11.0.3
 wheel==0.38.4
-xformers==0.0.20
 yarl==1.9.2
 zipp==3.15.0

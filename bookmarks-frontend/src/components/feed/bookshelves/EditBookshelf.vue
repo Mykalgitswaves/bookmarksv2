@@ -2,8 +2,8 @@
     <section class="edit-bookshelf">
         <div class="bookshelf-heading">
             <div>
-                <h1 class="bookshelf-title">{{ bookshelfTitle || 'Untitled'}}</h1>
-                <p class="bookshelf-description">{{ bookshelfdescription || 'Add a description'}}</p>
+                <h1 class="bookshelf-title">{{ bookshelf?.title || 'Untitled'}}</h1>
+                <p class="bookshelf-description">{{ bookshelf?.description || 'Add a description'}}</p>
             </div>
             <button
                 type="button"
@@ -49,85 +49,178 @@
             </div>
         </div>
 
-        <h3 class="bookshelf-books-heading">
-            {{ bookShelfComponentMap[currentView.value].heading('untitled') }}
-        </h3>
+        <div class="flex items-center space-between">
+            <h3 class="bookshelf-books-heading">
+                {{ bookShelfComponentMap[currentView.value].heading('untitled') }}
+            </h3>
+            
+            <button
+                v-if="currentView.value === 'edit-books' && !isReorderModeEnabled"
+                class="btn reorder-btn"
+                @click="enterReorderMode()"
+            >
+                <IconReorder class="ninety-deg"/>
+            </button>
+        </div>
 
-        <Component 
-            :is="bookShelfComponentMap[currentView.value].component()"
-            v-bind="bookShelfComponentMap[currentView.value].props"
-            v-on="bookShelfComponentMap[currentView.value].events" 
-        />
+        <div v-if="dataLoaded">
+            <BookshelfBooks 
+                v-if="currentView.value === 'edit-books'"
+                :books="books"
+                :can-reorder="isReorderModeEnabled"
+                :is-reordering="isReordering"
+                :unset-current-book="unsetKey"
+                @send-bookdata-socket="
+                    (bookdata) => reorder_books(bookdata)
+                "
+                @cancelled-reorder="cancelledReorder"
+            />
+
+            <SearchBooks 
+                v-if="currentView.value === 'add-books'"
+                @book-to-parent="(book) => addBook(book)"  
+            />
+        </div>
     </section>    
     <div class="mobile-menu-spacer sm:hidden"></div>
+
+    <Transition name="content">
+        <ErrorToast v-if="error.isShowing" :message="error.message" :refresh="true"/>
+    </Transition>
+
 </template>
 <script setup>
-    import { ref, onMounted, reactive } from 'vue'
-    import { useRoute, useRouter } from 'vue-router';
-    import IconEdit from '../../svg/icon-edit.vue'
-    import BookshelfBooks from './BookshelfBooks.vue';
-    import SearchBooks from '../createPosts/searchBooks.vue';
-    import PlaceholderImage from '../../svg/placeholderImage.vue';
-    import { 
-        getBookshelf, 
-        goToBookshelfSettingsPage,
-    } from './bookshelvesRtc';
-    import { setReactiveProperty } from '../../../services/helpers';
-    import { helpersCtrl } from '../../../services/helpers'
-    const route = useRoute();
-    const router = useRouter();
-    const bookshelf = ref(null);
-    
-    const books = ref([]);
+import { ref, onMounted, reactive, onBeforeUnmount } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
+import IconEdit from '../../svg/icon-edit.vue';
+import IconReorder from '../../svg/icon-reorder.vue';
+import BookshelfBooks from './BookshelfBooks.vue';
+import SearchBooks from '../createPosts/searchBooks.vue';
+import PlaceholderImage from '../../svg/placeholderImage.vue';
+import ErrorToast from '../../shared/ErrorToast.vue';
+import { 
+    getBookshelf, 
+    goToBookshelfSettingsPage,
+    ws,
+    removeWsEventListener,
+} from './bookshelvesRtc';
+import { setReactiveProperty } from '../../../services/helpers';
+import { helpersCtrl } from '../../../services/helpers'
+import { urls } from '../../../services/urls';
+import { db } from '../../../services/db';
 
-    const currentView = reactive({value: 'edit-books'});
-    const { commanatoredString } = helpersCtrl;
-    
-    /**
-     * @param {book} emitted book from search component.
-     * @returns {book} Will submit a put request of the specific book. 
-     */
-    function addBook(book){
-        let props = {
-            order: books.value.length++, 
-            name: book.id,
-            bookTitle: book.title,
-            author: commanatoredString(book.authorNames),
-            imgUrl: book.imgUrl
-        };
-        books.value.push(props);
-        // TODO add in endpoint put call for attaching a book to a bookshelf.
-        setReactiveProperty(currentView, 'value', 'edit-books');
-    }
+const route = useRoute();
+const router = useRouter();
+const dataLoaded = ref(false);
+const bookshelf = ref(null);
+const books = ref([]);
+const isReordering = ref(false);
+const isReorderModeEnabled = ref(false);
+let unsetKey = 0;
 
-    // Needed for handling <Component> source of truth for what user is looking at. 
-    const bookShelfComponentMap = {
+const error = ref({
+    message: '',
+    isShowing: false
+});
+
+//  Used to send and reorder data!
+// #TODO: Fix fix fix please please please. @kylearbide
+function reorder_books(bookData) {
+    isReordering.value = true;
+    // Send data to server
+    ws.sendData(bookData);
+    console.log(bookData, 'bookData'); 
+    isReordering.value = false;
+    // Forget what this is used for.
+    unsetKey++;
+}
+
+const currentView = reactive({value: 'edit-books'});
+const { commanatoredString } = helpersCtrl;
+
+const bookShelfComponentMap = {
     "edit-books": {
-        heading: (bookshelfName) => "Edit books",
+        heading: () => "Reorder books",
         buttonText: 'Add books',
-        component: () => BookshelfBooks,
-        props: {
-            'books': books,
-        },
-        events: {
-
-        }
     },
     "add-books": {
         heading: (bookshelfName) => (`Add books to ${bookshelfName}`),
         buttonText: 'Edit books',
-        component: () => SearchBooks,
-        props: {},
-        events: {
-            'book-to-parent': addBook
-        } 
     }
+};
+
+async function get_combos() {
+    await db.get(urls.rtc.bookShelfTest('new')).then((res) => { 
+    bookshelf.value = res.bookshelf
+    books.value = res.bookshelf.books
+    dataLoaded.value = true;
+    });
+}
+
+function addBook(book){
+    let props = {
+        id: book.id,
+        order: books.value.length++, 
+        bookTitle: book.title,
+        author: commanatoredString(book.authorNames),
+        imgUrl: book.imgUrl
+    };
+
+    books.value.push(props);
+    // TODO add in endpoint put call for attaching a book to a bookshelf.
+    setReactiveProperty(currentView, 'value', 'edit-books');
+}
+
+async function enterReorderMode(){
+    isReorderModeEnabled.value = true;
+    // Probably need a way to edit this so we dont keep things open for long. Can add in an edit btn to the ux
+    await ws.createNewSocketConnection(route.params.bookshelf);
+}
+
+// This may be tricky to lock out the ws connection, people might try and reconnect to soon after disconnecting.
+function cancelledReorder() {
+    isReorderModeEnabled.value = false;
+    isReordering.value = false;
+    ws.unsubscribeFromSocketConnection();
+    get_combos();
 }
 
 onMounted(() => {
     // Probably could do a better way to generate link in this file. We can figure out later i guess?
     bookshelf.value = getBookshelf(route.params.bookshelf);
+    get_combos();
+    document.addEventListener('ws-loaded-data', () => {
+        console.log('ws data has arrived')
+        // Make this the new data!
+        books.value = ws.books;
+    });
+
+    document.addEventListener('ws-connection-error', (e) => {
+        error.value.message = e.detail.message;
+        error.value.isShowing = true;
+        // Hide toast manually after three seconds.
+        setTimeout(() => {
+            error.value.isShowing = false;
+        }, 5000);
+
+        if(ws.socket.readyState === 3) {
+            console.log('socket is closed, reconnecting');
+            ws.createNewSocketConnection(route.params.bookshelf);
+        }
+    });
 });
+
+// Need this for regular navigation.
+onBeforeUnmount(() => {
+    ws.unsubscribeFromSocketConnection();
+    removeWsEventListener();
+});
+
+// Need to send close frame for websocket
+window.onbeforeunload = () => {
+    ws.unsubscribeFromSocketConnection();
+    removeWsEventListener();
+};
 </script>
 <style scoped>
 
@@ -137,6 +230,13 @@ onMounted(() => {
         max-width: 880px;
         padding-left: var(--padding-sm);
         padding-right: var(--padding-sm);
+    }
+    
+    @media screen and (max-width: 550px) {
+        .edit-bookshelf {
+            padding-left: 0;
+            padding-right: 0;
+        }   
     }
 
     .bookshelf-heading {
@@ -190,5 +290,11 @@ onMounted(() => {
         font-weight: 500;   
         margin-top: var(--padding-sm);
         color: var(--stone-600);
+    }
+
+    .reorder-btn {
+        border: 1px solid var(--stone-200);
+        padding: var(--padding-sm);
+        margin-top: var(--padding-md);
     }
 </style>
