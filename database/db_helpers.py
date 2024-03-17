@@ -3888,7 +3888,33 @@ class Neo4jDriver():
                             n_mutual_friends=response['mutualFriends']) for response in result
         ]
         return(suggested_friends)
+    
+    ###################################################################################################################
+    ########### BOOKSHELF QUERIES 
+    ###################################################################################################################
+
+    def create_bookshelf(self, bookshelf):
+        """
+        Creates a bookshelf
+        """
+        with self.driver.session() as session:
+            result = session.execute_write(self.create_bookshelf_query, bookshelf=bookshelf)
+        return(result)
+    
+    @staticmethod
+    def create_bookshelf_query(tx, bookshelf):
+        query = """
+        MATCH (user:User {id: $user_id})
+        CREATE (user)-[:OWNS]->(bookshelf:Bookshelf {name: $name, created_date: datetime()})
+        RETURN bookshelf
+        """
         
+        result = tx.run(query, user_id=bookshelf.user_id, name=bookshelf.name)
+        response = result.single()
+        if not response:
+            return HTTPException(400,"Bookshelf not created")
+        else:
+            return HTTPException(200, 'Success')
 
     def close(self):
         self.driver.close()
