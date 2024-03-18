@@ -29,6 +29,11 @@ class Config(BaseSettings):
     #ADMIN CREDENTIALS
     ADMIN_CREDENTIALS: str
 
+    #CORS Configs
+    ALLOWED_ORIGINS: List[str]
+    IS_ALLOWED_CREDENTIALS: bool
+    ALLOWED_METHODS: List[str]
+    ALLOWED_HEADERS: List[str]
 
 try:
     with open("src/config/config.json", "r") as file:
