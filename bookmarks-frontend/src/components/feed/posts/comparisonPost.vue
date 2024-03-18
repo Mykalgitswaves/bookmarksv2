@@ -1,48 +1,73 @@
 <template>
     <div class="card">
+        <!-- Username of OP -->
         <div class="card-header">
-            <p
-                class="text-slate-600"
-                @click="router.push(`/feed/${route.params.user}/user/${props.user_id}`)"
-            ><span class="text-indigo-600 underline italic cursor-pointer">@{{ props.username }}</span> made a comparison</p>
+            <p  class="text-slate-600"
+                @click="router.push(navRoutes.toUserPageFromPost(route.params.user, props.user_id))"
+            >
+                <span class="text-indigo-600 underline italic cursor-pointer">
+                    @{{ props.username }}</span> made a comparison
+            </p>
         </div>
+
         <div class="card-content-main">
-            <div class="comparisons">
+            <!-- headings for comparisons -->
+            <div v-if="book?.length" class="comparisons">
                 <div class="comparison">
-                    <img class="comparison-image" :src="props.small_img_url[0]" alt="">
-                    <p class="text-xl font-semibold cursor-pointer title-hover" @click="router.push(`/feed/${user}/works/${props.book[0]}`)">{{ props.book_title[0] }}</p>
-                    <p class="comparison-headline">{{ props.headlines[0] }}</p>
+                    <img class="comparison-image" :src="small_img_url?.length ? small_img_url[0] : ''" alt="">
+                    <p  class="text-xl font-semibold cursor-pointer title-hover" 
+                        @click="router.push(navRoutes.toBookPageFromPost(user, book[0]))"
+                    >{{ props.book_title[0] }}</p>
+                    <p class="comparison-headline">{{ headlines[0] }}</p>
                 </div>
 
                 <IconLinkArrow />
 
                 <div class="comparison">
-                    <img class="comparison-image" :src="props.small_img_url[1]" alt="">
-                    <p class="text-xl font-semibold cursor-pointer title-hover" @click="router.push(`/feed/${user}/works/${props.book[1]}`)">{{ props.book_title[1] }}</p>
-                    <p class="comparison-headline">{{ props.headlines[1] }}</p>
+                    <img class="comparison-image" 
+                        :src="small_img_url?.length ? small_img_url[1] : ''" 
+                        alt=""
+                    >
+                    
+                    <p class="text-xl font-semibold cursor-pointer title-hover"
+                        @click="router.push(navRoutes.toBookPageFromPost(user, book[1]))"
+                    >{{ props.book_title[1] }}</p>
+                    
+                    <p v-if="headlines?.length && headlines[1]?.length" 
+                       class="comparison-headline"
+                    >{{ headlines[1] }}</p>
                 </div>
+            </div>
+
+            <!-- Error case if some content doesn't load with the initial request. -->
+            <div v-else>
+                <h2 class="text-2xl">No content...</h2>
+
+                <p class="text-slate-500 mt-5">Something weird happened</p>
             </div>
         </div>
 
-        <div class="card-responses">
+        <!-- Actual comparisons dude -->
+        <div v-if="comparisons?.length" class="card-responses">
             <div class="divider"></div>
 
             <h3 class="text-slate-700 text-lg my-2">Commonalities</h3>
 
             <ul class="my-3 content-start">
                 <li 
-                    v-for="(c, index) in props.comparisons" 
+                    v-for="(c, index) in comparisons" 
                     :key="index"
                     class="card-commonalities"
                 >
                 
-                    <h3>{{ props.comparators[index] }}</h3>
+                    <h3>{{ comparators[index] }}</h3>
                     
                     <p class="mt-2 ml-2 text-slate-500">{{ c }}</p>
                 </li>  
             </ul>
         </div>
-                    
+
+        <!-- Actions -->
         <div class="card-footer">
             <button
                 type="button"
@@ -57,7 +82,7 @@
                 type="button" 
                 class="text-slate-600 flex items-center"
                 :class="{'is-liked': isLiked}"
-                @click="AddLikeOrUnlike(props.id)"
+                @click="AddLikeOrUnlike(id)"
             >
                 <IconLike/>
                 <span class="ml-2">Like</span>
@@ -72,7 +97,7 @@ import IconComment from '../../svg/icon-comment.vue';
 import { postStore } from '../../../stores/postStore';
 import { reactive, ref, } from 'vue';
 import { db } from '../../../services/db';
-import { urls } from '../../../services/urls';
+import { urls, navRoutes } from '../../../services/urls';
 import { useRoute, useRouter } from 'vue-router'
 
 const props = defineProps({
@@ -143,26 +168,22 @@ const route = useRoute();
 const router = useRouter();
 const user = route.params.user;
 
-console.log(props)
-
 async function AddLikeOrUnlike(id){
-    const user_id = route.params.user
+    const user_id = route.params.user;
+    // Turning off debug for now.
     await db.post(
-        urls.reviews.likeComparison(user_id, id), true
-        )
-        .then((res) => {
-            console.log(res)
-            isLiked.value = true;
-        });
+        urls.reviews.likeComparison(user_id, id), false
+    ).then(() => {
+        isLiked.value = true;
+    });
 }
 
 function navigateToCommentPage() {
     postStore.save(props.id);
-    router.push(`/feed/${user}/post/${props.id}`);
+    router.push(navRoutes.toPostPageFromFeed(user, props.id));
 }
 
 </script>
-
 <style scoped>
 
 .v-enter-active,

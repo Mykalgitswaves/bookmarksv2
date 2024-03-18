@@ -7,9 +7,9 @@ export const urls = {
         name: baseUrl + 'setup-reader/name',
         bookByText: (text) => (`${baseUrl}books/${text}`),
     },
-    authUrl: baseUrl + 'api/auth_user/',
+    authUrl: baseUrl + 'api/auth/verify/',
     booksByN: baseUrl + 'books/n/',
-    login: baseUrl + 'api/login/',
+    login: baseUrl + 'api/auth/login',
     author: baseUrl + 'api/author/',
     user: {
         getUser: (user_id) => (baseUrl + `api/user/${user_id}/get_user`),
@@ -53,7 +53,7 @@ export const urls = {
         getComments: (post_id) =>(baseUrl + `api/review/${post_id}/comments`),
         // calling more comments (duh)
         getMoreComments: (comment_id) => (baseUrl + `api/review/comments/${comment_id}/replies`),
-        getFeed: () => (baseUrl + `api/posts`)
+        getFeed: () => (baseUrl + `api/posts`),
     },
     books: {
         // for book page
@@ -64,5 +64,13 @@ export const urls = {
         bookshelf: (bookshelf_id) => (wsUrl + `ws/bookshelf/${bookshelf_id}`),
         createBookshelf: () => (baseUrl + `api/bookshelf/create`),
         bookShelfTest: (bookshelf_id) => (baseUrl + `api/bookshelves/${bookshelf_id}`)
-    }
+    },
+}
+
+// Methods for navigating to and from places.
+export const navRoutes = { 
+    toLoggedInFeed: (current_user) => (`/feed/${current_user}/all`), 
+    toUserPageFromPost: (current_user, user) => (`/feed/${current_user}/user/${user}`),
+    toBookPageFromPost: (current_user, book_id) => (`/feed/${current_user}/works/${book_id}`),
+    toPostPageFromFeed: (current_user, post_id) => (`/feed/${current_user}/post/${post_id}`),
 }

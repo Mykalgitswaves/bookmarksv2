@@ -62,6 +62,7 @@
 <script setup>
 import {ref, toRaw } from 'vue';
 import { useRouter } from 'vue-router';
+import { urls, navRoutes } from '../services/urls';
 
 const message = ref('');
 const formBlob = ref({
@@ -79,7 +80,7 @@ async function submitForm() {
   formData.append('password', toRaw(formBlob.value.password));
   
   try {
-    await fetch('http://127.0.0.1:8000/api/auth/login', {
+    await fetch(urls.login, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
@@ -89,20 +90,19 @@ async function submitForm() {
       body: formData,
     }).then((res) => res.json())
     .then((data) => {
-      const uuid = data.user.uuid
-      const token = `token=${data.token.access_token}`;
+      const user_id = data.user_id;
+      const token = `token=${data.access_token}`;
       document.cookie = token;
-      return router.push(`/feed/${uuid}/all`);
-    })
+      return router.push(navRoutes.toLoggedInFeed(user_id));
+    });
   } catch(error) {
-      console.error(error)
-    //   message.value = error.detail;
-    //   errorMessage.value = true
+      console.error(error);
+      message.value = error.detail;
+      errorMessage.value = true
       
-    //   setTimeout(() => {
-    //     return (errorMessage.value = false)
-    //   }, 2000)
-    // console.error(error);
+      setTimeout(() => {
+        return (errorMessage.value = false)
+      }, 2000)
   }
 }
 </script>
