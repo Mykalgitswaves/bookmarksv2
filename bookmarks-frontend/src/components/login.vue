@@ -8,12 +8,12 @@
     @submit.prevent="submitForm()"
     method="POST"
   >
-    <label class="gray-700">Enter your email</label>
+    <label class="gray-700">Enter your username</label>
     <input
       class="py-2 px-4 rounded-md border-2 border-indigo-200"
       v-model="formBlob.username"
       name="username"
-      type="email"
+      type="username"
       placeholder="Email"
     />
 
@@ -79,7 +79,7 @@ async function submitForm() {
   formData.append('password', toRaw(formBlob.value.password));
   
   try {
-    await fetch('http://127.0.0.1:8000/api/token', {
+    await fetch('http://127.0.0.1:8000/api/auth/login', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
