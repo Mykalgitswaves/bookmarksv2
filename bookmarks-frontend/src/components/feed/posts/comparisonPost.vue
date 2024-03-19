@@ -11,13 +11,14 @@
         </div>
 
         <div class="card-content-main">
+
             <!-- headings for comparisons -->
-            <div v-if="book?.length" class="comparisons">
+            <div v-if="bookBlobs?.length" class="comparisons">
                 <div class="comparison">
-                    <img class="comparison-image" :src="small_img_url?.length ? small_img_url[0] : ''" alt="">
+                    <img class="comparison-image" :src="bookBlobs[0]?.small_img_url ? bookBlobs[0].small_img_url : ''" alt="">
                     <p  class="text-xl font-semibold cursor-pointer title-hover" 
-                        @click="router.push(navRoutes.toBookPageFromPost(user, book[0]))"
-                    >{{ props.book_title[0] }}</p>
+                        @click="router.push(navRoutes.toBookPageFromPost(user, bookBlobs[0]?.id))"
+                    >{{ bookBlobs[0]?.title }}</p>
                     <p class="comparison-headline">{{ headlines[0] }}</p>
                 </div>
 
@@ -25,13 +26,13 @@
 
                 <div class="comparison">
                     <img class="comparison-image" 
-                        :src="small_img_url?.length ? small_img_url[1] : ''" 
+                        :src="bookBlobs[1]?.small_img_url ? bookBlobs[1]?.small_img_url : ''" 
                         alt=""
                     >
                     
                     <p class="text-xl font-semibold cursor-pointer title-hover"
-                        @click="router.push(navRoutes.toBookPageFromPost(user, book[1]))"
-                    >{{ props.book_title[1] }}</p>
+                        @click="router.push(navRoutes.toBookPageFromPost(user, bookBlobs[1]?.id))"
+                    >{{ bookBlobs[1]?.title }}</p>
                     
                     <p v-if="headlines?.length && headlines[1]?.length" 
                        class="comparison-headline"
@@ -101,17 +102,9 @@ import { urls, navRoutes } from '../../../services/urls';
 import { useRoute, useRouter } from 'vue-router'
 
 const props = defineProps({
-    book: {
-        type: Array,
-        required: true
-    },
-    book_title: {
+    bookBlobs: {
         type: Array,
         required: true,
-    },
-    small_img_url: {
-        type: Array,
-        required: true
     },
     headlines: {
         type: Array,
@@ -125,11 +118,7 @@ const props = defineProps({
         type: Array,
         required: true
     },
-    comparator_ids: {
-        type: Array,
-        required: true
-    },
-    createdAt: {
+    createdDate: {
         type: String,
         required: true,
     },
