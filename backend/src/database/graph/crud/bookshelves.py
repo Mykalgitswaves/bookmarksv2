@@ -18,7 +18,7 @@ class BookshelfCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
                    b.description as description, 
                    b.books as books,
                    b.visibility as visibility,
-                   b.img_url as img_url
+                   b.img_url as img_url,
                    u as user,
                    r as access
             """
@@ -131,5 +131,23 @@ class BookshelfCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
             """
         )
         result = tx.run(query, book_to_remove=book_to_remove, books=books, bookshelf_id=bookshelf_id)
+        response = result.single()
+        return response is not None
+    
+    def delete_bookshelf(self, bookshelf_id, user_id):
+        with self.driver.session() as session:
+            result = session.write_transaction(self.delete_bookshelf_query, bookshelf_id, user_id)
+        return result
+    
+    @staticmethod
+    def delete_bookshelf_query(tx, bookshelf_id, user_id):
+        query = (
+            """
+            MATCH (b:Bookshelf {id: $bookshelf_id})<-[r:HAS_BOOKSHELF_ACCESS {type: "owner"}]-(u:User {id: $user_id})
+            DETACH DELETE b
+            return u.id
+            """
+        )
+        result = tx.run(query, bookshelf_id=bookshelf_id, user_id=user_id)
         response = result.single()
         return response is not None

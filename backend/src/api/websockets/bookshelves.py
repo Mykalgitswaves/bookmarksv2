@@ -3,7 +3,6 @@ from fastapi import WebSocket, HTTPException
 from fastapi.encoders import jsonable_encoder
 from src.database.graph.crud.bookshelves import BookshelfCRUDRepositoryGraph
 from src.securities.authorizations.jwt import jwt_generator
-from src.models.schemas.bookshelves import BookshelfPayload
 
 class BookshelfWSManager:
     def __init__(self):

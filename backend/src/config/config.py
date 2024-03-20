@@ -24,7 +24,11 @@ class Config(BaseSettings):
     JWT_SUBJECT: str
 
     #WEB SOCKET Configs
+    WS_SECRET_KEY: str
+    WS_ALGORITHM : str
+    WS_SCHEMES: List[str]
     WS_MIN_EXPIRE: int
+    WS_SUBJECT: str
 
     #Google Books API Key
     GOOGLE_BOOKS_API_KEY: str

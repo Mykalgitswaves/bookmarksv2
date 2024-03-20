@@ -2,7 +2,7 @@ from pydantic import BaseModel, validator
 from pydantic.typing import Literal
 import datetime
 from neo4j.time import DateTime as Neo4jDateTime
-from typing import List
+from typing import List, Any
 from fastapi import HTTPException
 
 from src.utils.exceptions.bookshelves import (
@@ -352,12 +352,12 @@ class Bookshelf(BaseModel):
     description: str
     id: str
     img_url: str | None = None
-    books: DoublyLinkedList = DoublyLinkedList()
+    books: Any = DoublyLinkedList()
     members: set = set()
     followers: set = set()
     contributors: set = set()
     visibility: Literal['public', 'private', 'friends']
-    queue: BookshelfQueue = BookshelfQueue()
+    queue: Any = BookshelfQueue()
 
     def add_book_to_shelf(self, book, user_id):
         # Cannot have more than 100 books in your shelf for an arbitrary reason???
