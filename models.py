@@ -474,15 +474,6 @@ def generate_bookshelf_response_object(bookshelf):
         followers=bookshelf.followers,
     )
 
-class BookshelfCreate(BaseModel):
-    id : str
-    title: str
-    description: str = ""
-    image_url: str | None = None
-    authors: set[str] = set()
-    
-
-    
 # # Possible optimization of first one.
 # class HashMapDLL:
 #     def __init__(self):

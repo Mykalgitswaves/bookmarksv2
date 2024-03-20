@@ -1273,7 +1273,7 @@ class WSManager:
 
 ws_manager = WSManager()
 
-@app.websocket('/ws/bookshelf/{bookshelf_id}')
+@app.websocket('/ws/bookshelf/{bookshelf_id}') # This is changing to /api/bookshelf/ws/{bookshelf_id}
 async def bookshelf_connection(websocket: WebSocket, bookshelf_id: str):
         await websocket.accept()
         await ws_manager.connect(bookshelf_id, websocket)
@@ -1325,7 +1325,7 @@ async def get_books_from_bookshelf(bookshelf_id: str, current_user: Annotated[Us
 
     return JSONResponse(content={"bookshelf": jsonable_encoder(BS)})
 
-@app.put("/api/bookshelves/{bookshelf_id}")
+@app.put("/api/bookshelves/{bookshelf_id}") #Changing this to #/api/bookshelves/{bookshelf_id}/remove_book
 async def test_remove_item_from_list(request: Request, bookshelf_id: str):
     data = await request.json()
     if data:
