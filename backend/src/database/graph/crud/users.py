@@ -388,6 +388,26 @@ class UserCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
         
         return friend_list
     
+    def get_simple_friend_list(self,user_id:str):
+        """
+        Returns all the friends of user and their relationships to current_user
+        """
+        with self.driver.session() as session:
+            result = session.execute_read(self.get_simple_friend_list_query, user_id=user_id)  
+        return(result)
+    
+    @staticmethod
+    def get_simple_friend_list_query(tx, user_id:str):
+        query = """
+        match (user:User {id:$user_id})
+        match (user)-[friendRel:FRIENDED {status:"friends"}]-(toUser:User {disabled:False})
+        RETURN toUser.id as friend_id
+        """
+        
+        result = tx.run(query,user_id=user_id)
+
+        return [response['friend_id'] for response in result]
+    
     def get_friend_request_list(self,user_id:str):
         """
         Returns all incoming friend requests for a user
