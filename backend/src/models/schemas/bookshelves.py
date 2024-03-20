@@ -39,7 +39,7 @@ class BookshelfReorder(BaseModel):
     contributor_id: str
 
 class BookshelfBookRemove(BaseModel):
-    book_id: str
+    target_id: str
     contributor_id: str
 
 class BookshelfBook(BaseModel):

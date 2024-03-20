@@ -12,7 +12,7 @@ from fastapi.encoders import jsonable_encoder
 from fastapi.responses import JSONResponse
 from typing import Annotated
 
-from src.securities.authorizations.verify import get_current_active_user
+from src.securities.authorizations.verify import get_current_active_user, get_bookshelf_websocket_user
 from src.api.utils.database import get_repository
 
 from src.models.schemas.users import UserInResponse, User
@@ -145,7 +145,7 @@ async def remove_item_from_list(request: Request,
 @router.websocket('/ws/{bookshelf_id}') # This is changing to /api/bookshelf/ws/{bookshelf_id}
 async def bookshelf_connection(websocket: WebSocket, 
                                bookshelf_id: str,
-                               current_user: Annotated[User, Depends(get_current_active_user)],
+                               current_user: Annotated[User, Depends(get_bookshelf_websocket_user)],
                                bookshelf_repo: BookshelfCRUDRepositoryGraph = Depends(get_repository(repo_type=BookshelfCRUDRepositoryGraph))):
         await websocket.accept()
         await bookshelf_ws_manager.connect(bookshelf_id, websocket)
@@ -154,23 +154,41 @@ async def bookshelf_connection(websocket: WebSocket,
                 data = await websocket.receive_json()
                 # We will distinguish between the types of data that can be sent.
                 # {"type:"}'reorder' 'add' 'delete'
-                try:
-                    data = BookshelfReorder(
-                        target_id=data['target_id'],
-                        previous_book_id=data['previous_book_id'],
-                        next_book_id=data['next_book_id'],
-                        contributor_id=current_user.id
-                    )
-                except ValueError as e:
-                    await bookshelf_ws_manager.invalid_data_error(bookshelf_id=bookshelf_id)
-                    continue
+                if data['type'] == 'reorder':
+                    try:
+                        data = BookshelfReorder(
+                            target_id=data['target_id'],
+                            previous_book_id=data['previous_book_id'],
+                            next_book_id=data['next_book_id'],
+                            contributor_id=current_user.id
+                        )
+                    except ValueError as e:
+                        await bookshelf_ws_manager.invalid_data_error(bookshelf_id=bookshelf_id)
+                        continue
+                    
+                    async with bookshelf_ws_manager.locks[bookshelf_id]:
+                        # Lock out the bookshelf on the client while reorder is happening.
+                        await bookshelf_ws_manager.send_data(data={"state": "locked"}, bookshelf_id=bookshelf_id)
+                        # Create task to trun this.
+                        await bookshelf_ws_manager.reorder_books_and_send_updated_data(current_user=current_user, bookshelf_id=bookshelf_id, data=data, bookshelf_repo=bookshelf_repo)
                 
-                async with bookshelf_ws_manager.locks[bookshelf_id]:
-                    # Lock out the bookshelf on the client while reorder is happening.
-                    await bookshelf_ws_manager.send_data(data={"state": "locked"}, bookshelf_id=bookshelf_id)
-                    # Create task to trun this.
-                    await bookshelf_ws_manager.reorder_books_and_send_updated_data(bookshelf_id=bookshelf_id, data=data, bookshelf_repo=bookshelf_repo)
-                        
+                elif data['type'] == 'delete':
+                    try:
+                        data = BookshelfBookRemove(
+                            target_id=data['target_id'],
+                            contributor_id=current_user.id
+                        )
+                    except ValueError as e:
+                        await bookshelf_ws_manager.invalid_data_error(bookshelf_id=bookshelf_id)
+                        continue
+
+                    async with bookshelf_ws_manager.locks[bookshelf_id]:
+                        await bookshelf_ws_manager.send_data(data={"state": "locked"}, bookshelf_id=bookshelf_id)
+
+                        await bookshelf_ws_manager.remove_book_and_send_updated_data(current_user=current_user, bookshelf_id=bookshelf_id, data=data, bookshelf_repo=bookshelf_repo)
+
+                elif data['type'] == 'add':
+                    pass
                 
 
 

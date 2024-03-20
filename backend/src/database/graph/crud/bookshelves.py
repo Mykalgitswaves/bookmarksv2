@@ -87,8 +87,29 @@ class BookshelfCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
         query = (
             """
             MATCH (b:Bookshelf {id: $bookshelf_id})
-            SET b.books = $books
+            SET b.books = $books, b.last_edited_date = datetime()
+            RETURN b.id as id
             """
         )
         result = tx.run(query, books=books, bookshelf_id=bookshelf_id)
-        return result.single()
+        response = result.single()
+        return response is not None
+    
+    def delete_book_from_bookshelf(self, book_to_remove, books, bookshelf_id):
+        with self.driver.session() as session:
+            result = session.write_transaction(self.delete_book_from_bookshelf_query, book_to_remove, books, bookshelf_id)
+        return result
+    
+    @staticmethod
+    def delete_book_from_bookshelf_query(tx, book_to_remove, books, bookshelf_id):
+        query = (
+            """
+            MATCH (b:Bookshelf {id: $bookshelf_id})-[r:CONTAINS_BOOK]->(book:Book {id: $book_to_remove})
+            SET b.books = $books, b.last_edited_date = datetime()
+            DELETE r
+            return b.id
+            """
+        )
+        result = tx.run(query, book_to_remove=book_to_remove, books=books, bookshelf_id=bookshelf_id)
+        response = result.single()
+        return response is not None

@@ -23,6 +23,9 @@ class Config(BaseSettings):
     JWT_MIN_EXPIRE: int
     JWT_SUBJECT: str
 
+    #WEB SOCKET Configs
+    WS_MIN_EXPIRE: int
+
     #Google Books API Key
     GOOGLE_BOOKS_API_KEY: str
 

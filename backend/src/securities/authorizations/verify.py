@@ -5,6 +5,7 @@ from jose import JWTError
 from src.securities.authorizations.jwt import jwt_generator
 from src.config.config import settings
 from src.models.schemas.users import User
+from src.models.schemas.jwt import JWTBookshelfWSUser
 from src.database.graph.crud.users import UserCRUDRepositoryGraph
 from src.api.utils.database import get_repository
 
@@ -35,8 +36,7 @@ async def get_current_active_user(
         raise HTTPException(status_code=400, detail="Inactive user")
     return current_user
 
-async def get_current_active_user_fast(token: Annotated[str, Depends(jwt_generator.oauth2_scheme)], 
-                           user_repo: UserCRUDRepositoryGraph = Depends(get_repository(repo_type=UserCRUDRepositoryGraph))):
+async def get_bookshelf_websocket_user(token: Annotated[str, Depends(jwt_generator.oauth2_scheme)]):
     """
     faster version of get_current_active_user which doesn't check the user's status in the DB.
     """
@@ -46,13 +46,14 @@ async def get_current_active_user_fast(token: Annotated[str, Depends(jwt_generat
         headers={"WWW-Authenticate": "Bearer"},
     )
     try:
-        username = jwt_generator.retrieve_details_from_token(token, secret_key=settings.JWT_SECRET_KEY)
-        if username is None:
+        user_id, bookshelf_id = jwt_generator.retrieve_details_from_bookshelf_ws_token(token, secret_key=settings.JWT_SECRET_KEY)
+        if not user_id or not bookshelf_id:
             raise credentials_exception
         
     except JWTError:
         raise credentials_exception
-    user = user_repo.get_user_by_username(username=username)
-    if user is None:
-        raise credentials_exception
-    return user
+    
+    return JWTBookshelfWSUser(
+        user_id=user_id,
+        bookshelf_id=bookshelf_id
+    )

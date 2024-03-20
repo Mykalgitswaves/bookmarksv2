@@ -10,3 +10,7 @@ class JWToken(pydantic.BaseModel):
 
 class JWTUser(pydantic.BaseModel):
     username: str
+
+class JWTBookshelfWSUser(pydantic.BaseModel):
+    user_id: str
+    bookshelf_id: str

@@ -5,7 +5,7 @@ from jose import jwt as jose_jwt, JWTError as JoseJWTError
 from fastapi.security import OAuth2PasswordBearer
 
 from src.config.config import settings
-from src.models.schemas.jwt import JWToken, JWTUser
+from src.models.schemas.jwt import JWToken, JWTUser, JWTBookshelfWSUser
 from src.models.schemas.users import User
 from src.utils.exceptions.database import EntityDoesNotExist
 
@@ -53,7 +53,47 @@ class JWTGenerator:
             raise ValueError("Invalid payload in token") from validation_error
 
         return jwt_user.username
+    
+    def _generate_bookshelf_websocket_token(
+        self,
+        *,
+        jwt_data: dict[str, str],
+        expires_delta: datetime.timedelta | None = None,
+    ) -> str:
+        to_encode = jwt_data.copy()
 
+        if expires_delta:
+            expire = datetime.datetime.now(datetime.timezone.utc) + expires_delta
+
+        else:
+            expire =  datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(minutes=settings.WS_MIN_EXPIRE)
+
+        to_encode.update(JWToken(exp=expire, sub=settings.WS_SUBJECT).dict())
+
+        return jose_jwt.encode(to_encode, key=settings.WS_SECRET_KEY, algorithm=settings.WS_ALGORITHM)
+
+    def generate_bookshelf_websocket_token(self, user_id: str, bookshelf_id: str) -> str:
+        if not user_id or not bookshelf_id:
+            raise EntityDoesNotExist(f"Cannot generate JWT token for WS without User or bookshelf entity!")
+
+        return self._generate_bookshelf_websocket_token(
+            jwt_data=JWTBookshelfWSUser(user_id=user_id,
+                                        bookshelf_id=bookshelf_id).dict(),  # type: ignore
+            expires_delta=datetime.timedelta(minutes=settings.WS_MIN_EXPIRE),
+        )
+
+    def retrieve_details_from_bookshelf_ws_token(self, token: str, secret_key: str) -> str:
+        try:
+            payload = jose_jwt.decode(token=token, key=secret_key, algorithms=[settings.JWT_ALGORITHM])
+            ws_user = JWTBookshelfWSUser(user_id=payload["user_id"], bookshelf_id=payload["bookshelf_id"])
+
+        except JoseJWTError as token_decode_error:
+            raise ValueError("Unable to decode JWT Token") from token_decode_error
+
+        except pydantic.ValidationError as validation_error:
+            raise ValueError("Invalid payload in token") from validation_error
+
+        return ws_user.user_id, ws_user.bookshelf_id
 
 def get_jwt_generator() -> JWTGenerator:
     return JWTGenerator()
