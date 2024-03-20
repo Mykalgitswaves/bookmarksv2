@@ -100,6 +100,7 @@ import IconPlus from '../svg/icon-plus.vue'
 import IconExit from '../svg/icon-exit.vue';
 import IconFilter from '../svg/icon-filter.vue';
 import { navigate } from './createPostService';
+
 const toggleCreateReviewType = ref(false);
 const selectDropdown = ref(false);
 const bookData = ref(null);
