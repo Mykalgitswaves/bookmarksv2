@@ -36,22 +36,44 @@ async def get_current_active_user(
         raise HTTPException(status_code=400, detail="Inactive user")
     return current_user
 
+async def get_current_user_no_exceptions(token: Annotated[str, Depends(jwt_generator.oauth2_scheme)], 
+                           user_repo: UserCRUDRepositoryGraph = Depends(get_repository(repo_type=UserCRUDRepositoryGraph))):
+    """
+    Same as get_current_user but doesn't raise an exception if the user is inactive.
+    """
+    try:
+        username = jwt_generator.retrieve_details_from_token(token, secret_key=settings.JWT_SECRET_KEY)
+        if username is None:
+            return
+        
+    except JWTError:
+        return
+    user = user_repo.get_user_by_username(username=username)
+    if user is None:
+        return
+    return user
+
+async def get_current_active_user_no_exceptions(
+    current_user: Annotated[User, Depends(get_current_user_no_exceptions)]
+):
+    """
+    Same as get_current_active_user but doesn't raise an exception if the user is inactive.
+    """
+    if current_user.disabled:
+        return
+    return current_user
+
 async def get_bookshelf_websocket_user(token: Annotated[str, Depends(jwt_generator.oauth2_scheme)]):
     """
-    faster version of get_current_active_user which doesn't check the user's status in the DB.
+    Specific for verifying the websocket token for bookshelves.
     """
-    credentials_exception = HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Could not validate credentials",
-        headers={"WWW-Authenticate": "Bearer"},
-    )
     try:
         user_id, bookshelf_id = jwt_generator.retrieve_details_from_bookshelf_ws_token(token, secret_key=settings.JWT_SECRET_KEY)
         if not user_id or not bookshelf_id:
-            raise credentials_exception
+            return
         
     except JWTError:
-        raise credentials_exception
+        return 
     
     return JWTBookshelfWSUser(
         user_id=user_id,

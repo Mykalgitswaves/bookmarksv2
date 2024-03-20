@@ -32,6 +32,10 @@ class BookshelfCreate(BaseModel):
     #         return v.to_native()
     #     return v
 
+class BookshelfTaskRoute(BaseModel):
+    type: Literal["reorder", "add", "delete"]
+    token: str
+
 class BookshelfReorder(BaseModel):
     target_id: str
     previous_book_id: str | None

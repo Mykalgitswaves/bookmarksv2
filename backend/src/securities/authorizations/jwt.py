@@ -87,11 +87,11 @@ class JWTGenerator:
             payload = jose_jwt.decode(token=token, key=secret_key, algorithms=[settings.JWT_ALGORITHM])
             ws_user = JWTBookshelfWSUser(user_id=payload["user_id"], bookshelf_id=payload["bookshelf_id"])
 
-        except JoseJWTError as token_decode_error:
-            raise ValueError("Unable to decode JWT Token") from token_decode_error
+        except JoseJWTError:
+            return
 
-        except pydantic.ValidationError as validation_error:
-            raise ValueError("Invalid payload in token") from validation_error
+        except pydantic.ValidationError:
+            return
 
         return ws_user.user_id, ws_user.bookshelf_id
 

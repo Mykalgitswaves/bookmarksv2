@@ -6,19 +6,28 @@ from fastapi import (
     Request, 
     WebSocket, 
     WebSocketException,
-    WebSocketDisconnect
+    WebSocketDisconnect,
+    status
 )
 from fastapi.encoders import jsonable_encoder
 from fastapi.responses import JSONResponse
 from typing import Annotated
 
-from src.securities.authorizations.verify import get_current_active_user, get_bookshelf_websocket_user
+from src.securities.authorizations.verify import get_current_active_user, get_bookshelf_websocket_user, get_current_active_user_no_exceptions
 from src.api.utils.database import get_repository
 
 from src.models.schemas.users import UserInResponse, User
 from src.database.graph.crud.bookshelves import BookshelfCRUDRepositoryGraph
 from src.database.graph.crud.users import UserCRUDRepositoryGraph
-from src.models.schemas.bookshelves import BookshelfCreate, BookshelfResponse, BookshelfId, BookshelfReorder, BookshelfBookRemove, BookshelfBookAdd
+from src.models.schemas.bookshelves import (
+    BookshelfCreate, 
+    BookshelfResponse, 
+    BookshelfId, 
+    BookshelfReorder, 
+    BookshelfBookRemove, 
+    BookshelfBookAdd, 
+    BookshelfTaskRoute
+)
 from src.api.websockets.bookshelves import bookshelf_ws_manager
 
 router = fastapi.APIRouter(prefix="/bookshelves", tags=["bookshelves"])
@@ -145,13 +154,42 @@ async def remove_item_from_list(request: Request,
 @router.websocket('/ws/{bookshelf_id}') # This is changing to /api/bookshelf/ws/{bookshelf_id}
 async def bookshelf_connection(websocket: WebSocket, 
                                bookshelf_id: str,
-                               current_user: Annotated[User, Depends(get_bookshelf_websocket_user)],
+                               current_user: Annotated[User, Depends(get_current_active_user_no_exceptions)],
                                bookshelf_repo: BookshelfCRUDRepositoryGraph = Depends(get_repository(repo_type=BookshelfCRUDRepositoryGraph))):
+        # This is responsible for the initial connection to the websocket.
+        if not current_user:
+            await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
+            return
+        
+        if bookshelf_id not in bookshelf_ws_manager.cache:
+        # THIS NEEDS TO REDIRECT TO THE /api/bookshelves/{bookshelf_id} endpoint
+            await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
+            return
+        
+        if current_user.id not in bookshelf_ws_manager.cache[bookshelf_id].contributors:
+            await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
+            return
+        
         await websocket.accept()
-        await bookshelf_ws_manager.connect(bookshelf_id, websocket)
+        await bookshelf_ws_manager.connect(bookshelf_id, current_user.id, websocket)
+        
         try:
             while True and bookshelf_id in bookshelf_ws_manager.cache: #CAN THE TRUE BE REMOVED?
                 data = await websocket.receive_json()
+
+                try:
+                    task = BookshelfTaskRoute(
+                        type = data['type'],
+                        token=data['token']
+                    )
+                except ValueError as e:
+                    await bookshelf_ws_manager.invalid_data_error(bookshelf_id=bookshelf_id)
+                    continue
+
+                current_user = get_bookshelf_websocket_user(token=task.token)
+                if not current_user:
+                    bookshelf_ws_manager.disconnect(bookshelf_id, websocket)
+                    continue
                 # We will distinguish between the types of data that can be sent.
                 # {"type:"}'reorder' 'add' 'delete'
                 if data['type'] == 'reorder':
@@ -202,7 +240,6 @@ async def bookshelf_connection(websocket: WebSocket,
 
                         await bookshelf_ws_manager.add_book_and_send_updated_data(current_user=current_user, bookshelf_id=bookshelf_id, data=data, bookshelf_repo=bookshelf_repo)
                 
-
-
         except WebSocketDisconnect:
             await bookshelf_ws_manager.disconnect(bookshelf_id, websocket)
+    

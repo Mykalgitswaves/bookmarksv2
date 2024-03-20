@@ -1,7 +1,8 @@
 import asyncio
-from fastapi import WebSocket
+from fastapi import WebSocket, HTTPException
 from fastapi.encoders import jsonable_encoder
 from src.database.graph.crud.bookshelves import BookshelfCRUDRepositoryGraph
+from src.securities.authorizations.jwt import jwt_generator
 from src.models.schemas.bookshelves import BookshelfPayload
 
 class BookshelfWSManager:
@@ -15,22 +16,34 @@ class BookshelfWSManager:
         }
 
         
-    async def connect(self, bookshelf_id: str, ws: WebSocket):
+    async def connect(self, bookshelf_id: str, user_id: str, ws: WebSocket):
         if bookshelf_id not in self.ac:
             self.ac[bookshelf_id] = set()
+
         self.ac[bookshelf_id].add(ws)
-        self.locks[bookshelf_id] = asyncio.Lock()
-        if bookshelf_id in self.cache:
-            books = jsonable_encoder(self.cache[bookshelf_id].get_books())
-            print('inside of reorder books and send data dude')
-            await self.send_data(data={
-                "state": "unlocked", "data": books }, bookshelf_id=bookshelf_id)
-        else:
-            # This should redirect back to the get endpoint for the bookshelf
-            pass
+        
+        if bookshelf_id not in self.locks:
+            self.locks[bookshelf_id] = asyncio.Lock()
+
+        books = jsonable_encoder(self.cache[bookshelf_id].get_books())
+
+        print('New User Established Connection to Bookshelf WS. Generating unique token...')
+        token = jwt_generator.generate_bookshelf_websocket_token(user_id=user_id, bookshelf_id=bookshelf_id)
+
+        # SHOULD THIS BE A SEND JSON INSTEAD? NO NEED TO SEND A MESSAGE TO THE ENTIRE GROUP
+        # await self.send_data(data={
+        #     "state": "unlocked", "data": books }, bookshelf_id=bookshelf_id)
+        await ws.send_json(data={
+            "state": "unlocked", "data": books, "token":token}, bookshelf_id=bookshelf_id)
+        
 
     async def disconnect(self, bookshelf_id: str, ws: WebSocket):
         self.ac[bookshelf_id].remove(ws)
+        if not self.ac[bookshelf_id]:
+            del self.ac[bookshelf_id]
+            del self.locks[bookshelf_id]
+            del self.cache[bookshelf_id]
+        ws.close()
             
         # if self.cache[bookshelf_id]: 
         #     # If cache exists and there is no one else in the pool 
