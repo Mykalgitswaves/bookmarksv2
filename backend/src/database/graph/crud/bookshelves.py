@@ -4,7 +4,7 @@ from src.models.schemas.bookshelves import Bookshelf
 class BookshelfCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
     def get_bookshelf(self, bookshelf_id):
         with self.driver.session() as session:
-            result = session.write_transaction(self.get_bookshelf_query, bookshelf_id)
+            result = session.read_transaction(self.get_bookshelf_query, bookshelf_id)
         return result
     
     @staticmethod
@@ -76,6 +76,26 @@ class BookshelfCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
                         created_by=bookshelf.created_by,
                         visibility=bookshelf.visibility)
         return result.single()["id"]
+    
+    def create_book_in_bookshelf_rel(self, book_to_add, books, bookshelf_id, user_id):
+        with self.driver.session() as session:
+            result = session.write_transaction(self.create_book_in_bookshelf_rel_query, book_to_add, books, bookshelf_id, user_id)
+        return result
+    
+    @staticmethod
+    def create_book_in_bookshelf_rel_query(tx, book_to_add, books, bookshelf_id, user_id):
+        query = (
+            """
+            MATCH (b:Bookshelf {id: $bookshelf_id})
+            MATCH (book:Book {id: $book_to_add})
+            SET b.books = $books, b.last_edited_date = datetime()
+            MERGE (b)-[:CONTAINS_BOOK {create_date: datetime(), added_by_id: $user_id}]->(book)
+            return b.id
+            """
+        )
+        result = tx.run(query, book_to_add=book_to_add, books=books, bookshelf_id=bookshelf_id, user_id=user_id)
+        response = result.single()
+        return response is not None
     
     def update_books_in_bookshelf(self, books, bookshelf_id):
         with self.driver.session() as session:

@@ -42,6 +42,10 @@ class BookshelfBookRemove(BaseModel):
     target_id: str
     contributor_id: str
 
+class BookshelfBookAdd(BaseModel):
+    target_id: str
+    contributor_id: str
+
 class BookshelfBook(BaseModel):
     id: str
     order: int

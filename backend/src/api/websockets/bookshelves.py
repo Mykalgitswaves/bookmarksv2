@@ -95,11 +95,42 @@ class BookshelfWSManager:
             )
             return
         
-        _bookshelf.remove_book(data.book_id)
+        _bookshelf.remove_book(data.book_id, data.contributor_id)
 
         books = jsonable_encoder(_bookshelf.get_books())
 
         response = bookshelf_repo.delete_book_from_bookshelf(book_to_remove=data.book_id, books=books, bookshelf_id=bookshelf_id)
+
+        if response:
+            await self.send_data(bookshelf_id=bookshelf_id, data={
+                "state": "unlocked", "data": books })
+        else:
+            await self.send_data(data={
+                "state": "error", 
+                "data": self.errors['FAILED_TO_REORDER']
+            }, bookshelf_id=bookshelf_id)
+
+    async def add_book_and_send_updated_data(self, current_user, bookshelf_id, data, bookshelf_repo:BookshelfCRUDRepositoryGraph):
+        _bookshelf = self.cache[bookshelf_id]
+        if current_user.bookshelf_id != bookshelf_id:
+            await self.send_data(data={"state": "error", 
+                "data": self.errors['INVALID_AUTHOR_PERMISSION'] },
+                bookshelf_id=bookshelf_id
+            )
+            return
+        
+        if current_user.id not in _bookshelf.contributors:
+            await self.send_data(data={"state": "error", 
+                "data": self.errors['INVALID_AUTHOR_PERMISSION'] },
+                bookshelf_id=bookshelf_id
+            )
+            return
+        
+        _bookshelf.add_book_to_shelf(data.book_id, data.contributor_id)
+
+        books = jsonable_encoder(_bookshelf.get_books())
+
+        response = bookshelf_repo.create_book_in_bookshelf_rel(book_to_add=data.book_id, books=books, bookshelf_id=bookshelf_id, user_id=current_user.id)
 
         if response:
             await self.send_data(bookshelf_id=bookshelf_id, data={

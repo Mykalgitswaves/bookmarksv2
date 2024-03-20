@@ -18,7 +18,7 @@ from src.api.utils.database import get_repository
 from src.models.schemas.users import UserInResponse, User
 from src.database.graph.crud.bookshelves import BookshelfCRUDRepositoryGraph
 from src.database.graph.crud.users import UserCRUDRepositoryGraph
-from src.models.schemas.bookshelves import BookshelfCreate, BookshelfResponse, BookshelfId, BookshelfReorder, BookshelfBookRemove
+from src.models.schemas.bookshelves import BookshelfCreate, BookshelfResponse, BookshelfId, BookshelfReorder, BookshelfBookRemove, BookshelfBookAdd
 from src.api.websockets.bookshelves import bookshelf_ws_manager
 
 router = fastapi.APIRouter(prefix="/bookshelves", tags=["bookshelves"])
@@ -188,7 +188,19 @@ async def bookshelf_connection(websocket: WebSocket,
                         await bookshelf_ws_manager.remove_book_and_send_updated_data(current_user=current_user, bookshelf_id=bookshelf_id, data=data, bookshelf_repo=bookshelf_repo)
 
                 elif data['type'] == 'add':
-                    pass
+                    try:
+                        data = BookshelfBookAdd(
+                            target_id=data['target_id'],
+                            contributor_id=current_user.id
+                        )
+                    except ValueError as e:
+                        await bookshelf_ws_manager.invalid_data_error(bookshelf_id=bookshelf_id)
+                        continue
+
+                    async with bookshelf_ws_manager.locks[bookshelf_id]:
+                        await bookshelf_ws_manager.send_data(data={"state": "locked"}, bookshelf_id=bookshelf_id)
+
+                        await bookshelf_ws_manager.add_book_and_send_updated_data(current_user=current_user, bookshelf_id=bookshelf_id, data=data, bookshelf_repo=bookshelf_repo)
                 
 
 
