@@ -41,7 +41,7 @@ export const urls = {
         getReviews: (user_id) => (baseUrl +`api/${user_id}/posts`),
         getComparisons: (user_id) => (baseUrl + `api/${user_id}/comparisons`),
         // getting post data including initial comments on click of comment btn
-        getPost: (user_id, id) => (baseUrl + `api/${user_id}/posts/${id}/post`),
+        getPost: (post_id) => (baseUrl + `api/posts/post/${post_id}`),
         likePost: (post_id) => (baseUrl + `api/review/${post_id}/like`),
         unlikePost: (post_id) => (baseUrl + `api/review/${post_id}/remove_like`),
         likeComparison: (comparison_id, user_id) => (baseUrl + `api/${user_id}/like/comparisons/${comparison_id}`),
@@ -50,7 +50,7 @@ export const urls = {
         unlikeComment: (comment_id) => (baseUrl + `api/review/${comment_id}/remove_like`),
         pinComment: (comment_id, post_id) => (baseUrl + `api/review/${comment_id}/pin/${post_id}`),
         unpinComment: (comment_id, post_id) => (baseUrl + `api/review/post/${post_id}/comment/${comment_id}/remove_pin`),
-        getComments: (post_id) =>(baseUrl + `api/review/${post_id}/comments`),
+        getComments: (post_id) =>(baseUrl + `api/posts/post/${post_id}/comments`),
         // calling more comments (duh)
         getMoreComments: (comment_id) => (baseUrl + `api/review/comments/${comment_id}/replies`),
         getFeed: () => (baseUrl + `api/posts`),

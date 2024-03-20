@@ -694,8 +694,7 @@ class PostCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
                                          title = response['b.title'],
                                         small_img_url = response['b.small_img_url']))
                 
-
-            output = ComparisonPost(post_id=post["id"],
+            output = ComparisonPost(id=post['id'],
                             compared_books=books,
                             user_username=response["pu.username"],
                             comparators=post['comparators'],
