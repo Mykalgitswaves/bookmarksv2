@@ -43,25 +43,20 @@ async def get_current_user_no_exceptions(token: Annotated[str, Depends(jwt_gener
     """
     try:
         username = jwt_generator.retrieve_details_from_token(token, secret_key=settings.JWT_SECRET_KEY)
+        
         if username is None:
             return
         
     except JWTError:
         return
     user = user_repo.get_user_by_username(username=username)
+
     if user is None:
         return
-    return user
-
-async def get_current_active_user_no_exceptions(
-    current_user: Annotated[User, Depends(get_current_user_no_exceptions)]
-):
-    """
-    Same as get_current_active_user but doesn't raise an exception if the user is inactive.
-    """
-    if current_user.disabled:
+    
+    if user.disabled:
         return
-    return current_user
+    return user
 
 async def get_bookshelf_websocket_user(token: Annotated[str, Depends(jwt_generator.oauth2_scheme)]):
     """

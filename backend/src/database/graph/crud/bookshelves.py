@@ -1,5 +1,5 @@
 from src.database.graph.crud.base import BaseCRUDRepositoryGraph
-from src.models.schemas.bookshelves import Bookshelf
+from src.models.schemas.bookshelves import Bookshelf, BookshelfPage
 
 class BookshelfCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
     def get_bookshelf(self, bookshelf_id):
@@ -35,7 +35,7 @@ class BookshelfCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
             elif record["access"]["type"] == "member":
                 members.add(record["user"]["id"])
         
-        bookshelf = Bookshelf(
+        bookshelf = BookshelfPage(
             id=record["id"],
             title=record["title"],
             description=record["description"],

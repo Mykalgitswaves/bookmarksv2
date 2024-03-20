@@ -33,7 +33,7 @@ class BookshelfWSManager:
         # await self.send_data(data={
         #     "state": "unlocked", "data": books }, bookshelf_id=bookshelf_id)
         await ws.send_json(data={
-            "state": "unlocked", "data": books, "token":token}, bookshelf_id=bookshelf_id)
+            "state": "unlocked", "data": books, "token":token})
         
 
     async def disconnect(self, bookshelf_id: str, ws: WebSocket):

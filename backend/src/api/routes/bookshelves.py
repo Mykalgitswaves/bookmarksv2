@@ -14,7 +14,7 @@ from fastapi.encoders import jsonable_encoder
 from fastapi.responses import JSONResponse
 from typing import Annotated
 
-from src.securities.authorizations.verify import get_current_active_user, get_bookshelf_websocket_user, get_current_active_user_no_exceptions
+from src.securities.authorizations.verify import get_current_active_user, get_bookshelf_websocket_user, get_current_user_no_exceptions
 from src.api.utils.database import get_repository
 
 from src.models.schemas.users import UserInResponse, User
@@ -27,7 +27,8 @@ from src.models.schemas.bookshelves import (
     BookshelfReorder, 
     BookshelfBookRemove, 
     BookshelfBookAdd, 
-    BookshelfTaskRoute
+    BookshelfTaskRoute,
+    Bookshelf
 )
 from src.api.websockets.bookshelves import bookshelf_ws_manager
 
@@ -85,7 +86,21 @@ async def get_bookshelf(bookshelf_id: str,
                     raise HTTPException(status_code=403, detail="User is not authorized to view friends only bookshelf")
         else:
             if bookshelf_id not in bookshelf_ws_manager.cache:
-                bookshelf_ws_manager.cache[bookshelf_id] = _bookshelf
+                _bookshelf_dll = Bookshelf(
+                    title=_bookshelf.title,
+                    description=_bookshelf.description,
+                    created_by=_bookshelf.created_by,
+                    id=_bookshelf.id,
+                    img_url=_bookshelf.img_url,
+                    members=_bookshelf.members,
+                    followers=_bookshelf.followers,
+                    contributors=_bookshelf.contributors,
+                    visibility=_bookshelf.visibility
+                )
+                for book in _bookshelf.books:
+                    _bookshelf_dll.add_book_to_shelf(book, current_user.id)
+
+                bookshelf_ws_manager.cache[bookshelf_id] = _bookshelf_dll
 
         # Set this in the cache for websocket.
 
@@ -166,24 +181,31 @@ async def remove_item_from_list(request: Request,
         # In this case, we update the order of the book on the db side. 
         bookshelf_repo.remove_book_advanced(book_to_remove=data.book_id, books=books, bookshelf_id=bookshelf_id)
 
-@router.websocket('/ws/{bookshelf_id}') # This is changing to /api/bookshelf/ws/{bookshelf_id}
+@router.websocket('/ws/{bookshelf_id}') # This is changing to /api/bookshelves/ws/{bookshelf_id}
 async def bookshelf_connection(websocket: WebSocket, 
                                bookshelf_id: str,
                                token: str = Query(...),
-                               bookshelf_repo: BookshelfCRUDRepositoryGraph = Depends(get_repository(repo_type=BookshelfCRUDRepositoryGraph))):
-        
-    current_user = get_current_active_user_no_exceptions(token=token)
-    # This is responsible for the initial connection to the websocket.
-    if not current_user:
+                               bookshelf_repo: BookshelfCRUDRepositoryGraph = Depends(get_repository(repo_type=BookshelfCRUDRepositoryGraph)),
+                               user_repo: UserCRUDRepositoryGraph = Depends(get_repository(repo_type=UserCRUDRepositoryGraph))):
+    print("entered bookshelf_connection")
+    try:
+        current_user = await get_current_user_no_exceptions(token=token, user_repo=user_repo)
+    except:
         await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
         return
-    
+    # This is responsible for the initial connection to the websocket.
+    if not current_user:
+        print("user missing")
+        await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
+        return
     if bookshelf_id not in bookshelf_ws_manager.cache:
+        print("bookshelf missing")
     # THIS NEEDS TO REDIRECT TO THE /api/bookshelves/{bookshelf_id} endpoint
         await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
         return
     
     if current_user.id not in bookshelf_ws_manager.cache[bookshelf_id].contributors:
+        print("user not in contributors")
         await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
         return
     
