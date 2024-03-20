@@ -3,18 +3,16 @@
     <transition-group tag="div" name="content">
         <div v-if="postType === 'ComparisonPost'" class="center-cards">
             <ComparisonPost 
-              :book="p.book"
-              :small_img_url="p.book_small_img"
-              :headlines="p.book_specific_headlines"
-              :book_title="p.book_title"
-              :comparisons="p.responses"
-              :comparators="p.comparators"
-              :comparator_ids="p.comparators"
-              :created_at="p.created_date"
-              :id="p.id"
-              :username="p.user_username"
-              :num_replies="p.num_replies"
-              :likes="p.likes"
+                :bookBlobs="p.compared_books"
+                :headlines="p.book_specific_headlines"
+                :comparisons="p.responses"
+                :comparators="p.comparators"
+                :createdDate="p.created_date"
+                :user_id="p.user_id"
+                :id="p.id"
+                :username="p.user_username"
+                :num_replies="p.num_replies"
+                :likes="p.likes"
             />
           </div>
 
@@ -98,6 +96,7 @@ import Comments from './posts/comments.vue';
 import ComparisonPost from './posts/comparisonPost.vue';
 import UpdatePost from './posts/updatePost.vue';
 import ReviewPost from './posts/ReviewPost.vue';
+import { componentMapping } from './createPostService';
 
 // Grab data from and put into a new object so we dont need to load post again
 
@@ -119,16 +118,25 @@ const { user, post } = route.params;
 const uuid = ref('');
 
 async function get_post_and_comments() {
-    await db.get(urls.reviews.getPost(user, post)).then((res) => {
-        p.value = res.data.post;
-        postType.value = res.data.post_type;
-        op_user_uuid.value = res.data.op_user_id
+    console.log(post);
+
+    await db.get(urls.reviews.getPost(post)).then((res) => {
+        if(res.data === null || undefined){
+            return;
+        }
+        p.value = res.data?.post;
+        postType.value = res.data?.post_type;
+        op_user_uuid.value = res.data?.op_user_id
     });
     
     await db.get(urls.reviews.getComments(post), request, true).then((res) => {
-        comments.value = res.data.comments
-        pinnedComments.value = res.data.pinned_comments
-        uuid.value = res.data.uuid
+        if(res.data === null || undefined){
+            return;
+        }
+
+        comments.value = res.data?.comments
+        pinnedComments.value = res.data?.pinned_comments
+        uuid.value = res.data?.uuid
     });
 };
 
@@ -170,3 +178,16 @@ const placeholders = [
 const randomPlaceholderIndex = Math.floor(Math.random() * (placeholders.length - 1) + 1);
 
 </script>
+
+
+bookBlobs
+headlines
+comparisons
+comparators
+createdDate
+username
+id
+isIronic
+isAiGeneratedHeadlines
+user_id
+like
