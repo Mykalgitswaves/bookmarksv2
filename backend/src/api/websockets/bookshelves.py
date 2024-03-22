@@ -24,7 +24,7 @@ class BookshelfWSManager:
         if bookshelf_id not in self.locks:
             self.locks[bookshelf_id] = asyncio.Lock()
 
-        books = jsonable_encoder(self.cache[bookshelf_id].get_books())
+        books, book_ids = jsonable_encoder(self.cache[bookshelf_id].get_books())
 
         print('New User Established Connection to Bookshelf WS. Generating unique token...')
         token = jwt_generator.generate_bookshelf_websocket_token(user_id=user_id, bookshelf_id=bookshelf_id)
@@ -42,7 +42,7 @@ class BookshelfWSManager:
             del self.ac[bookshelf_id]
             del self.locks[bookshelf_id]
             del self.cache[bookshelf_id]
-        ws.close()
+        await ws.close()
             
         # if self.cache[bookshelf_id]: 
         #     # If cache exists and there is no one else in the pool 
@@ -73,23 +73,23 @@ class BookshelfWSManager:
             )
             return
 
-        try:
-            _bookshelf.reorder_book(**data.dict())
-            books = jsonable_encoder(_bookshelf.get_books())
-            response = bookshelf_repo.update_books_in_bookshelf(books=books, bookshelf_id=bookshelf_id)
+        # try:
+        _bookshelf.reorder_book(**data.dict())
+        books, book_ids = jsonable_encoder(_bookshelf.get_books())
+        response = bookshelf_repo.update_books_in_bookshelf(books=book_ids, bookshelf_id=bookshelf_id)
 
-            if response:
-                await self.send_data(data={
-                    "state": "unlocked", "data": books }, bookshelf_id=bookshelf_id)
-            else:
-                await self.send_data(data={ "state": "error", 
-                    "data": self.errors['FAILED_TO_REORDER'] }, bookshelf_id=bookshelf_id)
-                
-        except:
+        if response:
             await self.send_data(data={
-                "state": "error", 
-                "data": self.errors['FAILED_TO_REORDER']
-            }, bookshelf_id=bookshelf_id)
+                "state": "unlocked", "data": books }, bookshelf_id=bookshelf_id)
+        else:
+            await self.send_data(data={ "state": "error", 
+                "data": self.errors['FAILED_TO_REORDER'] }, bookshelf_id=bookshelf_id)
+                
+        # except:
+        #     await self.send_data(data={
+        #         "state": "error", 
+        #         "data": self.errors['FAILED_TO_REORDER']
+        #     }, bookshelf_id=bookshelf_id)
 
     async def remove_book_and_send_updated_data(self, current_user, bookshelf_id, data, bookshelf_repo:BookshelfCRUDRepositoryGraph):
         _bookshelf = self.cache[bookshelf_id]
@@ -109,9 +109,9 @@ class BookshelfWSManager:
         
         _bookshelf.remove_book(data.book_id, data.contributor_id)
 
-        books = jsonable_encoder(_bookshelf.get_books())
+        books, book_ids = jsonable_encoder(_bookshelf.get_books())
 
-        response = bookshelf_repo.delete_book_from_bookshelf(book_to_remove=data.book_id, books=books, bookshelf_id=bookshelf_id)
+        response = bookshelf_repo.delete_book_from_bookshelf(book_to_remove=data.book_id, books=book_ids, bookshelf_id=bookshelf_id)
 
         if response:
             await self.send_data(bookshelf_id=bookshelf_id, data={
@@ -138,15 +138,16 @@ class BookshelfWSManager:
             )
             return
         
-        _bookshelf.add_book_to_shelf(data.book_id, data.contributor_id)
-
-        books = jsonable_encoder(_bookshelf.get_books())
-
-        response = bookshelf_repo.create_book_in_bookshelf_rel(book_to_add=data.book_id, books=books, bookshelf_id=bookshelf_id, user_id=current_user.id)
-
+        response = bookshelf_repo.create_book_in_bookshelf_rel(book_to_add=data.book.id,bookshelf_id=bookshelf_id, user_id=current_user.id)
+        
         if response:
+            _bookshelf.add_book_to_shelf(data.book, data.contributor_id)
+
+            books, book_ids = jsonable_encoder(_bookshelf.get_books())
+
             await self.send_data(bookshelf_id=bookshelf_id, data={
                 "state": "unlocked", "data": books })
+            
         else:
             await self.send_data(data={
                 "state": "error", 

@@ -77,15 +77,15 @@ class JWTGenerator:
             raise EntityDoesNotExist(f"Cannot generate JWT token for WS without User or bookshelf entity!")
 
         return self._generate_bookshelf_websocket_token(
-            jwt_data=JWTBookshelfWSUser(user_id=user_id,
+            jwt_data=JWTBookshelfWSUser(id=user_id,
                                         bookshelf_id=bookshelf_id).dict(),  # type: ignore
             expires_delta=datetime.timedelta(minutes=settings.WS_MIN_EXPIRE),
         )
 
     def retrieve_details_from_bookshelf_ws_token(self, token: str, secret_key: str) -> str:
         try:
-            payload = jose_jwt.decode(token=token, key=secret_key, algorithms=[settings.JWT_ALGORITHM])
-            ws_user = JWTBookshelfWSUser(user_id=payload["user_id"], bookshelf_id=payload["bookshelf_id"])
+            payload = jose_jwt.decode(token=token, key=secret_key, algorithms=[settings.WS_ALGORITHM])
+            ws_user = JWTBookshelfWSUser(id=payload["id"], bookshelf_id=payload["bookshelf_id"])
 
         except JoseJWTError:
             return
@@ -93,7 +93,7 @@ class JWTGenerator:
         except pydantic.ValidationError:
             return
 
-        return ws_user.user_id, ws_user.bookshelf_id
+        return ws_user.id, ws_user.bookshelf_id
 
 def get_jwt_generator() -> JWTGenerator:
     return JWTGenerator()

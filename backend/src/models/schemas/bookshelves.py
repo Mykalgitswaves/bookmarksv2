@@ -43,19 +43,19 @@ class BookshelfReorder(BaseModel):
     contributor_id: str
 
 class BookshelfBookRemove(BaseModel):
-    target_id: str
+    book_id: str
     contributor_id: str
 
 class BookshelfBookAdd(BaseModel):
-    target_id: str
+    book: Any
     contributor_id: str
 
 class BookshelfBook(BaseModel):
     id: str
-    order: int
-    bookTitle: str
-    author: str
-    imgUrl: str | None
+    order: int | None = None
+    title: str
+    authors: list[str] | None = None
+    small_img_url: str | None
 
 class Node:
     def __init__(self, book):
@@ -108,6 +108,7 @@ class DoublyLinkedList:
         # Deletion for one book!
         if n.book.id == book_id and n.next == None:
             self.start_node = None
+            return
 
         # This only works when there is more than one book in shelf
         elif n.book.id == book_id and n.next != None:
@@ -199,14 +200,10 @@ class DoublyLinkedList:
             raise BookNotInShelf
         
         # If the node is already at the end of the list
+        # Detach the node from its current position
         if not current.next:
             return
-        
-        # Detach the node from its current position
-        if current.prev:
-            current.prev.next = current.next
-
-        if current.next:
+        else:
             current.next.prev = current.prev
         
         # Find the node with the previous book ID
@@ -216,6 +213,11 @@ class DoublyLinkedList:
                 prev_node = prev_node.next
             else:
                 break
+
+        if current.prev:
+            current.prev.next = current.next
+        else:
+            self.start_node = current.next
         
         if not prev_node:
             print('prev node not found')
@@ -315,14 +317,16 @@ class DoublyLinkedList:
 
     def to_array(self) -> list:
         books = []
+        book_ids = []
         current = self.start_node
         index = 0
         while current:
             current.book.order = index
             books.append(current.book)
+            book_ids.append(current.book.id)
             index += 1
             current = current.next
-        return books
+        return books, book_ids
 
 class BookshelfQueue(BaseModel):
     instructions: List[dict] = []

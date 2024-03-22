@@ -6,6 +6,7 @@ from src.database.graph.crud.authors import AuthorCRUDRepositoryGraph
 
 from src.database.graph.base import graph_db
 from src.models.schemas.books import Book, BookSearchResult, BookSimilar, BookPreview, BookUpdate
+from src.models.schemas.bookshelves import BookshelfBook
 
 class BookCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
     def get_book_by_id(self,book_id):
@@ -235,6 +236,33 @@ class BookCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
         response = result.single()
         if response:
             return (BookPreview(**response))
+        else:
+            return None
+        
+    def get_canonical_book_by_google_id_extended(self,google_id):
+        """
+        Uses the google id to find the id, title, authors, and small_img_url in our db TODO: Same Coalese with canonical
+        """
+        with self.driver.session() as session:
+            book = session.execute_read(self.get_canonical_book_by_google_id_extended_query, google_id)
+        return(book)
+    
+    @staticmethod
+    def get_canonical_book_by_google_id_extended_query(tx,google_id):
+        query = """
+                match (book:Book)
+                WHERE book.google_id = $google_id or book.id = $google_id
+                OPTIONAL MATCH (canonical:Book)-[:HAS_VERSION]->(book)
+                WITH COALESCE(canonical, book) AS b
+                return b.id as id, 
+                b.title as title,
+                b.author_names as authors,
+                b.small_img_url as small_img_url
+                """
+        result = tx.run(query, google_id=google_id)
+        response = result.single()
+        if response:
+            return (BookshelfBook(**response))
         else:
             return None
         

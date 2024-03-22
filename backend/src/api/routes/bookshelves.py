@@ -19,6 +19,7 @@ from src.api.utils.database import get_repository
 
 from src.models.schemas.users import UserInResponse, User
 from src.database.graph.crud.bookshelves import BookshelfCRUDRepositoryGraph
+from src.database.graph.crud.books import BookCRUDRepositoryGraph
 from src.database.graph.crud.users import UserCRUDRepositoryGraph
 from src.models.schemas.bookshelves import (
     BookshelfCreate, 
@@ -28,7 +29,8 @@ from src.models.schemas.bookshelves import (
     BookshelfBookRemove, 
     BookshelfBookAdd, 
     BookshelfTaskRoute,
-    Bookshelf
+    Bookshelf,
+    BookshelfBook
 )
 from src.api.websockets.bookshelves import bookshelf_ws_manager
 
@@ -133,60 +135,14 @@ async def delete_bookshelf(bookshelf_id: str,
     else:
         raise HTTPException(status_code=400, detail="Failed to delete bookshelf")
 
-@router.put("/{bookshelf_id}/remove_book",
-            name="bookshelf:remove_item")
-async def remove_item_from_list(request: Request, 
-                                bookshelf_id: str,
-                                current_user: Annotated[User, Depends(get_current_active_user)],
-                                bookshelf_repo: BookshelfCRUDRepositoryGraph = Depends(get_repository(repo_type=BookshelfCRUDRepositoryGraph))):
-    data = await request.json()
-
-    try:
-        data = BookshelfBookRemove(
-            book_id=data['book_id'],
-            contributor_id=current_user.id
-        )
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
-    
-    if bookshelf_id in bookshelf_ws_manager.cache:
-        # Pipeline if a book is in the cache.
-        _bookshelf = bookshelf_ws_manager.cache[bookshelf_id]
-
-        if current_user.id not in _bookshelf.contributors:
-            raise HTTPException(status_code=403, detail="User is not authorized to remove book from this bookshelf")
-        
-        if bookshelf_id in bookshelf_ws_manager.locks:
-            # Different logic if the bookshelf has a lock.
-            async with bookshelf_ws_manager.locks[bookshelf_id]:
-                await bookshelf_ws_manager.send_data(data={"state": "locked"}, bookshelf_id=bookshelf_id)
-
-                _bookshelf.remove_book(data.book_id)
-
-                books = jsonable_encoder(_bookshelf.get_books())
-
-                bookshelf_repo.remove_book(book_to_remove=data.book_id, books=books, bookshelf_id=bookshelf_id)
-
-                await bookshelf_ws_manager.send_data(bookshelf_id=bookshelf_id, data={
-                "state": "unlocked", "data": books })
-        else:
-            # No need to wait for the lock of update the websocket if no lock is present.
-            _bookshelf.remove_book(data.book_id)
-
-            books = jsonable_encoder(_bookshelf.get_books())
-
-            bookshelf_repo.remove_book(book_to_remove=data.book_id, books=books, bookshelf_id=bookshelf_id)
-
-    else:
-        # In this case, we update the order of the book on the db side. 
-        bookshelf_repo.remove_book_advanced(book_to_remove=data.book_id, books=books, bookshelf_id=bookshelf_id)
 
 @router.websocket('/ws/{bookshelf_id}') # This is changing to /api/bookshelves/ws/{bookshelf_id}
 async def bookshelf_connection(websocket: WebSocket, 
                                bookshelf_id: str,
                                token: str = Query(...),
                                bookshelf_repo: BookshelfCRUDRepositoryGraph = Depends(get_repository(repo_type=BookshelfCRUDRepositoryGraph)),
-                               user_repo: UserCRUDRepositoryGraph = Depends(get_repository(repo_type=UserCRUDRepositoryGraph))):
+                               user_repo: UserCRUDRepositoryGraph = Depends(get_repository(repo_type=UserCRUDRepositoryGraph)),
+                               book_repo: BookCRUDRepositoryGraph = Depends(get_repository(repo_type=BookCRUDRepositoryGraph))):
     print("entered bookshelf_connection")
     try:
         current_user = await get_current_user_no_exceptions(token=token, user_repo=user_repo)
@@ -224,14 +180,16 @@ async def bookshelf_connection(websocket: WebSocket,
             except ValueError as e:
                 await bookshelf_ws_manager.invalid_data_error(bookshelf_id=bookshelf_id)
                 continue
-
-            current_user = get_bookshelf_websocket_user(token=task.token)
-            if not current_user:
+            
+            try:
+                current_user = await get_bookshelf_websocket_user(token=task.token)
+            except:
                 bookshelf_ws_manager.disconnect(bookshelf_id, websocket)
-                continue
+                return
             # We will distinguish between the types of data that can be sent.
             # {"type:"}'reorder' 'add' 'delete'
             if data['type'] == 'reorder':
+                print("reorder")
                 try:
                     data = BookshelfReorder(
                         target_id=data['target_id'],
@@ -242,7 +200,7 @@ async def bookshelf_connection(websocket: WebSocket,
                 except ValueError as e:
                     await bookshelf_ws_manager.invalid_data_error(bookshelf_id=bookshelf_id)
                     continue
-                
+                print("locking")
                 async with bookshelf_ws_manager.locks[bookshelf_id]:
                     # Lock out the bookshelf on the client while reorder is happening.
                     await bookshelf_ws_manager.send_data(data={"state": "locked"}, bookshelf_id=bookshelf_id)
@@ -252,7 +210,7 @@ async def bookshelf_connection(websocket: WebSocket,
             elif data['type'] == 'delete':
                 try:
                     data = BookshelfBookRemove(
-                        target_id=data['target_id'],
+                        book_id=data['target_id'],
                         contributor_id=current_user.id
                     )
                 except ValueError as e:
@@ -267,18 +225,79 @@ async def bookshelf_connection(websocket: WebSocket,
             elif data['type'] == 'add':
                 try:
                     data = BookshelfBookAdd(
-                        target_id=data['target_id'],
+                        book=BookshelfBook(
+                            title=data['book']['title'],
+                            authors=data['book']['authors'],
+                            small_img_url=data['book']['small_img_url'],
+                            id=data['book']['id']
+                        ),
                         contributor_id=current_user.id
                     )
                 except ValueError as e:
                     await bookshelf_ws_manager.invalid_data_error(bookshelf_id=bookshelf_id)
                     continue
+                
+                if data.book.id[0] == "g":
+                    canonical_book = book_repo.get_canonical_book_by_google_id_extended(data.book.id) 
+                    if canonical_book:
+                        data.book = canonical_book
 
                 async with bookshelf_ws_manager.locks[bookshelf_id]:
                     await bookshelf_ws_manager.send_data(data={"state": "locked"}, bookshelf_id=bookshelf_id)
 
                     await bookshelf_ws_manager.add_book_and_send_updated_data(current_user=current_user, bookshelf_id=bookshelf_id, data=data, bookshelf_repo=bookshelf_repo)
-            
+            else:
+                await bookshelf_ws_manager.invalid_data_error(bookshelf_id=bookshelf_id)
+                continue
+
     except WebSocketDisconnect:
         await bookshelf_ws_manager.disconnect(bookshelf_id, websocket)
+
+# TO BE DELETED
+# @router.put("/{bookshelf_id}/remove_book",
+#             name="bookshelf:remove_item")
+# async def remove_item_from_list(request: Request, 
+#                                 bookshelf_id: str,
+#                                 current_user: Annotated[User, Depends(get_current_active_user)],
+#                                 bookshelf_repo: BookshelfCRUDRepositoryGraph = Depends(get_repository(repo_type=BookshelfCRUDRepositoryGraph))):
+#     data = await request.json()
+
+#     try:
+#         data = BookshelfBookRemove(
+#             book_id=data['book_id'],
+#             contributor_id=current_user.id
+#         )
+#     except ValueError as e:
+#         raise HTTPException(status_code=400, detail=str(e))
     
+#     if bookshelf_id in bookshelf_ws_manager.cache:
+#         # Pipeline if a book is in the cache.
+#         _bookshelf = bookshelf_ws_manager.cache[bookshelf_id]
+
+#         if current_user.id not in _bookshelf.contributors:
+#             raise HTTPException(status_code=403, detail="User is not authorized to remove book from this bookshelf")
+        
+#         if bookshelf_id in bookshelf_ws_manager.locks:
+#             # Different logic if the bookshelf has a lock.
+#             async with bookshelf_ws_manager.locks[bookshelf_id]:
+#                 await bookshelf_ws_manager.send_data(data={"state": "locked"}, bookshelf_id=bookshelf_id)
+
+#                 _bookshelf.remove_book(data.book_id)
+
+#                 books = jsonable_encoder(_bookshelf.get_books())
+
+#                 bookshelf_repo.remove_book(book_to_remove=data.book_id, books=books, bookshelf_id=bookshelf_id)
+
+#                 await bookshelf_ws_manager.send_data(bookshelf_id=bookshelf_id, data={
+#                 "state": "unlocked", "data": books })
+#         else:
+#             # No need to wait for the lock of update the websocket if no lock is present.
+#             _bookshelf.remove_book(data.book_id)
+
+#             books = jsonable_encoder(_bookshelf.get_books())
+
+#             bookshelf_repo.remove_book(book_to_remove=data.book_id, books=books, bookshelf_id=bookshelf_id)
+
+#     else:
+#         # In this case, we update the order of the book on the db side. 
+#         bookshelf_repo.remove_book_advanced(book_to_remove=data.book_id, books=books, bookshelf_id=bookshelf_id)

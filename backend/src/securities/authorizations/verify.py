@@ -63,14 +63,14 @@ async def get_bookshelf_websocket_user(token: Annotated[str, Depends(jwt_generat
     Specific for verifying the websocket token for bookshelves.
     """
     try:
-        user_id, bookshelf_id = jwt_generator.retrieve_details_from_bookshelf_ws_token(token, secret_key=settings.JWT_SECRET_KEY)
-        if not user_id or not bookshelf_id:
+        id, bookshelf_id = jwt_generator.retrieve_details_from_bookshelf_ws_token(token, secret_key=settings.WS_SECRET_KEY)
+        if not id or not bookshelf_id:
             return
         
     except JWTError:
         return 
     
     return JWTBookshelfWSUser(
-        user_id=user_id,
+        id=id,
         bookshelf_id=bookshelf_id
     )

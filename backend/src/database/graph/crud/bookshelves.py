@@ -77,25 +77,32 @@ class BookshelfCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
                         visibility=bookshelf.visibility)
         return result.single()["id"]
     
-    def create_book_in_bookshelf_rel(self, book_to_add, books, bookshelf_id, user_id):
+    def create_book_in_bookshelf_rel(self, book_to_add, bookshelf_id, user_id):
         with self.driver.session() as session:
-            result = session.write_transaction(self.create_book_in_bookshelf_rel_query, book_to_add, books, bookshelf_id, user_id)
+            result = session.write_transaction(self.create_book_in_bookshelf_rel_query, book_to_add, bookshelf_id, user_id)
         return result
     
     @staticmethod
-    def create_book_in_bookshelf_rel_query(tx, book_to_add, books, bookshelf_id, user_id):
+    def create_book_in_bookshelf_rel_query(tx, book_to_add, bookshelf_id, user_id):
         query = (
             """
             MATCH (b:Bookshelf {id: $bookshelf_id})
             MATCH (book:Book {id: $book_to_add})
-            SET b.books = $books, b.last_edited_date = datetime()
-            MERGE (b)-[:CONTAINS_BOOK {create_date: datetime(), added_by_id: $user_id}]->(book)
-            return b.id
+            OPTIONAL MATCH (b)-[rr:CONTAINS_BOOK]->(book)
+            WITH b, book, rr, EXISTS((b)-[:CONTAINS_BOOK]->(book)) AS relationshipExists
+            MERGE (b)-[r:CONTAINS_BOOK]->(book)
+            ON CREATE SET 
+                b.books = COALESCE(b.books, []) + $book_to_add, 
+                b.last_edited_date = datetime(),
+                r.create_date = datetime(),
+                r.added_by_id = $user_id
+            RETURN NOT relationshipExists AS wasAdded
             """
         )
-        result = tx.run(query, book_to_add=book_to_add, books=books, bookshelf_id=bookshelf_id, user_id=user_id)
+        result = tx.run(query, book_to_add=book_to_add, bookshelf_id=bookshelf_id, user_id=user_id)
         response = result.single()
-        return response is not None
+        return response['wasAdded']
+        
     
     def update_books_in_bookshelf(self, books, bookshelf_id):
         with self.driver.session() as session:
