@@ -189,7 +189,6 @@ async def bookshelf_connection(websocket: WebSocket,
             # We will distinguish between the types of data that can be sent.
             # {"type:"}'reorder' 'add' 'delete'
             if data['type'] == 'reorder':
-                print("reorder")
                 try:
                     data = BookshelfReorder(
                         target_id=data['target_id'],
@@ -200,7 +199,6 @@ async def bookshelf_connection(websocket: WebSocket,
                 except ValueError as e:
                     await bookshelf_ws_manager.invalid_data_error(bookshelf_id=bookshelf_id)
                     continue
-                print("locking")
                 async with bookshelf_ws_manager.locks[bookshelf_id]:
                     # Lock out the bookshelf on the client while reorder is happening.
                     await bookshelf_ws_manager.send_data(data={"state": "locked"}, bookshelf_id=bookshelf_id)

@@ -384,7 +384,6 @@ class Bookshelf(BaseModel):
             return HTTPException(500, "Only contributors can add books to bookshelves")
         
     def reorder_book(self, target_id, previous_book_id, next_book_id, contributor_id):
-        print(contributor_id, previous_book_id, next_book_id, target_id)
         if contributor_id in self.contributors:
             # Reordering in the middle.
             if previous_book_id and next_book_id:
