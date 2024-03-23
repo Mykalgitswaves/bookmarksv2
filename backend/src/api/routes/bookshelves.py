@@ -32,7 +32,10 @@ from src.models.schemas.bookshelves import (
     Bookshelf,
     BookshelfBook,
     BookshelfTitle,
-    BookshelfDescription
+    BookshelfDescription,
+    BookshelfVisibility,
+    BookshelfUser,
+    BookshelfPage
 )
 from src.api.websockets.bookshelves import bookshelf_ws_manager
 
@@ -72,9 +75,22 @@ async def get_bookshelf(bookshelf_id: str,
     # For now not using live data pulled from db since we dont have these objects stored there.
     if bookshelf_id in bookshelf_ws_manager.cache:
         _bookshelf = bookshelf_ws_manager.cache[bookshelf_id]
+        _bookshelf = BookshelfPage(
+            id=_bookshelf.id,
+            img_url=_bookshelf.img_url,
+            title=_bookshelf.title,
+            description=_bookshelf.description,
+            books=_bookshelf.get_books()[0],
+            contributors=_bookshelf.contributors,
+            followers=_bookshelf.followers,
+            visibility=_bookshelf.visibility,
+            members=_bookshelf.members,
+            created_by=_bookshelf.created_by
+        )
     else:
         _bookshelf = bookshelf_repo.get_bookshelf(bookshelf_id)
 
+    
     if not _bookshelf:
         raise HTTPException(status_code=404, detail="Bookshelf not found")
     else:
@@ -103,20 +119,23 @@ async def get_bookshelf(bookshelf_id: str,
                 )
                 for book in _bookshelf.books:
                     _bookshelf_dll.add_book_to_shelf(book, current_user.id)
-
                 bookshelf_ws_manager.cache[bookshelf_id] = _bookshelf_dll
 
         # Set this in the cache for websocket.
-
+        
         bookshelf_response = BookshelfResponse(
             title=_bookshelf.title,
             description=_bookshelf.description,
             books=_bookshelf.books,
             contributors=_bookshelf.contributors,
-            followers=_bookshelf.followers
+            followers=_bookshelf.followers,
+            visibility=_bookshelf.visibility,
+            members=_bookshelf.members,
+            created_by=_bookshelf.created_by,
         )
 
     return JSONResponse(content={"bookshelf": jsonable_encoder(bookshelf_response)})
+
 
 @router.delete("/{bookshelf_id}/delete",
             name="bookshelf:delete")
@@ -176,7 +195,76 @@ async def update_bookshelf_description(request: Request,
         return JSONResponse(content={"message": "Bookshelf description updated"})
     else:
         raise HTTPException(status_code=400, detail="Failed to update bookshelf description")
+    
+@router.put("/{bookshelf_id}/update_visibility",
+            name="bookshelf:update_visibility")
+async def update_bookshelf_visibility(request: Request,
+                                    bookshelf_id: str,
+                                    current_user: Annotated[User, Depends(get_current_active_user)],
+                                    bookshelf_repo: BookshelfCRUDRepositoryGraph = Depends(get_repository(repo_type=BookshelfCRUDRepositoryGraph))):
+    data = await request.json()
 
+    try:
+        bookshelf = BookshelfVisibility(id=bookshelf_id,
+                                         visibility=data['visibility'])
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+    response = bookshelf_repo.update_bookshelf_visibility(bookshelf.id, bookshelf.visibility, current_user.id)
+    if response:
+        return JSONResponse(content={"message": "Bookshelf visibility updated"})
+    else:
+        raise HTTPException(status_code=400, detail="Failed to update bookshelf visibility")
+
+@router.put("/{bookshelf_id}/add_contributor",
+            name="bookshelf:add_contributor")
+async def add_contributor_to_bookshelf(request: Request,
+                                        bookshelf_id: str,
+                                        current_user:  Annotated[User, Depends(get_current_active_user)],
+                                        bookshelf_repo: BookshelfCRUDRepositoryGraph = Depends(get_repository(repo_type=BookshelfCRUDRepositoryGraph))):
+    data = await request.json()
+
+    try:
+        bookshelf = BookshelfUser(id=bookshelf_id,
+                                  user_id=data['contributor_id'])
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    
+    if bookshelf.user_id == current_user.id:
+        raise HTTPException(status_code=400, detail="User cannot add themselves as a contributor to the bookshelf")
+
+    response = bookshelf_repo.update_bookshelf_contributors(bookshelf.id, bookshelf.user_id, current_user.id)
+    if response:
+        if bookshelf_id in bookshelf_ws_manager.cache:
+            bookshelf_ws_manager.cache[bookshelf_id].add_contributor(bookshelf.user_id)
+        return JSONResponse(content={"message": "Contributor added to bookshelf"})
+    else:
+        raise HTTPException(status_code=400, detail="Failed to add contributor to bookshelf")
+    
+@router.put("/{bookshelf_id}/remove_contributor",
+            name="bookshelf:remove_contributor")
+async def remove_contributor_to_bookshelf(request: Request,
+                                        bookshelf_id: str,
+                                        current_user:  Annotated[User, Depends(get_current_active_user)],
+                                        bookshelf_repo: BookshelfCRUDRepositoryGraph = Depends(get_repository(repo_type=BookshelfCRUDRepositoryGraph))):
+    data = await request.json()
+
+    try:
+        bookshelf = BookshelfUser(id=bookshelf_id,
+                                  user_id=data['contributor_id'])
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    
+    if bookshelf.user_id == current_user.id:
+        raise HTTPException(status_code=400, detail="User cannot remove themselves as a contributor to the bookshelf")
+
+    response = bookshelf_repo.delete_bookshelf_contributor(bookshelf.id, bookshelf.user_id, current_user.id)
+    if response:
+        if bookshelf_id in bookshelf_ws_manager.cache:
+            bookshelf_ws_manager.cache[bookshelf_id].remove_contributor(bookshelf.user_id)
+        return JSONResponse(content={"message": "Contributor added to bookshelf"})
+    else:
+        raise HTTPException(status_code=400, detail="Failed to add contributor to bookshelf")
 
 @router.websocket('/ws/{bookshelf_id}') # This is changing to /api/bookshelves/ws/{bookshelf_id}
 async def bookshelf_connection(websocket: WebSocket, 

@@ -102,6 +102,32 @@ class BookshelfCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
         result = tx.run(query, book_to_add=book_to_add, bookshelf_id=bookshelf_id, user_id=user_id)
         response = result.single()
         return response['wasAdded']
+    
+    def update_bookshelf_contributors(self, bookshelf_id, contributor_id, user_id):
+        with self.driver.session() as session:
+            result = session.write_transaction(self.update_bookshelf_contributors_query, bookshelf_id, contributor_id, user_id)
+        return result
+    
+    @staticmethod
+    def update_bookshelf_contributors_query(tx, bookshelf_id, contributor_id, user_id):
+        query = (
+            """
+            MATCH (b:Bookshelf {id: $bookshelf_id})<-[r:HAS_BOOKSHELF_ACCESS {type: "owner"}]-(u:User {id: $user_id})
+            MATCH (c:User {id: $contributor_id})
+            WHERE NOT EXISTS {
+                MATCH (bb)<-[rrr:HAS_BOOKSHELF_ACCESS {type: "contributor"}]-(uu:User)
+                WITH bb, COUNT(uu) AS contributorCount
+                WHERE contributorCount >= 5
+                RETURN bb
+            }
+            MERGE (c)-[rr:HAS_BOOKSHELF_ACCESS]->(b)
+            set rr.type = "contributor", rr.create_date = datetime()
+            RETURN c.id as id
+            """
+        )
+        result = tx.run(query, bookshelf_id=bookshelf_id, contributor_id=contributor_id, user_id=user_id)
+        response = result.single()
+        return response is not None
         
     
     def update_books_in_bookshelf(self, books, bookshelf_id):
@@ -158,6 +184,24 @@ class BookshelfCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
         response = result.single()
         return response is not None
     
+    def update_bookshelf_visibility(self, bookshelf_id, visibility, user_id):
+        with self.driver.session() as session:
+            result = session.write_transaction(self.update_bookshelf_visibility_query, bookshelf_id, visibility, user_id)
+        return result
+    
+    @staticmethod
+    def update_bookshelf_visibility_query(tx, bookshelf_id, visibility, user_id):
+        query = (
+            """
+            MATCH (b:Bookshelf {id: $bookshelf_id})<-[r:HAS_BOOKSHELF_ACCESS {type: "owner"}]-(u:User {id: $user_id})
+            SET b.visibility = $visibility, b.last_edited_date = datetime()
+            RETURN b.id as id
+            """
+        )
+        result = tx.run(query, bookshelf_id=bookshelf_id, visibility=visibility, user_id=user_id)
+        response = result.single()
+        return response is not None
+    
     def delete_book_from_bookshelf(self, book_to_remove, books, bookshelf_id):
         with self.driver.session() as session:
             result = session.write_transaction(self.delete_book_from_bookshelf_query, book_to_remove, books, bookshelf_id)
@@ -192,5 +236,24 @@ class BookshelfCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
             """
         )
         result = tx.run(query, bookshelf_id=bookshelf_id, user_id=user_id)
+        response = result.single()
+        return response is not None
+    
+    def delete_bookshelf_contributor(self, bookshelf_id, contributor_id, user_id):
+        with self.driver.session() as session:
+            result = session.write_transaction(self.delete_bookshelf_contributor_query, bookshelf_id, contributor_id, user_id)
+        return result
+    
+    @staticmethod
+    def delete_bookshelf_contributor_query(tx, bookshelf_id, contributor_id, user_id):
+        query = (
+            """
+            MATCH (b:Bookshelf {id: $bookshelf_id})<-[r:HAS_BOOKSHELF_ACCESS {type: "owner"}]-(u:User {id: $user_id})
+            MATCH (c:User {id: $contributor_id})-[rr:HAS_BOOKSHELF_ACCESS {type:"contributor"}]->(b)
+            DELETE rr
+            return b.id
+            """
+        )
+        result = tx.run(query, bookshelf_id=bookshelf_id, contributor_id=contributor_id, user_id=user_id)
         response = result.single()
         return response is not None

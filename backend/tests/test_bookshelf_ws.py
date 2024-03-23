@@ -38,10 +38,34 @@ def setup_class(request):
     request.cls.token_type = response.json()["token_type"]
     request.cls.user_id = response.json()["user_id"]
 
+    request.cls.username_2 = "testuser123_shelves_2"
+    request.cls.email_2 = "testuser_shelves_2@testemail.com"
+    request.cls.password_2 = "testpassword"
+
+    request.cls.admin_credentials = config["ADMIN_CREDENTIALS"]
+
+    headers = {"Content-Type": "application/x-www-form-urlencoded"}  # Set Content-Type to application/json
+    data = {
+        "username": request.cls.username_2,
+        "email": request.cls.email_2,
+        "password": request.cls.password_2,
+    }
+    response = requests.post(f"{request.cls.endpoint}/api/auth/signup", headers=headers, data=data)
+    assert response.status_code == 200, "Creating Test User"
+
+    request.cls.access_token_2 = response.json()["access_token"]
+    request.cls.token_type_2 = response.json()["token_type"]
+    request.cls.user_id_2 = response.json()["user_id"]
+
     yield
 
     response = requests.post(f"{request.cls.endpoint}/api/admin/delete_user_by_username", 
                              json={"username": request.cls.username, "admin_credentials": config["ADMIN_CREDENTIALS"]})
+
+    assert response.status_code == 200, "Cleanup: Test user deletion failed"
+
+    response = requests.post(f"{request.cls.endpoint}/api/admin/delete_user_by_username", 
+                             json={"username": request.cls.username_2, "admin_credentials": config["ADMIN_CREDENTIALS"]})
 
     assert response.status_code == 200, "Cleanup: Test user deletion failed"
 
@@ -235,6 +259,86 @@ class TestBookshelfWS:
         print(response.json())
         assert response.status_code == 200, "Deleting Bookshelf"
 
+    def test_change_visibility(self):
+        """
+        Test case to create a bookshelf.
+        """
+        headers = {"Authorization": f"{self.token_type} {self.access_token}"}
+        data = {
+            "bookshelf_name": "Test Bookshelf",
+            "bookshelf_description": "Test Bookshelf Description",
+            "visibility": "public"
+        }
+
+        response = requests.post(f"{self.endpoint}/api/bookshelves/create", headers=headers, json=data)
+        assert response.status_code == 200, "Creating Bookshelf"
+
+        bookshelf_id = response.json()["bookshelf_id"]
+
+        data = {
+            "visibility": "private"
+        }
+
+        response = requests.put(f"{self.endpoint}/api/bookshelves/{bookshelf_id}/update_visibility", headers=headers, json=data)
+        assert response.status_code == 200, "Updating Bookshelf"
+
+        response = requests.get(f"{self.endpoint}/api/bookshelves/{bookshelf_id}", headers=headers)
+        assert response.status_code == 200, "Getting Bookshelf"
+        assert response.json()['bookshelf']["visibility"] == "private", "Visibility Updated"
+
+        response = requests.delete(f"{self.endpoint}/api/bookshelves/{bookshelf_id}/delete", headers=headers)
+        print(response.json())
+        assert response.status_code == 200, "Deleting Bookshelf"
+
+    def test_contributors(self):
+        """
+        Test case to test adding and removing contributors
+        """
+        headers = {"Authorization": f"{self.token_type} {self.access_token}"}
+        data = {
+            "bookshelf_name": "Test Bookshelf",
+            "bookshelf_description": "Test Bookshelf Description",
+            "visibility": "public"
+        }
+
+        response = requests.post(f"{self.endpoint}/api/bookshelves/create", headers=headers, json=data)
+        assert response.status_code == 200, "Creating Bookshelf"
+
+        bookshelf_id = response.json()["bookshelf_id"]
+
+        data = {
+            "contributor_id": self.user_id_2
+        }
+
+        response = requests.put(f"{self.endpoint}/api/bookshelves/{bookshelf_id}/add_contributor", headers=headers, json=data)
+
+        assert response.status_code == 200, "Adding Contributor"
+
+        response = requests.get(f"{self.endpoint}/api/bookshelves/{bookshelf_id}", headers=headers)
+
+        assert response.status_code == 200, "Getting Bookshelf"
+        assert self.user_id_2 in response.json()['bookshelf']["contributors"], "Contributor Added"
         
+        response = requests.put(f"{self.endpoint}/api/bookshelves/{bookshelf_id}/add_contributor", headers=headers, json=data)
+
+        assert response.status_code == 200, "Adding Contributor"
+
+        response = requests.get(f"{self.endpoint}/api/bookshelves/{bookshelf_id}", headers=headers)
+
+        assert response.status_code == 200, "Getting Bookshelf"
+        assert len(response.json()['bookshelf']["contributors"]) == 2, "Duplicate Contributor Not Added"
+
+        response = requests.put(f"{self.endpoint}/api/bookshelves/{bookshelf_id}/remove_contributor", headers=headers, json=data)
+
+        assert response.status_code == 200, "Removing Contributor"
+
+        response = requests.get(f"{self.endpoint}/api/bookshelves/{bookshelf_id}", headers=headers)
+
+        assert response.status_code == 200, "Getting Bookshelf"
+        assert self.user_id_2 not in response.json()['bookshelf']["contributors"], "Contributor Removed"
+
+        response = requests.delete(f"{self.endpoint}/api/bookshelves/{bookshelf_id}/delete", headers=headers)
+
+        assert response.status_code == 200, "Deleting Bookshelf"
         
         

@@ -24,6 +24,12 @@ class BookshelfTitle(BookshelfId):
 class BookshelfDescription(BookshelfId):
     description: str
 
+class BookshelfVisibility(BookshelfId):
+    visibility: Literal['public', 'private', 'friends']
+
+class BookshelfUser(BookshelfId):
+    user_id: str
+
 class BookshelfCreate(BaseModel):
     title: str
     description: str
@@ -355,6 +361,9 @@ class BookshelfResponse(BaseModel):
     books: list[BookshelfBook]
     contributors: list[str]
     followers: list[str]
+    visibility: Literal['public', 'private', 'friends']
+    members: list[str]
+    created_by: str
 
 class BookshelfPage(BaseModel):
     created_by: str
@@ -425,14 +434,14 @@ class Bookshelf(BaseModel):
     def add_follower(self, user_id):
         self.followers.add(user_id)
     
-    def add_author(self, user_id):
+    def add_contributor(self, user_id):
         # can only be 5 contributors
         if len(self.contributors) > 5:
             return HTTPException(400, "Bookshelves have a maximum of 5 contributors")
         else:
             self.contributors.add(user_id)
 
-    def remove_author(self, user_id):
+    def remove_contributor(self, user_id):
         self.contributors.discard(user_id)
 
     def dequeue_into_bookshelf(self):
