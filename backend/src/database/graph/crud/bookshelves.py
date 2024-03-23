@@ -128,6 +128,27 @@ class BookshelfCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
         result = tx.run(query, bookshelf_id=bookshelf_id, contributor_id=contributor_id, user_id=user_id)
         response = result.single()
         return response is not None
+    
+    def update_bookshelf_members(self, bookshelf_id, member_id, user_id):
+        with self.driver.session() as session:
+            result = session.write_transaction(self.update_bookshelf_members_query, bookshelf_id, member_id, user_id)
+        return result
+    
+    @staticmethod
+    def update_bookshelf_members_query(tx, bookshelf_id, member_id, user_id):
+        query = (
+            """
+            MATCH (b:Bookshelf {id: $bookshelf_id})<-[r:HAS_BOOKSHELF_ACCESS {type: "owner"}]-(u:User {id: $user_id})
+            MATCH (c:User {id: $member_id})
+            MERGE (c)-[rr:HAS_BOOKSHELF_ACCESS]->(b)
+            ON CREATE
+                set rr.type = "member", rr.create_date = datetime()
+            RETURN rr.type as type
+            """
+        )
+        result = tx.run(query, bookshelf_id=bookshelf_id, member_id=member_id, user_id=user_id)
+        response = result.single()
+        return response['type'] == "member"
         
     
     def update_books_in_bookshelf(self, books, bookshelf_id):
@@ -255,5 +276,24 @@ class BookshelfCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
             """
         )
         result = tx.run(query, bookshelf_id=bookshelf_id, contributor_id=contributor_id, user_id=user_id)
+        response = result.single()
+        return response is not None
+    
+    def delete_bookshelf_member(self, bookshelf_id, member_id, user_id):
+        with self.driver.session() as session:
+            result = session.write_transaction(self.delete_bookshelf_member_query, bookshelf_id, member_id, user_id)
+        return result
+    
+    @staticmethod
+    def delete_bookshelf_member_query(tx, bookshelf_id, member_id, user_id):
+        query = (
+            """
+            MATCH (b:Bookshelf {id: $bookshelf_id})<-[r:HAS_BOOKSHELF_ACCESS {type: "owner"}]-(u:User {id: $user_id})
+            MATCH (c:User {id: $member_id})-[rr:HAS_BOOKSHELF_ACCESS {type:"member"}]->(b)
+            DELETE rr
+            return b.id
+            """
+        )
+        result = tx.run(query, bookshelf_id=bookshelf_id, member_id=member_id, user_id=user_id)
         response = result.single()
         return response is not None

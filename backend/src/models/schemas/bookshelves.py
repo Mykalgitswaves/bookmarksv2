@@ -433,6 +433,12 @@ class Bookshelf(BaseModel):
     
     def add_follower(self, user_id):
         self.followers.add(user_id)
+
+    def add_member(self, user_id):
+        self.members.add(user_id)
+    
+    def remove_member(self, user_id):
+        self.members.discard(user_id)
     
     def add_contributor(self, user_id):
         # can only be 5 contributors

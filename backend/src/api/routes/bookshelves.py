@@ -172,6 +172,8 @@ async def update_bookshelf_title(request: Request,
 
     response = bookshelf_repo.update_bookshelf_title(bookshelf.id, bookshelf.title, current_user.id)
     if response:
+        if bookshelf_id in bookshelf_ws_manager.cache:
+            bookshelf_ws_manager.cache[bookshelf_id].title = bookshelf.title
         return JSONResponse(content={"message": "Bookshelf title updated"})
     else:
         raise HTTPException(status_code=400, detail="Failed to update bookshelf title")
@@ -192,6 +194,8 @@ async def update_bookshelf_description(request: Request,
 
     response = bookshelf_repo.update_bookshelf_description(bookshelf.id, bookshelf.description, current_user.id)
     if response:
+        if bookshelf_id in bookshelf_ws_manager.cache:
+            bookshelf_ws_manager.cache[bookshelf_id].description = bookshelf.description
         return JSONResponse(content={"message": "Bookshelf description updated"})
     else:
         raise HTTPException(status_code=400, detail="Failed to update bookshelf description")
@@ -212,6 +216,8 @@ async def update_bookshelf_visibility(request: Request,
 
     response = bookshelf_repo.update_bookshelf_visibility(bookshelf.id, bookshelf.visibility, current_user.id)
     if response:
+        if bookshelf_id in bookshelf_ws_manager.cache:
+            bookshelf_ws_manager.cache[bookshelf_id].visibility = bookshelf.visibility
         return JSONResponse(content={"message": "Bookshelf visibility updated"})
     else:
         raise HTTPException(status_code=400, detail="Failed to update bookshelf visibility")
@@ -265,6 +271,56 @@ async def remove_contributor_to_bookshelf(request: Request,
         return JSONResponse(content={"message": "Contributor added to bookshelf"})
     else:
         raise HTTPException(status_code=400, detail="Failed to add contributor to bookshelf")
+    
+@router.put("/{bookshelf_id}/add_member",
+            name="bookshelf:add_member")
+async def add_member_to_bookshelf(request: Request,
+                                        bookshelf_id: str,
+                                        current_user:  Annotated[User, Depends(get_current_active_user)],
+                                        bookshelf_repo: BookshelfCRUDRepositoryGraph = Depends(get_repository(repo_type=BookshelfCRUDRepositoryGraph))):
+    data = await request.json()
+
+    try:
+        bookshelf = BookshelfUser(id=bookshelf_id,
+                                  user_id=data['member_id'])
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    
+    if bookshelf.user_id == current_user.id:
+        raise HTTPException(status_code=400, detail="User cannot add themselves as a member to the bookshelf")
+
+    response = bookshelf_repo.update_bookshelf_members(bookshelf.id, bookshelf.user_id, current_user.id)
+    if response:
+        if bookshelf_id in bookshelf_ws_manager.cache:
+            bookshelf_ws_manager.cache[bookshelf_id].add_member(bookshelf.user_id)
+        return JSONResponse(content={"message": "member added to bookshelf"})
+    else:
+        raise HTTPException(status_code=400, detail="Failed to add member to bookshelf")
+    
+@router.put("/{bookshelf_id}/remove_member",
+            name="bookshelf:remove_member")
+async def remove_member_to_bookshelf(request: Request,
+                                        bookshelf_id: str,
+                                        current_user:  Annotated[User, Depends(get_current_active_user)],
+                                        bookshelf_repo: BookshelfCRUDRepositoryGraph = Depends(get_repository(repo_type=BookshelfCRUDRepositoryGraph))):
+    data = await request.json()
+
+    try:
+        bookshelf = BookshelfUser(id=bookshelf_id,
+                                  user_id=data['member_id'])
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    
+    if bookshelf.user_id == current_user.id:
+        raise HTTPException(status_code=400, detail="User cannot remove themselves as a member to the bookshelf")
+
+    response = bookshelf_repo.delete_bookshelf_member(bookshelf.id, bookshelf.user_id, current_user.id)
+    if response:
+        if bookshelf_id in bookshelf_ws_manager.cache:
+            bookshelf_ws_manager.cache[bookshelf_id].remove_member(bookshelf.user_id)
+        return JSONResponse(content={"message": "member added to bookshelf"})
+    else:
+        raise HTTPException(status_code=400, detail="Failed to add member to bookshelf")
 
 @router.websocket('/ws/{bookshelf_id}') # This is changing to /api/bookshelves/ws/{bookshelf_id}
 async def bookshelf_connection(websocket: WebSocket, 

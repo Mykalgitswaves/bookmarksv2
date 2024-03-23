@@ -341,4 +341,54 @@ class TestBookshelfWS:
 
         assert response.status_code == 200, "Deleting Bookshelf"
         
+    def test_members(self):
+        """
+        Test case to test adding and removing members
+        """
+        headers = {"Authorization": f"{self.token_type} {self.access_token}"}
+        data = {
+            "bookshelf_name": "Test Bookshelf",
+            "bookshelf_description": "Test Bookshelf Description",
+            "visibility": "public"
+        }
+
+        response = requests.post(f"{self.endpoint}/api/bookshelves/create", headers=headers, json=data)
+        assert response.status_code == 200, "Creating Bookshelf"
+
+        bookshelf_id = response.json()["bookshelf_id"]
+
+        data = {
+            "member_id": self.user_id_2
+        }
+
+        response = requests.put(f"{self.endpoint}/api/bookshelves/{bookshelf_id}/add_member", headers=headers, json=data)
+
+        assert response.status_code == 200, "Adding member"
+
+        response = requests.get(f"{self.endpoint}/api/bookshelves/{bookshelf_id}", headers=headers)
+
+        assert response.status_code == 200, "Getting Bookshelf"
+        assert self.user_id_2 in response.json()['bookshelf']["members"], "member Added"
+        
+        response = requests.put(f"{self.endpoint}/api/bookshelves/{bookshelf_id}/add_member", headers=headers, json=data)
+
+        assert response.status_code == 200, "Adding member"
+
+        response = requests.get(f"{self.endpoint}/api/bookshelves/{bookshelf_id}", headers=headers)
+
+        assert response.status_code == 200, "Getting Bookshelf"
+        assert len(response.json()['bookshelf']["members"]) == 1, "Duplicate member Not Added"
+
+        response = requests.put(f"{self.endpoint}/api/bookshelves/{bookshelf_id}/remove_member", headers=headers, json=data)
+
+        assert response.status_code == 200, "Removing member"
+
+        response = requests.get(f"{self.endpoint}/api/bookshelves/{bookshelf_id}", headers=headers)
+
+        assert response.status_code == 200, "Getting Bookshelf"
+        assert self.user_id_2 not in response.json()['bookshelf']["members"], "member Removed"
+
+        response = requests.delete(f"{self.endpoint}/api/bookshelves/{bookshelf_id}/delete", headers=headers)
+
+        assert response.status_code == 200, "Deleting Bookshelf"
         
