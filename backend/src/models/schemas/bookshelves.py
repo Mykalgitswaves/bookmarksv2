@@ -18,6 +18,12 @@ from src.utils.exceptions.bookshelves import (
 class BookshelfId(BaseModel):
     id: str
 
+class BookshelfTitle(BookshelfId):
+    title: str
+
+class BookshelfDescription(BookshelfId):
+    description: str
+
 class BookshelfCreate(BaseModel):
     title: str
     description: str

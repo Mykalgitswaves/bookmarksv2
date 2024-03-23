@@ -30,7 +30,9 @@ from src.models.schemas.bookshelves import (
     BookshelfBookAdd, 
     BookshelfTaskRoute,
     Bookshelf,
-    BookshelfBook
+    BookshelfBook,
+    BookshelfTitle,
+    BookshelfDescription
 )
 from src.api.websockets.bookshelves import bookshelf_ws_manager
 
@@ -141,18 +143,39 @@ async def update_bookshelf_title(request: Request,
                                     bookshelf_id: str,
                                     current_user: Annotated[User, Depends(get_current_active_user)],
                                     bookshelf_repo: BookshelfCRUDRepositoryGraph = Depends(get_repository(repo_type=BookshelfCRUDRepositoryGraph))):
-        data = await request.json()
-    
-        try:
-            bookshelf_id = BookshelfId(id=bookshelf_id)
-        except ValueError as e:
-            raise HTTPException(status_code=400, detail=str(e))
+    data = await request.json()
+
+    try:
+        bookshelf = BookshelfTitle(id=bookshelf_id,
+                                      title=data['title'])
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+    response = bookshelf_repo.update_bookshelf_title(bookshelf.id, bookshelf.title, current_user.id)
+    if response:
+        return JSONResponse(content={"message": "Bookshelf title updated"})
+    else:
+        raise HTTPException(status_code=400, detail="Failed to update bookshelf title")
         
-        response = bookshelf_repo.update_bookshelf_title(bookshelf_id.id, data['title'], current_user.id)
-        if response:
-            return JSONResponse(content={"message": "Bookshelf title updated"})
-        else:
-            raise HTTPException(status_code=400, detail="Failed to update bookshelf title")
+@router.put("/{bookshelf_id}/update_description",
+            name="bookshelf:update_description")
+async def update_bookshelf_description(request: Request,
+                                    bookshelf_id: str,
+                                    current_user: Annotated[User, Depends(get_current_active_user)],
+                                    bookshelf_repo: BookshelfCRUDRepositoryGraph = Depends(get_repository(repo_type=BookshelfCRUDRepositoryGraph))):
+    data = await request.json()
+
+    try:
+        bookshelf = BookshelfDescription(id=bookshelf_id,
+                                         description=data['description'])
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+    response = bookshelf_repo.update_bookshelf_description(bookshelf.id, bookshelf.description, current_user.id)
+    if response:
+        return JSONResponse(content={"message": "Bookshelf description updated"})
+    else:
+        raise HTTPException(status_code=400, detail="Failed to update bookshelf description")
 
 
 @router.websocket('/ws/{bookshelf_id}') # This is changing to /api/bookshelves/ws/{bookshelf_id}
@@ -268,7 +291,7 @@ async def bookshelf_connection(websocket: WebSocket,
                 continue
 
     except WebSocketDisconnect:
-        await bookshelf_ws_manager.disconnect(bookshelf_id, websocket)
+        await bookshelf_ws_manager.disconnect_without_close(bookshelf_id, websocket)
 
 # TO BE DELETED
 # @router.put("/{bookshelf_id}/remove_book",

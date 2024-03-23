@@ -43,6 +43,13 @@ class BookshelfWSManager:
             del self.locks[bookshelf_id]
             del self.cache[bookshelf_id]
         await ws.close()
+
+    async def disconnect_without_close(self, bookshelf_id: str, ws: WebSocket):
+        self.ac[bookshelf_id].remove(ws)
+        if not self.ac[bookshelf_id]:
+            del self.ac[bookshelf_id]
+            del self.locks[bookshelf_id]
+            del self.cache[bookshelf_id]
             
         # if self.cache[bookshelf_id]: 
         #     # If cache exists and there is no one else in the pool 
