@@ -122,6 +122,24 @@ class BookshelfCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
         response = result.single()
         return response is not None
     
+    def update_bookshelf_title(self, bookshelf_id, title, user_id):
+        with self.driver.session() as session:
+            result = session.write_transaction(self.update_bookshelf_title_query, bookshelf_id, title, user_id)
+        return result
+    
+    @staticmethod
+    def update_bookshelf_title_query(tx, bookshelf_id, title, user_id):
+        query = (
+            """
+            MATCH (b:Bookshelf {id: $bookshelf_id})<-[r:HAS_BOOKSHELF_ACCESS {type: "owner"}]-(u:User {id: $user_id})
+            SET b.title = $title, b.last_edited_date = datetime()
+            RETURN b.id as id
+            """
+        )
+        result = tx.run(query, bookshelf_id=bookshelf_id, title=title, user_id=user_id)
+        response = result.single()
+        return response is not None
+    
     def delete_book_from_bookshelf(self, book_to_remove, books, bookshelf_id):
         with self.driver.session() as session:
             result = session.write_transaction(self.delete_book_from_bookshelf_query, book_to_remove, books, bookshelf_id)

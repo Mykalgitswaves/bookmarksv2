@@ -173,5 +173,33 @@ class TestBookshelfWS:
         response = requests.delete(f"{self.endpoint}/api/bookshelves/{bookshelf_id}/delete", headers=headers)
         print(response.json())
         assert response.status_code == 200, "Deleting Bookshelf"
+
+    def test_change_title(self):
+        """
+        Test case to create a bookshelf.
+        """
+        headers = {"Authorization": f"{self.token_type} {self.access_token}"}
+        data = {
+            "bookshelf_name": "Test Bookshelf",
+            "bookshelf_description": "Test Bookshelf Description",
+            "visibility": "public"
+        }
+
+        response = requests.post(f"{self.endpoint}/api/bookshelves/create", headers=headers, json=data)
+        assert response.status_code == 200, "Creating Bookshelf"
+        bookshelf_id = response.json()["bookshelf_id"]
+
+        data = {
+            "title": "New Title"
+        }
+
+        response = requests.put(f"{self.endpoint}/api/bookshelves/{bookshelf_id}/update_title", headers=headers, json=data)
+        assert response.status_code == 200, "Updating Bookshelf"
+
+        response = requests.get(f"{self.endpoint}/api/bookshelves/{bookshelf_id}", headers=headers)
+        assert response.status_code == 200, "Getting Bookshelf"
+        assert response.json()['bookshelf']["title"] == "New Title", "Title Updated"
+
+        
         
         
