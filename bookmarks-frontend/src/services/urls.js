@@ -42,8 +42,8 @@ export const urls = {
         getComparisons: (user_id) => (baseUrl + `api/${user_id}/comparisons`),
         // getting post data including initial comments on click of comment btn
         getPost: (post_id) => (baseUrl + `api/posts/post/${post_id}`),
-        likePost: (post_id) => (baseUrl + `api/review/${post_id}/like`),
-        unlikePost: (post_id) => (baseUrl + `api/review/${post_id}/remove_like`),
+        likePost: (post_id) => (baseUrl + `api/posts/post/${post_id}/like`),
+        unlikePost: (post_id) => (baseUrl + `api/posts/post/${post_id}/remove_like`),
         likeComparison: (comparison_id, user_id) => (baseUrl + `api/${user_id}/like/comparisons/${comparison_id}`),
         deleteComment: (comment_id) => (baseUrl + `api/review/${comment_id}/delete`),
         likeComment: (comment_id) => (baseUrl + `api/review/${comment_id}/like`),

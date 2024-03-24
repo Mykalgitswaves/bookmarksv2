@@ -16,6 +16,8 @@ export const feedComponentMapping = {
             id: data?.id,
             user_id: data?.user_id,
             likes: data?.likes,
+            liked_by_current_user: data?.liked_by_current_user,
+            deleted: data?.deleted,
         })
     },
     'review': {
@@ -26,12 +28,12 @@ export const feedComponentMapping = {
             responses: data?.responses,
             spoilers: data?.spoilers,
             likes: data?.likes,
+            liked_by_current_user: data?.liked_by_current_user,
             questions: data?.questions,
             question_ids: data?.question_ids,
             headline: data?.headline,
             // post id
             id: data?.id,
-            liked_by_current_user: data?.liked_by_current_user,
             num_comments: data?.num_comments,
             // User info
             username: data?.user_username,
@@ -54,10 +56,11 @@ export const feedComponentMapping = {
             page: data?.page,
             username: data?.user_username,
             user_id: data?.user_id,
-            likes: data?.like,
+            likes: data?.likes,
             deleted: data?.deleted,
             num_comments: data?.num_comments,
-            comments: data?.comments
+            comments: data?.comments,
+            liked_by_current_user: data?.liked_by_current_user,
         })
     }
 }

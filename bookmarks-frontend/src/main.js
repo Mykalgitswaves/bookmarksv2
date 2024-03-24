@@ -3,10 +3,11 @@ import './assets/main.css'
 import { createApp } from 'vue';
 import { createPinia } from 'pinia';
 
+// Not using any of these rn.
 import './webcomponents/cts-sort-items.js';
 import './webcomponents/sort-items.js';
 import './webcomponents/webc-lib.js';
-// For store of creating user data
+
 import { directives } from './directives.js';
 import App from './App.vue'
 import router from './router'

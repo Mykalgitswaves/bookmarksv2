@@ -1,9 +1,9 @@
 <template>
     <div class="card">
+        <!-- Header dude no shit -->
         <div class="card-header">
-            <p 
-                class="text-slate-600 text-center"
-                @click="router.push(`/feed/${route.params.user}/user/${props.user_id}`)"
+            <p class="text-slate-600 text-center"
+                @click="router.push(navRoutes.toUserPageFromPost(route.params.user, user_id))"
             >
                 <span class="text-indigo-600 cursor-pointer">{{ props.username }}'s</span>
                 made an update: 
@@ -11,46 +11,57 @@
         </div>
 
         <div class="card-content-main">
-            <div class="c_c_m_inner">
-                <img class="review-image" :src="props.small_img_url" alt="">
-                <p 
-                    class="text-xl font-semibold my-2 text-indigo-600 cursor-pointer"
-                    @click="router.push(`/feed/${user}/works/${props.book}`)"
-                >{{ props.title }}</p>
-                <p v-if="props.headline.length" class="fancy text-2xl">{{ props.headline }}</p>
+            <div v-if="book" class="c_c_m_inner">
+                <img class="review-image" :src="props.book.small_img_url" alt="">
+
+                <p class="text-xl font-semibold my-2 text-indigo-600 cursor-pointer"
+                    @click="router.push(navRoutes.toBookPageFromPost(user, book.id))"
+                >
+                    {{ book.title }}
+                </p>
+
+                <p v-if="props.headline?.length" class="fancy text-2xl">{{ props.headline }}</p>
+            </div>
+
+            <!-- Something weird happened -->
+            <div v-else class="c_c_m_inner">
+                <h2 class="text-2xl">No content...</h2>
+
+                <p class="text-slate mt-5">Something weird happened</p>
             </div>
         </div>
 
-        <div class="card-responses">
-                    <div class="divider"></div>
-                    
-                    <div class="text-slate-600 my-2 justify-self items-center">
-                        <IconBrain/>    
-                    </div>
+        <div v-if="book && page && response" class="card-responses">
+            <div class="divider"></div>
+            
+            <div class="text-slate-600 my-2 justify-self items-center">
+                <IconBrain/>    
+            </div>
 
-                    <h3 class="text-3xl text-indigo-600 italic mb-5">{{ props.page }}</h3>
+            <h3 class="text-3xl text-indigo-600 italic mb-5">{{ page }}</h3>
 
-                   <p>{{ props.response }}</p>
-                </div>
+            <p>{{ response }}</p>
+        </div>
 
+        <!-- Footer dawg  -->
         <div class="card-footer">
             <button
                 type="button"
                 class="text-slate-600 flex items-center"
-                @click="navigateToCommentPage()"
+                @click="router.push(navRoutes.toPostPageFromFeed(user, props.id))"
             >
                 <IconComment/>
-                <span class="ml-2">comments</span>
+                <span class="ml-2">{{ num_comments }} comments</span>
             </button>
         
             <button 
                 type="button" 
                 class="text-slate-600 flex items-center"
                 :class="{'is-liked': isLiked}"
-                @click="isLiked = !isLiked"
+                @click="AddLikeOrUnlike()"
             >
                 <IconLike/>
-                <span class="ml-2">Like</span>
+                <span class="ml-2">{{ _likes }} Likes</span>
             </button>
         </div>
     </div>    
@@ -60,14 +71,12 @@ import { ref } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import IconComment from '../../svg/icon-comment.vue';
 import IconLike from '../../svg/icon-like.vue';
+import { urls, navRoutes } from '../../../services/urls.js';
+import { db } from '../../../services/db.js';
 
 const props = defineProps({
     book: {
         type: Number,
-        required: true,
-    },
-    title: {
-        type: String,
         required: true,
     },
     response: {
@@ -95,24 +104,39 @@ const props = defineProps({
         type: Number,
         required: true
     },
-    small_img_url: {
-        type: String,
-        required: true
-    },
     user_id: {
         type: String,
         required: true
-    }
+    },
+    num_comments: {
+        type: Number,
+        required: true
+    },
+    likes: {
+        type: Number,
+        required: true
+    },
+    liked_by_current_user: {
+        type: Boolean,
+        required: true
+    },
 });
 
-const isLiked = ref(false);
+const isLiked = ref(props.liked_by_current_user);
+const _likes = ref(props.likes);
 
 const router = useRouter();
 const route = useRoute();
-
 const { user } = route.params
 
-function navigateToCommentPage() {
-    router.push(`/feed/${user}/post/${props.id}`);
+async function AddLikeOrUnlike(){
+    let url = isLiked.value ? 
+        urls.reviews.unlikePost(props.id) :
+        urls.reviews.likePost(props.id);
+    // Turning off debug for now.
+    await db.put(url, false).then(() => {
+        isLiked.value = !isLiked.value;
+        isLiked.value ? _likes.value += 1 : _likes.value -= 1;
+    });
 }
 </script>

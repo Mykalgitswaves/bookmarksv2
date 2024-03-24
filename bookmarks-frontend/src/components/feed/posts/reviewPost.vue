@@ -67,11 +67,11 @@
             <button type="button" 
                 class="text-slate-600 flex items-center"
                 :class="{'is-liked': isLiked}"
-                @click="likePost()"
+                @click="AddLikeOrUnlike()"
             >
                 <IconLike/>
 
-                <span class="ml-2">{{ postLikes }} likes</span>
+                <span class="ml-2">{{ _likes }} likes</span>
             </button>
         </div>
     </div> 
@@ -124,10 +124,6 @@ const props = defineProps({
         type: Number,
         required: true
     },
-    liked_by_current_user: {
-        type: Boolean,
-        required: true,
-    },
     num_comments: {
         type: Number,
         required: true,
@@ -140,26 +136,28 @@ const props = defineProps({
         type: Boolean,
         required: true,
     },
+    liked_by_current_user: {
+        type: Boolean,
+        required: true,
+    },
 });
 
-const isLiked = ref(false);
-const postLikes = ref(props.likes);
 const router = useRouter();
 const route = useRoute();
-const { user } = route.params
+const _likes = ref(props.likes)
+const isLiked = ref(props.liked_by_current_user);
+const postLikes = ref(props.likes);
+const { user } = route.params;
 
-async function likePost() {
-    if(isLiked.value === false) {
-        await db.put(urls.reviews.likePost(props.id), null, true).then(() => {
-            postLikes.value += 1;
-            isLiked.value = true;
-        })
-    } else {
-        await db.put(urls.reviews.unlikePost(props.id), null, true).then(() => {
-            postLikes.value -= 1;
-            isLiked.value = false;
-        })
-    }
+async function AddLikeOrUnlike(){
+    let url = isLiked.value ? 
+        urls.reviews.unlikePost(props.id) :
+        urls.reviews.likePost(props.id);
+    // Turning off debug for now.
+    await db.put(url, false).then(() => {
+        isLiked.value = !isLiked.value;
+        isLiked.value ? _likes.value += 1 : _likes.value -= 1;
+    });
 }
 
 function navigateToCommentPage() {

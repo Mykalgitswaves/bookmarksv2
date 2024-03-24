@@ -83,10 +83,10 @@
                 type="button" 
                 class="text-slate-600 flex items-center"
                 :class="{'is-liked': isLiked}"
-                @click="AddLikeOrUnlike(id)"
+                @click="AddLikeOrUnlike()"
             >
                 <IconLike/>
-                <span class="ml-2">Like</span>
+                <span class="ml-2">{{ _likes }} Likes</span>
             </button>
         </div>
     </div>
@@ -146,24 +146,32 @@ const props = defineProps({
     },
     likes: {
         type: Number
-    }
-})
+    },
+    liked_by_current_user: {
+        type: Boolean,
+        required: true
+    },
+});
 
 const showReview = reactive({});
 showReview[props.id] = false;
 
-const isLiked = ref(null);
+const _likes = ref(props.likes);
+const isLiked = ref(props.liked_by_current_user);
 const route = useRoute();
 const router = useRouter();
 const user = route.params.user;
 
-async function AddLikeOrUnlike(id){
+async function AddLikeOrUnlike(){
     const user_id = route.params.user;
+    let url = isLiked.value ? 
+        urls.reviews.unlikePost(props.id) :
+        urls.reviews.likePost(props.id);
+    console.log(url);
     // Turning off debug for now.
-    await db.post(
-        urls.reviews.likeComparison(user_id, id), false
-    ).then(() => {
+    await db.put(url, false).then(() => {
         isLiked.value = true;
+        isLiked.value ? _likes.value += 1 : _likes.value -= 1;
     });
 }
 
