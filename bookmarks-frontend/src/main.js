@@ -17,7 +17,6 @@ app.config.ignoredElements = ['sort-item', 'cts-sort-item'];
 app.config.productionTip = false;
 
 directives.forEach((directive) => {
-    console.log(directive.name, directive.fn)
     app.directive(directive.name, directive.fn);
 });
 
