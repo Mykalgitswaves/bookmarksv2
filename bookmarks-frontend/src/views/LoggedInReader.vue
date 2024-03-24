@@ -19,25 +19,10 @@
   import { db } from '../services/db'
   import { urls } from '../services/urls'
 
-// const headerMapping = {
-//   0: BookReviews,
-//   1: RecommendedBooks
-// }
-
-    // dynamicComponentState(index) {
-    //   this.componentState = headerMapping[index]
-    // }
-
-  // computed: {
-    // currentState() {
-    //   return this.componentState
-    // }
-
-      const route = useRoute();
-      onMounted(() => {
-        // Passing strings of url and uuid to authenticate function.
-        return db.authenticate(urls.authUrl, route.params.user);
-      });
+  const route = useRoute();
+  onMounted(() => {
+    db.authenticate(urls.authUrl, route.params.user);
+  });
 </script>
 <style scoped>
   .main-layout {
