@@ -2,7 +2,7 @@ import './assets/main.css'
 
 import { createApp } from 'vue';
 import { createPinia } from 'pinia';
-
+import JSConfetti from 'js-confetti';
 // Not using any of these rn.
 import './webcomponents/cts-sort-items.js';
 import './webcomponents/sort-items.js';
@@ -14,6 +14,7 @@ import router from './router'
 export const app = createApp(App)
 export const pinia = createPinia()
 export const baseURL = 'http://127.0.0.1:8000/';
+
 app.config.ignoredElements = ['sort-item', 'cts-sort-item'];
 app.config.productionTip = false;
 

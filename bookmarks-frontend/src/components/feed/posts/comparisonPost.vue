@@ -82,7 +82,7 @@
             <button 
                 type="button" 
                 class="text-slate-600 flex items-center"
-                :class="{'is-liked': isLiked}"
+                :class="{ 'is-liked': isLiked }"
                 @click="AddLikeOrUnlike()"
             >
                 <IconLike/>
@@ -100,6 +100,7 @@ import { reactive, ref, } from 'vue';
 import { db } from '../../../services/db';
 import { urls, navRoutes } from '../../../services/urls';
 import { useRoute, useRouter } from 'vue-router'
+import { createConfetti } from '../../../services/helpers';
 
 const props = defineProps({
     bookBlobs: {
@@ -163,16 +164,19 @@ const router = useRouter();
 const user = route.params.user;
 
 async function AddLikeOrUnlike(){
-    const user_id = route.params.user;
     let url = isLiked.value ? 
         urls.reviews.unlikePost(props.id) :
         urls.reviews.likePost(props.id);
     console.log(url);
     // Turning off debug for now.
     await db.put(url, false).then(() => {
-        isLiked.value = true;
+        isLiked.value = !isLiked.value;
         isLiked.value ? _likes.value += 1 : _likes.value -= 1;
     });
+
+    if(isLiked.value) {
+        await createConfetti();
+    }
 }
 
 function navigateToCommentPage() {

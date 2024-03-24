@@ -85,6 +85,7 @@ import { postStore } from '../../../stores/postStore';
 import IconLike from '../../svg/icon-like.vue';
 import IconComment from '../../svg/icon-comment.vue';
 import IconBrain from '../../svg/icon-brain.vue';
+import { createConfetti } from '../../../services/helpers.js';
 
 const props = defineProps({
     book: {
@@ -149,6 +150,7 @@ const isLiked = ref(props.liked_by_current_user);
 const postLikes = ref(props.likes);
 const { user } = route.params;
 
+
 async function AddLikeOrUnlike(){
     let url = isLiked.value ? 
         urls.reviews.unlikePost(props.id) :
@@ -158,6 +160,10 @@ async function AddLikeOrUnlike(){
         isLiked.value = !isLiked.value;
         isLiked.value ? _likes.value += 1 : _likes.value -= 1;
     });
+
+    if (isLiked.value) {
+        await createConfetti();
+    }
 }
 
 function navigateToCommentPage() {

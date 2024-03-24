@@ -1,5 +1,5 @@
 import { toRaw } from 'vue'
-
+import JSConfetti from 'js-confetti'
 // Helper functions used throughout our app!
 export const helpersCtrl = {
     // Handles commas
@@ -206,4 +206,10 @@ export function isOdd(number) {
 
 export function last(list){
     return list[list.length - 1]
+}
+
+export async function createConfetti(options){
+    const jsConfetti = new JSConfetti()
+    await jsConfetti.addConfetti(options||{})
+    jsConfetti.clearCanvas()
 }

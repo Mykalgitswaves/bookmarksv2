@@ -73,6 +73,7 @@ import IconComment from '../../svg/icon-comment.vue';
 import IconLike from '../../svg/icon-like.vue';
 import { urls, navRoutes } from '../../../services/urls.js';
 import { db } from '../../../services/db.js';
+import { createConfetti } from '../../../services/helpers.js';
 
 const props = defineProps({
     book: {
@@ -138,5 +139,11 @@ async function AddLikeOrUnlike(){
         isLiked.value = !isLiked.value;
         isLiked.value ? _likes.value += 1 : _likes.value -= 1;
     });
+    
+    // Make it fun right?
+    if(isLiked.value){
+        await createConfetti();
+    }
+
 }
 </script>

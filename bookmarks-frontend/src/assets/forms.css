@@ -21,7 +21,7 @@
   }
 
   .popout-flyout:not(.filter) {
-    left: 10px;
+    /* left: 10px; */
     background-color: var(--surface-primary);
   }
 
