@@ -42,8 +42,8 @@ class ReviewCreate(PostCreate):
 class ReviewPost(Post):
     questions: list
     question_ids: list
-    responses = list
-    spoilers = list
+    responses: list
+    spoilers: list
     headline: str = ""
     type: str = "review"
     

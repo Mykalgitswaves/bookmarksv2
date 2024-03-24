@@ -1,11 +1,12 @@
 <template>
   <div>
-    <div class="flex gap-5">
+    <div class="feed-menu-nav" role="menubar">
       <div class="btn-relative">
         <button 
+          ref="show-modal-btn"
           class="flex-center justify-center px-2 py-2 rounded-md color-white bg-indigo-600"
           type="button"
-          @click="selectDropdown = !selectDropdown"
+          @click="modals.selectDropdown = !modals.selectDropdown"
         >
           <IconPlus />
           
@@ -13,18 +14,22 @@
           
         </button>
 
-        <div 
-          v-if="selectDropdown" 
-          class="popout-flyout shadow-lg"
-        >
-          <button 
-            type="button" 
-            v-for="(option, index) in postOptions"
-            :key="index"
-            @click="navigate(createPostBaseRoute, option)"  
+        <div v-close-modal="{
+          exclude: ['show-modal-btn'],
+          handler: closeModal,
+          args: ['selectDropdown']
+        }">
+          <div v-if="modals.selectDropdown"
+            class="popout-flyout shadow-lg"
           >
-            {{ option }}
-          </button>
+            <button type="button" 
+              v-for="(option, index) in postOptions"
+              :key="index"
+              @click="navigate(createPostBaseRoute, option)"  
+            >
+              {{ option }}
+            </button>
+          </div>
         </div>
       </div>
 
@@ -32,32 +37,39 @@
         <div class="btn-relative">
           <button
             v-if="!toggleCreateReviewType"
+            ref="create-review-btn"
             type="button"
             class="flex-center justify-center px-2 py-2 bg-indigo-100 text-indigo-600 rounded-md"
-            @click="filterPopout = !filterPopout"
+            @click="modals.filterPopout = !modals.filterPopout"
           >
               <IconFilter />
               Filter
           </button>
-          
-          <div
-            v-if="filterPopout"
-            class="popout-right shadow-lg px-2 py-2"
-          >
-            <div 
-              v-for="(option, index) in filterOptions" 
-              :key="index"
-              class="is_ai my-2"
+
+          <div v-close-modal="{
+            exclude: ['create-review-btn'],
+            handler: closeModal,
+            args: ['filterPopout']
+          }">
+            <div
+              v-if="modals.filterPopout"
+              class="popout-right shadow-lg px-2 py-2"
             >
-              <label :for="index + '-option'">
-                <input 
-                  type="checkbox"
-                  :id="option.pk + '-option'"
-                  v-model="option.is_active"
-                  :value="false"
-                />
-                {{ option.filter }}
-              </label>
+              <div 
+                v-for="(option, index) in filterOptions" 
+                :key="index"
+                class="is_ai my-2"
+              >
+                <label :for="index + '-option'">
+                  <input 
+                    type="checkbox"
+                    :id="option.pk + '-option'"
+                    v-model="option.is_active"
+                    :value="false"
+                  />
+                  {{ option.filter }}
+                </label>
+              </div>
             </div>
           </div>
         </div>
@@ -72,7 +84,7 @@
 
       <div v-if="!toggleCreateReviewType">
         <TransitionGroup name="content" tag="div">
-          <div v-if="feedData?.length">
+          <div v-if="feedData?.length" class="cards-outer-wrapper">
             <div
               v-for="post in feedData" :key="post.id" 
               class="center-cards"
@@ -90,11 +102,12 @@
     <div class="mobile-menu-spacer sm:hidden"></div>
 </template>
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, reactive } from 'vue';
 import { useRoute } from 'vue-router';
 import { db } from '@/services/db.js';
 import { urls } from '@/services/urls.js';
 import { filterOptions } from './filters.js';
+import { close } from '../../services/helpers.js'
 import { feedComponentMapping } from './feedPostsService';
 import IconPlus from '../svg/icon-plus.vue'
 import IconExit from '../svg/icon-exit.vue';
@@ -102,19 +115,28 @@ import IconFilter from '../svg/icon-filter.vue';
 import { navigate } from './createPostService';
 
 const toggleCreateReviewType = ref(false);
-const selectDropdown = ref(false);
+const modals = reactive({
+  selectDropdown: false,
+  filterPopout: false,
+});
 const bookData = ref(null);
-const feedData = ref(null);
+const feedData = ref([]);
+const privateFeed = ref([]);
 const postOptions = ['review', 'update', 'comparison'];
 const filterPopout = ref(false);
 const route = useRoute();
 const { user } = route.params; 
 const createPostBaseRoute = `/feed/${user}/create`;
 
+function closeModal(reactiveKey) {
+  modals[reactiveKey] = false;
+}
+
 async function loadWorks() {
-    bookData.value = await db.get(urls.booksByN, {'limit': 25}, true);
     await db.get(urls.reviews.getFeed(), true).then((res) => {
-      feedData.value = res.data.filter((d) => d.type !== 'milestone');
+      // We dont want milestone on the feed page since those are private posts.
+      feedData.value = res.data.filter((post) => (post.type !== 'milestone' || post.deleted !== true));
+      privateFeed.value = res.data.filter((post) => post.type === 'milestone');
     });
 }
 
@@ -124,6 +146,21 @@ onMounted(() => {
 </script>
 
 <style scoped>
+
+  .feed-menu-nav {
+    position: fixed;
+    display: flex;
+    column-gap: 10px;
+    justify-content: space-between;
+    padding: 10px;
+    top: 5px;
+  }
+
+  /* used to set the margin top on our cards */
+  .cards-outer-wrapper {
+    margin-top: 10px;
+  }
+
   .card-grids {
     display: grid;
     grid-template-columns: 1;

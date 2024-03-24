@@ -1,49 +1,55 @@
 <template>
-<div class="card" :class="{'card-is-liked': isLiked || props.liked_by_current_user}">
-        <div class="card-header">
-            <p 
-                class="text-slate-600 text-center"
-                @click="router.push(`/feed/${route.params.user}/user/${props.user_id}`)"
-            >
-                <span class="text-indigo-600 cursor-pointer">{{ props.username }}'s</span>
-                made a review: 
-            </p>
-        </div>
+<div class="card" 
+    :class="{'card-is-liked': isLiked || props.liked_by_current_user}"
+>
+    <div class="card-header">
+        <p class="text-slate-600 text-center"
+            @click="router.push(navRoutes.toUserPageFromPost(route.params.user, props.user_id))"
+        >
+            <span class="text-indigo-600 cursor-pointer">{{ username }}'s</span>
+            made a review: 
+        </p>
+    </div>
 
         <div class="card-content-main">
-            <div class="c_c_m_inner">
-                <img class="review-image" :src="props.small_img_url" alt="">
-                <p 
-                    class="text-xl font-semibold my-2 text-indigo-600 cursor-pointer
-                    title-hover
-                    " 
-                    @click="router.push(`/feed/${user}/works/${props.book}`)"
-                >{{ props.title }}</p>
-                <p v-if="props.headline.length" class="fancy text-2xl">{{ props.headline }}</p>
+            <!-- Happy case -->
+            <div v-if="props.book" class="c_c_m_inner">
+                <img class="review-image" :src="props.book?.small_img_url" alt="">
+
+                <p class="text-xl font-semibold my-2 text-indigo-600 cursor-pointer title-hover" 
+                    @click="router.push(navRoutes.toBookPageFromPost(user, book.id))"
+                >{{ props.book?.title }}</p>
+
+                <p v-if="headline" class="fancy text-2xl">{{ headline }}</p>
+            </div>
+
+            <!-- What happens if we don't have shit. -->
+            <div v-else class="c_c_m_inner">
+                <h2 class="text-2xl">No content...</h2>
+
+                <p class="text-slate-500 mt-5">Something weird happened</p>
             </div>
         </div>
 
         <div class="card-responses">
-                    <div class="divider"></div>
-                    
-                    <div class="text-slate-600 my-2 justify-self items-center">
-                        <IconBrain/>
-                        
-                    </div>
+            <div class="divider"></div>
+            
+            <div class="text-slate-600 my-2 justify-self items-center">
+                <IconBrain/>
+            </div>
 
-                    <ul class="my-3 content-start">
-                        <li 
-                            v-for="(r, index) in props.responses" 
-                            :key="index"
-                            class="card-commonalities"
-                        >
-                        
-                            <h3>{{ props.questions[index] }}</h3>
-                            
-                            <p class="mt-2 ml-2 text-slate-500">{{ r }}</p>
-                        </li>  
-                    </ul>
-                </div>
+            <ul class="my-3 content-start">
+                <li v-for="(r, index) in props.responses" 
+                    :key="index"
+                    class="card-commonalities"
+                >
+                
+                    <h3>{{ props.questions[index] }}</h3>
+                    
+                    <p class="mt-2 ml-2 text-slate-500">{{ r }}</p>
+                </li>  
+            </ul>
+        </div>
 
         <div class="card-footer">
             <button
@@ -54,17 +60,17 @@
                 <IconComment/>
                 
                 <span class="ml-2">
-                    {{ props.num_comments }} comments
+                    {{ num_comments }} comments
                 </span>
             </button>
         
-            <button 
-                type="button" 
+            <button type="button" 
                 class="text-slate-600 flex items-center"
                 :class="{'is-liked': isLiked}"
                 @click="likePost()"
             >
                 <IconLike/>
+
                 <span class="ml-2">{{ postLikes }} likes</span>
             </button>
         </div>
@@ -74,18 +80,15 @@
 import { ref } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { db } from '../../../services/db';
-import { urls } from '../../../services/urls';
+import { urls, navRoutes } from '../../../services/urls';
+import { postStore } from '../../../stores/postStore';
 import IconLike from '../../svg/icon-like.vue';
 import IconComment from '../../svg/icon-comment.vue';
 import IconBrain from '../../svg/icon-brain.vue';
 
 const props = defineProps({
     book: {
-        type: Number || String,
-        required: true,
-    },
-    title: {
-        type: String,
+        type: Object,
         required: true,
     },
     responses: {
@@ -121,10 +124,6 @@ const props = defineProps({
         type: Number,
         required: true
     },
-    small_img_url: {
-        type: String,
-        required: true
-    },
     liked_by_current_user: {
         type: Boolean,
         required: true,
@@ -136,12 +135,15 @@ const props = defineProps({
     user_id: {
         type: String,
         required: true
-    }
+    },
+    deleted: {
+        type: Boolean,
+        required: true,
+    },
 });
 
 const isLiked = ref(false);
 const postLikes = ref(props.likes);
-console.log(props)
 const router = useRouter();
 const route = useRoute();
 const { user } = route.params
@@ -161,7 +163,9 @@ async function likePost() {
 }
 
 function navigateToCommentPage() {
-    router.push(`/feed/${user}/post/${props.id}`);
+    // Not sure we need this here but doing it elsewhere so fuck it.
+    postStore.save(props.id);
+    router.push(navRoutes.toPostPageFromFeed(user, props.id));
 }
 </script>
 <style scoped>

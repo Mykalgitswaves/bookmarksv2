@@ -398,14 +398,16 @@ class PostCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
             elif response['labels(p)'] == ["Review"]:
                 review = ReviewPost(
                             id=post["id"],
-                            book=BookPreview(id=response['b']['id'],
-                                             title=response['b']['title'],
-                                             small_img_url=response['b']['small_img_url']),
+                            book=BookPreview(
+                                id=response['b']['id'],
+                                title=response['b']['title'],
+                                small_img_url=response['b']['small_img_url']
+                            ),
                             headline=post['headline'],
                             created_date=post["created_date"],
                             questions=post['questions'],
                             question_ids=post['question_ids'],
-                            responses=post['responses'],
+                            responses=post.get('responses', []),
                             spoilers=post['spoilers'],
                             user_id=response['u.id'],
                             user_username=response['u.username'],
@@ -414,7 +416,6 @@ class PostCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
                         )
                 review.liked_by_current_user = response['liked_by_current_user']
                 review.posted_by_current_user = response['posted_by_current_user']
-                
                 output.append(review)
         return(output)
     
