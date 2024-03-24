@@ -7,22 +7,21 @@
     <FooterNav/>
 </div>
 </template>
-
 <script setup>
+import TopNav from '@/components/feed/topnav.vue';
+import FooterNav from '@/components/feed/footernav.vue'
+import profilePicture from '@/assets/profileimage.jpg'
 
-  import TopNav from '@/components/feed/topnav.vue';
+import { onMounted } from "vue";
+import { useRoute } from 'vue-router';
+import { db } from '../services/db'
+import { urls } from '../services/urls'
 
-  import FooterNav from '@/components/feed/footernav.vue'
-  import profilePicture from '@/assets/profileimage.jpg'
-  import { onMounted } from "vue";
-  import { useRoute } from 'vue-router';
-  import { db } from '../services/db'
-  import { urls } from '../services/urls'
+const route = useRoute();
 
-  const route = useRoute();
-  onMounted(() => {
-    db.authenticate(urls.authUrl, route.params.user);
-  });
+onMounted(() => {
+  db.authenticate(urls.authUrl, route.params.user);
+});
 </script>
 <style scoped>
   .main-layout {
