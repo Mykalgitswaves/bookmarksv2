@@ -1,5 +1,6 @@
 <template>
   <div>
+    <!-- Top nav bar that is absolute positioned, for making posts and filtering posts -->
     <div class="feed-menu-nav" role="menubar">
       <div class="btn-relative">
         <button 
@@ -11,7 +12,6 @@
           <IconPlus />
           
           <span>Make a Post</span>
-          
         </button>
 
         <div v-close-modal="{
@@ -34,72 +34,74 @@
       </div>
 
 
-        <div class="btn-relative">
-          <button
-            v-if="!toggleCreateReviewType"
-            ref="create-review-btn"
-            type="button"
-            class="flex-center justify-center px-2 py-2 bg-indigo-100 text-indigo-600 rounded-md"
-            @click="modals.filterPopout = !modals.filterPopout"
-          >
-              <IconFilter />
-              Filter
-          </button>
+      <div class="btn-relative">
+        <button
+          v-if="!toggleCreateReviewType"
+          ref="create-review-btn"
+          type="button"
+          class="flex-center justify-center px-2 py-2 bg-indigo-100 text-indigo-600 rounded-md"
+          @click="modals.filterPopout = !modals.filterPopout"
+        >
+            <IconFilter />
+            Filter
+        </button>
 
-          <div v-close-modal="{
-            exclude: ['create-review-btn'],
-            handler: closeModal,
-            args: ['filterPopout']
-          }">
-            <div
-              v-if="modals.filterPopout"
-              class="popout-right shadow-lg px-2 py-2"
+        <div v-close-modal="{
+          exclude: ['create-review-btn'],
+          handler: closeModal,
+          args: ['filterPopout']
+        }">
+          <div
+            v-if="modals.filterPopout"
+            class="popout-right shadow-lg px-2 py-2"
+          >
+            <div 
+              v-for="(option, index) in filterOptions" 
+              :key="index"
+              class="is_ai my-2"
             >
-              <div 
-                v-for="(option, index) in filterOptions" 
-                :key="index"
-                class="is_ai my-2"
-              >
-                <label :for="index + '-option'">
-                  <input 
-                    type="checkbox"
-                    :id="option.pk + '-option'"
-                    v-model="option.is_active"
-                    :value="false"
-                  />
-                  {{ option.filter }}
-                </label>
-              </div>
+              <label :for="index + '-option'">
+                <input 
+                  type="checkbox"
+                  :id="option.pk + '-option'"
+                  v-model="option.is_active"
+                  :value="false"
+                />
+                {{ option.filter }}
+              </label>
             </div>
           </div>
         </div>
       </div>
-
-      <component 
-        v-if="toggleCreateReviewType" 
-        :is="mapping[postTypeMapping]" 
-        :key="postTypeMapping" 
-        @is-postable-data="handlePost"
-      />
-
-      <div v-if="!toggleCreateReviewType">
-        <TransitionGroup name="content" tag="div">
-          <div v-if="feedData?.length" class="cards-outer-wrapper">
-            <div
-              v-for="post in feedData" :key="post.id" 
-              class="center-cards"
-            >
-              <component
-                :is="feedComponentMapping[post?.type]?.component()"
-                v-bind="feedComponentMapping[post?.type]?.props(post)"
-              />
-            </div>
-          </div>
-        </TransitionGroup>
-      </div>
     </div>
 
-    <div class="mobile-menu-spacer sm:hidden"></div>
+    <!-- Create posts for feed! -->
+    <component 
+      v-if="toggleCreateReviewType" 
+      :is="mapping[postTypeMapping]" 
+      :key="postTypeMapping" 
+      @is-postable-data="handlePost"
+    />
+
+    <!-- View posts for feed -->
+    <div v-if="!toggleCreateReviewType">
+      <TransitionGroup name="content" tag="div">
+        <div v-if="feedData?.length" class="cards-outer-wrapper">
+          <div
+            v-for="post in feedData" :key="post.id" 
+            class="center-cards"
+          >
+            <component
+              :is="feedComponentMapping[post?.type]?.component()"
+              v-bind="feedComponentMapping[post?.type]?.props(post)"
+            />
+          </div>
+        </div>
+      </TransitionGroup>
+    </div>
+  </div>
+
+  <div class="mobile-menu-spacer sm:hidden"></div>
 </template>
 <script setup>
 import { ref, onMounted, reactive } from 'vue';
@@ -107,7 +109,6 @@ import { useRoute } from 'vue-router';
 import { db } from '@/services/db.js';
 import { urls } from '@/services/urls.js';
 import { filterOptions } from './filters.js';
-import { close } from '../../services/helpers.js'
 import { feedComponentMapping } from './feedPostsService';
 import IconPlus from '../svg/icon-plus.vue'
 import IconExit from '../svg/icon-exit.vue';
@@ -115,15 +116,16 @@ import IconFilter from '../svg/icon-filter.vue';
 import { navigate } from './createPostService';
 
 const toggleCreateReviewType = ref(false);
+
+// Used to show and hide modals.
 const modals = reactive({
   selectDropdown: false,
   filterPopout: false,
 });
-const bookData = ref(null);
+
 const feedData = ref([]);
 const privateFeed = ref([]);
 const postOptions = ['review', 'update', 'comparison'];
-const filterPopout = ref(false);
 const route = useRoute();
 const { user } = route.params; 
 const createPostBaseRoute = `/feed/${user}/create`;
@@ -144,7 +146,6 @@ onMounted(() => {
     loadWorks();
 });
 </script>
-
 <style scoped>
 
   .feed-menu-nav {

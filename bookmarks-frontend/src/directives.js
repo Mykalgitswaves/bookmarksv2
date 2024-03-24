@@ -13,16 +13,16 @@ export const directives = [
                 // from the object used in v-closable
                 const { args, handler, exclude } = binding.value
                 // This variable indicates if the clicked element is excluded
-                let clickedOnExcludedEl = false
+                let clickedOnExcludedEl = false;
                 exclude.forEach((refName) => {
                     // We only run this code if we haven't detected
                     // any excluded element yet
                     if (!clickedOnExcludedEl) {
                     // Get the element using the reference name
-                    const excludedEl = vnode.ctx.refs[refName]
+                    const excludedEl = vnode?.ctx?.refs[refName]
                     // See if this excluded element
                     // is the same element the user just clicked on
-                    clickedOnExcludedEl = excludedEl.contains(e.target)
+                    clickedOnExcludedEl = excludedEl?.contains(e.target)
                     }
                 })
                 // We check to see if the clicked element is not
