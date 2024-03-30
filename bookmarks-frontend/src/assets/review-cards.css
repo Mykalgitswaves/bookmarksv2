@@ -21,6 +21,10 @@
     padding: 30px 20px;
 }
 
+.card-content-main.update {
+    padding-top: 10px;
+}
+
 .c_c_m_inner {
     margin-bottom: 1rem;
     display: flex;

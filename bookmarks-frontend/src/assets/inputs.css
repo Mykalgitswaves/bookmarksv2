@@ -160,6 +160,10 @@ input[type="checkbox"] {
     max-width: 880px;
   }
 
+  .comparator-headlines.create {
+    justify-content: start;
+  }
+
   .comparator-headlines > * {
     flex-basis: 40%;
     min-width: 280px;

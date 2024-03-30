@@ -38,5 +38,10 @@ export const createQuestionStore = defineStore('questions', () => {
         updateArr();
     }
 
-    return { state, arr, addOrUpdateQuestion, deleteQuestion }
+    function clearQuestions() {
+        state.clear();
+        updateArr();
+    }
+
+    return { state, arr, addOrUpdateQuestion, deleteQuestion, clearQuestions }
 })

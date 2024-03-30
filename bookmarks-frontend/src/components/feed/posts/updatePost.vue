@@ -10,9 +10,9 @@
             </p>
         </div>
 
-        <div class="card-content-main">
+        <div class="card-content-main update">
             <div v-if="book" class="c_c_m_inner">
-                <p class="text-xl font-semibold mb-2 text-indigo-600 cursor-pointer"
+                <p class="text-xl font-semibold text-indigo-600 cursor-pointer"
                     @click="router.push(navRoutes.toBookPageFromPost(user, book.id))"
                 >
                     {{ book.title }}

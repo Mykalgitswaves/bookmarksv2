@@ -1,20 +1,17 @@
 <template>
     <ul class="container questions">
-        <li v-for="(question, i) in questions" :key="i">
+        <li v-for="(question, i) in questions" :key="i" @click="createPostResponseFormDict[i] = !createPostResponseFormDict[i]">
             <div class="my-3 text-lg question-border px-5 py-5 cursor-pointer w-100 box-btn justify-between">
-                <button type="button"
-                    class="text-start"
-                    @click="createPostResponseFormDict[i] = !createPostResponseFormDict[i]"
-                >
-                        <span v-if="!props.isComparison" class="block">{{ question.q }}?</span>
-                        <span v-if="!props.isComparison" class="block text-slate-400 text-start" :key="question.response">
-                            {{ question.response }}
-                        </span>
-
-                        <span v-if="props.isComparison" class="block">{{ `The ${question.topic} of both books...` }}</span>
-
-                        <span v-if="props.isComparison" class="block text-slate-400 text-start">{{ question.comparison }}</span>
-                </button>
+                <div class="text-start">
+                    <span v-if="!props.isComparison" class="block">{{ question.q }}?</span>
+                    <span v-if="!props.isComparison" class="block text-slate-400 text-start" :key="question.response">
+                        {{ question.response }}
+                    </span>
+                    
+                    <span v-if="props.isComparison" class="block">{{ `The ${question.topic} of both books...` }}</span>
+                    
+                    <span v-if="props.isComparison" class="block text-slate-400 text-start">{{ question.comparison }}</span>
+                </div>
             </div>
 
             <CreatePostResponseForm 
@@ -27,14 +24,11 @@
             />
         </li>
     </ul>
-    
-    
 </template>
 <script setup>
 import { reactive, computed, watch } from 'vue';
 import { createQuestionStore } from '../../../stores/createPostStore';
 import CreatePostResponseForm from './createPostResponseForm.vue';
-import IconRemove from '../../svg/icon-remove.vue';
 
 const props = defineProps({
     isViewingReview: {

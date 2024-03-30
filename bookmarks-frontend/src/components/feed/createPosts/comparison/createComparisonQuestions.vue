@@ -1,7 +1,7 @@
 <template>
     <div class="container mt-10">
 
-        <p class="text-xl text-indigo-600 font-medium mt-10 mb-5">Add comparisons</p>
+        <p class="text-xl text-stone-700 font-medium mt-10">Add comparisons</p>
 
         <div class="select-1">
             <label for="comparison_dropdown">Pick a topic to create a comparison</label>
@@ -17,7 +17,7 @@
                     :key="index" 
                     :value="topic"
                 >
-                    {{ topic === 'custom' ? 'Add your own' : `The ${topic} of both books...`  }}
+                    {{ topic === 'custom' ? 'Custom' : `The ${topic} of both books...`  }}
                 </option>
             </select>
         </div>
@@ -101,7 +101,7 @@ async function addQuestionToStoreFn(question) {
         emit('postable-store-data', postData)
         emit('question-added');
 
-        await resetQuestion()
+        resetQuestion()
     }
     catch(err) {
         console.error(err)
