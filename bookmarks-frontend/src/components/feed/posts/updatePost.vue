@@ -29,18 +29,16 @@
 
                 <p class="text-slate mt-5">Something weird happened</p>
             </div>
-        </div>
 
-        <div v-if="book && page && response" class="card-responses">
-            <div class="divider"></div>
-            
-            <div class="text-slate-600 my-2 justify-self items-center">
-                <IconBrain/>    
+            <div v-if="page || response || quote" class="card-responses">
+                <h4 class="text-lg italic text-slate-700">
+                    page #<span class="text-indigo-600">{{ page }}</span>
+                </h4>
+
+                <p class="quote">"{{ quote }}""</p>
+
+                <p class="response">{{ response }}</p>
             </div>
-
-            <h3 class="text-3xl text-indigo-600 italic mb-5">{{ page }}</h3>
-
-            <p>{{ response }}</p>
         </div>
 
         <!-- Footer dawg  -->
@@ -71,6 +69,7 @@ import { ref } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import IconComment from '../../svg/icon-comment.vue';
 import IconLike from '../../svg/icon-like.vue';
+import IconBrain from '../../svg/icon-brain.vue';
 import { urls, navRoutes } from '../../../services/urls.js';
 import { db } from '../../../services/db.js';
 import { createConfetti } from '../../../services/helpers.js';
@@ -87,6 +86,10 @@ const props = defineProps({
     spoilers: {
         type: Array,
         required: true,
+    },
+    quote: {
+        type: String,
+        required: false,
     },
     page: {
         type: Number,
@@ -147,3 +150,17 @@ async function AddLikeOrUnlike(){
 
 }
 </script>
+<style scoped>
+
+.quote {
+    padding-left: calc(1 * var(--padding-md));
+    padding-right: calc(1 * var(--padding-md));
+    padding-top: var(--spacing-sm);
+    padding-bottom: var(--spacing-sm);
+    margin-bottom: var(--spacing-md);
+    margin-right: var(--spacing-md);
+    margin-left: var(--spacing-md);
+    font-style: italic;
+    background-color: var(--stone-100);
+}
+</style>

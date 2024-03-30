@@ -111,7 +111,8 @@ async def create_update(request: Request,
      questions:[]
      ids:[]
      responses:[]
-     spoilers:[]
+     spoilers:[],
+     quote
      }
 
     """
@@ -137,15 +138,16 @@ async def create_update(request: Request,
         canonical_book = book_repo.get_canonical_book_by_google_id(book_id) 
         if canonical_book:
             db_book = canonical_book
-    
+
     try:
         update = UpdateCreate(
                             book=db_book,
                             user_username=current_user.username,
-                            headline=response['headline'],
-                            page=response['page'],
-                            response=response['response'],
-                            spoiler=response['is_spoiler'])
+                            headline=response.get('headline'),
+                            page=response.get('page'),
+                            response=response.get('response'),
+                            spoiler=response.get('is_spoiler'),
+                            quote=response.get('quote'))
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
         

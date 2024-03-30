@@ -74,6 +74,7 @@ export const helpersCtrl = {
         data.headline = update.headline;
         data.response = update.response;
         data.is_spoiler = update.is_spoiler;
+        data.quote = update.quote;
 
         return data;
     },

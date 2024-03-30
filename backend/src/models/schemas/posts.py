@@ -52,6 +52,7 @@ class UpdateCreate(PostCreate):
     response: str
     spoiler: bool
     headline: str = ""
+    quote: str = ""
 
 
 class UpdatePost(Post):
@@ -60,6 +61,7 @@ class UpdatePost(Post):
     spoiler: bool
     headline: str = ""
     type: str = "update"
+    quote: str = None
 
 class ComparisonCreate(BaseModel):
     user_username: str

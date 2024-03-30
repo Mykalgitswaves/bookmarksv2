@@ -70,11 +70,10 @@
   }
 
   .create-post-heading-text {
-    color: var(--slate-600);
+    color: var(--slate-800);
     font-size: var(--font-2xl);
     font-weight: 500;  
-    margin-bottom: var(--margin-md);
-}
+  }
 
   .create-post-heading-book-title {
     color: var(--indigo-500);    

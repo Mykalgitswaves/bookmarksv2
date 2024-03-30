@@ -98,6 +98,7 @@ class PostCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
                             headline:$headline,
                             response:$response,
                             spoiler:$spoiler,
+                            quote:$quote,
                             deleted:false,
                             likes:0})
             create (u)-[p:POSTED]->(d)
@@ -112,7 +113,8 @@ class PostCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
                         page=update_post.page, 
                         headline=update_post.headline, 
                         response=update_post.response,
-                        spoiler=update_post.spoiler)
+                        spoiler=update_post.spoiler,
+                        quote=update_post.quote)
         
         response = result.single()
         update_result = UpdatePost(
@@ -122,6 +124,7 @@ class PostCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
                         headline=update_post.headline, 
                         response=update_post.response,
                         spoiler=update_post.spoiler,
+                        quote=update_post.quote,
                         created_date=response['d.created_date'],
                         id=response['d.id']
         )   
@@ -386,6 +389,7 @@ class PostCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
                                     page=post['page'],
                                     response=post['response'],
                                     spoiler=post['spoiler'],
+                                    quote=post['quote'],
                                     user_id=response['u.id'],
                                     user_username=response['u.username'],
                                     likes=post['likes'],

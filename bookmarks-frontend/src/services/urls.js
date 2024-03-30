@@ -33,9 +33,9 @@ export const urls = {
         searchBook: (text) => (`${baseUrl}api/search/book/${text}`)
     },
     reviews: {
-        review: baseUrl + 'api/review/create_review',
-        update: baseUrl + 'api/review/create_update',
-        comparison: baseUrl + 'api/review/create_comparison',
+        review: baseUrl + 'api/posts/create_review',
+        update: baseUrl + 'api/posts/create_update',
+        comparison: baseUrl + 'api/posts/create_comparison',
         createComment: () => (baseUrl + 'api/review/create_comment'),
         // used in feed
         getReviews: (user_id) => (baseUrl +`api/${user_id}/posts`),

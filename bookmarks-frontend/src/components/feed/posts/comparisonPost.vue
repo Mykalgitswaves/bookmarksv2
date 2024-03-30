@@ -76,7 +76,7 @@
                 @click="navigateToCommentPage()"
             >
                 <IconComment/>
-                <span class="ml-2">comments</span>
+                <span class="ml-2">{{ num_comments }} comments</span>
             </button>
         
             <button 
@@ -150,6 +150,10 @@ const props = defineProps({
     },
     liked_by_current_user: {
         type: Boolean,
+        required: true
+    },
+    num_comments: {
+        type: Number,
         required: true
     },
 });
