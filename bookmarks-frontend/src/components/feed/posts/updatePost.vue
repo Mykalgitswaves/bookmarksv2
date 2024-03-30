@@ -12,17 +12,19 @@
 
         <div class="card-content-main">
             <div v-if="book" class="c_c_m_inner">
-                <img class="review-image" :src="props.book.small_img_url" alt="">
-
-                <p class="text-xl font-semibold my-2 text-indigo-600 cursor-pointer"
+                <p class="text-xl font-semibold mb-2 text-indigo-600 cursor-pointer"
                     @click="router.push(navRoutes.toBookPageFromPost(user, book.id))"
                 >
                     {{ book.title }}
                 </p>
 
-                <p v-if="props.headline?.length" class="fancy text-2xl">{{ props.headline }}</p>
-            </div>
+                <img class="review-image" :src="props.book.small_img_url" alt="">
 
+                <h4 class="text-xl italic text-slate-700">
+                    on page #<span class="text-indigo-600">{{ page }}</span>
+                </h4>
+            </div>
+            
             <!-- Something weird happened -->
             <div v-else class="c_c_m_inner">
                 <h2 class="text-2xl">No content...</h2>
@@ -30,14 +32,15 @@
                 <p class="text-slate mt-5">Something weird happened</p>
             </div>
 
-            <div v-if="page || response || quote" class="card-responses">
-                <h4 class="text-lg italic text-slate-700">
-                    page #<span class="text-indigo-600">{{ page }}</span>
-                </h4>
+            <div class="divider"></div>
 
-                <p class="quote">"{{ quote }}""</p>
+            <div v-if="book && (response || quote)" class="card-responses">
+                <!-- Removing headline for now to minimize amount of information people are seeing -->
+                <p v-if="props.headline?.length" class="mb-5 fancy text-2xl">{{ props.headline }}</p>
 
-                <p class="response">{{ response }}</p>
+                <p v-if="quote" class="quote">"{{ quote }}"</p>
+
+                <p v-if="response" class="response">{{ response }}</p>
             </div>
         </div>
 
@@ -153,14 +156,28 @@ async function AddLikeOrUnlike(){
 <style scoped>
 
 .quote {
-    padding-left: calc(1 * var(--padding-md));
-    padding-right: calc(1 * var(--padding-md));
+    padding-left: var(--padding-md);
+    padding-right: var(--padding-md);
     padding-top: var(--spacing-sm);
     padding-bottom: var(--spacing-sm);
-    margin-bottom: var(--spacing-md);
+    margin-bottom: var(--spacing-sm);
     margin-right: var(--spacing-md);
     margin-left: var(--spacing-md);
     font-style: italic;
-    background-color: var(--stone-100);
+    background-color: var(--stone-50);
+    color: var(--stone-800);
+    border-radius: var(--radius-sm);
+}
+
+.response {
+    padding-left: var(--padding-md);
+    padding-right: var(--padding-md);
+}
+
+.response::first-letter {
+    font-size: var(--font-2xl);
+    font-family: var(--fancy-script);
+    font-optical-sizing: auto;
+    font-weight: 500;
 }
 </style>

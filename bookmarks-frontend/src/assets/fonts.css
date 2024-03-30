@@ -1,10 +1,12 @@
-@import url('https://fonts.googleapis.com/css2?family=Pinyon+Script&family=Ubuntu:wght@300;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400..700;1,400..700&display=swap');
 
 /* use with font-family: var(--variable); to activate fancy ness */
 :root {
-    --fancy-script:  'Pinyon Script', cursive; 
+    --fancy-script:  'Lora', serif; 
 }
 
 .fancy {
     font-family: var(--fancy-script);
+    font-optical-sizing: auto;
+    font-style: normal;
 }
