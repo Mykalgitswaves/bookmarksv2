@@ -15,24 +15,23 @@
             <!-- headings for comparisons -->
             <div v-if="bookBlobs?.length" class="comparisons">
                 <div class="comparison">
-                    <img class="comparison-image" :src="bookBlobs[0]?.small_img_url ? bookBlobs[0].small_img_url : ''" alt="">
                     <p  class="text-xl font-semibold cursor-pointer title-hover" 
                         @click="router.push(navRoutes.toBookPageFromPost(user, bookBlobs[0]?.id))"
                     >{{ bookBlobs[0]?.title }}</p>
+
+                    <img class="comparison-image" :src="bookBlobs[0]?.small_img_url ? bookBlobs[0].small_img_url : ''" alt="">
+
                     <p class="comparison-headline">{{ headlines[0] }}</p>
                 </div>
 
                 <IconLinkArrow />
 
                 <div class="comparison">
-                    <img class="comparison-image" 
-                        :src="bookBlobs[1]?.small_img_url ? bookBlobs[1]?.small_img_url : ''" 
-                        alt=""
-                    >
-                    
                     <p class="text-xl font-semibold cursor-pointer title-hover"
                         @click="router.push(navRoutes.toBookPageFromPost(user, bookBlobs[1]?.id))"
                     >{{ bookBlobs[1]?.title }}</p>
+
+                    <img class="comparison-image" :src="bookBlobs[1]?.small_img_url ? bookBlobs[1]?.small_img_url : ''" alt="">
                     
                     <p v-if="headlines?.length && headlines[1]?.length" 
                        class="comparison-headline"
@@ -51,9 +50,11 @@
         <!-- Actual comparisons dude -->
         <div v-if="comparisons?.length" class="card-responses">
             <div class="divider"></div>
-
-            <h3 class="text-slate-700 text-lg my-2">Commonalities</h3>
-
+            
+            <h3 class="text-slate-700 text-xl my-2">Commonalities</h3>
+            
+            <div class="divider"></div>
+            
             <ul class="my-3 content-start">
                 <li 
                     v-for="(c, index) in comparisons" 
@@ -63,7 +64,7 @@
                 
                     <h3>{{ comparators[index] }}</h3>
                     
-                    <p class="mt-2 ml-2 text-slate-500">{{ c }}</p>
+                    <p class="mt-2 ml-2 card-commonality-response">{{ c }}</p>
                 </li>  
             </ul>
         </div>

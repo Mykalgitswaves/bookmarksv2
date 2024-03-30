@@ -1,6 +1,6 @@
 <template>
     <section v-if="books.length === 2" class="mt-10">
-        <CreateComparisonHeadlines class="mb-10" :books="books" @headlines-changed="$emit('headlines-changed', $data)"/>
+        <CreateComparisonHeadlines class="mb-10" :books="books" @headlines-changed="$emit('headlines-changed', $event)"/>
 
         <div class="grid-two-btn-container">    
             <button
@@ -25,8 +25,8 @@
             v-show="currentView === 'add'"
             :books="books"
             :headlines="headlines"
-            @question-added="$emit('question-added', $data)"
-            @postable-store-data="$emit('postable-store-data', $data)"
+            @question-added="$emit('question-added', $event)"
+            @postable-store-data="$emit('postable-store-data', $event)"
         />
 
         <ViewComparisonQuestionsVue
@@ -39,7 +39,6 @@ import { onUnmounted } from 'vue';
 import CreateComparisonQuestionsVue from './comparison/createComparisonQuestions.vue';
 import ViewComparisonQuestionsVue from './comparison/viewComparisonQuestions.vue';
 import CreateComparisonHeadlines from './comparison/createComparisonHeadlines.vue';
-import { createQuestionStore } from '../../../stores/createPostStore';
 
 defineProps({
     currentView: {
@@ -60,12 +59,6 @@ defineProps({
         required: true,
     }
 });
-const store = createQuestionStore();
-
-onUnmounted(() => {
-    // Destroy old questions in store once you leave the page. This could pisss people off a bit idk.
-    store.clearQuestions();
-})
 
 </script>
 <style scoped>

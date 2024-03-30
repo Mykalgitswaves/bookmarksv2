@@ -1,6 +1,7 @@
 <template> 
 <section class="post-section-wrapper">
-    <BackBtn/>    
+    <BackBtn/>  
+      
     <component
         :is="componentMapping[reviewType]"
         @is-postable-data="handlePost"
@@ -22,6 +23,7 @@
 <script setup>
 import { ref, watch } from 'vue';
 import { componentMapping, urlsMapping} from './createPostService';
+import { createQuestionStore } from '../../stores/createPostStore'
 import { useRoute, useRouter } from 'vue-router';
 import { db } from '../../services/db';
 import IconAddPost from '../svg/icon-add-post.vue';
@@ -37,13 +39,15 @@ const { reviewType } = route.params
 function handlePost(e) {
   emittedPostData.value = e;
 }
-
+// Make sure to clear out questions on successfull post.
+const store = createQuestionStore();
 async function postToEndpoint() {
     await db.post(urlsMapping[reviewType], emittedPostData, true).then(() => {
-    postTypeMapping.value = '';
-    // Set to null after request is sent.
-    emittedPostData.value = null;
-    router.push({name: 'home-feed', params: { user: route.params.user }})
+      postTypeMapping.value = '';
+      // Set to null after request is sent.
+      emittedPostData.value = null;
+      store.clearQuestions();
+      router.push({name: 'home-feed', params: { user: route.params.user }})
   });
 }
 
