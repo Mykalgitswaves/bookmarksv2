@@ -13,14 +13,12 @@
 
         <div class="card-content-main">
             <!-- Happy case -->
-            <div v-if="props.book" class="c_c_m_inner">
-                <img class="review-image" :src="props.book?.small_img_url" alt="">
-
-                <p class="text-xl font-semibold my-2 text-indigo-600 cursor-pointer title-hover" 
+            <div v-if="props.book" class="c_c_m_inner mb-0">
+                <p class="text-xl font-semibold mb-2 text-indigo-600 cursor-pointer title-hover" 
                     @click="router.push(navRoutes.toBookPageFromPost(user, book.id))"
                 >{{ props.book?.title }}</p>
 
-                <p v-if="headline" class="fancy text-2xl">{{ headline }}</p>
+                <img class="review-image" :src="props.book?.small_img_url" alt="">
             </div>
 
             <!-- What happens if we don't have shit. -->
@@ -32,11 +30,9 @@
         </div>
 
         <div class="card-responses">
+            <div class="divider"></div>            
+                <p v-if="headline" class="fancy text-2xl">{{ headline }}</p>
             <div class="divider"></div>
-            
-            <div class="text-slate-600 my-2 justify-self items-center">
-                <IconBrain/>
-            </div>
 
             <ul class="my-3 content-start">
                 <li v-for="(r, index) in props.responses" 

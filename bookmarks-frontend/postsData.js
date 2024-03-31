@@ -75,12 +75,14 @@ export const postData = {
                             "is_spoiler": false
                           }
                     ],
-                    "Your post": [
+                    "custom": [
                         {   
                             "id": -1,
-                            "q": 'Answer prompts or add your own questions to review books.',
-                            "response": "View or edit your responses here.",
-                            "is_spoiler": false
+                            "q": '',
+                            "response": '',
+                            "is_spoiler": false,
+                            "placeholder": "Add your own question here...",
+                            "isHiddenCustomQuestion": false
                         }
                     ]
         },

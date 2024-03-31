@@ -32,11 +32,16 @@
                 <p class="text-slate mt-5">Something weird happened</p>
             </div>
 
-            <div class="divider"></div>
+            <div v-if="props.headline?.length">
+                <div class="divider"></div>
+
+                <p class="fancy text-2xl">{{ props.headline }}</p>
+                
+                <div class="divider"></div>
+            </div>
 
             <div v-if="book && (response || quote)" class="card-responses">
                 <!-- Removing headline for now to minimize amount of information people are seeing -->
-                <p v-if="props.headline?.length" class="mb-5 fancy text-2xl">{{ props.headline }}</p>
 
                 <p v-if="quote" class="quote">"{{ quote }}"</p>
 

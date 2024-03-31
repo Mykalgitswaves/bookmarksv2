@@ -20,18 +20,23 @@
 
             <CreatePostHeadline @headline-changed="headlineHandler" />
 
-            <p class="text-2xl font-medium my-5 text-slate-600">Add and answer questions.</p>
+            <div class="mt-10 mb-5">
+                <h4 class="heading">Add and answer questions.</h4>
+                <p class="subheading">pick from some templates below</p>
+            </div>
 
             <div class="grid-two-btn-container">
                 
                 <button
                     type="button" 
+                    :class="{ 'active': currentPostTopic === 'questions' }"
                     class="btn border-indigo-500 text-indigo-500 text-lg"
                     @click="currentPostTopic = 'questions'"
                 >Pick Questions</button>
 
                 <button 
                     type="button"
+                    :class="{ 'active': currentPostTopic === 'review' }"
                     class="btn border-indigo-500 text-indigo-500 text-lg"
                     @click="currentPostTopic = 'review'"
                 >Your Review ({{ count }})</button>
@@ -42,7 +47,7 @@
                 :question-map="questionMapping"
                 :is-viewing-review="false"
                 :question-count="count"
-                @question-added="($event) => currentPostTopic = 'review'"
+                @question-added="currentPostTopic = 'review'"
             />
 
             <YourReviewQuestions 
@@ -55,7 +60,7 @@
     </section>
 </template>
 <script setup>
-import { ref, defineEmits, watch, computed } from 'vue'
+import { ref, defineEmits, watch, computed, reactive } from 'vue'
 import { postData } from '../../../../postsData.js';
 import { createQuestionStore } from '../../../stores/createPostStore';
 import { helpersCtrl } from '../../../services/helpers';
@@ -66,7 +71,7 @@ import YourReviewQuestions from './yourReviewQuestions.vue';
 
 // get qs from data and add in entries.
 const questionCats = Array.from(Object.keys(postData.posts.review))
-
+console.log(questionCats)
 // Refs
 const book = ref(null);
 const { clone } = helpersCtrl;
@@ -78,7 +83,7 @@ let characterQuestions = clone(postData.posts.review['character']);
 let plotQuestions = clone(postData.posts.review['plot']);
 let toneQuestions = clone(postData.posts.review['tone']);
 let allQuestions = clone(postData.posts.review['all']);
-const viewEntriesDefault = clone(postData.posts.review['Your post']);
+let customQuestions = clone(postData.posts.review['custom']);
 
 const store = createQuestionStore();
 
@@ -88,12 +93,13 @@ const headline = ref('');
 const currentPostTopic = ref('questions')
 
 // used to show certain question sets.
-const questionMapping = {
+const questionMapping = reactive({
     'character': characterQuestions,
     'plot': plotQuestions,
     'tone': toneQuestions,
     'all': allQuestions,
-}
+    'custom': customQuestions,
+});
 
 // functions
 const emit = defineEmits(['is-postable-data']);
@@ -118,8 +124,23 @@ const count = computed(() => {
 // Add a watcher to emit up when something is added, doesn't seem to capture when entries loses entry with splice so we have duplicate above.
 watch(entries, () => {
         emit('is-postable-data', helpersCtrl.formatReviewData(entries.value, book.value, headline.value))
-        // watch all values of entries and remove entries whose response value is an empty string, since they have been deleted.
-})
+        console.log(entries.value[entries.value.length - 1]);
+        // If you added a custom question, add a new one to the end of the reactive list.
+        let numOfCustomQuestions = entries.value.filter(q => q.id < 0).length;
+        if(numOfCustomQuestions) {
+            let lastIdOfCustomQuestionDecremented = entries.value[entries.value.length - 1].id;
+            if(lastIdOfCustomQuestionDecremented){
+                questionMapping.custom.push({
+                    "id": lastIdOfCustomQuestionDecremented - 1,
+                    "q": '',
+                    "response": '',
+                    "is_spoiler": false,
+                    "placeholder": "Add your own question here...",
+                    "isHiddenCustomQuestion": false
+                });
+            }
+        }
+});
 
 watch(headline, () => {
     if(entries.value?.length) {
@@ -133,6 +154,16 @@ watch(currentTopic, () => {
 </script>
 
 <style scoped>
+
+.heading {
+    font-size: var(--font-2xl);
+    color: var(--stone-700);
+    font-weight: 500;
+}
+
+.subheading {
+    color: var(--stone-600);
+}
 
 .text-white { 
     color: #fff;
@@ -184,5 +215,10 @@ textarea {
 
 .border-indigo-500 {
     border: solid 2px var(--indigo-500);
+}
+.active {
+    background-color: var(--indigo-500);
+    color: #fff;
+    border-color: var(--indigo-500);
 }
 </style>

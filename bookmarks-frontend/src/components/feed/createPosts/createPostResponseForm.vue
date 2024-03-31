@@ -55,7 +55,7 @@
                     :class="{
                         'added': q.response !== '',
                     }"
-                    @click="alertQuestionWatch(q)"
+                    @click="alertQuestionWatch(q, 'review')"
                 >
                     Add response
                 </button>
@@ -102,16 +102,26 @@ const props = defineProps({
     },
     indexOfQ: {
         type: Number,
+    },
+    isCustomQuestion: {
+        type: Boolean,
+        required: false,
+        default: false,
     }
 })
 
 const q  = toRaw(props.q)
-
 const store = createQuestionStore();
 const emit = defineEmits(['store-changed']);
 
-function alertQuestionWatch(question) {
-    store.addOrUpdateQuestion(question)
-    emit('store-changed', props.indexOfQ);
+function alertQuestionWatch(question, option) {
+    if(!option){
+        store.addOrUpdateQuestion(question)
+    } else {
+        // We want to allow users to create more than one custom question.
+        question.isHiddenCustomQuestion = true;
+        store.addOrUpdateQuestion(question);
+    }
+        emit('store-changed', props.indexOfQ);
 }
 </script>

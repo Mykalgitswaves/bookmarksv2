@@ -35,8 +35,6 @@
     const route = useRoute();
     const { work1, reviewType } = route.params;
 
-    console.log(work1, reviewType, route.params);
-
     const mapping = {
         "review": createReviewPost,
         "update": createUpdatePost,
@@ -47,7 +45,6 @@
 
     function handlePost(data){
         postableData.value = data;
-        console.log(data);
     }
 
     async function postData() {

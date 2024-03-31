@@ -26,7 +26,7 @@ export const createQuestionStore = defineStore('questions', () => {
     
     // Add or update a question in the map
     function addOrUpdateQuestion(question) {
-        if (!state.has(question)) {
+        if (!state.has(question) || question.id < 0) {
             state.set(question.id, question);
             updateArr();
         }

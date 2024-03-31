@@ -31,7 +31,7 @@
             <p>Feed</p>
         </div>
 
-        <div 
+        <!-- <div 
             class="nav-button-group hover:bg-gray-200"
             v-show="!isSearchBarActive"
             @click="goToSocialPage(user)"
@@ -46,7 +46,7 @@
                 <IconSocial/>
             </button>
             <p>Social</p>
-        </div>
+        </div> -->
         
         <div 
             class="nav-button-group hover:bg-gray-200"
@@ -65,8 +65,7 @@
             <p>Bookshelves</p>
         </div>
 
-        <div 
-            class="nav-button-group hover:bg-gray-200"
+        <div class="nav-button-group hover:bg-gray-200"
             v-show="!isSearchBarActive"
             @click="goToUserPage(user)"
             aria-roledescription="navigation button"

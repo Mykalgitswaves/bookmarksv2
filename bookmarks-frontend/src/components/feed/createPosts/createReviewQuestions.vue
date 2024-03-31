@@ -20,15 +20,20 @@
                         :key="i"
                         @click="store.addOrUpdateQuestion(question)"
                     >
-                        <div class="my-3 text-lg question-border px-5 py-5 cursor-pointer w-100 box-btn">
+                        <div class="my-3 text-lg question-border px-5 py-5 cursor-pointer w-100 box-btn"
+                            v-if="question?.id >= 0 || !question?.isHiddenCustomQuestion"
+                        >
                             <button type="button"
                                 class="text-start"
                                 :class="{'w-70': props.isViewingReview}"
                                 @click="store.addOrUpdateQuestion(question)"
                             >
-                                    <span class="block">{{ question.q }}?</span>
-                                    <span class="block text-slate-400 text-start" :key="question.response">
-                                        {{ question.response }}
+                                    <span v-if="question.id >= 0" class="block">{{ question?.q }}?</span>
+                                    
+                                    <span v-else class="block">{{ question?.placeholder }}</span>
+                                    
+                                    <span v-if="question.id >= 0" class="block text-slate-400 text-start" :key="question.response">
+                                        {{ question?.response }}
                                     </span>
                             </button>
 
@@ -53,7 +58,7 @@
         </ul>
 </template>
 <script setup>
-import { toRaw, ref, watch } from 'vue';
+import { ref, watch, computed } from 'vue';
 import { helpersCtrl } from '../../../services/helpers';
 import { createQuestionStore } from '../../../stores/createPostStore';
 import IconAddPostVue from '../../svg/icon-add-post.vue';
@@ -71,18 +76,29 @@ const props = defineProps({
     questionCount: {
         type: Number,
     }
-})
+});
+
 const { clone } = helpersCtrl;
-const questionMap = (toRaw(props.questionMap))
+
 const store = createQuestionStore();
-const qset = Array.from(Object.entries(questionMap))
-const activeQuestionCat = ref([])
+const qset = computed(() => {
+    console.log(props.questionMap);
+    return Array.from(Object.entries(props.questionMap));
+});
+
+watch(props.questionMap, (newValue) => {
+    console.log(newValue);
+});
+
+const activeQuestionCat = ref([]);
+
 activeQuestionCat.value.forEach((boolean) => (boolean.value = false));
 
-const emit = defineEmits(['question-added'])
+const emit = defineEmits(['question-added']);
+
 watch(() => props.questionCount, (newValue) => {
-    emit('question-added', newValue)
-})
+    emit('question-added', newValue);
+});
 </script>
 <style scoped>
 
