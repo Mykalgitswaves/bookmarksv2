@@ -36,7 +36,7 @@ export const urls = {
         review: baseUrl + 'api/posts/create_review',
         update: baseUrl + 'api/posts/create_update',
         comparison: baseUrl + 'api/posts/create_comparison',
-        createComment: () => (baseUrl + 'api/review/create_comment'),
+        createComment: () => (baseUrl + 'api/posts/comment/create'),
         // used in feed
         getReviews: (user_id) => (baseUrl +`api/${user_id}/posts`),
         getComparisons: (user_id) => (baseUrl + `api/${user_id}/comparisons`),
@@ -46,9 +46,9 @@ export const urls = {
         unlikePost: (post_id) => (baseUrl + `api/posts/post/${post_id}/remove_like`),
         likeComparison: (comparison_id, user_id) => (baseUrl + `api/${user_id}/like/comparisons/${comparison_id}`),
         deleteComment: (comment_id) => (baseUrl + `api/review/${comment_id}/delete`),
-        likeComment: (comment_id) => (baseUrl + `api/review/${comment_id}/like`),
-        unlikeComment: (comment_id) => (baseUrl + `api/review/${comment_id}/remove_like`),
-        pinComment: (comment_id, post_id) => (baseUrl + `api/review/${comment_id}/pin/${post_id}`),
+        likeComment: (comment_id) => (baseUrl + `api/posts/comment/${comment_id}/like`),
+        unlikeComment: (comment_id) => (baseUrl + `api/posts/comment/${comment_id}/remove_like`),
+        pinComment: (comment_id, post_id) => (baseUrl + `api/posts/post/${post_id}/pin/${comment_id}`),
         unpinComment: (comment_id, post_id) => (baseUrl + `api/review/post/${post_id}/comment/${comment_id}/remove_pin`),
         getComments: (post_id) =>(baseUrl + `api/posts/post/${post_id}/comments`),
         // calling more comments (duh)

@@ -40,6 +40,7 @@
               :title="p.book_title"
               :headline="p.headline"
               :response="p.response"
+              :quote="p.quote"
               :spoiler="p.spoiler"
               :username="p.user_username"
               :small_img_url="p.book_small_img"
