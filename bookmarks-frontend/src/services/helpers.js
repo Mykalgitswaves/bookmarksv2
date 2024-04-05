@@ -16,7 +16,7 @@ export const helpersCtrl = {
         let error = () => { throw new Error("commanatoredString needs a list with values! No empty ones brah");}
         
         if (!list || !list.length) {
-            return error();
+            return null;
         }
         
         let result = '';

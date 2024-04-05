@@ -28,6 +28,7 @@ export const ws = {
     client: getCookieByParam(['token']),
     socket: null, // Initialize socket variable
     books: [],
+    secure_token: null,
     connection_address: '',
     current_state: '', // Use current state to lock out ui or inform users that reorders are occuring. 
     // This is set by the on message function. We can get really granular here and our ws manager in 
@@ -35,7 +36,7 @@ export const ws = {
 
     newSocket: async (connection_address) => {
         ws.connection_address = connection_address;
-        ws.socket = new WebSocket(urls.rtc.bookshelf(connection_address)); // Assign the socket to ws.socket
+        ws.socket = new WebSocket(`${urls.rtc.bookshelf(connection_address)}?token=${ws.client}`); // Assign the socket to ws.socket
     },
     
     createNewSocketConnection: async (connection_address) => {
@@ -48,13 +49,17 @@ export const ws = {
 
             ws.socket.onmessage = (e) => {
                 const data = JSON.parse(e.data);
+                if(!ws.secure_token && data?.token){
+                    ws.secure_token = data.token;
+                }
                 // cases.
                 if(data?.state === 'locked'){
                     console.log('locked while reordering', data);
                     ws.current_state = 'locked'
                 // unlocked means we are also returning reordered data 
                 } else if (data?.state === 'unlocked') {
-                    console.log('unlocked', data)
+                    console.log('unlocked', data);
+                    
                     ws.current_state = 'unlocked';
                     // make sure we have bookshelves saved 
                     if(data.data.length){
@@ -92,6 +97,7 @@ export const ws = {
 
     sendData(data) {
         if (ws.socket && ws.socket.readyState === WebSocket.OPEN) {
+            data.token = ws.secure_token;
             ws.socket.send(JSON.stringify(data));
             console.log(data);
         } else {

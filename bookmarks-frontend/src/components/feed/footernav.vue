@@ -12,10 +12,11 @@
             >
                 <IconSearch/>
             </button>
+
             <p>Search</p>
         </div>
 
-        <div 
+        <div
             class="nav-button-group hover:bg-gray-200" 
             @click="goToFeedPage(user)"
             aria-roledescription="navigation button"
@@ -28,6 +29,7 @@
             >
                 <IconFeed/>
             </button>
+
             <p>Feed</p>
         </div>
 
@@ -62,10 +64,12 @@
             >
                 <IconBookshelves/>
             </button>
+
             <p>Bookshelves</p>
         </div>
 
-        <div class="nav-button-group hover:bg-gray-200"
+        <div 
+            class="nav-button-group hover:bg-gray-200"
             v-show="!isSearchBarActive"
             @click="goToUserPage(user)"
             aria-roledescription="navigation button"
@@ -78,6 +82,7 @@
             >
                 <IconProfile/>
             </button>
+
             <p>Profile</p>
         </div>
     </footer>
@@ -239,5 +244,12 @@ footer .nav-button-group {
 .footer-nav-button:hover {
     color: #343fa9;
     transform: scale(1.02);
+}
+
+.desktop-footer {
+    position: fixed;
+    left: 0;
+    top: 0;
+    height: 100%;
 }
 </style>

@@ -2,8 +2,8 @@
     <section class="edit-bookshelf">
         <div class="bookshelf-heading">
             <div>
-                <h1 class="bookshelf-title">{{ bookshelf?.title || 'Untitled'}}</h1>
-                <p class="bookshelf-description">{{ bookshelf?.description || 'Add a description'}}</p>
+                <h1 class="bookshelf-title">{{ bookshelfData?.title || 'Untitled'}}</h1>
+                <p class="bookshelf-description">{{ bookshelfData?.description || 'Add a description'}}</p>
             </div>
             <button
                 type="button"
@@ -51,7 +51,7 @@
 
         <div class="flex items-center space-between">
             <h3 class="bookshelf-books-heading">
-                {{ bookShelfComponentMap[currentView.value].heading('untitled') }}
+                {{ bookShelfComponentMap[currentView.value].heading(bookshelfData?.title) }}
             </h3>
             
             <button
@@ -64,17 +64,28 @@
         </div>
 
         <div v-if="dataLoaded">
-            <BookshelfBooks 
-                v-if="currentView.value === 'edit-books'"
-                :books="books"
-                :can-reorder="isReorderModeEnabled"
-                :is-reordering="isReordering"
-                :unset-current-book="unsetKey"
-                @send-bookdata-socket="
-                    (bookdata) => reorder_books(bookdata)
-                "
-                @cancelled-reorder="cancelledReorder"
-            />
+            <div v-if="currentView.value === 'edit-books'">
+                <BookshelfBooks 
+                    v-if="bookshelfData?.books?.length"
+                    :books="books"
+                    :can-reorder="isReorderModeEnabled"
+                    :is-reordering="isReordering"
+                    :unset-current-book="unsetKey"
+                    @send-bookdata-socket="
+                        (bookdata) => reorder_books(bookdata)
+                    "
+                    @cancelled-reorder="cancelledReorder"
+                />
+
+                <div v-else>
+                    <p class="text-no-books-added">No books have been added to this shelf yet.</p>
+                    <button 
+                        type="button"
+                        class="btn add-readers-btn mt-5"    
+                        @click="gotToAddBooksAndCreateSocketConnection()"
+                    >Add now</button>
+                </div>
+            </div>
 
             <SearchBooks 
                 v-if="currentView.value === 'add-books'"
@@ -112,7 +123,7 @@ import { db } from '../../../services/db';
 const route = useRoute();
 const router = useRouter();
 const dataLoaded = ref(false);
-const bookshelf = ref(null);
+const bookshelfData = ref(null);
 const books = ref([]);
 const isReordering = ref(false);
 const isReorderModeEnabled = ref(false);
@@ -127,6 +138,7 @@ const error = ref({
 // #TODO: Fix fix fix please please please. @kylearbide
 function reorder_books(bookData) {
     isReordering.value = true;
+    bookData.type = 'reorder';
     // Send data to server
     ws.sendData(bookData);
     console.log(bookData, 'bookData'); 
@@ -149,15 +161,25 @@ const bookShelfComponentMap = {
     }
 };
 
-async function get_combos() {
-    await db.get(urls.rtc.bookShelfTest('new')).then((res) => { 
-    bookshelf.value = res.bookshelf
+async function get_shelf() {
+    let { bookshelf } = route.params;
+    await db.get(urls.rtc.bookShelfTest(bookshelf)).then((res) => { 
+    bookshelfData.value = res.bookshelf
     books.value = res.bookshelf.books
     dataLoaded.value = true;
     });
 }
 
-function addBook(book){
+async function addBook(book){
+    if(ws.socket?.readyState !== 1){
+        error.value.message = 'There was an error adding the book to the bookshelf. Please try again.';
+        error.value.isShowing = true;
+        // Hide toast manually after three seconds.
+        setTimeout(() => {
+            error.value.isShowing = false;
+        }, 5000);
+    }
+
     let props = {
         id: book.id,
         order: books.value.length++, 
@@ -166,9 +188,24 @@ function addBook(book){
         imgUrl: book.imgUrl
     };
 
+    // See it on the front end before you send it over the wire?
     books.value.push(props);
+
+    let data = {
+        type: 'add',
+        book: book,
+        bookshelf_id: route.params.bookshelf,
+        user_id: route.params.user,
+    };
+
+    ws.sendData(data);
     // TODO add in endpoint put call for attaching a book to a bookshelf.
     setReactiveProperty(currentView, 'value', 'edit-books');
+}
+
+function gotToAddBooksAndCreateSocketConnection(){
+    ws.createNewSocketConnection(route.params.bookshelf);
+    setReactiveProperty(currentView, 'value', 'add-books');
 }
 
 async function enterReorderMode(){
@@ -182,13 +219,13 @@ function cancelledReorder() {
     isReorderModeEnabled.value = false;
     isReordering.value = false;
     ws.unsubscribeFromSocketConnection();
-    get_combos();
+    get_shelf();
 }
 
 onMounted(() => {
     // Probably could do a better way to generate link in this file. We can figure out later i guess?
-    bookshelf.value = getBookshelf(route.params.bookshelf);
-    get_combos();
+    bookshelfData.value = getBookshelf(route.params.bookshelf);
+    get_shelf();
     document.addEventListener('ws-loaded-data', () => {
         console.log('ws data has arrived')
         // Make this the new data!
@@ -244,7 +281,9 @@ window.onbeforeunload = () => {
         align-items: center;
         justify-content: space-between;
     }
+
     .bookshelf-title {
+        font-family: var(--fancy-script);
         font-size: var(--font-4xl);
         font-weight: 500;
         color: var(--stone-700);
@@ -269,6 +308,10 @@ window.onbeforeunload = () => {
         column-gap: 14px;
     }
 
+    .text-no-books-added {
+        font-size: var(--font-sm);
+        color: var(--stone-600);
+    }
 
     .no-collaborators-note {
         font-size: var(--font-sm);
@@ -286,7 +329,8 @@ window.onbeforeunload = () => {
     }
 
     .bookshelf-books-heading {
-        font-size: var(--font-xl);
+        font-family: var(--fancy-script);
+        font-size: var(--font-2xl);
         font-weight: 500;   
         margin-top: var(--padding-sm);
         color: var(--stone-600);

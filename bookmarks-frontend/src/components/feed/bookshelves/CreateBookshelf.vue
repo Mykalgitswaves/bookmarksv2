@@ -39,7 +39,10 @@
     import { db } from '../../../services/db';
     const route = useRoute();
     const router = useRouter();
-    const model = reactive({});
+    // All shelves start as private.
+    const model = reactive({
+        'visibility': 'private',
+    });
     const error_message = ref('');
     const isShowingErrorMessage = ref(false);
 
@@ -58,7 +61,9 @@
 
     async function createAndNavigateToBookshelf(model){
         let payload = toRaw(model);
-        await db.post(urls.rtc.createBookshelf(), payload, true, successFn, failureFn);
+        await db.post(urls.rtc.createBookshelf(), payload, true, null, failureFn).then((res) => {
+            successFn(res);
+        });
     }
     
 </script>

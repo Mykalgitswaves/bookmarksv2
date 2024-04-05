@@ -50,30 +50,32 @@
             />
           </div>
 
-          <div v-if="p" class="grid content-center px-2 my-5">
-            <p class="text-sm italic text-slate-600">
-                "The trouble with most of us is that we would rather be ruined by praise than saved by criticism."
-            </p>   
-            <div class="make-comments-container main">
-                <label for="post-comment-form">
-                    <textarea 
-                        id="post-comment-form"  
-                        class="make-comment-textarea"
-                        type="text"
-                        v-model="comment"
-                        :placeholder="placeholders[randomPlaceholderIndex]"    
-                    />
-                </label>
+            <!-- <teleport> -->
+                <div v-if="p" class="grid content-center px-2 my-5">
+                    <p class="text-sm italic text-slate-600">
+                        "The trouble with most of us is that we would rather be ruined by praise than saved by criticism."
+                    </p>   
+                    <div class="make-comments-container main">
+                        <label for="post-comment-form">
+                            <textarea 
+                                id="post-comment-form"  
+                                class="make-comment-textarea"
+                                type="text"
+                                v-model="comment"
+                                :placeholder="placeholders[randomPlaceholderIndex]"    
+                            />
+                        </label>
 
-                <button
-                    class="send-comment-btn" 
-                    type="button"
-                    @click="postComment()"
-                >
-                    <IconSend />
-                </button>
-            </div>
-          </div>
+                        <button
+                            class="send-comment-btn" 
+                            type="button"
+                            @click="postComment()"
+                        >
+                            <IconSend />
+                        </button>
+                    </div>
+                </div>
+            <!-- </teleport> -->
 
           <Comments v-if="p" 
             :comments="comments" 
