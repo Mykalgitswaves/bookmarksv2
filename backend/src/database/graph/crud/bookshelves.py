@@ -46,7 +46,7 @@ class BookshelfCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
         for ix, key in enumerate(record["book_ids"]):
             book = book_map[key]
             if "author_names" not in book:
-                book["author_names"] = ["Unknown Author"]
+                book.__setattr__("author_names", "Unknown Author")
             book_objects.append(BookshelfBook(
                 id=book["id"],
                 order=ix,
