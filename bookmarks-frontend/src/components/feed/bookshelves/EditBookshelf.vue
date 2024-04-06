@@ -77,14 +77,12 @@
                     @cancelled-reorder="cancelledReorder"
                 />
 
-                <div v-else>
-                    <p class="text-no-books-added">No books have been added to this shelf yet.</p>
-                    <button 
-                        type="button"
-                        class="btn add-readers-btn mt-5"    
-                        @click="gotToAddBooksAndCreateSocketConnection()"
-                    >Add now</button>
-                </div>
+                <p v-else class="text-no-books-added">No books have been added to this shelf yet.</p>
+                <button 
+                    type="button"
+                    class="btn add-readers-btn mt-5"    
+                    @click="gotToAddBooksAndCreateSocketConnection()"
+                >Add now</button>
             </div>
 
             <SearchBooks 
