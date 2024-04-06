@@ -1,7 +1,7 @@
 <template>
     <Bookshelves
         :bookshelves="bookshelvesCreatedByUser"
-        is_admin="true"
+        :is_admin="true"
     >
         <template v-slot:heading>
             <h1 class="title font-medium fancy">Your bookshelves 
