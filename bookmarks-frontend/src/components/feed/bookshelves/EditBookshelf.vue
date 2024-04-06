@@ -32,7 +32,7 @@
                         v-if="currentView.value === 'edit-books'"
                         type="button"
                         class="btn add-readers-btn ml-5"
-                        @click="setReactiveProperty(currentView, 'value', 'add-books')"
+                        @click="gotToAddBooksAndCreateSocketConnection()"
                     >
                         {{ bookShelfComponentMap[currentView.value].buttonText }}
                     </button>
@@ -162,9 +162,9 @@ const bookShelfComponentMap = {
 async function get_shelf() {
     let { bookshelf } = route.params;
     await db.get(urls.rtc.bookShelfTest(bookshelf)).then((res) => { 
-    bookshelfData.value = res.bookshelf
-    books.value = res.bookshelf.books
-    dataLoaded.value = true;
+        bookshelfData.value = res.bookshelf
+        books.value = res.bookshelf.books
+        dataLoaded.value = true;
     });
 }
 
@@ -194,7 +194,10 @@ async function addBook(book){
 }
 
 function gotToAddBooksAndCreateSocketConnection(){
-    ws.createNewSocketConnection(route.params.bookshelf);
+    if(ws.socket?.readyState !== 1 || !ws.socket) {
+        ws.createNewSocketConnection(route.params.bookshelf);
+    }
+    
     setReactiveProperty(currentView, 'value', 'add-books');
 }
 
