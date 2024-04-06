@@ -13,9 +13,9 @@
             <SortableBook
                 :order="index"
                 :id="book?.id"
-                :bookTitle="book?.bookTitle"
-                :author="book?.author"
-                :imgUrl="book?.imgUrl"
+                :bookTitle="book?.title"
+                :author="book?.author_names"
+                :imgUrl="book?.small_img_url"
                 :next-book="books[index + 1]"
                 :prev-book="books[index - 1]"
                 :current-book="currentBook"
