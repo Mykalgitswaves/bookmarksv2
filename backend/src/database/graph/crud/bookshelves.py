@@ -1,5 +1,5 @@
 from src.database.graph.crud.base import BaseCRUDRepositoryGraph
-from src.models.schemas.bookshelves import Bookshelf, BookshelfPage, BookshelfSimplified
+from src.models.schemas.bookshelves import Bookshelf, BookshelfPage, BookshelfPreview, BookshelfBook
 
 class BookshelfCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
     def get_bookshelf(self, bookshelf_id):
@@ -12,17 +12,17 @@ class BookshelfCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
         query = (
             """
             MATCH (b:Bookshelf {id: $bookshelf_id})
-            OPTIONAL MATCH (b)-[rr:CONTAINS_BOOK]->(bb:Books)
+            OPTIONAL MATCH (b)-[rr:CONTAINS_BOOK]->(bb:Book)
             MATCH (u:User)-[r:HAS_BOOKSHELF_ACCESS]->(b)
             RETURN b.id as id, 
                    b.title as title, 
                    b.description as description, 
-                   b.books as books,
+                   b.books as book_ids,
                    b.visibility as visibility,
                    b.img_url as img_url,
                    u as user,
                    r as access,
-                   bb as book_objects
+                   apoc.map.setKey({},bb.id, bb{.*}) AS books
             """
         )
 
@@ -39,8 +39,18 @@ class BookshelfCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
                 contributors.add(record["user"]["id"])
             elif record["access"]["type"] == "member":
                 members.add(record["user"]["id"])
-            elif record["book_objects"] is not None:
-                book_objects.append(record["book_objects"])
+        
+        for ix, key in enumerate(record["book_ids"]):
+            book = record["books"][key]
+            if "author_names" not in book:
+                book["author_names"] = ["Unknown Author"]
+            book_objects.append(BookshelfBook(
+                id=book["id"],
+                order=ix,
+                title=book["title"],
+                authors=book["author_names"],
+                small_img_url=book["small_img_url"]
+            ))
         
         bookshelf = BookshelfPage(
             id=record["id"],
@@ -55,6 +65,52 @@ class BookshelfCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
         )
 
         return bookshelf
+    
+    def get_bookshelves_created_by_user(self, user_id):
+        with self.driver.session() as session:
+            result = session.read_transaction(self.get_bookshelves_created_by_user_query, user_id)
+        return result
+    
+    @staticmethod
+    def get_bookshelves_created_by_user_query(tx, user_id):
+        query = (
+            """
+            MATCH (b:Bookshelf)<-[r:HAS_BOOKSHELF_ACCESS {type: "owner"}]-(u:User {id: $user_id})
+            OPTIONAL MATCH (b)-[:CONTAINS_BOOK]->(bb:Book)
+            OPTIONAL MATCH (uu:User)-[:HAS_BOOKSHELF_ACCESS {type: "member"}]->(b)
+            RETURN b.id as id, 
+                b.title as title, 
+                b.description as description, 
+                b.books as book_ids,
+                b.visibility as visibility,
+                b.img_url as img_url,
+                b.created_by as created_by,
+                count(bb) as book_count,
+                count(uu) as member_count,
+                apoc.map.setKey({},bb.id, bb.small_img_url) AS books
+            """
+        )
+
+        result = tx.run(query, user_id=user_id)
+        bookshelves = []
+        for record in result:
+            first_four_books_imgs = []
+            for key in record["book_ids"]:
+                first_four_books_imgs.append(record["books"][key])
+            bookshelf = BookshelfPreview(
+                id=record["id"],
+                title=record["title"],
+                book_ids=record["book_ids"],
+                description=record["description"],
+                visibility=record["visibility"],
+                img_url=record["img_url"],
+                created_by=record["created_by"],
+                books_count=record["book_count"],
+                book_img_urls=first_four_books_imgs,
+                member_count=record["member_count"]
+            )
+            bookshelves.append(bookshelf)
+        return bookshelves
 
     def create_bookshelf(self, bookshelf):
         with self.driver.session() as session:
@@ -304,46 +360,3 @@ class BookshelfCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
         result = tx.run(query, bookshelf_id=bookshelf_id, member_id=member_id, user_id=user_id)
         response = result.single()
         return response is not None
-    
-    def get_bookshelves_created_by_user(self, user_id):
-        with self.driver.session() as session:
-            result = session.read_transaction(self.get_bookshelves_created_by_user_query, user_id)
-        return result
-    
-    @staticmethod
-    def get_bookshelves_created_by_user_query(tx, user_id):
-        query = (
-            """
-            MATCH (b:Bookshelf)<-[r:HAS_BOOKSHELF_ACCESS {type: "owner"}]-(u:User {id: $user_id})
-            OPTIONAL MATCH (b)-[:CONTAINS_BOOK]->(bb:Book)
-            OPTIONAL MATCH (uu:User)-[:FOLLOWS]->(b)
-            RETURN b.id as id, 
-                b.title as title, 
-                b.description as description, 
-                b.books as books,
-                b.visibility as visibility,
-                b.img_url as img_url,
-                b.created_by as created_by,
-                count(bb) as book_count,
-                count(uu) as followers_count,
-                collect(bb.img_url)[..4] as book_img_urls
-            """
-        )
-
-        result = tx.run(query, user_id=user_id)
-        bookshelves = []
-        for record in result:
-            bookshelf = BookshelfSimplified(
-                id=record["id"],
-                title=record["title"],
-                books=record["books"],
-                description=record["description"],
-                visibility=record["visibility"],
-                img_url=record["img_url"],
-                created_by=record["created_by"],
-                books_count=record["book_count"],
-                book_img_urls=record["book_img_urls"],
-                followers_count=record["followers_count"]
-            )
-            bookshelves.append(bookshelf)
-        return bookshelves

@@ -368,14 +368,16 @@ class BookshelfResponse(BaseModel):
     members: list[str]
     created_by: str
 
-class BookshelfSimplified(BaseModel):
+class BookshelfPreview(BaseModel):
     id: str
     title: str
     description: str
     books_count: int
+    book_ids: list[str]
+    img_url: str | None = None
     book_img_urls: list[str]
     visibility: Literal['public', 'private', 'friends']
-    followers_count: int
+    member_count: int
     created_by: str
 
 class BookshelfPage(BaseModel):
@@ -384,7 +386,7 @@ class BookshelfPage(BaseModel):
     description: str
     id: str
     img_url: str | None = None
-    books: list[str] = []
+    books: Any
     members: set = set()
     followers: set = set()
     contributors: set = set()
