@@ -441,9 +441,12 @@ async def bookshelf_connection(websocket: WebSocket,
                 async with bookshelf_ws_manager.locks[bookshelf_id]:
                     await bookshelf_ws_manager.send_data(data={"state": "locked"}, bookshelf_id=bookshelf_id)
 
-                    await bookshelf_ws_manager.add_book_and_send_updated_data(current_user=current_user, bookshelf_id=bookshelf_id, data=data, bookshelf_repo=bookshelf_repo)
-                    if data.book.id[0] == "g":
-                        background_tasks.add_task(google_books_background_tasks.update_book_google_id,data.book.id,book_repo)
+                    await bookshelf_ws_manager.add_book_and_send_updated_data(current_user=current_user, 
+                                                                              bookshelf_id=bookshelf_id, 
+                                                                              data=data, 
+                                                                              background_tasks=background_tasks,
+                                                                              bookshelf_repo=bookshelf_repo,
+                                                                              book_repo=book_repo)
             else:
                 await bookshelf_ws_manager.invalid_data_error(bookshelf_id=bookshelf_id)
                 continue

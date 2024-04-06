@@ -1,8 +1,10 @@
 import asyncio
-from fastapi import WebSocket, HTTPException
+from fastapi import WebSocket, HTTPException, BackgroundTasks
 from fastapi.encoders import jsonable_encoder
 from src.database.graph.crud.bookshelves import BookshelfCRUDRepositoryGraph
+from src.database.graph.crud.books import BookCRUDRepositoryGraph
 from src.securities.authorizations.jwt import jwt_generator
+from src.api.background_tasks.google_books import google_books_background_tasks
 
 class BookshelfWSManager:
     def __init__(self):
@@ -129,7 +131,13 @@ class BookshelfWSManager:
                 "data": self.errors['FAILED_TO_REORDER']
             }, bookshelf_id=bookshelf_id)
 
-    async def add_book_and_send_updated_data(self, current_user, bookshelf_id, data, bookshelf_repo:BookshelfCRUDRepositoryGraph):
+    async def add_book_and_send_updated_data(self, 
+                                             current_user, 
+                                             bookshelf_id, 
+                                             data, 
+                                             background_tasks: BackgroundTasks,
+                                             bookshelf_repo:BookshelfCRUDRepositoryGraph, 
+                                             book_repo:BookCRUDRepositoryGraph):
         _bookshelf = self.cache[bookshelf_id]
         if current_user.bookshelf_id != bookshelf_id:
             await self.send_data(data={"state": "error", 
@@ -145,6 +153,9 @@ class BookshelfWSManager:
             )
             return
         response = bookshelf_repo.create_book_in_bookshelf_rel(book_to_add=data.book,bookshelf_id=bookshelf_id, user_id=current_user.id)
+        if data.book.id[0] == "g":
+            background_tasks.add_task(google_books_background_tasks.update_book_google_id,data.book.id,book_repo)
+
         if response:
             _bookshelf.add_book_to_shelf(data.book, data.contributor_id)
 

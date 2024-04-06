@@ -22,7 +22,8 @@ class BookshelfCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
                    b.img_url as img_url,
                    u as user,
                    r as access,
-                   apoc.map.setKey({},bb.id, bb{.*}) AS books
+                   collect(bb.id) as book_object_ids,
+                   collect(bb) as books
             """
         )
 
@@ -39,9 +40,11 @@ class BookshelfCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
                 contributors.add(record["user"]["id"])
             elif record["access"]["type"] == "member":
                 members.add(record["user"]["id"])
+
+        book_map = dict(zip(record["book_object_ids"], record["books"]))
         
         for ix, key in enumerate(record["book_ids"]):
-            book = record["books"][key]
+            book = book_map[key]
             if "author_names" not in book:
                 book["author_names"] = ["Unknown Author"]
             book_objects.append(BookshelfBook(
@@ -87,16 +90,19 @@ class BookshelfCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
                 b.created_by as created_by,
                 count(bb) as book_count,
                 count(uu) as member_count,
-                apoc.map.setKey({},bb.id, bb.small_img_url) AS books
+                collect(bb.id) as book_object_ids,
+                collect(bb.small_img_url) as book_img_urls
             """
         )
 
         result = tx.run(query, user_id=user_id)
         bookshelves = []
         for record in result:
+            book_map = dict(zip(record["book_object_ids"], record["book_img_urls"]))
             first_four_books_imgs = []
-            for key in record["book_ids"]:
-                first_four_books_imgs.append(record["books"][key])
+            for key in record["book_ids"][:4]:
+                first_four_books_imgs.append(book_map[key])
+                
             bookshelf = BookshelfPreview(
                 id=record["id"],
                 title=record["title"],
