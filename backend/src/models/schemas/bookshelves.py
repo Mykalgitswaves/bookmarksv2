@@ -333,10 +333,7 @@ class DoublyLinkedList:
         current = self.start_node
         index = 0
         while current:
-            if current.book.get('order'):
-               current.book.order = index
-            else:
-                current.book['order'] = index
+            current.book.order = index
             books.append(current.book)
             book_ids.append(current.book.id)
             index += 1
