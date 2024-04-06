@@ -144,8 +144,7 @@ class BookshelfWSManager:
                 bookshelf_id=bookshelf_id
             )
             return
-        
-        response = bookshelf_repo.create_book_in_bookshelf_rel(book_to_add=data.book.id,bookshelf_id=bookshelf_id, user_id=current_user.id)
+        response = bookshelf_repo.create_book_in_bookshelf_rel(book_to_add=data.book,bookshelf_id=bookshelf_id, user_id=current_user.id)
         if response:
             _bookshelf.add_book_to_shelf(data.book, data.contributor_id)
 

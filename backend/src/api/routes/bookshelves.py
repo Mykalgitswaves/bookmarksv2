@@ -38,6 +38,7 @@ from src.models.schemas.bookshelves import (
     BookshelfPage,
 )
 from src.api.websockets.bookshelves import bookshelf_ws_manager
+from src.api.background_tasks.google_books import google_books_background_tasks
 
 router = fastapi.APIRouter(prefix="/bookshelves", tags=["bookshelves"])
 
@@ -335,6 +336,7 @@ async def remove_member_to_bookshelf(request: Request,
 @router.websocket('/ws/{bookshelf_id}') # This is changing to /api/bookshelves/ws/{bookshelf_id}
 async def bookshelf_connection(websocket: WebSocket, 
                                bookshelf_id: str,
+                               background_tasks: BackgroundTasks,
                                token: str = Query(...),
                                bookshelf_repo: BookshelfCRUDRepositoryGraph = Depends(get_repository(repo_type=BookshelfCRUDRepositoryGraph)),
                                user_repo: UserCRUDRepositoryGraph = Depends(get_repository(repo_type=UserCRUDRepositoryGraph)),
@@ -440,6 +442,8 @@ async def bookshelf_connection(websocket: WebSocket,
                     await bookshelf_ws_manager.send_data(data={"state": "locked"}, bookshelf_id=bookshelf_id)
 
                     await bookshelf_ws_manager.add_book_and_send_updated_data(current_user=current_user, bookshelf_id=bookshelf_id, data=data, bookshelf_repo=bookshelf_repo)
+                    if data.book.id[0] == "g":
+                        background_tasks.add_task(google_books_background_tasks.update_book_google_id,data.book.id,book_repo)
             else:
                 await bookshelf_ws_manager.invalid_data_error(bookshelf_id=bookshelf_id)
                 continue

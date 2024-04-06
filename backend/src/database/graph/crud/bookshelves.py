@@ -150,20 +150,28 @@ class BookshelfCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
         query = (
             """
             MATCH (b:Bookshelf {id: $bookshelf_id})
-            MATCH (book:Book {id: $book_to_add})
+            merge (book:Book {id:$book_id, title:$title, small_img_url:$small_img_url, author_names: $author_names})
+            with b, book
             OPTIONAL MATCH (b)-[rr:CONTAINS_BOOK]->(book)
             WITH b, book, rr, EXISTS((b)-[:CONTAINS_BOOK]->(book)) AS relationshipExists
             MERGE (b)-[r:CONTAINS_BOOK]->(book)
             ON CREATE SET 
-                b.books = COALESCE(b.books, []) + $book_to_add, 
+                b.books = COALESCE(b.books, []) + $book_id, 
                 b.last_edited_date = datetime(),
                 r.create_date = datetime(),
                 r.added_by_id = $user_id
             RETURN NOT relationshipExists AS wasAdded
             """
         )
-        result = tx.run(query, book_to_add=book_to_add, bookshelf_id=bookshelf_id, user_id=user_id)
+        result = tx.run(query, book_id=book_to_add.id, 
+                        title=book_to_add.title, 
+                        small_img_url=book_to_add.small_img_url,
+                        author_names=book_to_add.authors,
+                        bookshelf_id=bookshelf_id, 
+                        user_id=user_id)
         response = result.single()
+        if not response:
+            return False
         return response['wasAdded']
     
     def update_bookshelf_contributors(self, bookshelf_id, contributor_id, user_id):
