@@ -1,11 +1,14 @@
 <template>
-    <Bookshelves 
-        v-if="bookshelvesCreatedByUser.length"
+    <Bookshelves
         :bookshelves="bookshelvesCreatedByUser"
         is_admin="true"
     >
         <template v-slot:heading>
-            <h1 class="title font-medium fancy">Your bookshelves</h1>
+            <h1 class="title font-medium fancy">Your bookshelves 
+                <span class="text-indigo-500">
+                    {{ bookshelvesCreatedByUser?.length }}
+                </span>
+            </h1>
         </template>
         
         <template v-slot:empty-shelf>

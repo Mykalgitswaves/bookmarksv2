@@ -17,6 +17,9 @@
                 <p class="bookshelf-title">{{ shelf?.title }}</p>
             </div>
         </div>
+        <div class="bookshelves">
+
+        </div>
 
         <div v-else class="bookshelves">
             <div class="empty bookshelf">
@@ -62,7 +65,6 @@
 </script>
 <style scoped>
 .bookshelves {
-    margin-top: 20px;
     margin-bottom: var(--margin-md);
     padding: var(--padding-sm);
     display: grid;
