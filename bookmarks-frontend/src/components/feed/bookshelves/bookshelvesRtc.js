@@ -36,7 +36,7 @@ export const ws = {
 
     newSocket: async (connection_address) => {
         ws.connection_address = connection_address;
-        ws.socket = new WebSocket(`${urls.rtc.bookshelf(connection_address)}?token=${ws.client}`); // Assign the socket to ws.socket
+        ws.socket = new WebSocket(urls.rtc.bookshelf(connection_address, ws.client)); // Assign the socket to ws.socket
     },
     
     createNewSocketConnection: async (connection_address) => {
