@@ -17,11 +17,8 @@
                 <p class="bookshelf-title">{{ shelf?.title }}</p>
             </div>
         </div>
+
         <div class="bookshelves">
-
-        </div>
-
-        <div v-else class="bookshelves">
             <div class="empty bookshelf">
                 <slot name="empty-shelf"></slot>
             </div>
