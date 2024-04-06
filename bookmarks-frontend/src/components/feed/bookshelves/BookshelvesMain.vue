@@ -1,10 +1,11 @@
 <template>
     <Bookshelves 
-        :bookshelves="bookshelves"
+        v-if="bookshelvesCreatedByUser.length"
+        :bookshelves="bookshelvesCreatedByUser"
         is_admin="true"
     >
         <template v-slot:heading>
-            <h1 class="title font-medium">Your bookshelves</h1>
+            <h1 class="title font-medium fancy">Your bookshelves</h1>
         </template>
         
         <template v-slot:empty-shelf>
@@ -14,7 +15,7 @@
 
     <Bookshelves :bookshelves="[]">
         <template v-slot:heading>
-            <h1 class="title font-medium">Liked bookshelves</h1>
+            <h1 class="title font-medium fancy">Liked bookshelves</h1>
         </template>
 
         <template v-slot:empty-shelf>
@@ -24,11 +25,25 @@
 </template>
 <script setup>
     import Bookshelves from './bookshelves.vue'; 
+    import { db } from '../../../services/db';
+    import { urls } from '../../../services/urls';
+    import { ref, onMounted } from 'vue';
+    import { useRoute } from 'vue-router';
 
-    const bookshelves = [
-        {name: 'new', id: 'new', },
-    ]
+    const route = useRoute();
+    const { user } = route.params;
+    const bookshelvesCreatedByUser = ref([]);
 
+    async function getBookshelves(){
+        await db.get(urls.rtc.getBookshelvesCreatedByUser(user)).then((res) => {
+            bookshelvesCreatedByUser.value = res.bookshelves;
+            console.log(res);
+        });
+    }
+
+    onMounted(() => {
+        getBookshelves();
+    });
 </script>
 <style scoped>
 .bookshelf:hover {

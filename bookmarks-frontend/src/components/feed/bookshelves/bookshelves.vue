@@ -12,9 +12,10 @@
                 :key="shelf?.id"
                 @click="goToBookshelfPage(user, shelf?.id)"
             >
-            <div class="bookshelf"></div>
-            <p class="bookshelf-title">{{ shelf?.name }}</p>
-        </div>
+                <img class="bookshelf" :src="shelf?.book_img_urls[0] || noBookYetUrl" alt=""/>
+                
+                <p class="bookshelf-title">{{ shelf?.title }}</p>
+            </div>
         </div>
 
         <div v-else class="bookshelves">
@@ -56,17 +57,17 @@
     function createNewBookshelf(){
         router.push(`/feed/${user}/bookshelves/create`);
     }
+
+    const noBookYetUrl = 'https://placehold.co/100X150'
 </script>
 <style scoped>
 .bookshelves {
-    border: 2px  var(--indigo-200) solid;
-    border-radius: var(--radius-md);
     margin-top: 20px;
     margin-bottom: var(--margin-md);
     padding: var(--padding-sm);
     display: grid;
     /* grid-template-columns: var(--grid-auto-cols); */
-    grid-template-columns: repeat(auto-fit,  120px);
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
     gap: 10px;
     width: 100%;
 }
@@ -93,9 +94,10 @@
 }
 
 .bookshelf-title {
+    padding-top: var(--padding-sm);
     text-align: center;
-    color: var(--stone-800);
     font-weight: 400;
+    color: var(--stone-800);
 }
 
 .bookshelf.empty {

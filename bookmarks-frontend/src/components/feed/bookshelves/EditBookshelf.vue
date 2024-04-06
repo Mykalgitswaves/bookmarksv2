@@ -101,7 +101,7 @@
 
 </template>
 <script setup>
-import { ref, onMounted, reactive, onBeforeUnmount } from 'vue';
+import { ref, onMounted, reactive, onBeforeUnmount, toRaw } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import IconEdit from '../../svg/icon-edit.vue';
 import IconReorder from '../../svg/icon-reorder.vue';
@@ -179,25 +179,17 @@ async function addBook(book){
             error.value.isShowing = false;
         }, 5000);
     }
-
-    let props = {
-        id: book.id,
-        order: books.value.length++, 
-        bookTitle: book.title,
-        author: commanatoredString(book.authorNames),
-        imgUrl: book.imgUrl
-    };
-
-    // See it on the front end before you send it over the wire?
-    books.value.push(props);
-
+    
     let data = {
         type: 'add',
-        book: book,
         bookshelf_id: route.params.bookshelf,
         user_id: route.params.user,
     };
 
+    // Do this just incase something weird happens with the type of data being emmitted.
+    data.book = typeof book === 'proxy' ? toRaw(book) : book;
+    data.book.order = books.value.length + 1;
+    
     ws.sendData(data);
     // TODO add in endpoint put call for attaching a book to a bookshelf.
     setReactiveProperty(currentView, 'value', 'edit-books');
@@ -229,7 +221,8 @@ onMounted(() => {
     document.addEventListener('ws-loaded-data', () => {
         console.log('ws data has arrived')
         // Make this the new data!
-        books.value = ws.books;
+        books.value.push(ws.books.pop());
+        ws.books = [];
     });
 
     document.addEventListener('ws-connection-error', (e) => {

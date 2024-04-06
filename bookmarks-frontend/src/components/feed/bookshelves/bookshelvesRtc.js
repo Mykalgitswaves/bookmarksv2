@@ -59,11 +59,10 @@ export const ws = {
                 // unlocked means we are also returning reordered data 
                 } else if (data?.state === 'unlocked') {
                     console.log('unlocked', data);
-                    
                     ws.current_state = 'unlocked';
                     // make sure we have bookshelves saved 
                     if(data.data.length){
-                        ws.books = data.data;
+                        ws.books = data.data[0];
                         // Used to reload data.
                         document.dispatchEvent(wsDataLoaded);
                     }

@@ -27,7 +27,7 @@ export const urls = {
         unfriendFriend: (user_id, friend_id) => (baseUrl + `api/user/${user_id}/remove_friend/${friend_id}`),
         followUser: (user_id, friend_id) => (baseUrl + `api/user/${user_id}/follow/${friend_id}`),
         unfollowUser: (user_id, friend_id) => (baseUrl + `api/user/${user_id}/unfollow/${friend_id}`),
-        getUsersFriendRequests: (user_id) => (baseUrl + `api/user/${user_id}/friend_requests`)
+        getUsersFriendRequests: (user_id) => (baseUrl + `api/user/${user_id}/friend_requests`),
     },
     create: {
         searchBook: (text) => (`${baseUrl}api/search/book/${text}`)
@@ -64,7 +64,8 @@ export const urls = {
         bookshelf: (bookshelf_id) => (wsUrl + `api/bookshelves/ws/${bookshelf_id}`),
         createBookshelf: () => (baseUrl + `api/bookshelf/create`),
         createBookshelf: () => (baseUrl + `api/bookshelves/create`),
-        bookShelfTest: (bookshelf_id) => (baseUrl + `api/bookshelves/${bookshelf_id}`)
+        bookShelfTest: (bookshelf_id) => (baseUrl + `api/bookshelves/${bookshelf_id}`),
+        getBookshelvesCreatedByUser: (user) => (baseUrl + `api/bookshelves/created_bookshelves/${user}`),
     },
 }
 

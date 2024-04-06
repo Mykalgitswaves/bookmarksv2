@@ -333,7 +333,10 @@ class DoublyLinkedList:
         current = self.start_node
         index = 0
         while current:
-            current.book.order = index
+            if current.book.get('order'):
+               current.book.order = index
+            else:
+                current.book['order'] = index
             books.append(current.book)
             book_ids.append(current.book.id)
             index += 1
@@ -363,6 +366,16 @@ class BookshelfResponse(BaseModel):
     followers: list[str]
     visibility: Literal['public', 'private', 'friends']
     members: list[str]
+    created_by: str
+
+class BookshelfSimplified(BaseModel):
+    id: str
+    title: str
+    description: str
+    books_count: int
+    book_img_urls: list[str]
+    visibility: Literal['public', 'private', 'friends']
+    followers_count: int
     created_by: str
 
 class BookshelfPage(BaseModel):

@@ -35,7 +35,7 @@ from src.models.schemas.bookshelves import (
     BookshelfDescription,
     BookshelfVisibility,
     BookshelfUser,
-    BookshelfPage
+    BookshelfPage,
 )
 from src.api.websockets.bookshelves import bookshelf_ws_manager
 
@@ -89,7 +89,6 @@ async def get_bookshelf(bookshelf_id: str,
         )
     else:
         _bookshelf = bookshelf_repo.get_bookshelf(bookshelf_id)
-
     
     if not _bookshelf:
         raise HTTPException(status_code=404, detail="Bookshelf not found")
@@ -136,6 +135,17 @@ async def get_bookshelf(bookshelf_id: str,
 
     return JSONResponse(content={"bookshelf": jsonable_encoder(bookshelf_response)})
 
+@router.get("/created_bookshelves/{user_id}",
+        name="bookshelf:created_bookshelves")
+async def get_created_bookshelves(user_id: str, current_user:  Annotated[User, Depends(get_current_active_user)],
+    bookshelf_repo: BookshelfCRUDRepositoryGraph = Depends(get_repository(repo_type=BookshelfCRUDRepositoryGraph)),
+):
+    
+        if current_user.id == user_id:
+            bookshelves = bookshelf_repo.get_bookshelves_created_by_user(user_id=user_id)    
+            return JSONResponse(content={"bookshelves": jsonable_encoder(bookshelves)})
+    # except:
+    #     raise HTTPException(status_code=402, detail="Failed to get bookshelves")
 
 @router.delete("/{bookshelf_id}/delete",
             name="bookshelf:delete")
@@ -485,3 +495,28 @@ async def bookshelf_connection(websocket: WebSocket,
 #     else:
 #         # In this case, we update the order of the book on the db side. 
 #         bookshelf_repo.remove_book_advanced(book_to_remove=data.book_id, books=books, bookshelf_id=bookshelf_id)
+        
+        # TODO: Add get request for all bookshelves for current user.
+        #  distinction in return values between bookshelves created by user and bookshelves followed by user.
+        # { 
+            # 'created-bookshelves' [],
+        #   'followed-bookshelves' [],
+        # }
+
+        """
+        Example of a bookshelf object for front end could look like this:
+        followed, contributor, owner.
+        followed shelf objects look like = {
+            first_four_img_urls of books in bookshelf: [], so we can make css mozaic for picture.
+            bookshelf_title: 'new',
+            bookshelf_id: , },
+            num_books, '',
+            num_followers: optional
+            is_contributor: bool
+        }
+
+        created_shelf_objects = {
+         ... followed shelf objects have,
+            visibility
+        }
+        """
