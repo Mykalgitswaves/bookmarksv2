@@ -36,7 +36,7 @@
         </li>
     </ul>
 
-    <teleport v-if="currentBook !== null || canReorder" to="body">
+    <teleport v-if="currentBook !== null || canReorder || isEditing" to="body">
         <div class="sorting-footer">
             <div v-if="currentBook" class="s-f-book">
                 <img :src="currentBook.small_img_url" class="s-f--current-book-img" alt="">
@@ -47,7 +47,9 @@
             </div>
 
             <h3 v-else>
-                Click on a book to reorder
+                <span v-if="canReorder">Click on a book to reorder</span> 
+
+                <span v-if="isEditing">Click on a book to edit</span> 
             </h3>
 
             <div class="sorting-footer-controls">
@@ -74,6 +76,11 @@ const props = defineProps({
     },
     canReorder: {
         type: Boolean,
+        default: false,
+    },
+    isEditing: {
+        type: Boolean,
+        default: false,
     },
     unsetCurrentBook: {
         type: Number,
@@ -129,8 +136,11 @@ function resetSort() {
         next_book_id: null,
         author_id: user
     };
-
-    emit('cancelled-reorder')
+    if(props.canReorder){
+        emit('cancelled-reorder')
+    } else if (props.isEditing){
+        emit('cancelled-edit')
+    }
 };
 
 // Specific function for swapping to end of list.

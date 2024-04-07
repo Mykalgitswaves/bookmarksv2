@@ -3,6 +3,7 @@
         <div class="bookshelf-heading">
             <div>
                 <h1 class="bookshelf-title">{{ bookshelfData?.title || 'Untitled'}}</h1>
+
                 <p class="bookshelf-description">{{ bookshelfData?.description || 'Add a description'}}</p>
             </div>
             <button
@@ -54,14 +55,25 @@
                 {{ bookShelfComponentMap[currentView.value].heading(bookshelfData?.title) }}
             </h3>
             
-            <button
-                v-if="currentView.value === 'edit-books' && !isReorderModeEnabled"
-                class="btn reorder-btn"
-                :disabled="bookshelfData?.books?.length <= 1"
-                @click="enterReorderMode()"
-            >
-                <IconReorder class="ninety-deg"/>
-            </button>
+            <div class="flex gap-2">
+                <button
+                    v-if="currentView.value === 'edit-books' && !isReorderModeEnabled"
+                    class="btn reorder-btn"
+                    :disabled="bookshelfData?.books?.length <= 1"
+                    @click="enterReorderMode()"
+                >
+                    Reorder
+                </button>
+
+                <button
+                    v-if="currentView.value === 'edit-books' && !isReorderModeEnabled"
+                    class="btn reorder-btn"
+                    :disabled="bookshelfData?.books?.length <= 1"
+                    @click="enterEditMode()"
+                >
+                    Edit
+                </button>
+            </div>
         </div>
 
         <div v-if="dataLoaded">
@@ -70,12 +82,14 @@
                     v-if="bookshelfData?.books?.length"
                     :books="books"
                     :can-reorder="isReorderModeEnabled"
+                    :is-editing="isEditingModeEnabled"    
                     :is-reordering="isReordering"
                     :unset-current-book="unsetKey"
                     @send-bookdata-socket="
                         (bookdata) => reorder_books(bookdata)
                     "
                     @cancelled-reorder="cancelledReorder"
+                    @cancelled-edit=cancelledEdit
                 />
 
                 <div v-else>
@@ -102,7 +116,7 @@
 
 </template>
 <script setup>
-import { ref, onMounted, reactive, onBeforeUnmount, toRaw } from 'vue';
+import { ref, onMounted, reactive, onBeforeUnmount, toRaw, computed } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import IconEdit from '../../svg/icon-edit.vue';
 import IconReorder from '../../svg/icon-reorder.vue';
@@ -128,32 +142,24 @@ const bookshelfData = ref(null);
 const books = ref([]);
 const isReordering = ref(false);
 const isReorderModeEnabled = ref(false);
+const isEditingModeEnabled = ref(false);
 let unsetKey = 0;
+
+const currentBookCount = computed(() => {
+    return books.value.length || 0;
+});
 
 const error = ref({
     message: '',
     isShowing: false
 });
 
-//  Used to send and reorder data!
-// #TODO: Fix fix fix please please please. @kylearbide
-function reorder_books(bookData) {
-    isReordering.value = true;
-    bookData.type = 'reorder';
-    // Send data to server
-    ws.sendData(bookData);
-    console.log(bookData, 'bookData'); 
-    isReordering.value = false;
-    // Forget what this is used for.
-    unsetKey++;
-}
-
 const currentView = reactive({value: 'edit-books'});
 const { commanatoredString } = helpersCtrl;
 
 const bookShelfComponentMap = {
     "edit-books": {
-        heading: () => "Reorder books",
+        heading: () => `${currentBookCount.value} books`,
         buttonText: 'Add books',
     },
     "add-books": {
@@ -162,6 +168,22 @@ const bookShelfComponentMap = {
     }
 };
 
+//  Used to send and reorder data!
+// #TODO: Fix fix fix please please please. @kylearbide
+function reorder_books(bookData) {
+    isReordering.value = true;
+    bookData.type = 'reorder';
+    // Send data to server
+    ws.sendData(bookData);
+    isReordering.value = false;
+    // Forget what this is used for.
+    unsetKey++;
+}
+
+/**
+ * @description
+ * This function is used to get the bookshelf data from the server.
+ */
 async function get_shelf() {
     let { bookshelf } = route.params;
     await db.get(urls.rtc.bookShelfTest(bookshelf)).then((res) => { 
@@ -171,6 +193,10 @@ async function get_shelf() {
     });
 }
 
+/**
+ * @description
+ * This function is used to add a book to the bookshelf. It will send the data to the ws server
+ */
 async function addBook(book){
     if(ws.socket?.readyState !== 1){
         error.value.message = 'There was an error adding the book to the bookshelf. Please try again.';
@@ -196,6 +222,11 @@ async function addBook(book){
     setReactiveProperty(currentView, 'value', 'edit-books');
 }
 
+/**
+ * @description
+ * This function is used to navigate to the bookshelf settings page.
+ * This function also creates a socket connection if one does not exist.
+ */
 function gotToAddBooksAndCreateSocketConnection(){
     if(ws.socket?.readyState !== 1 || !ws.socket) {
         ws.createNewSocketConnection(route.params.bookshelf);
@@ -204,6 +235,11 @@ function gotToAddBooksAndCreateSocketConnection(){
     setReactiveProperty(currentView, 'value', 'add-books');
 }
 
+/**
+ * @description
+ * This function is used to enter reorder mode. It will create a new socket connection
+ * and subscribe to the socket connection.
+ */
 async function enterReorderMode(){
     isReorderModeEnabled.value = true;
     // Probably need a way to edit this so we dont keep things open for long. Can add in an edit btn to the ux
@@ -216,6 +252,18 @@ function cancelledReorder() {
     isReordering.value = false;
     ws.unsubscribeFromSocketConnection();
     get_shelf();
+}
+
+/**
+ * @description
+ * This function is used to enter edit mode. It will allow users to add tags and delete books.
+ */
+function enterEditMode(){
+    isEditingModeEnabled.value = true;
+}
+
+function cancelledEdit(){
+    isEditingModeEnabled.value = false;
 }
 
 onMounted(() => {
@@ -288,6 +336,12 @@ window.onbeforeunload = () => {
 
     .bookshelf-description {
         font-size: var(--font-lg);
+        color: var(--stone-500);
+        line-height: 1.2;
+    }
+
+    .bookshelf-book-count {
+        margin-top: 4px;
         color: var(--stone-500);
         line-height: 1.2;
     }
