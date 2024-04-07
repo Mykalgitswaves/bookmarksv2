@@ -88,6 +88,7 @@
                     @send-bookdata-socket="
                         (bookdata) => reorder_books(bookdata)
                     "
+                    @removed-book="(removed_book_id) => remove_book(removed_book_id)"
                     @cancelled-reorder="cancelledReorder"
                     @cancelled-edit=cancelledEdit
                 />
@@ -258,12 +259,32 @@ function cancelledReorder() {
  * @description
  * This function is used to enter edit mode. It will allow users to add tags and delete books.
  */
-function enterEditMode(){
+async function enterEditMode(){
+    await ws.createNewSocketConnection(route.params.bookshelf);
     isEditingModeEnabled.value = true;
 }
 
 function cancelledEdit(){
     isEditingModeEnabled.value = false;
+    ws.unsubscribeFromSocketConnection();
+}
+
+/**
+ * @description
+ * This function is used to remove a book from the bookshelf.
+ * @param {string} removed_book_id - The id of the book that is being removed.
+ * This function uses a key ref object used as a depencency inside of
+ * BookshelfBooks computed function which sets currentBook to null.
+ */
+function remove_book(removed_book_id){
+    let data = {
+        type: 'delete',
+        target_id: removed_book_id,
+        bookshelf_id: route.params.bookshelf,
+    };
+
+    ws.sendData(data);
+    unsetKey++;
 }
 
 onMounted(() => {

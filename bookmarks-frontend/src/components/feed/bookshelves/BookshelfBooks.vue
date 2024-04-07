@@ -2,7 +2,7 @@
     <ul class="bookshelf-books" ref="books" v-if="books.length">
         <li class="bs-b-wrapper">
             <button
-                v-if="currentBook && currentBook.id !== books[0].id"
+                v-if="(currentBook && currentBook.id !== books[0].id) && !isEditing"
                 class="swap-btn-target"
                 type="button"
                 @click="swapToBeginningOfList()"
@@ -20,15 +20,17 @@
                 :prev-book="books[index - 1]"
                 :current-book="currentBook"
                 :index="index"
+                :is-editing="isEditing"
                 @set-sort="(data) => setSort(data)"
                 @swapped-with="(data) => swappedWithHandler(data)"
+                @removed-book="$emit('removed-book', $event)"
             />
         </li>
 
         <!-- For swapping to end of the list. -->
         <li class="bs-b-wrapper">
             <button
-                v-if="currentBook && currentBook.id !== books[books.length - 1].id"
+                v-if="(currentBook && currentBook.id !== books[books.length - 1].id) && !isEditing"
                 class="swap-btn-target"
                 type="button"
                 @click="swapToEndOfList()"
@@ -119,7 +121,7 @@ function setCurrentBook(bookData) {
 
 // early step of swap, sets currentBook.
 function setSort(bookData) {
-    if(props.canReorder){
+    if(props.canReorder || props.isEditing){
         console.assert(bookData !== (null || undefined));
         bookdata.target_id = bookData;
         setCurrentBook(bookData);
@@ -177,6 +179,7 @@ function swappedWithHandler(book_data) {
 
     emit('send-bookdata-socket', bookdata);
 };
+
 </script>
 
 <style scoped lang="scss">

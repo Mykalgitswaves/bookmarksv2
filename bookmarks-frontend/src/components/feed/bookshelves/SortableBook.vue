@@ -35,10 +35,22 @@
     >
       {{ index }}
     </button>
+    
+    <button v-if="shouldShowBookToolbar"
+        type="button"
+        class="remove-btn-button"
+        @click="$emit('removed-book', props.id)"
+    >
+        <span class="flex items-center gap-2 text-stone-800">
+            Remove from shelf
+            <IconDelete />
+        </span>
+    </button>
 </template>
 <script setup>
 import { computed, ref } from 'vue';
-import { wsCurrentState } from './bookshelvesRtc';
+import { ws, wsCurrentState } from './bookshelvesRtc';
+import IconDelete from '../../svg/icon-trash.vue';
 
 const props = defineProps({
     order: {
@@ -67,6 +79,9 @@ const props = defineProps({
     },
     index: {
         type: Number
+    },
+    isEditing: {
+        type: Boolean
     }
 });
 const input = ref('input');
@@ -95,6 +110,11 @@ function shouldShowSwap() {
         return false; // If there's no current book, don't show the swap button
     }
 
+    // We dont want to show swap buttons for editing books.
+    if(props.isEditing){
+        return false;
+    }
+
     // Hide the one before the current book.
     if(props.currentBook?.order - 1 === props.order){
         return false;;
@@ -109,7 +129,16 @@ function shouldShowSwap() {
     return !!(props.id !== props.currentBook.id)
 }
 
+const shouldShowBookToolbar = computed(() => {
+    if(!props.currentBook) return false;
+
+    if(props.currentBook.id === props.id && props.isEditing){
+        return true;
+    }
+});
+
 const isLocked = computed(() => wsCurrentState.value === 'locked');
+
 
 </script>
 <styles scoped lang="scss">
@@ -207,5 +236,20 @@ const isLocked = computed(() => wsCurrentState.value === 'locked');
             color: var(--stone-500);
             font-size: var(--font-sm);
         }
+    }
+
+    .remove-btn-button {
+        display: flex;
+        justify-content: start;
+        align-items: start;
+        margin-left: auto;
+        margin-right: var(--margin-sm);
+        color: var(--stone-600);
+        transition: var(--transition-short);
+    }
+
+    .remove-btn-button:hover {
+        color: var(--red-500);
+        text-decoration: underline;
     }
 </styles>  
