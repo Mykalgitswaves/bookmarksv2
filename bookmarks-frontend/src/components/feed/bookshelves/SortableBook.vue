@@ -49,7 +49,7 @@
 </template>
 <script setup>
 import { computed, ref } from 'vue';
-import { ws, wsCurrentState } from './bookshelvesRtc';
+import { wsCurrentState } from './bookshelvesRtc';
 import IconDelete from '../../svg/icon-trash.vue';
 
 const props = defineProps({
