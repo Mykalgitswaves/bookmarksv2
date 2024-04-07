@@ -1,120 +1,143 @@
 <template>
-    <section class="edit-bookshelf">
-        <div class="bookshelf-heading">
-            <div>
-                <h1 class="bookshelf-title">{{ bookshelfData?.title || 'Untitled'}}</h1>
-
-                <p class="bookshelf-description">{{ bookshelfData?.description || 'Add a description'}}</p>
-            </div>
-            <button
-                type="button"
-                class="btn edit-btn"
-                @click="goToBookshelfSettingsPage(router, route.params.user, route.params.bookshelf)"
-            >
-                <IconEdit/>
-            </button>
-        </div>
-        <div class="bookshelf-top-toolbar">
-            <div v-if="!collaborators?.length" class="flex items-end">
-                <PlaceholderImage class="extra small-profile-image"/>
-                <p class="no-collaborators-note">No collaborators added to this bookshelf yet</p>
-            </div>
-
-            <div class="mt-2 flex space-between">
-                <button
-                    type="button"
-                    class="btn add-readers-btn"
-                >
-                    Add readers
-                </button>
-
+    <KeepAlive>
+        <section class="edit-bookshelf">
+            <!-- titles descriptions and some buttons -->
+            <div class="bookshelf-heading">
                 <div>
+                    <h1 class="bookshelf-title">{{ bookshelfData?.title || 'Untitled'}}</h1>
+
+                    <p class="bookshelf-description">{{ bookshelfData?.description || 'Add a description'}}</p>
+                </div>
+
+                <button
+                    v-if="isAdmin"
+                    type="button"
+                    class="btn edit-btn"
+                    @click="goToBookshelfSettingsPage(router, route.params.user, route.params.bookshelf)"
+                >
+                    <IconEdit/>
+                </button>
+            </div>
+
+            <!-- More nav controls -->
+            <div class="bookshelf-top-toolbar">
+                <div v-if="isAdmin && !collaborators?.length" class="flex items-end">
+                    <PlaceholderImage class="extra small-profile-image"/>
+                    <p class="no-collaborators-note">No collaborators added to this bookshelf yet</p>
+                </div>
+
+                <div v-if="isAdmin" class="mt-2 flex" >
                     <button
-                        v-if="currentView.value === 'edit-books'"
                         type="button"
-                        class="btn add-readers-btn ml-5"
-                        @click="gotToAddBooksAndCreateSocketConnection()"
+                        class="btn add-readers-btn"
+                        @click="setReactiveProperty(currentView, 'value', 'add-collaborators')"
                     >
-                        {{ bookShelfComponentMap[currentView.value].buttonText }}
+                        Add collaborators
                     </button>
 
-                    <button
-                        v-if="currentView.value === 'add-books'"
+                    <button v-if="currentView.value === 'add-collaborators'"
                         type="button"
                         class="btn add-readers-btn ml-5"
                         @click="setReactiveProperty(currentView, 'value', 'edit-books')"
                     >
-                        {{ bookShelfComponentMap[currentView.value].buttonText }}
+                        Add books
+                    </button>
+
+                    <div>
+                        <button
+                            v-if="currentView.value === 'edit-books'"
+                            type="button"
+                            class="btn add-readers-btn ml-5"
+                            @click="gotToAddBooksAndCreateSocketConnection()"
+                        >
+                            {{ bookShelfComponentMap[currentView.value].buttonText }}
+                        </button>
+
+                        <button
+                            v-if="currentView.value === 'add-books'"
+                            type="button"
+                            class="btn add-readers-btn ml-5"
+                            @click="setReactiveProperty(currentView, 'value', 'edit-books')"
+                        >
+                            {{ bookShelfComponentMap[currentView.value].buttonText }}
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Where you can manage collaborators, add more to your shelf! -->
+            <BookshelfManageCollaborators 
+                v-if="isAdmin && currentView.value === 'add-collaborators' && bookshelfData"
+                :bookshelf="bookshelfData"    
+            />
+
+            <!-- This is for editing and reordering controls. -->
+            <div v-if="isAdmin && currentView.value === 'edit-books'" class="flex items-center space-between">
+                <h3 class="bookshelf-books-heading">
+                    {{ bookShelfComponentMap[currentView.value].heading(bookshelfData?.title) }}
+                </h3>
+                
+                <div v-if="currentView.value === 'edit-books' && !isReorderModeEnabled" class="flex gap-2">
+                    <button class="btn reorder-btn"
+                        :disabled="bookshelfData?.books?.length <= 1"
+                        @click="enterReorderMode()"
+                    >
+                        Reorder
+                    </button>
+
+                    <button class="btn reorder-btn"
+                        :disabled="bookshelfData?.books?.length <= 1"
+                        @click="enterEditMode()"
+                    >
+                        Edit
                     </button>
                 </div>
             </div>
-        </div>
 
-        <div class="flex items-center space-between">
-            <h3 class="bookshelf-books-heading">
-                {{ bookShelfComponentMap[currentView.value].heading(bookshelfData?.title) }}
-            </h3>
-            
-            <div class="flex gap-2">
-                <button
-                    v-if="currentView.value === 'edit-books' && !isReorderModeEnabled"
-                    class="btn reorder-btn"
-                    :disabled="bookshelfData?.books?.length <= 1"
-                    @click="enterReorderMode()"
-                >
-                    Reorder
-                </button>
+            <div v-if="dataLoaded">
+                <div v-if="currentView.value === 'edit-books'">
+                    <BookshelfBooks 
+                        v-if="bookshelfData?.books?.length"
+                        :is-admin="isAdmin"
+                        :books="books"
+                        :can-reorder="isReorderModeEnabled"
+                        :is-editing="isEditingModeEnabled"    
+                        :is-reordering="isReordering"
+                        :unset-current-book="unsetKey"
+                        @send-bookdata-socket="
+                            (bookdata) => reorder_books(bookdata)
+                        "
+                        @removed-book="(removed_book_id) => remove_book(removed_book_id)"
+                        @cancelled-reorder="cancelledReorder"
+                        @cancelled-edit=cancelledEdit
+                    />
 
-                <button
-                    v-if="currentView.value === 'edit-books' && !isReorderModeEnabled"
-                    class="btn reorder-btn"
-                    :disabled="bookshelfData?.books?.length <= 1"
-                    @click="enterEditMode()"
-                >
-                    Edit
-                </button>
-            </div>
-        </div>
+                    <div v-else>
+                        <p class="text-no-books-added">No books have been added to this shelf yet.</p>
 
-        <div v-if="dataLoaded">
-            <div v-if="currentView.value === 'edit-books'">
-                <BookshelfBooks 
-                    v-if="bookshelfData?.books?.length"
-                    :books="books"
-                    :can-reorder="isReorderModeEnabled"
-                    :is-editing="isEditingModeEnabled"    
-                    :is-reordering="isReordering"
-                    :unset-current-book="unsetKey"
-                    @send-bookdata-socket="
-                        (bookdata) => reorder_books(bookdata)
-                    "
-                    @removed-book="(removed_book_id) => remove_book(removed_book_id)"
-                    @cancelled-reorder="cancelledReorder"
-                    @cancelled-edit=cancelledEdit
-                />
-
-                <div v-else>
-                    <p class="text-no-books-added">No books have been added to this shelf yet.</p>
-
-                    <button type="button"
-                        class="btn add-readers-btn mt-5"    
-                        @click="gotToAddBooksAndCreateSocketConnection()"
-                    >Add now</button>
+                        <button v-if="isAdmin" 
+                            type="button"
+                            class="btn add-readers-btn mt-5"    
+                            @click="gotToAddBooksAndCreateSocketConnection()"
+                        >Add now</button>
+                    </div>
                 </div>
             </div>
 
+            <!-- Where you search for books for adding -->
             <SearchBooks 
-                v-if="currentView.value === 'add-books'"
+                v-if="isAdmin && currentView.value === 'add-books'"
                 @book-to-parent="(book) => addBook(book)"  
             />
-        </div>
-    </section>    
+        </section>   
+    </KeepAlive>
+     <!--need this until i can figure out better solush smh.  -->
     <div class="mobile-menu-spacer sm:hidden"></div>
 
+    <!-- Errors -->
     <Transition name="content">
         <ErrorToast v-if="error.isShowing" :message="error.message" :refresh="true"/>
     </Transition>
-
 </template>
 <script setup>
 import { ref, onMounted, reactive, onBeforeUnmount, toRaw, computed } from 'vue';
@@ -122,6 +145,7 @@ import { useRoute, useRouter } from 'vue-router';
 import IconEdit from '../../svg/icon-edit.vue';
 import IconReorder from '../../svg/icon-reorder.vue';
 import BookshelfBooks from './BookshelfBooks.vue';
+import BookshelfManageCollaborators from './BookshelfManageCollaborators.vue';
 import SearchBooks from '../createPosts/searchBooks.vue';
 import PlaceholderImage from '../../svg/placeholderImage.vue';
 import ErrorToast from '../../shared/ErrorToast.vue';
@@ -138,12 +162,14 @@ import { db } from '../../../services/db';
 
 const route = useRoute();
 const router = useRouter();
+const { user } = route.params
 const dataLoaded = ref(false);
 const bookshelfData = ref(null);
 const books = ref([]);
 const isReordering = ref(false);
 const isReorderModeEnabled = ref(false);
 const isEditingModeEnabled = ref(false);
+const isAdmin = ref(false);
 let unsetKey = 0;
 
 const currentBookCount = computed(() => {
@@ -191,6 +217,7 @@ async function get_shelf() {
         bookshelfData.value = res.bookshelf
         books.value = res.bookshelf.books
         dataLoaded.value = true;
+        isAdmin.value = !!(res.bookshelf.created_by === user);
     });
 }
 
