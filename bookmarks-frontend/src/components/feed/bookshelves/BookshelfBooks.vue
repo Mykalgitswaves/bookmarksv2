@@ -39,7 +39,7 @@
     <teleport v-if="currentBook !== null || canReorder" to="body">
         <div class="sorting-footer">
             <div v-if="currentBook" class="s-f-book">
-                <img :src="currentBook.imgUrl" class="s-f--current-book-img" alt="">
+                <img :src="currentBook.small_img_url" class="s-f--current-book-img" alt="">
 
                 <h3 class="s-f--current-book">
                 {{ selectedBookToBeMoved }}
@@ -102,7 +102,7 @@ watch(() => props.unsetCurrentBook, (newVal) => {
 });
 
 const selectedBookToBeMoved = computed(() => 
-    `#${currentBook.value?.order ?? ''} ${currentBook.value?.bookTitle}`
+    `#${currentBook.value?.order ?? ''} ${currentBook.value?.title}`
 );
 
 // Used to set the current target
@@ -172,7 +172,7 @@ function swappedWithHandler(book_data) {
 <style scoped lang="scss">
     .bookshelf-books {
         display: grid;
-        padding-top: var(--padding-sm);
+        // padding-top: var(--padding-sm);/
         row-gap: 8px;
     }
 

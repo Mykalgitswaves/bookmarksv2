@@ -57,6 +57,7 @@
             <button
                 v-if="currentView.value === 'edit-books' && !isReorderModeEnabled"
                 class="btn reorder-btn"
+                :disabled="bookshelfData?.books?.length <= 1"
                 @click="enterReorderMode()"
             >
                 <IconReorder class="ninety-deg"/>
@@ -77,12 +78,14 @@
                     @cancelled-reorder="cancelledReorder"
                 />
 
-                <p v-else class="text-no-books-added">No books have been added to this shelf yet.</p>
-                <button 
-                    type="button"
-                    class="btn add-readers-btn mt-5"    
-                    @click="gotToAddBooksAndCreateSocketConnection()"
-                >Add now</button>
+                <div v-else>
+                    <p class="text-no-books-added">No books have been added to this shelf yet.</p>
+
+                    <button type="button"
+                        class="btn add-readers-btn mt-5"    
+                        @click="gotToAddBooksAndCreateSocketConnection()"
+                    >Add now</button>
+                </div>
             </div>
 
             <SearchBooks 
@@ -221,10 +224,9 @@ onMounted(() => {
     get_shelf();
     document.addEventListener('ws-loaded-data', () => {
         console.log('ws data has arrived')
-        // Make this the new data!
-        books.value.push(ws.books.pop());
-        ws.books = [];
-    });
+        // Grab the last added book to the shelf!
+        books.value = ws.books;
+        });
 
     document.addEventListener('ws-connection-error', (e) => {
         error.value.message = e.detail.message;
