@@ -30,6 +30,20 @@ class BookshelfVisibility(BookshelfId):
 class BookshelfUser(BookshelfId):
     user_id: str
 
+class BookshelfContributor(BaseModel):
+    user_id: str
+    username: str
+    profile_img_url: str | None = None
+    relationship_to_current_user: str
+    created_date: datetime.datetime
+
+    @validator('created_date', pre=True, allow_reuse=True)
+    def parse_neo4j_datetime(cls, v):
+        if isinstance(v, Neo4jDateTime):
+            # Convert Neo4jDateTime to Python datetime
+            return v.to_native()
+        return v
+
 class BookshelfCreate(BaseModel):
     title: str
     description: str

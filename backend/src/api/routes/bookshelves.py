@@ -332,7 +332,38 @@ async def remove_member_to_bookshelf(request: Request,
         return JSONResponse(content={"message": "member added to bookshelf"})
     else:
         raise HTTPException(status_code=400, detail="Failed to add member to bookshelf")
+    
+@router.get("/{bookshelf_id}/contributors",
+            name="bookshelf:get_contributors")
+async def get_contributors(bookshelf_id: str, 
+                            current_user:  Annotated[User, Depends(get_current_active_user)],
+                            bookshelf_repo: BookshelfCRUDRepositoryGraph = Depends(get_repository(repo_type=BookshelfCRUDRepositoryGraph))):
+    """
+    Returns a list of contributors to the bookshelf
 
+    Args:
+        bookshelf_id: The id of the bookshelf.
+
+    Returns:
+        list(BookshelfContributor): A list of contributors to the bookshelf.
+            {
+                "user_id": str,
+                "username": str,
+                "full_name": str,
+                "profile_img_url": str
+                "relationship_to_current_user": str
+                "created_date": datetime
+            }
+    """
+    
+    contributors, contributor_ids = bookshelf_repo.get_bookshelf_contributors(bookshelf_id, 
+                                                                              current_user.id)
+
+    if current_user.id not in contributor_ids:
+        raise HTTPException(status_code=403, detail="User is not authorized to view contributors to this bookshelf")
+    else:
+        return JSONResponse(content={"contributors": jsonable_encoder(contributors)})
+    
 @router.websocket('/ws/{bookshelf_id}') # This is changing to /api/bookshelves/ws/{bookshelf_id}
 async def bookshelf_connection(websocket: WebSocket, 
                                bookshelf_id: str,
