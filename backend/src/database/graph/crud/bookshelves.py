@@ -4,7 +4,8 @@ from src.models.schemas.bookshelves import (
     BookshelfPage, 
     BookshelfPreview, 
     BookshelfBook,
-    BookshelfContributor
+    BookshelfContributor,
+    BookshelfMember
 )
 
 class BookshelfCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
@@ -191,6 +192,70 @@ class BookshelfCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
 
         
         return contributors, contributor_ids
+    
+    def get_bookshelf_members(self, bookshelf_id, current_user_id):
+        with self.driver.session() as session:
+            members = session.read_transaction(self.get_bookshelf_members_query, bookshelf_id, current_user_id)
+        return members
+    
+    @staticmethod
+    def get_bookshelf_members_query(tx, bookshelf_id, current_user_id):
+        query = (
+            """
+            match (currentUser:User {id:$current_user_id})
+            MATCH (bookshelf:Bookshelf {id:$bookshelf_id})<-[r:HAS_BOOKSHELF_ACCESS]-(user:User)
+            where r.type in ["owner", "member", "contributor"]
+            OPTIONAL MATCH (currentUser)<-[incomingFriendStatus:FRIENDED]-(user)
+            OPTIONAL MATCH (currentUser)-[outgoingFriendStatus:FRIENDED]->(user)
+            OPTIONAL MATCH (currentUser)<-[incomingBlockStatus:BLOCKED]-(user)
+            OPTIONAL MATCH (currentUser)-[outgoingBlockStatus:BLOCKED]->(user)
+            OPTIONAL MATCH (currentUser)<-[incomingFollowStatus:FOLLOWS]-(user)
+            OPTIONAL MATCH (currentUser)-[outgoingFollowStatus:FOLLOWS]->(user)
+            RETURN user, currentUser,
+                incomingFriendStatus.status AS incomingFriendStatus,
+                incomingBlockStatus,
+                incomingFollowStatus,
+                outgoingFriendStatus.status AS outgoingFriendStatus,
+                outgoingBlockStatus,
+                outgoingFollowStatus
+            """
+        )
+        result = tx.run(query, 
+                        bookshelf_id=bookshelf_id,
+                        current_user_id=current_user_id)
+        
+        members = []
+
+        for response in result:
+            if 'profile_img_url' in response['user']:
+                profile_img_url = response['user']['profile_img_url']
+            else:
+                profile_img_url = None
+
+            if response['incomingFriendStatus'] == 'friends' or response['outgoingFriendStatus'] == 'friends':
+                relationship_to_current_user = 'friend'
+            elif response['incomingFriendStatus'] == 'pending':
+                relationship_to_current_user = 'anonymous_user_friend_requested'
+            elif response['outgoingFriendStatus'] == 'pending':
+                relationship_to_current_user = 'current_user_friend_requested'
+            elif response['incomingBlockStatus']:
+                relationship_to_current_user = 'current_user_blocked_by_anonymous_user'
+            elif response['outgoingBlockStatus']:
+                relationship_to_current_user = 'anonymous_user_blocked_by_current_user'
+            elif response['user']['id'] == current_user_id:
+                relationship_to_current_user = 'is_current_user'
+            else:
+                relationship_to_current_user = 'stranger'
+
+            members.append(BookshelfMember(
+                user_id=response['user']['id'],
+                username=response['user']['username'],
+                created_date=response['user']['created_date'],
+                profile_img_url=profile_img_url,
+                relationship_to_current_user=relationship_to_current_user
+            ))
+
+        return members
 
     def create_bookshelf(self, bookshelf):
         with self.driver.session() as session:

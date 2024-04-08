@@ -422,6 +422,12 @@ class TestBookshelfWS:
         assert response.status_code == 200, "Getting Bookshelf"
         assert self.user_id_2 in response.json()['bookshelf']["members"], "Member Added"
 
+        # Get just the members
+        response = requests.get(f"{self.endpoint}/api/bookshelves/{bookshelf_id}/members", headers=headers)
+        assert response.status_code == 200, "Getting Members"
+        assert len(response.json()['members']) == 2, "Getting Members"
+        print(response.json()['members'])
+
         # Try adding the same member again (duplicate member)
         response = requests.put(f"{self.endpoint}/api/bookshelves/{bookshelf_id}/add_member", headers=headers, json=data)
         assert response.status_code == 200, "Adding member"

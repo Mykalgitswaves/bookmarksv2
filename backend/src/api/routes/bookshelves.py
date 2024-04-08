@@ -364,6 +364,19 @@ async def get_contributors(bookshelf_id: str,
     else:
         return JSONResponse(content={"contributors": jsonable_encoder(contributors)})
     
+@router.get("/{bookshelf_id}/members",
+            name="bookshelf:get_members")
+async def get_members(bookshelf_id: str,
+                        current_user:  Annotated[User, Depends(get_current_active_user)],
+                        bookshelf_repo: BookshelfCRUDRepositoryGraph = Depends(get_repository(repo_type=BookshelfCRUDRepositoryGraph))):
+    """
+    Returns a list of members to the bookshelf
+    """
+    members = bookshelf_repo.get_bookshelf_members(bookshelf_id, 
+                                                    current_user.id)
+    
+    return JSONResponse(content={"members": jsonable_encoder(members)})
+    
 @router.websocket('/ws/{bookshelf_id}') # This is changing to /api/bookshelves/ws/{bookshelf_id}
 async def bookshelf_connection(websocket: WebSocket, 
                                bookshelf_id: str,

@@ -43,6 +43,9 @@ class BookshelfContributor(BaseModel):
             # Convert Neo4jDateTime to Python datetime
             return v.to_native()
         return v
+    
+class BookshelfMember(BookshelfContributor):
+    pass
 
 class BookshelfCreate(BaseModel):
     title: str
