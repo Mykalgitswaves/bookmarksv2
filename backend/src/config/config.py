@@ -42,6 +42,14 @@ class Config(BaseSettings):
     ALLOWED_METHODS: List[str]
     ALLOWED_HEADERS: List[str]
 
+    #RDS Configs
+    MYSQL_USERNAME: str
+    MYSQL_PASSWORD: str
+    MYSQL_HOST: str
+    MYSQL_PORT: int
+    MYSQL_DATABASE: str
+    MYSQL_ECHO: bool
+
 try:
     with open("src/config/config.json", "r") as file:
         config = json.load(file)
