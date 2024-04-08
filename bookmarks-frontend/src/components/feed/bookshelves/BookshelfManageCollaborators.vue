@@ -1,7 +1,5 @@
 <template>
     <div class="mt-5">
-        <BookshelfCollaborator/>
-
         <div id="collaborator-note">
             <p class="bookshelf-note">
                 Collaborators have the ability to add, remove and reorder books.
@@ -9,6 +7,10 @@
             </p>
         </div>
 
+        <BookshelfCollaborator role="creator"/>
+
+        <div class="divider"></div>
+        
         <ul class="collaborators-list">
             <li>
                 <BookshelfCollaborator />
@@ -21,8 +23,7 @@
     </div>
 </template>
 
-<script>
-import { defineProps } from 'vue';
+<script setup>
 import BookshelfCollaborator from './BookshelfCollaborator.vue';
 import SearchBooks from '../createPosts/searchBooks.vue';
 
@@ -32,6 +33,8 @@ const props = defineProps({
         required: true,
     },
 });
+
+console.log(props.bookshelf);
 
 </script>
 <style scoped>

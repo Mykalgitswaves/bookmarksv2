@@ -13,16 +13,28 @@
 
         <div>
             <h4 class="collaborator-username">michael</h4>
-            <p id="role" class="collaborator-role">role: creator</p>  
+            <p id="role" class="collaborator-role">role: {{ props.role }}</p>  
         </div>
 
         <button type="button"
-            class="btn btn-danger"
+            class="btn ml-auto"
+            :class="{ 'btn-danger': (role === 'collaborator') }"
+            :disabled="role === 'creator'"
         >
             remove
         </button>
     </div>
 </template>
+<script setup>
+const props = defineProps({
+    role: {
+        type: String,
+        required: false,
+        default: 'collaborator',
+    },
+});
+
+</script>
 <style scoped>
     .collaborator {
         margin-left: auto;
@@ -54,6 +66,9 @@
         border-radius: var(--radius-sm);
         padding-left: 12px;
         padding-right: 12px;
+    }
+
+    .ml-auto {
         margin-left: auto;
     }
 </style>

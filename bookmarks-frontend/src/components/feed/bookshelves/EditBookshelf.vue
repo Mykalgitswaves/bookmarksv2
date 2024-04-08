@@ -67,7 +67,9 @@
 
             <!-- Where you can manage collaborators, add more to your shelf! -->
             <BookshelfManageCollaborators 
-                v-if="isAdmin && currentView.value === 'add-collaborators' && bookshelfData"
+                v-if="isAdmin && 
+                currentView.value === 'add-collaborators'
+                && dataLoaded"
                 :bookshelf="bookshelfData"    
             />
 
