@@ -1,5 +1,5 @@
 from sqlalchemy import URL
-from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker
+from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
 
 from src.config.config import settings
 
@@ -16,6 +16,8 @@ class AsyncMySQLDatabase:
 
         self.async_engine = create_async_engine(self.url,
                                                 echo=settings.MYSQL_ECHO)
-        self.pool = async_sessionmaker(self.async_engine)
+        self.pool = async_sessionmaker(self.async_engine,
+                                       class_=AsyncSession,
+                                       expire_on_commit=False)
 
 async_mysql_database: AsyncMySQLDatabase = AsyncMySQLDatabase()
