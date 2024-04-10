@@ -34,11 +34,34 @@ def setup_class(request):
     request.cls.token_type = response.json()["token_type"]
     request.cls.user_id = response.json()["user_id"]
 
+    request.cls.username_friend = "friend_user123"
+    request.cls.email_friend = "frienduser@testemail.com"
+    request.cls.password_friend = "testpassword"
+    request.cls.full_name_friend = "Friend User"
+    
+    data = {
+        "username": request.cls.username_friend,
+        "email": request.cls.email_friend,
+        "password": request.cls.password_friend,
+    }
+    response = requests.post(f"{request.cls.endpoint}/api/auth/signup", headers=headers, data=data)
+    assert response.status_code == 200, "Testing Signup Form"
+
+    request.cls.access_token_friend = response.json()["access_token"]
+    request.cls.token_type_friend = response.json()["token_type"]
+    request.cls.user_id_friend = response.json()["user_id"]
+
     yield
 
     response = requests.post(f"{request.cls.endpoint}/api/admin/delete_user_by_username", 
                              json={"username": request.cls.username, "admin_credentials": config["ADMIN_CREDENTIALS"]})
 
+    assert response.status_code == 200, "Cleanup: Test user deletion failed"
+
+    response = requests.post(f"{request.cls.endpoint}/api/admin/delete_user_by_username",
+                                json={"username": request.cls.username_friend, "admin_credentials": config["ADMIN_CREDENTIALS"]})
+    
+    assert response.status_code == 200, "Cleanup: Test user deletion failed"
 
 @pytest.mark.usefixtures("setup_class")
 class TestSearch:
@@ -61,7 +84,7 @@ class TestSearch:
         Returns:
             None
         """
-        search_term = "test"
+        search_term = "friend_user123"
         headers = {
             "Authorization": f"{self.token_type} {self.access_token}"
         }
@@ -70,7 +93,47 @@ class TestSearch:
                                 headers=headers)
         print(response.json())
         assert response.status_code == 200, "Search users failed"
-        assert len(response.json()) > 0, "Search users failed"
+        assert len(response.json()['data']) > 0, "Search users failed"
+
+    def test_search_friends(self):
+        """
+        Test case to verify search works across friends in the DB
+
+        Returns:
+            None
+        """
+
+        headers = {
+            "Authorization": f"{self.token_type} {self.access_token}"
+        }
+
+        friend_headers = {
+            "Authorization": f"{self.token_type_friend} {self.access_token_friend}"
+        }
+
+        response = requests.put(f"{self.endpoint}/api/user/{self.user_id_friend}/send_friend_request", headers=headers)
+        assert response.status_code == 200, "Testing Send Friend Request"
+
+        response = requests.put(f"{self.endpoint}/api/user/{self.user_id}/accept_friend_request", headers=friend_headers)
+        assert response.status_code == 200, "Testing Accept Friend Request"
+
+
+        search_term = "friend_user123"
+
+        response = requests.get(f"{self.endpoint}/api/search/friends/{search_term}?skip=0&limit=3",
+                                headers=headers)
+        print(response.json())
+        assert response.status_code == 200, "Search friends failed"
+        assert len(response.json()['data']) > 0, "Search friends failed"
+
+        search_term = "test"
+
+        response = requests.get(f"{self.endpoint}/api/search/friends/{search_term}?skip=0&limit=3",
+                                headers=headers)
+        print(response.json())
+        # This should return an empty list as no friends with the search term exist
+        assert response.status_code == 200, "Search friends failed"
+        assert len(response.json()['data']) == 0, "Search friends failed"
 
         
         

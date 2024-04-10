@@ -164,4 +164,66 @@ class SearchCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
             user_list.append(user)
 
         return user_list
+    
+    def get_friends_full_text_search(self, 
+                                   search_query:str, 
+                                   skip:int, 
+                                   limit:int, 
+                                   current_user_id:str):
+        
+        """
+        Searches all user by the full text index (username and full name)
+        """
+        with self.driver.session() as session:
+            result = session.execute_read(self.get_friends_full_text_search_query, search_query=search_query, skip=skip, limit=limit, current_user_id=current_user_id)
+        return(result)
+    
+    @staticmethod
+    def get_friends_full_text_search_query(tx, 
+                                         search_query:str, 
+                                         skip:int, 
+                                         limit:int, 
+                                         current_user_id:str):
+        query = """
+        MATCH (currentUser:User {id: $current_user_id})-[:FRIENDED {status:"friends"}]->(friend:User)
+        WITH collect(friend) as friends
+        CALL db.index.fulltext.queryNodes('userFullText', $search_query)
+        YIELD node, score
+        WHERE node IN friends
+        RETURN node, score
+        ORDER BY score DESC
+        SKIP $skip
+        LIMIT $limit
+        """
+
+        result = tx.run(query, 
+                        search_query=search_query, 
+                        skip=skip, 
+                        limit=limit, 
+                        current_user_id=current_user_id)
+        
+        user_list = []
+        for response in result:
+            if 'profile_img_url' in response['node']:
+                profile_img_url = response['node']['profile_img_url']
+            else:
+                profile_img_url = None
+
+            if response['node']['id'] == current_user_id:
+                relationship_to_current_user = 'is_current_user'
+            else:
+                relationship_to_current_user = 'friend'
+
+            user = SearchResultUser(
+                id=response['node']['id'],
+                username=response['node']['username'],
+                disabled=False,
+                created_date=response['node']['created_date'],
+                profile_img_url=profile_img_url,
+                relationship_to_current_user=relationship_to_current_user
+            )
+
+            user_list.append(user)
+
+        return user_list
         

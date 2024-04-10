@@ -60,3 +60,22 @@ def search_for_param_user(param: str,
                                                       current_user_id=current_user.id)
 
     return JSONResponse(content={"data": jsonable_encoder(search_result)})
+
+@router.get("/friends/{param}",
+            name="search:friends")
+
+def search_for_param_friend(param: str, 
+                     current_user: Annotated[User, Depends(get_current_active_user)],
+                     skip: int=0, 
+                     limit: int=5,
+                     search_repo: SearchCRUDRepositoryGraph = Depends(get_repository(repo_type=SearchCRUDRepositoryGraph))):
+    """
+    Endpoint used for searching for friends, todo add in credentials for searching
+    """
+    
+    search_result = search_repo.get_friends_full_text_search(search_query=param, 
+                                                      skip=skip, 
+                                                      limit=limit,
+                                                      current_user_id=current_user.id)
+
+    return JSONResponse(content={"data": jsonable_encoder(search_result)})
