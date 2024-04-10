@@ -21,6 +21,24 @@ def setup_class(request):
     request.cls.password = "testpassword"
     request.cls.search_term = "fiction"
 
+    headers = {"Content-Type": "application/x-www-form-urlencoded"}  # Set Content-Type to application/json
+    data = {
+        "username": request.cls.username,
+        "email": request.cls.email,
+        "password": request.cls.password,
+    }
+    response = requests.post(f"{request.cls.endpoint}/api/auth/signup", headers=headers, data=data)
+    assert response.status_code == 200, "Creating Test User" 
+
+    request.cls.access_token = response.json()["access_token"]
+    request.cls.token_type = response.json()["token_type"]
+    request.cls.user_id = response.json()["user_id"]
+
+    yield
+
+    response = requests.post(f"{request.cls.endpoint}/api/admin/delete_user_by_username", 
+                             json={"username": request.cls.username, "admin_credentials": config["ADMIN_CREDENTIALS"]})
+
 
 @pytest.mark.usefixtures("setup_class")
 class TestSearch:
@@ -35,5 +53,24 @@ class TestSearch:
         print(response.json())
         assert response.status_code == 200, "Search genres failed"
         assert len(response.json()) > 0, "Search genres failed"
+
+    def test_search_users(self):
+        """
+        Test case to verify search works across users in the DB
+
+        Returns:
+            None
+        """
+        search_term = "test"
+        headers = {
+            "Authorization": f"{self.token_type} {self.access_token}"
+        }
+
+        response = requests.get(f"{self.endpoint}/api/search/users/{search_term}?skip=0&limit=3",
+                                headers=headers)
+        print(response.json())
+        assert response.status_code == 200, "Search users failed"
+        assert len(response.json()) > 0, "Search users failed"
+
         
         

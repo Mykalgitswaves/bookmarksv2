@@ -24,7 +24,7 @@ class GoogleBooksSearch(GoogleBooks):
                 if 'authors' in result['volumeInfo']: 
                     author_names=result['volumeInfo']['authors']
                 else:
-                    author_names=None
+                    author_names=[]
                     
                 if title in search_metadata_map:
                     # if any(item in search_metadata_map[title] for item in author_names): # If any of the authors are matching

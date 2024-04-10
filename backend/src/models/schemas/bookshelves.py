@@ -36,6 +36,7 @@ class BookshelfContributor(BaseModel):
     profile_img_url: str | None = None
     relationship_to_current_user: str
     created_date: datetime.datetime
+    full_name: str | None = None
 
     @validator('created_date', pre=True, allow_reuse=True)
     def parse_neo4j_datetime(cls, v):
