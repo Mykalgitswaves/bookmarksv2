@@ -125,6 +125,104 @@ class BookshelfCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
             bookshelves.append(bookshelf)
         return bookshelves
     
+    def get_bookshelves_contributed_to_by_user(self, user_id):
+        with self.driver.session() as session:
+            result = session.read_transaction(self.get_bookshelves_contributed_to_by_user_query, user_id)
+        return result
+    
+    @staticmethod
+    def get_bookshelves_contributed_to_by_user_query(tx, user_id):
+        query = (
+            """
+            MATCH (b:Bookshelf)<-[r:HAS_BOOKSHELF_ACCESS {type: "contributor"}]-(u:User {id: $user_id})
+            OPTIONAL MATCH (b)-[:CONTAINS_BOOK]->(bb:Book)
+            OPTIONAL MATCH (uu:User)-[:HAS_BOOKSHELF_ACCESS {type: "member"}]->(b)
+            RETURN b.id as id, 
+                b.title as title, 
+                b.description as description, 
+                b.books as book_ids,
+                b.visibility as visibility,
+                b.img_url as img_url,
+                b.created_by as created_by,
+                count(bb) as book_count,
+                count(uu) as member_count,
+                collect(bb.id) as book_object_ids,
+                collect(bb.small_img_url) as book_img_urls
+            """
+        )
+
+        result = tx.run(query, user_id=user_id)
+        bookshelves = []
+        for record in result:
+            book_map = dict(zip(record["book_object_ids"], record["book_img_urls"]))
+            first_four_books_imgs = []
+            for key in record["book_ids"][:4]:
+                first_four_books_imgs.append(book_map[key])
+                
+            bookshelf = BookshelfPreview(
+                id=record["id"],
+                title=record["title"],
+                book_ids=record["book_ids"],
+                description=record["description"],
+                visibility=record["visibility"],
+                img_url=record["img_url"],
+                created_by=record["created_by"],
+                books_count=record["book_count"],
+                book_img_urls=first_four_books_imgs,
+                member_count=record["member_count"]
+            )
+            bookshelves.append(bookshelf)
+        return bookshelves
+    
+    def get_bookshelves_member_of_by_user(self, user_id):
+        with self.driver.session() as session:
+            result = session.read_transaction(self.get_bookshelves_member_of_by_user_query, user_id)
+        return result
+    
+    @staticmethod
+    def get_bookshelves_member_of_by_user_query(tx, user_id):
+        query = (
+            """
+            MATCH (b:Bookshelf)<-[r:HAS_BOOKSHELF_ACCESS {type: "member"}]-(u:User {id: $user_id})
+            OPTIONAL MATCH (b)-[:CONTAINS_BOOK]->(bb:Book)
+            OPTIONAL MATCH (uu:User)-[:HAS_BOOKSHELF_ACCESS {type: "member"}]->(b)
+            RETURN b.id as id, 
+                b.title as title, 
+                b.description as description, 
+                b.books as book_ids,
+                b.visibility as visibility,
+                b.img_url as img_url,
+                b.created_by as created_by,
+                count(bb) as book_count,
+                count(uu) as member_count,
+                collect(bb.id) as book_object_ids,
+                collect(bb.small_img_url) as book_img_urls
+            """
+        )
+
+        result = tx.run(query, user_id=user_id)
+        bookshelves = []
+        for record in result:
+            book_map = dict(zip(record["book_object_ids"], record["book_img_urls"]))
+            first_four_books_imgs = []
+            for key in record["book_ids"][:4]:
+                first_four_books_imgs.append(book_map[key])
+                
+            bookshelf = BookshelfPreview(
+                id=record["id"],
+                title=record["title"],
+                book_ids=record["book_ids"],
+                description=record["description"],
+                visibility=record["visibility"],
+                img_url=record["img_url"],
+                created_by=record["created_by"],
+                books_count=record["book_count"],
+                book_img_urls=first_four_books_imgs,
+                member_count=record["member_count"]
+            )
+            bookshelves.append(bookshelf)
+        return bookshelves
+    
     def get_bookshelf_contributors(self, bookshelf_id, current_user_id):
         with self.driver.session() as session:
             contributors, contributor_ids = session.read_transaction(self.get_bookshelf_contributors_query, bookshelf_id, current_user_id)

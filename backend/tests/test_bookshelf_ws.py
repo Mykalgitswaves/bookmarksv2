@@ -364,6 +364,14 @@ class TestBookshelfWS:
         assert response.status_code == 200, "Getting Bookshelf"
         assert self.user_id_2 in response.json()['bookshelf']["contributors"], "Contributor Added"
 
+        # Get user_2s contributor bookshelves
+        user_2_headers = {"Authorization": f"{self.token_type_2} {self.access_token_2}"}
+        response = requests.get(f"{self.endpoint}/api/bookshelves/contributed_bookshelves/{self.user_id_2}", headers=user_2_headers)
+        assert response.status_code == 200, "Getting Contributed Bookshelves"
+        assert len(response.json()['bookshelves']) == 1, "Getting Contributed Bookshelves"
+        bookshelf = response.json()['bookshelves'][0]
+        assert bookshelf["id"] == bookshelf_id, "Getting Contributed Bookshelves"
+
         # Add the same contributor again (duplicate)
         response = requests.put(f"{self.endpoint}/api/bookshelves/{bookshelf_id}/add_contributor", headers=headers, json=data)
         assert response.status_code == 200, "Adding Contributor"
@@ -427,6 +435,14 @@ class TestBookshelfWS:
         assert response.status_code == 200, "Getting Members"
         assert len(response.json()['members']) == 2, "Getting Members"
         print(response.json()['members'])
+
+        # Get user_2s member bookshelves
+        user_2_headers = {"Authorization": f"{self.token_type_2} {self.access_token_2}"}
+        response = requests.get(f"{self.endpoint}/api/bookshelves/member_bookshelves/{self.user_id_2}", headers=user_2_headers)
+        assert response.status_code == 200, "Getting Member Bookshelves"
+        assert len(response.json()['bookshelves']) == 1, "Getting Member Bookshelves"
+        bookshelf = response.json()['bookshelves'][0]
+        assert bookshelf["id"] == bookshelf_id, "Getting Member Bookshelves"
 
         # Try adding the same member again (duplicate member)
         response = requests.put(f"{self.endpoint}/api/bookshelves/{bookshelf_id}/add_member", headers=headers, json=data)
