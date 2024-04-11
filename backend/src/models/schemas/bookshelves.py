@@ -30,6 +30,10 @@ class BookshelfVisibility(BookshelfId):
 class BookshelfUser(BookshelfId):
     user_id: str
 
+class BookshelfBookNote(BookshelfId):
+    note_for_shelf: str | None
+    book_id: str
+
 class BookshelfContributor(BaseModel):
     user_id: str
     username: str
@@ -86,6 +90,7 @@ class BookshelfBook(BaseModel):
     title: str
     authors: list[str] | None = None
     small_img_url: str | None
+    note_for_shelf: str | None = None
 
 class Node:
     def __init__(self, book):
@@ -357,6 +362,15 @@ class DoublyLinkedList:
             index += 1
             current = current.next
         return books, book_ids
+    
+    def update_book_note(self, book_id, note):
+        current = self.start_node
+        while current:
+            if current.book.id == book_id:
+                current.book.note_for_shelf = note
+                return True
+            current = current.next
+        return False
 
 class BookshelfQueue(BaseModel):
     instructions: List[dict] = []
@@ -479,6 +493,10 @@ class Bookshelf(BaseModel):
 
     def remove_contributor(self, user_id):
         self.contributors.discard(user_id)
+
+    def update_book_note(self, book_id, note):
+        status = self.books.update_book_note(book_id, note)
+        return status
 
     def dequeue_into_bookshelf(self):
         while not self.queue.is_empty():

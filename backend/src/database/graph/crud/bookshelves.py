@@ -30,7 +30,8 @@ class BookshelfCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
                    u as user,
                    r as access,
                    collect(bb.id) as book_object_ids,
-                   collect(bb) as books
+                   collect(bb) as books,
+                   collect(rr.note_for_shelf) as book_note_for_shelves
             """
         )
 
@@ -48,10 +49,17 @@ class BookshelfCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
             elif record["access"]["type"] == "member":
                 members.add(record["user"]["id"])
 
-        book_map = dict(zip(record["book_object_ids"], record["books"]))
+        book_map = {
+        book_id: {
+            'item': book,
+            'description': note_for_shelf
+        }
+        for book_id, book, note_for_shelf in zip(record["book_object_ids"], record["books"], record["book_note_for_shelves"])
+}
         
         for ix, key in enumerate(record["book_ids"]):
-            book = book_map[key]
+            book = book_map[key]["item"]
+            description = book_map[key]["description"]
             if "author_names" not in book:
                 book.__setattr__("author_names", ["Unknown Author"])
             book_objects.append(BookshelfBook(
@@ -59,7 +67,8 @@ class BookshelfCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
                 order=ix,
                 title=book["title"],
                 authors=book["author_names"],
-                small_img_url=book["small_img_url"]
+                small_img_url=book["small_img_url"],
+                note_for_shelf=description
             ))
         
         bookshelf = BookshelfPage(
@@ -404,7 +413,8 @@ class BookshelfCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
                 b.books = COALESCE(b.books, []) + $book_id, 
                 b.last_edited_date = datetime(),
                 r.create_date = datetime(),
-                r.added_by_id = $user_id
+                r.added_by_id = $user_id,
+                r.note_for_shelf = $note_for_shelf
             RETURN NOT relationshipExists AS wasAdded
             """
         )
@@ -412,6 +422,7 @@ class BookshelfCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
                         title=book_to_add.title, 
                         small_img_url=book_to_add.small_img_url,
                         author_names=book_to_add.authors,
+                        note_for_shelf=book_to_add.note_for_shelf,
                         bookshelf_id=bookshelf_id, 
                         user_id=user_id)
         response = result.single()
@@ -536,6 +547,26 @@ class BookshelfCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
             """
         )
         result = tx.run(query, bookshelf_id=bookshelf_id, visibility=visibility, user_id=user_id)
+        response = result.single()
+        return response is not None
+    
+    def update_book_note_for_shelf(self, bookshelf_id, book_id, note_for_shelf, user_id):
+        with self.driver.session() as session:
+            result = session.write_transaction(self.update_book_note_for_shelf_query, bookshelf_id, book_id, note_for_shelf, user_id)
+        return result
+    
+    @staticmethod
+    def update_book_note_for_shelf_query(tx, bookshelf_id, book_id, note_for_shelf, user_id):
+        query = (
+            """
+            MATCH (b:Bookshelf {id: $bookshelf_id})<-[r:HAS_BOOKSHELF_ACCESS]-(u:User {id: $user_id})
+            where r.type in ["owner", "contributor"]
+            MATCH (b)-[rr:CONTAINS_BOOK]->(book:Book {id: $book_id})
+            SET rr.note_for_shelf = $note_for_shelf, b.last_edited_date = datetime()
+            RETURN b.id as id
+            """
+        )
+        result = tx.run(query, bookshelf_id=bookshelf_id, book_id=book_id, note_for_shelf=note_for_shelf, user_id=user_id)
         response = result.single()
         return response is not None
     

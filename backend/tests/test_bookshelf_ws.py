@@ -143,7 +143,8 @@ class TestBookshelfWS:
             data_to_send = {"type": "add", "token": ws_token, "book": {"title": "Second Foundation", 
                                                                        "small_img_url": small_img_url,
                                                                        "authors": ["Isaac Asimov"],
-                                                                       "id": "c707fd781-dd1a-4ba7-91f1-f1a2e7ecb872"}}
+                                                                       "id": "c707fd781-dd1a-4ba7-91f1-f1a2e7ecb872",
+                                                                       "note_for_shelf": "This is a note for the shelf."}}
             await ws.send(json.dumps(data_to_send))
 
             # Optionally, wait for another response after sending the data
@@ -183,6 +184,26 @@ class TestBookshelfWS:
             print("Server response:", response_after_sending)
             response_after_completion = await ws.recv()
             print("Server response:", response_after_completion)
+
+            # Send a request to the update bookself note endpoint
+            request_data = {"note_for_shelf": "This is a new note for the shelf.",
+                            "book_id": "c707fd781-dd1a-4ba7-91f1-f1a2e7ecb872"}
+            response = requests.put(f"{self.endpoint}/api/bookshelves/{bookshelf_id}/update_book_note", headers=headers, json=request_data)
+            assert response.status_code == 200, "Updating Note"
+
+            # Get the websocket response after updating the note
+            response_after_sending = await ws.recv()
+            print("Server response:", response_after_sending)
+
+            # Send a request to the update bookself note endpoint
+            request_data = {"note_for_shelf": None,
+                            "book_id": "c707fd781-dd1a-4ba7-91f1-f1a2e7ecb872"}
+            response = requests.put(f"{self.endpoint}/api/bookshelves/{bookshelf_id}/update_book_note", headers=headers, json=request_data)
+            assert response.status_code == 200, "Updating Note"
+
+            # Get the websocket response after updating the note
+            response_after_sending = await ws.recv()
+            print("Server response:", response_after_sending)
 
             # Send data to add another book to the server
             small_img_url = "http://books.google.com/books/publisher/content?id=zJiJDQAAQBAJ&printsec=frontcover&img=1&zoom=5&edge=curl&imgtk=AFLRE7101pEA1qPqLGWj3HZGYk066aVnUx5od6ELqnAUw6y7YJyuaCg67i-feAewSsl9o0_ya__x6cl7HlnlEPLkxS1MtkyDzlgXO3s0KVRzcahD0_9gOYwFQPfJkqrQtUOdeffhxQSL&source=gbs_api"

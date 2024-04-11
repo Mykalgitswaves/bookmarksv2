@@ -36,6 +36,7 @@ from src.models.schemas.bookshelves import (
     BookshelfVisibility,
     BookshelfUser,
     BookshelfPage,
+    BookshelfBookNote
 )
 from src.api.websockets.bookshelves import bookshelf_ws_manager
 from src.api.background_tasks.google_books import google_books_background_tasks
@@ -67,7 +68,7 @@ async def create_bookshelf(request:Request,
     return {"bookshelf_id": bookshelf_id}
     
     
-@router.get("/{bookshelf_id}",
+@router.get("/{bookshelf_id}", # TODO: Add descriptions here
             name="bookshelf:get")
 async def get_bookshelf(bookshelf_id: str, 
                         current_user:  Annotated[User, Depends(get_current_active_user)],
@@ -147,7 +148,7 @@ async def get_created_bookshelves(user_id: str, current_user:  Annotated[User, D
     else:
         raise HTTPException(status_code=403, detail="User is not authorized to view bookshelves created by another user")
     
-@router.get("/contributed_bookshelves/{user_id}",
+@router.get("/contributed_bookshelves/{user_id}", 
             name="bookshelf:contributed_bookshelves")
 async def get_contributed_bookshelves(user_id: str, 
                                       current_user:  Annotated[User, Depends(get_current_active_user)],
@@ -158,7 +159,7 @@ async def get_contributed_bookshelves(user_id: str,
     else:
         raise HTTPException(status_code=403, detail="User is not authorized to view bookshelves contributed to by another user")
 
-@router.get("/member_bookshelves/{user_id}",
+@router.get("/member_bookshelves/{user_id}", 
             name="bookshelf:member_bookshelves")
 async def get_member_bookshelves(user_id: str,
                                  current_user:  Annotated[User, Depends(get_current_active_user)],
@@ -307,9 +308,9 @@ async def remove_contributor_to_bookshelf(request: Request,
 @router.put("/{bookshelf_id}/add_member",
             name="bookshelf:add_member")
 async def add_member_to_bookshelf(request: Request,
-                                        bookshelf_id: str,
-                                        current_user:  Annotated[User, Depends(get_current_active_user)],
-                                        bookshelf_repo: BookshelfCRUDRepositoryGraph = Depends(get_repository(repo_type=BookshelfCRUDRepositoryGraph))):
+                                 bookshelf_id: str,
+                                 current_user:  Annotated[User, Depends(get_current_active_user)],
+                                 bookshelf_repo: BookshelfCRUDRepositoryGraph = Depends(get_repository(repo_type=BookshelfCRUDRepositoryGraph))):
     data = await request.json()
 
     try:
@@ -397,8 +398,71 @@ async def get_members(bookshelf_id: str,
                                                     current_user.id)
     
     return JSONResponse(content={"members": jsonable_encoder(members)})
+
+@router.put("/{bookshelf_id}/update_book_note",
+            name="bookshelf:update_book_note")
+async def update_book_note(request: Request,
+                            bookshelf_id: str,
+                            current_user: Annotated[User, Depends(get_current_active_user)],
+                            bookshelf_repo: BookshelfCRUDRepositoryGraph = Depends(get_repository(repo_type=BookshelfCRUDRepositoryGraph))):
+    data = await request.json()
+
+    # Build the request data
+    try:
+        bookshelf = BookshelfBookNote(
+            book_id=data['book_id'],
+            note_for_shelf=data['note_for_shelf'],
+            id=bookshelf_id
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
     
-@router.websocket('/ws/{bookshelf_id}') # This is changing to /api/bookshelves/ws/{bookshelf_id}
+    # Check if the bookshelf is cached
+    if bookshelf_id in bookshelf_ws_manager.cache:
+        #Check user permissions
+        if current_user.id not in bookshelf_ws_manager.cache[bookshelf_id].contributors:
+            raise HTTPException(status_code=403, detail="User is not authorized to update book note for this bookshelf")
+        
+        # Update the book note in the cache
+        status = bookshelf_ws_manager.cache[bookshelf_id].update_book_note(bookshelf.book_id, bookshelf.note_for_shelf)
+        # Check that the book was found in the bookshelf
+        if status:
+            # Update the book note in the database
+            repo_status = bookshelf_repo.update_book_note_for_shelf(bookshelf_id, 
+                                                      bookshelf.book_id, 
+                                                      bookshelf.note_for_shelf,
+                                                      current_user.id)
+            
+            # Check that the book note was updated in the database
+            if repo_status:
+                # Grab the books from the cache
+                books, book_ids = bookshelf_ws_manager.cache[bookshelf_id].get_books()
+
+                books = jsonable_encoder(books)
+
+                # Send the updated data to the websocket
+                await bookshelf_ws_manager.send_data(bookshelf_id=bookshelf_id, data={
+                "state": "unlocked", "data": books })
+
+                # Return a success message
+                return JSONResponse(content={"message": "Book note updated"})
+            else:
+                raise HTTPException(status_code=400, detail="Book updated in cache but failed to update in db")
+        else:
+            raise HTTPException(status_code=404, detail="Book not found in bookshelf")
+    else:
+        # Update the book note in the database
+        repo_status = bookshelf_repo.update_book_note_for_shelf(bookshelf_id, 
+                                                                bookshelf.book_id, 
+                                                                bookshelf.note_for_shelf,
+                                                                current_user.id)
+        if repo_status:
+            # Return a success message
+            return JSONResponse(content={"message": "Book note updated"})
+        else:
+            raise HTTPException(status_code=400, detail="Failed to update book note")
+
+@router.websocket('/ws/{bookshelf_id}') # TODO: Add descriptions here
 async def bookshelf_connection(websocket: WebSocket, 
                                bookshelf_id: str,
                                background_tasks: BackgroundTasks,
@@ -485,7 +549,7 @@ async def bookshelf_connection(websocket: WebSocket,
 
             elif data['type'] == 'add':
                 try:
-                    data = BookshelfBookAdd(
+                    book_data = BookshelfBookAdd(
                         book=BookshelfBook(
                             title=data['book']['title'],
                             authors=data['book']['authors'],
@@ -494,21 +558,25 @@ async def bookshelf_connection(websocket: WebSocket,
                         ),
                         contributor_id=current_user.id
                     )
+                    
                 except ValueError as e:
                     await bookshelf_ws_manager.invalid_data_error(bookshelf_id=bookshelf_id)
                     continue
                 
-                if data.book.id[0] == "g":
-                    canonical_book = book_repo.get_canonical_book_by_google_id_extended(data.book.id) 
+                if book_data.book.id[0] == "g":
+                    canonical_book = book_repo.get_canonical_book_by_google_id_extended(book_data.book.id) 
                     if canonical_book:
-                        data.book = canonical_book
+                        book_data.book = canonical_book
+
+                if "note_for_shelf" in data['book']:
+                        book_data.book.note_for_shelf = data['book']["note_for_shelf"]
 
                 async with bookshelf_ws_manager.locks[bookshelf_id]:
                     await bookshelf_ws_manager.send_data(data={"state": "locked"}, bookshelf_id=bookshelf_id)
 
                     await bookshelf_ws_manager.add_book_and_send_updated_data(current_user=current_user, 
                                                                               bookshelf_id=bookshelf_id, 
-                                                                              data=data, 
+                                                                              data=book_data, 
                                                                               background_tasks=background_tasks,
                                                                               bookshelf_repo=bookshelf_repo,
                                                                               book_repo=book_repo)
