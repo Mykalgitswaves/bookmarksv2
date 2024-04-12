@@ -2,7 +2,7 @@
     <footer :class="{ 'minimized': minimizeFooter }"  
         class="lg:border-solid border-indigo-100 border-[1px]"
     >
-        <div class="nav-button-group hover:bg-gray-200" 
+        <!-- <div class="nav-button-group hover:bg-gray-200" 
             @click="goToSearchPage(user)"
             aria-roledescription="navigation button"
         >
@@ -14,7 +14,7 @@
             </button>
 
             <p>Search</p>
-        </div>
+        </div> -->
 
         <div class="nav-button-group hover:bg-gray-200" 
             @click="goToFeedPage(user)"
@@ -49,6 +49,22 @@
             <p>Bookshelves</p>
         </div>
 
+        <div class="nav-button-group hover:bg-gray-200" 
+            @click="goToFeedPage(user)"
+            aria-roledescription="navigation button"
+        >
+            <button 
+                class="footer-nav-button" 
+                type="button"
+                alt="feed"
+                @click="goToFeedPage(user)"
+            >
+                <IconFeed/>
+            </button>
+
+            <p>Notes</p>
+        </div>
+
         <div class="nav-button-group hover:bg-gray-200"
             v-show="!isSearchBarActive"
             @click="goToUserPage(user)"
@@ -63,7 +79,7 @@
                 <IconProfile/>
             </button>
 
-            <p>Profile</p>
+            <p>Connections</p>
         </div>
     </footer>
 
