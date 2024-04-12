@@ -84,7 +84,7 @@
     />
 
     <!-- View posts for feed -->
-    <div v-if="!toggleCreateReviewType">
+    <div v-if="!toggleCreateReviewType" >
       <TransitionGroup name="content" tag="div">
         <div v-if="feedData?.length" class="cards-outer-wrapper">
           <div
@@ -160,6 +160,14 @@ onMounted(() => {
   /* used to set the margin top on our cards */
   .cards-outer-wrapper {
     margin-top: 10px;
+    @media screen and (max-width: 550px) {
+      display: flex;
+      overflow: scroll;
+      column-gap: 20px;
+      scroll-snap-type: x mandatory;
+      scroll-snap-align: center;
+    }
+
   }
 
   .card-grids {

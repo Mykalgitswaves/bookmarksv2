@@ -1,12 +1,12 @@
 <template>
-    <footer class="lg:border-solid border-indigo-100 border-[1px]">
-        <div
-            class="nav-button-group hover:bg-gray-200" 
+    <footer :class="{ 'minimized': minimizeFooter }"  
+        class="lg:border-solid border-indigo-100 border-[1px]"
+    >
+        <div class="nav-button-group hover:bg-gray-200" 
             @click="goToSearchPage(user)"
             aria-roledescription="navigation button"
         >
-            <button 
-                class="footer-nav-button" 
+            <button class="footer-nav-button" 
                 type="button"
                 @click="goToSearchPage(user)"
             >
@@ -16,8 +16,7 @@
             <p>Search</p>
         </div>
 
-        <div
-            class="nav-button-group hover:bg-gray-200" 
+        <div class="nav-button-group hover:bg-gray-200" 
             @click="goToFeedPage(user)"
             aria-roledescription="navigation button"
         >
@@ -32,26 +31,8 @@
 
             <p>Feed</p>
         </div>
-
-        <!-- <div 
-            class="nav-button-group hover:bg-gray-200"
-            v-show="!isSearchBarActive"
-            @click="goToSocialPage(user)"
-            aria-roledescription="navigation button"
-        >
-            <button 
-                class="footer-nav-button"
-                type="button"
-                @click="goToSocialPage(user)"
-                alt="feed"
-            >
-                <IconSocial/>
-            </button>
-            <p>Social</p>
-        </div> -->
         
-        <div 
-            class="nav-button-group hover:bg-gray-200"
+        <div class="nav-button-group hover:bg-gray-200"
             v-show="!isSearchBarActive"
             @click="goToBookshelvesPage(user)"
             aria-roledescription="navigation button"
@@ -68,8 +49,7 @@
             <p>Bookshelves</p>
         </div>
 
-        <div 
-            class="nav-button-group hover:bg-gray-200"
+        <div class="nav-button-group hover:bg-gray-200"
             v-show="!isSearchBarActive"
             @click="goToUserPage(user)"
             aria-roledescription="navigation button"
@@ -86,6 +66,17 @@
             <p>Profile</p>
         </div>
     </footer>
+
+    <Transition name="content" tag="div">
+        <div v-if="minimizeFooter"
+            @click="minimizeFooter = false"
+            @mouseover="minimizeFooter = false"
+        >
+            <div class="show-footer-nav">
+                <span class="message">Show nav</span>
+            </div>
+        </div>
+    </Transition>
 </template>
 
 
@@ -105,8 +96,10 @@ import { goToSearchPage,
     goToUserPage,
     goToBookshelvesPage
 } from './footernavService';
+import { debounce, throttle } from 'lodash';
 
 const isSearchBarActive = ref(false);
+const minimizeFooter = ref(false);
 
 const route = useRoute();
 const { user } = route.params
@@ -115,8 +108,22 @@ window.addEventListener('toggleSearchBar', () => {
     isSearchBarActive.value = !isSearchBarActive.value
 });
 
-</script>
+if(window.visualViewport.width <= 768){
+    window.addEventListener('scroll', function(event) {
+        function footer() {
+            var scroll = window.scrollY || document.documentElement.scrollTop;
 
+            if (scroll < 50) {
+                minimizeFooter.value = false;
+            } else {
+                minimizeFooter.value = true;
+            }
+        }
+
+        footer();
+    });
+}
+</script>
 <style scoped>
 .hidden {
     display: none !important;
@@ -137,11 +144,49 @@ footer {
     transition-timing-function: ease-in-out;
 }
 
+footer.minimized {
+    display: none !important;
+    position: absolute;
+    bottom: -100px !important;
+    left: 0;
+    transition: 250ms;
+}
 
 footer .nav-button-group {
     padding: 0;
 }
 
+.show-footer-nav {
+    position: fixed;
+    padding: 14px 24px;
+    width: 80px;
+    background-color: var(--indigo-300);
+    border-radius: var(--radius-sm);
+    bottom: 10px;
+    left: 50%;
+    transform: translate(-50%, 0);
+    opacity: 0.95;
+    transition-duration: 250ms;
+}
+
+.show-footer-nav:hover {
+    background-color: var(--indigo-200);
+    cursor: pointer;
+    width: 100px;
+}
+
+.show-footer-nav .message {
+    position: absolute; 
+    bottom: 30px;
+    left: 50%;
+    width: 80px;
+    transform: translateX(-50%);
+    text-align: center;
+    white-space: nowrap;
+    font-size: var(--font-lg);
+    font-family: var(--fancy-script);
+    color: var(--indigo-500);
+}
 
 .searchbar {
     display: flex;
