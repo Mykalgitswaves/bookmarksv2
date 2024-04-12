@@ -81,14 +81,14 @@
                 
                 <div v-if="currentView.value === 'edit-books' && !isReorderModeEnabled" class="flex gap-2">
                     <button class="btn reorder-btn"
-                        :disabled="bookshelfData?.books?.length <= 1"
+                        :disabled="books.length <= 1"
                         @click="enterReorderMode()"
                     >
                         Reorder
                     </button>
 
                     <button class="btn reorder-btn"
-                        :disabled="bookshelfData?.books?.length <= 1"
+                        :disabled="books.length <= 1"
                         @click="enterEditMode()"
                     >
                         Edit

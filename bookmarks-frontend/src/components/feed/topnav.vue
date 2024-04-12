@@ -1,5 +1,5 @@
 <template>
-  <MobileMenu/>
+  <!-- <MobileMenu/> -->
 </template>
 <script setup>
   import MobileMenu from './partials/mobile-menu.vue';

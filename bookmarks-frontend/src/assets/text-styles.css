@@ -10,6 +10,10 @@
   color: var(--slate-600);
 }
 
+.text-stone-700 {
+  color: var(--stone-700);
+}
+
 /* Apply classes using CSS variables */
 .t-xs {
   font-size: var(--font-xs);
@@ -82,4 +86,12 @@
 
 .italic {
   font-style: var(--font-italic);
+}
+
+/* Used for titles on work feed view */
+.work-feed-heading {
+  font-size: var(--font-2xl);
+  padding-left: var(--margin-sm);
+  font-family: var(--fancy-script);
+  color: var(--stone-600);
 }
