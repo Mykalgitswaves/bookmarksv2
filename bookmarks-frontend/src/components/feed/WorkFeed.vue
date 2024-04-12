@@ -31,6 +31,10 @@
             />
           </div>
         </div>
+
+        <h2 v-if="feedData?.length" class="mt-10 text-3xl text-stone-700 text-center fancy">No more posts.<br>
+          <span class="text-2xl text-indigo-500">Probably a good time to do some reading...📚</span>
+        </h2>
       </TransitionGroup>
     </div>
   </div>
