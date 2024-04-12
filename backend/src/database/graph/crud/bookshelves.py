@@ -1,5 +1,12 @@
 from src.database.graph.crud.base import BaseCRUDRepositoryGraph
-from src.models.schemas.bookshelves import Bookshelf, BookshelfPage, BookshelfPreview, BookshelfBook
+from src.models.schemas.bookshelves import (
+    Bookshelf, 
+    BookshelfPage, 
+    BookshelfPreview, 
+    BookshelfBook,
+    BookshelfContributor,
+    BookshelfMember
+)
 
 class BookshelfCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
     def get_bookshelf(self, bookshelf_id):
@@ -23,7 +30,8 @@ class BookshelfCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
                    u as user,
                    r as access,
                    collect(bb.id) as book_object_ids,
-                   collect(bb) as books
+                   collect(bb) as books,
+                   collect(rr.note_for_shelf) as book_note_for_shelves
             """
         )
 
@@ -41,10 +49,17 @@ class BookshelfCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
             elif record["access"]["type"] == "member":
                 members.add(record["user"]["id"])
 
-        book_map = dict(zip(record["book_object_ids"], record["books"]))
+        book_map = {
+        book_id: {
+            'item': book,
+            'description': note_for_shelf
+        }
+        for book_id, book, note_for_shelf in zip(record["book_object_ids"], record["books"], record["book_note_for_shelves"])
+}
         
         for ix, key in enumerate(record["book_ids"]):
-            book = book_map[key]
+            book = book_map[key]["item"]
+            description = book_map[key]["description"]
             if "author_names" not in book:
                 book.__setattr__("author_names", ["Unknown Author"])
             book_objects.append(BookshelfBook(
@@ -52,7 +67,8 @@ class BookshelfCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
                 order=ix,
                 title=book["title"],
                 authors=book["author_names"],
-                small_img_url=book["small_img_url"]
+                small_img_url=book["small_img_url"],
+                note_for_shelf=description
             ))
         
         bookshelf = BookshelfPage(
@@ -117,6 +133,238 @@ class BookshelfCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
             )
             bookshelves.append(bookshelf)
         return bookshelves
+    
+    def get_bookshelves_contributed_to_by_user(self, user_id):
+        with self.driver.session() as session:
+            result = session.read_transaction(self.get_bookshelves_contributed_to_by_user_query, user_id)
+        return result
+    
+    @staticmethod
+    def get_bookshelves_contributed_to_by_user_query(tx, user_id):
+        query = (
+            """
+            MATCH (b:Bookshelf)<-[r:HAS_BOOKSHELF_ACCESS {type: "contributor"}]-(u:User {id: $user_id})
+            OPTIONAL MATCH (b)-[:CONTAINS_BOOK]->(bb:Book)
+            OPTIONAL MATCH (uu:User)-[:HAS_BOOKSHELF_ACCESS {type: "member"}]->(b)
+            RETURN b.id as id, 
+                b.title as title, 
+                b.description as description, 
+                b.books as book_ids,
+                b.visibility as visibility,
+                b.img_url as img_url,
+                b.created_by as created_by,
+                count(bb) as book_count,
+                count(uu) as member_count,
+                collect(bb.id) as book_object_ids,
+                collect(bb.small_img_url) as book_img_urls
+            """
+        )
+
+        result = tx.run(query, user_id=user_id)
+        bookshelves = []
+        for record in result:
+            book_map = dict(zip(record["book_object_ids"], record["book_img_urls"]))
+            first_four_books_imgs = []
+            for key in record["book_ids"][:4]:
+                first_four_books_imgs.append(book_map[key])
+                
+            bookshelf = BookshelfPreview(
+                id=record["id"],
+                title=record["title"],
+                book_ids=record["book_ids"],
+                description=record["description"],
+                visibility=record["visibility"],
+                img_url=record["img_url"],
+                created_by=record["created_by"],
+                books_count=record["book_count"],
+                book_img_urls=first_four_books_imgs,
+                member_count=record["member_count"]
+            )
+            bookshelves.append(bookshelf)
+        return bookshelves
+    
+    def get_bookshelves_member_of_by_user(self, user_id):
+        with self.driver.session() as session:
+            result = session.read_transaction(self.get_bookshelves_member_of_by_user_query, user_id)
+        return result
+    
+    @staticmethod
+    def get_bookshelves_member_of_by_user_query(tx, user_id):
+        query = (
+            """
+            MATCH (b:Bookshelf)<-[r:HAS_BOOKSHELF_ACCESS {type: "member"}]-(u:User {id: $user_id})
+            OPTIONAL MATCH (b)-[:CONTAINS_BOOK]->(bb:Book)
+            OPTIONAL MATCH (uu:User)-[:HAS_BOOKSHELF_ACCESS {type: "member"}]->(b)
+            RETURN b.id as id, 
+                b.title as title, 
+                b.description as description, 
+                b.books as book_ids,
+                b.visibility as visibility,
+                b.img_url as img_url,
+                b.created_by as created_by,
+                count(bb) as book_count,
+                count(uu) as member_count,
+                collect(bb.id) as book_object_ids,
+                collect(bb.small_img_url) as book_img_urls
+            """
+        )
+
+        result = tx.run(query, user_id=user_id)
+        bookshelves = []
+        for record in result:
+            book_map = dict(zip(record["book_object_ids"], record["book_img_urls"]))
+            first_four_books_imgs = []
+            for key in record["book_ids"][:4]:
+                first_four_books_imgs.append(book_map[key])
+                
+            bookshelf = BookshelfPreview(
+                id=record["id"],
+                title=record["title"],
+                book_ids=record["book_ids"],
+                description=record["description"],
+                visibility=record["visibility"],
+                img_url=record["img_url"],
+                created_by=record["created_by"],
+                books_count=record["book_count"],
+                book_img_urls=first_four_books_imgs,
+                member_count=record["member_count"]
+            )
+            bookshelves.append(bookshelf)
+        return bookshelves
+    
+    def get_bookshelf_contributors(self, bookshelf_id, current_user_id):
+        with self.driver.session() as session:
+            contributors, contributor_ids = session.read_transaction(self.get_bookshelf_contributors_query, bookshelf_id, current_user_id)
+        return contributors, contributor_ids
+    
+    @staticmethod
+    def get_bookshelf_contributors_query(tx, bookshelf_id, current_user_id):
+        query = (
+            """
+            match (currentUser:User {id:$current_user_id})
+            MATCH (bookshelf:Bookshelf {id:$bookshelf_id})<-[r:HAS_BOOKSHELF_ACCESS]-(user:User)
+            where r.type in ["owner", "contributor"]
+            OPTIONAL MATCH (currentUser)<-[incomingFriendStatus:FRIENDED]-(user)
+            OPTIONAL MATCH (currentUser)-[outgoingFriendStatus:FRIENDED]->(user)
+            OPTIONAL MATCH (currentUser)<-[incomingBlockStatus:BLOCKED]-(user)
+            OPTIONAL MATCH (currentUser)-[outgoingBlockStatus:BLOCKED]->(user)
+            OPTIONAL MATCH (currentUser)<-[incomingFollowStatus:FOLLOWS]-(user)
+            OPTIONAL MATCH (currentUser)-[outgoingFollowStatus:FOLLOWS]->(user)
+            RETURN user, currentUser,
+                incomingFriendStatus.status AS incomingFriendStatus,
+                incomingBlockStatus,
+                incomingFollowStatus,
+                outgoingFriendStatus.status AS outgoingFriendStatus,
+                outgoingBlockStatus,
+                outgoingFollowStatus
+            """
+        )
+        result = tx.run(query, 
+                        bookshelf_id=bookshelf_id,
+                        current_user_id=current_user_id)
+        
+        contributors = []
+        contributor_ids = []
+
+        for response in result:
+            if 'profile_img_url' in response['user']:
+                profile_img_url = response['user']['profile_img_url']
+            else:
+                profile_img_url = None
+
+            if response['incomingFriendStatus'] == 'friends' or response['outgoingFriendStatus'] == 'friends':
+                relationship_to_current_user = 'friend'
+            elif response['incomingFriendStatus'] == 'pending':
+                relationship_to_current_user = 'anonymous_user_friend_requested'
+            elif response['outgoingFriendStatus'] == 'pending':
+                relationship_to_current_user = 'current_user_friend_requested'
+            elif response['incomingBlockStatus']:
+                relationship_to_current_user = 'current_user_blocked_by_anonymous_user'
+            elif response['outgoingBlockStatus']:
+                relationship_to_current_user = 'anonymous_user_blocked_by_current_user'
+            elif response['user']['id'] == current_user_id:
+                relationship_to_current_user = 'is_current_user'
+            else:
+                relationship_to_current_user = 'stranger'
+
+            contributors.append(BookshelfContributor(
+                user_id=response['user']['id'],
+                username=response['user']['username'],
+                created_date=response['user']['created_date'],
+                profile_img_url=profile_img_url,
+                relationship_to_current_user=relationship_to_current_user,
+                full_name=response['user']['full_name']
+            ))
+
+            contributor_ids.append(response['user']['id'])
+
+        
+        return contributors, contributor_ids
+    
+    def get_bookshelf_members(self, bookshelf_id, current_user_id):
+        with self.driver.session() as session:
+            members = session.read_transaction(self.get_bookshelf_members_query, bookshelf_id, current_user_id)
+        return members
+    
+    @staticmethod
+    def get_bookshelf_members_query(tx, bookshelf_id, current_user_id):
+        query = (
+            """
+            match (currentUser:User {id:$current_user_id})
+            MATCH (bookshelf:Bookshelf {id:$bookshelf_id})<-[r:HAS_BOOKSHELF_ACCESS]-(user:User)
+            where r.type in ["owner", "member", "contributor"]
+            OPTIONAL MATCH (currentUser)<-[incomingFriendStatus:FRIENDED]-(user)
+            OPTIONAL MATCH (currentUser)-[outgoingFriendStatus:FRIENDED]->(user)
+            OPTIONAL MATCH (currentUser)<-[incomingBlockStatus:BLOCKED]-(user)
+            OPTIONAL MATCH (currentUser)-[outgoingBlockStatus:BLOCKED]->(user)
+            OPTIONAL MATCH (currentUser)<-[incomingFollowStatus:FOLLOWS]-(user)
+            OPTIONAL MATCH (currentUser)-[outgoingFollowStatus:FOLLOWS]->(user)
+            RETURN user, currentUser,
+                incomingFriendStatus.status AS incomingFriendStatus,
+                incomingBlockStatus,
+                incomingFollowStatus,
+                outgoingFriendStatus.status AS outgoingFriendStatus,
+                outgoingBlockStatus,
+                outgoingFollowStatus
+            """
+        )
+        result = tx.run(query, 
+                        bookshelf_id=bookshelf_id,
+                        current_user_id=current_user_id)
+        
+        members = []
+
+        for response in result:
+            if 'profile_img_url' in response['user']:
+                profile_img_url = response['user']['profile_img_url']
+            else:
+                profile_img_url = None
+
+            if response['incomingFriendStatus'] == 'friends' or response['outgoingFriendStatus'] == 'friends':
+                relationship_to_current_user = 'friend'
+            elif response['incomingFriendStatus'] == 'pending':
+                relationship_to_current_user = 'anonymous_user_friend_requested'
+            elif response['outgoingFriendStatus'] == 'pending':
+                relationship_to_current_user = 'current_user_friend_requested'
+            elif response['incomingBlockStatus']:
+                relationship_to_current_user = 'current_user_blocked_by_anonymous_user'
+            elif response['outgoingBlockStatus']:
+                relationship_to_current_user = 'anonymous_user_blocked_by_current_user'
+            elif response['user']['id'] == current_user_id:
+                relationship_to_current_user = 'is_current_user'
+            else:
+                relationship_to_current_user = 'stranger'
+
+            members.append(BookshelfMember(
+                user_id=response['user']['id'],
+                username=response['user']['username'],
+                created_date=response['user']['created_date'],
+                profile_img_url=profile_img_url,
+                relationship_to_current_user=relationship_to_current_user,
+                full_name=response['user']['full_name']
+            ))
+
+        return members
 
     def create_bookshelf(self, bookshelf):
         with self.driver.session() as session:
@@ -165,7 +413,8 @@ class BookshelfCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
                 b.books = COALESCE(b.books, []) + $book_id, 
                 b.last_edited_date = datetime(),
                 r.create_date = datetime(),
-                r.added_by_id = $user_id
+                r.added_by_id = $user_id,
+                r.note_for_shelf = $note_for_shelf
             RETURN NOT relationshipExists AS wasAdded
             """
         )
@@ -173,6 +422,7 @@ class BookshelfCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
                         title=book_to_add.title, 
                         small_img_url=book_to_add.small_img_url,
                         author_names=book_to_add.authors,
+                        note_for_shelf=book_to_add.note_for_shelf,
                         bookshelf_id=bookshelf_id, 
                         user_id=user_id)
         response = result.single()
@@ -297,6 +547,26 @@ class BookshelfCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
             """
         )
         result = tx.run(query, bookshelf_id=bookshelf_id, visibility=visibility, user_id=user_id)
+        response = result.single()
+        return response is not None
+    
+    def update_book_note_for_shelf(self, bookshelf_id, book_id, note_for_shelf, user_id):
+        with self.driver.session() as session:
+            result = session.write_transaction(self.update_book_note_for_shelf_query, bookshelf_id, book_id, note_for_shelf, user_id)
+        return result
+    
+    @staticmethod
+    def update_book_note_for_shelf_query(tx, bookshelf_id, book_id, note_for_shelf, user_id):
+        query = (
+            """
+            MATCH (b:Bookshelf {id: $bookshelf_id})<-[r:HAS_BOOKSHELF_ACCESS]-(u:User {id: $user_id})
+            where r.type in ["owner", "contributor"]
+            MATCH (b)-[rr:CONTAINS_BOOK]->(book:Book {id: $book_id})
+            SET rr.note_for_shelf = $note_for_shelf, b.last_edited_date = datetime()
+            RETURN b.id as id
+            """
+        )
+        result = tx.run(query, bookshelf_id=bookshelf_id, book_id=book_id, note_for_shelf=note_for_shelf, user_id=user_id)
         response = result.single()
         return response is not None
     

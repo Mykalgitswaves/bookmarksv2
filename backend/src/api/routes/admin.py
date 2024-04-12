@@ -1,9 +1,13 @@
 import fastapi
 from fastapi import Depends, HTTPException, Request
+
+from src.database.sql.crud.users import UserRepository
+from src.database.sql.models.users import UserTest
+
 from src.database.graph.crud.users import UserCRUDRepositoryGraph
 from src.database.graph.crud.books import BookCRUDRepositoryGraph
 from src.database.graph.crud.posts import PostCRUDRepositoryGraph
-from src.api.utils.database import get_repository
+from src.api.utils.database import get_repository, get_sql_repository
 from src.config.config import settings
 
 router = fastapi.APIRouter(prefix="/admin", tags=["admin"])
@@ -61,3 +65,49 @@ async def delete_post_and_comments(request: Request,
             return HTTPException(status_code=200, detail="Post deleted")
         else:
             return HTTPException(status_code=404, detail="Post not found")
+        
+@router.post("/create_user_sql",
+             name="admin:create_user_sql")
+async def create_user_sql(request: Request,
+                       user_repo: UserRepository = Depends(get_sql_repository(repo_type=UserRepository))):
+    data = await request.json()
+    
+    admin_credentials = data.get("admin_credentials")
+    
+    if admin_credentials != settings.ADMIN_CREDENTIALS:
+        raise fastapi.HTTPException(status_code=403, detail="Forbidden")
+    
+    user = UserTest(
+        username=data.get("username"),
+        email=data.get("email"),
+        full_name=data.get("full_name"),
+        user_id=data.get("user_id")
+    )
+    
+    response = await user_repo.create_user(user)
+    
+    return response
+
+@router.get("/get_user_sql",
+            name="admin:get_user_sql")
+async def get_user_sql(request: Request,
+                       user_repo: UserRepository = Depends(get_sql_repository(repo_type=UserRepository))):
+    data = await request.json()
+
+    user_id = data.get("user_id")
+
+    response = await user_repo.get_user(user_id)
+
+    return response
+
+@router.delete("/delete_user_sql",
+                name="admin:delete_user_sql")
+async def delete_user_sql(request: Request,
+                          user_repo: UserRepository = Depends(get_sql_repository(repo_type=UserRepository))):
+    data = await request.json()
+
+    user_id = data.get("user_id")
+
+    response = await user_repo.delete_user(user_id)
+
+    return response
