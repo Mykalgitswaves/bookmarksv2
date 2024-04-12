@@ -52,6 +52,9 @@ class BookshelfContributor(BaseModel):
 class BookshelfMember(BookshelfContributor):
     pass
 
+class BookshelfFollower(BookshelfContributor):
+    pass
+
 class BookshelfCreate(BaseModel):
     title: str
     description: str
@@ -392,7 +395,7 @@ class BookshelfResponse(BaseModel):
     description: str
     books: list[BookshelfBook]
     contributors: list[str]
-    followers: list[str]
+    follower_count: int = 0
     visibility: Literal['public', 'private', 'friends']
     members: list[str]
     created_by: str
@@ -408,6 +411,7 @@ class BookshelfPreview(BaseModel):
     visibility: Literal['public', 'private', 'friends']
     member_count: int
     created_by: str
+    follower_count: int = 0
 
 class BookshelfPage(BaseModel):
     created_by: str
@@ -417,7 +421,7 @@ class BookshelfPage(BaseModel):
     img_url: str | None = None
     books: Any
     members: set = set()
-    followers: set = set()
+    follower_count: int = 0
     contributors: set = set()
     visibility: Literal['public', 'private', 'friends']
     
@@ -429,7 +433,7 @@ class Bookshelf(BaseModel):
     img_url: str | None = None
     books: Any = DoublyLinkedList()
     members: set = set()
-    followers: set = set()
+    follower_count: int = 0
     contributors: set = set()
     visibility: Literal['public', 'private', 'friends']
     queue: Any = BookshelfQueue()

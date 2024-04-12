@@ -5,7 +5,8 @@ from src.models.schemas.bookshelves import (
     BookshelfPreview, 
     BookshelfBook,
     BookshelfContributor,
-    BookshelfMember
+    BookshelfMember,
+    BookshelfFollower
 )
 
 class BookshelfCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
@@ -21,6 +22,7 @@ class BookshelfCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
             MATCH (b:Bookshelf {id: $bookshelf_id})
             OPTIONAL MATCH (b)-[rr:CONTAINS_BOOK]->(bb:Book)
             MATCH (u:User)-[r:HAS_BOOKSHELF_ACCESS]->(b)
+            OPTIONAL MATCH (follower:User)-[follows_rel:FOLLOWS_SHELF]->(b)
             RETURN b.id as id, 
                    b.title as title, 
                    b.description as description, 
@@ -31,6 +33,7 @@ class BookshelfCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
                    r as access,
                    collect(bb.id) as book_object_ids,
                    collect(bb) as books,
+                   collect(follower.id) as followers,
                    collect(rr.note_for_shelf) as book_note_for_shelves
             """
         )
@@ -80,7 +83,8 @@ class BookshelfCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
             img_url=record["img_url"],
             created_by=owner,
             contributors=contributors,
-            members=members
+            members=members,
+            follower_count=len(record["followers"])
         )
 
         return bookshelf
@@ -97,6 +101,7 @@ class BookshelfCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
             MATCH (b:Bookshelf)<-[r:HAS_BOOKSHELF_ACCESS {type: "owner"}]-(u:User {id: $user_id})
             OPTIONAL MATCH (b)-[:CONTAINS_BOOK]->(bb:Book)
             OPTIONAL MATCH (uu:User)-[:HAS_BOOKSHELF_ACCESS {type: "member"}]->(b)
+            OPTIONAL MATCH (follower:User)-[follows_rel:FOLLOWS_SHELF]->(b)
             RETURN b.id as id, 
                 b.title as title, 
                 b.description as description, 
@@ -106,6 +111,7 @@ class BookshelfCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
                 b.created_by as created_by,
                 count(bb) as book_count,
                 count(uu) as member_count,
+                count(follower) as follower_count,
                 collect(bb.id) as book_object_ids,
                 collect(bb.small_img_url) as book_img_urls
             """
@@ -129,7 +135,8 @@ class BookshelfCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
                 created_by=record["created_by"],
                 books_count=record["book_count"],
                 book_img_urls=first_four_books_imgs,
-                member_count=record["member_count"]
+                member_count=record["member_count"],
+                follower_count=record["follower_count"]
             )
             bookshelves.append(bookshelf)
         return bookshelves
@@ -146,6 +153,7 @@ class BookshelfCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
             MATCH (b:Bookshelf)<-[r:HAS_BOOKSHELF_ACCESS {type: "contributor"}]-(u:User {id: $user_id})
             OPTIONAL MATCH (b)-[:CONTAINS_BOOK]->(bb:Book)
             OPTIONAL MATCH (uu:User)-[:HAS_BOOKSHELF_ACCESS {type: "member"}]->(b)
+            OPTIONAL MATCH (follower:User)-[follows_rel:FOLLOWS_SHELF]->(b)
             RETURN b.id as id, 
                 b.title as title, 
                 b.description as description, 
@@ -155,6 +163,7 @@ class BookshelfCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
                 b.created_by as created_by,
                 count(bb) as book_count,
                 count(uu) as member_count,
+                count(follower) as follower_count,
                 collect(bb.id) as book_object_ids,
                 collect(bb.small_img_url) as book_img_urls
             """
@@ -178,7 +187,8 @@ class BookshelfCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
                 created_by=record["created_by"],
                 books_count=record["book_count"],
                 book_img_urls=first_four_books_imgs,
-                member_count=record["member_count"]
+                member_count=record["member_count"],
+                follower_count=record["follower_count"]
             )
             bookshelves.append(bookshelf)
         return bookshelves
@@ -195,6 +205,7 @@ class BookshelfCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
             MATCH (b:Bookshelf)<-[r:HAS_BOOKSHELF_ACCESS {type: "member"}]-(u:User {id: $user_id})
             OPTIONAL MATCH (b)-[:CONTAINS_BOOK]->(bb:Book)
             OPTIONAL MATCH (uu:User)-[:HAS_BOOKSHELF_ACCESS {type: "member"}]->(b)
+            OPTIONAL MATCH (follower:User)-[follows_rel:FOLLOWS_SHELF]->(b)
             RETURN b.id as id, 
                 b.title as title, 
                 b.description as description, 
@@ -204,6 +215,7 @@ class BookshelfCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
                 b.created_by as created_by,
                 count(bb) as book_count,
                 count(uu) as member_count,
+                count(follower) as follower_count,
                 collect(bb.id) as book_object_ids,
                 collect(bb.small_img_url) as book_img_urls
             """
@@ -227,7 +239,8 @@ class BookshelfCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
                 created_by=record["created_by"],
                 books_count=record["book_count"],
                 book_img_urls=first_four_books_imgs,
-                member_count=record["member_count"]
+                member_count=record["member_count"],
+                follower_count=record["follower_count"]
             )
             bookshelves.append(bookshelf)
         return bookshelves
@@ -303,8 +316,8 @@ class BookshelfCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
     
     def get_bookshelf_members(self, bookshelf_id, current_user_id):
         with self.driver.session() as session:
-            members = session.read_transaction(self.get_bookshelf_members_query, bookshelf_id, current_user_id)
-        return members
+            members, member_ids = session.read_transaction(self.get_bookshelf_members_query, bookshelf_id, current_user_id)
+        return members, member_ids
     
     @staticmethod
     def get_bookshelf_members_query(tx, bookshelf_id, current_user_id):
@@ -333,6 +346,7 @@ class BookshelfCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
                         current_user_id=current_user_id)
         
         members = []
+        member_ids = []
 
         for response in result:
             if 'profile_img_url' in response['user']:
@@ -364,7 +378,73 @@ class BookshelfCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
                 full_name=response['user']['full_name']
             ))
 
-        return members
+            member_ids.append(response['user']['id'])
+
+        return members, member_ids
+    
+    def get_bookshelf_followers(self, bookshelf_id, current_user_id):
+        with self.driver.session() as session:
+            followers = session.read_transaction(self.get_bookshelf_followers_query, bookshelf_id, current_user_id)
+        return followers
+    
+    @staticmethod
+    def get_bookshelf_followers_query(tx, bookshelf_id, current_user_id):
+        query = (
+            """
+            match (currentUser:User {id:$current_user_id})
+            MATCH (bookshelf:Bookshelf {id:$bookshelf_id})<-[r:FOLLOWS_SHELF]-(user:User)
+            OPTIONAL MATCH (currentUser)<-[incomingFriendStatus:FRIENDED]-(user)
+            OPTIONAL MATCH (currentUser)-[outgoingFriendStatus:FRIENDED]->(user)
+            OPTIONAL MATCH (currentUser)<-[incomingBlockStatus:BLOCKED]-(user)
+            OPTIONAL MATCH (currentUser)-[outgoingBlockStatus:BLOCKED]->(user)
+            OPTIONAL MATCH (currentUser)<-[incomingFollowStatus:FOLLOWS]-(user)
+            OPTIONAL MATCH (currentUser)-[outgoingFollowStatus:FOLLOWS]->(user)
+            RETURN user, currentUser,
+                incomingFriendStatus.status AS incomingFriendStatus,
+                incomingBlockStatus,
+                incomingFollowStatus,
+                outgoingFriendStatus.status AS outgoingFriendStatus,
+                outgoingBlockStatus,
+                outgoingFollowStatus
+            """
+        )
+        result = tx.run(query, 
+                        bookshelf_id=bookshelf_id,
+                        current_user_id=current_user_id)
+        
+        followers = []
+
+        for response in result:
+            if 'profile_img_url' in response['user']:
+                profile_img_url = response['user']['profile_img_url']
+            else:
+                profile_img_url = None
+
+            if response['incomingFriendStatus'] == 'friends' or response['outgoingFriendStatus'] == 'friends':
+                relationship_to_current_user = 'friend'
+            elif response['incomingFriendStatus'] == 'pending':
+                relationship_to_current_user = 'anonymous_user_friend_requested'
+            elif response['outgoingFriendStatus'] == 'pending':
+                relationship_to_current_user = 'current_user_friend_requested'
+            elif response['incomingBlockStatus']:
+                relationship_to_current_user = 'current_user_blocked_by_anonymous_user'
+            elif response['outgoingBlockStatus']:
+                relationship_to_current_user = 'anonymous_user_blocked_by_current_user'
+            elif response['user']['id'] == current_user_id:
+                relationship_to_current_user = 'is_current_user'
+            else:
+                relationship_to_current_user = 'stranger'
+
+            followers.append(BookshelfFollower(
+                user_id=response['user']['id'],
+                username=response['user']['username'],
+                created_date=response['user']['created_date'],
+                profile_img_url=profile_img_url,
+                relationship_to_current_user=relationship_to_current_user,
+                full_name=response['user']['full_name']
+            ))
+
+        return followers
 
     def create_bookshelf(self, bookshelf):
         with self.driver.session() as session:
@@ -429,6 +509,25 @@ class BookshelfCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
         if not response:
             return False
         return response['wasAdded']
+    
+    def create_follow_bookshelf_rel(self, bookshelf_id, user_id):
+        with self.driver.session() as session:
+            result = session.write_transaction(self.create_follow_bookshelf_rel_query, bookshelf_id, user_id)
+        return result
+    
+    @staticmethod
+    def create_follow_bookshelf_rel_query(tx, bookshelf_id, user_id):
+        query = (
+            """
+            MATCH (b:Bookshelf {id: $bookshelf_id, visibility: "public"})
+            MATCH (u:User {id: $user_id, disabled: false})
+            MERGE (u)-[r:FOLLOWS_SHELF {created_date: datetime()}]->(b)
+            RETURN b.id as id
+            """
+        )
+        result = tx.run(query, bookshelf_id=bookshelf_id, user_id=user_id)
+        response = result.single()
+        return response is not None
     
     def update_bookshelf_contributors(self, bookshelf_id, contributor_id, user_id):
         with self.driver.session() as session:
@@ -642,5 +741,23 @@ class BookshelfCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
             """
         )
         result = tx.run(query, bookshelf_id=bookshelf_id, member_id=member_id, user_id=user_id)
+        response = result.single()
+        return response is not None
+    
+    def delete_follow_bookshelf_rel(self, bookshelf_id, user_id):
+        with self.driver.session() as session:
+            result = session.write_transaction(self.delete_follow_bookshelf_rel_query, bookshelf_id, user_id)
+        return result
+    
+    @staticmethod
+    def delete_follow_bookshelf_rel_query(tx, bookshelf_id, user_id):
+        query = (
+            """
+            MATCH (b:Bookshelf {id: $bookshelf_id})<-[r:FOLLOWS_SHELF]-(u:User {id: $user_id})
+            DELETE r
+            return b.id
+            """
+        )
+        result = tx.run(query, bookshelf_id=bookshelf_id, user_id=user_id)
         response = result.single()
         return response is not None

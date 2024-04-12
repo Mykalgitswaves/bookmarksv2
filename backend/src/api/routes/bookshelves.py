@@ -68,7 +68,7 @@ async def create_bookshelf(request:Request,
     return {"bookshelf_id": bookshelf_id}
     
     
-@router.get("/{bookshelf_id}", # TODO: Add descriptions here
+@router.get("/{bookshelf_id}", 
             name="bookshelf:get")
 async def get_bookshelf(bookshelf_id: str, 
                         current_user:  Annotated[User, Depends(get_current_active_user)],
@@ -84,7 +84,7 @@ async def get_bookshelf(bookshelf_id: str,
             description=_bookshelf.description,
             books=_bookshelf.get_books()[0],
             contributors=_bookshelf.contributors,
-            followers=_bookshelf.followers,
+            follower_count=_bookshelf.follower_count,
             visibility=_bookshelf.visibility,
             members=_bookshelf.members,
             created_by=_bookshelf.created_by
@@ -114,7 +114,7 @@ async def get_bookshelf(bookshelf_id: str,
                     id=_bookshelf.id,
                     img_url=_bookshelf.img_url,
                     members=_bookshelf.members,
-                    followers=_bookshelf.followers,
+                    follower_count=_bookshelf.follower_count,
                     contributors=_bookshelf.contributors,
                     visibility=_bookshelf.visibility
                 )
@@ -129,7 +129,7 @@ async def get_bookshelf(bookshelf_id: str,
             description=_bookshelf.description,
             books=_bookshelf.books,
             contributors=_bookshelf.contributors,
-            followers=_bookshelf.followers,
+            follower_count=_bookshelf.follower_count,
             visibility=_bookshelf.visibility,
             members=_bookshelf.members,
             created_by=_bookshelf.created_by,
@@ -394,10 +394,24 @@ async def get_members(bookshelf_id: str,
     """
     Returns a list of members to the bookshelf
     """
-    members = bookshelf_repo.get_bookshelf_members(bookshelf_id, 
+
+    members, member_ids = bookshelf_repo.get_bookshelf_members(bookshelf_id, 
                                                     current_user.id)
     
-    return JSONResponse(content={"members": jsonable_encoder(members)})
+    if current_user.id not in bookshelf_repo.get_bookshelf_contributors(bookshelf_id, current_user.id)[1] and current_user.id not in member_ids:
+        raise HTTPException(status_code=403, detail="User is not authorized to view members of this bookshelf")
+    else:
+        return JSONResponse(content={"members": jsonable_encoder(members)})
+
+#Router for getting all followers of a bookshelf
+@router.get("/{bookshelf_id}/followers",
+            name="bookshelf:get_followers")
+async def get_followers(bookshelf_id: str,
+                        current_user: Annotated[User, Depends(get_current_active_user)],
+                        bookshelf_repo: BookshelfCRUDRepositoryGraph = Depends(get_repository(repo_type=BookshelfCRUDRepositoryGraph))):
+    
+    followers = bookshelf_repo.get_bookshelf_followers(bookshelf_id, current_user.id)
+    return JSONResponse(content={"followers": jsonable_encoder(followers)})  
 
 @router.put("/{bookshelf_id}/update_book_note",
             name="bookshelf:update_book_note")
@@ -460,9 +474,35 @@ async def update_book_note(request: Request,
             # Return a success message
             return JSONResponse(content={"message": "Book note updated"})
         else:
-            raise HTTPException(status_code=400, detail="Failed to update book note")
+            raise HTTPException(status_code=400, detail="Failed to update book note")      
 
-@router.websocket('/ws/{bookshelf_id}') # TODO: Add descriptions here
+#Router for following a bookshelf
+@router.put("/{bookshelf_id}/follow",
+            name="bookshelf:follow")
+async def follow_bookshelf(bookshelf_id: str,
+                            current_user: Annotated[User, Depends(get_current_active_user)],
+                            bookshelf_repo: BookshelfCRUDRepositoryGraph = Depends(get_repository(repo_type=BookshelfCRUDRepositoryGraph))):
+    
+    response = bookshelf_repo.create_follow_bookshelf_rel(bookshelf_id, current_user.id)
+    if response:
+        return JSONResponse(content={"message": "Bookshelf followed"})
+    else:
+        raise HTTPException(status_code=400, detail="Bookshelf could not be found or is not public")
+
+#Router for unfollowing a bookshelf
+@router.put("/{bookshelf_id}/unfollow",
+            name="bookshelf:unfollow")
+async def unfollow_bookshelf(bookshelf_id: str,
+                            current_user: Annotated[User, Depends(get_current_active_user)],
+                            bookshelf_repo: BookshelfCRUDRepositoryGraph = Depends(get_repository(repo_type=BookshelfCRUDRepositoryGraph))):
+    
+    response = bookshelf_repo.delete_follow_bookshelf_rel(bookshelf_id, current_user.id)
+    if response:
+        return JSONResponse(content={"message": "Bookshelf unfollowed"})
+    else:
+        raise HTTPException(status_code=400, detail="Bookshelf could not be found or is not public")
+    
+@router.websocket('/ws/{bookshelf_id}') 
 async def bookshelf_connection(websocket: WebSocket, 
                                bookshelf_id: str,
                                background_tasks: BackgroundTasks,

@@ -486,4 +486,46 @@ class TestBookshelfWS:
         # Delete the bookshelf
         response = requests.delete(f"{self.endpoint}/api/bookshelves/{bookshelf_id}/delete", headers=headers)
         assert response.status_code == 200, "Deleting Bookshelf"
-        
+
+    def test_followers(self):
+        """
+        Test case to test adding and removing followers
+        """
+        headers = {"Authorization": f"{self.token_type} {self.access_token}"}
+        data = {
+            "bookshelf_name": "Test Bookshelf",
+            "bookshelf_description": "Test Bookshelf Description",
+            "visibility": "public"
+        }
+
+        # Create a bookshelf
+        response = requests.post(f"{self.endpoint}/api/bookshelves/create", headers=headers, json=data)
+        assert response.status_code == 200, "Creating Bookshelf"
+
+        bookshelf_id = response.json()["bookshelf_id"]
+
+        user_2_headers = {"Authorization": f"{self.token_type_2} {self.access_token_2}"}
+
+        # Add a follower to the bookshelf
+        response = requests.put(f"{self.endpoint}/api/bookshelves/{bookshelf_id}/follow", headers=user_2_headers)
+        assert response.status_code == 200, "Adding follower"
+
+        # Get the bookshelf
+        response = requests.get(f"{self.endpoint}/api/bookshelves/{bookshelf_id}", headers=user_2_headers)
+        assert response.status_code == 200, "Getting Bookshelf"
+        assert response.json()['bookshelf']["follower_count"] == 1, "follower Added"
+
+        # Get just the followers
+        response = requests.get(f"{self.endpoint}/api/bookshelves/{bookshelf_id}/followers", headers=user_2_headers)
+        assert response.status_code == 200, "Getting followers"
+        assert len(response.json()['followers']) == 1, "Getting followers"
+        print(response.json()['followers'])
+
+        # Unfollow
+        response = requests.put(f"{self.endpoint}/api/bookshelves/{bookshelf_id}/unfollow", headers=user_2_headers)
+        assert response.status_code == 200, "Unfollowing"
+
+        # Get the followers again
+        response = requests.get(f"{self.endpoint}/api/bookshelves/{bookshelf_id}/followers", headers=user_2_headers)
+        assert response.status_code == 200, "Getting followers"
+        assert not response.json()['followers'], "Getting followers"
