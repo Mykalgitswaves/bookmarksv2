@@ -8,6 +8,7 @@ class BookPreview(BaseModel):
     id: str
     title: str
     small_img_url: str | None = None
+    google_id: str | None = None
 
 class BookSearchInput(BaseModel):
     text: str
@@ -49,6 +50,7 @@ class BookSimilar(BaseModel):
     img_url: str | None = None
 
 class BookUpdate(BaseModel):
+    id: str
     google_id: str
     small_img_url: str | None = None
     title: str | None = None

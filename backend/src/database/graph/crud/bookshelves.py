@@ -34,7 +34,7 @@ class BookshelfCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
                    collect(bb.id) as book_object_ids,
                    collect(bb) as books,
                    collect(follower.id) as followers,
-                   collect(rr.note_for_shelf) as book_note_for_shelves
+                   collect(rr) as book_note_for_shelves
             """
         )
 
@@ -52,10 +52,11 @@ class BookshelfCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
             elif record["access"]["type"] == "member":
                 members.add(record["user"]["id"])
 
+
         book_map = {
         book_id: {
             'item': book,
-            'description': note_for_shelf
+            'description': getattr(note_for_shelf, 'note_for_shelf', None)
         }
         for book_id, book, note_for_shelf in zip(record["book_object_ids"], record["books"], record["book_note_for_shelves"])
 }
@@ -484,7 +485,7 @@ class BookshelfCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
         query = (
             """
             MATCH (b:Bookshelf {id: $bookshelf_id})
-            merge (book:Book {id:$book_id, title:$title, small_img_url:$small_img_url, author_names: $author_names})
+            match (book:Book {id:$book_id})
             with b, book
             OPTIONAL MATCH (b)-[rr:CONTAINS_BOOK]->(book)
             WITH b, book, rr, EXISTS((b)-[:CONTAINS_BOOK]->(book)) AS relationshipExists
@@ -509,6 +510,49 @@ class BookshelfCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
         if not response:
             return False
         return response['wasAdded']
+    
+    def create_book_in_bookshelf_rel_and_book(self, book_to_add, bookshelf_id, user_id):
+        with self.driver.session() as session:
+            result = session.write_transaction(self.create_book_in_bookshelf_rel_and_book_query, book_to_add, bookshelf_id, user_id)
+        return result
+    
+    @staticmethod
+    def create_book_in_bookshelf_rel_and_book_query(tx, book_to_add, bookshelf_id, user_id):
+        query = (
+            """
+            MATCH (b:Bookshelf {id: $bookshelf_id})
+            create (book:Book {id:"c"+randomUUID(),
+                                google_id:$book_id, 
+                                title:$title, 
+                                small_img_url:$small_img_url, 
+                                author_names: $author_names})
+            with b, book
+            OPTIONAL MATCH (b)-[rr:CONTAINS_BOOK]->(book)
+            WITH b, book, rr, EXISTS((b)-[:CONTAINS_BOOK]->(book)) AS relationshipExists
+            MERGE (b)-[r:CONTAINS_BOOK]->(book)
+            ON CREATE SET 
+                b.books = COALESCE(b.books, []) + book.id, 
+                b.last_edited_date = datetime(),
+                r.create_date = datetime(),
+                r.added_by_id = $user_id,
+                r.note_for_shelf = $note_for_shelf
+            RETURN NOT relationshipExists AS wasAdded,
+                     book.id as id
+            """
+        )
+        result = tx.run(query, book_id=book_to_add.id, 
+                        title=book_to_add.title, 
+                        small_img_url=book_to_add.small_img_url,
+                        author_names=book_to_add.authors,
+                        note_for_shelf=book_to_add.note_for_shelf,
+                        bookshelf_id=bookshelf_id, 
+                        user_id=user_id)
+        response = result.single()
+        if not response:
+            return False
+        if response['wasAdded']:
+            return response['id']
+        return False
     
     def create_follow_bookshelf_rel(self, bookshelf_id, user_id):
         with self.driver.session() as session:

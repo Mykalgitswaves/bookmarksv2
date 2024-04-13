@@ -69,10 +69,12 @@ async def create_review(request: Request,
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
-    
+    book_exists = True
     if book_id[0] == "g":
+        book_exists = False
         canonical_book = book_repo.get_canonical_book_by_google_id(book_id) 
         if canonical_book:
+            book_exists = True
             db_book = canonical_book
 
     try:
@@ -88,9 +90,12 @@ async def create_review(request: Request,
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     
-    review = post_repo.create_review(review)
+    if book_exists:
+        review = post_repo.create_review(review)
+    else:
+        review = post_repo.create_review_and_book(review)
 
-    if db_book.id[0] == "g":
+    if not book_exists:
         background_tasks.add_task(google_books_background_tasks.update_book_google_id,db_book.id,book_repo)
 
     return JSONResponse(content={"data": jsonable_encoder(review)})

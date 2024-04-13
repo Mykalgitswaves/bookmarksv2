@@ -94,6 +94,7 @@ class BookshelfBook(BaseModel):
     authors: list[str] | None = None
     small_img_url: str | None
     note_for_shelf: str | None = None
+    google_id: str | None = None
 
 class Node:
     def __init__(self, book):

@@ -603,9 +603,12 @@ async def bookshelf_connection(websocket: WebSocket,
                     await bookshelf_ws_manager.invalid_data_error(bookshelf_id=bookshelf_id)
                     continue
                 
+                book_exists = True
                 if book_data.book.id[0] == "g":
+                    book_exists = False
                     canonical_book = book_repo.get_canonical_book_by_google_id_extended(book_data.book.id) 
                     if canonical_book:
+                        book_exists = True
                         book_data.book = canonical_book
 
                 if "note_for_shelf" in data['book']:
@@ -619,7 +622,8 @@ async def bookshelf_connection(websocket: WebSocket,
                                                                               data=book_data, 
                                                                               background_tasks=background_tasks,
                                                                               bookshelf_repo=bookshelf_repo,
-                                                                              book_repo=book_repo)
+                                                                              book_repo=book_repo,
+                                                                              book_exists=book_exists)
             else:
                 await bookshelf_ws_manager.invalid_data_error(bookshelf_id=bookshelf_id)
                 continue

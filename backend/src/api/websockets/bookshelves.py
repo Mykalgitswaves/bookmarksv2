@@ -137,7 +137,8 @@ class BookshelfWSManager:
                                              data, 
                                              background_tasks: BackgroundTasks,
                                              bookshelf_repo:BookshelfCRUDRepositoryGraph, 
-                                             book_repo:BookCRUDRepositoryGraph):
+                                             book_repo:BookCRUDRepositoryGraph,
+                                             book_exists:bool):
         _bookshelf = self.cache[bookshelf_id]
         if current_user.bookshelf_id != bookshelf_id:
             await self.send_data(data={"state": "error", 
@@ -152,9 +153,18 @@ class BookshelfWSManager:
                 bookshelf_id=bookshelf_id
             )
             return
-        response = bookshelf_repo.create_book_in_bookshelf_rel(book_to_add=data.book,bookshelf_id=bookshelf_id, user_id=current_user.id)
-        if data.book.id[0] == "g":
-            background_tasks.add_task(google_books_background_tasks.update_book_google_id,data.book.id,book_repo)
+        if book_exists:
+            response = bookshelf_repo.create_book_in_bookshelf_rel(book_to_add=data.book,
+                                                                   bookshelf_id=bookshelf_id, 
+                                                                   user_id=current_user.id)
+        else:
+            response = bookshelf_repo.create_book_in_bookshelf_rel_and_book(book_to_add=data.book,
+                                                                     bookshelf_id=bookshelf_id, 
+                                                                     user_id=current_user.id)
+            if response:
+                data.book.google_id = data.book.id
+                data.book.id = response
+                background_tasks.add_task(google_books_background_tasks.update_book_google_id,data.book.google_id,book_repo)
 
         if response:
             _bookshelf.add_book_to_shelf(data.book, data.contributor_id)

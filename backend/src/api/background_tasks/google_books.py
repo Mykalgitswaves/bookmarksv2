@@ -113,7 +113,8 @@ class GoogleBooksBackgroundTasks(GoogleBooks):
                     "pages":pageCount,
                     "publication_year":publishedDate,
                     "lang": language,
-                    "google_id": google_id
+                    "google_id": google_id,
+                    "id": db_response.id
                 }
 
                 book_update = BookUpdate(**parameters)

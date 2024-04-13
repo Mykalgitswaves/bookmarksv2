@@ -34,7 +34,7 @@ class PostCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
     def create_review_query(tx, review_post):
         query = """
                 match (u:User {username:$username})
-                merge (b:Book {id:$book_id, title:$title, small_img_url:$small_img_url})
+                match (b:Book {id:$book_id})
                 create (r:Review {id:randomUUID(), 
                                 created_date:datetime(),
                                 headline:$headline,
@@ -52,8 +52,6 @@ class PostCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
         result = tx.run(query, 
                         username=review_post.user_username, 
                         book_id=review_post.book.id, 
-                        title=review_post.book.title,
-                        small_img_url=review_post.book.small_img_url,
                         headline=review_post.headline, 
                         questions=review_post.questions,
                         question_ids=review_post.question_ids,
@@ -61,6 +59,69 @@ class PostCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
                         spoilers=review_post.spoilers)
         
         response = result.single()
+        review = ReviewPost(
+                        user_username=review_post.user_username, 
+                        book=review_post.book,
+                        headline=review_post.headline, 
+                        questions=review_post.questions,
+                        question_ids=review_post.question_ids,
+                        responses=review_post.responses,
+                        spoilers=review_post.spoilers,
+                        created_date=response['created_date'],
+                        id=response['review_id']
+        )
+        return(review)
+    
+    def create_review_and_book(self, review_post:ReviewCreate):
+        """
+        Creates a review in the database and the book that it is associated with
+        Args:
+            review_post:ReviewPost object to be pushed to DB
+        Returns:
+            created_date: Exact datetime of creation from Neo4j
+            review_id: PK of the review_post in DB
+        """
+        with self.driver.session() as session:
+            review = session.execute_write(self.create_review_and_book_query, review_post)
+        return(review)
+    
+    @staticmethod
+    def create_review_and_book_query(tx, review_post):
+        query = """
+                match (u:User {username:$username})
+                create (b:Book {id:"c"+randomUUID(),
+                                google_id:$book_id, 
+                                title:$title, 
+                                small_img_url:$small_img_url})
+                create (r:Review {id:randomUUID(), 
+                                created_date:datetime(),
+                                headline:$headline,
+                                questions:$questions,
+                                question_ids:$question_ids,
+                                responses:$responses,
+                                spoilers:$spoilers,
+                                deleted:false,
+                                likes:0})
+                create (u)-[p:POSTED]->(r)
+                create (r)-[pp:POST_FOR_BOOK]->(b)
+                return r.created_date as created_date, 
+                    r.id as review_id,
+                    b.id as book_id
+                """
+        result = tx.run(query, 
+                        username=review_post.user_username, 
+                        book_id=review_post.book.id, 
+                        title=review_post.book.title, 
+                        small_img_url=review_post.book.small_img_url, 
+                        headline=review_post.headline, 
+                        questions=review_post.questions,
+                        question_ids=review_post.question_ids,
+                        responses=review_post.responses,
+                        spoilers=review_post.spoilers)
+        
+        response = result.single()
+        review_post.book.google_id = review_post.book.id
+        review_post.book.id = response['book_id']
         review = ReviewPost(
                         user_username=review_post.user_username, 
                         book=review_post.book,

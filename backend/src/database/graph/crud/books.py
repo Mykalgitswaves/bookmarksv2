@@ -105,7 +105,7 @@ class BookCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
     @staticmethod
     def get_book_by_google_id_query(tx,google_id):
         query = """
-                match (b:Book {id:$google_id}) 
+                match (b:Book {google_id:$google_id}) 
                 match (b)-[r]-(g)
                 return b.gr_id,
                 b.id, 
@@ -133,7 +133,8 @@ class BookCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
                         title=response["b.title"],
                         description=response["b.description"],
                         isbn13 = response["b.isbn13"],
-                        isbn10 = response["b.isbn10"])
+                        isbn10 = response["b.isbn10"],
+                        google_id=google_id)
             for response in result:
                 if response['TYPE(r)'] == 'HAS_TAG':
                     book.tags.append(response["g.id"])
@@ -630,10 +631,8 @@ class BookCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
     @staticmethod
     def update_book_preview_query(tx, book):
         query = """
-                        match (b:Book {id:$google_id})
-                        set b.id = randomUUID(),
-                            b.google_id = $google_id,
-                            b.description = $description,
+                        match (b:Book {google_id:$google_id})
+                        set b.description = $description,
                             b.isbn13 = $isbn13,
                             b.isbn10 = $isbn10,
                             b.img_url = $img_url,
