@@ -82,6 +82,14 @@ import IconPlus from '../svg/icon-plus.vue'
 import IconExit from '../svg/icon-exit.vue';
 import IconFilter from '../svg/icon-filter.vue';
 
+const props = defineProps({
+    user: {
+        type: String,
+        required: true,
+    },
+});
+
+const createPostBaseRoute = `/feed/${props.user}/create`;
 const postOptions = ['review', 'update', 'comparison'];
 // Used to show and hide modals.
 const modals = reactive({

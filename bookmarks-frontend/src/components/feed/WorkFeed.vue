@@ -17,7 +17,7 @@
     <div v-if="!toggleCreateReviewType" class="reviews">  
       <h2 class="work-feed-heading">Posts</h2>
 
-      <WorkFeedControls />
+      <WorkFeedControls :user="user" />
 
       <TransitionGroup name="content" tag="div">
         <div v-if="feedData?.length" class="cards-outer-wrapper">
@@ -62,7 +62,6 @@ const privateFeed = ref([]);
 const postOptions = ['review', 'update', 'comparison'];
 const route = useRoute();
 const { user } = route.params; 
-const createPostBaseRoute = `/feed/${user}/create`;
 
 function closeModal(reactiveKey) {
   modals[reactiveKey] = false;
