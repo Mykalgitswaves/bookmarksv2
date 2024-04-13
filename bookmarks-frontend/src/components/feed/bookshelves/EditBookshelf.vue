@@ -99,7 +99,7 @@
             <div v-if="dataLoaded">
                 <div v-if="currentView.value === 'edit-books'">
                     <BookshelfBooks 
-                        v-if="bookshelfData?.books?.length"
+                        v-if="books?.length"
                         :is-admin="isAdmin"
                         :books="books"
                         :can-reorder="isReorderModeEnabled"
