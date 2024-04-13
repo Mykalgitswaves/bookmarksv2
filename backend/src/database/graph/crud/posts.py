@@ -152,7 +152,7 @@ class PostCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
     def create_update_query(tx, update_post):
         query = """
             match (u:User {username:$username})
-            merge (b:Book {id:$book_id, title:$title, small_img_url:$small_img_url})
+            match (b:Book {id:$book_id})
             create (d:Update {id:randomUUID(), 
                             created_date:datetime(),
                             page:$page,
@@ -168,6 +168,63 @@ class PostCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
             """
         result = tx.run(query, 
                         username=update_post.user_username, 
+                        book_id=update_post.book.id,
+                        page=update_post.page, 
+                        headline=update_post.headline, 
+                        response=update_post.response,
+                        spoiler=update_post.spoiler,
+                        quote=update_post.quote)
+        
+        response = result.single()
+        update_result = UpdatePost(
+                        user_username=update_post.user_username, 
+                        book=update_post.book,
+                        page=update_post.page, 
+                        headline=update_post.headline, 
+                        response=update_post.response,
+                        spoiler=update_post.spoiler,
+                        quote=update_post.quote,
+                        created_date=response['d.created_date'],
+                        id=response['d.id']
+        )   
+        return(update_result)
+    
+    def create_update_and_book(self, update_post:UpdateCreate):
+        """
+        Creates a update in the database and book
+        Args:
+            update_post: UpdatePost object to be pushed to DB
+        Returns:
+            created_date: Exact datetime of creation from Neo4j
+            update_id: PK of the update in the db
+        """
+        with self.driver.session() as session:
+            update_result = session.execute_write(self.create_update_and_book_query, update_post)
+        return(update_result)
+    
+    @staticmethod
+    def create_update_and_book_query(tx, update_post):
+        query = """
+            match (u:User {username:$username})
+            create (b:Book {id:"c"+randomUUID(),
+                            google_id:$book_id, 
+                            title:$title, 
+                            small_img_url:$small_img_url})
+            create (d:Update {id:randomUUID(), 
+                            created_date:datetime(),
+                            page:$page,
+                            headline:$headline,
+                            response:$response,
+                            spoiler:$spoiler,
+                            quote:$quote,
+                            deleted:false,
+                            likes:0})
+            create (u)-[p:POSTED]->(d)
+            create (d)-[pp:POST_FOR_BOOK]->(b)
+            return d.created_date, d.id, b.id as book_id
+            """
+        result = tx.run(query, 
+                        username=update_post.user_username, 
                         book_id=update_post.book.id, 
                         title=update_post.book.title, 
                         small_img_url=update_post.book.small_img_url,
@@ -178,6 +235,8 @@ class PostCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
                         quote=update_post.quote)
         
         response = result.single()
+        update_post.book.google_id = update_post.book.id
+        update_post.book.id = response['book_id']
         update_result = UpdatePost(
                         user_username=update_post.user_username, 
                         book=update_post.book,
@@ -208,8 +267,8 @@ class PostCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
     def create_comparison_query(tx, comparison_post):
         query = """
         match (u:User {username:$username})
-        merge (b:Book {id:$book_id_1, title:$title_1, small_img_url:$small_img_url_1})
-        merge (bb:Book {id:$book_id_2, title:$title_2, small_img_url:$small_img_url_2})
+        match (b:Book {id:$book_id_1})
+        match (bb:Book {id:$book_id_2})
         create (c:Comparison {id:randomUUID(), 
                             created_date:datetime(),
                             comparator_ids:$comparator_ids,
@@ -229,6 +288,70 @@ class PostCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
                         username=comparison_post.user_username, 
                         book_id_1=comparison_post.compared_books[0].id,
                         book_id_2=comparison_post.compared_books[1].id,
+                        comparators=comparison_post.comparators,
+                        comparator_ids=comparison_post.comparator_ids,
+                        responses=comparison_post.responses,
+                        book_specific_headlines=comparison_post.book_specific_headlines)
+        
+        response = result.single()
+        
+        comparison_result = ComparisonPost(
+                        user_username=comparison_post.user_username, 
+                        compared_books=comparison_post.compared_books,
+                        comparators=comparison_post.comparators,
+                        comparator_ids=comparison_post.comparator_ids,
+                        responses=comparison_post.responses,
+                        book_specific_headlines=comparison_post.book_specific_headlines,
+                        created_date=response['c.created_date'],
+                        id=response['c.id']
+        )
+        return(comparison_result)
+    
+    def create_comparison_and_books(self, comparison_post:ComparisonCreate):
+        """
+        Creates a review in the database
+        Args:
+            comparison_post: ComparisonPost object to be pushed to DB
+        Returns:
+            created_date: Exact datetime of creation from Neo4j
+            comparison_id: PK of the comparison in the db
+        """
+        with self.driver.session() as session:
+            comparison_result = session.execute_write(self.create_comparison_and_books_query, comparison_post)
+        return(comparison_result)
+    
+    @staticmethod
+    def create_comparison_and_books_query(tx, comparison_post):
+        query = """
+        match (u:User {username:$username})
+        merge (b:Book {google_id:$book_id_1})
+        on create set b.title=$title_1, b.small_img_url=$small_img_url_1, b.id="c"+randomUUID()
+        merge (bb:Book {google_id:$book_id_2})
+        on create set bb.title=$title_2, bb.small_img_url=$small_img_url_2, bb.id="c"+randomUUID()
+        create (c:Comparison {id:randomUUID(), 
+                            created_date:datetime(),
+                            comparator_ids:$comparator_ids,
+                            comparators:$comparators,
+                            responses:$responses,
+                            book_specific_headlines:$book_specific_headlines,
+                            deleted:false,
+                            likes:0})
+
+        create (u)-[p:POSTED]->(c)
+        create (c)-[pp:POST_FOR_BOOK]->(b)
+        create (c)-[cc:POST_FOR_BOOK]->(bb)
+
+        return c.created_date, 
+               c.id, 
+               b.id as book_id_1, 
+               bb.id as book_id_2,
+               b.google_id as book_google_id_1,
+                bb.google_id as book_google_id_2 
+                """
+        result = tx.run(query, 
+                        username=comparison_post.user_username, 
+                        book_id_1=comparison_post.compared_books[0].id,
+                        book_id_2=comparison_post.compared_books[1].id,
                         title_1=comparison_post.compared_books[0].title,
                         title_2=comparison_post.compared_books[1].title,
                         small_img_url_1=comparison_post.compared_books[0].small_img_url,
@@ -239,6 +362,11 @@ class PostCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
                         book_specific_headlines=comparison_post.book_specific_headlines)
         
         response = result.single()
+
+        comparison_post.compared_books[0].google_id = response['book_google_id_1']
+        comparison_post.compared_books[0].id = response['book_id_1']
+        comparison_post.compared_books[1].google_id = response['book_google_id_2']
+        comparison_post.compared_books[1].id = response['book_id_2']
         
         comparison_result = ComparisonPost(
                         user_username=comparison_post.user_username, 
@@ -270,7 +398,7 @@ class PostCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
         query = """
         match (u:User {username:$username})
         match (f:User {username:$to_user_username})
-        merge (b:Book {id:$book_id, title:$title, small_img_url:$small_img_url})
+        match (b:Book {id:$book_id})
         create (r:RecommendationFriend {id:randomUUID(), 
                                         created_date:datetime(),
                                         from_user_text:$from_user_text,
@@ -285,6 +413,58 @@ class PostCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
         result = tx.run(query, 
                         username=recommendation_post.user_username, 
                         book_id=recommendation_post.book.id,
+                        to_user_username=recommendation_post.to_user_username,
+                        from_user_text=recommendation_post.from_user_text, 
+                        to_user_text=recommendation_post.to_user_text)
+        
+        response = result.single()
+        recommendation_result = RecommendationFriend(
+                        user_username=recommendation_post.user_username, 
+                        book=recommendation_post.book,
+                        to_user_username=recommendation_post.to_user_username,
+                        from_user_text=recommendation_post.from_user_text, 
+                        to_user_text=recommendation_post.to_user_text,
+                        created_date=response['r.created_date'],
+                        id=response['r.id']
+        )
+        return(recommendation_result)
+    
+    def create_recommendation_post_and_book(self, recommendation_post:RecommendationFriend):
+        """
+        Creates a recommendation post and book in the database
+        Args:
+            recommendation_post: RecommendationFriend object to be pushed to DB
+        Returns:
+            created_date: Exact datetime of creation from Neo4j
+            recommendation_id: PK of the recommendation in the db
+        """
+        with self.driver.session() as session:
+            recommendation_result = session.execute_write(self.create_recommendation_post_and_book_query, recommendation_post)
+        return(recommendation_result)
+    
+    @staticmethod
+    def create_recommendation_post_and_book_query(tx, recommendation_post):
+        query = """
+        match (u:User {username:$username})
+        match (f:User {username:$to_user_username})
+        create (b:Book {id:"c"+randomUUID(),
+                        google_id:$book_id, 
+                        title:$title, 
+                        small_img_url:$small_img_url})
+        create (r:RecommendationFriend {id:randomUUID(), 
+                                        created_date:datetime(),
+                                        from_user_text:$from_user_text,
+                                        to_user_text:$to_user_text,
+                                        deleted:false,
+                                        likes:0})
+        create (u)-[p:POSTED]->(r)
+        create (r)-[rr:RECOMMENDED_TO]->(f)
+        create (r)-[pp:POST_FOR_BOOK]->(b)
+        return r.created_date, r.id, b.id as book_id
+        """
+        result = tx.run(query, 
+                        username=recommendation_post.user_username, 
+                        book_id=recommendation_post.book.id,
                         title=recommendation_post.book.title,
                         small_img_url=recommendation_post.book.small_img_url,
                         to_user_username=recommendation_post.to_user_username,
@@ -292,6 +472,8 @@ class PostCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
                         to_user_text=recommendation_post.to_user_text)
         
         response = result.single()
+        recommendation_post.book.google_id = recommendation_post.book.id
+        recommendation_post.book.id = response['book_id']
         recommendation_result = RecommendationFriend(
                         user_username=recommendation_post.user_username, 
                         book=recommendation_post.book,

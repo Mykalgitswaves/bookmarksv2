@@ -96,7 +96,8 @@ async def create_review(request: Request,
         review = post_repo.create_review_and_book(review)
 
     if not book_exists:
-        background_tasks.add_task(google_books_background_tasks.update_book_google_id,db_book.id,book_repo)
+        print("triggering background task")
+        background_tasks.add_task(google_books_background_tasks.update_book_google_id,review.book.google_id,book_repo)
 
     return JSONResponse(content={"data": jsonable_encoder(review)})
 
@@ -138,10 +139,13 @@ async def create_update(request: Request,
                             small_img_url=small_img_url)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
-    
+    print(db_book)
+    book_exists = True
     if book_id[0] == "g":
+        book_exists = False
         canonical_book = book_repo.get_canonical_book_by_google_id(book_id) 
         if canonical_book:
+            book_exists = True
             db_book = canonical_book
 
     try:
@@ -156,10 +160,13 @@ async def create_update(request: Request,
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
         
-    update = post_repo.create_update(update)
-
-    if db_book.id[0] == "g":
-        background_tasks.add_task(google_books_background_tasks.update_book_google_id,db_book.id,book_repo)
+    if book_exists:
+        update = post_repo.create_update(update)
+    else:
+        update = post_repo.create_update_and_book(update)
+    print(update)
+    if not book_exists:
+        background_tasks.add_task(google_books_background_tasks.update_book_google_id,update.book.google_id,book_repo)
 
     return JSONResponse(content={"data": jsonable_encoder(update)})
 
@@ -197,17 +204,22 @@ async def create_comparison(request: Request,
     
     books_metadata = zip(response['book_ids'],response['book_small_imgs'],response['book_titles'])
 
+    all_books_exist = True
     for book_id, small_img_url, title in books_metadata:
         canonical_book = book_repo.get_canonical_book_by_google_id(book_id) 
         
         if canonical_book:
             books.append(canonical_book)
         else:
+            all_books_exist = False
             try:
-                books.append(BookPreview(id=book_id, 
-                            title=title, 
-                            small_img_url=small_img_url)
-                )
+                if book_id[0] == "g":
+                    books.append(BookPreview(id=book_id, 
+                                        title=title, 
+                                        small_img_url=small_img_url,
+                                        google_id=book_id))
+                else:
+                    raise ValueError("Book does not exist in the database")
             except ValueError as e:
                 raise HTTPException(status_code=400, detail=str(e))
             
@@ -221,12 +233,15 @@ async def create_comparison(request: Request,
                                     book_specific_headlines=response['book_specific_headlines'])
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
-        
-    comparison = post_repo.create_comparison(comparison)
+    
+    if all_books_exist:
+        comparison = post_repo.create_comparison(comparison)
+    else:
+        comparison = post_repo.create_comparison_and_books(comparison)
 
     for book in books:
         if book.id == "g":
-            background_tasks.add_task(google_books_background_tasks.update_book_google_id,book.id,book_repo)
+            background_tasks.add_task(google_books_background_tasks.update_book_google_id,book.google_id,book_repo)
 
     return JSONResponse(content={"data": jsonable_encoder(comparison)})
 
@@ -264,9 +279,13 @@ async def create_recommendation_friend(request: Request,
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     
+
+    book_exists = True
     if book_id[0] == "g":
+        book_exists = False
         canonical_book = book_repo.get_canonical_book_by_google_id(book_id) 
         if canonical_book:
+            book_exists = True
             db_book = canonical_book
 
     try:
@@ -280,10 +299,13 @@ async def create_recommendation_friend(request: Request,
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     
-    recommendation = post_repo.create_recommendation_post(recommendation)
+    if book_exists:
+        recommendation = post_repo.create_recommendation_post(recommendation)
+    else:
+        recommendation = post_repo.create_recommendation_post_and_book(recommendation)
 
-    if db_book.id[0] == "g":
-        background_tasks.add_task(google_books_background_tasks.update_book_google_id,db_book.id,book_repo)
+    if not book_exists:
+        background_tasks.add_task(google_books_background_tasks.update_book_google_id,recommendation.book.google_id,book_repo)
 
     return JSONResponse(content={"data": jsonable_encoder(recommendation)})
 

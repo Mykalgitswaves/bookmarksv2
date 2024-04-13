@@ -8,4 +8,4 @@ versions.log
 *.cpython
 __pycache__
 */raw_data/*
-
+app.log

@@ -159,7 +159,8 @@ class TestPosts:
             "headline":"Test Headline",
             "page": 1,
             "response":"Test Response",
-            "is_spoiler":False
+            "is_spoiler":False,
+            "quote":"Test Quote"
         }
         
         response = requests.post(f"{self.endpoint}/api/posts/create_update", headers=headers, json=data)
@@ -191,7 +192,8 @@ class TestPosts:
             "headline":"Test Headline",
             "page": 1,
             "response":"Test Response",
-            "is_spoiler":False
+            "is_spoiler":False,
+            "quote":"Test Quote"
         }
         
         response = requests.post(f"{self.endpoint}/api/posts/create_update", headers=headers, json=data)

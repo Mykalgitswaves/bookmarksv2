@@ -8,7 +8,21 @@ from src.book_apis.google_books.base import GoogleBooks
 from src.book_apis.open_library.versions import open_library_versions
 from src.book_apis.google_books.pull_books import google_books_pull
 
+import logging
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+
+file_handler = logging.FileHandler('app.log')
+formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+logger.addHandler(file_handler)
+
 class GoogleBooksBackgroundTasks(GoogleBooks):
+    async def simple_task(self, x: int):
+        logger.info(str(x) + " is the value of x in the simple task")
+        print(x)
+        return x
+    
     def pull_book_and_versions(self,
                                google_book:Book,
                                book_repo: BookCRUDRepositoryGraph = Depends(get_repository(repo_type=BookCRUDRepositoryGraph))):
@@ -35,16 +49,18 @@ class GoogleBooksBackgroundTasks(GoogleBooks):
                             #     if not book_repo.check_if_version_or_canon(version_book.id):
                             #         logging.warning(f"The book {google_book.book_id} with isbn ({google_book.isbn13},{google_book.isbn10}) had a version conflict with the versions {version_book.id} with isbn ({version_book.isbn13},{version_book.isbn10})")
                                 
-    def update_book_google_id(self,
+    async def update_book_google_id(self,
                               google_id:str, 
                               book_repo: BookCRUDRepositoryGraph = Depends(get_repository(repo_type=BookCRUDRepositoryGraph))):
+        logger.info(f"Updating book with google id {google_id}")
         api_key = self.api_key
         db_response = book_repo.get_book_by_google_id(google_id)
-
-        if db_response:    
+        logger.info(f"db_response {db_response}")
+        if db_response:
             path = f"https://www.googleapis.com/books/v1/volumes/{google_id[1:]}?key={api_key}"
             r = requests.get(path)
             response = r.json()
+            print("background task response", response)
             if 'volumeInfo' in response:
                 if 'industryIdentifiers' in response['volumeInfo']:
                     isbn13 = next((item for item in response['volumeInfo']['industryIdentifiers'] if item["type"] == "ISBN_13"), None)
@@ -118,9 +134,9 @@ class GoogleBooksBackgroundTasks(GoogleBooks):
                 }
 
                 book_update = BookUpdate(**parameters)
-
+                print("background task book_update", book_update)
                 book_id = book_repo.update_book_preview(book_update)
-                                
+                                 
                 if book_repo.check_if_version_or_canon(book_id):
                     if isbn13:
                         response = open_library_versions.get_book_versions(isbn13)

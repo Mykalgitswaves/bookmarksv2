@@ -52,7 +52,7 @@ class BookshelfWSManager:
             del self.ac[bookshelf_id]
             del self.locks[bookshelf_id]
             del self.cache[bookshelf_id]
-            
+        # await ws.close()    
         # if self.cache[bookshelf_id]: 
         #     # If cache exists and there is no one else in the pool 
         #     # clear the cache also should add a way to save to db.
@@ -135,11 +135,11 @@ class BookshelfWSManager:
                                              current_user, 
                                              bookshelf_id, 
                                              data, 
-                                             background_tasks: BackgroundTasks,
                                              bookshelf_repo:BookshelfCRUDRepositoryGraph, 
                                              book_repo:BookCRUDRepositoryGraph,
                                              book_exists:bool):
         _bookshelf = self.cache[bookshelf_id]
+        update_book = False 
         if current_user.bookshelf_id != bookshelf_id:
             await self.send_data(data={"state": "error", 
                 "data": self.errors['INVALID_AUTHOR_PERMISSION'] },
@@ -164,7 +164,7 @@ class BookshelfWSManager:
             if response:
                 data.book.google_id = data.book.id
                 data.book.id = response
-                background_tasks.add_task(google_books_background_tasks.update_book_google_id,data.book.google_id,book_repo)
+                update_book = True
 
         if response:
             _bookshelf.add_book_to_shelf(data.book, data.contributor_id)
@@ -173,6 +173,9 @@ class BookshelfWSManager:
 
             await self.send_data(bookshelf_id=bookshelf_id, data={
                 "state": "unlocked", "data": books })
+            
+            if update_book:
+                return data.book.google_id
             
         else:
             await self.send_data(data={

@@ -13,6 +13,7 @@ from fastapi import (
 from fastapi.encoders import jsonable_encoder
 from fastapi.responses import JSONResponse
 from typing import Annotated
+import asyncio
 
 from src.securities.authorizations.verify import get_current_active_user, get_bookshelf_websocket_user, get_current_user_no_exceptions
 from src.api.utils.database import get_repository
@@ -505,7 +506,7 @@ async def unfollow_bookshelf(bookshelf_id: str,
 @router.websocket('/ws/{bookshelf_id}') 
 async def bookshelf_connection(websocket: WebSocket, 
                                bookshelf_id: str,
-                               background_tasks: BackgroundTasks,
+                            #    background_tasks: BackgroundTasks,
                                token: str = Query(...),
                                bookshelf_repo: BookshelfCRUDRepositoryGraph = Depends(get_repository(repo_type=BookshelfCRUDRepositoryGraph)),
                                user_repo: UserCRUDRepositoryGraph = Depends(get_repository(repo_type=UserCRUDRepositoryGraph)),
@@ -538,7 +539,8 @@ async def bookshelf_connection(websocket: WebSocket,
     try:
         while True and bookshelf_id in bookshelf_ws_manager.cache: #CAN THE TRUE BE REMOVED?
             data = await websocket.receive_json()
-
+            background_tasks = BackgroundTasks()
+            print(data)
             try:
                 task = BookshelfTaskRoute(
                     type = data['type'],
@@ -551,7 +553,7 @@ async def bookshelf_connection(websocket: WebSocket,
             try:
                 current_user = await get_bookshelf_websocket_user(token=task.token)
             except:
-                bookshelf_ws_manager.disconnect(bookshelf_id, websocket)
+                await bookshelf_ws_manager.disconnect(bookshelf_id, websocket)
                 return
             # We will distinguish between the types of data that can be sent.
             # {"type:"}'reorder' 'add' 'delete'
@@ -592,7 +594,7 @@ async def bookshelf_connection(websocket: WebSocket,
                     book_data = BookshelfBookAdd(
                         book=BookshelfBook(
                             title=data['book']['title'],
-                            authors=data['book']['authors'],
+                            authors=data['book']['author_names'],
                             small_img_url=data['book']['small_img_url'],
                             id=data['book']['id']
                         ),
@@ -617,19 +619,31 @@ async def bookshelf_connection(websocket: WebSocket,
                 async with bookshelf_ws_manager.locks[bookshelf_id]:
                     await bookshelf_ws_manager.send_data(data={"state": "locked"}, bookshelf_id=bookshelf_id)
 
-                    await bookshelf_ws_manager.add_book_and_send_updated_data(current_user=current_user, 
+                    google_id_to_add = await bookshelf_ws_manager.add_book_and_send_updated_data(current_user=current_user, 
                                                                               bookshelf_id=bookshelf_id, 
                                                                               data=book_data, 
-                                                                              background_tasks=background_tasks,
                                                                               bookshelf_repo=bookshelf_repo,
                                                                               book_repo=book_repo,
                                                                               book_exists=book_exists)
+                    if google_id_to_add:
+                        print("Triggering background task to update book google id")
+                        task = asyncio.create_task(google_books_background_tasks.update_book_google_id(google_id=google_id_to_add,
+                                                                                                       book_repo=book_repo))
+                        background_tasks.add_task(task)
             else:
                 await bookshelf_ws_manager.invalid_data_error(bookshelf_id=bookshelf_id)
                 continue
 
     except WebSocketDisconnect:
         await bookshelf_ws_manager.disconnect_without_close(bookshelf_id, websocket)
+    
+
+@router.get("/tests/test_background_task",
+            name="bookshelf:test_background_task")
+async def test_background_task(background_tasks: BackgroundTasks):
+    print("Triggering background task")
+    background_tasks.add_task(google_books_background_tasks.simple_task, x=1)
+    return JSONResponse(content={"message": "Task added"})
 
 # TO BE DELETED
 # @router.put("/{bookshelf_id}/remove_book",
@@ -687,20 +701,20 @@ async def bookshelf_connection(websocket: WebSocket,
         #   'followed-bookshelves' [],
         # }
 
-        """
-        Example of a bookshelf object for front end could look like this:
-        followed, contributor, owner.
-        followed shelf objects look like = {
-            first_four_img_urls of books in bookshelf: [], so we can make css mozaic for picture.
-            bookshelf_title: 'new',
-            bookshelf_id: , },
-            num_books, '',
-            num_followers: optional
-            is_contributor: bool
-        }
+        # """
+        # Example of a bookshelf object for front end could look like this:
+        # followed, contributor, owner.
+        # followed shelf objects look like = {
+        #     first_four_img_urls of books in bookshelf: [], so we can make css mozaic for picture.
+        #     bookshelf_title: 'new',
+        #     bookshelf_id: , },
+        #     num_books, '',
+        #     num_followers: optional
+        #     is_contributor: bool
+        # }
 
-        created_shelf_objects = {
-         ... followed shelf objects have,
-            visibility
-        }
-        """
+        # created_shelf_objects = {
+        #  ... followed shelf objects have,
+        #     visibility
+        # }
+        # """
