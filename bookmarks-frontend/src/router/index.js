@@ -15,6 +15,7 @@ import BookshelvesPage from '@/components/feed/BookshelvesPage.vue';
 import EditBookshelf from '@/components/feed/bookshelves/EditBookshelf.vue';
 import EditBookshelfSettings from '@/components/feed/bookshelves/EditBookshelfSettings.vue'
 import BookshelvesMain from '@/components/feed/bookshelves/BookshelvesMain.vue';
+import ViewBookshelvesBySection from '@/components/feed/bookshelves/ViewBookshelvesBySection.vue';
 import CreateBookshelfForm from '@/components/feed/bookshelves/CreateBookshelf.vue';
 import CreatePostPage from '@/components/feed/CreatePostPage.vue';
 
@@ -97,6 +98,10 @@ export const router = createRouter({
           path: 'bookshelves',
           component: BookshelvesPage,
           children: [
+            {
+              path: 'by/:shelfType',
+              component: ViewBookshelvesBySection
+            },
             {
               path: ':bookshelf',
               component: EditBookshelf,

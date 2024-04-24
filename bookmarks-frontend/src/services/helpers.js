@@ -214,3 +214,10 @@ export async function createConfetti(options){
     await jsConfetti.addConfetti(options||{})
     jsConfetti.clearCanvas()
 }
+
+export const truncateText = (originalString, truncatedLength) => {
+    if (originalString.length > truncatedLength) {
+        return originalString.slice(0, truncatedLength) + '...';
+    }
+    return originalString;
+}

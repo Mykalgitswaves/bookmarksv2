@@ -1,4 +1,4 @@
-import { urls } from "../../../services/urls";
+import { urls, navRoutes } from "../../../services/urls";
 import { helpersCtrl } from "../../../services/helpers";
 import { ref } from 'vue';
 import { db } from "../../../services/db";
@@ -137,4 +137,8 @@ export async function get_bookshelf(shelfName) {
     Promise.resolve(bookshelfPromise).then(() => {
         return result
     });
+}
+
+export const viewBookshelvesForSection = (user_id, location) => {
+    return navRoutes.toBookshelfSectionPage(user_id, location);
 }

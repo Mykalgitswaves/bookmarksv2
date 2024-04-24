@@ -1,30 +1,34 @@
 <template>
-    <Bookshelves
-        :bookshelves="bookshelvesCreatedByUser"
-        :is_admin="true"
-    >
-        <template v-slot:heading>
-            <h1 class="title font-medium fancy">Your bookshelves 
-                <span class="text-indigo-500">
-                    {{ bookshelvesCreatedByUser?.length }}
-                </span>
-            </h1>
-        </template>
-        
-        <template v-slot:empty-shelf>
-            <p>You haven't created any bookshelves yet</p>
-        </template>
-    </Bookshelves>
+    <div class="bookshelf-container">
+        <Bookshelves :bookshelves="bookshelvesCreatedByUser"
+            :is_admin="true"
+            :data-loaded="dataLoaded"
+        >
+            <template v-slot:heading>
+                <h1 class="title font-medium fancy">Your bookshelves 
+                    <span class="text-indigo-500">
+                        {{ bookshelvesCreatedByUser?.length }}
+                    </span>
+                </h1>
+            </template>
+            
+            <template v-if="dataLoaded && !(bookshelvesCreatedByUser.length > 0)" 
+                v-slot:empty-shelf
+            >
+                <p>You haven't created any bookshelves yet</p>
+            </template>
+        </Bookshelves>
 
-    <Bookshelves :bookshelves="[]">
-        <template v-slot:heading>
-            <h1 class="title font-medium fancy">Liked bookshelves</h1>
-        </template>
+        <Bookshelves :bookshelves="[]">
+            <template v-slot:heading>
+                <h1 class="title font-medium fancy">Liked bookshelves</h1>
+            </template>
 
-        <template v-slot:empty-shelf>
-            <p>You haven't liked any bookshelves yet</p>
-        </template>
-    </Bookshelves>
+            <template v-slot:empty-shelf>
+                <p>You haven't liked any bookshelves yet</p>
+            </template>
+        </Bookshelves>
+    </div>
 </template>
 <script setup>
     import Bookshelves from './bookshelves.vue'; 
@@ -36,11 +40,12 @@
     const route = useRoute();
     const { user } = route.params;
     const bookshelvesCreatedByUser = ref([]);
+    const dataLoaded = ref(false);
 
     async function getBookshelves(){
         await db.get(urls.rtc.getBookshelvesCreatedByUser(user)).then((res) => {
+            dataLoaded.value = true;
             bookshelvesCreatedByUser.value = res.bookshelves;
-            console.log(res);
         });
     }
 
@@ -49,6 +54,12 @@
     });
 </script>
 <style scoped>
+.bookshelf-container {
+    display: grid;
+    max-width: 880px;
+    row-gap: 40px;
+    margin-top: 10vh;
+}
 .bookshelf:hover {
     background-color: var(--stone-100);
 }

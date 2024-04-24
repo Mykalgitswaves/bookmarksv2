@@ -11,6 +11,10 @@
 
         <div class="divider"></div>
         
+        <SearchUsers :friends-only="true"
+            label-above="Friends can be either members or collaborators of your bookshelf."
+        />
+
         <ul class="collaborators-list">
             <li>
                 <BookshelfCollaborator />
@@ -25,7 +29,7 @@
 
 <script setup>
 import BookshelfCollaborator from './BookshelfCollaborator.vue';
-import SearchBooks from '../createPosts/searchBooks.vue';
+import SearchUsers from '../social/SearchFriends.vue';
 
 const props = defineProps({
     bookshelf: {

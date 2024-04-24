@@ -120,3 +120,13 @@
   .ninety-deg {
     transform: rotate(90deg);
   }
+
+  /* 
+    Used in conjunction with :class to conditionally hide or show things in the ui that 
+    also have aria-busy so we can be more accessible. 
+  */
+  .indicator-finished-loading {
+    visibility: hidden !important;
+    height: 0 !important;
+    width: 0 !important;
+  }
