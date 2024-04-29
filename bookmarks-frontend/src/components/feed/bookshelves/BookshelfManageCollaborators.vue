@@ -10,26 +10,65 @@
         <BookshelfCollaborator role="creator"/>
 
         <div class="divider"></div>
-        
-        <SearchUsers :friends-only="true"
-            label-above="Friends can be either members or collaborators of your bookshelf."
-        />
+        <!-- If user has friends render this shit -->
+        <div v-if="friends?.length">
+            <div class="flex items-center gap-2">
+                <button type="button"
+                    class="collaborator-tab"
+                    @click="currentView = 'close-friends'"
+                >
+                    Add friends to your bookshelf
+                </button>
 
-        <ul class="collaborators-list">
-            <li>
-                <BookshelfCollaborator />
-            </li>
-        </ul>
+                <button type="button"
+                    class="collaborator-tab"
+                    @click="currentView  = 'search-friends'"
+                >
 
-        <ul>
+                </button>
+            </div>
+            
+            <SearchUsers v-if="currentView === 'search-friends'"
+                :friends-only="true"
+                label-above="Friends can be either members or collaborators of your bookshelf."
+            />
 
-        </ul>
+            <ul class="collaborators-list">
+                <li>
+                    <BookshelfCollaborator />
+                </li>
+            </ul>
+        </div>
+
+        <!-- What to do if users don't have friends, direct them to either a link generator for sign up that sends a friend request auto  -->
+        <div v-else>
+            <!-- Only render one of these depending on whether or not users have pending friend requests or not-->
+            <div class="collaborator-cta">
+                <h2>You haven't connected with your friends on (name of our app) yet.</h2>
+                
+                <p>Invite them to join <a href="" class="underline">here.</a> <br/></p>
+            </div>
+
+            <div class="collaborator-cta">
+                <h2>You haven't connected with your friends on (name of our app) yet.</h2>
+                
+                <p>Accept your requests to add a friend to this bookshelf</p>
+
+                <a href="" class="underline">
+                    Accept friend requests
+                </a>
+            </div>
+        </div>
     </div>
 </template>
 
 <script setup>
 import BookshelfCollaborator from './BookshelfCollaborator.vue';
 import SearchUsers from '../social/SearchFriends.vue';
+import { ref, onMounted } from 'vue';
+import { db } from '../../../services/db';
+import { urls } from '../../../services/urls';
+import { useRoute } from 'vue-router';
 
 const props = defineProps({
     bookshelf: {
@@ -38,8 +77,18 @@ const props = defineProps({
     },
 });
 
-console.log(props.bookshelf);
+const route = useRoute();
+const friends = ref([]);
 
+async function loadFriends(){
+    await db.get(`${urls.user.getFriends(route.params.user)}/?includes_pending=true`).then((res) => {
+        friends.value = res;
+    });
+};
+
+onMounted(async () => {
+    await loadFriends();
+});
 </script>
 <style scoped>
 .bookshelf-note {

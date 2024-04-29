@@ -201,7 +201,6 @@ class SearchCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
                         skip=skip, 
                         limit=limit, 
                         current_user_id=current_user_id)
-        
         user_list = []
         for response in result:
             if 'profile_img_url' in response['node']:

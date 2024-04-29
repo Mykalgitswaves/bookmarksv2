@@ -408,6 +408,20 @@ class UserCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
 
         return [response['friend_id'] for response in result]
     
+    def get_pending_friend_count(self, user_id: str):
+        with self.driver.session() as session:
+            result = session.execute_read(self.get_pending_friend_count_query, user_id=user_id)  
+        return(result)
+    
+    def get_pending_friend_count_query(tx, user_id):
+        query = """
+            match (user:User {id:$user_id})
+            match (user)<-[friendRel:FRIENDED {status:"pending"}]-(fromUser:User {disabled:False})
+            return count(friendRel) as friend_request_count
+            """
+        result = tx.run(query,user_id=user_id)
+        breakpoint()
+        
     def get_friend_request_list(self,user_id:str):
         """
         Returns all incoming friend requests for a user
@@ -421,10 +435,10 @@ class UserCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
         query = """
         match (user:User {id:$user_id})
         match (user)<-[friendRel:FRIENDED {status:"pending"}]-(fromUser:User {disabled:False})
-        RETURN fromUser, friendRel.created_date as created_date
+        RETURN fromUser, friendRel.created_date as created_date, fromUser.profile_img_url as profile_img_url
         """
-        
         result = tx.run(query,user_id=user_id)
+
         friend_request_list = []
         for response in result:
             if 'profile_img_url' in response['fromUser']:

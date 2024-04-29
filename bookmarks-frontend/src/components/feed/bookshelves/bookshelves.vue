@@ -53,10 +53,11 @@
                 class="create-bookshelf-btn"
                 @click="createNewBookshelf()"
             >
-            create
+                Create
             </button>
 
-            <button type="button" 
+            <button v-if="!isOnSectionPage" 
+                type="button" 
                 class="create-bookshelf-btn"
                 @click="router.push(viewBookshelvesForSection(user, 'created_bookshelves'))"
             >
@@ -86,6 +87,9 @@
         dataLoaded: {
             type: Boolean,
             default: false,
+        },
+        isOnSectionPage: {
+            type: Boolean,
         }
     })
 

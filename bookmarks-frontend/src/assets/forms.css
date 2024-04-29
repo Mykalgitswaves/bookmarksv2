@@ -369,3 +369,10 @@ ul:has(.comments-wrapper) {
   width: 32px;
   margin-right: var(--margin-sm);
 }
+
+.bookshelves-main-container {
+  display: grid;
+  max-width: 880px;
+  row-gap: 40px;
+  margin-top: 10vh;
+}

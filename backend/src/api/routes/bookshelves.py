@@ -152,30 +152,31 @@ async def get_created_bookshelves(user_id: str, current_user:  Annotated[User, D
 @router.get("/contributed_bookshelves/{user_id}", 
             name="bookshelf:contributed_bookshelves")
 async def get_contributed_bookshelves(user_id: str, 
-                                      current_user:  Annotated[User, Depends(get_current_active_user)],
-                                      bookshelf_repo: BookshelfCRUDRepositoryGraph = Depends(get_repository(repo_type=BookshelfCRUDRepositoryGraph))):
+    current_user:  Annotated[User, Depends(get_current_active_user)],
+    bookshelf_repo: BookshelfCRUDRepositoryGraph = Depends(get_repository(repo_type=BookshelfCRUDRepositoryGraph))
+):
     if current_user.id == user_id:
         bookshelves = bookshelf_repo.get_bookshelves_contributed_to_by_user(user_id=user_id)    
         return JSONResponse(content={"bookshelves": jsonable_encoder(bookshelves)})
     else:
         raise HTTPException(status_code=403, detail="User is not authorized to view bookshelves contributed to by another user")
 
-@router.get("/member_bookshelves/{user_id}", 
-            name="bookshelf:member_bookshelves")
+@router.get("/member_bookshelves/{user_id}", name="bookshelf:member_bookshelves")
 async def get_member_bookshelves(user_id: str,
-                                 current_user:  Annotated[User, Depends(get_current_active_user)],
-                                 bookshelf_repo: BookshelfCRUDRepositoryGraph = Depends(get_repository(repo_type=BookshelfCRUDRepositoryGraph))):
+    current_user:  Annotated[User, Depends(get_current_active_user)],
+    bookshelf_repo: BookshelfCRUDRepositoryGraph = Depends(get_repository(repo_type=BookshelfCRUDRepositoryGraph))
+):
     if current_user.id == user_id:
         bookshelves = bookshelf_repo.get_bookshelves_member_of_by_user(user_id=user_id)    
         return JSONResponse(content={"bookshelves": jsonable_encoder(bookshelves)})
     else:
         raise HTTPException(status_code=403, detail="User is not authorized to view bookshelves they are a member of")
 
-@router.delete("/{bookshelf_id}/delete",
-            name="bookshelf:delete")
+@router.delete("/{bookshelf_id}/delete", name="bookshelf:delete")
 async def delete_bookshelf(bookshelf_id: str, 
-                            current_user:  Annotated[User, Depends(get_current_active_user)],
-                            bookshelf_repo: BookshelfCRUDRepositoryGraph = Depends(get_repository(repo_type=BookshelfCRUDRepositoryGraph))):
+    current_user:  Annotated[User, Depends(get_current_active_user)],
+    bookshelf_repo: BookshelfCRUDRepositoryGraph = Depends(get_repository(repo_type=BookshelfCRUDRepositoryGraph))
+):
     # For now not using live data pulled from db since we dont have these objects stored there.
     try:
         bookshelf_id = BookshelfId(id=bookshelf_id)

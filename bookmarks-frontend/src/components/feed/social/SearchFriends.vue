@@ -3,11 +3,11 @@
       <label v-if="props.labelAbove" for="search-book" class="text-gray-600 text-sm">{{ props.labelAbove }}</label>
       
       <input
-        id="search-book"
+        id="search-user"
         class="py-2 px-4 rounded-md border-2 border-indigo-200 w-62 max-w-[600px]"
-        :ref="(el) => (inputRef.push(el))"
         :class="props.labelAbove ? 'mt-0' : 'mt-5'"
-        @keyup="debouncedSearchBooks($event)"
+        v-model="searchData"
+        @keyup="debouncedSearchRequest($event)"
         placeholder="Search for friends"
         name="searchForUsers"
         type="text"
@@ -48,8 +48,17 @@ const props = defineProps({
 const emit = defineEmits(['user-to-parent'])
 const { debounce } = helpersCtrl;
 const searchResultsArray = ref(null);
+const searchData = ref('')
 const user = ref(null);
-const inputRef = ref([]);
+
+async function searchRequest(){
+    await db.get(urls.user.searchUsersFriends(searchData.value)).then((res) => {
+        searchResultsArray.value = res.data;
+        console.log(res)
+    });
+}
+
+const debouncedSearchRequest = debounce(searchRequest, 500, false)
 
 </script>
 <style scoped>

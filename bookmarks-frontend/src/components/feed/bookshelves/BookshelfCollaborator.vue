@@ -16,9 +16,13 @@
             <p id="role" class="collaborator-role">role: {{ props.role }}</p>  
         </div>
 
-        <button type="button"
+        <button 
+            type="button"
             class="btn ml-auto"
-            :class="{ 'btn-danger': (role === 'collaborator') }"
+            :class="{ 
+                'btn-danger': role === 'collaborator', 
+                'btn-role-disabled': role === 'creator' 
+            }"
             :disabled="role === 'creator'"
         >
             remove
@@ -66,6 +70,10 @@ const props = defineProps({
         border-radius: var(--radius-sm);
         padding-left: 12px;
         padding-right: 12px;
+    }
+
+    .btn-role-disabled {
+        color: var(--stone-400);
     }
 
     .ml-auto {

@@ -13,6 +13,7 @@ from src.securities.authorizations.verify import get_current_active_user
 from src.securities.hashing.password import pwd_generator
 from src.securities.authorizations.jwt import jwt_generator
 from src.models.schemas.token import Token
+from typing import Optional
 
 router = fastapi.APIRouter(prefix="/user", tags=["user"])
 
@@ -442,12 +443,13 @@ async def get_user_about(user_id:str,
     if current_user and user_id:
         user = user_repo.get_user_about_me(user_id=user_id.id)
         return JSONResponse(content={"data": jsonable_encoder(user)})
-    
-@router.get("/{user_id}/friends",
-            name="user:friends")
+
+@router.get("/{user_id}/friends", name="user:friends")
 async def get_friend_list(user_id: str, 
-                          current_user: Annotated[User, Depends(get_current_active_user)],
-                          user_repo: UserCRUDRepositoryGraph = Depends(get_repository(repo_type=UserCRUDRepositoryGraph))):
+    current_user: Annotated[User, Depends(get_current_active_user)],
+    includes_pending: Optional[str] = Query(None, description="Include a count of pending friend requests"),
+    user_repo: UserCRUDRepositoryGraph = Depends(get_repository(repo_type=UserCRUDRepositoryGraph)),
+):
     """
     Gets the friend list for the user as well as each friends relationship to the current user 
     """
@@ -455,6 +457,10 @@ async def get_friend_list(user_id: str,
         raise HTTPException(400, "Unauthorized")
     if user_id:
         friend_list = user_repo.get_friend_list(user_id=user_id,current_user_id=current_user.id)
+        if includes_pending:
+            print('pending dude')
+            pending_count = user_repo.get_pending_friend_count(user_id=user_id, current_user=current_user.id)
+            print(pending_count)
         return JSONResponse(content={"data": jsonable_encoder(friend_list)})
     
 @router.get("/{user_id}/friend_requests",

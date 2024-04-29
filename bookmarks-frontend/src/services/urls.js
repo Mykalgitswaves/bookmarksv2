@@ -12,12 +12,14 @@ export const urls = {
     login: baseUrl + 'api/auth/login',
     author: baseUrl + 'api/author/',
     user: {
+        // Specific for the current users info
         getUser: (user_id) => (baseUrl + `api/user/${user_id}/get_user`),
         setUserImgCdnUrl: (user_id) => (baseUrl + `api/user/${user_id}/update_profile_img`),
         getUserAbout: (user_id) => (baseUrl + `api/user/${user_id}/user_about`),
         updateUsername: (user_id) => (baseUrl + `api/user/${user_id}/update_username`),
         updateBio: (user_id) => (baseUrl +  `api/user/${user_id}/update_bio`),
         updateEmail: (user_id) => (baseUrl + `api/user/${user_id}/update_email`),
+        // Friending, requesting, social stuff.
         sendAnonFriendRequest: (user_id, friend_id) => (baseUrl + `api/user/${user_id}/send_friend_request/${friend_id}`),
         acceptAnonFriendRequest: (user_id, friend_id) => (baseUrl + `api/user/${user_id}/accept_friend_request/${friend_id}`),
         unsendAnonFriendRequest: (user_id, friend_id) => (baseUrl + `api/user/${user_id}/unsend_friend_request/${friend_id}`),
@@ -28,6 +30,8 @@ export const urls = {
         followUser: (user_id, friend_id) => (baseUrl + `api/user/${user_id}/follow/${friend_id}`),
         unfollowUser: (user_id, friend_id) => (baseUrl + `api/user/${user_id}/unfollow/${friend_id}`),
         getUsersFriendRequests: (user_id) => (baseUrl + `api/user/${user_id}/friend_requests`),
+        searchUsersFriends: (param) => (baseUrl + `api/search/friends/${param}`),
+        getFriends: (user_id) => (baseUrl + `api/user/${user_id}/friends`),
     },
     create: {
         searchBook: (text) => (`${baseUrl}api/search/book/${text}`)
@@ -58,7 +62,6 @@ export const urls = {
     books: {
         // for book page
         getBookPage: (book_id) => (baseUrl + `api/books/${book_id}`)
-        
     },
     rtc: {
         bookshelf: (bookshelf_id, token) => (wsUrl + `api/bookshelves/ws/${bookshelf_id}?token=${token}`),
@@ -66,6 +69,7 @@ export const urls = {
         createBookshelf: () => (baseUrl + `api/bookshelves/create`),
         bookShelfTest: (bookshelf_id) => (baseUrl + `api/bookshelves/${bookshelf_id}`),
         getBookshelvesCreatedByUser: (user) => (baseUrl + `api/bookshelves/created_bookshelves/${user}`),
+        getMemberBookshelves: (user) => (baseUrl + `api/bookshelves/member_bookshelves/${user}`),
     },
 }
 
