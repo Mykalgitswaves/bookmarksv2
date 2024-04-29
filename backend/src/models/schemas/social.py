@@ -1,6 +1,7 @@
 from pydantic import BaseModel, validator
 import datetime
 from neo4j.time import DateTime as Neo4jDateTime
+from neo4j.time import Date as Neo4jDate
 
 class FriendRequestCreate(BaseModel):
     from_user_id: str
@@ -19,6 +20,8 @@ class FriendUser(BaseModel):
     def parse_neo4j_datetime(cls, v):
         if isinstance(v, Neo4jDateTime):
             # Convert Neo4jDateTime to Python datetime
+            return v.to_native()
+        elif isinstance(v, Neo4jDate):
             return v.to_native()
         return v
     

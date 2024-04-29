@@ -452,6 +452,9 @@ async def get_friend_list(user_id: str,
 ):
     """
     Gets the friend list for the user as well as each friends relationship to the current user 
+
+    Args:
+        includes_pending (Optional[str], optional): Include a count of pending friend requests, can only be requested by current user. Defaults to None.
     """
     if not current_user:    
         raise HTTPException(400, "Unauthorized")
@@ -459,8 +462,9 @@ async def get_friend_list(user_id: str,
         friend_list = user_repo.get_friend_list(user_id=user_id,current_user_id=current_user.id)
         if includes_pending:
             print('pending dude')
-            pending_count = user_repo.get_pending_friend_count(user_id=user_id, current_user=current_user.id)
-            print(pending_count)
+            if current_user.id == user_id:
+                pending_count = user_repo.get_pending_friend_count(user_id=user_id)
+                print(pending_count)
         return JSONResponse(content={"data": jsonable_encoder(friend_list)})
     
 @router.get("/{user_id}/friend_requests",

@@ -639,12 +639,12 @@ async def bookshelf_connection(websocket: WebSocket,
         await bookshelf_ws_manager.disconnect_without_close(bookshelf_id, websocket)
     
 
-@router.get("/tests/test_background_task",
-            name="bookshelf:test_background_task")
-async def test_background_task(background_tasks: BackgroundTasks):
-    print("Triggering background task")
-    background_tasks.add_task(google_books_background_tasks.simple_task, x=1)
-    return JSONResponse(content={"message": "Task added"})
+# @router.get("/tests/test_background_task",
+#             name="bookshelf:test_background_task")
+# async def test_background_task(background_tasks: BackgroundTasks):
+#     print("Triggering background task")
+#     background_tasks.add_task(google_books_background_tasks.simple_task, x=1)
+#     return JSONResponse(content={"message": "Task added"})
 
 # TO BE DELETED
 # @router.put("/{bookshelf_id}/remove_book",
@@ -719,3 +719,19 @@ async def test_background_task(background_tasks: BackgroundTasks):
         #     visibility
         # }
         # """
+
+# Want to Read bookshelf get for user 
+router.get("want_to_read/{user_id}",
+            name="bookshelf:want_to_read")
+async def get_user_want_to_read(user_id: str,
+                                current_user: Annotated[User, Depends(get_current_active_user)],
+                                bookshelf_repo: BookshelfCRUDRepositoryGraph = Depends(get_repository(repo_type=BookshelfCRUDRepositoryGraph))):
+    if current_user.id == user_id:
+        owner = "current_user"
+
+    bookshelf = bookshelf_repo.get_user_want_to_read(user_id=user_id)
+
+    if bookshelf.visibility == "public" or current_user.id == user_id:   
+        return JSONResponse(content={"bookshelves": jsonable_encoder(bookshelf)})
+    else:
+        raise HTTPException(status_code=403, detail="User is not authorized to view want to read bookshelf of another user")

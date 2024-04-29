@@ -32,11 +32,19 @@ class UserCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
                     email:$email,
                     password:$password,
                     created_date:datetime(),
-                    disabled:False}) 
-                    return u.id as id, 
+                    disabled:False,
+                    visibility:"public"})
+                WITH u
+                CREATE (a:WantToReadShelf {id: randomUUID(), created_date: datetime(), last_edited_date: datetime(), books: [], visibility: "public"}),
+                    (b:CurrentlyReadingShelf {id:  randomUUID(), created: datetime(), last_edited_date: datetime(), books: [], visibility: "public"}),
+                    (c:FinishedReadingShelf {id:  randomUUID(), created: datetime(), last_edited_date: datetime(), books: [], visibility: "public"})
+                CREATE (u)-[:HAS_WANT_TO_READ_SHELF]->(a),
+                        (u)-[:HAS_CURRENTLY_READING_SHELF]->(b),
+                        (u)-[:HAS_FINISHED_READING_SHELF]->(c)
+                return u.id as id, 
                     u.username as username, 
                     u.email as email, 
-                    u.created_date as created_date, 
+                    u.created_date as created_date,
                     u.disabled as disabled
                 """
         
@@ -409,10 +417,12 @@ class UserCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
         return [response['friend_id'] for response in result]
     
     def get_pending_friend_count(self, user_id: str):
+        print(user_id)
         with self.driver.session() as session:
             result = session.execute_read(self.get_pending_friend_count_query, user_id=user_id)  
         return(result)
     
+    @staticmethod
     def get_pending_friend_count_query(tx, user_id):
         query = """
             match (user:User {id:$user_id})
@@ -420,7 +430,7 @@ class UserCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
             return count(friendRel) as friend_request_count
             """
         result = tx.run(query,user_id=user_id)
-        breakpoint()
+        return result.single()['friend_request_count']
         
     def get_friend_request_list(self,user_id:str):
         """
