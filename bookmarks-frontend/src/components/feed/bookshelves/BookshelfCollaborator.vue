@@ -12,31 +12,63 @@
         </svg>
 
         <div>
-            <h4 class="collaborator-username">michael</h4>
-            <p id="role" class="collaborator-role">role: {{ props.role }}</p>  
+            <h4 class="collaborator-username">{{ friend?.username || currentUserName }}</h4>
+            <p id="role" class="collaborator-role">role: {{ friend.role || 'unassigned' }}</p>  
         </div>
 
-        <button 
+        <button v-if="friend?.role"
             type="button"
             class="btn ml-auto"
             :class="{ 
                 'btn-danger': role === 'collaborator', 
-                'btn-role-disabled': role === 'creator' 
+                'btn-role-disabled': role === 'creator',
             }"
             :disabled="role === 'creator'"
         >
             remove
         </button>
+
+        <!-- Stuff for adding permissions to your friends -->
+        <form v-if="friend?.role !== 'creator'" class="ml-auto collab-type-form" @submit.prevent="setFriendAsCollaboratorType">
+            <select class="collab-select" name="" id="collaborator-types" v-model="collabType">
+                <option value="writer">writer</option>
+
+                <option value="member">member</option>
+            </select>
+
+            <button type="submit" class="btn btn-green-100" @click="setFriendRoleOnBookshelf(friend.id, collabType)">add</button>
+
+            <button type="button" class="btn btn-red-100" @click="$emit('remove-friend-from-suggested', friend?.id)">ignore</button>
+        </form>
     </div>
 </template>
 <script setup>
+import { ref } from 'vue'
+import { db } from '../../../services/db';
+import { urls } from '../../../services/urls';
+
 const props = defineProps({
     role: {
         type: String,
         required: false,
         default: 'collaborator',
     },
+    friend: {
+        type: Object,
+        required: true,
+    },
+    bookshelf_id: {
+        type: String,
+        required: true,
+    },
 });
+
+const collabType = ref('none');
+
+async function setFriendRoleOnBookshelf() {
+    await db.put(urls.rtc.setContributorOnShelf())
+}
+
 
 </script>
 <style scoped>
@@ -52,6 +84,10 @@ const props = defineProps({
         min-width: 280px;
         text-align: start;
         column-gap: 12px;
+    }
+
+    .collaborator-role {
+        color: var(--stone-500);
     }
 
     .collaborator-text {
@@ -78,5 +114,42 @@ const props = defineProps({
 
     .ml-auto {
         margin-left: auto;
+    }
+
+    .collab-select {
+        min-width: fit-content;
+        border: 1px solid var(--stone-100);
+        border-radius: var(--radius-sm);
+        color: var(--stone-700);
+        font-size: var(--font-sm);
+    }
+
+    .collab-type-form {
+        display: flex;
+        column-gap: 12px;
+    }
+
+    .btn-green-100 {
+        background-color: var(--green-100);
+        color: var(--green-700);
+        border-radius: var(--radius-sm);
+        padding-left: 12px;
+        padding-right: 12px;
+    }
+
+    .btn-green-100:hover {
+        background-color: var(--green-200);
+    }
+
+    .btn-red-100 {
+        background-color: var(--red-100);
+        color: var(--red-700);
+        border-radius: var(--radius-sm);
+        padding-left: 12px;
+        padding-right: 12px;
+    }
+
+    .btn-red-100:hover {
+        background-color: var(--red-200);
     }
 </style>

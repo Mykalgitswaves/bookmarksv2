@@ -464,7 +464,10 @@ async def get_friend_list(user_id: str,
             print('pending dude')
             if current_user.id == user_id:
                 pending_count = user_repo.get_pending_friend_count(user_id=user_id)
-                print(pending_count)
+                return JSONResponse(content={
+                        "friends": jsonable_encoder(friend_list), 
+                        "pending_count": jsonable_encoder(pending_count)
+                    })
         return JSONResponse(content={"data": jsonable_encoder(friend_list)})
     
 @router.get("/{user_id}/friend_requests",

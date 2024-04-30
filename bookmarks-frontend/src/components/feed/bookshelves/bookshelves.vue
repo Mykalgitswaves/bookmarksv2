@@ -158,8 +158,8 @@
 }
 
 .bookshelf {
-    min-height: 45px;
-    min-width: 45px;
+    height: 45px;
+    width: 45px;
     padding: 4px;
     color: var(--stone-600);
     cursor: pointer;

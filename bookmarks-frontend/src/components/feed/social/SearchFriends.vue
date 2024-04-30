@@ -1,6 +1,6 @@
 <template>
-    <form class="grid grid-cols-1 gap-2">
-      <label v-if="props.labelAbove" for="search-book" class="text-gray-600 text-sm">{{ props.labelAbove }}</label>
+    <form class="search-user-form">
+      <label v-if="props.labelAbove" for="search-book" class="text-gray-600 text-sm mb-2">{{ props.labelAbove }}</label>
       
       <input
         id="search-user"
@@ -11,20 +11,13 @@
         placeholder="Search for friends"
         name="searchForUsers"
         type="text"
+        :disabled="props.disabled"
       />
 
       <label class="text-gray-600 text-sm" for="searchForBooks" v-if="props.labelBelow">
         {{ props.labelBelow }}
       </label>
     </form>
-
-    <ul class="user-search-results">
-        <li class="user">
-            <div>
-                <img class="h-10 w-10 rounded-full" />
-            </div>
-        </li>
-    </ul>
 </template>
 <script setup>
 import { ref } from 'vue'
@@ -43,27 +36,44 @@ const props = defineProps({
     labelBelow: {
         type: String,
     },
+    disabled: {
+        type: Boolean,
+        default: false,
+    }
 });
 
-const emit = defineEmits(['user-to-parent'])
+const emit = defineEmits(['friends'])
 const { debounce } = helpersCtrl;
-const searchResultsArray = ref(null);
 const searchData = ref('')
-const user = ref(null);
 
 async function searchRequest(){
     await db.get(urls.user.searchUsersFriends(searchData.value)).then((res) => {
-        searchResultsArray.value = res.data;
-        console.log(res)
+        console.log(res);
+        emit('search-friends-result', res);
     });
 }
 
 const debouncedSearchRequest = debounce(searchRequest, 500, false)
 
 </script>
-<style scoped>
+<style scoped lang="scss">
 .user-search-results {
     max-width: 600px;
     background-color: var(--stone-100);
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.search-user-form {
+    margin-left: auto;
+    margin-right: auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-top: var(--margin-md);
+
+    input {
+        width: 100%;
+    }
 }
 </style>
