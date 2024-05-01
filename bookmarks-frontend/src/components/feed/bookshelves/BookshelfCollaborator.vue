@@ -13,7 +13,7 @@
 
         <div>
             <h4 class="collaborator-username">{{ friend?.username || currentUserName }}</h4>
-            <p id="role" class="collaborator-role">role: {{ friend.role || 'unassigned' }}</p>  
+            <p id="role" class="collaborator-role">role: {{ friend?.role || 'unassigned' }}</p>  
         </div>
 
         <button v-if="friend?.role"
@@ -31,7 +31,7 @@
         <!-- Stuff for adding permissions to your friends -->
         <form v-if="friend?.role !== 'creator'" class="ml-auto collab-type-form" @submit.prevent="setFriendAsCollaboratorType">
             <select class="collab-select" name="" id="collaborator-types" v-model="collabType">
-                <option value="writer">writer</option>
+                <option value="contributor">contributor</option>
 
                 <option value="member">member</option>
             </select>
@@ -57,18 +57,38 @@ const props = defineProps({
         type: Object,
         required: true,
     },
-    bookshelf_id: {
+    bookshelfId: {
         type: String,
         required: true,
     },
 });
 
+const emit = defineEmits(['added-member', 'added-contributor']);
 const collabType = ref('none');
+const hasBeenAdded = ref(false);
 
 async function setFriendRoleOnBookshelf() {
-    await db.put(urls.rtc.setContributorOnShelf())
+    try {
+        if(collabType.value === 'collaborator'){
+            await db.put(urls.rtc.setContributorOnShelf(props.bookshelfId), {'contributor_id': props.friend.id}, true).then((res) => {
+                console.log(res);
+                if(res.statusCode === 200){
+                    emit('added-collaborator', props.friend.id);
+                }
+            })
+        } else if(collabType.value === 'member'){
+            const promise = await db.put(urls.rtc.setMemberOnShelf(props.bookshelfId), {'member_id': props.friend.id}, true)
+            const res = await promise.json();
+            if(res.statusCode === 200){
+                emit('added-member', props.friend.id);
+            }
+        }
+        
+        hasBeenAdded.value =  true;
+    } catch(err) {
+        console.log(err);
+    }
 }
-
 
 </script>
 <style scoped>

@@ -8,11 +8,21 @@
         </div>
 
         <BookshelfCollaborator role="creator" :friend="{username: 'michaelfinal.png@gmail.com', role: 'creator'}"/>
+        <!-- All contributors of shelf. -->
+        <ul class="collaborators-list" v-if="currentView === 'close-friends'">
+            <li v-for="friend in bookshelfContributors" :key="friend?.id">
+                <BookshelfCollaborator 
+                    :friend="friend" 
+                    :bookshelf-id="route.params.bookshelf"
+                    @remove-friend-from-suggested="(id) => removeFriendFromSuggested(id)"
+                />
+            </li>
+        </ul>
 
         <div class="divider"></div>
 
         <!-- If user has friends render this shit -->
-        <div v-if="friends?.length || paginatedFriends?.length">
+        <div v-if="dataLoaded && suggestedFriendsForShelf?.length">
             <div class="flex items-center gap-5 justify-center">
                 <button type="button"
                     class="collaborator-tab"
@@ -46,8 +56,9 @@
             </div>
 
             <ul class="collaborators-list" v-if="currentView === 'close-friends'">
-                <li v-for="friend in friends" :key="friend?.id">
+                <li v-for="friend in suggestedFriendsForShelf" :key="friend?.id">
                     <BookshelfCollaborator :friend="friend" 
+                        :bookshelf-id="route.params.bookshelf"
                         @remove-friend-from-suggested="(id) => removeFriendFromSuggested(id)"
                     />
                 </li>
@@ -56,7 +67,7 @@
         </div>
 
         <!-- What to do if users don't have friends, direct them to either a link generator for sign up that sends a friend request auto  -->
-        <div v-else>
+        <div v-if="dataLoaded && !suggestedFriendsForShelf?.length">
             <!-- Only render one of these depending on whether or not users have pending friend requests or not-->
             <div class="collaborator-cta" v-if="pendingFriendCount">
                 <h2>You haven't connected with your friends on (name of our app) yet.</h2>
@@ -74,6 +85,8 @@
                 </a>
             </div>
         </div>
+
+        <div v-if="!dataLoaded" class="loading">Loading</div>
     </div>
 </template>
 
@@ -92,11 +105,14 @@ const props = defineProps({
     },
 });
 
+
 const route = useRoute();
-const friends = ref([]);
+const suggestedFriendsForShelf = ref([]);
 const pendingFriendCount = ref(0);
+const bookshelfContributors = ref([]);
 const currentView = ref('close-friends');
 const searchFriendsResult = ref([]);
+const dataLoaded = ref(false);
 let hiddenFriends = [];
 
 // Need to add this to our backend somehow for paginating through suggested friends.
@@ -109,26 +125,45 @@ const setPagination = (startEndInts) => {
     currentPaginationGroupEnd.value = startEndInts[1];
 }
 
-async function loadFriends(){
+async function loadSuggestedFriends(){
     await db.get(`${urls.user.getFriends(route.params.user)}/?includes_pending=true`).then((res) => {
-        friends.value = res.friend_list.filter((friend) => !hiddenFriends.includes(friend.id));
+        suggestedFriendsForShelf.value = res.friends;
+        // DO THIS LATER BUT GET THIS SHIT WORKING FIRST.
+        // friends.value = friends.value.filter((friend) => {
+        //     if(hiddenFriends?.includes(friend.id)){
+        //         console.log(friend, ":skipped")
+        //         return;
+        //     }
+        //     return friend;
+        // });
         pendingFriendCount.value = res.pendingCount;
     });
 };
 
+async function loadShelfCollaborators(){
+    await db.get(urls.rtc.getBookshelfContributors(route.params.bookshelf)).then((res) => {
+        bookshelfContributors.value = res.contributors
+    })
+}
+
+// Add it to array and hide.
 function removeFriendFromSuggested(id){
     hiddenFriends.push(id);
     sethiddenUserFromShelfInLS();
-    friends.value = friends.value.filter((friend) => friend.id !== id);
 };
 
 function sethiddenUserFromShelfInLS(){
-    localStorage.set(`${route.params.bookshelf}-${route.params.user}-hidden-friends`, hiddenFriends);
+    localStorage.setItem(`${route.params.bookshelf}-${route.params.user}-hidden-friends`, hiddenFriends);
 };
 
 onMounted(async () => {
-    await loadFriends();
-    hiddenFriends = [...localStorage.get(`${route.params.bookshelf}-${route.params.user}-hidden-friends`)];
+    hiddenFriends = localStorage.getItem(`${route.params.bookshelf}-${route.params.user}-hidden-friends`);
+    const suggestedFriendsPromise = await loadSuggestedFriends()
+    const loadShelfCollaboratorsPromise = await loadShelfCollaborators();
+    // wait for all data to load then set dataLoaded to true.
+    Promise.all([loadShelfCollaboratorsPromise, suggestedFriendsPromise]).then(() => {
+        dataLoaded.value = true;
+    })
 });
 </script>
 <style scoped>

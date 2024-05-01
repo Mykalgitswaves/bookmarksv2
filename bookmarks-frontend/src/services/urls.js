@@ -74,7 +74,9 @@ export const urls = {
          *  @param { obj[str] { contributor_id: contributor_id } }  - the user id of the person you want to add as a contributor to the shelf
          * contributors have write access to shelves. 
          **/ 
-        setContributorOnShelf: (bookshelf_id) => (baseUrl + `api/bookshelves/${bookshelf_id}/add_contributor`)
+        setContributorOnShelf: (bookshelf_id) => (baseUrl + `api/bookshelves/${bookshelf_id}/add_contributor`),
+        getBookshelfContributors: (bookshelf_id) => (baseUrl + `api/bookshelves/${bookshelf_id}/contributors`),
+        setMemberOnShelf: (bookshelf_id) => (baseUrl + `api/bookshelves/${bookshelf_id}/add_member`),
     },
 }
 

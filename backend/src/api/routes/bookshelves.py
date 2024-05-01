@@ -278,7 +278,7 @@ async def add_contributor_to_bookshelf(request: Request,
     if response:
         if bookshelf_id in bookshelf_ws_manager.cache:
             bookshelf_ws_manager.cache[bookshelf_id].add_contributor(bookshelf.user_id)
-        return JSONResponse(content={"message": "Contributor added to bookshelf"})
+        return JSONResponse(content={"message": "Contributor added to bookshelf", "role": "contributor"})
     else:
         raise HTTPException(status_code=400, detail="Failed to add contributor to bookshelf")
     
