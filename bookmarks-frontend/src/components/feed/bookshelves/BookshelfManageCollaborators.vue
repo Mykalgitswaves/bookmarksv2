@@ -6,7 +6,7 @@
         >
             <IconInfo />
 
-            learn more about bookshelves
+            learn more about contributors.
         </button>
 
         <div>
