@@ -6,7 +6,7 @@
         >
             <IconInfo />
 
-            learn more about contributors.
+            learn more about contributors
         </button>
 
         <div>
