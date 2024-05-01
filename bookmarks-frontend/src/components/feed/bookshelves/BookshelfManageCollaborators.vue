@@ -21,7 +21,7 @@
 
         <BookshelfCollaborator role="creator" :friend="{username: 'michaelfinal.png@gmail.com', role: 'creator'}"/>
         <!-- All contributors of shelf. -->
-        <ul class="collaborators-list" v-if="currentView === 'close-friends'">
+        <ul class="collaborators-list">
             <li v-for="friend in bookshelfContributors" :key="friend?.id">
                 <BookshelfCollaborator role="contributor"
                     :friend="friend" 
