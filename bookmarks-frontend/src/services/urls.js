@@ -75,8 +75,11 @@ export const urls = {
          * contributors have write access to shelves. 
          **/ 
         setContributorOnShelf: (bookshelf_id) => (baseUrl + `api/bookshelves/${bookshelf_id}/add_contributor`),
+        removeContributorFromShelf: (bookshelf_id) => (baseUrl + `api/bookshelves/${bookshelf_id}/remove_contributor`),
         getBookshelfContributors: (bookshelf_id) => (baseUrl + `api/bookshelves/${bookshelf_id}/contributors`),
+        
         setMemberOnShelf: (bookshelf_id) => (baseUrl + `api/bookshelves/${bookshelf_id}/add_member`),
+        removeMemberFromShelf: (bookshelf_id) => (baseUrl + `api/bookshelves/${bookshelf_id}/remove_member`),
     },
 }
 

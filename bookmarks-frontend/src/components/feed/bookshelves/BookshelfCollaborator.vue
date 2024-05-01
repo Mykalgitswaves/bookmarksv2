@@ -13,7 +13,8 @@
 
         <div>
             <h4 class="collaborator-username">{{ friend?.username || currentUserName }}</h4>
-            <p id="role" class="collaborator-role">role: {{ friend?.role || 'unassigned' }}</p>  
+
+            <p id="role" class="collaborator-role">role: {{ friend?.role || role || 'unassigned' }}</p>  
         </div>
 
         <button v-if="friend?.role"
@@ -29,7 +30,7 @@
         </button>
 
         <!-- Stuff for adding permissions to your friends -->
-        <form v-if="friend?.role !== 'creator'" class="ml-auto collab-type-form" @submit.prevent="setFriendAsCollaboratorType">
+        <form v-if="!['creator', 'contributor'].includes(role) && !currentUserCanRemoveContributors" class="ml-auto collab-type-form" @submit.prevent="setFriendAsCollaboratorType">
             <select class="collab-select" name="" id="collaborator-types" v-model="collabType">
                 <option value="contributor">contributor</option>
 
@@ -40,12 +41,17 @@
 
             <button type="button" class="btn btn-red-100" @click="$emit('remove-friend-from-suggested', friend?.id)">ignore</button>
         </form>
+
+        <form v-if="currentUserIsAdmin" class="ml-auto collab-type-form" @submit.prevent="removeContributorFromBookshelf()">
+            <button type="submit" class="btn btn-red-100">Remove</button>
+        </form>
     </div>
 </template>
 <script setup>
 import { ref } from 'vue'
 import { db } from '../../../services/db';
 import { urls } from '../../../services/urls';
+import { routeLocationKey } from 'vue-router';
 
 const props = defineProps({
     role: {
@@ -61,6 +67,11 @@ const props = defineProps({
         type: String,
         required: true,
     },
+    currentUserIsAdmin: {
+        type: Boolean,
+        required: false,
+        default: false,
+    }
 });
 
 const emit = defineEmits(['added-member', 'added-contributor']);
@@ -87,6 +98,12 @@ async function setFriendRoleOnBookshelf() {
         hasBeenAdded.value =  true;
     } catch(err) {
         console.log(err);
+    }
+}
+
+async function removeContributorFromBookshelf() {
+    if(props.role === 'contributor'){
+        await db.put(urls.rtc.removeContributorFromShelf(props.friend.id), {'contributor_id': props.friend.id})
     }
 }
 

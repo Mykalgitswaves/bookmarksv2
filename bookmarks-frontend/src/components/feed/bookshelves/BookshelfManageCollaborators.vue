@@ -1,19 +1,32 @@
 <template>
     <div class="mt-5">
-        <div id="collaborator-note">
-            <p class="bookshelf-note">
-                Collaborators have the ability to add, remove and reorder books.
-                You can manage your collaborators here.
-            </p>
+        <button type="button" 
+            class="btn flex gap-2 mb-2 pl-0" 
+            @click="modals.showInfoModal = !modals.showInfoModal"
+        >
+            <IconInfo />
+
+            learn more about bookshelves
+        </button>
+
+        <div>
+            <div id="collaborator-note" v-if="modals.showInfoModal">
+                <p class="bookshelf-note">
+                    Contributors have the ability to add, remove and reorder books.
+                    You can manage your contributors here. bookshelves can have a maximum limit of 5 contributors.
+                    Members are able to view books but cannot edit bookshelves.
+                </p>
+            </div>
         </div>
 
         <BookshelfCollaborator role="creator" :friend="{username: 'michaelfinal.png@gmail.com', role: 'creator'}"/>
         <!-- All contributors of shelf. -->
         <ul class="collaborators-list" v-if="currentView === 'close-friends'">
             <li v-for="friend in bookshelfContributors" :key="friend?.id">
-                <BookshelfCollaborator 
+                <BookshelfCollaborator role="contributor"
                     :friend="friend" 
                     :bookshelf-id="route.params.bookshelf"
+                    :current-user-is-admin="currentUserCanRemoveContributors()"
                     @remove-friend-from-suggested="(id) => removeFriendFromSuggested(id)"
                 />
             </li>
@@ -97,6 +110,7 @@ import { ref, onMounted, computed } from 'vue';
 import { db } from '../../../services/db';
 import { urls } from '../../../services/urls';
 import { useRoute } from 'vue-router';
+import IconInfo from '../../svg/icon-info.vue';
 
 const props = defineProps({
     bookshelf: {
@@ -114,6 +128,10 @@ const currentView = ref('close-friends');
 const searchFriendsResult = ref([]);
 const dataLoaded = ref(false);
 let hiddenFriends = [];
+
+const modals = ref({
+    showInfoModal: false,
+});
 
 // Need to add this to our backend somehow for paginating through suggested friends.
 const currentPaginationGroupEnd = ref(0);
@@ -156,6 +174,14 @@ function sethiddenUserFromShelfInLS(){
     localStorage.setItem(`${route.params.bookshelf}-${route.params.user}-hidden-friends`, hiddenFriends);
 };
 
+// used for admin permissions on bookshelves.
+const currentUserCanRemoveContributors = () => {
+    if(route.params.user === props.bookshelf.created_by){
+        return true;
+    }
+}
+
+
 onMounted(async () => {
     hiddenFriends = localStorage.getItem(`${route.params.bookshelf}-${route.params.user}-hidden-friends`);
     const suggestedFriendsPromise = await loadSuggestedFriends()
@@ -168,12 +194,15 @@ onMounted(async () => {
 </script>
 <style scoped>
 .bookshelf-note {
+    background-color: var(--stone-100);
     font-size: var(--font-sm);
-    color: var(--stone-500);
+    color: var(--stone-600);
     margin-bottom: var(--margin-md);
     margin-left: auto;
     margin-left: right;
     text-align: start;
+    border-radius: var(--radius-sm);
+    padding: var(--padding-sm);
 }
 
 .collaborators-list {
