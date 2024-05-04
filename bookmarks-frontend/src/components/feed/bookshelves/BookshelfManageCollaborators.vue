@@ -7,10 +7,12 @@
             <IconInfo />
 
             learn more about contributors
+
+            <IconChevron :style="{transform: modals.showInfoModal ? 'rotate(180deg)' : ''}" class="ml-2"/>
         </button>
 
         <div>
-            <div id="collaborator-note" v-if="modals.showInfoModal">
+            <div id="collaborator-note" v-if="!modals.showInfoModal">
                 <p class="bookshelf-note">
                     Contributors have the ability to add, remove and reorder books.
                     You can manage your contributors here. bookshelves can have a maximum limit of 5 contributors.
@@ -124,6 +126,7 @@ import { urls } from '../../../services/urls';
 import { useRoute } from 'vue-router';
 import IconInfo from '../../svg/icon-info.vue';
 import IconLoading from '../../svg/icon-loading.vue';
+import IconChevron from '../../svg/icon-chevron.vue';
 
 const props = defineProps({
     bookshelf: {
