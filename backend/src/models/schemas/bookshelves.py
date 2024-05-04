@@ -37,7 +37,7 @@ class BookshelfBookNote(BookshelfId):
 class BookshelfContributor(BaseModel):
     user_id: str
     username: str
-    role: str = "contributor"
+    role: str 
     profile_img_url: str | None = None
     relationship_to_current_user: str
     created_date: datetime.datetime

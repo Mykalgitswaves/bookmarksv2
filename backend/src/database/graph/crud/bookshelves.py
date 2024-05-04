@@ -378,7 +378,8 @@ class BookshelfCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
                 created_date=response['user']['created_date'],
                 profile_img_url=profile_img_url,
                 relationship_to_current_user=relationship_to_current_user,
-                full_name=response['user']['full_name']
+                full_name=response['user']['full_name'],
+                role = "member"
             ))
 
             member_ids.append(response['user']['id'])
@@ -444,7 +445,8 @@ class BookshelfCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
                 created_date=response['user']['created_date'],
                 profile_img_url=profile_img_url,
                 relationship_to_current_user=relationship_to_current_user,
-                full_name=response['user']['full_name']
+                full_name=response['user']['full_name'],
+                role="follower"
             ))
 
         return followers
