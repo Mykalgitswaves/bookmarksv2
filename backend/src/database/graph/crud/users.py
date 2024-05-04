@@ -419,13 +419,13 @@ class UserCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
         match (user:User {id:$user_id})
         match (currentUser:User {id:$current_user_id})
         match (user)-[friendRel:FRIENDED {status:"friends"}]-(toUser:User {disabled:False})
+        WHERE NOT EXISTS((toUser)-[:HAS_BOOKSHELF_ACCESS]->(:Bookshelf {id:$bookshelf_id}))
         OPTIONAL MATCH (currentUser)<-[incomingFriendStatus:FRIENDED]-(toUser)
         OPTIONAL MATCH (currentUser)-[outgoingFriendStatus:FRIENDED]->(toUser)
         OPTIONAL MATCH (currentUser)<-[incomingBlockStatus:BLOCKED]-(toUser)
         OPTIONAL MATCH (currentUser)-[outgoingBlockStatus:BLOCKED]->(toUser)
         OPTIONAL MATCH (currentUser)<-[incomingFollowStatus:FOLLOWS]-(toUser)
         OPTIONAL MATCH (currentUser)-[outgoingFollowStatus:FOLLOWS]->(toUser)
-        WHERE NOT EXISTS((toUser)-[:HAS_BOOKSHELF_ACCESS]->(:Bookshelf {id:$bookshelf_id}))
         RETURN toUser, currentUser,
             incomingFriendStatus.status AS incomingFriendStatus,
             incomingBlockStatus,
