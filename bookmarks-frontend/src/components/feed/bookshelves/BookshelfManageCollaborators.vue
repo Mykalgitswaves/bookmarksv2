@@ -18,20 +18,46 @@
                 </p>
             </div>
         </div>
+        <div>
+            <h2 class="">Owner</h2>
 
-        <BookshelfCollaborator v-if="bookshelfOwner" :role="bookshelfOwner?.role" :friend="bookshelfOwner" />
+            <BookshelfCollaborator 
+                v-if="bookshelfOwner"
+                :role="bookshelfOwner?.role"
+                :friend="bookshelfOwner" 
+            />
 
-        <!-- All contributors of shelf. -->
-        <ul class="collaborators-list">
-            <li v-for="friend in bookshelfContributors" :key="friend?.id">
-                <BookshelfCollaborator role="contributor"
-                    :friend="friend" 
-                    :bookshelf-id="route.params.bookshelf"
-                    :current-user-is-admin="currentUserCanRemoveContributors()"
-                    @remove-friend-from-suggested="(id) => removeFriendFromSuggested(id)"
-                />
-            </li>
-        </ul>
+            <div class="divider"></div>
+
+            <!-- All contributors of shelf. -->
+            <h2><span v-if="bookshelfContributors?.length">{{ bookshelfContributors.length }}</span> Contributors</h2>
+
+            <ul class="collaborators-list">
+                <li v-for="friend in bookshelfContributors" :key="friend?.id">
+                    <BookshelfCollaborator role="contributor"
+                        :friend="friend" 
+                        :bookshelf-id="route.params.bookshelf"
+                        :current-user-is-admin="currentUserCanRemoveContributors()"
+                        @remove-friend-from-suggested="(id) => removeFriendFromSuggested(id)"
+                    />
+                </li>
+            </ul>
+
+            <div class="divider"></div>
+
+            <h2><span v-if="bookshelfMembers?.length">{{ bookshelfMembers.length }}</span> Members</h2>
+
+            <ul class="collaborators-list">
+                <li v-for="friend in bookshelfMembers" :key="friend?.id">
+                    <BookshelfCollaborator role="contributor"
+                        :friend="friend" 
+                        :bookshelf-id="route.params.bookshelf"
+                        :current-user-is-admin="currentUserCanRemoveContributors()"
+                        @remove-friend-from-suggested="(id) => removeFriendFromSuggested(id)"
+                    />
+                </li>
+            </ul>
+        </div>
 
         <div class="divider"></div>
 
@@ -44,7 +70,6 @@
             <ul class="collaborators-list" v-if="currentView === 'close-friends'">
                 <SearchUsers :friends-only="true"
                     class="mb-5"
-                    label-above="Friends can be either members or collaborators of your bookshelf."
                     @search-friends-result="(friendData) => searchFriendsResult = friendData"
                 />
                 
@@ -86,7 +111,7 @@
             </div>
         </div>
 
-        <div v-if="!dataLoaded" class="loading">Loading</div>
+        <div v-if="!dataLoaded" class="loading">Loading <IconLoading /></div>
     </div>
 </template>
 
@@ -98,6 +123,7 @@ import { db } from '../../../services/db';
 import { urls } from '../../../services/urls';
 import { useRoute } from 'vue-router';
 import IconInfo from '../../svg/icon-info.vue';
+import IconLoading from '../../svg/icon-loading.vue';
 
 const props = defineProps({
     bookshelf: {
@@ -111,6 +137,7 @@ const route = useRoute();
 const suggestedFriendsForShelf = ref([]);
 const pendingFriendCount = ref(0);
 const bookshelfContributors = ref([]);
+const bookshelfMembers = ref([]);
 const bookshelfOwner = ref(null);
 const currentView = ref('close-friends');
 const searchFriendsResult = ref([]);
@@ -132,16 +159,8 @@ const setPagination = (startEndInts) => {
 }
 
 async function loadSuggestedFriends(){
-    await db.get(`${urls.user.getFriends(route.params.user)}/?includes_pending=true&bookshelf_id=${route.params.bookshelf}`).then((res) => {
+    await db.get(urls.user.getFriends(route.params.user), `includes_pending=true&bookshelf_id=${route.params.bookshelf}`).then((res) => {
         suggestedFriendsForShelf.value = res.friends;
-        // DO THIS LATER BUT GET THIS SHIT WORKING FIRST.
-        // friends.value = friends.value.filter((friend) => {
-        //     if(hiddenFriends?.includes(friend.id)){
-        //         console.log(friend, ":skipped")
-        //         return;
-        //     }
-        //     return friend;
-        // });
         pendingFriendCount.value = res.pendingCount;
     });
 };
@@ -151,6 +170,12 @@ async function loadShelfContributors(){
         bookshelfOwner.value = res.contributors.find((contributor) => contributor.role === 'owner');
 
         bookshelfContributors.value = res.contributors.filter((contributor) => contributor.role !== 'owner');
+    })
+}
+
+async function loadShelfMembers(){
+    await db.get(urls.rtc.getBookshelfMembers(route.params.bookshelf)).then((res) => {
+        bookshelfMembers.value = res.members;
     })
 }
 
@@ -176,8 +201,10 @@ onMounted(async () => {
     hiddenFriends = localStorage.getItem(`${route.params.bookshelf}-${route.params.user}-hidden-friends`);
     const suggestedFriendsPromise = await loadSuggestedFriends()
     const loadShelfContributorsPromise = await loadShelfContributors();
+    const loadShelfMembersPromise = await loadShelfMembers();
+
     // wait for all data to load then set dataLoaded to true.
-    Promise.all([loadShelfContributorsPromise, suggestedFriendsPromise]).then(() => {
+    Promise.all([loadShelfContributorsPromise, suggestedFriendsPromise, loadShelfMembersPromise]).then(() => {
         dataLoaded.value = true;
     })
 });
@@ -221,5 +248,13 @@ onMounted(async () => {
     padding-top: var(--padding-sm);
     font-size: var(--font-lg);
     color: var(---stone-500);
+}
+
+.loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 40px;
+    column-gap: 12px;
 }
 </style>

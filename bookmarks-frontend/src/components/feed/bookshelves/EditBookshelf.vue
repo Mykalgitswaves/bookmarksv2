@@ -23,7 +23,7 @@
             <div class="bookshelf-top-toolbar">
                 <div v-if="isAdmin && !collaborators?.length" class="flex items-end">
                     <PlaceholderImage class="extra small-profile-image"/>
-                    <p class="no-collaborators-note">No collaborators added to this bookshelf yet</p>
+                    <p class="no-collaborators-note">No contributors have been added to this bookshelf yet</p>
                 </div>
 
                 <div v-if="isAdmin" class="mt-2 flex" >
@@ -32,7 +32,7 @@
                         class="btn add-readers-btn"
                         @click="setReactiveProperty(currentView, 'value', 'add-collaborators')"
                     >
-                        Add collaborators
+                        Add contributors
                     </button>
 
                     <button v-if="currentView.value === 'add-collaborators'"

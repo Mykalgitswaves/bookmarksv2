@@ -14,7 +14,7 @@
         <div>
             <h4 class="collaborator-username">{{ friend?.username || currentUserName }}</h4>
 
-            <p id="role" class="collaborator-role">role: {{ friend?.role || role || 'unassigned' }}</p>  
+            <!-- <p id="role" class="collaborator-role">role: {{ friend?.role || role || 'unassigned' }}</p>   -->
         </div>
         <!-- Only owner can remove contributors -->
         <button v-if="friend?.role === 'owner'" 

@@ -80,6 +80,8 @@ export const urls = {
         
         setMemberOnShelf: (bookshelf_id) => (baseUrl + `api/bookshelves/${bookshelf_id}/add_member`),
         removeMemberFromShelf: (bookshelf_id) => (baseUrl + `api/bookshelves/${bookshelf_id}/remove_member`),
+        
+        getBookshelfMembers: (bookshelf_id) => (baseUrl + `api/bookshelves/${bookshelf_id}/members`),
     },
 }
 
