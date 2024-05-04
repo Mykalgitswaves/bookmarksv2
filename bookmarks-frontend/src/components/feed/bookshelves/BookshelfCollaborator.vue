@@ -79,20 +79,22 @@ const collabType = ref('none');
 const hasBeenAdded = ref(false);
 
 async function setFriendRoleOnBookshelf() {
+    console.log('firing this shit');
     try {
         if(collabType.value === 'collaborator'){
             await db.put(urls.rtc.setContributorOnShelf(props.bookshelfId), {'contributor_id': props.friend.id}, true).then((res) => {
                 console.log(res);
-                if(res.statusCode === 200){
+                if(res?.status === 200){
                     emit('added-collaborator', props.friend.id);
                 }
             })
         } else if(collabType.value === 'member'){
-            const promise = await db.put(urls.rtc.setMemberOnShelf(props.bookshelfId), {'member_id': props.friend.id}, true)
-            const res = await promise.json();
-            if(res.statusCode === 200){
-                emit('added-member', props.friend.id);
-            }
+            await db.put(urls.rtc.setMemberOnShelf(props.bookshelfId), {'member_id': props.friend.id}, true).then((res) => {
+                console.log(res);
+                if(res?.status === 200){
+                    emit('added-member', props.friend.id);
+                }
+            })
         }
         
         hasBeenAdded.value =  true;

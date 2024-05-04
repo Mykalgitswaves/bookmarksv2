@@ -314,7 +314,7 @@ async def add_member_to_bookshelf(request: Request,
                                  current_user:  Annotated[User, Depends(get_current_active_user)],
                                  bookshelf_repo: BookshelfCRUDRepositoryGraph = Depends(get_repository(repo_type=BookshelfCRUDRepositoryGraph))):
     data = await request.json()
-
+    
     try:
         bookshelf = BookshelfUser(id=bookshelf_id,
                                   user_id=data['member_id'])
@@ -386,7 +386,7 @@ async def get_contributors(bookshelf_id: str,
     if current_user.id not in contributor_ids:
         raise HTTPException(status_code=403, detail="User is not authorized to view contributors to this bookshelf")
     else:
-        return JSONResponse(content={"contributors": jsonable_encoder(contributors)})
+        return JSONResponse(content={"contributors": jsonable_encoder(filter_author_out_from_contributors)})
     
 @router.get("/{bookshelf_id}/members",
             name="bookshelf:get_members")

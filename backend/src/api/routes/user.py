@@ -448,6 +448,7 @@ async def get_user_about(user_id:str,
 async def get_friend_list(user_id: str, 
     current_user: Annotated[User, Depends(get_current_active_user)],
     includes_pending: Optional[str] = Query(None, description="Include a count of pending friend requests"),
+    bookshelf_id: Optional[str] = Query(None, description="Used to exclude existing contributors and members for a bookshelf suggested friends list."),
     user_repo: UserCRUDRepositoryGraph = Depends(get_repository(repo_type=UserCRUDRepositoryGraph)),
 ):
     """
@@ -467,7 +468,7 @@ async def get_friend_list(user_id: str,
                 return JSONResponse(content={
                         "friends": jsonable_encoder(friend_list), 
                         "pending_count": jsonable_encoder(pending_count)
-                    })
+                    })   
         return JSONResponse(content={"data": jsonable_encoder(friend_list)})
     
 @router.get("/{user_id}/friend_requests",
