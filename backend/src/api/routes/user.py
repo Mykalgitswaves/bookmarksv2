@@ -2,7 +2,7 @@ import fastapi
 from fastapi import HTTPException, Depends, Request, status, Query
 from fastapi.encoders import jsonable_encoder
 from fastapi.responses import JSONResponse
-from typing import Annotated
+from typing import Annotated, Optional
 
 from src.models.schemas.users import UserInResponse, User, UserUsername, UserBio, UserEmail, UserProfileImg, UserPassword, UserId
 from src.models.schemas.social import FriendRequestCreate, BlockUserCreate, FollowUserCreate, FriendDelete
@@ -13,7 +13,6 @@ from src.securities.authorizations.verify import get_current_active_user
 from src.securities.hashing.password import pwd_generator
 from src.securities.authorizations.jwt import jwt_generator
 from src.models.schemas.token import Token
-from typing import Optional
 
 router = fastapi.APIRouter(prefix="/user", tags=["user"])
 

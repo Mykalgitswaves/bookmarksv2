@@ -1,8 +1,8 @@
 import fastapi
-from fastapi import HTTPException, Depends, BackgroundTasks
+from fastapi import HTTPException, Depends, BackgroundTasks, Query
 from fastapi.encoders import jsonable_encoder
 from fastapi.responses import JSONResponse
-from typing import Annotated
+from typing import Annotated, Optional
 
 from src.api.utils.database import get_repository
 from src.database.graph.crud.search import SearchCRUDRepositoryGraph
@@ -68,14 +68,22 @@ def search_for_param_friend(param: str,
                      current_user: Annotated[User, Depends(get_current_active_user)],
                      skip: int=0, 
                      limit: int=5,
+                     bookshelf_id: Optional[str] = Query(None, description="Used to exclude existing contributors and members for a bookshelf suggested friends list."),
                      search_repo: SearchCRUDRepositoryGraph = Depends(get_repository(repo_type=SearchCRUDRepositoryGraph))):
     """
     Endpoint used for searching for friends, todo add in credentials for searching
     """
     
-    search_result = search_repo.get_friends_full_text_search(search_query=param, 
+    if bookshelf_id:
+        search_result = search_repo.get_friends_full_text_search_no_bookshelf_access(search_query=param, 
                                                       skip=skip, 
                                                       limit=limit,
-                                                      current_user_id=current_user.id)
+                                                      current_user_id=current_user.id,
+                                                      bookshelf_id=bookshelf_id)
+    else:
+        search_result = search_repo.get_friends_full_text_search(search_query=param, 
+                                                        skip=skip, 
+                                                        limit=limit,
+                                                        current_user_id=current_user.id)
 
     return JSONResponse(content={"data": jsonable_encoder(search_result)})
