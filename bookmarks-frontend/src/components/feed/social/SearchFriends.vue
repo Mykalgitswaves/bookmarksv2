@@ -1,5 +1,5 @@
 <template>
-    <form class="search-user-form">
+    <div class="search-user-form" role="form">
       <label v-if="props.labelAbove" for="search-book" class="text-gray-600 text-sm mb-2">{{ props.labelAbove }}</label>
       
       <input
@@ -17,7 +17,7 @@
       <label class="text-gray-600 text-sm" for="searchForBooks" v-if="props.labelBelow">
         {{ props.labelBelow }}
       </label>
-    </form>
+    </div>
 </template>
 <script setup>
 import { ref } from 'vue'
