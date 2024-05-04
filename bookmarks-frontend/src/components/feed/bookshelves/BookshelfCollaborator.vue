@@ -31,7 +31,7 @@
             <button type="button" class="btn btn-red-100" @click="$emit('remove-friend-from-suggested', friend?.id)">ignore</button>
         </form>
 
-        <form v-if="!isSuggested && currentUserIsAdmin" class="ml-auto collab-type-form" @submit.prevent="removeFromBookshelf()">
+        <form v-if="!isSuggested" class="ml-auto collab-type-form" @submit.prevent="removeFromBookshelf()">
             <button type="submit"
                 class="btn ml-auto"
                 :class="{ 
@@ -39,9 +39,9 @@
                     'btn-role-disabled': role === 'owner', // Owner cannot be removed
                     'btn-red-100': ['contributor', 'member'].includes(role),
                 }"
-                :disabled="role === 'owner'"
+                :disabled="role === 'owner' || !currentUserIsAdmin"
             >
-                Remove
+                {{ role === 'owner' ? 'with great power...' : 'Remove' }}
             </button>
         </form>
     </div>
@@ -50,7 +50,6 @@
 import { ref } from 'vue'
 import { db } from '../../../services/db';
 import { urls } from '../../../services/urls';
-import { routeLocationKey } from 'vue-router';
 
 const props = defineProps({
     role: {
