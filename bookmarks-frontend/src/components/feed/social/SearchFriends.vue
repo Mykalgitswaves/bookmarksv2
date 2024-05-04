@@ -51,7 +51,7 @@ const { debounce } = helpersCtrl;
 const searchData = ref('')
 
 async function searchRequest() {
-    await db.get(urls.user.searchUsersFriends(searchData.value), props.bookshelfId).then((res) => {
+    await db.get(urls.user.searchUsersFriends(searchData.value), { 'bookshelf_id': props.bookshelfId }).then((res) => {
         console.log(res);
         emit('search-friends-result', res);
     });
