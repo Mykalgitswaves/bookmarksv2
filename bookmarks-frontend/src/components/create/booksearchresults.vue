@@ -83,7 +83,7 @@ const reviewRange = ref(5)
     if(included < 1){
       state.addBook({
         'id': object['book'], 
-        'review': object['score'],
+        // 'review': object['score'], Removing since we are doing away with stars.
         'title': object['book_title'],
         'authors': object['book_authors'],
         'img_url': object['book_small_img_url']
