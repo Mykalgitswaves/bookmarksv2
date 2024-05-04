@@ -185,7 +185,7 @@ class SearchCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
                                          limit:int, 
                                          current_user_id:str):
         query = """
-        MATCH (currentUser:User {id: $current_user_id})-[:FRIENDED {status:"friends"}]->(friend:User)
+        MATCH (currentUser:User {id: $current_user_id})-[:FRIENDED {status:"friends"}]-(friend:User)
         WITH collect(friend) as friends
         CALL db.index.fulltext.queryNodes('userFullText', $search_query)
         YIELD node, score
@@ -253,11 +253,11 @@ class SearchCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
                                                                 current_user_id:str,
                                                                 bookshelf_id:str):
         query = """
-        MATCH (currentUser:User {id: $current_user_id})-[:FRIENDED {status:"friends"}]->(friend:User)
+        MATCH (currentUser:User {id: $current_user_id})-[:FRIENDED {status:"friends"}]-(friend:User)
         WHERE NOT (friend)-[:HAS_BOOKSHELF_ACCESS]->(:Bookshelf {id: $bookshelf_id})
         WITH friend
         WITH collect(friend) as friends
-        CALL db.index.fulltext.queryNodes('userFullText', $search_query)
+        CALL db.index.fulltext.queryNodes('userFullText', $search_query + "*")
         YIELD node, score
         WHERE node IN friends
         RETURN node, score
@@ -265,7 +265,7 @@ class SearchCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
         SKIP $skip
         LIMIT $limit
         """
-
+        print(search_query, skip, limit, current_user_id, bookshelf_id, "search params")
         result = tx.run(query, 
                         search_query=search_query, 
                         skip=skip, 
