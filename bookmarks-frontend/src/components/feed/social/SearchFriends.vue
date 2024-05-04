@@ -50,8 +50,8 @@ const emit = defineEmits(['friends'])
 const { debounce } = helpersCtrl;
 const searchData = ref('')
 
-async function searchRequest(){
-    await db.get(urls.user.searchUsersFriends(searchData.value), props.bookshelf_id).then((res) => {
+async function searchRequest() {
+    await db.get(urls.user.searchUsersFriends(searchData.value), props.bookshelfId).then((res) => {
         console.log(res);
         emit('search-friends-result', res);
     });
