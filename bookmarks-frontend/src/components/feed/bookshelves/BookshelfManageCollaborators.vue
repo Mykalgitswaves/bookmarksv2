@@ -40,7 +40,7 @@
                         :friend="friend" 
                         :bookshelf-id="route.params.bookshelf"
                         :current-user-is-admin="currentUserCanRemoveContributors()"
-                        @remove-friend-from-suggested="(id) => removeFriendFromSuggested(id)"
+                        @removed-contributor="(contributor_id) => removeFromList('contributor', contributor_id)"
                     />
                 </li>
             </ul>
@@ -55,7 +55,7 @@
                         :friend="friend" 
                         :bookshelf-id="route.params.bookshelf"
                         :current-user-is-admin="currentUserCanRemoveContributors()"
-                        @remove-friend-from-suggested="(id) => removeFriendFromSuggested(id)"
+                        @removed-member="(member_id) => removeFromList('member', member_id)"
                     />
                 </li>
             </ul>
@@ -72,6 +72,8 @@
             <ul class="collaborators-list" v-if="currentView === 'close-friends'">
                 <SearchUsers :friends-only="true"
                     class="mb-5"
+                    :bookshelf-id="route.params.bookshelf"
+                    label-above="Friends added to this shelf as members or contributors won't appear in search results"
                     @search-friends-result="(friendData) => searchFriendsResult = friendData"
                 />
                 
@@ -85,6 +87,7 @@
                     <li v-for="friend in suggestedFriendsForShelf" :key="friend?.id">
                         <BookshelfCollaborator :friend="friend" 
                         :bookshelf-id="route.params.bookshelf"
+                        :is-suggested="true"
                         @remove-friend-from-suggested="(id) => removeFriendFromSuggested(id)"
                         />
                     </li>
@@ -96,8 +99,8 @@
         <!-- What to do if users don't have friends, direct them to either a link generator for sign up that sends a friend request auto  -->
         <div v-if="dataLoaded && !suggestedFriendsForShelf?.length">
             <!-- Only render one of these depending on whether or not users have pending friend requests or not-->
-            <div class="collaborator-cta" v-if="pendingFriendCount">
-                <h2 class="add-friends-heading-text">You haven't connected with your friends on (name of our app) yet.</h2>
+            <div class="collaborator-cta" v-if="!pendingFriendCount">
+                <h2 class="add-friends-heading-text">Need more friends? <span>(dont worry we do too 🫥)</span></h2>
                 
                 <p class="add-friends-description-text">Invite them to join <a href="" class="underline text-indigo-500">here.</a> <br/></p>
             </div>
@@ -134,7 +137,6 @@ const props = defineProps({
         required: true,
     },
 });
-
 
 const route = useRoute();
 const suggestedFriendsForShelf = ref([]);
@@ -199,6 +201,13 @@ const currentUserCanRemoveContributors = () => {
     }
 }
 
+function removeFromList(listName, user_id){
+    if(listName === 'contributor'){
+        bookshelfContributors.value = bookshelfContributors.value.filter((contributor) => contributor.user_id !== user_id);
+    } else if(listName === 'member'){
+        bookshelfMembers.value = bookshelfMembers.value.filter((member) => member.user_id !== user_id);
+    }
+}
 
 onMounted(async () => {
     hiddenFriends = localStorage.getItem(`${route.params.bookshelf}-${route.params.user}-hidden-friends`);
@@ -209,7 +218,7 @@ onMounted(async () => {
     // wait for all data to load then set dataLoaded to true.
     Promise.all([loadShelfContributorsPromise, suggestedFriendsPromise, loadShelfMembersPromise]).then(() => {
         dataLoaded.value = true;
-    })
+    });
 });
 </script>
 <style scoped>
@@ -243,14 +252,15 @@ onMounted(async () => {
 }
 
 .add-friends-heading-text {
+    color: var(--stone-700);
     font-size: var(--font-2xl);
-    color: var(---stone-700);
+    font-weight: 500;
 }
 
 .add-friends-description-text {
-    padding-top: var(--padding-sm);
+    padding-top: 2px;
     font-size: var(--font-lg);
-    color: var(---stone-500);
+    color: var(--stone-500);
 }
 
 .loading {

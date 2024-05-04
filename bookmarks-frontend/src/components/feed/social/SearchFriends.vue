@@ -39,7 +39,11 @@ const props = defineProps({
     disabled: {
         type: Boolean,
         default: false,
-    }
+    },
+    bookshelfId: {
+        type: String,
+        required: true,
+    },
 });
 
 const emit = defineEmits(['friends'])
@@ -47,7 +51,7 @@ const { debounce } = helpersCtrl;
 const searchData = ref('')
 
 async function searchRequest(){
-    await db.get(urls.user.searchUsersFriends(searchData.value)).then((res) => {
+    await db.get(urls.user.searchUsersFriends(searchData.value), props.bookshelf_id).then((res) => {
         console.log(res);
         emit('search-friends-result', res);
     });

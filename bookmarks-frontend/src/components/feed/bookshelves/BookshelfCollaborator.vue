@@ -17,20 +17,9 @@
             <!-- <p id="role" class="collaborator-role">role: {{ friend?.role || role || 'unassigned' }}</p>   -->
         </div>
         <!-- Only owner can remove contributors -->
-        <button v-if="friend?.role === 'owner'" 
-            type="button"
-            class="btn ml-auto"
-            :class="{ 
-                'btn-danger': role === 'collaborator', 
-                'btn-role-disabled': role !== 'creator', // Owner cannot be removed
-            }"
-            :disabled="role === 'creator'"
-        >
-            remove
-        </button>
 
         <!-- Stuff for adding permissions to your friends -->
-        <form v-if="!['owner', 'contributor'].includes(role) && !currentUserCanRemoveContributors" class="ml-auto collab-type-form" @submit.prevent="setFriendAsCollaboratorType">
+        <form v-if="isSuggested && !['owner', 'contributor'].includes(role)" class="ml-auto collab-type-form" @submit.prevent="setFriendAsCollaboratorType">
             <select class="collab-select" name="" id="collaborator-types" v-model="collabType">
                 <option value="contributor">contributor</option>
 
@@ -42,8 +31,18 @@
             <button type="button" class="btn btn-red-100" @click="$emit('remove-friend-from-suggested', friend?.id)">ignore</button>
         </form>
 
-        <form v-if="currentUserIsAdmin" class="ml-auto collab-type-form" @submit.prevent="removeContributorFromBookshelf()">
-            <button type="submit" class="btn btn-red-100">Remove</button>
+        <form v-if="!isSuggested && currentUserIsAdmin" class="ml-auto collab-type-form" @submit.prevent="removeFromBookshelf()">
+            <button type="submit"
+                class="btn ml-auto"
+                :class="{ 
+                    'btn-danger': role === 'collaborator', 
+                    'btn-role-disabled': role === 'owner', // Owner cannot be removed
+                    'btn-red-100': ['contributor', 'member'].includes(role),
+                }"
+                :disabled="role === 'owner'"
+            >
+                Remove
+            </button>
         </form>
     </div>
 </template>
@@ -71,10 +70,14 @@ const props = defineProps({
         type: Boolean,
         required: false,
         default: false,
+    },
+    isSuggested: {
+        type: Boolean,        
+        default: false,
     }
 });
 
-const emit = defineEmits(['added-member', 'added-contributor']);
+const emit = defineEmits(['added-member', 'added-contributor', 'removed-contributor', 'removed-member']);
 const collabType = ref('none');
 const hasBeenAdded = ref(false);
 
@@ -82,15 +85,15 @@ async function setFriendRoleOnBookshelf() {
     console.log('firing this shit');
     try {
         if(collabType.value === 'collaborator'){
-            await db.put(urls.rtc.setContributorOnShelf(props.bookshelfId), {'contributor_id': props.friend.id}, true).then((res) => {
-                console.log(res);
+            await db.put(urls.rtc.setContributorOnShelf(props.bookshelfId), 
+                {'contributor_id': props.friend.id}, true).then((res) => {
                 if(res?.status === 200){
                     emit('added-collaborator', props.friend.id);
                 }
             })
         } else if(collabType.value === 'member'){
-            await db.put(urls.rtc.setMemberOnShelf(props.bookshelfId), {'member_id': props.friend.id}, true).then((res) => {
-                console.log(res);
+            await db.put(urls.rtc.setMemberOnShelf(props.bookshelfId), 
+               {'member_id': props.friend.id}, true).then((res) => {
                 if(res?.status === 200){
                     emit('added-member', props.friend.id);
                 }
@@ -103,23 +106,31 @@ async function setFriendRoleOnBookshelf() {
     }
 }
 
-async function removeContributorFromBookshelf() {
-    if(props.role === 'contributor'){
-        await db.put(urls.rtc.removeContributorFromShelf(props.friend.id), {'contributor_id': props.friend.id})
+async function removeFromBookshelf() {
+    if (props.friend.role === 'contributor') {
+        await db.put(urls.rtc.removeContributorFromShelf(props.bookshelfId), 
+            { 'contributor_id': props.friend.user_id }).then(() => {
+
+            emit('removed-contributor', props.friend.user_id);
+        });
+    } else if (props.friend.role === 'member') {
+        await db.put(urls.rtc.removeMemberFromShelf(props.bookshelfId), 
+            { 'member_id': props.friend.user_id }).then(() => {
+                
+            emit('removed-member', props.friend.user_id);
+        });
     }
 }
 
 </script>
 <style scoped>
     .collaborator {
-        margin-left: auto;
         margin-right: auto;
         padding-top: var(--padding-sm);
         padding-bottom: var(--padding-sm);
         display: flex;
         align-items: center;
         justify-content: space-between;
-        max-width: 640px;
         min-width: 280px;
         text-align: start;
         column-gap: 12px;

@@ -788,6 +788,7 @@ class BookshelfCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
             return b.id
             """
         )
+        print(bookshelf_id, member_id, user_id)
         result = tx.run(query, bookshelf_id=bookshelf_id, member_id=member_id, user_id=user_id)
         response = result.single()
         return response is not None
