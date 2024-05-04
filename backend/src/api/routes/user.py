@@ -459,7 +459,21 @@ async def get_friend_list(user_id: str,
     """
     if not current_user:    
         raise HTTPException(400, "Unauthorized")
-    if user_id:
+    if not user_id:
+        raise HTTPException(400, "Bad request")
+    
+    if bookshelf_id:
+        friend_list = user_repo.get_friend_list_no_bookshelf_access(user_id=user_id,current_user_id=current_user.id, bookshelf_id=bookshelf_id)
+        if includes_pending:
+            print('pending dude')
+            if current_user.id == user_id:
+                pending_count = user_repo.get_pending_friend_count(user_id=user_id)
+                return JSONResponse(content={
+                        "friends": jsonable_encoder(friend_list), 
+                        "pending_count": jsonable_encoder(pending_count)
+                    })   
+        return JSONResponse(content={"data": jsonable_encoder(friend_list)})
+    else:
         friend_list = user_repo.get_friend_list(user_id=user_id,current_user_id=current_user.id)
         if includes_pending:
             print('pending dude')
@@ -470,7 +484,6 @@ async def get_friend_list(user_id: str,
                         "pending_count": jsonable_encoder(pending_count)
                     })   
         return JSONResponse(content={"data": jsonable_encoder(friend_list)})
-    
 @router.get("/{user_id}/friend_requests",
             name="user:friend_requests")
 async def get_friend_request_list(user_id: str, 

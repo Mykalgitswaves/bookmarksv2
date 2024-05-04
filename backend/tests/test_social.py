@@ -40,6 +40,8 @@ def setup_class(request):
         "email": request.cls.email_friend,
         "password": request.cls.password_friend,
     }
+
+    # Create a fake user in the database
     response = requests.post(f"{request.cls.endpoint}/api/auth/signup", headers=headers, data=data)
     assert response.status_code == 200, "Testing Signup Form"
 

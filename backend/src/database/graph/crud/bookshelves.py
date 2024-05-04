@@ -270,7 +270,8 @@ class BookshelfCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
                 incomingFollowStatus,
                 outgoingFriendStatus.status AS outgoingFriendStatus,
                 outgoingBlockStatus,
-                outgoingFollowStatus
+                outgoingFollowStatus,
+                r.type as accessType
             """
         )
         result = tx.run(query, 
@@ -307,7 +308,8 @@ class BookshelfCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
                 created_date=response['user']['created_date'],
                 profile_img_url=profile_img_url,
                 relationship_to_current_user=relationship_to_current_user,
-                full_name=response['user']['full_name']
+                full_name=response['user']['full_name'],
+                role=response['accessType']
             ))
 
             contributor_ids.append(response['user']['id'])

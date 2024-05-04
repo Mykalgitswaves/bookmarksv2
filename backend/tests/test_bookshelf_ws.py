@@ -142,7 +142,7 @@ class TestBookshelfWS:
             small_img_url = "http://books.google.com/books/content?id=_uawAAAAIAAJ&printsec=frontcover&img=1&zoom=5&imgtk=AFLRE732DLT-Q5P4M6ll9fpW5DH-Lz-FrGxwAQptgERj0vxnZYrLz57WvWzJ5k8Rr-OVQdQBOAImZNKuZQkgOgOO1HH2l5tUMj62Zngs0JbkXfsQIy3PcS_v8oHhB3XB7M0irmn4gM9g&source=gbs_api"
             data_to_send = {"type": "add", "token": ws_token, "book": {"title": "Second Foundation", 
                                                                        "small_img_url": small_img_url,
-                                                                       "authors": ["Isaac Asimov"],
+                                                                       "author_names": ["Isaac Asimov"],
                                                                        "id": "c707fd781-dd1a-4ba7-91f1-f1a2e7ecb872",
                                                                        "note_for_shelf": "This is a note for the shelf."}}
             await ws.send(json.dumps(data_to_send))
@@ -175,7 +175,7 @@ class TestBookshelfWS:
             # Send data to add a book to the server
             data_to_send = {"type": "add", "token": ws_token, "book": {"title": "Second Foundation", 
                                                                        "small_img_url": small_img_url,
-                                                                       "authors": ["Isaac Asimov"],
+                                                                       "author_names": ["Isaac Asimov"],
                                                                        "id": "c707fd781-dd1a-4ba7-91f1-f1a2e7ecb872"}}
             await ws.send(json.dumps(data_to_send))
 
@@ -209,7 +209,7 @@ class TestBookshelfWS:
             small_img_url = "http://books.google.com/books/publisher/content?id=zJiJDQAAQBAJ&printsec=frontcover&img=1&zoom=5&edge=curl&imgtk=AFLRE7101pEA1qPqLGWj3HZGYk066aVnUx5od6ELqnAUw6y7YJyuaCg67i-feAewSsl9o0_ya__x6cl7HlnlEPLkxS1MtkyDzlgXO3s0KVRzcahD0_9gOYwFQPfJkqrQtUOdeffhxQSL&source=gbs_api"
             data_to_send = {"type": "add", "token": ws_token, "book": {"title": "What Are You Looking At?", 
                                                                        "small_img_url": small_img_url,
-                                                                       "authors": ["Will Gompertz"],
+                                                                       "author_names": ["Will Gompertz"],
                                                                        "id": "c5af309c7-3ac9-4d32-a7ce-32cbe818c15d"}}
             await ws.send(json.dumps(data_to_send))
 

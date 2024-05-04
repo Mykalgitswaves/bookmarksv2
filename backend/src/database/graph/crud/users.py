@@ -396,6 +396,81 @@ class UserCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
         
         return friend_list
     
+    def get_friend_list_no_bookshelf_access(self,
+                                            user_id:str, 
+                                            current_user_id:str,
+                                            bookshelf_id:str):
+        """
+        Returns all the friends of user and their relationships to current_user
+        """
+        with self.driver.session() as session:
+            result = session.execute_read(self.get_friend_list_no_bookshelf_access_query, 
+                                          user_id=user_id, 
+                                          current_user_id=current_user_id,
+                                          bookshelf_id=bookshelf_id)  
+        return(result)
+    
+    @staticmethod
+    def get_friend_list_no_bookshelf_access_query(tx, 
+                                                  user_id:str, 
+                                                  current_user_id:str,
+                                                  bookshelf_id:str):
+        query = """
+        match (user:User {id:$user_id})
+        match (currentUser:User {id:$current_user_id})
+        match (user)-[friendRel:FRIENDED {status:"friends"}]-(toUser:User {disabled:False})
+        OPTIONAL MATCH (currentUser)<-[incomingFriendStatus:FRIENDED]-(toUser)
+        OPTIONAL MATCH (currentUser)-[outgoingFriendStatus:FRIENDED]->(toUser)
+        OPTIONAL MATCH (currentUser)<-[incomingBlockStatus:BLOCKED]-(toUser)
+        OPTIONAL MATCH (currentUser)-[outgoingBlockStatus:BLOCKED]->(toUser)
+        OPTIONAL MATCH (currentUser)<-[incomingFollowStatus:FOLLOWS]-(toUser)
+        OPTIONAL MATCH (currentUser)-[outgoingFollowStatus:FOLLOWS]->(toUser)
+        WHERE NOT EXISTS((toUser)-[:HAS_BOOKSHELF_ACCESS]->(:Bookshelf {id:$bookshelf_id}))
+        RETURN toUser, currentUser,
+            incomingFriendStatus.status AS incomingFriendStatus,
+            incomingBlockStatus,
+            incomingFollowStatus,
+            outgoingFriendStatus.status AS outgoingFriendStatus,
+            outgoingBlockStatus,
+            outgoingFollowStatus
+        """
+        
+        result = tx.run(query,user_id=user_id, current_user_id=current_user_id)
+        friend_list = []
+        for response in result:
+            if 'profile_img_url' in response['toUser']:
+                profile_img_url = response['toUser']['profile_img_url']
+            else:
+                profile_img_url = None
+
+            if response['incomingFriendStatus'] == 'friends' or response['outgoingFriendStatus'] == 'friends':
+                relationship_to_current_user = 'friend'
+            elif response['incomingFriendStatus'] == 'pending':
+                relationship_to_current_user = 'anonymous_user_friend_requested'
+            elif response['outgoingFriendStatus'] == 'pending':
+                relationship_to_current_user = 'current_user_friend_requested'
+            elif response['incomingBlockStatus']:
+                relationship_to_current_user = 'current_user_blocked_by_anonymous_user'
+            elif response['outgoingBlockStatus']:
+                relationship_to_current_user = 'anonymous_user_blocked_by_current_user'
+            elif response['toUser']['id'] == current_user_id:
+                relationship_to_current_user = 'is_current_user'
+            else:
+                relationship_to_current_user = 'stranger'
+
+            friend = FriendUser(
+                id=response['toUser']['id'],
+                username=response['toUser']['username'],
+                disabled=False,
+                created_date=response['toUser']['created_date'],
+                profile_img_url=profile_img_url,
+                relationship_to_current_user=relationship_to_current_user
+            )
+
+            friend_list.append(friend)
+        
+        return friend_list
+
     def get_simple_friend_list(self,user_id:str):
         """
         Returns all the friends of user and their relationships to current_user
