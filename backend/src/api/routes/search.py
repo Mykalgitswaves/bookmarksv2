@@ -75,7 +75,6 @@ def search_for_param_friend(param: str,
     """
     
     if bookshelf_id:
-        print("searching with bookshelf id")
         search_result = search_repo.get_friends_full_text_search_no_bookshelf_access(search_query=param, 
                                                       skip=skip, 
                                                       limit=limit,
@@ -86,5 +85,5 @@ def search_for_param_friend(param: str,
                                                         skip=skip, 
                                                         limit=limit,
                                                         current_user_id=current_user.id)
-    print(search_result)
+    
     return JSONResponse(content={"data": jsonable_encoder(search_result)})

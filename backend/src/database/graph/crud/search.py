@@ -265,7 +265,6 @@ class SearchCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
         SKIP $skip
         LIMIT $limit
         """
-        print(search_query, skip, limit, current_user_id, bookshelf_id, "search params")
         result = tx.run(query, 
                         search_query=search_query, 
                         skip=skip, 
