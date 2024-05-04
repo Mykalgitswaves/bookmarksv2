@@ -1,7 +1,7 @@
 <template>
     <div class="collaborator">
         <!-- We need to replace this with actual profile images -->
-        <svg class="extra small-profile-image" xmlns="http://www.w3.org/2000/svg" version="1.1" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:svgjs="http://svgjs.dev/svgjs" viewBox="0 0 700 700" width="50" ><defs><linearGradient gradientTransform="rotate(183, 0.5, 0.5)" x1="50%" y1="0%" x2="50%" y2="100%" id="ffflux-gradient"><stop stop-color="hsl(267, 172%, 20%)" stop-opacity="1" offset="0%"></stop><stop stop-color="hsl(100, 100%, 80%)" stop-opacity="1" offset="100%"></stop></linearGradient><filter id="ffflux-filter" x="-20%" y="-20%" width="140%" height="140%" filterUnits="objectBoundingBox" primitiveUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+        <!-- <svg class="extra small-profile-image" xmlns="http://www.w3.org/2000/svg" version="1.1" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:svgjs="http://svgjs.dev/svgjs" viewBox="0 0 700 700" width="50" ><defs><linearGradient gradientTransform="rotate(183, 0.5, 0.5)" x1="50%" y1="0%" x2="50%" y2="100%" id="ffflux-gradient"><stop stop-color="hsl(267, 172%, 20%)" stop-opacity="1" offset="0%"></stop><stop stop-color="hsl(100, 100%, 80%)" stop-opacity="1" offset="100%"></stop></linearGradient><filter id="ffflux-filter" x="-20%" y="-20%" width="140%" height="140%" filterUnits="objectBoundingBox" primitiveUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
             <feTurbulence type="fractalNoise" baseFrequency="0.005 0.003" numOctaves="1" seed="196" stitchTiles="stitch" x="0%" y="0%" width="100%" height="100%" result="turbulence"></feTurbulence>
 
             <feGaussianBlur stdDeviation="20 0" x="0%" y="0%" width="100%" height="100%" in="turbulence" edgeMode="duplicate" result="blur"></feGaussianBlur>
@@ -9,7 +9,7 @@
             <feBlend mode="color-dodge" x="0%" y="0%" width="100%" height="100%" in="SourceGraphic" in2="blur" result="blend"></feBlend>
 
             </filter></defs><rect width="100%" height="100%" fill="url(#ffflux-gradient)" filter="url(#ffflux-filter)"></rect>
-        </svg>
+        </svg> -->
 
         <div>
             <h4 class="collaborator-username">{{ friend?.username || currentUserName }}</h4>
@@ -28,7 +28,7 @@
 
             <button type="submit" class="btn btn-green-100" @click="setFriendRoleOnBookshelf(friend.id, collabType)">add</button>
 
-            <button type="button" class="btn btn-red-100" @click="$emit('remove-friend-from-suggested', friend?.id)">ignore</button>
+            <!-- <button type="button" class="btn btn-red-100" @click="$emit('remove-friend-from-suggested', friend?.id)">ignore</button> -->
         </form>
 
         <form v-if="!isSuggested" class="ml-auto collab-type-form" @submit.prevent="removeFromBookshelf()">

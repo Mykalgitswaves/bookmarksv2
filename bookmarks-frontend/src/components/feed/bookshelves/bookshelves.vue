@@ -180,6 +180,7 @@
     font-size: var(--font-xl);
     font-weight: 400;
     color: var(--stone-800);
+    word-break: anywhere;
 }
 
 .bookshelf-description {

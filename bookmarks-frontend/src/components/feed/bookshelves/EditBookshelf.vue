@@ -381,7 +381,8 @@ window.onbeforeunload = () => {
         font-size: var(--font-4xl);
         font-weight: 500;
         color: var(--stone-700);
-        line-height: 1.5;        
+        line-height: 1.5;
+        word-break: break-all;     
     }
 
     .bookshelf-description {

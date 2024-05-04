@@ -95,3 +95,10 @@
   font-family: var(--fancy-script);
   color: var(--stone-600);
 }
+
+.section-heading {
+  font-size: var(--font-lg);
+  font-family: var(--fancy-script);
+  color: var(--stone-600);
+  font-weight: 500;
+}
