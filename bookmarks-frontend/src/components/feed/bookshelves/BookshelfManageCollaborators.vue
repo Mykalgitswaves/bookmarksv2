@@ -27,6 +27,7 @@
                 v-if="bookshelfOwner"
                 :role="bookshelfOwner?.role"
                 :friend="bookshelfOwner" 
+                :current-user-is-admin="currentUserCanRemoveContributors()"
             />
 
             <div class="divider"></div>
