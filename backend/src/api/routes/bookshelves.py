@@ -386,7 +386,7 @@ async def get_contributors(bookshelf_id: str,
     if current_user.id not in contributor_ids:
         raise HTTPException(status_code=403, detail="User is not authorized to view contributors to this bookshelf")
     else:
-        return JSONResponse(content={"contributors": jsonable_encoder(filter_author_out_from_contributors)})
+        return JSONResponse(content={"contributors": jsonable_encoder(contributors)})
     
 @router.get("/{bookshelf_id}/members",
             name="bookshelf:get_members")
