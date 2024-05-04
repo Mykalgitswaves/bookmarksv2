@@ -454,7 +454,7 @@ class TestBookshelfWS:
         # Get just the members
         response = requests.get(f"{self.endpoint}/api/bookshelves/{bookshelf_id}/members", headers=headers)
         assert response.status_code == 200, "Getting Members"
-        assert len(response.json()['members']) == 2, "Getting Members"
+        assert len(response.json()['members']) == 1, "Getting Members"
         print(response.json()['members'])
 
         # Get user_2s member bookshelves

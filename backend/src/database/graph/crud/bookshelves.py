@@ -328,7 +328,7 @@ class BookshelfCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
             """
             match (currentUser:User {id:$current_user_id})
             MATCH (bookshelf:Bookshelf {id:$bookshelf_id})<-[r:HAS_BOOKSHELF_ACCESS]-(user:User)
-            where r.type in ["owner", "member", "contributor"]
+            where r.type = "member"
             OPTIONAL MATCH (currentUser)<-[incomingFriendStatus:FRIENDED]-(user)
             OPTIONAL MATCH (currentUser)-[outgoingFriendStatus:FRIENDED]->(user)
             OPTIONAL MATCH (currentUser)<-[incomingBlockStatus:BLOCKED]-(user)
