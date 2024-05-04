@@ -435,7 +435,7 @@ class UserCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
             outgoingFollowStatus
         """
         
-        result = tx.run(query,user_id=user_id, current_user_id=current_user_id)
+        result = tx.run(query,user_id=user_id, current_user_id=current_user_id, bookshelf_id=bookshelf_id)
         friend_list = []
         for response in result:
             if 'profile_img_url' in response['toUser']:

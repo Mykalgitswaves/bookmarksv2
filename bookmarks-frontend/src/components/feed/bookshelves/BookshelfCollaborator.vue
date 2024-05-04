@@ -16,13 +16,13 @@
 
             <p id="role" class="collaborator-role">role: {{ friend?.role || role || 'unassigned' }}</p>  
         </div>
-
-        <button v-if="friend?.role"
+        <!-- Only owner can remove contributors -->
+        <button v-if="friend?.role === 'owner'" 
             type="button"
             class="btn ml-auto"
             :class="{ 
                 'btn-danger': role === 'collaborator', 
-                'btn-role-disabled': role === 'creator',
+                'btn-role-disabled': role !== 'creator', // Owner cannot be removed
             }"
             :disabled="role === 'creator'"
         >
@@ -30,7 +30,7 @@
         </button>
 
         <!-- Stuff for adding permissions to your friends -->
-        <form v-if="!['creator', 'contributor'].includes(role) && !currentUserCanRemoveContributors" class="ml-auto collab-type-form" @submit.prevent="setFriendAsCollaboratorType">
+        <form v-if="!['owner', 'contributor'].includes(role) && !currentUserCanRemoveContributors" class="ml-auto collab-type-form" @submit.prevent="setFriendAsCollaboratorType">
             <select class="collab-select" name="" id="collaborator-types" v-model="collabType">
                 <option value="contributor">contributor</option>
 

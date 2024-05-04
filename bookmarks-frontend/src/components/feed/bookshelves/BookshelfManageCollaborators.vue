@@ -19,7 +19,8 @@
             </div>
         </div>
 
-        <BookshelfCollaborator role="creator" :friend="{username: 'michaelfinal.png@gmail.com', role: 'creator'}"/>
+        <BookshelfCollaborator v-if="bookshelfOwner" :role="bookshelfOwner?.role" :friend="bookshelfOwner" />
+
         <!-- All contributors of shelf. -->
         <ul class="collaborators-list">
             <li v-for="friend in bookshelfContributors" :key="friend?.id">
@@ -35,46 +36,32 @@
         <div class="divider"></div>
 
         <!-- If user has friends render this shit -->
-        <div v-if="dataLoaded && suggestedFriendsForShelf?.length">
-            <div class="flex items-center gap-5 justify-center">
-                <button type="button"
-                    class="collaborator-tab"
-                    :class="{'active': currentView === 'close-friends'}"
-                    @click="currentView = 'close-friends'"
-                >
-                    Add friends to your bookshelf
-                </button>
+        <div v-if="dataLoaded">
+            <h3 class="collaborator-tab active text-center">
+                Add friends to your bookshelf
+            </h3>
 
-                <button type="button"
-                    class="collaborator-tab"
-                    :class="{'active': currentView === 'search-friends'}"
-                    @click="currentView  = 'search-friends'"
-                    >
-                    <!-- :disabled="friends.length < 5" -->
-                    Search for friends
-                </button>
-            </div>
-            
-            <div v-if="currentView === 'search-friends'">
+            <ul class="collaborators-list" v-if="currentView === 'close-friends'">
                 <SearchUsers :friends-only="true"
+                    class="mb-5"
                     label-above="Friends can be either members or collaborators of your bookshelf."
                     @search-friends-result="(friendData) => searchFriendsResult = friendData"
                 />
                 
-                <ul class="collaborators-list">
+                <div v-if="searchFriendsResult?.length">
                     <li v-for="friend in searchFriendsResult" :key="friend?.id">
                         <BookshelfCollaborator :friend="friend"/>
                     </li>
-                </ul>
-            </div>
+                </div>
 
-            <ul class="collaborators-list" v-if="currentView === 'close-friends'">
-                <li v-for="friend in suggestedFriendsForShelf" :key="friend?.id">
-                    <BookshelfCollaborator :friend="friend" 
+                <div v-else-if="suggestedFriendsForShelf?.length">
+                    <li v-for="friend in suggestedFriendsForShelf" :key="friend?.id">
+                        <BookshelfCollaborator :friend="friend" 
                         :bookshelf-id="route.params.bookshelf"
                         @remove-friend-from-suggested="(id) => removeFriendFromSuggested(id)"
-                    />
-                </li>
+                        />
+                    </li>
+                </div>
             </ul>
             <!-- <PaginationControls @increment="(startEndInts) => setPagination(startEndInts)"/> -->
         </div>
@@ -83,17 +70,17 @@
         <div v-if="dataLoaded && !suggestedFriendsForShelf?.length">
             <!-- Only render one of these depending on whether or not users have pending friend requests or not-->
             <div class="collaborator-cta" v-if="pendingFriendCount">
-                <h2>You haven't connected with your friends on (name of our app) yet.</h2>
+                <h2 class="add-friends-heading-text">You haven't connected with your friends on (name of our app) yet.</h2>
                 
-                <p>Invite them to join <a href="" class="underline">here.</a> <br/></p>
+                <p class="add-friends-description-text">Invite them to join <a href="" class="underline text-indigo-500">here.</a> <br/></p>
             </div>
 
             <div class="collaborator-cta" v-else>
-                <h2>You haven't connected with your friends on (name of our app) yet.</h2>
+                <h2 class="add-friends-heading-text">You haven't connected with your friends on (name of our app) yet.</h2>
                 
-                <p>Accept your requests to add a friend to this bookshelf</p>
+                <p class="add-friends-description-text">Accept your requests to add a friend to this bookshelf</p>
 
-                <a href="" class="underline">
+                <a href="" class="underline text-indigo-500">
                     Accept friend requests
                 </a>
             </div>
@@ -124,6 +111,7 @@ const route = useRoute();
 const suggestedFriendsForShelf = ref([]);
 const pendingFriendCount = ref(0);
 const bookshelfContributors = ref([]);
+const bookshelfOwner = ref(null);
 const currentView = ref('close-friends');
 const searchFriendsResult = ref([]);
 const dataLoaded = ref(false);
@@ -144,7 +132,7 @@ const setPagination = (startEndInts) => {
 }
 
 async function loadSuggestedFriends(){
-    await db.get(`${urls.user.getFriends(route.params.user)}/?includes_pending=true`).then((res) => {
+    await db.get(`${urls.user.getFriends(route.params.user)}/?includes_pending=true&bookshelf_id=${route.params.bookshelf}`).then((res) => {
         suggestedFriendsForShelf.value = res.friends;
         // DO THIS LATER BUT GET THIS SHIT WORKING FIRST.
         // friends.value = friends.value.filter((friend) => {
@@ -158,9 +146,11 @@ async function loadSuggestedFriends(){
     });
 };
 
-async function loadShelfCollaborators(){
+async function loadShelfContributors(){
     await db.get(urls.rtc.getBookshelfContributors(route.params.bookshelf)).then((res) => {
-        bookshelfContributors.value = res.contributors
+        bookshelfOwner.value = res.contributors.find((contributor) => contributor.role === 'owner');
+
+        bookshelfContributors.value = res.contributors.filter((contributor) => contributor.role !== 'owner');
     })
 }
 
@@ -185,9 +175,9 @@ const currentUserCanRemoveContributors = () => {
 onMounted(async () => {
     hiddenFriends = localStorage.getItem(`${route.params.bookshelf}-${route.params.user}-hidden-friends`);
     const suggestedFriendsPromise = await loadSuggestedFriends()
-    const loadShelfCollaboratorsPromise = await loadShelfCollaborators();
+    const loadShelfContributorsPromise = await loadShelfContributors();
     // wait for all data to load then set dataLoaded to true.
-    Promise.all([loadShelfCollaboratorsPromise, suggestedFriendsPromise]).then(() => {
+    Promise.all([loadShelfContributorsPromise, suggestedFriendsPromise]).then(() => {
         dataLoaded.value = true;
     })
 });
@@ -220,5 +210,16 @@ onMounted(async () => {
 .collaborator-tab.active {
     color: var(--indigo-500);
     border-bottom-color: var(--indigo-300);
+}
+
+.add-friends-heading-text {
+    font-size: var(--font-2xl);
+    color: var(---stone-700);
+}
+
+.add-friends-description-text {
+    padding-top: var(--padding-sm);
+    font-size: var(--font-lg);
+    color: var(---stone-500);
 }
 </style>

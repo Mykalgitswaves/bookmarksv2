@@ -19,13 +19,13 @@
             </template>
         </Bookshelves>
 
-        <Bookshelves :bookshelves="[]">
+        <Bookshelves :bookshelves="[]" :data-loaded="true">
             <template v-slot:heading>
-                <h1 class="bookshelf-wrapper-title font-medium fancy">Liked bookshelves</h1>
+                <h1 class="bookshelf-wrapper-title font-medium fancy">Followed bookshelves</h1>
             </template>
 
             <template v-slot:empty-shelf>
-                <p>You haven't liked any bookshelves yet</p>
+                <p>You haven't followed any bookshelves yet</p>
             </template>
         </Bookshelves>
     </div>

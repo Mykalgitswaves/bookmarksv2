@@ -90,7 +90,11 @@
         },
         isOnSectionPage: {
             type: Boolean,
-        }
+        },
+        sectionId: {
+            type: String,
+            required: false,
+        },
     })
 
     function createNewBookshelf(){
