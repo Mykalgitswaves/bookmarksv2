@@ -141,7 +141,26 @@ class BookshelfCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
             )
             bookshelves.append(bookshelf)
         return bookshelves
-    
+    def get_explore_bookshelves_for_user(self, user_id, start_index, end_index):
+        with self.driver.session() as session:
+            result = session.read_transaction(self.get_explore_bookshelves_for_user_query, user_id, start_index, end_index)
+        return result
+    @staticmethod
+    def get_explore_bookshelves_for_user_query(tx, user_id, start_index, end_index):
+        query = (
+            """
+            MATCH (u:User {id: $user_id})
+            MATCH (b:Bookshelf {visibility: "public"})<-[r:HAS_BOOKSHELF_ACCESS]-(u)
+            WHERE r.type NOT IN ["owner", "contributor", "member"]
+            RETURN b
+            SKIP {start_index}
+            LIMIT {end_index}
+            """
+        )
+        result = tx.run(query, user_id=user_id, start_index=start_index, end_index=end_index)
+        response = result.single()
+        print(response)
+
     def get_bookshelves_contributed_to_by_user(self, user_id):
         with self.driver.session() as session:
             result = session.read_transaction(self.get_bookshelves_contributed_to_by_user_query, user_id)
@@ -303,7 +322,7 @@ class BookshelfCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
                 relationship_to_current_user = 'stranger'
 
             contributors.append(BookshelfContributor(
-                user_id=response['user']['id'],
+                id=response['user']['id'],
                 username=response['user']['username'],
                 created_date=response['user']['created_date'],
                 profile_img_url=profile_img_url,
@@ -373,7 +392,7 @@ class BookshelfCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
                 relationship_to_current_user = 'stranger'
 
             members.append(BookshelfMember(
-                user_id=response['user']['id'],
+                id=response['user']['id'],
                 username=response['user']['username'],
                 created_date=response['user']['created_date'],
                 profile_img_url=profile_img_url,

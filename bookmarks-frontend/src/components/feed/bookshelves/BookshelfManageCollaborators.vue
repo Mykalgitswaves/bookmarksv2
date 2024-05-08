@@ -47,7 +47,7 @@
                 </h2>
 
                 <ul class="collaborators-list">
-                    <li v-for="friend in bookshelfContributors" :key="friend?.id">
+                    <li v-for="(friend, index) in bookshelfContributors" :key="friend.id">
                         <BookshelfCollaborator role="contributor"
                             :friend="friend" 
                             :bookshelf-id="route.params.bookshelf"
@@ -69,7 +69,7 @@
                 </h2>
 
                 <ul class="collaborators-list">
-                    <li v-for="friend in bookshelfMembers" :key="friend?.id">
+                    <li v-for="(friend, index) in bookshelfMembers" :key="friend?.id">
                         <BookshelfCollaborator role="contributor"
                             :friend="friend" 
                             :bookshelf-id="route.params.bookshelf"
@@ -90,27 +90,35 @@
             </h3>
 
             <ul class="collaborators-list">
-                <SearchUsers v-if="suggestedFriendsForShelf?.length" 
-                    :friends-only="true"
-                    class="mb-5"
-                    :bookshelf-id="route.params.bookshelf"
-                    label-above="Friends added to this shelf as members or contributors won't appear in search results"
-                    @search-friends-result="(friendData) => searchFriendsResult = friendData"
-                />
+                <div class="mx-auto">
+                    <SearchUsers v-if="suggestedFriendsForShelf?.length" 
+                        :friends-only="true"
+                        class="mb-5"
+                        :bookshelf-id="route.params.bookshelf"
+                        label-above="Friends added to this shelf as members or contributors won't appear in search results"
+                        @search-friends-result="(friendData) => searchFriendsResult = friendData"
+                    />
+                </div>
                 
                 <div v-if="searchFriendsResult?.length">
                     <li v-for="friend in searchFriendsResult" :key="friend?.id">
-                        <BookshelfCollaborator :friend="friend"/>
+                        <BookshelfCollaborator :friend="friend"
+                            @added-contributor="(user_id) => addFriendToList('contributor', user_id)"
+                            @added-member="(user_id) => addFriendToList('member', user_id)"
+                        />
                     </li>
                 </div>
 
                 <div v-else-if="suggestedFriendsForShelf?.length">
                     <li v-for="friend in suggestedFriendsForShelf" :key="friend?.id">
                         <BookshelfCollaborator :friend="friend" 
-                        :bookshelf-id="route.params.bookshelf"
-                        :is-suggested="true"
-                        @remove-friend-from-suggested="(id) => removeFriendFromSuggested(id)"
+                            :bookshelf-id="route.params.bookshelf"
+                            :is-suggested="true"
+                            @added-contributor="(user_id) => addFriendToList('contributor', user_id)"
+                            @added-member="(user_id) => addFriendToList('member', user_id)"
                         />
+                        <!-- Figure out what we are doing with remove friend from suggested. -->
+                        <!-- @remove-friend-from-suggested="(id) => removeFriendFromSuggested(id)" -->
                     </li>
                 </div>
             </ul>
@@ -137,14 +145,14 @@
             </div>
         </div>
 
-        <div v-if="!dataLoaded" class="loading">Loading <IconLoading /></div>
+        <div v-if="!dataLoaded" class="mx-auto flex gap-2 items-center">Loading <IconLoading class="loading-spinner"/></div>
     </div>
 </template>
 
 <script setup>
 import BookshelfCollaborator from './BookshelfCollaborator.vue';
 import SearchUsers from '../social/SearchFriends.vue';
-import { ref, onMounted, computed } from 'vue';
+import { ref, onMounted, computed, toRaw } from 'vue';
 import { db } from '../../../services/db';
 import { urls } from '../../../services/urls';
 import { useRoute } from 'vue-router';
@@ -158,14 +166,13 @@ const props = defineProps({
         required: true,
     },
 });
-
+const emit = defineEmits(['added-friend-as-contributor', 'removed-friend-as-contributor']);
 const route = useRoute();
 const suggestedFriendsForShelf = ref([]);
 const pendingFriendCount = ref(0);
 const bookshelfContributors = ref([]);
 const bookshelfMembers = ref([]);
 const bookshelfOwner = ref(null);
-const currentView = ref('close-friends');
 const searchFriendsResult = ref([]);
 const dataLoaded = ref(false);
 let hiddenFriends = [];
@@ -186,6 +193,7 @@ const setPagination = (startEndInts) => {
 
 async function loadSuggestedFriends(){
     await db.get(urls.user.getFriends(route.params.user), `includes_pending=true&bookshelf_id=${route.params.bookshelf}`).then((res) => {
+        console.log(res)
         suggestedFriendsForShelf.value = res.friends;
         pendingFriendCount.value = res.pendingCount;
     });
@@ -224,10 +232,34 @@ const currentUserCanRemoveContributors = () => {
 
 function removeFromList(listName, user_id){
     if(listName === 'contributor'){
-        bookshelfContributors.value = bookshelfContributors.value.filter((contributor) => contributor.user_id !== user_id);
+        bookshelfContributors.value = bookshelfContributors.value.filter((contributor) => contributor.id !== user_id);
     } else if(listName === 'member'){
-        bookshelfMembers.value = bookshelfMembers.value.filter((member) => member.user_id !== user_id);
+        bookshelfMembers.value = bookshelfMembers.value.filter((member) => member.id !== user_id);
     }
+    emit('removed-friend-as-contributor');
+}
+
+function addFriendToList(listName, user_id){
+    console.log(listName, user_id)
+    let friend = suggestedFriendsForShelf.value.find((user) => user.id === user_id);
+    
+    if (friend) {
+        friend = toRaw(friend)
+    } else {
+        return;
+    }
+
+    if (listName === 'contributor' && friend) {
+        friend.role = 'contributor';
+        bookshelfContributors.value.push(friend);
+    } else if(listName === 'member' && friend){
+        friend.role = 'member';
+        bookshelfMembers.value.push(friend);
+    }
+    
+    // Remove from shelf.
+    suggestedFriendsForShelf.value = suggestedFriendsForShelf.value.filter((user) => user.id !== user_id);
+    emit('added-friend-as-contributor');
 }
 
 onMounted(async () => {
@@ -272,6 +304,10 @@ onMounted(async () => {
     border-bottom-color: var(--indigo-300);
 }
 
+.collaborator-cta {
+    text-align: center;
+}
+
 .add-friends-heading-text {
     color: var(--stone-700);
     font-size: var(--font-2xl);
@@ -284,11 +320,15 @@ onMounted(async () => {
     color: var(--stone-500);
 }
 
-.loading {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin-top: 40px;
-    column-gap: 12px;
+.loading-spinner {
+    animation: spin 1s infinite linear;
+}
+
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    } to {
+        transform: rotate(360deg);
+    }
 }
 </style>

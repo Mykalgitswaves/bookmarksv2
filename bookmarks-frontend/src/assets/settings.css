@@ -104,6 +104,11 @@
     min-height: 289px;
 }
 
+.settings-info-form.danger-zone {
+    border: 1px dotted var(--red-300);
+    min-height: fit-content;
+}
+
 .settings-info-form textarea {
     padding-left: 8px;
 }
@@ -118,6 +123,14 @@
 .settings-info-form-input[disabled] {
     background-color: #fff;
     cursor: not-allowed;
+}
+
+.settings-info-form-textarea {
+    height: fit-content;
+    padding: 8px 12px;
+    width: 100%;
+    border-radius: 6px;
+    resize: none;
 }
 
 
@@ -164,6 +177,7 @@
     justify-self: end;
     padding: 6px;
     border-radius: 6px;
+    max-height: 40px;
 }
 
 .edit-btn.filled {
@@ -183,6 +197,7 @@
     padding: 10px 4px;
     border-radius: 6px;
     transition: all 250ms ease;
+    max-height: 40px;
 }
 
 .save-btn.disabled, .save-btn.disabled:hover {
@@ -201,6 +216,7 @@
     transition: all 250ms ease;
     background-color: #64748b;
     color: #fff;
+    max-height: 40px;
 }
 
 .cancel-btn:hover {

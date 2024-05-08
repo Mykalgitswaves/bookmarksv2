@@ -12,7 +12,7 @@ from fastapi import (
 )
 from fastapi.encoders import jsonable_encoder
 from fastapi.responses import JSONResponse
-from typing import Annotated
+from typing import Annotated, Optional
 import asyncio
 
 from src.securities.authorizations.verify import get_current_active_user, get_bookshelf_websocket_user, get_current_user_no_exceptions
@@ -137,6 +137,21 @@ async def get_bookshelf(bookshelf_id: str,
         )
 
     return JSONResponse(content={"bookshelf": jsonable_encoder(bookshelf_response)})
+
+# Endpoint for returning other shelves created by non current user.
+# We can probably add some future functionality for recommending bookshelves to users. 
+@router.get("/explore/{user_id}", name="bookshelf:explore_bookshelves")
+async def get_explore_bookshelves(
+    user_id: str,
+    current_user: Annotated[User, Depends(get_current_active_user)],
+    bookshelf_repo: BookshelfCRUDRepositoryGraph = Depends(get_repository(repo_type=BookshelfCRUDRepositoryGraph)),
+    pagination: Optional[list] = Query(None, description="pagination start and end"),
+):
+    if current_user.id == user_id:
+        start_index, end_index = (map(int, pagination[0].split(',')) if pagination else (None, None))
+        bookshelf_repo.get_explore_bookshelves_for_user(user_id=user_id, start_index=start_index, end_index=end_index)
+        
+
 
 @router.get("/created_bookshelves/{user_id}",
         name="bookshelf:created_bookshelves")

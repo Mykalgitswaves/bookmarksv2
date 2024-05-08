@@ -855,7 +855,7 @@ class UserCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
         
         result = tx.run(query,user_id=user_id, n=n)
         suggested_friends = [
-            SuggestedFriend(user_id=response['otherUser.id'],
+            SuggestedFriend(id=response['otherUser.id'],
                             user_username=response['otherUser.username'],
                             user_profile_img_url=response['otherUser.profile_img_url'],
                             n_mutual_friends=response['mutualFriends']) for response in result

@@ -21,15 +21,16 @@
 
             <!-- More nav controls -->
             <div class="bookshelf-top-toolbar">
-                <div v-if="isAdmin && !collaborators?.length" class="flex items-end">
-                    <PlaceholderImage class="extra small-profile-image"/>
-                    <p class="no-collaborators-note">No contributors have been added to this bookshelf yet</p>
+                <div v-if="isAdmin">
+                    <p v-if="!contributorCount" class="collaborators-note">No contributors have been added to this bookshelf yet</p>
+                    <p v-else class="collaborators-note">{{ contributorCount }} contributors added</p>   
                 </div>
 
                 <div v-if="isAdmin" class="mt-2 flex" >
                     <button
                         type="button"
                         class="btn add-readers-btn"
+                        :class="{ 'active': currentView.value === 'add-collaborators'}"
                         @click="setReactiveProperty(currentView, 'value', 'add-collaborators')"
                     >
                         Add contributors
@@ -38,6 +39,7 @@
                     <button v-if="currentView.value === 'add-collaborators'"
                         type="button"
                         class="btn add-readers-btn ml-5"
+                        :class="{ 'active': currentView.value === 'edit-books'}"
                         @click="setReactiveProperty(currentView, 'value', 'edit-books')"
                     >
                         Add books
@@ -47,6 +49,7 @@
                         <button
                             v-if="currentView.value === 'edit-books'"
                             type="button"
+                            :class="{ 'active': currentView.value === 'edit-books'}"
                             class="btn add-readers-btn ml-5"
                             @click="gotToAddBooksAndCreateSocketConnection()"
                         >
@@ -66,12 +69,17 @@
             </div>
 
             <!-- Where you can manage collaborators, add more to your shelf! -->
-            <BookshelfManageCollaborators 
-                v-if="isAdmin && 
-                currentView.value === 'add-collaborators'
-                && dataLoaded"
-                :bookshelf="bookshelfData"    
-            />
+            <!-- Keep alive prevents us from having to make the same request every time you click away. -->
+            <KeepAlive>
+                <BookshelfManageCollaborators 
+                    v-if="isAdmin && 
+                    currentView.value === 'add-collaborators'
+                    && dataLoaded"
+                    :bookshelf="bookshelfData"    
+                    @added-friend-as-contributor="setContributorCount('+')"
+                    @removed-friend-as-contributor="setContributorCount('-')"
+                />
+            </KeepAlive>
 
             <!-- This is for editing and reordering controls. -->
             <div v-if="isAdmin && currentView.value === 'edit-books'" class="flex items-center space-between">
@@ -145,7 +153,6 @@
 import { ref, onMounted, reactive, onBeforeUnmount, toRaw, computed } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import IconEdit from '../../svg/icon-edit.vue';
-import IconReorder from '../../svg/icon-reorder.vue';
 import BookshelfBooks from './BookshelfBooks.vue';
 import BookshelfManageCollaborators from './BookshelfManageCollaborators.vue';
 import SearchBooks from '../createPosts/searchBooks.vue';
@@ -341,6 +348,17 @@ onMounted(() => {
     });
 });
 
+const changedCount = ref(0);
+const contributorCount = computed(() => (bookshelfData.value.contributors.length + bookshelfData.value.members.length - 1) + changedCount.value);
+
+function setContributorCount(operator){
+    if(operator === '+'){
+        changedCount.value += 1;
+    } else {
+        changedCount.value -= 1;
+    }
+
+}
 // Need this for regular navigation.
 onBeforeUnmount(() => {
     ws.unsubscribeFromSocketConnection();
@@ -382,7 +400,7 @@ window.onbeforeunload = () => {
         font-weight: 500;
         color: var(--stone-700);
         line-height: 1.5;
-        word-break: break-all;     
+        /* word-break: break-all;      */
     }
 
     .bookshelf-description {
@@ -414,7 +432,7 @@ window.onbeforeunload = () => {
         color: var(--stone-600);
     }
 
-    .no-collaborators-note {
+    .collaborators-note {
         font-size: var(--font-sm);
         color: var(--stone-600);
     }
@@ -427,6 +445,12 @@ window.onbeforeunload = () => {
 
     .add-readers-btn:hover {
         transform: scale(1.02);
+    }
+
+    .add-readers-btn.active {
+        background-color: var(--indigo-100);
+        border-color: var(--indigo-300);
+        color: var(--indigo-600);
     }
 
     .bookshelf-books-heading {

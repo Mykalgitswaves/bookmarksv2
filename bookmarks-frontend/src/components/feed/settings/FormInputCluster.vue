@@ -2,12 +2,20 @@
     <label :for="props.inputId">
         <p class="text-sm text-slate-600 mb-2">{{ props.name }}</p>
         <div class="flex gap-5">
-            <input
+            <input v-if="!isTextArea"
                 :type="props.inputType"
-                id="user-name"
                 class="settings-info-form-input"
                 v-model="data"
             >
+
+            <textarea v-if="isTextArea"
+                name=""
+                id=""
+                class="settings-info-form-textarea"
+                v-model="data"
+            >
+
+            </textarea>
 
             <button
                 v-if="!showSaveField"
@@ -17,16 +25,18 @@
             >
                 <IconEdit/>  
             </button>
+
             <button
                 v-if="showSaveField"
                 type="button"
                 class="save-btn"
                 :class="{'disabled': props.isSaveDisabled}"
                 :disabled="props.isSaveDisabled"
-                @click="emit('new-value-saved', data)"
+                @click="emit('new-value-saved')"
             >
                 Save  
             </button>
+
             <button
                 v-if="showSaveField"
                 type="button"
@@ -61,14 +71,18 @@ const props = defineProps({
         type: Boolean,
         default: false,
     },
+    isTextArea: {
+        type: Boolean,
+        default: false,
+    }
 })
 
-const emit = defineEmits(['new-value-saved']);
+const emit = defineEmits(['new-value-set', 'new-value-saved']);
 
 const showSaveField = ref(false);
-const data = ref(props.value)
+const data = ref(props.value);
 
 watchEffect(() => {
-    emit('updated:string', data.value)
-})
+    emit('new-value-set', data.value)
+});
 </script>

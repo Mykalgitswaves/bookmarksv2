@@ -5,54 +5,109 @@
                     input-id="bookshelfTitle" 
                     name="Title" 
                     type="text"    
-                    :value="data.shelfTitle"
-                    @new-value-saved="($event) => updateFieldName($event, 'bookshelfTitle')"
+                    :value="data.title"
+                    @new-value-set="($event) => updateFieldName($event, 'title')"
+                    @new-value-saved="saveFieldName('title')"
                 />
 
-                <p class="text-sm text-slate-600">Description</p>
-                
-                <textarea 
-                    name="description" id="" cols="30" rows="3"
-                    placeholder=""
-                    :disabled="isEditing"
-                    v-model="data.shelfDescription"
-                ></textarea>
+                <FormInputCluster 
+                    :is-text-area="true" 
+                    name="Description" 
+                    type="text"    
+                    :value="data.description"
+                    @new-value-set="($event) => updateFieldName($event, 'description')"
+                    @new-value-saved="saveFieldName('description')"
+                />
 
-                <button 
-                    type="button"
-                    class="save-btn mt-5"
-                    @click="updateFieldName(userData.bio, 'bookshelfDescription')"
-                >
-                    save
-                </button>
+                <!-- <div>
+                    <textarea 
+                        name="description" id="" cols="30" rows="3"
+                        placeholder=""
+                        :disabled="isEditing"
+                        v-model="data.shelfDescription"
+                    ></textarea>
+
+                    <button 
+                        type="button"
+                        class="save-btn mt-5"
+                        @click="updateFieldName(userData.bio, 'description')"
+                    >
+                        save
+                    </button>
+                </div> -->
+            </div>
+
+            <div class="settings-info-form danger-zone">
+                <h3 class="danger-zone-text text-center">Danger zone</h3>
+                
+                <div>
+                    <label class="select-label" for="">
+                        Visibility
+                    </label>
+                    <select class="select" name="visibility" id="" v-model="data.visibility">
+                        <option value="public">public</option>
+                        <option value="private">private</option>
+                    </select>
+                </div>
             </div>
     </section>    
     <div class="mobile-menu-spacer sm:hidden"></div>
 </template>
 <script setup>
+import { onMounted, reactive } from 'vue';
+import { useRoute } from 'vue-router';
 import FormInputCluster from '../settings/FormInputCluster.vue';
-import { reactive } from 'vue';
+import { db } from '../../../services/db';
+import { urls } from '../../../services/urls';
+
+const route = useRoute();
+const { bookshelf } = route.params;
 
 const data = reactive({
     loaded: false,
-    shelfTitle: 'Untitled',
-    shelfDescription: 'Add a description',
+    title: 'Untitled',
+    description: 'Add a description',
+    visibility: 'private',
     // TODO double check that designs dont have any other shit in them.
 });
 
 const urlsMapping = {
     // TODO make endpoints for bookshelf pages.
-    // "username": urls.user.updateUsername,
-    // "email": urls.user.updateEmail,
-    // "bio": urls.user.updateBio
+    "title": urls.rtc.setShelfTitle(bookshelf),
+    "description": urls.rtc.setShelfDescription(bookshelf),
+    "visibility": urls.rtc.setShelfVisibility(bookshelf),
 }
 
 function updateFieldName(newDataToSave, keyForMapping) {
     // TODO Make this into an external forms.js service function accepting urls mapping as an option.
     // Need this to say whether or not email save is disabled
+    console.log(data);
     data[keyForMapping] = newDataToSave;
-    db.put(urlsMapping[keyForMapping](route.params.user), newDataToSave, true).then((res) => {
+}
+
+function saveFieldName(keyForMapping){
+    db.put(urlsMapping[keyForMapping], data[keyForMapping], true).then((res) => {
         data[keyForMapping] = res.data;
     });
 }
+
+async function load_shelf() {
+    await db.get(urls.rtc.bookShelfTest(bookshelf)).then((res) => { 
+        data.description = res.bookshelf.description
+        data.title = res.bookshelf.title
+        data.loaded = true;
+    });
+}
+
+onMounted(async () => {
+    await load_shelf();
+});
 </script>
+
+<style scoped>
+
+.danger-zone-section {
+    margin-left: auto;
+    margin-right: auto;
+}
+</style>

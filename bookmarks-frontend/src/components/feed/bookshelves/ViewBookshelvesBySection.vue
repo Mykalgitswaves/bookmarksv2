@@ -1,6 +1,9 @@
 <template>
-    <div class="bookshelves-main-container ml-0">  
-        <Bookshelves :bookshelves="bookshelves"
+    <div class="bookshelves-main-container ml-0">
+
+        <Bookshelves
+            v-if="route.params.shelfType !== 'explore'" 
+            :bookshelves="bookshelves"
             :is_admin="!!(route.params.shelfType === 'created_bookshelves')"
             :data-loaded="dataLoaded"
             :is-on-section-page="true"
@@ -41,11 +44,17 @@ const route = useRoute();
 const bookshelves = ref([]);
 const dataLoaded = ref(false);
 
+// use offset to control how many we see per page or per filter.
+let pagination = 0;
+let paginationOffset = 10;
+
 const sectionTitle = () => {
     if(route.params.shelfType === 'created_bookshelves'){
         return 'Your created bookshelves';
     } else if(route.params.shelfType === 'member_bookshelves'){
         return 'Bookshelves you follow';
+    } else if(route.params.shelfType === 'explore'){
+        return 'Explore bookshelves';
     }
     // Add in more functinoality here as we add in more bookshelf types. 
 };
@@ -57,6 +66,13 @@ async function getBookshelvesForSection(){
         url = urls.rtc.getBookshelvesCreatedByUser(route.params.user);
     } else if(route.params.shelfType === 'member_bookshelves') {
         url = urls.rtc.getMemberBookshelves(route.params.user);
+    } else if(route.params.shelfType === 'explore') {
+        url = urls.rtc.getExploreBookshelves(route.params.user);
+        await db.get(url, {'pagination': [pagination, pagination + paginationOffset]}, true).then((res) => {
+            bookshelves.value = res.bookshelves;
+            dataLoaded.value = true;
+            return;
+        });
     }
     await db.get(url).then((res) => {
         bookshelves.value = res.bookshelves;

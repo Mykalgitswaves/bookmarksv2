@@ -26,7 +26,7 @@
                 <option value="member">member</option>
             </select>
 
-            <button type="submit" class="btn btn-green-100" @click="setFriendRoleOnBookshelf(friend.id, collabType)">add</button>
+            <button type="submit" class="btn btn-green-100" @click="setFriendRoleOnBookshelf(friend?.id, collabType)">add</button>
 
             <!-- <button type="button" class="btn btn-red-100" @click="$emit('remove-friend-from-suggested', friend?.id)">ignore</button> -->
         </form>
@@ -81,22 +81,21 @@ const collabType = ref('none');
 const hasBeenAdded = ref(false);
 
 async function setFriendRoleOnBookshelf() {
-    console.log('firing this shit');
     try {
-        if(collabType.value === 'collaborator'){
+        console.log('firing this shit');
+        if(collabType.value === 'contributor'){
+            console.log('firing this shit');
             await db.put(urls.rtc.setContributorOnShelf(props.bookshelfId), 
-                {'contributor_id': props.friend.id}, true).then((res) => {
-                if(res?.status === 200){
-                    emit('added-collaborator', props.friend.id);
-                }
-            })
+            { 'contributor_id': props.friend?.id }, true).then((res) => {
+                    console.log('200 dude')
+                    emit('added-contributor', props.friend.id);
+            });
         } else if(collabType.value === 'member'){
             await db.put(urls.rtc.setMemberOnShelf(props.bookshelfId), 
-               {'member_id': props.friend.id}, true).then((res) => {
-                if(res?.status === 200){
-                    emit('added-member', props.friend.id);
-                }
-            })
+               { 'member_id': props.friend?.id }, true).then((res) => {
+                console.log('200 dude')
+                emit('added-member', props.friend.id);
+            });
         }
         
         hasBeenAdded.value =  true;
@@ -108,15 +107,14 @@ async function setFriendRoleOnBookshelf() {
 async function removeFromBookshelf() {
     if (props.friend.role === 'contributor') {
         await db.put(urls.rtc.removeContributorFromShelf(props.bookshelfId), 
-            { 'contributor_id': props.friend.user_id }).then(() => {
-
-            emit('removed-contributor', props.friend.user_id);
+            { 'contributor_id': props.friend?.id }).then(() => {
+            emit('removed-contributor', props.friend?.id);
         });
     } else if (props.friend.role === 'member') {
         await db.put(urls.rtc.removeMemberFromShelf(props.bookshelfId), 
-            { 'member_id': props.friend.user_id }).then(() => {
+            { 'member_id': props.friend?.id }).then(() => {
                 
-            emit('removed-member', props.friend.user_id);
+            emit('removed-member', props.friend?.id);
         });
     }
 }

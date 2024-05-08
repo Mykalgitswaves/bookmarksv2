@@ -28,12 +28,18 @@
                 <p>You haven't followed any bookshelves yet</p>
             </template>
         </Bookshelves>
+
+        <div>
+            <h1 class="bookshelf-wrapper-title font-medium fancy">Explore bookshelves</h1>
+
+            <a :href="navRoutes.toBookshelfSectionPage(user, 'explore')" class="underline text-indigo-500">Find new bookshelves</a>
+        </div>
     </div>
 </template>
 <script setup>
 import Bookshelves from './bookshelves.vue'; 
 import { db } from '../../../services/db';
-import { urls } from '../../../services/urls';
+import { urls, navRoutes } from '../../../services/urls';
 import { ref, onMounted } from 'vue';
 import { useRoute } from 'vue-router';
 

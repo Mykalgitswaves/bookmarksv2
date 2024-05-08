@@ -68,8 +68,9 @@ export const urls = {
         createBookshelf: () => (baseUrl + `api/bookshelf/create`),
         createBookshelf: () => (baseUrl + `api/bookshelves/create`),
         bookShelfTest: (bookshelf_id) => (baseUrl + `api/bookshelves/${bookshelf_id}`),
-        getBookshelvesCreatedByUser: (user) => (baseUrl + `api/bookshelves/created_bookshelves/${user}`),
-        getMemberBookshelves: (user) => (baseUrl + `api/bookshelves/member_bookshelves/${user}`),
+        getBookshelvesCreatedByUser: (user_id) => (baseUrl + `api/bookshelves/created_bookshelves/${user_id}`),
+        getMemberBookshelves: (user_id) => (baseUrl + `api/bookshelves/member_bookshelves/${user_id}`),
+        getExploreBookshelves: (user_id) => (baseUrl + `api/bookshelves/explore/${user_id}`),
         /**
          *  @param { obj[str] { contributor_id: contributor_id } }  - the user id of the person you want to add as a contributor to the shelf
          * contributors have write access to shelves. 
@@ -82,6 +83,12 @@ export const urls = {
         removeMemberFromShelf: (bookshelf_id) => (baseUrl + `api/bookshelves/${bookshelf_id}/remove_member`),
         
         getBookshelfMembers: (bookshelf_id) => (baseUrl + `api/bookshelves/${bookshelf_id}/members`),
+        // Used for updating properties on a shelf.
+        setShelfTitle: (bookshelf_id) => (baseUrl + `api/bookshelves/${bookshelf_id}/update_name`),
+        setShelfDescription: (bookshelf_id) => (baseUrl + `api/bookshelves/${bookshelf_id}/update_name`),
+        setShelfVisibility: (bookshelf_id) => (baseUrl + `api/bookshelves/${bookshelf_id}/update_visibility`),
+        // ⚠️⚠️⚠️ Danger zone ⚠️⚠️⚠️.
+        deleteBookshelf: (bookshelf_id) => (baseUrl + `api/bookshelves/${bookshelf_id}/delete`),
     },
 }
 

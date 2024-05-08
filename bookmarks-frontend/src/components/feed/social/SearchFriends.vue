@@ -72,7 +72,7 @@ const debouncedSearchRequest = debounce(searchRequest, 500, false)
     margin-right: auto;
     display: flex;
     flex-direction: column;
-    align-items: start;
+    align-items: center;
     margin-top: var(--margin-md);
     text-align: start;
 

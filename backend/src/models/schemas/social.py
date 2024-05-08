@@ -114,7 +114,7 @@ class PinnedCommentActivity(BaseActivity):
     book_small_img_urls: list[str] | str | None = None
 
 class SuggestedFriend(BaseModel):
-    user_id: str
+    id: str
     user_username: str
     user_profile_img_url: str
     n_mutual_friends: int

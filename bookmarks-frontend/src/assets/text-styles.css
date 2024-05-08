@@ -102,3 +102,10 @@
   color: var(--stone-600);
   font-weight: 500;
 }
+
+.danger-zone-text {
+  font-size: var(--font-xl);
+  font-family: var(--fancy-script);
+  color: var(--red-500);
+  font-weight: 500;
+}
