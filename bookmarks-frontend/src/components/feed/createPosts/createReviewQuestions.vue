@@ -18,7 +18,7 @@
                     <li 
                         v-for="(question, i) in questionType[1]" 
                         :key="i"
-                        @click="store.addOrUpdateQuestion(question)"
+                        @click="updateQuestion()"
                     >
                         <div class="my-3 text-lg question-border px-5 py-5 cursor-pointer w-100 box-btn"
                             v-if="question?.id >= 0 || !question?.isHiddenCustomQuestion"
@@ -93,6 +93,11 @@ watch(props.questionMap, (newValue) => {
 const activeQuestionCat = ref([]);
 
 activeQuestionCat.value.forEach((boolean) => (boolean.value = false));
+
+function updateQuestion(question) {
+    store.addOrUpdateQuestion(question);
+    // Maybe add more logic in here to emit the shit.
+}
 
 const emit = defineEmits(['question-added']);
 

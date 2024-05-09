@@ -47,7 +47,7 @@
                 :question-map="questionMapping"
                 :is-viewing-review="false"
                 :question-count="count"
-                @question-added="currentPostTopic = 'review'"
+                @question-added="(question) => handleQuestionAdded(question)"
             />
 
             <YourReviewQuestions 
@@ -119,7 +119,12 @@ function headlineHandler(e) {
 // emit handlers from child components.
 const count = computed(() => {
     return store.arr.length
-})
+});
+
+// 
+function handleQuestionAdded(question) {
+    console.log(question);
+}
 
 // Add a watcher to emit up when something is added, doesn't seem to capture when entries loses entry with splice so we have duplicate above.
 watch(entries, () => {
