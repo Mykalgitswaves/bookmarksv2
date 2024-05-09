@@ -14,7 +14,7 @@
                 <IconChevron :class="{'active': activeQuestionCat[index]}"/>
             </button>
 
-                <ul class="container questions" v-if="!activeQuestionCat[index]">
+                <ul class="container questions" v-if="activeQuestionCat[index]">
                     <li 
                         v-for="(question, i) in questionType[1]" 
                         :key="i"
