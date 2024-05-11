@@ -105,4 +105,20 @@ class TestBookshelfMandatory:
         response = requests.get(f"{self.endpoint}/api/bookshelves/{bookshelf_id}", headers=headers)
         assert response.status_code == 200, "Get Finished Reading Shelf by ID"
 
+    def test_bookshelf_previews(self):
+        """
+        Test case to check the get preview endpoints for the mandatory shelves
+        """
 
+        headers = {"Authorization": f"{self.token_type} {self.access_token}"}
+        response = requests.get(f"{self.endpoint}/api/bookshelves/want_to_read/{self.user_id}/preview", headers=headers)
+        assert response.status_code == 200, "Get Want to Read Shelf Preview"
+        print(response.json())
+
+        response = requests.get(f"{self.endpoint}/api/bookshelves/currently_reading/{self.user_id}/preview", headers=headers)
+        assert response.status_code == 200, "Get Currently Reading Shelf Preview"
+        print(response.json())
+
+        response = requests.get(f"{self.endpoint}/api/bookshelves/finished_reading/{self.user_id}/preview", headers=headers)
+        assert response.status_code == 200, "Get Finished Reading Shelf Preview"
+        print(response.json())

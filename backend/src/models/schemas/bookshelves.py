@@ -425,7 +425,7 @@ class BookshelfPreview(BaseModel):
     img_url: str | None = None
     book_img_urls: list[str]
     visibility: Literal['public', 'private', 'friends']
-    member_count: int
+    member_count: int = 0
     created_by: str
     created_by_username: str
     follower_count: int = 0
@@ -441,36 +441,6 @@ class BookshelfPage(BaseModel):
     members: set = set()
     follower_count: int = 0
     contributors: set = set()
-    visibility: Literal['public', 'private', 'friends']
-
-class BookshelfPageWantToRead(BaseModel):
-    created_by: str
-    created_by_username: str
-    title: str
-    description: str
-    id: str
-    img_url: str | None = None
-    books: Any
-    visibility: Literal['public', 'private', 'friends']
-
-class BookshelfPageCurrentlyReading(BaseModel):
-    created_by: str
-    created_by_username: str
-    title: str
-    description: str
-    id: str
-    img_url: str | None = None
-    books: Any
-    visibility: Literal['public', 'private', 'friends']
-
-class BookshelfPageFinishedReading(BaseModel):
-    created_by: str
-    created_by_username: str
-    title: str
-    description: str
-    id: str
-    img_url: str | None = None
-    books: Any
     visibility: Literal['public', 'private', 'friends']
     
 class Bookshelf(BaseModel):

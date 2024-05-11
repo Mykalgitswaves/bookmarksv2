@@ -1,10 +1,7 @@
 from src.database.graph.crud.base import BaseCRUDRepositoryGraph
 from src.models.schemas.bookshelves import (
     Bookshelf, 
-    BookshelfPage, 
-    BookshelfPageWantToRead,
-    BookshelfPageCurrentlyReading,
-    BookshelfPageFinishedReading,
+    BookshelfPage,
     BookshelfPreview, 
     BookshelfBook,
     BookshelfContributor,
@@ -656,6 +653,54 @@ class BookshelfCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
         )
 
         return bookshelf
+    
+    def get_user_want_to_read_preview(self, user_id):
+        with self.driver.session() as session:
+            result = session.read_transaction(self.get_user_want_to_read_preview_query, user_id)
+        return result
+    
+    @staticmethod
+    def get_user_want_to_read_preview_query(tx, user_id):
+        query = (
+            """
+            MATCH (u:User {id: $user_id})-[:HAS_WANT_TO_READ_SHELF]->(shelf:WantToReadShelf)
+            OPTIONAL MATCH (shelf)-[rr:CONTAINS_BOOK]->(bb:Book)
+            RETURN shelf.id as id, 
+                   shelf.title as title, 
+                   shelf.description as description, 
+                   shelf.books as book_ids,
+                   shelf.visibility as visibility,
+                   shelf.img_url as img_url,
+                   u.id as created_by,
+                   u.username as created_by_username,
+                   collect(bb.id) as book_object_ids,
+                   collect(bb.small_img_url) as book_img_urls,
+                   count(bb) as book_count
+            """
+        )
+
+        result = tx.run(query, user_id=user_id)
+        record = result.single()
+        
+        book_map = dict(zip(record["book_object_ids"], record["book_img_urls"]))
+        first_four_books_imgs = []
+        for key in record["book_ids"][:4]:
+            first_four_books_imgs.append(book_map[key])
+            
+        bookshelf = BookshelfPreview(
+            id=record["id"],
+            title=record["title"],
+            book_ids=record["book_ids"],
+            description=record["description"],
+            visibility=record["visibility"],
+            img_url=record["img_url"],
+            created_by=record["created_by"],
+            created_by_username=record["created_by_username"],
+            books_count=record["book_count"],
+            book_img_urls=first_four_books_imgs
+        )
+
+        return bookshelf
 
     def get_user_currently_reading(self, user_id):
         with self.driver.session() as session:
@@ -788,6 +833,54 @@ class BookshelfCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
 
         return bookshelf
     
+    def get_user_currently_reading_preview(self, user_id):
+        with self.driver.session() as session:
+            result = session.read_transaction(self.get_user_currently_reading_preview_query, user_id)
+        return result
+    
+    @staticmethod
+    def get_user_currently_reading_preview_query(tx, user_id):
+        query = (
+            """
+            MATCH (u:User {id: $user_id})-[:HAS_CURRENTLY_READING_SHELF]->(shelf:CurrentlyReadingShelf)
+            OPTIONAL MATCH (shelf)-[rr:CONTAINS_BOOK]->(bb:Book)
+            RETURN shelf.id as id, 
+                   shelf.title as title, 
+                   shelf.description as description, 
+                   shelf.books as book_ids,
+                   shelf.visibility as visibility,
+                   shelf.img_url as img_url,
+                   u.id as created_by,
+                   u.username as created_by_username,
+                   collect(bb.id) as book_object_ids,
+                   collect(bb.small_img_url) as book_img_urls,
+                   count(bb) as book_count
+            """
+        )
+
+        result = tx.run(query, user_id=user_id)
+        record = result.single()
+        
+        book_map = dict(zip(record["book_object_ids"], record["book_img_urls"]))
+        first_four_books_imgs = []
+        for key in record["book_ids"][:4]:
+            first_four_books_imgs.append(book_map[key])
+            
+        bookshelf = BookshelfPreview(
+            id=record["id"],
+            title=record["title"],
+            book_ids=record["book_ids"],
+            description=record["description"],
+            visibility=record["visibility"],
+            img_url=record["img_url"],
+            created_by=record["created_by"],
+            created_by_username=record["created_by_username"],
+            books_count=record["book_count"],
+            book_img_urls=first_four_books_imgs
+        )
+
+        return bookshelf
+    
     def get_user_finished_reading(self, user_id):
         with self.driver.session() as session:
             result = session.read_transaction(self.get_user_finished_reading_query, user_id)
@@ -854,13 +947,13 @@ class BookshelfCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
 
         return bookshelf
     
-    def get_user_finished_by_shelf_id(self, bookshelf_id):
+    def get_user_finished_reading_by_shelf_id(self, bookshelf_id):
         with self.driver.session() as session:
-            result = session.read_transaction(self.get_user_finished_by_shelf_id_query, bookshelf_id)
+            result = session.read_transaction(self.get_user_finished_reading_by_shelf_id_query, bookshelf_id)
         return result
     
     @staticmethod
-    def get_user_finished_by_shelf_id_query(tx, bookshelf_id):
+    def get_user_finished_reading_by_shelf_id_query(tx, bookshelf_id):
         query = (
             """
             MATCH (u:User)-[:HAS_FINISHED_READING_SHELF]->(shelf:FinishedReadingShelf {id: $bookshelf_id})
@@ -915,6 +1008,54 @@ class BookshelfCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
             created_by=record["user"]["id"],
             created_by_username=record["user"]["username"],
             contributors=set(record["user"]["id"])
+        )
+
+        return bookshelf
+    
+    def get_user_finished_reading_preview(self, user_id):
+        with self.driver.session() as session:
+            result = session.read_transaction(self.get_user_finished_reading_preview_query, user_id)
+        return result
+    
+    @staticmethod
+    def get_user_finished_reading_preview_query(tx, user_id):
+        query = (
+            """
+            MATCH (u:User {id: $user_id})-[:HAS_FINISHED_READING_SHELF]->(shelf:FinishedReadingShelf)
+            OPTIONAL MATCH (shelf)-[rr:CONTAINS_BOOK]->(bb:Book)
+            RETURN shelf.id as id, 
+                   shelf.title as title, 
+                   shelf.description as description, 
+                   shelf.books as book_ids,
+                   shelf.visibility as visibility,
+                   shelf.img_url as img_url,
+                   u.id as created_by,
+                   u.username as created_by_username,
+                   collect(bb.id) as book_object_ids,
+                   collect(bb.small_img_url) as book_img_urls,
+                   count(bb) as book_count
+            """
+        )
+
+        result = tx.run(query, user_id=user_id)
+        record = result.single()
+        
+        book_map = dict(zip(record["book_object_ids"], record["book_img_urls"]))
+        first_four_books_imgs = []
+        for key in record["book_ids"][:4]:
+            first_four_books_imgs.append(book_map[key])
+            
+        bookshelf = BookshelfPreview(
+            id=record["id"],
+            title=record["title"],
+            book_ids=record["book_ids"],
+            description=record["description"],
+            visibility=record["visibility"],
+            img_url=record["img_url"],
+            created_by=record["created_by"],
+            created_by_username=record["created_by_username"],
+            books_count=record["book_count"],
+            book_img_urls=first_four_books_imgs
         )
 
         return bookshelf
