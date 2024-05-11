@@ -392,7 +392,8 @@ class BookshelfQueue(BaseModel):
     def is_empty(self) -> bool:
         return len(self.instructions) == 0
     
-class BookshelfResponse(BaseModel): 
+class BookshelfResponse(BaseModel):
+    id: str
     title: str
     description: str
     books: list[BookshelfBook]
@@ -401,6 +402,19 @@ class BookshelfResponse(BaseModel):
     visibility: Literal['public', 'private', 'friends']
     members: list[str]
     created_by: str
+    created_by_username: str
+
+class BookshelfResponseWantToRead(BaseModel):
+    id: str
+    title: str
+    description: str
+    books: list[BookshelfBook]
+    contributors: list[str]
+    follower_count: int = 0
+    visibility: Literal['public', 'private', 'friends']
+    members: list[str]
+    created_by: str
+    created_by_username: str
 
 class BookshelfPreview(BaseModel):
     id: str
@@ -418,6 +432,7 @@ class BookshelfPreview(BaseModel):
 
 class BookshelfPage(BaseModel):
     created_by: str
+    created_by_username: str
     title: str
     description: str
     id: str
@@ -427,9 +442,40 @@ class BookshelfPage(BaseModel):
     follower_count: int = 0
     contributors: set = set()
     visibility: Literal['public', 'private', 'friends']
+
+class BookshelfPageWantToRead(BaseModel):
+    created_by: str
+    created_by_username: str
+    title: str
+    description: str
+    id: str
+    img_url: str | None = None
+    books: Any
+    visibility: Literal['public', 'private', 'friends']
+
+class BookshelfPageCurrentlyReading(BaseModel):
+    created_by: str
+    created_by_username: str
+    title: str
+    description: str
+    id: str
+    img_url: str | None = None
+    books: Any
+    visibility: Literal['public', 'private', 'friends']
+
+class BookshelfPageFinishedReading(BaseModel):
+    created_by: str
+    created_by_username: str
+    title: str
+    description: str
+    id: str
+    img_url: str | None = None
+    books: Any
+    visibility: Literal['public', 'private', 'friends']
     
 class Bookshelf(BaseModel):
     created_by: str
+    created_by_username: str
     title: str
     description: str
     id: str

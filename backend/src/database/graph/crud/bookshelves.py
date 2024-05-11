@@ -2,6 +2,9 @@ from src.database.graph.crud.base import BaseCRUDRepositoryGraph
 from src.models.schemas.bookshelves import (
     Bookshelf, 
     BookshelfPage, 
+    BookshelfPageWantToRead,
+    BookshelfPageCurrentlyReading,
+    BookshelfPageFinishedReading,
     BookshelfPreview, 
     BookshelfBook,
     BookshelfContributor,
@@ -46,6 +49,7 @@ class BookshelfCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
         for record in result:
             if record["access"]["type"] == "owner":
                 owner = record["user"]["id"]
+                owner_username = record["user"]["username"]
                 contributors.add(owner)
             elif record["access"]["type"] == "contributor":
                 contributors.add(record["user"]["id"])
@@ -83,6 +87,7 @@ class BookshelfCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
             visibility=record["visibility"],
             img_url=record["img_url"],
             created_by=owner,
+            created_by_username=owner_username,
             contributors=contributors,
             members=members,
             follower_count=len(record["followers"])
@@ -158,10 +163,10 @@ class BookshelfCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
             """
             MATCH (u:User {id: $user_id})-[:FRIENDED {status:"friends"}]-(friend:User)
             MATCH (b:Bookshelf {visibility: "public"})<-[r:HAS_BOOKSHELF_ACCESS]-(friend)
-            OPTIONAL MATCH (b)-[access_rel:HAS_BOOKSHELF_ACCESS]-(u)
-            OPTIONAL MATCH (b)-[follow_rel:FOLLOWS_SHELF]-(u)
-            where access_rel is null and follow_rel is null and b.visibility = "public"
-            with b, friend, access_rel, follow_rel, r
+            where not (b)-[:HAS_BOOKSHELF_ACCESS]-(u) and
+            not (b)-[:FOLLOWS_SHELF]-(u) and 
+            b.visibility = "public"
+            with b, friend, r
             Match (b)-[:HAS_BOOKSHELF_ACCESS {type: "owner"}]-(owner:User)
             OPTIONAL MATCH (b)-[:CONTAINS_BOOK]->(bb:Book)
 
@@ -520,6 +525,399 @@ class BookshelfCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
             ))
 
         return followers
+
+    def get_user_want_to_read(self, user_id):
+        with self.driver.session() as session:
+            result = session.read_transaction(self.get_user_want_to_read_query, user_id)
+        return result
+    
+    @staticmethod
+    def get_user_want_to_read_query(tx, user_id):
+        query = (
+            """
+            MATCH (u:User {id: $user_id})-[:HAS_WANT_TO_READ_SHELF]->(shelf:WantToReadShelf)
+            OPTIONAL MATCH (shelf)-[rr:CONTAINS_BOOK]->(bb:Book)
+            RETURN shelf.id as id, 
+                   shelf.title as title, 
+                   shelf.description as description, 
+                   shelf.books as book_ids,
+                   shelf.visibility as visibility,
+                   shelf.img_url as img_url,
+                   u as user,
+                   collect(bb.id) as book_object_ids,
+                   collect(bb) as books,
+                   collect(rr) as book_note_for_shelves
+            """
+        )
+        
+        result = tx.run(query, user_id=user_id)
+
+        book_objects = []
+
+        record = result.single()
+
+        book_map = {
+        book_id: {
+            'item': book,
+            'description': getattr(note_for_shelf, 'note_for_shelf', None)
+        }
+        for book_id, book, note_for_shelf in zip(record["book_object_ids"], record["books"], record["book_note_for_shelves"])
+}
+        
+        for ix, key in enumerate(record["book_ids"]):
+            book = book_map[key]["item"]
+            description = book_map[key]["description"]
+            if "author_names" not in book:
+                book.__setattr__("author_names", ["Unknown Author"])
+            book_objects.append(BookshelfBook(
+                id=book["id"],
+                order=ix,
+                title=book["title"],
+                authors=book["author_names"],
+                small_img_url=book["small_img_url"],
+                note_for_shelf=description
+            ))
+        
+        bookshelf = BookshelfPage(
+            id=record["id"],
+            title=record["title"],
+            books=book_objects,
+            description=record["description"],
+            visibility=record["visibility"],
+            img_url=record["img_url"],
+            created_by=record["user"]["id"],
+            created_by_username=record["user"]["username"],
+            contributors=set(record["user"]["id"])
+        )
+
+        return bookshelf
+    
+    def get_user_want_to_read_by_shelf_id(self, bookshelf_id):
+        with self.driver.session() as session:
+            result = session.read_transaction(self.get_user_want_to_read_by_shelf_id_query, bookshelf_id)
+        return result
+    
+    @staticmethod
+    def get_user_want_to_read_by_shelf_id_query(tx, bookshelf_id):
+        query = (
+            """
+            MATCH (u:User)-[:HAS_WANT_TO_READ_SHELF]->(shelf:WantToReadShelf {id: $bookshelf_id})
+            OPTIONAL MATCH (shelf)-[rr:CONTAINS_BOOK]->(bb:Book)
+            RETURN shelf.id as id, 
+                   shelf.title as title, 
+                   shelf.description as description, 
+                   shelf.books as book_ids,
+                   shelf.visibility as visibility,
+                   shelf.img_url as img_url,
+                   u as user,
+                   collect(bb.id) as book_object_ids,
+                   collect(bb) as books,
+                   collect(rr) as book_note_for_shelves
+            """
+        )
+        
+        result = tx.run(query, bookshelf_id=bookshelf_id)
+        book_objects = []
+
+        record = result.single()
+
+        book_map = {
+        book_id: {
+            'item': book,
+            'description': getattr(note_for_shelf, 'note_for_shelf', None)
+        }
+        for book_id, book, note_for_shelf in zip(record["book_object_ids"], record["books"], record["book_note_for_shelves"])
+}
+        
+        for ix, key in enumerate(record["book_ids"]):
+            book = book_map[key]["item"]
+            description = book_map[key]["description"]
+            if "author_names" not in book:
+                book.__setattr__("author_names", ["Unknown Author"])
+            book_objects.append(BookshelfBook(
+                id=book["id"],
+                order=ix,
+                title=book["title"],
+                authors=book["author_names"],
+                small_img_url=book["small_img_url"],
+                note_for_shelf=description
+            ))
+        
+        bookshelf = BookshelfPage(
+            id=record["id"],
+            title=record["title"],
+            books=book_objects,
+            description=record["description"],
+            visibility=record["visibility"],
+            img_url=record["img_url"],
+            created_by=record["user"]["id"],
+            created_by_username=record["user"]["username"],
+            contributors=set(record["user"]["id"])
+        )
+
+        return bookshelf
+
+    def get_user_currently_reading(self, user_id):
+        with self.driver.session() as session:
+            result = session.read_transaction(self.get_user_currently_reading_query, user_id)
+        return result
+    
+    @staticmethod
+    def get_user_currently_reading_query(tx, user_id):
+        query = (
+            """
+            MATCH (u:User {id: $user_id})-[:HAS_CURRENTLY_READING_SHELF]->(shelf:CurrentlyReadingShelf)
+            OPTIONAL MATCH (shelf)-[rr:CONTAINS_BOOK]->(bb:Book)
+            RETURN shelf.id as id, 
+                   shelf.title as title, 
+                   shelf.description as description, 
+                   shelf.books as book_ids,
+                   shelf.visibility as visibility,
+                   shelf.img_url as img_url,
+                   u as user,
+                   collect(bb.id) as book_object_ids,
+                   collect(bb) as books,
+                   collect(rr) as book_note_for_shelves
+            """
+        )
+        
+        result = tx.run(query, user_id=user_id)
+
+        book_objects = []
+
+        record = result.single()
+
+        book_map = {
+        book_id: {
+            'item': book,
+            'description': getattr(note_for_shelf, 'note_for_shelf', None)
+        }
+        for book_id, book, note_for_shelf in zip(record["book_object_ids"], record["books"], record["book_note_for_shelves"])
+}
+        
+        for ix, key in enumerate(record["book_ids"]):
+            book = book_map[key]["item"]
+            description = book_map[key]["description"]
+            if "author_names" not in book:
+                book.__setattr__("author_names", ["Unknown Author"])
+            book_objects.append(BookshelfBook(
+                id=book["id"],
+                order=ix,
+                title=book["title"],
+                authors=book["author_names"],
+                small_img_url=book["small_img_url"],
+                note_for_shelf=description
+            ))
+        
+        bookshelf = BookshelfPage(
+            id=record["id"],
+            title=record["title"],
+            books=book_objects,
+            description=record["description"],
+            visibility=record["visibility"],
+            img_url=record["img_url"],
+            created_by=record["user"]["id"],
+            created_by_username=record["user"]["username"],
+            contributors=set(record["user"]["id"])
+        )
+
+        return bookshelf
+    
+    def get_user_currently_reading_by_shelf_id(self, bookshelf_id):
+        with self.driver.session() as session:
+            result = session.read_transaction(self.get_user_currently_reading_by_shelf_id_query, bookshelf_id)
+        return result
+    
+    @staticmethod
+    def get_user_currently_reading_by_shelf_id_query(tx, bookshelf_id):
+        query = (
+            """
+            MATCH (u:User)-[:HAS_CURRENTLY_READING_SHELF]->(shelf:CurrentlyReadingShelf {id: $bookshelf_id})
+            OPTIONAL MATCH (shelf)-[rr:CONTAINS_BOOK]->(bb:Book)
+            RETURN shelf.id as id, 
+                   shelf.title as title, 
+                   shelf.description as description, 
+                   shelf.books as book_ids,
+                   shelf.visibility as visibility,
+                   shelf.img_url as img_url,
+                   u as user,
+                   collect(bb.id) as book_object_ids,
+                   collect(bb) as books,
+                   collect(rr) as book_note_for_shelves
+            """
+        )
+        
+        result = tx.run(query, bookshelf_id=bookshelf_id)
+        book_objects = []
+
+        record = result.single()
+
+        book_map = {
+        book_id: {
+            'item': book,
+            'description': getattr(note_for_shelf, 'note_for_shelf', None)
+        }
+        for book_id, book, note_for_shelf in zip(record["book_object_ids"], record["books"], record["book_note_for_shelves"])
+}
+        
+        for ix, key in enumerate(record["book_ids"]):
+            book = book_map[key]["item"]
+            description = book_map[key]["description"]
+            if "author_names" not in book:
+                book.__setattr__("author_names", ["Unknown Author"])
+            book_objects.append(BookshelfBook(
+                id=book["id"],
+                order=ix,
+                title=book["title"],
+                authors=book["author_names"],
+                small_img_url=book["small_img_url"],
+                note_for_shelf=description
+            ))
+        
+        bookshelf = BookshelfPage(
+            id=record["id"],
+            title=record["title"],
+            books=book_objects,
+            description=record["description"],
+            visibility=record["visibility"],
+            img_url=record["img_url"],
+            created_by=record["user"]["id"],
+            created_by_username=record["user"]["username"],
+            contributors=set(record["user"]["id"])
+        )
+
+        return bookshelf
+    
+    def get_user_finished_reading(self, user_id):
+        with self.driver.session() as session:
+            result = session.read_transaction(self.get_user_finished_reading_query, user_id)
+        return result
+    
+    @staticmethod
+    def get_user_finished_reading_query(tx, user_id):
+        query = (
+            """
+            MATCH (u:User {id: $user_id})-[:HAS_FINISHED_READING_SHELF]->(shelf:FinishedReadingShelf)
+            OPTIONAL MATCH (shelf)-[rr:CONTAINS_BOOK]->(bb:Book)
+            RETURN shelf.id as id, 
+                   shelf.title as title, 
+                   shelf.description as description, 
+                   shelf.books as book_ids,
+                   shelf.visibility as visibility,
+                   shelf.img_url as img_url,
+                   u as user,
+                   collect(bb.id) as book_object_ids,
+                   collect(bb) as books,
+                   collect(rr) as book_note_for_shelves
+            """
+        )
+        
+        result = tx.run(query, user_id=user_id)
+
+        book_objects = []
+
+        record = result.single()
+
+        book_map = {
+        book_id: {
+            'item': book,
+            'description': getattr(note_for_shelf, 'note_for_shelf', None)
+        }
+        for book_id, book, note_for_shelf in zip(record["book_object_ids"], record["books"], record["book_note_for_shelves"])
+}
+        
+        for ix, key in enumerate(record["book_ids"]):
+            book = book_map[key]["item"]
+            description = book_map[key]["description"]
+            if "author_names" not in book:
+                book.__setattr__("author_names", ["Unknown Author"])
+            book_objects.append(BookshelfBook(
+                id=book["id"],
+                order=ix,
+                title=book["title"],
+                authors=book["author_names"],
+                small_img_url=book["small_img_url"],
+                note_for_shelf=description
+            ))
+        
+        bookshelf = BookshelfPage(
+            id=record["id"],
+            title=record["title"],
+            books=book_objects,
+            description=record["description"],
+            visibility=record["visibility"],
+            img_url=record["img_url"],
+            created_by=record["user"]["id"],
+            created_by_username=record["user"]["username"],
+            contributors=set(record["user"]["id"])
+        )
+
+        return bookshelf
+    
+    def get_user_finished_by_shelf_id(self, bookshelf_id):
+        with self.driver.session() as session:
+            result = session.read_transaction(self.get_user_finished_by_shelf_id_query, bookshelf_id)
+        return result
+    
+    @staticmethod
+    def get_user_finished_by_shelf_id_query(tx, bookshelf_id):
+        query = (
+            """
+            MATCH (u:User)-[:HAS_FINISHED_READING_SHELF]->(shelf:FinishedReadingShelf {id: $bookshelf_id})
+            OPTIONAL MATCH (shelf)-[rr:CONTAINS_BOOK]->(bb:Book)
+            RETURN shelf.id as id, 
+                   shelf.title as title, 
+                   shelf.description as description, 
+                   shelf.books as book_ids,
+                   shelf.visibility as visibility,
+                   shelf.img_url as img_url,
+                   u as user,
+                   collect(bb.id) as book_object_ids,
+                   collect(bb) as books,
+                   collect(rr) as book_note_for_shelves
+            """
+        )
+        
+        result = tx.run(query, bookshelf_id=bookshelf_id)
+        book_objects = []
+
+        record = result.single()
+
+        book_map = {
+        book_id: {
+            'item': book,
+            'description': getattr(note_for_shelf, 'note_for_shelf', None)
+        }
+        for book_id, book, note_for_shelf in zip(record["book_object_ids"], record["books"], record["book_note_for_shelves"])
+}
+        
+        for ix, key in enumerate(record["book_ids"]):
+            book = book_map[key]["item"]
+            description = book_map[key]["description"]
+            if "author_names" not in book:
+                book.__setattr__("author_names", ["Unknown Author"])
+            book_objects.append(BookshelfBook(
+                id=book["id"],
+                order=ix,
+                title=book["title"],
+                authors=book["author_names"],
+                small_img_url=book["small_img_url"],
+                note_for_shelf=description
+            ))
+        
+        bookshelf = BookshelfPage(
+            id=record["id"],
+            title=record["title"],
+            books=book_objects,
+            description=record["description"],
+            visibility=record["visibility"],
+            img_url=record["img_url"],
+            created_by=record["user"]["id"],
+            created_by_username=record["user"]["username"],
+            contributors=set(record["user"]["id"])
+        )
+
+        return bookshelf
 
     def create_bookshelf(self, bookshelf):
         with self.driver.session() as session:

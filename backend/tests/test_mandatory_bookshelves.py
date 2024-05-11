@@ -74,35 +74,35 @@ class TestBookshelfMandatory:
     """
     Test class for Mandatory bookshelves
     """
-    def test_create_bookshelf(self):
-        # """
-        # Test case to create a bookshelf.
+    def test_get_bookshelves(self):
+        """
+        Test case to check the get endpoints for the mandatory shelves
+        """
 
-        # This test case sends a POST request to create a bookshelf with the specified name, description, and visibility.
-        # It then sends a GET request to retrieve the created bookshelf and verifies that the response status code is 200.
-        # Finally, it sends a DELETE request to delete the created bookshelf and verifies that the response status code is 200.
+        headers = {"Authorization": f"{self.token_type} {self.access_token}"}  # Set Authorization header
+        response = requests.get(f"{self.endpoint}/api/bookshelves/want_to_read/{self.user_id}", headers=headers)
+        assert response.status_code == 200, "Get Want to Read Shelf"
+        print(response.json())
+        bookshelf_id = response.json()["bookshelf"]["id"]
 
-        # Returns:
-        #     None
-        # """
-        # headers = {"Authorization": f"{self.token_type} {self.access_token}"}
-        # data = {
-        #     "bookshelf_name": "Test Bookshelf",
-        #     "bookshelf_description": "Test Bookshelf Description",
-        #     "visibility": "public"
-        # }
+        # Test with the bookshelf_id endpoint
+        response = requests.get(f"{self.endpoint}/api/bookshelves/{bookshelf_id}", headers=headers)
+        assert response.status_code == 200, "Get Want to Read Shelf by ID"
 
-        # # Send a POST request to create a bookshelf
-        # response = requests.post(f"{self.endpoint}/api/bookshelves/create", headers=headers, json=data)
-        # assert response.status_code == 200, "Creating Bookshelf"
-        # bookshelf_id = response.json()["bookshelf_id"]
+        response = requests.get(f"{self.endpoint}/api/bookshelves/currently_reading/{self.user_id}", headers=headers)
+        assert response.status_code == 200, "Get Currently Reading Shelf"
+        bookshelf_id = response.json()["bookshelf"]["id"]
 
-        # # Send a GET request to retrieve the created bookshelf
-        # response = requests.get(f"{self.endpoint}/api/bookshelves/{bookshelf_id}", headers=headers)
-        # assert response.status_code == 200, "Getting Bookshelf"
+        # Test with the bookshelf_id endpoint
+        response = requests.get(f"{self.endpoint}/api/bookshelves/{bookshelf_id}", headers=headers)
+        assert response.status_code == 200, "Get Currently Reading Shelf by ID"
 
-        # # Send a DELETE request to delete the created bookshelf
-        # response = requests.delete(f"{self.endpoint}/api/bookshelves/{bookshelf_id}/delete", headers=headers)
-        # print(response.json())
-        # assert response.status_code == 200, "Deleting Bookshelf"
-        pass
+        response = requests.get(f"{self.endpoint}/api/bookshelves/finished_reading/{self.user_id}", headers=headers)
+        assert response.status_code == 200, "Get Finished Reading Shelf"
+        bookshelf_id = response.json()["bookshelf"]["id"]
+
+        # Test with the bookshelf_id endpoint
+        response = requests.get(f"{self.endpoint}/api/bookshelves/{bookshelf_id}", headers=headers)
+        assert response.status_code == 200, "Get Finished Reading Shelf by ID"
+
+

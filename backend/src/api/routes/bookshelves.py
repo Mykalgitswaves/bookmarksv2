@@ -88,10 +88,18 @@ async def get_bookshelf(bookshelf_id: str,
             follower_count=_bookshelf.follower_count,
             visibility=_bookshelf.visibility,
             members=_bookshelf.members,
-            created_by=_bookshelf.created_by
+            created_by=_bookshelf.created_by,
+            created_by_username=_bookshelf.created_by_username
         )
     else:
-        _bookshelf = bookshelf_repo.get_bookshelf(bookshelf_id)
+        if bookshelf_id.startswith("want_to_read"):
+            _bookshelf = bookshelf_repo.get_user_want_to_read_by_shelf_id(bookshelf_id=bookshelf_id)
+        elif bookshelf_id.startswith("currently_reading"):
+            _bookshelf = bookshelf_repo.get_user_currently_reading_by_shelf_id(bookshelf_id=bookshelf_id)
+        elif bookshelf_id.startswith("finished_reading"):
+            _bookshelf = bookshelf_repo.get_user_finished_reading_by_shelf_id(bookshelf_id=bookshelf_id)
+        else:
+            _bookshelf = bookshelf_repo.get_bookshelf(bookshelf_id)
     
     if not _bookshelf:
         raise HTTPException(status_code=404, detail="Bookshelf not found")
@@ -112,6 +120,7 @@ async def get_bookshelf(bookshelf_id: str,
                     title=_bookshelf.title,
                     description=_bookshelf.description,
                     created_by=_bookshelf.created_by,
+                    created_by_username=_bookshelf.created_by_username,
                     id=_bookshelf.id,
                     img_url=_bookshelf.img_url,
                     members=_bookshelf.members,
@@ -126,6 +135,7 @@ async def get_bookshelf(bookshelf_id: str,
         # Set this in the cache for websocket.
         
         bookshelf_response = BookshelfResponse(
+            id=_bookshelf.id,
             title=_bookshelf.title,
             description=_bookshelf.description,
             books=_bookshelf.books,
@@ -134,6 +144,7 @@ async def get_bookshelf(bookshelf_id: str,
             visibility=_bookshelf.visibility,
             members=_bookshelf.members,
             created_by=_bookshelf.created_by,
+            created_by_username=_bookshelf.created_by_username
         )
 
     return JSONResponse(content={"bookshelf": jsonable_encoder(bookshelf_response)})
@@ -529,10 +540,151 @@ async def unfollow_bookshelf(bookshelf_id: str,
     else:
         raise HTTPException(status_code=400, detail="Bookshelf could not be found or is not public")
     
+# Want to Read bookshelf get for user 
+@router.get("/want_to_read/{user_id}",
+            name="bookshelf:want_to_read")
+async def get_user_want_to_read(user_id: str,
+                                current_user: Annotated[User, Depends(get_current_active_user)],
+                                bookshelf_repo: BookshelfCRUDRepositoryGraph = Depends(get_repository(repo_type=BookshelfCRUDRepositoryGraph))):
+    print("Test")
+    bookshelf = bookshelf_repo.get_user_want_to_read(user_id=user_id)
+
+    if not bookshelf:
+        raise HTTPException(status_code=404, detail="Want to read bookshelf not found")
+    
+    if bookshelf.id not in bookshelf_ws_manager.cache:
+        bookshelf_dll = Bookshelf(
+            title=bookshelf.title,
+            description=bookshelf.description,
+            created_by=bookshelf.created_by,
+            created_by_username=bookshelf.created_by_username,
+            id=bookshelf.id,
+            img_url=bookshelf.img_url,
+            members=bookshelf.members,
+            follower_count=bookshelf.follower_count,
+            contributors=bookshelf.contributors,
+            visibility=bookshelf.visibility
+        )
+        for book in bookshelf.books:
+            bookshelf_dll.add_book_to_shelf(book, current_user.id)
+        bookshelf_ws_manager.cache[bookshelf.id] = bookshelf_dll
+        
+    if bookshelf.visibility == "public" or current_user.id == user_id:
+        bookshelf_response = BookshelfResponse(
+            id=bookshelf.id,
+            title=bookshelf.title,
+            description=bookshelf.description,
+            books=bookshelf.books,
+            contributors=bookshelf.contributors,
+            follower_count=bookshelf.follower_count,
+            visibility=bookshelf.visibility,
+            members=bookshelf.members,
+            created_by=bookshelf.created_by,
+            created_by_username=bookshelf.created_by_username
+        )
+        return JSONResponse(content={"bookshelf": jsonable_encoder(bookshelf_response)})
+    else:
+        raise HTTPException(status_code=403, detail="User is not authorized to view want to read bookshelf of another user")
+    
+# Currently reading bookshelf get for user 
+@router.get("/currently_reading/{user_id}",
+            name="bookshelf:currently_reading")
+async def get_user_currently_reading(
+        user_id: str,
+        current_user: Annotated[User, Depends(get_current_active_user)],
+        bookshelf_repo: BookshelfCRUDRepositoryGraph = Depends(get_repository(repo_type=BookshelfCRUDRepositoryGraph))
+        ):
+
+    bookshelf = bookshelf_repo.get_user_currently_reading(user_id=user_id)
+
+    if not bookshelf:
+        raise HTTPException(status_code=404, detail="Currently reading bookshelf not found")
+
+    if bookshelf.id not in bookshelf_ws_manager.cache:
+        bookshelf_dll = Bookshelf(
+            title=bookshelf.title,
+            description=bookshelf.description,
+            created_by=bookshelf.created_by,
+            created_by_username=bookshelf.created_by_username,
+            id=bookshelf.id,
+            img_url=bookshelf.img_url,
+            members=bookshelf.members,
+            follower_count=bookshelf.follower_count,
+            contributors=bookshelf.contributors,
+            visibility=bookshelf.visibility
+        )
+        for book in bookshelf.books:
+            bookshelf_dll.add_book_to_shelf(book, current_user.id)
+        bookshelf_ws_manager.cache[bookshelf.id] = bookshelf_dll
+        
+    if bookshelf.visibility == "public" or current_user.id == user_id:
+        bookshelf_response = BookshelfResponse(
+            id=bookshelf.id,
+            title=bookshelf.title,
+            description=bookshelf.description,
+            books=bookshelf.books,
+            contributors=bookshelf.contributors,
+            follower_count=bookshelf.follower_count,
+            visibility=bookshelf.visibility,
+            members=bookshelf.members,
+            created_by=bookshelf.created_by,
+            created_by_username=bookshelf.created_by_username
+        )
+        return JSONResponse(content={"bookshelf": jsonable_encoder(bookshelf_response)})
+    else:
+        raise HTTPException(status_code=403, detail="User is not authorized to view want to read bookshelf of another user")
+    
+# Finished Reading bookshelf get for user 
+@router.get("/finished_reading/{user_id}",
+            name="bookshelf:want_to_read")
+async def get_user_finished_reading(
+        user_id: str,
+        current_user: Annotated[User, Depends(get_current_active_user)],
+        bookshelf_repo: BookshelfCRUDRepositoryGraph = Depends(get_repository(repo_type=BookshelfCRUDRepositoryGraph))
+        ):
+
+    bookshelf = bookshelf_repo.get_user_finished_reading(user_id=user_id)
+
+    if not bookshelf:
+        raise HTTPException(status_code=404, detail="Finished reading bookshelf not found")
+
+    if bookshelf.id not in bookshelf_ws_manager.cache:
+        bookshelf_dll = Bookshelf(
+            title=bookshelf.title,
+            description=bookshelf.description,
+            created_by=bookshelf.created_by,
+            created_by_username=bookshelf.created_by_username,
+            id=bookshelf.id,
+            img_url=bookshelf.img_url,
+            members=bookshelf.members,
+            follower_count=bookshelf.follower_count,
+            contributors=bookshelf.contributors,
+            visibility=bookshelf.visibility
+        )
+        for book in bookshelf.books:
+            bookshelf_dll.add_book_to_shelf(book, current_user.id)
+        bookshelf_ws_manager.cache[bookshelf.id] = bookshelf_dll
+        
+    if bookshelf.visibility == "public" or current_user.id == user_id:
+        bookshelf_response = BookshelfResponse(
+            id=bookshelf.id,
+            title=bookshelf.title,
+            description=bookshelf.description,
+            books=bookshelf.books,
+            contributors=bookshelf.contributors,
+            follower_count=bookshelf.follower_count,
+            visibility=bookshelf.visibility,
+            members=bookshelf.members,
+            created_by=bookshelf.created_by,
+            created_by_username=bookshelf.created_by_username
+        )
+        return JSONResponse(content={"bookshelf": jsonable_encoder(bookshelf_response)})
+    else:
+        raise HTTPException(status_code=403, detail="User is not authorized to view want to read bookshelf of another user")
+    
 @router.websocket('/ws/{bookshelf_id}') 
 async def bookshelf_connection(websocket: WebSocket, 
                                bookshelf_id: str,
-                            #    background_tasks: BackgroundTasks,
                                token: str = Query(...),
                                bookshelf_repo: BookshelfCRUDRepositoryGraph = Depends(get_repository(repo_type=BookshelfCRUDRepositoryGraph)),
                                user_repo: UserCRUDRepositoryGraph = Depends(get_repository(repo_type=UserCRUDRepositoryGraph)),
@@ -662,101 +814,4 @@ async def bookshelf_connection(websocket: WebSocket,
 
     except WebSocketDisconnect:
         await bookshelf_ws_manager.disconnect_without_close(bookshelf_id, websocket)
-    
 
-# @router.get("/tests/test_background_task",
-#             name="bookshelf:test_background_task")
-# async def test_background_task(background_tasks: BackgroundTasks):
-#     print("Triggering background task")
-#     background_tasks.add_task(google_books_background_tasks.simple_task, x=1)
-#     return JSONResponse(content={"message": "Task added"})
-
-# TO BE DELETED
-# @router.put("/{bookshelf_id}/remove_book",
-#             name="bookshelf:remove_item")
-# async def remove_item_from_list(request: Request, 
-#                                 bookshelf_id: str,
-#                                 current_user: Annotated[User, Depends(get_current_active_user)],
-#                                 bookshelf_repo: BookshelfCRUDRepositoryGraph = Depends(get_repository(repo_type=BookshelfCRUDRepositoryGraph))):
-#     data = await request.json()
-
-#     try:
-#         data = BookshelfBookRemove(
-#             book_id=data['book_id'],
-#             contributor_id=current_user.id
-#         )
-#     except ValueError as e:
-#         raise HTTPException(status_code=400, detail=str(e))
-    
-#     if bookshelf_id in bookshelf_ws_manager.cache:
-#         # Pipeline if a book is in the cache.
-#         _bookshelf = bookshelf_ws_manager.cache[bookshelf_id]
-
-#         if current_user.id not in _bookshelf.contributors:
-#             raise HTTPException(status_code=403, detail="User is not authorized to remove book from this bookshelf")
-        
-#         if bookshelf_id in bookshelf_ws_manager.locks:
-#             # Different logic if the bookshelf has a lock.
-#             async with bookshelf_ws_manager.locks[bookshelf_id]:
-#                 await bookshelf_ws_manager.send_data(data={"state": "locked"}, bookshelf_id=bookshelf_id)
-
-#                 _bookshelf.remove_book(data.book_id)
-
-#                 books = jsonable_encoder(_bookshelf.get_books())
-
-#                 bookshelf_repo.remove_book(book_to_remove=data.book_id, books=books, bookshelf_id=bookshelf_id)
-
-#                 await bookshelf_ws_manager.send_data(bookshelf_id=bookshelf_id, data={
-#                 "state": "unlocked", "data": books })
-#         else:
-#             # No need to wait for the lock of update the websocket if no lock is present.
-#             _bookshelf.remove_book(data.book_id)
-
-#             books = jsonable_encoder(_bookshelf.get_books())
-
-#             bookshelf_repo.remove_book(book_to_remove=data.book_id, books=books, bookshelf_id=bookshelf_id)
-
-#     else:
-#         # In this case, we update the order of the book on the db side. 
-#         bookshelf_repo.remove_book_advanced(book_to_remove=data.book_id, books=books, bookshelf_id=bookshelf_id)
-        
-        # TODO: Add get request for all bookshelves for current user.
-        #  distinction in return values between bookshelves created by user and bookshelves followed by user.
-        # { 
-            # 'created-bookshelves' [],
-        #   'followed-bookshelves' [],
-        # }
-
-        # """
-        # Example of a bookshelf object for front end could look like this:
-        # followed, contributor, owner.
-        # followed shelf objects look like = {
-        #     first_four_img_urls of books in bookshelf: [], so we can make css mozaic for picture.
-        #     bookshelf_title: 'new',
-        #     bookshelf_id: , },
-        #     num_books, '',
-        #     num_followers: optional
-        #     is_contributor: bool
-        # }
-
-        # created_shelf_objects = {
-        #  ... followed shelf objects have,
-        #     visibility
-        # }
-        # """
-
-# Want to Read bookshelf get for user 
-router.get("want_to_read/{user_id}",
-            name="bookshelf:want_to_read")
-async def get_user_want_to_read(user_id: str,
-                                current_user: Annotated[User, Depends(get_current_active_user)],
-                                bookshelf_repo: BookshelfCRUDRepositoryGraph = Depends(get_repository(repo_type=BookshelfCRUDRepositoryGraph))):
-    if current_user.id == user_id:
-        owner = "current_user"
-
-    bookshelf = bookshelf_repo.get_user_want_to_read(user_id=user_id)
-
-    if bookshelf.visibility == "public" or current_user.id == user_id:   
-        return JSONResponse(content={"bookshelves": jsonable_encoder(bookshelf)})
-    else:
-        raise HTTPException(status_code=403, detail="User is not authorized to view want to read bookshelf of another user")

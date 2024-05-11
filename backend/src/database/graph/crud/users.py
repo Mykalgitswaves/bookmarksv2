@@ -35,9 +35,9 @@ class UserCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
                     disabled:False,
                     visibility:"public"})
                 WITH u
-                CREATE (a:WantToReadShelf {id: randomUUID(), created_date: datetime(), last_edited_date: datetime(), books: [], visibility: "public"}),
-                    (b:CurrentlyReadingShelf {id:  randomUUID(), created: datetime(), last_edited_date: datetime(), books: [], visibility: "public"}),
-                    (c:FinishedReadingShelf {id:  randomUUID(), created: datetime(), last_edited_date: datetime(), books: [], visibility: "public"})
+                CREATE (a:WantToReadShelf {id: "want_to_read_" + randomUUID(), created_date: datetime(), last_edited_date: datetime(), books: [], visibility: "public", title: "Want to Read", description: "Books I want to read"}),
+                    (b:CurrentlyReadingShelf {id: "currently_reading_" +  randomUUID(), created: datetime(), last_edited_date: datetime(), books: [], visibility: "public", title: "Currently Reading", description: "Books I am currently reading"}),
+                    (c:FinishedReadingShelf {id:  "finished_reading_" + randomUUID(), created: datetime(), last_edited_date: datetime(), books: [], visibility: "public", title: "Finished Reading", description: "Books I finished reading"})
                 CREATE (u)-[:HAS_WANT_TO_READ_SHELF]->(a),
                         (u)-[:HAS_CURRENTLY_READING_SHELF]->(b),
                         (u)-[:HAS_FINISHED_READING_SHELF]->(c)
@@ -1083,7 +1083,11 @@ class UserCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
     def delete_user_by_username_query(tx, username: str):
         query = """
                 match (u:User {username:$username})
-                detach delete u
+                match (u)-[r:HAS_WANT_TO_READ_SHELF]->(wantShelf:WantToReadShelf)
+                match (u)-[r2:HAS_CURRENTLY_READING_SHELF]->(currentShelf:CurrentlyReadingShelf)
+                match (u)-[r3:HAS_FINISHED_READING_SHELF]->(readShelf:FinishedReadingShelf)
+                detach delete wantShelf, currentShelf, readShelf, u
+                return "User deleted successfully"
                 """
         
         result = tx.run(query, username=username)
