@@ -18,10 +18,12 @@ import asyncio
 from src.securities.authorizations.verify import get_current_active_user, get_bookshelf_websocket_user, get_current_user_no_exceptions
 from src.api.utils.database import get_repository
 
-from src.models.schemas.users import UserInResponse, User, UserId
 from src.database.graph.crud.bookshelves import BookshelfCRUDRepositoryGraph
 from src.database.graph.crud.books import BookCRUDRepositoryGraph
 from src.database.graph.crud.users import UserCRUDRepositoryGraph
+
+from src.models.schemas.books import BookId
+from src.models.schemas.users import UserInResponse, User, UserId
 from src.models.schemas.bookshelves import (
     BookshelfCreate, 
     BookshelfResponse, 
@@ -771,6 +773,250 @@ async def get_user_finished_reading_preview(
     else:
         raise HTTPException(status_code=404, detail="Finished reading bookshelf not found")
     
+# Quick add book to bookshelf
+@router.put("/quick_add/{bookshelf_id}",
+            name="bookshelf:quick_add")
+async def quick_add_book_to_bookshelf(
+    request: Request,
+    bookshelf_id: str,
+    current_user: Annotated[User, Depends(get_current_active_user)],
+    background_tasks:BackgroundTasks,
+    move_from: Optional[str] = None,
+    bookshelf_repo: BookshelfCRUDRepositoryGraph = Depends(get_repository(repo_type=BookshelfCRUDRepositoryGraph)),
+    book_repo: BookCRUDRepositoryGraph = Depends(get_repository(repo_type=BookCRUDRepositoryGraph))
+):
+    data = await request.json()
+    try:
+        book_data = BookshelfBookAdd(
+            book=BookshelfBook(
+                title=data['book']['title'],
+                authors=data['book']['author_names'],
+                small_img_url=data['book']['small_img_url'],
+                id=data['book']['id']
+            ),
+            contributor_id=current_user.id,
+            move_from=move_from
+        )
+        
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    
+    prefixes = ["want_to_read", "currently_reading", "finished_reading"]
+    
+    # Check google book id to see if its in the database
+    book_exists = True
+    if book_data.book.id[0] == "g":
+        book_exists = False
+        canonical_book = book_repo.get_canonical_book_by_google_id_extended(book_data.book.id) 
+        if canonical_book:
+            book_exists = True
+            book_data.book = canonical_book
+
+    if "note_for_shelf" in data['book']:
+        book_data.book.note_for_shelf = data['book']["note_for_shelf"]
+
+    # Delete the book from the previous shelf if it exists
+    if book_data.move_from:
+        # Check if the book exists in the database
+        if not book_exists:
+            raise HTTPException(status_code=400, detail="Book does not exist in database and therefore cannot be moved to a shelf")
+
+        # Check the reading flow shelves by explicit name
+        if book_data.move_from == "want_to_read":
+            # We need to run the query first to get the book id
+            want_to_read_bookshelf_id = bookshelf_repo.delete_book_from_want_to_read(book_data.book.id, current_user.id)
+
+            # Check if the query executed successfully
+            if not want_to_read_bookshelf_id:
+                raise HTTPException(status_code=400, detail="Failed to remove book from previous shelf")
+            
+            # Check if the bookshelf is in the cache
+            if want_to_read_bookshelf_id in bookshelf_ws_manager.cache:
+                bookshelf_ws_manager.remove_book_only_from_cache(want_to_read_bookshelf_id, book_data)
+        
+        elif book_data.move_from == "currently_reading":
+            currently_reading_bookshelf_id = bookshelf_repo.delete_book_from_currently_reading(book_data.book.id, current_user.id)
+
+            # Check if the query executed successfully
+            if not currently_reading_bookshelf_id:
+                raise HTTPException(status_code=400, detail="Failed to remove book from previous shelf")
+            
+            # Check if the bookshelf is in the cache
+            if currently_reading_bookshelf_id and currently_reading_bookshelf_id in bookshelf_ws_manager.cache:
+                bookshelf_ws_manager.remove_book_only_from_cache(currently_reading_bookshelf_id, book_data)
+
+        elif book_data.move_from == "finished_reading":
+            finished_reading_bookshelf_id = bookshelf_repo.delete_book_from_finished_reading(book_data.book.id, current_user.id)
+
+            # Check if the query executed successfully
+            if not finished_reading_bookshelf_id:
+                raise HTTPException(status_code=400, detail="Failed to remove book from previous shelf")
+            
+            # Check if the bookshelf is in the cache
+            if finished_reading_bookshelf_id and finished_reading_bookshelf_id in bookshelf_ws_manager.cache:
+                bookshelf_ws_manager.remove_book_only_from_cache(finished_reading_bookshelf_id, book_data)
+
+        # Now handle the other cases where the shelf is not a reading flow shelf
+        else:
+            if bookshelf_id.id in bookshelf_ws_manager.cache:
+                response = await bookshelf_ws_manager.remove_book_and_send_updated_data_quick(
+                    current_user=current_user, 
+                    bookshelf_id=bookshelf_id, 
+                    data=data, 
+                    bookshelf_repo=bookshelf_repo)
+                if not response:
+                    raise HTTPException(status_code=400, detail="Failed to remove book from previous shelf")
+                    
+            else:
+                # If the bookshelf is not in the cache, we need to run the query and validate the user permissions
+                # Check the bookshelf id for keywords
+                if any(prefix in book_data.move_from for prefix in prefixes):
+                    response = bookshelf_repo.delete_book_from_reading_flow_bookshelf_with_validate(book_data.book.id, book_data.move_from, current_user.id)
+                else:
+                    response = bookshelf_repo.delete_book_from_bookshelf_with_validate(book_data.book.id, bookshelf_id.id, current_user.id)
+                if not response:
+                    raise HTTPException(status_code=400, detail="Failed to remove book from previous shelf")
+    
+    # # Add query for reading flow shelves
+    # if bookshelf_id == "want_to_read":
+    #     # Check if the book exists in the database
+    #     if book_exists:
+    #         want_to_read_bookshelf_id = bookshelf_repo.create_book_in_want_to_read_rel(book_data.book.id, current_user.id)
+
+    #     else:
+    #         want_to_read_bookshelf_id, book_data = bookshelf_repo.create_book_want_to_read_rel_with_book_data(book_data.book, current_user.id)
+
+    #         if want_to_read_bookshelf_id:
+    #             background_tasks.add_task(
+    #                 google_books_background_tasks.update_book_google_id,
+    #                 book_data.book.google_id,
+    #                 book_repo)
+                
+    #     # Check if the query executed successfully
+    #     if not want_to_read_bookshelf_id:
+    #         raise HTTPException(status_code=400, detail="Failed to add book to want to read bookshelf")
+        
+    #     # Check if the bookshelf is in the cache
+    #     if want_to_read_bookshelf_id in bookshelf_ws_manager.cache:
+    #         bookshelf_ws_manager.add_book_only_to_cache(want_to_read_bookshelf_id, book_data)
+
+    #     return JSONResponse(content={"message": "Book added successfully"})
+    
+    # elif bookshelf_id == "currently_reading":
+    #     # Check if the book exists in the database
+    #     if book_exists:
+    #         currently_reading_bookshelf_id = bookshelf_repo.add_book_to_currently_reading(book_data.book.id, current_user.id)
+    #     else:
+    #         currently_reading_bookshelf_id, book_data = bookshelf_repo.add_book_to_currently_reading_with_book_data(book_data.book, current_user.id)
+            
+    #         if currently_reading_bookshelf_id:
+    #             background_tasks.add_task(
+    #                 google_books_background_tasks.update_book_google_id,
+    #                 book_data.book.google_id,
+    #                 book_repo)
+                
+    #     # Check if the query executed successfully
+    #     if not currently_reading_bookshelf_id:
+    #         raise HTTPException(status_code=400, detail="Failed to add book to currently reading bookshelf")
+         
+    #     # Check if the bookshelf is in the cache
+    #     if currently_reading_bookshelf_id in bookshelf_ws_manager.cache:
+    #         bookshelf_ws_manager.add_book_only_to_cache(currently_reading_bookshelf_id, book_data)
+
+    #     return JSONResponse(content={"message": "Book added successfully"})
+    
+    # elif bookshelf_id == "finished_reading":
+    #     # Check if the book exists in the database
+    #     if book_exists:
+    #         finished_reading_bookshelf_id = bookshelf_repo.add_book_to_finished_reading(
+    #             book_data.book.id, 
+    #             current_user.id)
+    #     else:
+    #         finished_reading_bookshelf_id, book_data = bookshelf_repo.add_book_to_finished_reading_with_book_data(
+    #             book_data.book, 
+    #             current_user.id)
+            
+    #         if finished_reading_bookshelf_id:
+    #             background_tasks.add_task(
+    #                 google_books_background_tasks.update_book_google_id,
+    #                 book_data.book.google_id,
+    #                 book_repo)
+
+    #     # Check if the query executed successfully
+    #     if not finished_reading_bookshelf_id:
+    #         raise HTTPException(status_code=400, detail="Failed to add book to finished reading bookshelf")
+        
+    #     # Check if the bookshelf is in the cache
+    #     if finished_reading_bookshelf_id in bookshelf_ws_manager.cache:
+    #         bookshelf_ws_manager.add_book_only_to_cache(finished_reading_bookshelf_id, book_data)
+
+    #     return JSONResponse(content={"message": "Book added successfully"})
+    
+    # Add query for reading flow shelves
+    if bookshelf_id in prefixes:
+        # Check if the book exists in the database
+        if book_exists:
+            response = bookshelf_repo.create_book_in_reading_flow_bookshelf_rel(book_data.book, bookshelf_id, current_user.id)
+        else:
+            response = bookshelf_repo.create_book_in_reading_flow_bookshelf_rel_and_book(book_data.book, bookshelf_id, current_user.id)
+            # Run background task to update the google book
+            if response:
+                background_tasks.add_task(
+                    google_books_background_tasks.update_book_google_id,
+                    book_data.book.id,
+                    book_repo)
+                
+        if response:
+            return JSONResponse(content={"message": "Book added successfully"})
+        else:
+            raise HTTPException(status_code=400, detail="Failed to add book to bookshelf")
+    
+    else: 
+        # Check the cache for the bookshelf
+        if bookshelf_id in bookshelf_ws_manager.cache:
+            google_id_to_add = await bookshelf_ws_manager.add_book_and_send_updated_data_quick(
+                current_user=current_user, 
+                bookshelf_id=bookshelf_id, 
+                data=book_data, 
+                bookshelf_repo=bookshelf_repo,
+                book_repo=book_repo,
+                book_exists=book_exists)
+            
+            # Check if the book exists in the database
+            if google_id_to_add:
+                background_tasks.add_task(
+                    google_books_background_tasks.update_book_google_id,
+                    google_id_to_add,
+                    book_repo)
+                
+            return JSONResponse(content={"message": "Book added successfully"})
+        else:
+            # If the bookshelf is not in the cache, we need to run the query and validate the user permissions
+            # Check the bookshelf id for keywords
+            if any(prefix in book_data.move_from for prefix in prefixes):
+                if book_exists:
+                    response = bookshelf_repo.create_book_in_reading_flow_bookshelf_rel_with_shelf_id(book_data.book, bookshelf_id, current_user.id)
+                else:
+                    response = bookshelf_repo.create_book_in_reading_flow_bookshelf_rel_with_shelf_id_and_book(book_data.book, bookshelf_id, current_user.id)
+            else:
+                # These are the normal bookshelf cases
+                if book_exists:
+                    response = bookshelf_repo.create_book_in_bookshelf_rel(book_data.book, bookshelf_id, current_user.id)
+                else:
+                    response = bookshelf_repo.create_book_in_bookshelf_rel_and_book(book_data.book, bookshelf_id, current_user.id)
+                    
+                    # Run background task to update the google book
+                    if response:
+                        background_tasks.add_task(
+                            google_books_background_tasks.update_book_google_id,
+                            book_data.book.id,
+                            book_repo)
+                    
+            if response:
+                return JSONResponse(content={"message": "Book added successfully"})
+            else:
+                raise HTTPException(status_code=400, detail="Failed to add book to bookshelf")
+
 @router.websocket('/ws/{bookshelf_id}') 
 async def bookshelf_connection(websocket: WebSocket, 
                                bookshelf_id: str,
@@ -838,13 +1084,15 @@ async def bookshelf_connection(websocket: WebSocket,
                 async with bookshelf_ws_manager.locks[bookshelf_id]:
                     # Lock out the bookshelf on the client while reorder is happening.
                     await bookshelf_ws_manager.send_data(data={"state": "locked"}, bookshelf_id=bookshelf_id)
-                    # Create task to trun this.
+                    # Create task to run this.
                     await bookshelf_ws_manager.reorder_books_and_send_updated_data(current_user=current_user, bookshelf_id=bookshelf_id, data=data, bookshelf_repo=bookshelf_repo)
             
             elif data['type'] == 'delete':
                 try:
                     data = BookshelfBookRemove(
-                        book_id=data['target_id'],
+                        book=BookId(
+                            id=data['target_id']
+                        ),
                         contributor_id=current_user.id
                     )
                 except ValueError as e:
@@ -854,7 +1102,11 @@ async def bookshelf_connection(websocket: WebSocket,
                 async with bookshelf_ws_manager.locks[bookshelf_id]:
                     await bookshelf_ws_manager.send_data(data={"state": "locked"}, bookshelf_id=bookshelf_id)
 
-                    await bookshelf_ws_manager.remove_book_and_send_updated_data(current_user=current_user, bookshelf_id=bookshelf_id, data=data, bookshelf_repo=bookshelf_repo)
+                    await bookshelf_ws_manager.remove_book_and_send_updated_data(
+                        current_user=current_user, 
+                        bookshelf_id=bookshelf_id, 
+                        data=data, 
+                        bookshelf_repo=bookshelf_repo)
 
             elif data['type'] == 'add':
                 try:

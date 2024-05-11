@@ -532,7 +532,7 @@ class BookshelfCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
     def get_user_want_to_read_query(tx, user_id):
         query = (
             """
-            MATCH (u:User {id: $user_id})-[:HAS_WANT_TO_READ_SHELF]->(shelf:WantToReadShelf)
+            MATCH (u:User {id: $user_id})-[:HAS_READING_FLOW_SHELF]->(shelf:WantToReadShelf)
             OPTIONAL MATCH (shelf)-[rr:CONTAINS_BOOK]->(bb:Book)
             RETURN shelf.id as id, 
                    shelf.title as title, 
@@ -584,7 +584,7 @@ class BookshelfCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
             img_url=record["img_url"],
             created_by=record["user"]["id"],
             created_by_username=record["user"]["username"],
-            contributors=set(record["user"]["id"])
+            contributors=set([record["user"]["id"]])
         )
 
         return bookshelf
@@ -598,7 +598,7 @@ class BookshelfCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
     def get_user_want_to_read_by_shelf_id_query(tx, bookshelf_id):
         query = (
             """
-            MATCH (u:User)-[:HAS_WANT_TO_READ_SHELF]->(shelf:WantToReadShelf {id: $bookshelf_id})
+            MATCH (u:User)-[:HAS_READING_FLOW_SHELF]->(shelf:WantToReadShelf {id: $bookshelf_id})
             OPTIONAL MATCH (shelf)-[rr:CONTAINS_BOOK]->(bb:Book)
             RETURN shelf.id as id, 
                    shelf.title as title, 
@@ -649,7 +649,7 @@ class BookshelfCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
             img_url=record["img_url"],
             created_by=record["user"]["id"],
             created_by_username=record["user"]["username"],
-            contributors=set(record["user"]["id"])
+            contributors=set([record["user"]["id"]])
         )
 
         return bookshelf
@@ -663,7 +663,7 @@ class BookshelfCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
     def get_user_want_to_read_preview_query(tx, user_id):
         query = (
             """
-            MATCH (u:User {id: $user_id})-[:HAS_WANT_TO_READ_SHELF]->(shelf:WantToReadShelf)
+            MATCH (u:User {id: $user_id})-[:HAS_READING_FLOW_SHELF]->(shelf:WantToReadShelf)
             OPTIONAL MATCH (shelf)-[rr:CONTAINS_BOOK]->(bb:Book)
             RETURN shelf.id as id, 
                    shelf.title as title, 
@@ -711,7 +711,7 @@ class BookshelfCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
     def get_user_currently_reading_query(tx, user_id):
         query = (
             """
-            MATCH (u:User {id: $user_id})-[:HAS_CURRENTLY_READING_SHELF]->(shelf:CurrentlyReadingShelf)
+            MATCH (u:User {id: $user_id})-[:HAS_READING_FLOW_SHELF]->(shelf:CurrentlyReadingShelf)
             OPTIONAL MATCH (shelf)-[rr:CONTAINS_BOOK]->(bb:Book)
             RETURN shelf.id as id, 
                    shelf.title as title, 
@@ -763,7 +763,7 @@ class BookshelfCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
             img_url=record["img_url"],
             created_by=record["user"]["id"],
             created_by_username=record["user"]["username"],
-            contributors=set(record["user"]["id"])
+            contributors=set([record["user"]["id"]])
         )
 
         return bookshelf
@@ -777,7 +777,7 @@ class BookshelfCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
     def get_user_currently_reading_by_shelf_id_query(tx, bookshelf_id):
         query = (
             """
-            MATCH (u:User)-[:HAS_CURRENTLY_READING_SHELF]->(shelf:CurrentlyReadingShelf {id: $bookshelf_id})
+            MATCH (u:User)-[:HAS_READING_FLOW_SHELF]->(shelf:CurrentlyReadingShelf {id: $bookshelf_id})
             OPTIONAL MATCH (shelf)-[rr:CONTAINS_BOOK]->(bb:Book)
             RETURN shelf.id as id, 
                    shelf.title as title, 
@@ -828,7 +828,7 @@ class BookshelfCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
             img_url=record["img_url"],
             created_by=record["user"]["id"],
             created_by_username=record["user"]["username"],
-            contributors=set(record["user"]["id"])
+            contributors=set([record["user"]["id"]])
         )
 
         return bookshelf
@@ -842,7 +842,7 @@ class BookshelfCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
     def get_user_currently_reading_preview_query(tx, user_id):
         query = (
             """
-            MATCH (u:User {id: $user_id})-[:HAS_CURRENTLY_READING_SHELF]->(shelf:CurrentlyReadingShelf)
+            MATCH (u:User {id: $user_id})-[:HAS_READING_FLOW_SHELF]->(shelf:CurrentlyReadingShelf)
             OPTIONAL MATCH (shelf)-[rr:CONTAINS_BOOK]->(bb:Book)
             RETURN shelf.id as id, 
                    shelf.title as title, 
@@ -890,7 +890,7 @@ class BookshelfCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
     def get_user_finished_reading_query(tx, user_id):
         query = (
             """
-            MATCH (u:User {id: $user_id})-[:HAS_FINISHED_READING_SHELF]->(shelf:FinishedReadingShelf)
+            MATCH (u:User {id: $user_id})-[:HAS_READING_FLOW_SHELF]->(shelf:FinishedReadingShelf)
             OPTIONAL MATCH (shelf)-[rr:CONTAINS_BOOK]->(bb:Book)
             RETURN shelf.id as id, 
                    shelf.title as title, 
@@ -942,7 +942,7 @@ class BookshelfCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
             img_url=record["img_url"],
             created_by=record["user"]["id"],
             created_by_username=record["user"]["username"],
-            contributors=set(record["user"]["id"])
+            contributors=set([record["user"]["id"]])
         )
 
         return bookshelf
@@ -956,7 +956,7 @@ class BookshelfCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
     def get_user_finished_reading_by_shelf_id_query(tx, bookshelf_id):
         query = (
             """
-            MATCH (u:User)-[:HAS_FINISHED_READING_SHELF]->(shelf:FinishedReadingShelf {id: $bookshelf_id})
+            MATCH (u:User)-[:HAS_READING_FLOW_SHELF]->(shelf:FinishedReadingShelf {id: $bookshelf_id})
             OPTIONAL MATCH (shelf)-[rr:CONTAINS_BOOK]->(bb:Book)
             RETURN shelf.id as id, 
                    shelf.title as title, 
@@ -1007,7 +1007,7 @@ class BookshelfCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
             img_url=record["img_url"],
             created_by=record["user"]["id"],
             created_by_username=record["user"]["username"],
-            contributors=set(record["user"]["id"])
+            contributors=set([record["user"]["id"]])
         )
 
         return bookshelf
@@ -1021,7 +1021,7 @@ class BookshelfCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
     def get_user_finished_reading_preview_query(tx, user_id):
         query = (
             """
-            MATCH (u:User {id: $user_id})-[:HAS_FINISHED_READING_SHELF]->(shelf:FinishedReadingShelf)
+            MATCH (u:User {id: $user_id})-[:HAS_READING_FLOW_SHELF]->(shelf:FinishedReadingShelf)
             OPTIONAL MATCH (shelf)-[rr:CONTAINS_BOOK]->(bb:Book)
             RETURN shelf.id as id, 
                    shelf.title as title, 
@@ -1160,6 +1160,297 @@ class BookshelfCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
                         note_for_shelf=book_to_add.note_for_shelf,
                         bookshelf_id=bookshelf_id, 
                         user_id=user_id)
+        response = result.single()
+        if not response:
+            return False
+        if response['wasAdded']:
+            return response['id']
+        return False
+    
+    def create_book_in_reading_flow_bookshelf_rel(
+            self, 
+            book_to_add,
+            bookshelf_type,
+            user_id):
+        
+        with self.driver.session() as session:
+            result = session.write_transaction(self.create_book_in_reading_flow_bookshelf_rel_query, book_to_add, bookshelf_type, user_id)
+        return result
+    
+    @staticmethod
+    def create_book_in_reading_flow_bookshelf_rel_query(
+        tx, 
+        book_to_add, 
+        bookshelf_type,
+        user_id):
+        if bookshelf_type == "want_to_read":
+            query = (
+                """
+                MATCH (u:User {id: $user_id})-[:HAS_READING_FLOW_SHELF]->(b:WantToReadShelf)
+                match (book:Book {id:$book_id})
+                with b, book
+                OPTIONAL MATCH (b)-[rr:CONTAINS_BOOK]->(book)
+                WITH b, book, rr, EXISTS((b)-[:CONTAINS_BOOK]->(book)) AS relationshipExists
+                MERGE (b)-[r:CONTAINS_BOOK]->(book)
+                ON CREATE SET 
+                    b.books = COALESCE(b.books, []) + $book_id, 
+                    b.last_edited_date = datetime(),
+                    r.create_date = datetime(),
+                    r.added_by_id = $user_id,
+                    r.note_for_shelf = $note_for_shelf
+                RETURN NOT relationshipExists AS wasAdded
+                """
+            )
+        elif bookshelf_type == "currently_reading":
+            query = (
+                """
+                MATCH (u:User {id: $user_id})-[:HAS_READING_FLOW_SHELF]->(b:CurrentlyReadingShelf)
+                match (book:Book {id:$book_id})
+                with b, book
+                OPTIONAL MATCH (b)-[rr:CONTAINS_BOOK]->(book)
+                WITH b, book, rr, EXISTS((b)-[:CONTAINS_BOOK]->(book)) AS relationshipExists
+                MERGE (b)-[r:CONTAINS_BOOK]->(book)
+                ON CREATE SET 
+                    b.books = COALESCE(b.books, []) + $book_id, 
+                    b.last_edited_date = datetime(),
+                    r.create_date = datetime(),
+                    r.added_by_id = $user_id,
+                    r.note_for_shelf = $note_for_shelf
+                RETURN NOT relationshipExists AS wasAdded
+                """
+            )
+        elif bookshelf_type == "finished_reading":
+            query = (
+                """
+                MATCH (u:User {id: $user_id})-[:HAS_READING_FLOW_SHELF]->(b:FinishedReadingShelf)
+                match (book:Book {id:$book_id})
+                with b, book
+                OPTIONAL MATCH (b)-[rr:CONTAINS_BOOK]->(book)
+                WITH b, book, rr, EXISTS((b)-[:CONTAINS_BOOK]->(book)) AS relationshipExists
+                MERGE (b)-[r:CONTAINS_BOOK]->(book)
+                ON CREATE SET 
+                    b.books = COALESCE(b.books, []) + $book_id, 
+                    b.last_edited_date = datetime(),
+                    r.create_date = datetime(),
+                    r.added_by_id = $user_id,
+                    r.note_for_shelf = $note_for_shelf
+                RETURN NOT relationshipExists AS wasAdded
+                """
+            )
+        else:
+            return False
+        
+        result = tx.run(
+            query,
+            book_id=book_to_add.id,
+            note_for_shelf=book_to_add.note_for_shelf, 
+            user_id=user_id)
+        response = result.single()
+        if not response:
+            return False
+        return response['wasAdded']
+    
+    def create_book_in_reading_flow_bookshelf_rel_with_shelf_id(
+            self, 
+            book_to_add,
+            bookshelf_id,
+            user_id):
+        
+        with self.driver.session() as session:
+            result = session.write_transaction(self.create_book_in_reading_flow_bookshelf_rel_with_shelf_id_query, book_to_add, bookshelf_id, user_id)
+        return result
+    
+    @staticmethod
+    def create_book_in_reading_flow_bookshelf_rel_with_shelf_id_query(
+        tx, 
+        book_to_add, 
+        bookshelf_id,
+        user_id):
+
+        query = (
+            """
+            MATCH (u:User {id: $user_id})-[:HAS_READING_FLOW_SHELF]->(b: {id: $bookshelf_id})
+            match (book:Book {id:$book_id})
+            with b, book
+            OPTIONAL MATCH (b)-[rr:CONTAINS_BOOK]->(book)
+            WITH b, book, rr, EXISTS((b)-[:CONTAINS_BOOK]->(book)) AS relationshipExists
+            MERGE (b)-[r:CONTAINS_BOOK]->(book)
+            ON CREATE SET 
+                b.books = COALESCE(b.books, []) + $book_id, 
+                b.last_edited_date = datetime(),
+                r.create_date = datetime(),
+                r.added_by_id = $user_id,
+                r.note_for_shelf = $note_for_shelf
+            RETURN NOT relationshipExists AS wasAdded
+            """
+        )
+        
+        result = tx.run(
+            query,
+            book_id=book_to_add.id,
+            note_for_shelf=book_to_add.note_for_shelf,
+            bookshelf_id=bookshelf_id,
+            user_id=user_id)
+        response = result.single()
+        if not response:
+            return False
+        return response['wasAdded']
+    
+    def create_book_in_reading_flow_bookshelf_rel_and_book(
+            self, 
+            book_to_add,
+            bookshelf_type,
+            user_id):
+        
+        with self.driver.session() as session:
+            result = session.write_transaction(self.create_book_in_reading_flow_bookshelf_rel_and_book_query, book_to_add, bookshelf_type, user_id)
+        return result
+    
+    @staticmethod
+    def create_book_in_reading_flow_bookshelf_rel_and_book_query(
+        tx,
+        book_to_add,
+        bookshelf_type,
+        user_id):
+
+        if bookshelf_type == "want_to_read":
+            query = (
+                """
+                MATCH (u:User {id: $user_id})-[:HAS_READING_FLOW_SHELF]->(b:WantToReadShelf)
+                create (book:Book {id:"c"+randomUUID(),
+                                    google_id:$book_id, 
+                                    title:$title, 
+                                    small_img_url:$small_img_url, 
+                                    author_names: $author_names})
+                with b, book
+                OPTIONAL MATCH (b)-[rr:CONTAINS_BOOK]->(book)
+                WITH b, book, rr, EXISTS((b)-[:CONTAINS_BOOK]->(book)) AS relationshipExists
+                MERGE (b)-[r:CONTAINS_BOOK]->(book)
+                ON CREATE SET 
+                    b.books = COALESCE(b.books, []) + book.id, 
+                    b.last_edited_date = datetime(),
+                    r.create_date = datetime(),
+                    r.added_by_id = $user_id,
+                    r.note_for_shelf = $note_for_shelf
+                RETURN NOT relationshipExists AS wasAdded,
+                        book.id as id
+                """
+            )
+        elif bookshelf_type == "currently_reading":
+            query = (
+                """
+                MATCH (u:User {id: $user_id})-[:HAS_READING_FLOW_SHELF]->(b:CurrentlyReadingShelf)
+                create (book:Book {id:"c"+randomUUID(),
+                                    google_id:$book_id, 
+                                    title:$title, 
+                                    small_img_url:$small_img_url, 
+                                    author_names: $author_names})
+                with b, book
+                OPTIONAL MATCH (b)-[rr:CONTAINS_BOOK]->(book)
+                WITH b, book, rr, EXISTS((b)-[:CONTAINS_BOOK]->(book)) AS relationshipExists
+                MERGE (b)-[r:CONTAINS_BOOK]->(book)
+                ON CREATE SET 
+                    b.books = COALESCE(b.books, []) + book.id, 
+                    b.last_edited_date = datetime(),
+                    r.create_date = datetime(),
+                    r.added_by_id = $user_id,
+                    r.note_for_shelf = $note_for_shelf
+                RETURN NOT relationshipExists AS wasAdded,
+                        book.id as id
+                """
+            )
+        elif bookshelf_type == "finished_reading":
+            query = (
+                """
+                MATCH (u:User {id: $user_id})-[:HAS_READING_FLOW_SHELF]->(b:FinishedReadingShelf)
+                create (book:Book {id:"c"+randomUUID(),
+                                    google_id:$book_id, 
+                                    title:$title, 
+                                    small_img_url:$small_img_url, 
+                                    author_names: $author_names})
+                with b, book
+                OPTIONAL MATCH (b)-[rr:CONTAINS_BOOK]->(book)
+                WITH b, book, rr, EXISTS((b)-[:CONTAINS_BOOK]->(book)) AS relationshipExists
+                MERGE (b)-[r:CONTAINS_BOOK]->(book)
+                ON CREATE SET 
+                    b.books = COALESCE(b.books, []) + book.id, 
+                    b.last_edited_date = datetime(),
+                    r.create_date = datetime(),
+                    r.added_by_id = $user_id,
+                    r.note_for_shelf = $note_for_shelf
+                RETURN NOT relationshipExists AS wasAdded,
+                        book.id as id
+                """
+            )
+        else:
+            return False
+        
+        result = tx.run(
+            query,
+            book_id=book_to_add.id,
+            title=book_to_add.title,
+            small_img_url=book_to_add.small_img_url,
+            author_names=book_to_add.authors,
+            note_for_shelf=book_to_add.note_for_shelf,
+            user_id=user_id)
+
+        response = result.single()
+        if not response:
+            return False
+        if response['wasAdded']:
+            return response['id']
+        return False
+    
+    def create_book_in_reading_flow_bookshelf_rel_with_shelf_id_and_book(
+            self, 
+            book_to_add,
+            bookshelf_id,
+            user_id):
+        
+        with self.driver.session() as session:
+            result = session.write_transaction(self.create_book_in_reading_flow_bookshelf_rel_with_shelf_id_and_book_query, book_to_add, bookshelf_id, user_id)
+        return result
+    
+    @staticmethod
+    def create_book_in_reading_flow_bookshelf_rel_with_shelf_id_and_book_query(
+        tx,
+        book_to_add,
+        bookshelf_id,
+        user_id):
+
+        query = (
+            """
+            MATCH (u:User {id: $user_id})-[:HAS_READING_FLOW_SHELF]->(b: {id: $bookshelf_id})
+            create (book:Book {id:"c"+randomUUID(),
+                                google_id:$book_id, 
+                                title:$title, 
+                                small_img_url:$small_img_url, 
+                                author_names: $author_names})
+            with b, book
+            OPTIONAL MATCH (b)-[rr:CONTAINS_BOOK]->(book)
+            WITH b, book, rr, EXISTS((b)-[:CONTAINS_BOOK]->(book)) AS relationshipExists
+            MERGE (b)-[r:CONTAINS_BOOK]->(book)
+            ON CREATE SET 
+                b.books = COALESCE(b.books, []) + book.id, 
+                b.last_edited_date = datetime(),
+                r.create_date = datetime(),
+                r.added_by_id = $user_id,
+                r.note_for_shelf = $note_for_shelf
+            RETURN NOT relationshipExists AS wasAdded,
+                    book.id as id
+            """
+        )
+
+        result = tx.run(
+            query,
+            book_id=book_to_add.id,
+            bookshelf_id=bookshelf_id,
+            title=book_to_add.title,
+            small_img_url=book_to_add.small_img_url,
+            author_names=book_to_add.authors,
+            note_for_shelf=book_to_add.note_for_shelf,
+            user_id=user_id)
+
         response = result.single()
         if not response:
             return False
@@ -1419,3 +1710,136 @@ class BookshelfCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
         result = tx.run(query, bookshelf_id=bookshelf_id, user_id=user_id)
         response = result.single()
         return response is not None
+    
+    def delete_book_from_want_to_read(self, book_id, user_id):
+        with self.driver.session() as session:
+            result = session.write_transaction(self.delete_book_from_want_to_read_query, book_id, user_id)
+        return result
+    
+    @staticmethod
+    def delete_book_from_want_to_read_query(tx, book_id, user_id):
+        query = (
+            """
+            MATCH (u:User {id: $user_id})-[:HAS_READING_FLOW_SHELF]->(shelf:WantToReadShelf)
+            MATCH (shelf)-[r:CONTAINS_BOOK]->(book:Book {id: $book_id})
+            DELETE r
+            SET shelf.books = [book_id IN shelf.books WHERE book_id <> $book_id]
+            return shelf.id
+            """
+        )
+        result = tx.run(query, book_id=book_id, user_id=user_id)
+        response = result.single()
+        return response is not None
+    
+    def delete_book_from_currently_reading(self, book_id, user_id):
+        with self.driver.session() as session:
+            result = session.write_transaction(self.delete_book_from_currently_reading_query, book_id, user_id)
+        return result
+    
+    @staticmethod
+    def delete_book_from_currently_reading_query(tx, book_id, user_id):
+        query = (
+            """
+            MATCH (u:User {id: $user_id})-[:HAS_READING_FLOW_SHELF]->(shelf:CurrentlyReadingShelf)
+            MATCH (shelf)-[r:CONTAINS_BOOK]->(book:Book {id: $book_id})
+            DELETE r
+            SET shelf.books = [book_id IN shelf.books WHERE book_id <> $book_id]
+            return shelf.id
+            """
+        )
+        result = tx.run(query, book_id=book_id, user_id=user_id)
+        response = result.single()
+        return response is not None
+    
+    def delete_book_from_finished_reading(self, book_id, user_id):
+        with self.driver.session() as session:
+            result = session.write_transaction(self.delete_book_from_finished_reading_query, book_id, user_id)
+        return result
+    
+    @staticmethod
+    def delete_book_from_finished_reading_query(tx, book_id, user_id):
+        query = (
+            """
+            MATCH (u:User {id: $user_id})-[:HAS_READING_FLOW_SHELF]->(shelf:FinishedReadingShelf)
+            MATCH (shelf)-[r:CONTAINS_BOOK]->(book:Book {id: $book_id})
+            DELETE r
+            SET shelf.books = [book_id IN shelf.books WHERE book_id <> $book_id]
+            return shelf.id
+            """
+        )
+        result = tx.run(query, book_id=book_id, user_id=user_id)
+        response = result.single()
+        return response is not None
+    
+    def delete_book_from_bookshelf_with_validate(
+            self,
+            book_id,
+            bookshelf_id,
+            user_id
+    ):
+        with self.driver.session() as session:
+            result = session.write_transaction(
+                self.delete_book_from_bookshelf_with_validate_query,
+                book_id,
+                bookshelf_id,
+                user_id
+            )
+        return result
+    
+    @staticmethod
+    def delete_book_from_bookshelf_with_validate_query(
+        tx, 
+        book_id, 
+        bookshelf_id, 
+        user_id):
+        query = (
+            """
+            MATCH (u:User {id: $user_id})-[:HAS_BOOKSHELF_ACCESS {type: "owner"}]->(shelf:Bookshelf {id: $bookshelf_id})
+            MATCH (shelf)-[r:CONTAINS_BOOK]->(book:Book {id: $book_id})
+            DELETE r
+            SET shelf.books = [book_id IN shelf.books WHERE book_id <> $book_id]
+            return shelf.id
+            """
+        )
+        result = tx.run(
+            query, 
+            book_id=book_id, 
+            bookshelf_id=bookshelf_id,
+            user_id=user_id)
+        response = result.single()
+        return response is not None
+    
+    def delete_book_from_reading_flow_bookshelf_with_validate(
+            self,
+            book_id,
+            bookshelf_id,
+            user_id
+    ):
+        with self.driver.session() as session:
+            result = session.write_transaction(
+                self.delete_book_from_reading_flow_bookshelf_with_validate_query,
+                book_id,
+                bookshelf_id,
+                user_id
+            )
+        return result
+    
+    @staticmethod
+    def delete_book_from_reading_flow_bookshelf_with_validate_query(tx, book_id, bookshelf_id, user_id):
+        query = (
+            """
+            MATCH (u:User {id: $user_id})-[:HAS_READING_FLOW_SHELF]->(shelf: {id: $bookshelf_id})
+            MATCH (shelf)-[r:CONTAINS_BOOK]->(book:Book {id: $book_id})
+            DELETE r
+            SET shelf.books = [book_id IN shelf.books WHERE book_id <> $book_id]
+            return shelf.id
+            """
+        )
+        result = tx.run(
+            query, 
+            book_id=book_id, 
+            bookshelf_id=bookshelf_id,
+            user_id=user_id)
+        response = result.single()
+        return response is not None
+    

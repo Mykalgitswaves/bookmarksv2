@@ -38,9 +38,9 @@ class UserCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
                 CREATE (a:WantToReadShelf {id: "want_to_read_" + randomUUID(), created_date: datetime(), last_edited_date: datetime(), books: [], visibility: "public", title: "Want to Read", description: "Books I want to read"}),
                     (b:CurrentlyReadingShelf {id: "currently_reading_" +  randomUUID(), created: datetime(), last_edited_date: datetime(), books: [], visibility: "public", title: "Currently Reading", description: "Books I am currently reading"}),
                     (c:FinishedReadingShelf {id:  "finished_reading_" + randomUUID(), created: datetime(), last_edited_date: datetime(), books: [], visibility: "public", title: "Finished Reading", description: "Books I finished reading"})
-                CREATE (u)-[:HAS_WANT_TO_READ_SHELF]->(a),
-                        (u)-[:HAS_CURRENTLY_READING_SHELF]->(b),
-                        (u)-[:HAS_FINISHED_READING_SHELF]->(c)
+                CREATE (u)-[:HAS_READING_FLOW_SHELF]->(a),
+                        (u)-[:HAS_READING_FLOW_SHELF]->(b),
+                        (u)-[:HAS_READING_FLOW_SHELF]->(c)
                 return u.id as id, 
                     u.username as username, 
                     u.email as email, 
@@ -1083,9 +1083,9 @@ class UserCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
     def delete_user_by_username_query(tx, username: str):
         query = """
                 match (u:User {username:$username})
-                match (u)-[r:HAS_WANT_TO_READ_SHELF]->(wantShelf:WantToReadShelf)
-                match (u)-[r2:HAS_CURRENTLY_READING_SHELF]->(currentShelf:CurrentlyReadingShelf)
-                match (u)-[r3:HAS_FINISHED_READING_SHELF]->(readShelf:FinishedReadingShelf)
+                match (u)-[r:HAS_READING_FLOW_SHELF]->(wantShelf:WantToReadShelf)
+                match (u)-[r2:HAS_READING_FLOW_SHELF]->(currentShelf:CurrentlyReadingShelf)
+                match (u)-[r3:HAS_READING_FLOW_SHELF]->(readShelf:FinishedReadingShelf)
                 detach delete wantShelf, currentShelf, readShelf, u
                 return "User deleted successfully"
                 """

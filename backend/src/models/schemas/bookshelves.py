@@ -81,12 +81,13 @@ class BookshelfReorder(BaseModel):
     contributor_id: str
 
 class BookshelfBookRemove(BaseModel):
-    book_id: str
+    book: Any
     contributor_id: str
 
 class BookshelfBookAdd(BaseModel):
     book: Any
     contributor_id: str
+    move_from: str | None = None
 
 class BookshelfBook(BaseModel):
     id: str
