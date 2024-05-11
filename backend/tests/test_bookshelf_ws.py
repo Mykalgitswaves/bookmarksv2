@@ -529,3 +529,42 @@ class TestBookshelfWS:
         response = requests.get(f"{self.endpoint}/api/bookshelves/{bookshelf_id}/followers", headers=user_2_headers)
         assert response.status_code == 200, "Getting followers"
         assert not response.json()['followers'], "Getting followers"
+
+        # Delete the bookshelf
+        response = requests.delete(f"{self.endpoint}/api/bookshelves/{bookshelf_id}/delete", headers=headers)
+        assert response.status_code == 200, "Deleting Bookshelf"
+
+    def test_bookshelf_explore(self):
+        """
+        Test case for seeing a friends bookshelf in explore
+        """
+        headers = {"Authorization": f"{self.token_type} {self.access_token}"}
+        data = {
+            "bookshelf_name": "Test Bookshelf",
+            "bookshelf_description": "Test Bookshelf Description",
+            "visibility": "public"
+        }
+
+        # Create a bookshelf
+        response = requests.post(f"{self.endpoint}/api/bookshelves/create", headers=headers, json=data)
+        assert response.status_code == 200, "Creating Bookshelf"
+
+        bookshelf_id = response.json()["bookshelf_id"]
+
+        response = requests.put(f"{self.endpoint}/api/user/{self.user_id_2}/send_friend_request", headers=headers)
+        assert response.status_code == 200, "Testing Send Friend Request"
+
+        friend_headers = {"Authorization": f"{self.token_type_2} {self.access_token_2}"}
+
+        response = requests.put(f"{self.endpoint}/api/user/{self.user_id}/accept_friend_request", headers=friend_headers)
+        assert response.status_code == 200, "Testing Accept Friend Request"
+
+        response = requests.get(f"{self.endpoint}/api/bookshelves/explore/{self.user_id_2}", headers=friend_headers)
+        
+        assert response.status_code == 200, "Getting Explore"
+        assert len(response.json()['bookshelves']) == 1, "Getting Explore"
+
+        # Delete the bookshelf
+        response = requests.delete(f"{self.endpoint}/api/bookshelves/{bookshelf_id}/delete", headers=headers)
+        assert response.status_code == 200, "Deleting Bookshelf"
+

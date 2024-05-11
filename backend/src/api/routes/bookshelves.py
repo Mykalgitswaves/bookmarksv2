@@ -18,7 +18,7 @@ import asyncio
 from src.securities.authorizations.verify import get_current_active_user, get_bookshelf_websocket_user, get_current_user_no_exceptions
 from src.api.utils.database import get_repository
 
-from src.models.schemas.users import UserInResponse, User
+from src.models.schemas.users import UserInResponse, User, UserId
 from src.database.graph.crud.bookshelves import BookshelfCRUDRepositoryGraph
 from src.database.graph.crud.books import BookCRUDRepositoryGraph
 from src.database.graph.crud.users import UserCRUDRepositoryGraph
@@ -145,12 +145,20 @@ async def get_explore_bookshelves(
     user_id: str,
     current_user: Annotated[User, Depends(get_current_active_user)],
     bookshelf_repo: BookshelfCRUDRepositoryGraph = Depends(get_repository(repo_type=BookshelfCRUDRepositoryGraph)),
-    pagination: Optional[list] = Query(None, description="pagination start and end"),
+    skip: int=0, 
+    limit: int=5,
 ):
-    if current_user.id == user_id:
-        start_index, end_index = (map(int, pagination[0].split(',')) if pagination else (None, None))
-        bookshelf_repo.get_explore_bookshelves_for_user(user_id=user_id, start_index=start_index, end_index=end_index)
-        
+    try:
+        user_id_obj = UserId(id=user_id)
+
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    
+    if current_user.id == user_id_obj.id:
+        explore_bookshelves = bookshelf_repo.get_explore_bookshelves_for_user(user_id=user_id_obj.id, skip=skip, limit=limit)
+        return JSONResponse(content={"bookshelves": jsonable_encoder(explore_bookshelves)})
+    else:
+        raise HTTPException(status_code=403, detail="User is not authorized to view a different user's explore bookshelves")
 
 
 @router.get("/created_bookshelves/{user_id}",

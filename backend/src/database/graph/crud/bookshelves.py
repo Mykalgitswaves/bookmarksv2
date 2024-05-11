@@ -110,6 +110,7 @@ class BookshelfCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
                 b.visibility as visibility,
                 b.img_url as img_url,
                 b.created_by as created_by,
+                u.username as created_by_username,
                 count(bb) as book_count,
                 count(uu) as member_count,
                 count(follower) as follower_count,
@@ -134,6 +135,7 @@ class BookshelfCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
                 visibility=record["visibility"],
                 img_url=record["img_url"],
                 created_by=record["created_by"],
+                created_by_username=record["created_by_username"],
                 books_count=record["book_count"],
                 book_img_urls=first_four_books_imgs,
                 member_count=record["member_count"],
@@ -141,25 +143,68 @@ class BookshelfCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
             )
             bookshelves.append(bookshelf)
         return bookshelves
-    def get_explore_bookshelves_for_user(self, user_id, start_index, end_index):
+    
+    def get_explore_bookshelves_for_user(self, user_id, skip, limit):
+        """
+        Get all public bookshelves that the user's friends have created, contributed to, are members of, or follow.
+        """
         with self.driver.session() as session:
-            result = session.read_transaction(self.get_explore_bookshelves_for_user_query, user_id, start_index, end_index)
+            result = session.read_transaction(self.get_explore_bookshelves_for_user_query, user_id, skip, limit)
         return result
+    
     @staticmethod
-    def get_explore_bookshelves_for_user_query(tx, user_id, start_index, end_index):
+    def get_explore_bookshelves_for_user_query(tx, user_id, skip, limit):
         query = (
             """
-            MATCH (u:User {id: $user_id})
-            MATCH (b:Bookshelf {visibility: "public"})<-[r:HAS_BOOKSHELF_ACCESS]-(u)
-            WHERE r.type NOT IN ["owner", "contributor", "member"]
-            RETURN b
-            SKIP {start_index}
-            LIMIT {end_index}
+            MATCH (u:User {id: $user_id})-[:FRIENDED {status:"friends"}]-(friend:User)
+            MATCH (b:Bookshelf {visibility: "public"})<-[r:HAS_BOOKSHELF_ACCESS]-(friend)
+            OPTIONAL MATCH (b)-[access_rel:HAS_BOOKSHELF_ACCESS]-(u)
+            OPTIONAL MATCH (b)-[follow_rel:FOLLOWS_SHELF]-(u)
+            where access_rel is null and follow_rel is null and b.visibility = "public"
+            with b, friend, access_rel, follow_rel, r
+            Match (b)-[:HAS_BOOKSHELF_ACCESS {type: "owner"}]-(owner:User)
+            OPTIONAL MATCH (b)-[:CONTAINS_BOOK]->(bb:Book)
+
+            RETURN b as bookshelf,
+                friend as friend,
+                r as friend_access,
+                collect(bb.id) as book_object_ids,
+                collect(bb.small_img_url) as book_img_urls,
+                count(bb) as book_count,
+                owner.id as created_by,
+                owner.username as created_by_username
+
+            SKIP $skip
+            LIMIT $limit
             """
         )
-        result = tx.run(query, user_id=user_id, start_index=start_index, end_index=end_index)
-        response = result.single()
-        print(response)
+        result = tx.run(query, user_id=user_id, skip=skip, limit=limit)
+        bookshelf_list = []
+        
+        for response in result:
+            book_map = dict(zip(response["book_object_ids"], response["book_img_urls"]))
+            first_four_books_imgs = []
+            for key in response["bookshelf"]["books"][:4]:
+                first_four_books_imgs.append(book_map[key])
+                
+            bookshelf = BookshelfPreview(
+                id=response["bookshelf"]["id"],
+                title=response["bookshelf"]["title"],
+                book_ids=response["bookshelf"]["books"],
+                description=response["bookshelf"]["description"],
+                visibility=response["bookshelf"]["visibility"],
+                img_url=response["bookshelf"]["img_url"],
+                created_by=response["created_by"],
+                created_by_username=response["created_by_username"],
+                books_count=response["book_count"],
+                book_img_urls=first_four_books_imgs,
+                member_count=0,
+                follower_count=0
+            )
+            
+            bookshelf_list.append(bookshelf)
+        
+        return bookshelf_list
 
     def get_bookshelves_contributed_to_by_user(self, user_id):
         with self.driver.session() as session:
@@ -171,6 +216,7 @@ class BookshelfCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
         query = (
             """
             MATCH (b:Bookshelf)<-[r:HAS_BOOKSHELF_ACCESS {type: "contributor"}]-(u:User {id: $user_id})
+            MATCH (owner:User)-[:HAS_BOOKSHELF_ACCESS {type: "owner"}]->(b)
             OPTIONAL MATCH (b)-[:CONTAINS_BOOK]->(bb:Book)
             OPTIONAL MATCH (uu:User)-[:HAS_BOOKSHELF_ACCESS {type: "member"}]->(b)
             OPTIONAL MATCH (follower:User)-[follows_rel:FOLLOWS_SHELF]->(b)
@@ -181,6 +227,7 @@ class BookshelfCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
                 b.visibility as visibility,
                 b.img_url as img_url,
                 b.created_by as created_by,
+                owner.username as created_by_username,
                 count(bb) as book_count,
                 count(uu) as member_count,
                 count(follower) as follower_count,
@@ -205,6 +252,7 @@ class BookshelfCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
                 visibility=record["visibility"],
                 img_url=record["img_url"],
                 created_by=record["created_by"],
+                created_by_username=record["created_by_username"],
                 books_count=record["book_count"],
                 book_img_urls=first_four_books_imgs,
                 member_count=record["member_count"],
@@ -223,6 +271,7 @@ class BookshelfCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
         query = (
             """
             MATCH (b:Bookshelf)<-[r:HAS_BOOKSHELF_ACCESS {type: "member"}]-(u:User {id: $user_id})
+            MATCH (owner:User)-[:HAS_BOOKSHELF_ACCESS {type: "owner"}]->(b)
             OPTIONAL MATCH (b)-[:CONTAINS_BOOK]->(bb:Book)
             OPTIONAL MATCH (uu:User)-[:HAS_BOOKSHELF_ACCESS {type: "member"}]->(b)
             OPTIONAL MATCH (follower:User)-[follows_rel:FOLLOWS_SHELF]->(b)
@@ -233,6 +282,7 @@ class BookshelfCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
                 b.visibility as visibility,
                 b.img_url as img_url,
                 b.created_by as created_by,
+                owner.username as created_by_username,
                 count(bb) as book_count,
                 count(uu) as member_count,
                 count(follower) as follower_count,
@@ -257,6 +307,7 @@ class BookshelfCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
                 visibility=record["visibility"],
                 img_url=record["img_url"],
                 created_by=record["created_by"],
+                created_by_username=record["created_by_username"],
                 books_count=record["book_count"],
                 book_img_urls=first_four_books_imgs,
                 member_count=record["member_count"],
@@ -459,7 +510,7 @@ class BookshelfCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
                 relationship_to_current_user = 'stranger'
 
             followers.append(BookshelfFollower(
-                user_id=response['user']['id'],
+                id=response['user']['id'],
                 username=response['user']['username'],
                 created_date=response['user']['created_date'],
                 profile_img_url=profile_img_url,

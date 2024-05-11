@@ -413,6 +413,7 @@ class BookshelfPreview(BaseModel):
     visibility: Literal['public', 'private', 'friends']
     member_count: int
     created_by: str
+    created_by_username: str
     follower_count: int = 0
 
 class BookshelfPage(BaseModel):
