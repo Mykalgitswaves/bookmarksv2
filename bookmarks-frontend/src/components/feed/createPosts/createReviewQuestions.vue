@@ -10,15 +10,15 @@
                 type="button"
                 @click="activeQuestionCat[index] = !activeQuestionCat[index]"
             >
-                <Component :is="categoryIconMapping[questionType[0]]"/>
-                <span class="fancy">{{ questionType[0] }}</span>
+                <Component :is="categoryIconMapping[questionType[0]]" class="question-topic-icon"/>
+                <span class="fancy">{{ questionType[0] === 'custom' ? 'Add your own thoughts' : ToTitleCase(questionType[0]) }}</span>
 
                 <IconChevron :class="{'active-chevron': activeQuestionCat[index]}"/>
             </button>
 
             <!-- Subsection of a particular category -->
             <Transition name="content" tag="div">
-                <ul  v-if="!activeQuestionCat[index]" class="container questions">
+                <ul  v-if="questionType[0] === 'custom' ? activeQuestionCat[index] : !activeQuestionCat[index]" class="container questions">
                     <li v-for="(question, i) in questionType[1]" 
                         :key="i"
                         class="mb-5"
@@ -30,7 +30,7 @@
                             <form class="text-start w-100">
                                 <span v-if="question.id >= 0" class="block">{{ question?.q }}?</span>
                                 
-                                <span v-else class="block">{{ question?.placeholder }}</span>
+                                <!-- <span v-else class="block">{{ question?.placeholder }}</span> -->
                             
                                 <textarea name="response" type="text" 
                                     :style="{ height: throttledGenQuestionHeight(question.id) + 'px' }"
@@ -38,7 +38,7 @@
                                     class="create-question-response" 
                                     v-model="question.response"
                                     ref="textarea"
-                                    placeholder="type your response here..."
+                                    :placeholder="question.id >= 0 ? 'type your response here...' : 'Add your own thoughts here...'"
                                     @keyup="updateQuestion(question)"
                                 />
                             </form>
@@ -48,7 +48,7 @@
                             <p class="text-start text-indigo-400 text-sm">
                                 Question added
                             </p>
-
+                            
                             <button type="button"
                                 class="text-red-600 w-20 box-btn-remove"
                                 @click="removeQuestionFromStore(question)"
@@ -57,6 +57,14 @@
                                 Remove
                             </button>
                         </div>
+                        <!-- FOr custom questions you might want to add. -->
+                        <button v-if="question.id < 0"
+                            type="button"
+                            class="btn btn-ghost btn-icon mt-2 pl-0" 
+                            @click="addAnotherCustomQuestion()">
+                            <IconPlus />    
+                            Add another question
+                        </button>
                     </li>
                 </ul>
             </Transition>
@@ -65,10 +73,11 @@
 </template>
 <script setup>
 import { ref, watch, computed } from 'vue';
-import { helpersCtrl, throttle } from '../../../services/helpers';
+import { helpersCtrl, throttle, ToTitleCase } from '../../../services/helpers';
 import { createQuestionStore } from '../../../stores/createPostStore';
 import IconChevron from '../../svg/icon-chevron.vue';
 import IconRemove from '../../svg/icon-remove.vue';
+import IconPlus from '../../svg/icon-plus.vue';
 import { categoryIconMapping } from '../createPosts/questionCategories.js';
 
 const props = defineProps({

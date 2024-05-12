@@ -222,3 +222,10 @@ export const truncateText = (originalString, truncatedLength) => {
     }
     return originalString;
 }
+
+export function ToTitleCase(str) {
+    if (!str) {
+        return ""
+    }
+    return str.toLowerCase().replace(/\b\w/g, s => s.toUpperCase());
+  }

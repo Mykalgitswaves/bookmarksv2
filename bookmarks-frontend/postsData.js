@@ -1,20 +1,30 @@
 export const postData = {
     "posts": { 
         "review": {
-                    "all": [
-                        {
-                            "id": 1,
-                            "q" :"what is this book about?",
+                    "custom": [
+                        {   
+                            "id": -1,
+                            "q": '',
                             "response": '',
                             "is_spoiler": false,
-                        },
-                        {
-                            "id": 2,
-                            "q" :"what do you like about this book?",
-                            "response": '',
-                            "is_spoiler": false,
-                        },
+                            "placeholder": "Add your own question here...",
+                            "isHiddenCustomQuestion": false
+                        }
                     ],
+                    // "all": [
+                    //     {
+                    //         "id": 1,
+                    //         "q" :"what is this book about?",
+                    //         "response": '',
+                    //         "is_spoiler": false,
+                    //     },
+                    //     {
+                    //         "id": 2,
+                    //         "q" :"what do you like about this book?",
+                    //         "response": '',
+                    //         "is_spoiler": false,
+                    //     },
+                    // ],
                     "character": [
                         { 
                             "id": 3,
@@ -75,14 +85,12 @@ export const postData = {
                             "is_spoiler": false
                           }
                     ],
-                    "custom": [
-                        {   
-                            "id": -1,
-                            "q": '',
-                            "response": '',
-                            "is_spoiler": false,
-                            "placeholder": "Add your own question here...",
-                            "isHiddenCustomQuestion": false
+                    "conflict": [
+                        {
+                            "id": 10,
+                            "q": "What was the central conflict in the book?",
+                            "response": "",
+                            "is_spoiler": false
                         }
                     ]
         },

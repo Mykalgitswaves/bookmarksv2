@@ -102,7 +102,7 @@ const currentTopic = ref('Your post');
 let characterQuestions = clone(postData.posts.review['character']);
 let plotQuestions = clone(postData.posts.review['plot']);
 let toneQuestions = clone(postData.posts.review['tone']);
-let allQuestions = clone(postData.posts.review['all']);
+// let allQuestions = clone(postData.posts.review['all']);
 let customQuestions = clone(postData.posts.review['custom']);
 
 const store = createQuestionStore();
@@ -115,11 +115,11 @@ const step = ref(1);
 
 // used to show certain question sets.
 const questionMapping = reactive({
+    'custom': customQuestions,
     'character': characterQuestions,
     'plot': plotQuestions,
     'tone': toneQuestions,
-    'all': allQuestions,
-    'custom': customQuestions,
+    // 'all': allQuestions,
 });
 
 const progressTotal = computed(() => Math.floor((step.value * 100) / 3));

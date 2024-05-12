@@ -9,6 +9,19 @@
     border-radius: .25rem;
 }
 
+.btn-ghost {
+    /* border: 1px solid var(--stone-200); */
+    color: var(--stone-500);
+    fill: var(--stone-500);
+}
+
+.btn-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    column-gap: 8px;
+}
+
 .add-btn {
     color: #fff;
     background-color: rgb(129 140 248);
