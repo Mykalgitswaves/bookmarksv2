@@ -36,9 +36,12 @@
                 <p class="text-stone-600 mb-5 mt-2"><span class="text-indigo-500">{{ step }}</span> / 3</p>
 
                 <div class="toolbar-progress">
-                    <div class="total" :style="{'width': Math.floor((step * 100) / 3) + '%'}"></div>
+                    <div class="total" :style="{'width': progressTotal + '%'}"></div>
+                    <div class="remaining" :style="{'width': remainderTotal + '%'}"></div>
 
-                    <div class="remaining" :style="{'width': (Math.floor((step  * 100) / 3) - 100) + '%'}"></div>
+                    <span class="stepper one" :class="{'active': step >= 1}"></span>
+                    <span class="stepper two" :class="{'active': step >= 2}"></span>
+                    <span class="stepper three" :class="{'active': step >= 3}"></span>
                 </div>
             </div>
 
@@ -47,8 +50,9 @@
 
             <!-- Adding questions -->
             <div v-show="step === 2">
-                <div class="mt-10 mb-5">
-                    <h4 class="heading">Click into a question to add it to your review.</h4>
+
+                <div class="mt-10 mb-10">
+                    <h4 class="heading">Click into a topic to add questions to your review.</h4>
 
                     <p class="subheading">Pick from some pre-made prompts or add your own</p>
                 </div>
@@ -117,6 +121,9 @@ const questionMapping = reactive({
     'all': allQuestions,
     'custom': customQuestions,
 });
+
+const progressTotal = computed(() => Math.floor((step.value * 100) / 3));
+const remainderTotal = computed(() => 100 - progressTotal.value);
 
 // functions
 const emit = defineEmits(['is-postable-data']);
@@ -240,18 +247,45 @@ textarea {
 .toolbar-progress {
     width: 100%;
     max-width: 880px;
+    position: relative;
+    display: flex;
 }
 
 .toolbar-progress .total {
-    height: 2px;
     background-color: var(--indigo-500);
     border-bottom: 2px solid var(--indigo-500);
 }
 
 .toolbar-progress .remaining {
-    height: 2px;
     background-color: var(--indigo-500);
     border-bottom: 2px solid var(--stone-100);
+}
+
+.toolbar-progress .stepper {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background-color: var(--stone-100);
+    display: inline-block;
+    margin-left: -5px;
+    position: absolute;
+    top: -5px;
+}
+
+.toolbar-progress .stepper.one{
+    left: 33%;
+}
+
+.toolbar-progress .stepper.two{
+    left: 66%;
+}
+
+.toolbar-progress .stepper.three{
+    right: 0;
+}
+
+.stepper.active {
+    background-color: var(--indigo-500);
 }
 
 .list-move,
