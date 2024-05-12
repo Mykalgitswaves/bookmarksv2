@@ -1,7 +1,7 @@
 <template>
+    <!-- This represents a list of questions and corresponding categories for each. -->
     <ul>
-        <li 
-            v-for="(questionType, index) in qset"
+        <li v-for="(questionType, index) in qset"
             :key="index"
             :ref="(el) => activeQuestionCat.push(el)"
         >
@@ -10,59 +10,66 @@
                 type="button"
                 @click="activeQuestionCat[index] = !activeQuestionCat[index]"
             >
-                <span>{{ questionType[0] }}</span>
-                <IconChevron :class="{'active': activeQuestionCat[index]}"/>
+                <Component :is="categoryIconMapping[questionType[0]]"/>
+                <span class="fancy">{{ questionType[0] }}</span>
+
+                <IconChevron :class="{'active-chevron': activeQuestionCat[index]}"/>
             </button>
 
-                <ul class="container questions" v-if="activeQuestionCat[index]">
-                    <li 
-                        v-for="(question, i) in questionType[1]" 
+            <!-- Subsection of a particular category -->
+            <Transition name="content" tag="div">
+                <ul  v-if="activeQuestionCat[index]" class="container questions">
+                    <li v-for="(question, i) in questionType[1]" 
                         :key="i"
-                        @click="updateQuestion()"
-                    >
-                        <div class="my-3 text-lg question-border px-5 py-5 cursor-pointer w-100 box-btn"
-                            v-if="question?.id >= 0 || !question?.isHiddenCustomQuestion"
+                        class="mb-5"
+                    >   
+                        <div v-if="question && (question?.id >= 0 || !question?.isHiddenCustomQuestion)"
+                            class="my-2 text-lg question-border px-5 py-5 cursor-pointer w-100 box-btn"
+                            :class="{'active': state.has(question.id)}"
                         >
-                            <button type="button"
-                                class="text-start"
-                                :class="{'w-70': props.isViewingReview}"
-                                @click="store.addOrUpdateQuestion(question)"
-                            >
-                                    <span v-if="question.id >= 0" class="block">{{ question?.q }}?</span>
-                                    
-                                    <span v-else class="block">{{ question?.placeholder }}</span>
-                                    
-                                    <span v-if="question.id >= 0" class="block text-slate-400 text-start" :key="question.response">
-                                        {{ question?.response }}
-                                    </span>
-                            </button>
+                            <form class="text-start w-100">
+                                <span v-if="question.id >= 0" class="block">{{ question?.q }}?</span>
+                                
+                                <span v-else class="block">{{ question?.placeholder }}</span>
+                            
+                                <textarea name="response" type="text" 
+                                    :style="{ height: throttledGenQuestionHeight(question.id) + 'px' }"
+                                    :id="question.id"
+                                    class="create-question-response" 
+                                    v-model="question.response"
+                                    ref="textarea"
+                                    placeholder="type your response here..."
+                                    @keyup="updateQuestion(question)"
+                                />
+                            </form>
+                        </div>
 
-                            <button
-                                v-if="props.isViewingReview"
+                        <div v-if="state.has(question.id)" class="flex justify-between items-center w-100">
+                            <p class="text-start text-indigo-400 text-sm">
+                                Question added
+                            </p>
+
+                            <button type="button"
                                 class="text-red-600 w-20 box-btn-remove"
-                                @click="store.deleteQuestion(question)"
+                                @click="removeQuestionFromStore(question)"
                             >
-                                <IconRemove />
-                            </button>
-                            <button 
-                                v-if="!props.isViewingReview"
-                                class="add-question"
-                                @click="store.addOrUpdateQuestion(question)"
-                            >
-                                <IconAddPostVue/>
+                                <IconRemove style="height: 12px; width: 12px; fill: var(--red-400);" />
+                                Remove
                             </button>
                         </div>
                     </li>
                 </ul>
-            </li>
-        </ul>
+            </Transition>
+        </li>
+    </ul>
 </template>
 <script setup>
 import { ref, watch, computed } from 'vue';
-import { helpersCtrl } from '../../../services/helpers';
+import { helpersCtrl, throttle } from '../../../services/helpers';
 import { createQuestionStore } from '../../../stores/createPostStore';
-import IconAddPostVue from '../../svg/icon-add-post.vue';
 import IconChevron from '../../svg/icon-chevron.vue';
+import IconRemove from '../../svg/icon-remove.vue';
+import { categoryIconMapping } from '../createPosts/questionCategories.js';
 
 const props = defineProps({
     questionMap: {
@@ -81,22 +88,62 @@ const props = defineProps({
 const { clone } = helpersCtrl;
 
 const store = createQuestionStore();
+
+const textarea = ref([]);
+const heights = ref({});
+const cachedQuestions = {};
+
+function textAreaHeight(id) {
+    let question;
+    // Only loops through our questions once. saves some performance.
+    if (cachedQuestions[id]) {
+        question = cachedQuestions[id];
+    } else {
+       question = textarea.value.find((question) => parseInt(question.id, 10) === parseInt(id, 10));
+       cachedQuestions[id] = question;
+    }
+    
+    if (question) {
+        heights.value[id] = parseInt(question?.scrollHeight, 10);
+    } else {
+        heights.value[id] = 30;
+    }
+}
+
+function generateQuestionHeightWithCache(id) {   
+    textAreaHeight(id);
+    return heights.value[id];
+}
+
+const throttledGenQuestionHeight = throttle(generateQuestionHeightWithCache, 100);
+
+const { state } = store;
+
 const qset = computed(() => {
     console.log(props.questionMap);
     return Array.from(Object.entries(props.questionMap));
 });
 
-watch(props.questionMap, (newValue) => {
-    console.log(newValue);
-});
+const isCurrentQuestionAdded = (question) => { 
+    state.has(question.id);
+};
 
 const activeQuestionCat = ref([]);
 
 activeQuestionCat.value.forEach((boolean) => (boolean.value = false));
 
 function updateQuestion(question) {
+    if(!question.response.length){
+        return;
+    }
+
     store.addOrUpdateQuestion(question);
     // Maybe add more logic in here to emit the shit.
+}
+
+function removeQuestionFromStore(question){
+    question.response = '';
+    store.deleteQuestion(question)
 }
 
 const emit = defineEmits(['question-added']);
@@ -107,9 +154,23 @@ watch(() => props.questionCount, (newValue) => {
 </script>
 <style scoped>
 
+.create-question-response {
+    width: 100%;
+    border: none;
+    appearance: none;
+    resize: none;
+    color: var(--stone-500);
+    margin-right: 4px;
+    padding-top: 8px;
+    background-color: transparent
+}
 
+.create-question-response:focus {
+    border: none;
+    outline: none;
+}
 
-.active {
+.active-chevron {
     transform: rotate(180deg);
 }
 
@@ -125,10 +186,17 @@ watch(() => props.questionCount, (newValue) => {
 
 .box-btn-remove {
     display: flex;
-    justify-content: flex-end;
-    color: #e2e8f0;
+    column-gap: 4px;
+    align-items: center;
+    width: fit-content;
+    color: var(--red-400);
+    font-size: var(--font-sm);
     transition-duration: 250ms;
     transition-timing-function: ease;
+}
+
+.box-btn-remove:hover {
+    color: var(--red-500);
 }
 
 .add-question {

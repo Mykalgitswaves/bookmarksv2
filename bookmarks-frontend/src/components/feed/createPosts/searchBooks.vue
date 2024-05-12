@@ -1,25 +1,30 @@
 <template>
-     <form class="grid grid-cols-1 gap-2">
+     <form class="grid grid-cols-1 gap-2" :class="{'w-100': props.centered}">
       <label v-if="props.labelAbove" for="search-book" class="text-gray-600 text-sm mb-2">{{ props.labelAbove }}</label>
       
       <input
         id="search-book"
         class="py-2 px-4 rounded-md border-2 border-indigo-200 w-62 max-w-[600px]"
         :ref="(el) => (inputRef.push(el))"
-        :class="props.labelAbove ? 'mt-0' : 'mt-5'"
-        @keyup="debouncedSearchBooks($event)"
+        :class="{'mt-0': props.labelAbove, 
+          'mt-5': !props.labelAbove,
+          'w-100 mx-auto': props.centered
+        }"
         placeholder="Search for books"
         name="searchForBooks"
         type="text"
+        @keyup="debouncedSearchBooks($event)"
       />
 
-      <label class="text-gray-600 text-sm" for="searchForBooks" v-if="!props.labelAbove">
-        Tap a book and review it to add it to your shelf
-      </label>
+      <label v-if="!props.labelAbove" 
+        class="text-gray-600 text-sm" 
+        :class="{ 'text-center': props.centered }"
+        for="searchForBooks"
+      >Tap a book and review it to add it to your shelf</label>
     </form>
 
     <BookSearchResults 
-      class="max-w-[600px]" 
+      class="max-w-[600px] mx-auto" 
       :data="books" 
       :is-auth="true"
       :is-comparison="props.isComparison"
@@ -41,6 +46,10 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  centered: {
+    type: Boolean,
+    default: false,
+  }
 });
 
 const emit = defineEmits(['book-to-parent'])
@@ -67,5 +76,5 @@ watch(book, () => {
   if(props.isComparison && book.value !== null) {
     searchResultsArray.value = [];
   }
-})
+});
 </script>

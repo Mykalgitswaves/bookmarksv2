@@ -1,6 +1,6 @@
 <template>
     <div class>
-        <p class="text-2xl font-medium mb-2 mt-5 text-slate-600">Add a headline (TLDR) for your {{ props.reviewType }}.</p>
+        <p class="text-lg mb-2 mt-5 text-stone-600">Add a headline for your {{ props.reviewType }}.</p>
         
         <label 
             for="headline"
@@ -32,5 +32,4 @@ const emit = defineEmits();
 watch(headline, () => {
     emit('headline-changed', headline.value);
 });
-
 </script>

@@ -17,16 +17,9 @@
                     <span v-if="props.isComparison" class="block">{{ `The ${question.topic} of both books...` }}</span>
                     <span v-if="props.isComparison" class="block text-slate-400 text-start">{{ question.comparison }}</span>
                 </div>
-                <button type="button"
-                    class="btn-expand"
-                    :class="{'expanded': createPostResponseFormDict[i]}"
-                    @click="createPostResponseFormDict[i] = !createPostResponseFormDict[i]"
-                >
-                    <IconChevron />
-                </button>
             </div>
 
-            <CreatePostResponseForm 
+            <!-- <CreatePostResponseForm 
                 v-if="!createPostResponseFormDict[i]" 
                 :q="question" 
                 :is-comparison="props.isComparison"  
@@ -34,7 +27,7 @@
                 :is-custom-question="question.id < 0"
                 :index-of-q="i"
                 @store-changed="storeChangeHandler($event)"
-            />
+            /> -->
         </li>
     </ul>
 </template>

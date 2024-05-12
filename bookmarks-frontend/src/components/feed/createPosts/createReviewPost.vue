@@ -2,14 +2,14 @@
     <section>
         <BackBtn/>
         <div v-if="!book">
-            <p class="text-2xl mb-2 mt-5 font-semibold">The content monster is hungry for your thoughts 🍪. <br/>
+            <p class="text-2xl mb-2 mt-5 font-semibold text-center">The content monster is hungry for your thoughts 🍪. <br/>
                 <span class="text-indigo-500">Start by picking a book </span>
             </p>
 
-            <SearchBooks @book-to-parent="bookHandler"/>
+            <SearchBooks @book-to-parent="bookHandler" :centered="true"/>
         </div>
 
-        <div v-if="book" class="container">
+        <div v-if="book" class="container text-center">
             <div class="my-5">
                 <p class="create-post-heading-text">You're reviewing
                     <span class=" create-post-heading-book-title">
@@ -18,44 +18,60 @@
                 </p>
             </div>
 
-            <CreatePostHeadline @headline-changed="headlineHandler" />
+            <!-- Progress bar and controls -->
+            <div>
+                <div class="toolbar">
+                    <button type="button"
+                        class="toolbar-btn"
+                        @click="decrementStep"
+                    >Previous</button>
 
-            <div class="mt-10 mb-5">
-                <h4 class="heading">Add and answer questions.</h4>
-                <p class="subheading">pick from some templates below</p>
+                    <button type="button"
+                        class="toolbar-btn"
+                        @click="incrementStep"
+                    >Next</button>
+                </div>
+
+
+                <p class="text-stone-600 mb-5 mt-2"><span class="text-indigo-500">{{ step }}</span> / 3</p>
+
+                <div class="toolbar-progress">
+                    <div class="total" :style="{'width': Math.floor((step * 100) / 3) + '%'}"></div>
+
+                    <div class="remaining" :style="{'width': (Math.floor((step  * 100) / 3) - 100) + '%'}"></div>
+                </div>
             </div>
 
-            <div class="grid-two-btn-container">
-                
-                <button
-                    type="button" 
-                    :class="{ 'active': currentPostTopic === 'questions' }"
-                    class="btn border-indigo-500 text-indigo-500 text-lg"
-                    @click="currentPostTopic = 'questions'"
-                >Pick Questions</button>
+            <!-- Setting headlines -->
+            <CreatePostHeadline class="mt-15" v-show="step === 1" @headline-changed="headlineHandler" />
 
-                <button 
-                    type="button"
-                    :class="{ 'active': currentPostTopic === 'review' }"
-                    class="btn border-indigo-500 text-indigo-500 text-lg"
-                    @click="currentPostTopic = 'review'"
-                >Your Review ({{ count }})</button>
+            <!-- Adding questions -->
+            <div v-show="step === 2">
+                <div class="mt-10 mb-5">
+                    <h4 class="heading">Click into a question to add it to your review.</h4>
+
+                    <p class="subheading">Pick from some pre-made prompts or add your own</p>
+                </div>
+
+                <!-- Save some performance by caching stuff -->
+                <KeepAlive>
+                    <CreateReviewQuestions 
+                        :question-map="questionMapping"
+                        :is-viewing-review="false"
+                        :question-count="count"
+                        @question-added="(question) => handleQuestionAdded(question)"
+                    />
+                </KeepAlive>
             </div>
-            
-            <CreateReviewQuestions 
-                v-if="currentPostTopic === 'questions'"
-                :question-map="questionMapping"
-                :is-viewing-review="false"
-                :question-count="count"
-                @question-added="(question) => handleQuestionAdded(question)"
-            />
 
-            <YourReviewQuestions 
-                v-if="currentPostTopic === 'review'"
-                :is-viewing-review="true"
-                :is-comparison="false"
-                @question-form-completed="hasQuestionDataHandler()"
-            />
+            <div v-show="step === 3">
+
+                <YourReviewQuestions 
+                    :is-viewing-review="true"
+                    :is-comparison="false"
+                    @question-form-completed="hasQuestionDataHandler()"
+                />
+            </div>
         </div>
     </section>
 </template>
@@ -91,6 +107,7 @@ const store = createQuestionStore();
 const entries = ref([]);
 const headline = ref('');
 const currentPostTopic = ref('questions')
+const step = ref(1);
 
 // used to show certain question sets.
 const questionMapping = reactive({
@@ -124,6 +141,18 @@ const count = computed(() => {
 // 
 function handleQuestionAdded(question) {
     console.log(question);
+}
+
+function incrementStep() {
+    if(step.value < 3) {
+        step.value += 1;
+    }
+}
+
+function decrementStep() {
+    if(step.value > 1) {
+        step.value -= 1;
+    }
 }
 
 // Add a watcher to emit up when something is added, doesn't seem to capture when entries loses entry with splice so we have duplicate above.
@@ -194,6 +223,36 @@ textarea {
     text-align: start;
 }
 
+.toolbar {
+    display: flex;
+    column-gap: 20px;
+    justify-content: center;
+    align-items: center;
+}
+
+.toolbar-btn {
+    color: var(--stone-600);
+    font-family: var(--fancy-script);
+    font-size: var(--font-md);
+    padding: 8px 14px;
+}
+
+.toolbar-progress {
+    width: 100%;
+    max-width: 880px;
+}
+
+.toolbar-progress .total {
+    height: 2px;
+    background-color: var(--indigo-500);
+    border-bottom: 2px solid var(--indigo-500);
+}
+
+.toolbar-progress .remaining {
+    height: 2px;
+    background-color: var(--indigo-500);
+    border-bottom: 2px solid var(--stone-100);
+}
 
 .list-move,
 .list-enter-active,

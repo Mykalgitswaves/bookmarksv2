@@ -3,13 +3,13 @@ export const postData = {
         "review": {
                     "all": [
                         {
-                            "id": 10,
+                            "id": 1,
                             "q" :"what is this book about?",
                             "response": '',
                             "is_spoiler": false,
                         },
                         {
-                            "id": 11,
+                            "id": 2,
                             "q" :"what do you like about this book?",
                             "response": '',
                             "is_spoiler": false,
@@ -57,19 +57,19 @@ export const postData = {
                     ],
                     "tone": [
                         {  
-                            "id": 1,
+                            "id": 10,
                             "q": "Did you find the overall tone of the book satisfying? Why or why not?",
                             "response": "",
                             "is_spoiler": false
                           },
                           { 
-                            "id": 2, 
+                            "id": 11, 
                             "q": "How would you describe the tone and atmosphere of the key settings in the book?",
                             "response": "",
                             "is_spoiler": false
                           },
                           {
-                            "id": 3,
+                            "id": 12,
                             "q": "Were there any shifts in tone that stood out to you? If so, what purpose did they serve?",
                             "response": "",
                             "is_spoiler": false
@@ -90,27 +90,27 @@ export const postData = {
         "comparison": [
             {
                 "topic": "tone", 
-                "pk": 1,
+                "pk": 13,
                 "q": "The tone of these works..."
             },
             {
                 "topic": "character", 
-                "pk": 2,
+                "pk": 14,
                 "q": "The character of these works..."
             },
             {
                 "topic": "plot", 
-                "pk": 3,
+                "pk": 15,
                 "q": "The plot of these works..."
             },
             {
                 "topic": "setting", 
-                "pk": 4,
+                "pk": 16,
                 "q": "The setting of these works..."
             },
             {
                 "topic": "custom", 
-                "pk": 5,
+                "pk": -1,
                 "q": ""
             }
         ]

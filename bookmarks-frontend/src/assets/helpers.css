@@ -102,9 +102,9 @@
   }
 
   .create-post-heading-text {
-    color: var(--slate-800);
+    color: var(--stone-600);
     font-size: var(--font-2xl);
-    font-weight: 500;  
+    font-family: var(--fancy-script);  
   }
 
   .create-post-heading-book-title {
@@ -129,4 +129,8 @@
     visibility: hidden !important;
     height: 0 !important;
     width: 0 !important;
+  }
+
+  .text-stone-600 {
+    color: var(--stone-600);
   }
