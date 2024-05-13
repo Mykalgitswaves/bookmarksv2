@@ -151,6 +151,10 @@
     height: auto;
   }
 
+  .question-topic.has-questions {
+    background-color: var(--indigo-50);
+  }
+
   .question-border {
     border: dotted 2px rgb(229 231 235);
     transition-duration: 250ms;

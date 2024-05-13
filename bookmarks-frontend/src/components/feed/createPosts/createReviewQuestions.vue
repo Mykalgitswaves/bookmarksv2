@@ -5,7 +5,8 @@
             :key="index"
             :ref="(el) => activeQuestionCat.push(el)"
         >
-            <button 
+            <button
+                :class="{'has-questions': questionType[1].find((q) => q.response.length > 0)}"
                 class="question-topic"
                 type="button"
                 @click="activeQuestionCat[index] = !activeQuestionCat[index]"
@@ -58,10 +59,10 @@
                             </button>
                         </div>
                         <!-- FOr custom questions you might want to add. -->
-                        <button v-if="question.id < 0"
+                        <button v-if="(question.id < 0) && (i === questionType[1].length - 1)"
                             type="button"
                             class="btn btn-ghost btn-icon mt-2 pl-0" 
-                            @click="addAnotherCustomQuestion()">
+                            @click="$emit('custom-question-added', question)">
                             <IconPlus />    
                             Add another question
                         </button>
@@ -150,12 +151,13 @@ function updateQuestion(question) {
     // Maybe add more logic in here to emit the shit.
 }
 
+const emit = defineEmits(['question-added', 'deleted-custom-question']);
+
 function removeQuestionFromStore(question){
     question.response = '';
     store.deleteQuestion(question)
+    emit('deleted-custom-question', question);
 }
-
-const emit = defineEmits(['question-added']);
 
 watch(() => props.questionCount, (newValue) => {
     emit('question-added', newValue);

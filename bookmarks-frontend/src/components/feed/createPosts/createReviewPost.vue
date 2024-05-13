@@ -64,6 +64,8 @@
                         :is-viewing-review="false"
                         :question-count="count"
                         @question-added="(question) => handleQuestionAdded(question)"
+                        @custom-question-added="(question) => handleCustomQuestionAdded(question)"
+                        @deleted-custom-question="(question) => handleDeletedCustomQuestion(question)"
                     />
                 </KeepAlive>
             </div>
@@ -91,7 +93,7 @@ import YourReviewQuestions from './yourReviewQuestions.vue';
 
 // get qs from data and add in entries.
 const questionCats = Array.from(Object.keys(postData.posts.review))
-console.log(questionCats)
+
 // Refs
 const book = ref(null);
 const { clone } = helpersCtrl;
@@ -147,8 +149,30 @@ const count = computed(() => {
 
 // 
 function handleQuestionAdded(question) {
-    console.log(question);
+    entries.value.push(question)
 }
+
+function handleCustomQuestionAdded(question) {
+    questionMapping.custom.push({
+        "id": (question.id - 1),
+        "q": '',
+        "response": '',
+        "is_spoiler": false,
+        "placeholder": "Add your own response...",
+        "isHiddenCustomQuestion": false
+    });
+}
+
+function handleDeletedCustomQuestion(question) {
+    // Dont remove first question from the UI ever.
+    if(question.id === -1) {
+        return
+    }
+    // console.log(questionMapping.custom.find((q) => q.id === question.id));
+    // let questionToBeDelete = questionMapping.custom.find((q) => q.id === question.id);
+    let indexOfQToBeDeleted = questionMapping.custom.indexOf((q) => q.id === question.id);
+    questionMapping.custom.splice(indexOfQToBeDeleted, 1);
+}   
 
 function incrementStep() {
     if(step.value < 3) {
@@ -162,25 +186,27 @@ function decrementStep() {
     }
 }
 
-// Add a watcher to emit up when something is added, doesn't seem to capture when entries loses entry with splice so we have duplicate above.
+// Add a watcher to emit up when something is added, doesn't seem to capture when entries
+// loses entry with splice so we have duplicate above.
 watch(entries, () => {
-        emit('is-postable-data', helpersCtrl.formatReviewData(entries.value, book.value, headline.value))
-        console.log(entries.value[entries.value.length - 1]);
-        // If you added a custom question, add a new one to the end of the reactive list.
-        let numOfCustomQuestions = entries.value.filter(q => q.id < 0).length;
-        if(numOfCustomQuestions) {
-            let lastIdOfCustomQuestionDecremented = entries.value[entries.value.length - 1].id;
-            if(lastIdOfCustomQuestionDecremented){
-                questionMapping.custom.push({
-                    "id": lastIdOfCustomQuestionDecremented - 1,
-                    "q": '',
-                    "response": '',
-                    "is_spoiler": false,
-                    "placeholder": "Add your own question here...",
-                    "isHiddenCustomQuestion": false
-                });
-            }
-        }
+    emit('is-postable-data', helpersCtrl.formatReviewData(entries.value, book.value, headline.value))
+
+    // let numOfCustomQuestions = entries.value.filter(q => q.id < 0).length;
+    // console.log('num of custom questions', numOfCustomQuestions)
+    // if (numOfCustomQuestions) {
+    //     let lastIdOfCustomQuestionDecremented = entries.value[entries.value.length - 1].id;
+    //     console.log('last id of custom qeustion decremented', lastIdOfCustomQuestionDecremented)
+    //     if (lastIdOfCustomQuestionDecremented) {
+    //         questionMapping.custom.push({
+    //             "id": (lastIdOfCustomQuestionDecremented - 1),
+    //             "q": '',
+    //             "response": '',
+    //             "is_spoiler": false,
+    //             "placeholder": "Add your own response...",
+    //             "isHiddenCustomQuestion": false
+    //         });
+    //     }
+    // }
 });
 
 watch(headline, () => {
@@ -238,10 +264,11 @@ textarea {
 }
 
 .toolbar-btn {
-    color: var(--stone-600);
+    color: var(--indigo-500);
     font-family: var(--fancy-script);
     font-size: var(--font-md);
     padding: 8px 14px;
+    text-decoration: underline;
 }
 
 .toolbar-progress {
