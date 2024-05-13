@@ -24,12 +24,20 @@
                     <button type="button"
                         class="toolbar-btn"
                         @click="decrementStep"
-                    >Previous</button>
+                    >
+                        <span v-if="step < 2">Previous</span>
+
+                        <span v-else>Edit</span>
+                    </button>
 
                     <button type="button"
                         class="toolbar-btn"
                         @click="incrementStep"
-                    >Next</button>
+                    >
+                        <span v-if="step < 2">Next</span>
+
+                        <span v-else>Finalize</span>
+                    </button>
                 </div>
 
 
@@ -45,8 +53,8 @@
                 </div>
             </div>
 
-            <!-- Setting headlines -->
-            <CreatePostHeadline class="mt-15" v-show="step === 1" @headline-changed="headlineHandler" />
+            <!-- Did you like it buttons -->
+            
 
             <!-- Adding questions -->
             <div v-show="step === 2">
@@ -58,19 +66,24 @@
                 </div>
 
                 <!-- Save some performance by caching stuff -->
-                <KeepAlive>
-                    <CreateReviewQuestions 
-                        :question-map="questionMapping"
-                        :is-viewing-review="false"
-                        :question-count="count"
-                        @question-added="(question) => handleQuestionAdded(question)"
-                        @custom-question-added="(question) => handleCustomQuestionAdded(question)"
-                        @deleted-custom-question="(question) => handleDeletedCustomQuestion(question)"
-                    />
-                </KeepAlive>
+                <CreateReviewQuestions 
+                    :question-map="questionMapping"
+                    :is-viewing-review="false"
+                    :question-count="count"
+                    @question-added="(question) => handleQuestionAdded(question)"
+                    @custom-question-added="(question) => handleCustomQuestionAdded(question)"
+                    @deleted-custom-question="(question) => handleDeletedCustomQuestion(question)"
+                />
             </div>
 
             <div v-show="step === 3">
+                <div class="mt-10 mb-10">
+                    <h2 class="heading">Your review so far.</h2>
+
+                    <p class="subheading">View and post your thoughts</p>
+                </div>
+                <!-- Setting headlines -->
+                <CreatePostHeadline @headline-changed="headlineHandler" />
 
                 <YourReviewQuestions 
                     :is-viewing-review="true"

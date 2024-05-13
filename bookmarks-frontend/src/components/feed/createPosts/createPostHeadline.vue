@@ -1,6 +1,6 @@
 <template>
     <div class>
-        <p class="text-lg mb-2 mt-5 text-stone-600">Add a headline for your {{ props.reviewType }}.</p>
+        <p class="mb-2 mt-5 text-stone-600">Add a headline for your {{ props.reviewType }}.</p>
         
         <label 
             for="headline"
