@@ -30,6 +30,16 @@ class Post(BaseModel):
             # Convert Neo4jDateTime to Python datetime
             return v.to_native()
         return v
+    
+class WantToReadCreate(BaseModel):
+    user_id: str
+    book_id: str
+    headline: str | None = None
+
+class CurrentlyReadingCreate(BaseModel):
+    user_id: str
+    book_id: str
+    headline: str | None = None
 
 class ReviewCreate(PostCreate):
     headline: str = ""
@@ -37,7 +47,14 @@ class ReviewCreate(PostCreate):
     question_ids: list[int] = []
     responses: list[str] = []
     spoilers: list[bool] = []
-    
+
+class WantToReadPost(Post):
+    headline: str = ""
+    type: str = "want_to_read_post"
+
+class CurrentlyReadingPost(Post):
+    headline: str = ""
+    type: str = "currently_reading_post"
 
 class ReviewPost(Post):
     questions: list

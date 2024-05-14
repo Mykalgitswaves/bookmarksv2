@@ -200,6 +200,65 @@ class TestBookshelfMandatory:
         print(response.json(), "get want to read")
         assert book_data_1["book"]["id"] not in [book['id'] for book in response.json()["bookshelf"]["books"]], "Book not removed from Want to Read Shelf"
 
+    def test_post_creation_trigger(self):
+        """
+        This checks if a WantToReadPost object is created when a book is added to the Want to Read shelf
+        """
+        book_data_1 = {
+            	"book" : {
+                    "id" : "c707fd781-dd1a-4ba7-91f1-f1a2e7ecb872",
+                    "author_names": ["Isaac Asimov"],
+                    "title": "Foundation",
+                    "small_img_url": "http://books.google.com/books/content?id=_uawAAAAIAAJ&printsec=frontcover&img=1&zoom=5&imgtk=AFLRE732DLT-Q5P4M6ll9fpW5DH-Lz-FrGxwAQptgERj0vxnZYrLz57WvWzJ5k8Rr-OVQdQBOAImZNKuZQkgOgOO1HH2l5tUMj62Zngs0JbkXfsQIy3PcS_v8oHhB3XB7M0irmn4gM9g&source=gbs_api"
+                }
+        }
+
+        book_data_2 = {
+            	"book" : {
+                    "id" : "caaaedd16-11c7-4d74-8eb2-985537223d40",
+                    "author_names": ["Maggie O'Farrell"],
+                    "title": "The Marriage Portrait",
+                    "small_img_url": "http://books.google.com/books/content?id=AnuczwEACAAJ&printsec=frontcover&img=1&zoom=5&imgtk=AFLRE731cxkg3iRmy3ma5pIYhwtWMGlHSNK8oLk9FpLma-TJyfRdn-HbMz8tHjn3TPlvkBh-wPX7n2A6aVp-7_iymmoqcq7R62gaAt5Fp2cTuYIj34066LqjZMTdQiEnTodmHTSNLj9I&source=gbs_api"
+                }
+        }
+
+        book_data_3 = {
+            	"book" : {
+                    "id" : "c57fbe3df-9a61-41e7-a3e9-576f17a29c50",
+                    "author_names": ["Maya Phillips"],
+                    "title": "Nerd",
+                    "small_img_url": "http://books.google.com/books/publisher/content?id=483DEAAAQBAJ&printsec=frontcover&img=1&zoom=5&edge=curl&imgtk=AFLRE70x2bq6tvfuT2n_5ziJqrSWL2Lb1Iu5LiqLZTc0rH5AJTThqQ7K6N26LKGRoQe4LwJyjky9lPNdJs6nckmcOKhslPTVsyaT_jyJAAb9qHeZEM_wXHCLMLmVwyNBV_MuC4dxojW1&source=gbs_api"
+                }
+        }
+
+        headers = {"Authorization": f"{self.token_type} {self.access_token}"}
+        response = requests.put(f"{self.endpoint}/api/bookshelves/quick_add/want_to_read/", 
+                                 json=book_data_1, headers=headers)
+        assert response.status_code == 200, "Quick Add to Want to Read Shelf"
+        print(response.json(), "quick add want to read")
+
+        time.sleep(2)
+
+        response = requests.get(f"{self.endpoint}/api/posts/me", headers=headers)
+        assert response.status_code == 200, "Get Posts"
+        assert response.json()['data'][0]['type'] == 'want_to_read_post', "Want to Read Post not created"
+
+        response = requests.put(f"{self.endpoint}/api/bookshelves/quick_add/currently_reading/", 
+                                 json=book_data_3, headers=headers)
+        
+        assert response.status_code == 200, "Quick Add to Currently Reading Shelf"
+        print(response.json(), "quick add currently reading")
+
+        time.sleep(2)
+
+        response = requests.get(f"{self.endpoint}/api/posts/{self.user_id}", headers=headers)
+        assert response.status_code == 200, "Get Posts"
+        assert response.json()['data'][0]['type'] == 'currently_reading_post', "Currently Reading Post not created"
+
+        response = requests.get(f"{self.endpoint}/api/posts/post/{response.json()['data'][0]['id']}", headers=headers)
+        print(response.json())
+        assert response.status_code == 200, "Get Post"
+
 
 
 

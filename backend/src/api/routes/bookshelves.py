@@ -21,9 +21,11 @@ from src.api.utils.database import get_repository
 from src.database.graph.crud.bookshelves import BookshelfCRUDRepositoryGraph
 from src.database.graph.crud.books import BookCRUDRepositoryGraph
 from src.database.graph.crud.users import UserCRUDRepositoryGraph
+from src.database.graph.crud.posts import PostCRUDRepositoryGraph
 
 from src.models.schemas.books import BookId
 from src.models.schemas.users import UserInResponse, User, UserId
+from src.models.schemas.posts import WantToReadCreate, CurrentlyReadingCreate
 from src.models.schemas.bookshelves import (
     BookshelfCreate, 
     BookshelfResponse, 
@@ -783,8 +785,25 @@ async def quick_add_book_to_bookshelf(
     background_tasks:BackgroundTasks,
     move_from: Optional[str] = None,
     bookshelf_repo: BookshelfCRUDRepositoryGraph = Depends(get_repository(repo_type=BookshelfCRUDRepositoryGraph)),
-    book_repo: BookCRUDRepositoryGraph = Depends(get_repository(repo_type=BookCRUDRepositoryGraph))
+    book_repo: BookCRUDRepositoryGraph = Depends(get_repository(repo_type=BookCRUDRepositoryGraph)),
+    post_repo: PostCRUDRepositoryGraph = Depends(get_repository(repo_type=PostCRUDRepositoryGraph))
 ):
+    """
+    Adds a book to any bookshelf without creating a connection to the websocket
+    ARGS:
+        request: request object that contains the following data:
+            book: dict containing the following keys:
+                title: str
+                author_names: list[str]
+                small_img_url: str
+                id: str
+            note_for_shelf: str (optional
+        bookshelf_id: (str) the id of the bookshelf, or the keyword "want_to_read", "currently_reading", "finished_reading")
+        current_user: (User) the current user
+        move_from: (str) the previous shelf id if you want to remove the book from that shelf, or the keyword "want_to_read", "currently_reading", "finished_reading" 
+    
+    If a book is added to one of WantToRead/CurrentlyReading, a simple post will be made
+    """
     data = await request.json()
     try:
         book_data = BookshelfBookAdd(
@@ -792,7 +811,9 @@ async def quick_add_book_to_bookshelf(
                 title=data['book']['title'],
                 authors=data['book']['author_names'],
                 small_img_url=data['book']['small_img_url'],
-                id=data['book']['id']
+                id=data['book']['id'],
+                # add a get for note_for_shelf incase null
+                note_for_shelf=data['book'].get('note_for_shelf', None)
             ),
             contributor_id=current_user.id,
             move_from=move_from
@@ -812,8 +833,8 @@ async def quick_add_book_to_bookshelf(
             book_exists = True
             book_data.book = canonical_book
 
-    if "note_for_shelf" in data['book']:
-        book_data.book.note_for_shelf = data['book']["note_for_shelf"]
+    # if "note_for_shelf" in data['book']:
+    #     book_data.book.note_for_shelf = data['book']["note_for_shelf"]
 
     # Delete the book from the previous shelf if it exists
     if book_data.move_from:
@@ -877,81 +898,6 @@ async def quick_add_book_to_bookshelf(
                 if not response:
                     raise HTTPException(status_code=400, detail="Failed to remove book from previous shelf")
     
-    # # Add query for reading flow shelves
-    # if bookshelf_id == "want_to_read":
-    #     # Check if the book exists in the database
-    #     if book_exists:
-    #         want_to_read_bookshelf_id = bookshelf_repo.create_book_in_want_to_read_rel(book_data.book.id, current_user.id)
-
-    #     else:
-    #         want_to_read_bookshelf_id, book_data = bookshelf_repo.create_book_want_to_read_rel_with_book_data(book_data.book, current_user.id)
-
-    #         if want_to_read_bookshelf_id:
-    #             background_tasks.add_task(
-    #                 google_books_background_tasks.update_book_google_id,
-    #                 book_data.book.google_id,
-    #                 book_repo)
-                
-    #     # Check if the query executed successfully
-    #     if not want_to_read_bookshelf_id:
-    #         raise HTTPException(status_code=400, detail="Failed to add book to want to read bookshelf")
-        
-    #     # Check if the bookshelf is in the cache
-    #     if want_to_read_bookshelf_id in bookshelf_ws_manager.cache:
-    #         bookshelf_ws_manager.add_book_only_to_cache(want_to_read_bookshelf_id, book_data)
-
-    #     return JSONResponse(content={"message": "Book added successfully"})
-    
-    # elif bookshelf_id == "currently_reading":
-    #     # Check if the book exists in the database
-    #     if book_exists:
-    #         currently_reading_bookshelf_id = bookshelf_repo.add_book_to_currently_reading(book_data.book.id, current_user.id)
-    #     else:
-    #         currently_reading_bookshelf_id, book_data = bookshelf_repo.add_book_to_currently_reading_with_book_data(book_data.book, current_user.id)
-            
-    #         if currently_reading_bookshelf_id:
-    #             background_tasks.add_task(
-    #                 google_books_background_tasks.update_book_google_id,
-    #                 book_data.book.google_id,
-    #                 book_repo)
-                
-    #     # Check if the query executed successfully
-    #     if not currently_reading_bookshelf_id:
-    #         raise HTTPException(status_code=400, detail="Failed to add book to currently reading bookshelf")
-         
-    #     # Check if the bookshelf is in the cache
-    #     if currently_reading_bookshelf_id in bookshelf_ws_manager.cache:
-    #         bookshelf_ws_manager.add_book_only_to_cache(currently_reading_bookshelf_id, book_data)
-
-    #     return JSONResponse(content={"message": "Book added successfully"})
-    
-    # elif bookshelf_id == "finished_reading":
-    #     # Check if the book exists in the database
-    #     if book_exists:
-    #         finished_reading_bookshelf_id = bookshelf_repo.add_book_to_finished_reading(
-    #             book_data.book.id, 
-    #             current_user.id)
-    #     else:
-    #         finished_reading_bookshelf_id, book_data = bookshelf_repo.add_book_to_finished_reading_with_book_data(
-    #             book_data.book, 
-    #             current_user.id)
-            
-    #         if finished_reading_bookshelf_id:
-    #             background_tasks.add_task(
-    #                 google_books_background_tasks.update_book_google_id,
-    #                 book_data.book.google_id,
-    #                 book_repo)
-
-    #     # Check if the query executed successfully
-    #     if not finished_reading_bookshelf_id:
-    #         raise HTTPException(status_code=400, detail="Failed to add book to finished reading bookshelf")
-        
-    #     # Check if the bookshelf is in the cache
-    #     if finished_reading_bookshelf_id in bookshelf_ws_manager.cache:
-    #         bookshelf_ws_manager.add_book_only_to_cache(finished_reading_bookshelf_id, book_data)
-
-    #     return JSONResponse(content={"message": "Book added successfully"})
-    
     # Add query for reading flow shelves
     if bookshelf_id in prefixes:
         # Check if the book exists in the database
@@ -959,6 +905,7 @@ async def quick_add_book_to_bookshelf(
             response = bookshelf_repo.create_book_in_reading_flow_bookshelf_rel(book_data.book, bookshelf_id, current_user.id)
         else:
             response = bookshelf_repo.create_book_in_reading_flow_bookshelf_rel_and_book(book_data.book, bookshelf_id, current_user.id)
+
             # Run background task to update the google book
             if response:
                 background_tasks.add_task(
@@ -967,6 +914,26 @@ async def quick_add_book_to_bookshelf(
                     book_repo)
                 
         if response:
+            if bookshelf_id == 'want_to_read':
+                background_tasks.add_task(
+                        post_repo.create_want_to_read_post,
+                        WantToReadCreate(
+                            book_id=book_data.book.id,
+                            user_id=current_user.id,
+                            headline=book_data.book.note_for_shelf
+                        )
+                    )
+            
+            elif bookshelf_id == 'currently_reading':
+                background_tasks.add_task(
+                        post_repo.create_currently_reading_post,
+                        CurrentlyReadingCreate(
+                            book_id=book_data.book.id,
+                            user_id=current_user.id,
+                            headline=book_data.book.note_for_shelf
+                        )
+                    )
+                
             return JSONResponse(content={"message": "Book added successfully"})
         else:
             raise HTTPException(status_code=400, detail="Failed to add book to bookshelf")
@@ -993,11 +960,12 @@ async def quick_add_book_to_bookshelf(
         else:
             # If the bookshelf is not in the cache, we need to run the query and validate the user permissions
             # Check the bookshelf id for keywords
-            if any(prefix in book_data.move_from for prefix in prefixes):
+            if any(prefix in bookshelf_id for prefix in prefixes):
                 if book_exists:
                     response = bookshelf_repo.create_book_in_reading_flow_bookshelf_rel_with_shelf_id(book_data.book, bookshelf_id, current_user.id)
                 else:
                     response = bookshelf_repo.create_book_in_reading_flow_bookshelf_rel_with_shelf_id_and_book(book_data.book, bookshelf_id, current_user.id)
+
             else:
                 # These are the normal bookshelf cases
                 if book_exists:
@@ -1005,14 +973,35 @@ async def quick_add_book_to_bookshelf(
                 else:
                     response = bookshelf_repo.create_book_in_bookshelf_rel_and_book(book_data.book, bookshelf_id, current_user.id)
                     
-                    # Run background task to update the google book
-                    if response:
-                        background_tasks.add_task(
+
+            if response:
+                if not book_exists:
+                    background_tasks.add_task(
                             google_books_background_tasks.update_book_google_id,
                             book_data.book.id,
                             book_repo)
                     
-            if response:
+                if bookshelf_id.startswith("want_to_read"):
+                    background_tasks.add_task(
+                        post_repo.create_want_to_read_post,
+                        WantToReadCreate(
+                            book_id=book_data.book.id,
+                            user_id=current_user.id,
+                            headline=book_data.book.note_for_shelf
+                        )
+                    )
+
+                elif bookshelf_id.startswith("currently_reading"):
+                    background_tasks.add_task(
+                        post_repo.create_currently_reading_post,
+                        CurrentlyReadingCreate(
+                            book_id=book_data.book.id,
+                            user_id=current_user.id,
+                            headline=book_data.book.note_for_shelf
+                        )
+                    )
+                    
+
                 return JSONResponse(content={"message": "Book added successfully"})
             else:
                 raise HTTPException(status_code=400, detail="Failed to add book to bookshelf")

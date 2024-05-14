@@ -12,7 +12,11 @@ from src.models.schemas.posts import (
     RecommendationFriend,
     MilestoneCreate,
     MilestonePost,
-    LikedPost
+    LikedPost,
+    WantToReadCreate,
+    CurrentlyReadingCreate,
+    WantToReadPost,
+    CurrentlyReadingPost
 )
 from src.models.schemas.books import BookPreview
 
@@ -523,6 +527,84 @@ class PostCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
         )
         return(milestone_result)
     
+    def create_want_to_read_post(self, want_to_read_post:WantToReadCreate):
+        """
+        Creates a review in the database
+        Args:
+            want_to_read_post: WantToReadPost object to be pushed to DB
+        Returns:
+            created_date: Exact datetime of creation from Neo4j
+            want_to_read_id: PK of the want_to_read in the db
+        """
+        with self.driver.session() as session:
+            want_to_read_result = session.execute_write(self.create_want_to_read_post_query, want_to_read_post)
+        return(want_to_read_result)
+    
+    @staticmethod
+    def create_want_to_read_post_query(tx, want_to_read_post):
+        query = """
+        match (u:User {id:$user_id})
+        match (b:Book)
+        where b.id = $book_id or b.google_id = $book_id
+        with u, b
+        create (w:WantToReadPost {id:"post_want_to_read_" + randomUUID(),
+                            created_date:datetime(),
+                            deleted:false,
+                            likes:0,
+                            visibility:u.visibility,
+                            headline:$headline
+        })
+        create (u)-[r:POSTED]->(w)
+        create (w)-[rr:POST_FOR_BOOK]->(b)
+        return w.created_date, w.id
+        """
+        result = tx.run(query, 
+                        user_id=want_to_read_post.user_id,
+                        book_id=want_to_read_post.book_id,
+                        headline=want_to_read_post.headline)
+        response = result.single()
+        
+        return(response)
+    
+    def create_currently_reading_post(self, currently_reading_post:CurrentlyReadingCreate):
+        """
+        Creates a review in the database
+        Args:
+            currently_reading_post: CurrentlyReadingPost object to be pushed to DB
+        Returns:
+            created_date: Exact datetime of creation from Neo4j
+            currently_reading_id: PK of the currently_reading in the db
+        """
+        with self.driver.session() as session:
+            currently_reading_result = session.execute_write(self.create_currently_reading_post_query, currently_reading_post)
+        return(currently_reading_result)
+    
+    @staticmethod
+    def create_currently_reading_post_query(tx, currently_reading_post):
+        query = """
+        match (u:User {id:$user_id})
+        match (b:Book)
+        where b.id = $book_id or b.google_id = $book_id
+        with u, b
+        create (c:CurrentlyReadingPost {id:"post_currently_reading_" + randomUUID(),
+                            created_date:datetime(),
+                            deleted:false,
+                            likes:0,
+                            visibility:u.visibility,
+                            headline:$headline
+        })
+        create (u)-[r:POSTED]->(c)
+        create (c)-[rr:POST_FOR_BOOK]->(b)
+        return c.created_date, c.id
+        """
+        result = tx.run(query, 
+                        user_id=currently_reading_post.user_id,
+                        book_id=currently_reading_post.book_id,
+                        headline=currently_reading_post.headline)
+        response = result.single()
+        
+        return(response)
+    
     def create_post_like(self, liked_post:LikedPost):
         """
         Creates a like relationship between a user and a post
@@ -559,7 +641,7 @@ class PostCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
     def get_feed_query(tx, username, skip, limit):
         query = """ 
                     MATCH (p {deleted:false})
-                    WHERE p:Milestone OR p:Review OR p:Comparison OR p:Update
+                    WHERE p:Milestone OR p:Review OR p:Comparison OR p:Update OR p:WantToReadPost OR p:CurrentlyReadingPost
                     match (p)<-[pr:POSTED]-(u:User)
                     optional match (cu:User {username:$username})-[lr:LIKES]->(p)
                     optional match (p)-[br:POST_FOR_BOOK]-(b)
@@ -627,7 +709,7 @@ class PostCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
                                     book=BookPreview(id=response['b']['id'],
                                             title=response['b']['title'],
                                             small_img_url=response['b']['small_img_url']),
-                                    headline=post['headline'],
+                                    headline=post.get('headline', ""),
                                     created_date=post["created_date"],
                                     page=post['page'],
                                     response=post['response'],
@@ -650,7 +732,7 @@ class PostCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
                                 title=response['b']['title'],
                                 small_img_url=response['b']['small_img_url']
                             ),
-                            headline=post['headline'],
+                            headline=post.get('headline', ""),
                             created_date=post["created_date"],
                             questions=post['questions'],
                             question_ids=post['question_ids'],
@@ -664,6 +746,44 @@ class PostCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
                 review.liked_by_current_user = response['liked_by_current_user']
                 review.posted_by_current_user = response['posted_by_current_user']
                 output.append(review)
+
+            elif response['labels(p)'] == ["WantToReadPost"]:
+                want_to_read = WantToReadPost(
+                            id=post["id"],
+                            book=BookPreview(
+                                id=response['b']['id'],
+                                title=response['b']['title'],
+                                small_img_url=response['b']['small_img_url']
+                            ),
+                            headline=post.get('headline', ""),
+                            created_date=post["created_date"],
+                            user_id=response['u.id'],
+                            user_username=response['u.username'],
+                            num_comments=response["num_comments"],
+                            likes=post['likes']
+                        )
+                want_to_read.liked_by_current_user = response['liked_by_current_user']
+                want_to_read.posted_by_current_user = response['posted_by_current_user']
+                output.append(want_to_read)
+
+            elif response['labels(p)'] == ["CurrentlyReadingPost"]:
+                currently_reading = CurrentlyReadingPost(
+                            id=post["id"],
+                            book=BookPreview(
+                                id=response['b']['id'],
+                                title=response['b']['title'],
+                                small_img_url=response['b']['small_img_url']
+                            ),
+                            headline=post.get('headline', ""),
+                            created_date=post["created_date"],
+                            user_id=response['u.id'],
+                            user_username=response['u.username'],
+                            num_comments=response["num_comments"],
+                            likes=post['likes']
+                        )
+                currently_reading.liked_by_current_user = response['liked_by_current_user']
+                currently_reading.posted_by_current_user = response['posted_by_current_user']
+                output.append(currently_reading)
         return(output)
     
     def get_all_reviews_by_username(self, username): 
@@ -755,7 +875,8 @@ class PostCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
                                 user_username=username,
                                 likes=post['likes'],
                                 liked_by_current_user=response['liked_by_current_user'],
-                                num_comments=response['num_comments']
+                                num_comments=response['num_comments'],
+                                headline=post.get('headline', "")
                             )
                 
                 output.append(update)
@@ -774,10 +895,45 @@ class PostCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
                                 user_username=username,
                                 liked_by_current_user=response['liked_by_current_user'],
                                 num_comments=response['num_comments'],
-                                likes=post['likes']
+                                likes=post['likes'],
+                                headline=post.get('headline', "")
                             )
                     
                     output.append(review)
+
+            elif response['labels(p)'] == ["WantToReadPost"]:
+                want_to_read = WantToReadPost(
+                    id=post["id"],
+                    book=BookPreview(
+                        id=response['b']['id'], 
+                        title=response['b']['title'], 
+                        small_img_url=response['b']['small_img_url']),
+                    created_date=post["created_date"],
+                    user_username=username,
+                    headline=post.get('headline', ""),
+                    likes=post['likes'],
+                    liked_by_current_user=response['liked_by_current_user'],
+                    num_comments=response['num_comments']
+                )
+
+                output.append(want_to_read)
+
+            elif response['labels(p)'] == ["CurrentlyReadingPost"]:
+                currently_reading = CurrentlyReadingPost(
+                    id=post["id"],
+                    book=BookPreview(
+                        id=response['b']['id'], 
+                        title=response['b']['title'], 
+                        small_img_url=response['b']['small_img_url']),
+                    created_date=post["created_date"],
+                    user_username=username,
+                    headline=post.get('headline', ""),
+                    likes=post['likes'],
+                    liked_by_current_user=response['liked_by_current_user'],
+                    num_comments=response['num_comments']
+                )
+                
+                output.append(currently_reading)
         return(output)
     
     def get_all_reviews_by_user_id(self, user_id): 
@@ -869,7 +1025,8 @@ class PostCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
                                 user_username=response['username'],
                                 likes=post['likes'],
                                 liked_by_current_user=response['liked_by_current_user'],
-                                num_comments=response['num_comments']
+                                num_comments=response['num_comments'],
+                                headline=post.get('headline', "")
                             )
                 
                 output.append(update)
@@ -888,10 +1045,45 @@ class PostCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
                                 user_username=response['username'],
                                 liked_by_current_user=response['liked_by_current_user'],
                                 num_comments=response['num_comments'],
-                                likes=post['likes']
+                                likes=post['likes'],
+                                headline=post.get('headline', "")
                             )
                     
                     output.append(review)
+
+            elif response['labels(p)'] == ["WantToReadPost"]:
+                want_to_read = WantToReadPost(
+                    id=post["id"],
+                    book=BookPreview(
+                        id=response['b']['id'], 
+                        title=response['b']['title'], 
+                        small_img_url=response['b']['small_img_url']),
+                    created_date=post["created_date"],
+                    user_username=response['username'],
+                    headline=post.get('headline', ""),
+                    likes=post['likes'],
+                    liked_by_current_user=response['liked_by_current_user'],
+                    num_comments=response['num_comments']
+                )
+                output.append(want_to_read)
+
+            elif response['labels(p)'] == ["CurrentlyReadingPost"]:
+                currently_reading = CurrentlyReadingPost(
+                    id=post["id"],
+                    book=BookPreview(
+                        id=response['b']['id'], 
+                        title=response['b']['title'], 
+                        small_img_url=response['b']['small_img_url']),
+                    created_date=post["created_date"],
+                    user_username=response['username'],
+                    headline=post.get('headline', ""),
+                    likes=post['likes'],
+                    liked_by_current_user=response['liked_by_current_user'],
+                    num_comments=response['num_comments']
+                )
+                
+                output.append(currently_reading)
+
         return(output)
     
     def get_post(self, post_id, username):
@@ -989,6 +1181,34 @@ class PostCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
                                     liked_by_current_user=response['liked_by_current_user'],
                                     posted_by_current_user=response['posted_by_current_user']
                                     )
+        
+        elif response['labels(p)'] == ["WantToReadPost"]:
+            output = WantToReadPost(
+                id=post["id"],
+                book=BookPreview(
+                    id = response['b.id'],
+                    title = response['b.title'],
+                    small_img_url = response['b.small_img_url']),
+                created_date=post["created_date"],
+                headline=post.get('headline',""),
+                user_username=response["pu.username"],
+                likes=post['likes'],
+                liked_by_current_user=response['liked_by_current_user']
+                )
+        
+        elif response['labels(p)'] == ["CurrentlyReadingPost"]:
+            output = CurrentlyReadingPost(
+                id=post["id"],
+                book=BookPreview(
+                    id = response['b.id'],
+                    title = response['b.title'],
+                    small_img_url = response['b.small_img_url']),
+                created_date=post["created_date"],
+                headline=post.get('headline',""),
+                user_username=response["pu.username"],
+                likes=post['likes'],
+                liked_by_current_user=response['liked_by_current_user']
+                )
                 
         return({"post": output, "user_id": user_id})
     
