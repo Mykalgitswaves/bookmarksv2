@@ -9,7 +9,8 @@
                 id="headline" 
                 type="text"
                 placeholder="A masterpiece - someguy"
-                class="border-indigo-200 border-solid border-2 rounded-md px-2 py-2 w-100 max-w-[600px]"
+                class="border-indigo-200 border-2 rounded-md px-2 py-2 w-100"
+                :class="{'max-w-[600px] border-solid': !reviewVersion, 'review-search-bar': reviewVersion}"
                 v-model="headline"
             >
             <span class="block text-gray-600 text-sm my-2">This will appear front and center on your {{ props.reviewType }}</span>
@@ -25,6 +26,10 @@ const props = defineProps({
         required: false,
         default: () => ('review'),
     },
+    reviewVersion: {
+        type: Boolean,
+        default: false,
+    }
 })
 const headline = ref('')
 const emit = defineEmits();
@@ -33,3 +38,9 @@ watch(headline, () => {
     emit('headline-changed', headline.value);
 });
 </script>
+<style scoped>
+.review-search-bar {
+    font-family: var(--fancy-script);
+    border-style: dashed;
+}
+</style>

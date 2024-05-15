@@ -64,7 +64,8 @@
                             class="btn btn-ghost btn-icon mt-2 pl-0" 
                             @click="$emit('custom-question-added', question)">
                             <IconPlus />    
-                            Add another question
+                            
+                            Add another response
                         </button>
                     </li>
                 </ul>

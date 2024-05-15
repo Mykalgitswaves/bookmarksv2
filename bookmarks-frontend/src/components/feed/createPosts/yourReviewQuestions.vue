@@ -4,7 +4,7 @@
             <div class="my-3 text-lg question-border px-5 py-5 w-100 box-btn justify-between items-center">
                 <div class="text-start">
                     <!-- If we are looking at a custom review type question. -->
-                    <span v-if="!props.isComparison && question.id < 0" class="block">{{ question.q ? question.q : question.placeholder }}</span>
+                    <span v-if="!props.isComparison && question.id < 0" class="block fancy">Your response</span>
 
                     <!-- If we are looking at regular review type templated questions -->
                     <span v-if="!props.isComparison && question.id >= 0" class="block">{{ question.q }}?</span>
@@ -30,6 +30,14 @@
             /> -->
         </li>
     </ul>
+    <div v-if="!questions.length">
+        <h2 class="heading">You haven't added any responses</h2>
+        <p class="subheading">Click 
+            <button type="button" 
+                class="underline text-indigo-500"
+                @click="$emit('go-to-edit-section')"    
+            >here</button> to add some responses</p>
+    </div>
 </template>
 <script setup>
 import { reactive, computed, watch } from 'vue';
@@ -50,7 +58,7 @@ const props = defineProps({
         type: Boolean,
         required: false,
         default: false,
-    }
+    },
 });
 
 const store = createQuestionStore();

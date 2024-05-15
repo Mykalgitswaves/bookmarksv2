@@ -134,3 +134,8 @@
   .text-stone-600 {
     color: var(--stone-600);
   }
+
+  .m-tb-40 {
+    margin-top: 40px !important;
+    margin-bottom: 40px !important;
+  }

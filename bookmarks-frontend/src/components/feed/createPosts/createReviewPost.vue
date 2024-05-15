@@ -25,7 +25,7 @@
                         class="toolbar-btn"
                         @click="decrementStep"
                     >
-                        <span v-if="step < 2">Previous</span>
+                        <span v-if="step < 3">Previous</span>
 
                         <span v-else>Edit</span>
                     </button>
@@ -54,10 +54,12 @@
             </div>
 
             <!-- Did you like it buttons -->
-            
+            <div v-if="step === 1">
+                <ReviewRating @set-rating="(_rating) => rating = _rating" />
+            </div>
 
             <!-- Adding questions -->
-            <div v-show="step === 2">
+            <div v-if="step === 2">
 
                 <div class="mt-10 mb-10">
                     <h4 class="heading">Click into a topic to add questions to your review.</h4>
@@ -76,20 +78,21 @@
                 />
             </div>
 
-            <div v-show="step === 3">
-                <div class="mt-10 mb-10">
-                    <h2 class="heading">Your review so far.</h2>
+            <div v-if="step === 3">
+                <div class="m-tb-40">
+                    <!-- Setting headlines -->
+                    <CreatePostHeadline @headline-changed="headlineHandler" :review-version="true"/>
 
-                    <p class="subheading">View and post your thoughts</p>
+                    <div class="divider m-tb-40"></div>
+
+                    <YourReviewQuestions 
+                        class="mt-0"
+                        :is-viewing-review="true"
+                        :is-comparison="false"
+                        @question-form-completed="hasQuestionDataHandler()"
+                        @go-to-edit-section="decrementStep"
+                    />
                 </div>
-                <!-- Setting headlines -->
-                <CreatePostHeadline @headline-changed="headlineHandler" />
-
-                <YourReviewQuestions 
-                    :is-viewing-review="true"
-                    :is-comparison="false"
-                    @question-form-completed="hasQuestionDataHandler()"
-                />
             </div>
         </div>
     </section>
@@ -103,6 +106,7 @@ import SearchBooks from './searchBooks.vue';
 import CreatePostHeadline from './createPostHeadline.vue';
 import CreateReviewQuestions from './createReviewQuestions.vue';
 import YourReviewQuestions from './yourReviewQuestions.vue';
+import ReviewRating from './ReviewRating.vue';
 
 // get qs from data and add in entries.
 const questionCats = Array.from(Object.keys(postData.posts.review))
@@ -127,6 +131,7 @@ const entries = ref([]);
 const headline = ref('');
 const currentPostTopic = ref('questions')
 const step = ref(1);
+const rating = ref(null);
 
 // used to show certain question sets.
 const questionMapping = reactive({
@@ -202,7 +207,7 @@ function decrementStep() {
 // Add a watcher to emit up when something is added, doesn't seem to capture when entries
 // loses entry with splice so we have duplicate above.
 watch(entries, () => {
-    emit('is-postable-data', helpersCtrl.formatReviewData(entries.value, book.value, headline.value))
+    emit('is-postable-data', helpersCtrl.formatReviewData(rating.value, entries.value, book.value, headline.value))
 
     // let numOfCustomQuestions = entries.value.filter(q => q.id < 0).length;
     // console.log('num of custom questions', numOfCustomQuestions)
@@ -234,17 +239,6 @@ watch(currentTopic, () => {
 </script>
 
 <style scoped>
-
-.heading {
-    font-size: var(--font-2xl);
-    color: var(--stone-700);
-    font-weight: 500;
-}
-
-.subheading {
-    color: var(--stone-600);
-}
-
 .text-white { 
     color: #fff;
 }
@@ -277,7 +271,7 @@ textarea {
 }
 
 .toolbar-btn {
-    color: var(--indigo-500);
+    color: var(--indigo-400);
     font-family: var(--fancy-script);
     font-size: var(--font-md);
     padding: 8px 14px;
