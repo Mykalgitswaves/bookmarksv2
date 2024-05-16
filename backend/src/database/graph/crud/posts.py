@@ -46,6 +46,7 @@ class PostCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
                                 question_ids:$question_ids,
                                 responses:$responses,
                                 spoilers:$spoilers,
+                                rating:$rating,
                                 deleted:false,
                                 likes:0})
                 create (u)-[p:POSTED]->(r)
@@ -60,7 +61,8 @@ class PostCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
                         questions=review_post.questions,
                         question_ids=review_post.question_ids,
                         responses=review_post.responses,
-                        spoilers=review_post.spoilers)
+                        spoilers=review_post.spoilers,
+                        rating=review_post.rating)
         
         response = result.single()
         review = ReviewPost(
@@ -71,6 +73,7 @@ class PostCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
                         question_ids=review_post.question_ids,
                         responses=review_post.responses,
                         spoilers=review_post.spoilers,
+                        rating=review_post.rating,
                         created_date=response['created_date'],
                         id=response['review_id']
         )
@@ -104,6 +107,7 @@ class PostCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
                                 question_ids:$question_ids,
                                 responses:$responses,
                                 spoilers:$spoilers,
+                                rating:$rating,
                                 deleted:false,
                                 likes:0})
                 create (u)-[p:POSTED]->(r)
@@ -121,21 +125,23 @@ class PostCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
                         questions=review_post.questions,
                         question_ids=review_post.question_ids,
                         responses=review_post.responses,
-                        spoilers=review_post.spoilers)
+                        spoilers=review_post.spoilers,
+                        rating=review_post.rating)
         
         response = result.single()
         review_post.book.google_id = review_post.book.id
         review_post.book.id = response['book_id']
         review = ReviewPost(
-                        user_username=review_post.user_username, 
-                        book=review_post.book,
-                        headline=review_post.headline, 
-                        questions=review_post.questions,
-                        question_ids=review_post.question_ids,
-                        responses=review_post.responses,
-                        spoilers=review_post.spoilers,
-                        created_date=response['created_date'],
-                        id=response['review_id']
+            user_username=review_post.user_username, 
+            book=review_post.book,
+            headline=review_post.headline, 
+            questions=review_post.questions,
+            question_ids=review_post.question_ids,
+            responses=review_post.responses,
+            spoilers=review_post.spoilers,
+            rating=review_post.rating,
+            created_date=response['created_date'],
+            id=response['review_id']
         )
         return(review)
     
@@ -741,7 +747,8 @@ class PostCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
                             user_id=response['u.id'],
                             user_username=response['u.username'],
                             num_comments=response["num_comments"],
-                            likes=post['likes']
+                            likes=post['likes'],
+                            rating=post.get('rating')
                         )
                 review.liked_by_current_user = response['liked_by_current_user']
                 review.posted_by_current_user = response['posted_by_current_user']
@@ -896,7 +903,8 @@ class PostCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
                                 liked_by_current_user=response['liked_by_current_user'],
                                 num_comments=response['num_comments'],
                                 likes=post['likes'],
-                                headline=post.get('headline', "")
+                                headline=post.get('headline', ""),
+                                rating=post.get('rating')
                             )
                     
                     output.append(review)
@@ -1046,7 +1054,8 @@ class PostCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
                                 liked_by_current_user=response['liked_by_current_user'],
                                 num_comments=response['num_comments'],
                                 likes=post['likes'],
-                                headline=post.get('headline', "")
+                                headline=post.get('headline', ""),
+                                rating=post.get('rating')
                             )
                     
                     output.append(review)
@@ -1179,7 +1188,8 @@ class PostCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
                                     user_username=response["pu.username"],
                                     likes=post['likes'],
                                     liked_by_current_user=response['liked_by_current_user'],
-                                    posted_by_current_user=response['posted_by_current_user']
+                                    posted_by_current_user=response['posted_by_current_user'],
+                                    rating=post.get('rating')
                                     )
         
         elif response['labels(p)'] == ["WantToReadPost"]:

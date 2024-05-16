@@ -48,6 +48,7 @@ async def create_review(request: Request,
      ids:[]
      responses:[]
      spoilers:[]
+     rating: int | None = None
      }
 
     """
@@ -85,7 +86,8 @@ async def create_review(request: Request,
                         questions=response['questions'],
                         question_ids=response['ids'],
                         responses=response['responses'],
-                        spoilers=response['spoilers']
+                        spoilers=response['spoilers'],
+                        rating=response.get('rating')
                 )
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))

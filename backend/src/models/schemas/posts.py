@@ -47,6 +47,7 @@ class ReviewCreate(PostCreate):
     question_ids: list[int] = []
     responses: list[str] = []
     spoilers: list[bool] = []
+    rating: int | None = None
 
 class WantToReadPost(Post):
     headline: str = ""
@@ -63,6 +64,7 @@ class ReviewPost(Post):
     spoilers: list
     headline: str = ""
     type: str = "review"
+    rating: int | None = None
     
 class UpdateCreate(PostCreate):
     page: int

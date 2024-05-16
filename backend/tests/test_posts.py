@@ -91,7 +91,8 @@ class TestPosts:
             "questions":["Test Question 1","Test Question 2"],
             "ids":[-1,-1],
             "responses":["Response 1", "Response 2"],
-            "spoilers":[False, True]
+            "spoilers":[False, True],
+            "rating": 1
         }
         
         response = requests.post(f"{self.endpoint}/api/posts/create_review", headers=headers, json=data)
@@ -124,7 +125,8 @@ class TestPosts:
             "questions":["Test Question 1","Test Question 2"],
             "ids":[-1,-1],
             "responses":["Response 1", "Response 2"],
-            "spoilers":[False, True]
+            "spoilers":[False, True],
+            "rating": 1
         }
         
         response = requests.post(f"{self.endpoint}/api/posts/create_review", headers=headers, json=data)
