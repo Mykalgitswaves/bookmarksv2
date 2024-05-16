@@ -73,6 +73,7 @@
                     :is-viewing-review="false"
                     :question-count="count"
                     @question-added="(question) => handleQuestionAdded(question)"
+                    @question-updated="throttledUpdateQuestionInEntries()"
                     @custom-question-added="(question) => handleCustomQuestionAdded(question)"
                     @deleted-custom-question="(question) => handleDeletedCustomQuestion(question)"
                 />
@@ -80,8 +81,9 @@
 
             <div v-if="step === 3">
                 <div class="m-tb-40">
+                    <img class="book-img" :src="book?.small_img_url || book.img_url" alt="">
                     <!-- Setting headlines -->
-                    <CreatePostHeadline @headline-changed="headlineHandler" :review-version="true"/>
+                    <CreatePostHeadline :prop-headline="headline" @headline-changed="headlineHandler" :review-version="true"/>
 
                     <div class="divider m-tb-40"></div>
 
@@ -113,7 +115,7 @@ const questionCats = Array.from(Object.keys(postData.posts.review))
 
 // Refs
 const book = ref(null);
-const { clone } = helpersCtrl;
+const { clone, debounce } = helpersCtrl;
 const currentTopic = ref('Your post');
 
 // Defaults to character, this change will dictate the questions rendered. we can model it.
@@ -159,6 +161,12 @@ function bookHandler(e) {
 function headlineHandler(e) {
     headline.value = e;
 }
+
+function updateQuestionFromStore(){
+    entries.value = store.arr
+}
+
+const throttledUpdateQuestionInEntries = debounce(updateQuestionFromStore, 200, false);
 
 // emit handlers from child components.
 const count = computed(() => {
@@ -207,35 +215,19 @@ function decrementStep() {
 // Add a watcher to emit up when something is added, doesn't seem to capture when entries
 // loses entry with splice so we have duplicate above.
 watch(entries, () => {
-    emit('is-postable-data', helpersCtrl.formatReviewData(rating.value, entries.value, book.value, headline.value))
-
-    // let numOfCustomQuestions = entries.value.filter(q => q.id < 0).length;
-    // console.log('num of custom questions', numOfCustomQuestions)
-    // if (numOfCustomQuestions) {
-    //     let lastIdOfCustomQuestionDecremented = entries.value[entries.value.length - 1].id;
-    //     console.log('last id of custom qeustion decremented', lastIdOfCustomQuestionDecremented)
-    //     if (lastIdOfCustomQuestionDecremented) {
-    //         questionMapping.custom.push({
-    //             "id": (lastIdOfCustomQuestionDecremented - 1),
-    //             "q": '',
-    //             "response": '',
-    //             "is_spoiler": false,
-    //             "placeholder": "Add your own response...",
-    //             "isHiddenCustomQuestion": false
-    //         });
-    //     }
-    // }
+    let formattedData = helpersCtrl.formatReviewData(rating.value, entries.value, book.value, headline.value);
+    emit('is-postable-data', formattedData)
 });
 
 watch(headline, () => {
     if(entries.value?.length) {
-        emit('is-postable-data', helpersCtrl.formatReviewData(entries.value, book.value, headline.value))
+        emit('is-postable-data', helpersCtrl.formatReviewData(rating.value, entries.value, book.value, headline.value))
     }
 })
 
 watch(currentTopic, () => {
     characterQuestions = JSON.parse(JSON.stringify(postData.posts.review[currentTopic.value]));
-})
+});
 </script>
 
 <style scoped>
@@ -352,5 +344,12 @@ textarea {
     background-color: var(--indigo-500);
     color: #fff;
     border-color: var(--indigo-500);
+}
+
+.book-img {
+    border-radius: var(--radius-md);
+    margin-left: auto;
+    margin-right: auto;
+    height: 140px;
 }
 </style>

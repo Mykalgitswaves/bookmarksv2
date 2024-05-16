@@ -40,7 +40,7 @@
                                     v-model="question.response"
                                     ref="textarea"
                                     :placeholder="question.id >= 0 ? 'type your response here...' : 'Add your own thoughts here...'"
-                                    @keyup="updateQuestion(question)"
+                                    @keyup="debouncedUpdateQuestion(question)"
                                 />
                             </form>
                         </div>
@@ -61,10 +61,10 @@
                         <!-- FOr custom questions you might want to add. -->
                         <button v-if="(question.id < 0) && (i === questionType[1].length - 1)"
                             type="button"
-                            class="btn btn-ghost btn-icon mt-2 pl-0" 
+                            class="btn btn-ghost btn-icon mt-2" 
                             @click="$emit('custom-question-added', question)">
                             <IconPlus />    
-                            
+
                             Add another response
                         </button>
                     </li>
@@ -96,7 +96,7 @@ const props = defineProps({
     }
 });
 
-const { clone } = helpersCtrl;
+const { clone, debounce } = helpersCtrl;
 
 const store = createQuestionStore();
 
@@ -147,12 +147,15 @@ function updateQuestion(question) {
     if(!question.response.length){
         return;
     }
-
+    console.log(question, 'from inside update question fn');
     store.addOrUpdateQuestion(question);
     // Maybe add more logic in here to emit the shit.
+    emit('question-updated');
 }
 
-const emit = defineEmits(['question-added', 'deleted-custom-question']);
+const debouncedUpdateQuestion = debounce(updateQuestion, 200, false);
+
+const emit = defineEmits(['question-added', 'deleted-custom-question', 'question-updated']);
 
 function removeQuestionFromStore(question){
     question.response = '';
@@ -171,7 +174,7 @@ watch(() => props.questionCount, (newValue) => {
     border: none;
     appearance: none;
     resize: none;
-    color: var(--stone-500);
+    color: var(--stone-600);
     margin-right: 4px;
     padding-top: 8px;
     background-color: transparent

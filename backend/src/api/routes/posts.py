@@ -338,7 +338,7 @@ async def create_milestone(request: Request,
 
     return JSONResponse(content={"data": jsonable_encoder(milestone)})
 
-@router.put("/post/{post_id}/delete",
+@router.delete("/post/{post_id}/delete",
             name="post:delete")
 async def update_post_to_deleted(post_id: str, 
                                  current_user: Annotated[User, Depends(get_current_active_user)],

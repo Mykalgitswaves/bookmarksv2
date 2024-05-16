@@ -1,6 +1,6 @@
 <template>
 <div class="m-tb-40">
-    <h1 class="heading light">What did you think of the book?</h1>
+    <h1 class="heading light fancy">What did you think of the book?</h1>
 
     <form class="rating-radio-group">
         <label class="rating-label" for="rating-3">
@@ -63,8 +63,9 @@ watch(modelValue, (newValue) => {
 </script>
 <style scoped>
 .rating-radio-group {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    display: flex;
+    justify-content: space-around;
+    flex-wrap: wrap;
     column-gap: 20px;
     row-gap: 20px;
     margin-top: 40px;
@@ -72,6 +73,8 @@ watch(modelValue, (newValue) => {
 }
 
 .rating-label  {
+    --flex-basis: 22%;
+    flex-basis: var(--flex-basis);
     padding: var(--padding-sm);
     background-color: transparent;
     border-radius: var(--radius-md);
@@ -79,6 +82,12 @@ watch(modelValue, (newValue) => {
     place-content: center;
     text-align: center;
     border: 1px solid var(--indigo-400);
+}
+
+@media screen and (max-width: 768px) {
+    .rating-label {
+        --flex-basis: 180px;
+    }
 }
 
 .rating-label:has(input:checked) {

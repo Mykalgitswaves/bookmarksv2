@@ -139,3 +139,9 @@
     margin-top: 40px !important;
     margin-bottom: 40px !important;
   }
+
+  .hidden {
+    display: none !important;
+    visibility: hidden !important;
+    transition: var(--transition-short);
+  }

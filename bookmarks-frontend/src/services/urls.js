@@ -49,6 +49,7 @@ export const urls = {
         likePost: (post_id) => (baseUrl + `api/posts/post/${post_id}/like`),
         unlikePost: (post_id) => (baseUrl + `api/posts/post/${post_id}/remove_like`),
         likeComparison: (comparison_id, user_id) => (baseUrl + `api/${user_id}/like/comparisons/${comparison_id}`),
+        deletePost: (post_id) => (baseUrl + `api/posts/post/${post_id}/delete`),
         deleteComment: (comment_id) => (baseUrl + `api/review/${comment_id}/delete`),
         likeComment: (comment_id) => (baseUrl + `api/posts/comment/${comment_id}/like`),
         unlikeComment: (comment_id) => (baseUrl + `api/posts/comment/${comment_id}/remove_like`),

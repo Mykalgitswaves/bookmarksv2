@@ -53,11 +53,16 @@ export const helpersCtrl = {
     formatReviewData: (rating, questionList, book, headline) => {
         questionList = typeof questionList === Proxy ? toRaw(questionList) : questionList
         const data = {};
+        data.rating = null;
+        
+        if(rating){
+            data.rating = parseInt(rating);
+        }
+
         data.book_id = book.id;
         data.title = book.title;
         data.small_img_url = book.small_img_url;
         data.headline = headline;
-        data.rating = parseInt(rating);
         data.questions = Array.from(questionList.map((q) => q.q))
         data.ids = Array.from(questionList.map((q) => q.id))
         data.responses = Array.from(questionList.map((q) => q.response))

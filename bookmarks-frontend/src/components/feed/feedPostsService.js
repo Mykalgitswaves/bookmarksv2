@@ -19,7 +19,10 @@ export const feedComponentMapping = {
             liked_by_current_user: data?.liked_by_current_user,
             num_comments: data?.num_comments,
             deleted: data?.deleted,
-        })
+        }),
+        events: {
+            'post-deleted': 'hideDeletedPost'
+        } 
     },
     'review': {
         component: () => ReviewPost,
@@ -41,7 +44,10 @@ export const feedComponentMapping = {
             user_id: data?.user_id,
             posted_by_current_user: data?.posted_by_current_user,
             deleted: data?.deleted
-        })
+        }),
+        events: {
+            'post-deleted': 'hideDeletedPost'
+        } 
     },
     'update': {
         component: () => UpdatePost,
@@ -63,6 +69,9 @@ export const feedComponentMapping = {
             num_comments: data?.num_comments,
             comments: data?.comments,
             liked_by_current_user: data?.liked_by_current_user,
-        })
+        }),
+        events: {
+            'post-deleted': 'hideDeletedPost'
+        } 
     }
 }

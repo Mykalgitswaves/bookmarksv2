@@ -21,6 +21,10 @@
 <script setup>
 import { ref, watch } from 'vue'
 const props = defineProps({
+    propHeadline: {
+        type: String,
+        required: false,
+    },
     reviewType: {
         type: String,
         required: false,
@@ -30,8 +34,13 @@ const props = defineProps({
         type: Boolean,
         default: false,
     }
-})
+});
 const headline = ref('')
+
+if(props.propHeadline){
+    headline.value = props.propHeadline;
+}
+
 const emit = defineEmits();
 
 watch(headline, () => {

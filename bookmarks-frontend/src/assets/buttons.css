@@ -36,3 +36,24 @@
 .text-start {
     text-align: start;
 }
+
+.btn.btn-red {
+    background-color: var(--red-200);
+    color: var(--red-500);
+    transition: var(--transition-short);
+}
+
+.btn.btn-red:hover {
+    background-color: var(--red-300);
+}
+
+.btn.btn-ghost {
+    border: 1px solid var(--stone-300);
+    color: var(--stone-500);
+    transition: var(--transition-short);
+}
+
+.btn.btn-ghost:hover {
+    background-color: var(--stone-200);
+    color: var(--stone-600);
+}
