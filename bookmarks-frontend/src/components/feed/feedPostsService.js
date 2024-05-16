@@ -17,6 +17,7 @@ export const feedComponentMapping = {
             user_id: data?.user_id,
             likes: data?.likes,
             liked_by_current_user: data?.liked_by_current_user,
+            posted_by_current_user: data?.posted_by_current_user,
             num_comments: data?.num_comments,
             deleted: data?.deleted,
         }),
@@ -63,6 +64,7 @@ export const feedComponentMapping = {
             num_comments: data?.num_comments,
             comments: data?.comments,
             liked_by_current_user: data?.liked_by_current_user,
+            posted_by_current_user: data?.posted_by_current_user,
         }),
     }
 }

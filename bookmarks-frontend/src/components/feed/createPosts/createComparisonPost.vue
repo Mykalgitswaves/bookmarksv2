@@ -3,15 +3,20 @@
         @books-selected="booksHandlerFn"
     />
 
-    <CreateComparisonContentSection 
-        :books="books" 
-        :headlines="headlines"
-        :current-view="currentView"
-        :question-count="questionCount"
-        @headlines-changed="headlineHandler"
-        @question-added="questionAddedFn"
-        @postable-store-data="comparisonHandlerFn"  
-    />
+    <div v-if="books.length === 2">
+        <!-- Step 1 is creating responses for both -->
+
+        <!-- Step 2 is viewing your created -->
+        <CreateComparisonContentSection 
+            :books="books" 
+            :headlines="headlines"
+            :current-view="currentView"
+            :question-count="questionCount"
+            @headlines-changed="headlineHandler"
+            @question-added="questionAddedFn"
+            @postable-store-data="comparisonHandlerFn"  
+        />
+    </div>
 </template>
 <script setup>
 import { ref } from 'vue';
@@ -22,6 +27,7 @@ const books = ref([]);
 const currentView = ref('add');
 const questionCount = ref(0);
 const headlines = ref([]);
+const step = ref(1);
 
 function headlineHandler(headlineObj){
     headlines.value = [

@@ -30,9 +30,11 @@
         </div>
 
         <div class="card-responses">
-            <div class="divider"></div>            
-                <p v-if="headline" class="fancy text-2xl">{{ headline }}</p>
-            <div class="divider"></div>
+            <div v-if="headline">
+                <div class="divider"></div>            
+                <p class="fancy text-2xl">{{ headline }}</p>
+                <div class="divider"></div>
+            </div>
 
             <ul class="my-3 content-start">
                 <li v-for="(r, index) in props.responses" 
@@ -63,7 +65,7 @@
 
                 <button v-if="posted_by_current_user"
                     type="button"
-                    class="delete-post-btn ml-5"
+                    class="btn-small icon-btn btn-red-ghost ml-2"
                     @click="setDeletePost(props.id)"
                 >
                     <IconTrash />
@@ -113,7 +115,6 @@ import { urls, navRoutes } from '../../../services/urls';
 import { postStore } from '../../../stores/postStore';
 import IconLike from '../../svg/icon-like.vue';
 import IconComment from '../../svg/icon-comment.vue';
-import IconBrain from '../../svg/icon-brain.vue';
 import IconTrash from  '../../svg/icon-trash.vue';
 import { createConfetti } from '../../../services/helpers.js';
 
@@ -202,7 +203,7 @@ async function AddLikeOrUnlike(){
 
 /**
  * -----------------------------------------------------------------------------------------------
- * DELETING POSTS
+ * DELETING REVIEW POSTS
  * -----------------------------------------------------------------------------------------------
  */
 // We want to prompt users to make sure they are confident in deleting. hence the additional steps.
@@ -221,7 +222,7 @@ async function deletePost(id){
 }
 /**
  * -----------------------------------------------------------------------------------------------
- * END OF DELETING POSTS
+ * END OF DELETING REVIEW POSTS
  * -----------------------------------------------------------------------------------------------
  */
 
@@ -255,16 +256,5 @@ function navigateToCommentPage() {
 
 .title-hover:hover {
     color: #312e81;
-}
-
-.delete-post-btn {
-    display: flex;
-    column-gap: 10px;
-    color: var(--red-400);
-    align-items: center;
-}
-
-.delete-post-btn:hover {
-    color: var(--red-500);
 }
 </style>

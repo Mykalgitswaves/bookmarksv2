@@ -37,6 +37,11 @@
     text-align: start;
 }
 
+.btn-small {
+    padding: .5rem 1rem;
+    border-radius: .25rem;
+}
+
 .btn.btn-red {
     background-color: var(--red-200);
     color: var(--red-500);
@@ -56,4 +61,20 @@
 .btn.btn-ghost:hover {
     background-color: var(--stone-200);
     color: var(--stone-600);
+}
+
+.btn.icon-btn, .btn-small.icon-btn {
+    display: flex;
+    column-gap: 10px;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn-red-ghost {
+    color: var(--red-500);
+    background-color: var(--surface-primary);
+}
+
+.btn-red-ghost:hover {
+    background-color: var(--red-100);
 }
