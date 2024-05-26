@@ -95,33 +95,43 @@ export const postData = {
                     ]
         },
         "update": {},
-        "comparison": [
-            {
-                "topic": "tone", 
-                "pk": 13,
-                "q": "The tone of these works..."
-            },
-            {
-                "topic": "character", 
-                "pk": 14,
-                "q": "The character of these works..."
-            },
-            {
-                "topic": "plot", 
-                "pk": 15,
-                "q": "The plot of these works..."
-            },
-            {
-                "topic": "setting", 
-                "pk": 16,
-                "q": "The setting of these works..."
-            },
-            {
-                "topic": "custom", 
-                "pk": -1,
-                "q": ""
-            }
-        ]
+        "comparison": {
+            "custom": [
+                {
+                    "topic": "custom",
+                    "id": -1,
+                    "q": "",
+                }
+            ],
+            "tone": [
+                {
+                    "topic": "tone",
+                    "id": 1,
+                    "q": "The tone of both works...",
+                }
+            ],
+            "character": [
+                { 
+                    "topic": "character",
+                    "id": 2,
+                    "q": "The characters of these works...",
+                }
+            ],
+            "plot": [
+                {
+                    "topic": "plot",
+                    "id": 3,
+                    "q": "The plot of both works...",
+                } 
+            ],
+            "setting": [
+                {
+                    "topic": "setting",
+                    "id": 4,
+                    "q": "The setting of both works...",
+                },
+            ],
+        },
     },
 }
 

@@ -1,7 +1,5 @@
 <template>
-    <div>
-        <YourReviewQuestions :questions="store.arr" :is-comparison="true" :is-viewing-review="true"/>
-    </div>
+    <YourReviewQuestions :questions="store.arr" :is-comparison="true" :is-viewing-review="true"/>
 </template>
 <script setup>
 import { watch } from 'vue';

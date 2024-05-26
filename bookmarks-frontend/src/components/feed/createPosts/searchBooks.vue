@@ -1,6 +1,6 @@
 <template>
      <form class="grid grid-cols-1 gap-2" :class="{'w-100': props.centered}">
-      <label v-if="props.labelAbove" for="search-book" class="text-gray-600 text-sm mb-2">{{ props.labelAbove }}</label>
+      <label v-if="props.labelAbove" for="search-book" class="text-gray-600 text-sm mb-2" :class="{'text-center': props.centered}">{{ props.labelAbove }}</label>
       
       <input
         id="search-book"
@@ -20,7 +20,7 @@
         class="text-gray-600 text-sm" 
         :class="{ 'text-center': props.centered }"
         for="searchForBooks"
-      >Tap a book and review it to add it to your shelf</label>
+      >Tap a book to select it</label>
     </form>
 
     <BookSearchResults 
@@ -32,7 +32,7 @@
     />
 </template>
 <script setup>
-import { ref, reactive, computed, watch } from 'vue';
+import { ref, computed, watch } from 'vue';
 import BookSearchResults from '../../create/booksearchresults.vue';
 import { db } from '../../../services/db';
 import { urls } from '../../../services/urls';
@@ -49,6 +49,11 @@ const props = defineProps({
   centered: {
     type: Boolean,
     default: false,
+  },
+  selectedBook: {
+    type: Function,
+    default: () => '',
+    required: false,
   }
 });
 
@@ -70,7 +75,13 @@ function toParent(e) {
   emit('book-to-parent', book.value)
 }
 
-const books = computed(() => (searchResultsArray.value && searchResultsArray.value.data ? searchResultsArray.value.data : ''))
+const books = computed(() => {
+  if (searchResultsArray.value?.data) {
+    searchResultsArray.value.data = searchResultsArray.value.data.filter((book) => book.id !== props.selectedBook()?.id)
+    return searchResultsArray.value.data
+  }
+  return '';
+})
 
 watch(book, () => {
   if(props.isComparison && book.value !== null) {

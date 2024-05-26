@@ -1,5 +1,5 @@
 <template>
-    <p v-if="!isDoneReviewing" class="text-2xl mb-5 mt-5 font-semibold">The content monster is hungry for your thoughts 🍪. <br/>
+    <p v-if="!isDoneReviewing" class="text-center text-2xl mb-5 mt-5 font-semibold">The content monster is hungry for your thoughts 🍪. <br/>
         <span class="text-indigo-500">Start by picking two books to compare </span>
     </p>
 
@@ -11,7 +11,7 @@
     >
         <IconEdit /><span class="text-indigo-500 italic">{{ firstBook }}</span>
     </button>
-
+        
     <component
         v-if="!isDoneReviewing"
         :is="currentComponent.component"
@@ -19,7 +19,10 @@
         v-on="currentComponent.events"
     ></component>
 
-    <div v-if="isDoneReviewing" class="mt-15 flex container gap-5">
+    <div v-if="isDoneReviewing" class="mt-15 flex container gap-5 justify-center">
+        <p class="text-center fancy text-2xl text-stone-600">Comparing <span class="text-indigo-500">{{ books[0].title }}</span><br/> 
+            & <span class="text-indigo-500">{{ books[1].title }}</span>
+        </p>
         <button
             type="button"
             class="cursor-pointer text-indigo-600"
@@ -29,13 +32,11 @@
             <IconEdit />
             <span class="underline hidden">Edit selection</span>
         </button>
-        <p class="font-semibold text-left">Comparing <span class="text-indigo-500">{{ books[0].title }}</span> and <span class="text-indigo-500">{{ books[1].title }}</span></p>
-
     </div>
 </template>
 <script setup>
 
-import { ref, reactive, watch, computed } from 'vue';
+import { ref, reactive, watch, computed, watchEffect } from 'vue';
 import SearchBooks from '../searchBooks.vue';
 import IconEdit from '../../../svg/icon-edit.vue';
 
@@ -55,13 +56,20 @@ function bookTwoHandler(e) {
     emit('books-selected', books.value);
     isDoneReviewing.value = true;
 }
+
+function getFirstBook(){
+    console.log('called getFirstBook FN')
+    return books.value[0];
+}
+
 // hopefully this is flexible and vue doesnt fuck up. We can run  with this for a bit.
-const bookMapping = {
+const bookMapping = reactive({
     0: {
         component: SearchBooks,
         props: {
-            'label-above': 'Book 1',
+            'label-above': 'Selecting book 1',
             'is-comparison': 'true',
+            'centered': 'true',
         },
         events: {
             'book-to-parent': bookOneHandler,
@@ -70,14 +78,16 @@ const bookMapping = {
     1: {
         component: SearchBooks,
         props: {
-            'label-above': 'Book 2',
+            'label-above': 'Selecting book 2',
             'is-comparison': 'true',
+            'centered': 'true',
+            'selected-book': getFirstBook,
         },
         events: {
             'book-to-parent': bookTwoHandler,
         },
     },
-};
+});
 
 // make reactive object in case we ever want more than two books for a comparison
 const currentComponent = reactive({

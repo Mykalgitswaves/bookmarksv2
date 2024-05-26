@@ -29,7 +29,7 @@
                 <IconFeed/>
             </button>
 
-            <p>Feed</p>
+            <p class="fancy text-stone-600">Feed</p>
         </div>
         
         <div class="nav-button-group hover:bg-gray-200"
@@ -46,7 +46,7 @@
                 <IconBookshelves/>
             </button>
 
-            <p>Bookshelves</p>
+            <p class="fancy text-stone-600">Bookshelves</p>
         </div>
 
         <div class="nav-button-group hover:bg-gray-200" 
@@ -62,7 +62,7 @@
                 <IconFeed/>
             </button>
 
-            <p>Notes</p>
+            <p class="fancy text-stone-600">Notes</p>
         </div>
 
         <div class="nav-button-group hover:bg-gray-200"
@@ -79,7 +79,7 @@
                 <IconProfile/>
             </button>
 
-            <p>Connections</p>
+            <p class="fancy text-stone-600">Connections</p>
         </div>
     </footer>
 

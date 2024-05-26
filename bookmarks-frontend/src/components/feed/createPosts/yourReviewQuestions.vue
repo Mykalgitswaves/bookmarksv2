@@ -15,7 +15,7 @@
 
                     <!-- If we are looking at comparison type questions -->
                     <span v-if="props.isComparison" class="block">{{ `The ${question.topic} of both books...` }}</span>
-                    <span v-if="props.isComparison" class="block text-slate-400 text-start">{{ question.comparison }}</span>
+                    <span v-if="props.isComparison" class="block text-slate-400 text-start">{{ question.comparison || question.response }}</span>
                 </div>
             </div>
 
@@ -30,13 +30,16 @@
             /> -->
         </li>
     </ul>
+
     <div v-if="!questions.length">
         <h2 class="heading">You haven't added any responses</h2>
+
         <p class="subheading">Click 
             <button type="button" 
                 class="underline text-indigo-500"
                 @click="$emit('go-to-edit-section')"    
-            >here</button> to add some responses</p>
+            >here</button> to add some responses
+        </p>
     </div>
 </template>
 <script setup>
@@ -74,7 +77,7 @@ const questions = computed(() => {
 
 const createPostResponseFormDict = reactive({});
 
-const emit = defineEmits(['question-form-completed']);
+const emit = defineEmits(['question-form-completed', 'go-to-edit-section']);
 
 function storeChangeHandler(indexOfQ) {
     // take the current question and close the response form once you add it!
@@ -84,8 +87,8 @@ function storeChangeHandler(indexOfQ) {
 
 watch(questions, (newValue) => {
     /**  
-     * Grab the index of the newest question that was added to yourReviewQuestions
-     * and set a value to the dictionary of `false` so you can open and close
+    * Grab the index of the newest question that was added to yourReviewQuestions
+    * and set a value to the dictionary of `false` so you can open and close
     */
     const index = questions.value.indexOf(newValue);
     createPostResponseFormDict[index] = false;

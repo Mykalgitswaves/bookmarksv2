@@ -255,64 +255,6 @@ textarea {
     text-align: start;
 }
 
-.toolbar {
-    display: flex;
-    column-gap: 20px;
-    justify-content: center;
-    align-items: center;
-}
-
-.toolbar-btn {
-    color: var(--indigo-400);
-    font-family: var(--fancy-script);
-    font-size: var(--font-md);
-    padding: 8px 14px;
-    text-decoration: underline;
-}
-
-.toolbar-progress {
-    width: 100%;
-    max-width: 880px;
-    position: relative;
-    display: flex;
-}
-
-.toolbar-progress .total {
-    background-color: var(--indigo-500);
-    border-bottom: 2px solid var(--indigo-500);
-}
-
-.toolbar-progress .remaining {
-    background-color: var(--indigo-500);
-    border-bottom: 2px solid var(--stone-100);
-}
-
-.toolbar-progress .stepper {
-    width: 12px;
-    height: 12px;
-    border-radius: 50%;
-    background-color: var(--stone-100);
-    display: inline-block;
-    margin-left: -5px;
-    position: absolute;
-    top: -5px;
-}
-
-.toolbar-progress .stepper.one{
-    left: 33%;
-}
-
-.toolbar-progress .stepper.two{
-    left: 66%;
-}
-
-.toolbar-progress .stepper.three{
-    right: 0;
-}
-
-.stepper.active {
-    background-color: var(--indigo-500);
-}
 
 .list-move,
 .list-enter-active,

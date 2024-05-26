@@ -5,6 +5,38 @@
 
     <div v-if="books.length === 2">
         <!-- Step 1 is creating responses for both -->
+        <div class="mt-10">
+            <div class="toolbar">
+                <button type="button"
+                    class="toolbar-btn"
+                    @click="decrementStep"
+                >
+                    <span v-if="step < 3">Previous</span>
+
+                    <span v-else>Edit</span>
+                </button>
+
+                <button type="button"
+                    class="toolbar-btn"
+                    @click="incrementStep"
+                >
+                    <span v-if="step < 2">Next</span>
+
+                    <span v-else>Finalize</span>
+                </button>
+            </div>
+
+
+            <p class="text-stone-600 mb-5 mt-2"><span class="text-indigo-500">{{ step }}</span> / 2</p>
+
+            <div class="toolbar-progress">
+                <div class="total" :style="{'width': progressTotal + '%'}"></div>
+                <div class="remaining" :style="{'width': remainderTotal + '%'}"></div>
+
+                <span class="stepper one" :class="{'active': step >= 1}"></span>
+                <span class="stepper two" :class="{'active': step >= 2}"></span>
+            </div>
+        </div>
 
         <!-- Step 2 is viewing your created -->
         <CreateComparisonContentSection 
@@ -12,14 +44,16 @@
             :headlines="headlines"
             :current-view="currentView"
             :question-count="questionCount"
+            :step="step"
             @headlines-changed="headlineHandler"
             @question-added="questionAddedFn"
             @postable-store-data="comparisonHandlerFn"  
+            @go-to-books-selection="books = []"
         />
     </div>
 </template>
 <script setup>
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 import CreateComparisonSelection from './comparison/createComparisonSelection.vue';
 import CreateComparisonContentSection from './createComparisonContentSection.vue';
 
@@ -29,11 +63,9 @@ const questionCount = ref(0);
 const headlines = ref([]);
 const step = ref(1);
 
-function headlineHandler(headlineObj){
-    headlines.value = [
-        headlineObj.comparator_a_headline,
-        headlineObj.comparator_b_headline
-    ]
+function headlineHandler(headlineObj) {
+    console.log(headlineObj, Object.entries(headlineObj))
+    headlines.value = Object.values(headlineObj);
 }
 
 function booksHandlerFn(e) {
@@ -51,5 +83,21 @@ const emit = defineEmits(['is-postable-data']);
 function comparisonHandlerFn(e) {
     emit('is-postable-data', e);
 }
+
+// navigate on forms. 
+function incrementStep() {
+    if(step.value < 2) {
+        step.value += 1;
+    }
+}
+
+function decrementStep() {
+    if(step.value > 1) {
+        step.value -= 1;
+    }
+}
+// for progress bar, duh.
+const progressTotal = computed(() => Math.floor((step.value * 100) / 2));
+const remainderTotal = computed(() => 100 - progressTotal.value);
 
 </script>
