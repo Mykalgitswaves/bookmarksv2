@@ -62,10 +62,11 @@ const currentView = ref('add');
 const questionCount = ref(0);
 const headlines = ref([]);
 const step = ref(1);
+const emit = defineEmits(['is-postable-data', 'set-headlines']);
 
 function headlineHandler(headlineObj) {
-    console.log(headlineObj, Object.entries(headlineObj))
     headlines.value = Object.values(headlineObj);
+    emit('set-headlines', headlines.value);
 }
 
 function booksHandlerFn(e) {
@@ -77,8 +78,6 @@ function questionAddedFn(){
     currentView.value = 'view'
     questionCount.value++;
 }
-
-const emit = defineEmits(['is-postable-data']);
 
 function comparisonHandlerFn(e) {
     emit('is-postable-data', e);
@@ -96,6 +95,7 @@ function decrementStep() {
         step.value -= 1;
     }
 }
+
 // for progress bar, duh.
 const progressTotal = computed(() => Math.floor((step.value * 100) / 2));
 const remainderTotal = computed(() => 100 - progressTotal.value);

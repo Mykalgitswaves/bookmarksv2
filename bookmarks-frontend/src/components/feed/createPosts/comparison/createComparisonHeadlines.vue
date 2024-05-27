@@ -41,6 +41,8 @@ const models = reactive({
 if (props.headlines) {
     models.comparator_a_headline = props.headlines[0];
     models.comparator_b_headline = props.headlines[1];
+    // Make sure when we set this that we are emitting upwards
+    emit('headlines-changed', models);
 }
 
 const emit = defineEmits(['headlines-changed']);

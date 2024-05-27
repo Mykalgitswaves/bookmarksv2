@@ -58,7 +58,7 @@
                             Remove
                         </button>
                     </div>
-                    
+
                     <!-- FOr custom questions you might want to add. -->
                     <button v-if="(question.topic === 'custom') && (i === questions.length - 1)"
                         type="button"
@@ -154,7 +154,7 @@ function addQuestionToStoreFn(question) {
         console.log(question)
         store.addOrUpdateQuestion(question);
     }
-        const postData = formatQuestionStoreForPost(store.arr, [...props.headlines]);
+        const postData = formatQuestionStoreForPost(store.arr, props.headlines);
 
         emit('postable-store-data', postData)
         emit('question-added');
@@ -175,7 +175,7 @@ function removeQuestionFromStore(question){
 };
 
 watch(props.headlines, () => {
-    const postData = formatQuestionStoreForPost(store.arr, [...props.headlines]);
+    const postData = formatQuestionStoreForPost(store.arr, props.headlines);
     emit('postable-store-data', postData);
 });
 </script>

@@ -5,6 +5,7 @@
     <component
         :is="componentMapping[reviewType]"
         @is-postable-data="handlePost"
+        @set-headlines="handleHeadlines"
     />
 
     <button 
@@ -21,7 +22,7 @@
 </section>
 </template>
 <script setup>
-import { ref, watch } from 'vue';
+import { ref, watch, toRaw } from 'vue';
 import { componentMapping, urlsMapping} from './createPostService';
 import { createQuestionStore } from '../../stores/createPostStore'
 import { useRoute, useRouter } from 'vue-router';
@@ -35,6 +36,10 @@ const emittedPostData = ref(null);
 const router = useRouter();
 const route = useRoute();
 const { reviewType } = route.params
+
+function handleHeadlines(e){
+  emittedPostData.value['book_specific_headlines'] = toRaw(e);
+}
 
 function handlePost(e) {
   emittedPostData.value = e;
@@ -52,7 +57,7 @@ async function postToEndpoint() {
 }
 
 watch(emittedPostData, () => {
-  isPostableData.value = true;
+    isPostableData.value = true;
 });
 </script>
 
