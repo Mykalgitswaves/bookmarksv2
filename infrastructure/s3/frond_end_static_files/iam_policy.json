@@ -1,0 +1,24 @@
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Principal": {
+                "AWS": [
+                    "arn:aws:iam::788511695961:user/kyle",
+                    "arn:aws:iam::788511695961:root"
+                ]
+            },
+            "Action": [
+                "s3:Get*",
+                "s3:List*",
+                "s3:Put*",
+                "s3:Delete*"
+            ],
+            "Resource": [
+                "arn:aws:s3:::book-prod-front-end-static-files/*",
+                "arn:aws:s3:::book-prod-front-end-static-files"
+            ]
+        }
+    ]
+}

@@ -9,3 +9,5 @@ versions.log
 __pycache__
 */raw_data/*
 app.log
+*.terraform*
+*.tfstate
