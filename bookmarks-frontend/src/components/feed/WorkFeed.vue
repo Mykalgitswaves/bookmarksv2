@@ -25,10 +25,14 @@
             v-for="post in feedData" :key="post.id" 
             class="center-cards"
           >
-            <component
-              :is="feedComponentMapping[post?.type]?.component()"
-              v-bind="feedComponentMapping[post?.type]?.props(post)"
-            />
+            <transition name="content" tag="div">
+              <component
+                v-if="!deletedPosts.includes(post.id)"
+                :is="feedComponentMapping[post?.type]?.component()"
+                v-bind="feedComponentMapping[post?.type]?.props(post)"
+                @post-deleted="hideDeletedPost"
+              />
+            </transition>
           </div>
         </div>
 
@@ -73,6 +77,11 @@ async function loadWorks() {
       feedData.value = res.data.filter((post) => (post.type !== 'milestone' || post.deleted !== true));
       privateFeed.value = res.data.filter((post) => post.type === 'milestone');
     });
+}
+const deletedPosts = ref([]);
+
+function hideDeletedPost(deletedPostId){
+  deletedPosts.value.push(deletedPostId);
 }
 
 onMounted(() => {

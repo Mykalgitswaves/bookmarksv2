@@ -1,20 +1,30 @@
 export const postData = {
     "posts": { 
         "review": {
-                    "all": [
-                        {
-                            "id": 10,
-                            "q" :"what is this book about?",
+                    "custom": [
+                        {   
+                            "id": -1,
+                            "q": '',
                             "response": '',
                             "is_spoiler": false,
-                        },
-                        {
-                            "id": 11,
-                            "q" :"what do you like about this book?",
-                            "response": '',
-                            "is_spoiler": false,
-                        },
+                            "placeholder": "Add your own question here...",
+                            "isHiddenCustomQuestion": false
+                        }
                     ],
+                    // "all": [
+                    //     {
+                    //         "id": 1,
+                    //         "q" :"what is this book about?",
+                    //         "response": '',
+                    //         "is_spoiler": false,
+                    //     },
+                    //     {
+                    //         "id": 2,
+                    //         "q" :"what do you like about this book?",
+                    //         "response": '',
+                    //         "is_spoiler": false,
+                    //     },
+                    // ],
                     "character": [
                         { 
                             "id": 3,
@@ -57,63 +67,71 @@ export const postData = {
                     ],
                     "tone": [
                         {  
-                            "id": 1,
+                            "id": 10,
                             "q": "Did you find the overall tone of the book satisfying? Why or why not?",
                             "response": "",
                             "is_spoiler": false
                           },
                           { 
-                            "id": 2, 
+                            "id": 11, 
                             "q": "How would you describe the tone and atmosphere of the key settings in the book?",
                             "response": "",
                             "is_spoiler": false
                           },
                           {
-                            "id": 3,
+                            "id": 12,
                             "q": "Were there any shifts in tone that stood out to you? If so, what purpose did they serve?",
                             "response": "",
                             "is_spoiler": false
                           }
                     ],
-                    "custom": [
-                        {   
-                            "id": -1,
-                            "q": '',
-                            "response": '',
-                            "is_spoiler": false,
-                            "placeholder": "Add your own question here...",
-                            "isHiddenCustomQuestion": false
+                    "conflict": [
+                        {
+                            "id": 10,
+                            "q": "What was the central conflict in the book?",
+                            "response": "",
+                            "is_spoiler": false
                         }
                     ]
         },
         "update": {},
-        "comparison": [
-            {
-                "topic": "tone", 
-                "pk": 1,
-                "q": "The tone of these works..."
-            },
-            {
-                "topic": "character", 
-                "pk": 2,
-                "q": "The character of these works..."
-            },
-            {
-                "topic": "plot", 
-                "pk": 3,
-                "q": "The plot of these works..."
-            },
-            {
-                "topic": "setting", 
-                "pk": 4,
-                "q": "The setting of these works..."
-            },
-            {
-                "topic": "custom", 
-                "pk": 5,
-                "q": ""
-            }
-        ]
+        "comparison": {
+            "custom": [
+                {
+                    "topic": "custom",
+                    "id": -1,
+                    "q": "",
+                }
+            ],
+            "tone": [
+                {
+                    "topic": "tone",
+                    "id": 1,
+                    "q": "The tone of both works...",
+                }
+            ],
+            "character": [
+                { 
+                    "topic": "character",
+                    "id": 2,
+                    "q": "The characters of these works...",
+                }
+            ],
+            "plot": [
+                {
+                    "topic": "plot",
+                    "id": 3,
+                    "q": "The plot of both works...",
+                } 
+            ],
+            "setting": [
+                {
+                    "topic": "setting",
+                    "id": 4,
+                    "q": "The setting of both works...",
+                },
+            ],
+        },
     },
 }
 

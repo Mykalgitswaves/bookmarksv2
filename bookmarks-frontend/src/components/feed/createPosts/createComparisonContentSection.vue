@@ -1,44 +1,49 @@
 <template>
     <section v-if="books.length === 2" class="mt-10">
-        <CreateComparisonHeadlines class="mb-10" :books="books" @headlines-changed="$emit('headlines-changed', $event)"/>
-
-        <div class="grid-two-btn-container">    
-            <button
-                type="button" 
-                class="btn border-indigo-500 text-indigo-500 text-lg"
-                @click="currentView = 'add'"
-            >
-                Add comparisons
-            </button>
-
-            <button 
-                type="button"
-                class="btn border-indigo-500 text-indigo-500 text-lg"
-                @click="currentView = 'view'"
-            >
-                {{ questionCount }}
-                comparisons
-            </button>
+        <div v-show="step === 1">
+            <div class="mt-10 mb-10 text-center">
+                <h4 class="heading">Click into a topic to add comparisons for your post.</h4>
+                
+                <p class="subheading">Pick from some pre-made prompts or add your own</p>
+            </div>
+            
+            <CreateComparisonQuestionsVue 
+                :books="books"
+                :headlines="headlines"
+                @question-added="$emit('question-added', $event)"
+                @postable-store-data="$emit('postable-store-data', $event)"
+            />
         </div>
 
-        <CreateComparisonQuestionsVue 
-            v-show="currentView === 'add'"
-            :books="books"
-            :headlines="headlines"
-            @question-added="$emit('question-added', $event)"
-            @postable-store-data="$emit('postable-store-data', $event)"
-        />
+        <div v-show="step === 2">
+            <CreateComparisonHeadlines class="mb-10" :books="books" :headlines="headlines" @headlines-changed="$emit('headlines-changed', $event)"/>
 
-        <ViewComparisonQuestionsVue
-            v-show="currentView === 'view'"
-        />
+            <div class="divider"></div>
+
+            <ViewComparisonQuestionsVue @go-to-edit-section="emit('go-to-edit-section')"/>
+            
+            <div class="divider"></div>
+        </div>
     </section>
+
+    <div v-else>
+        <h2 class="heading">Select two books to make a comparison</h2>
+        
+        <p class="subheading">Update your current selection 
+            <button type="button"
+                class="text-indigo-500 underline"
+                @click="emit('go-to-books-selection')"
+            >
+                here
+            </button>
+        </p>
+    </div>
 </template>
 <script setup>
-import { onUnmounted } from 'vue';
 import CreateComparisonQuestionsVue from './comparison/createComparisonQuestions.vue';
-import ViewComparisonQuestionsVue from './comparison/viewComparisonQuestions.vue';
 import CreateComparisonHeadlines from './comparison/createComparisonHeadlines.vue';
+import ViewComparisonQuestionsVue from './comparison/viewComparisonQuestions.vue';
+const emit = defineEmits(['go-to-books-selection', 'headlines-changed', 'go-to-edit-section']);
 
 defineProps({
     currentView: {
@@ -57,7 +62,11 @@ defineProps({
     questionCount: {
         type: Number,
         required: true,
-    }
+    },
+    step: {
+        type: Number,
+        required: true,
+    },
 });
 
 </script>

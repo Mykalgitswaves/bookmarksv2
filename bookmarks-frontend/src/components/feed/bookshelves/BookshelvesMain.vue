@@ -1,5 +1,5 @@
 <template>
-    <div class="bookshelves-main-container">
+    <section class="bookshelves-main-container">
         <Bookshelves :bookshelves="bookshelvesCreatedByUser"
             :is_admin="true"
             :data-loaded="dataLoaded"
@@ -25,16 +25,19 @@
             </template>
 
             <template v-slot:empty-shelf>
-                <p>You haven't followed any bookshelves yet</p>
+                <p class="nowrap">You haven't followed any bookshelves yet</p>
             </template>
         </Bookshelves>
 
         <div>
-            <h1 class="bookshelf-wrapper-title font-medium fancy">Explore bookshelves</h1>
-
-            <a :href="navRoutes.toBookshelfSectionPage(user, 'explore')" class="underline text-indigo-500">Find new bookshelves</a>
+            <div class="pb-5">
+                <h1 class="bookshelf-wrapper-title font-medium fancy pb-5">Explore bookshelves</h1>
+            </div>
+            <div class="pt-5">
+                <a :href="navRoutes.toBookshelfSectionPage(user, 'explore')" class="underline text-indigo-500">Find new bookshelves</a>
+            </div>
         </div>
-    </div>
+    </section>
 </template>
 <script setup>
 import Bookshelves from './bookshelves.vue'; 

@@ -1,10 +1,10 @@
 <template>
-    <ul class="container questions mt-10">
+    <ul class="container questions" :class="{'mt-10': !isComparison}">
         <li v-for="(question, i) in questions" :key="i">
             <div class="my-3 text-lg question-border px-5 py-5 w-100 box-btn justify-between items-center">
                 <div class="text-start">
                     <!-- If we are looking at a custom review type question. -->
-                    <span v-if="!props.isComparison && question.id < 0" class="block">{{ question.q ? question.q : question.placeholder }}</span>
+                    <span v-if="!props.isComparison && question.id < 0" class="block fancy">Your response</span>
 
                     <!-- If we are looking at regular review type templated questions -->
                     <span v-if="!props.isComparison && question.id >= 0" class="block">{{ question.q }}?</span>
@@ -15,28 +15,22 @@
 
                     <!-- If we are looking at comparison type questions -->
                     <span v-if="props.isComparison" class="block">{{ `The ${question.topic} of both books...` }}</span>
-                    <span v-if="props.isComparison" class="block text-slate-400 text-start">{{ question.comparison }}</span>
+                    <span v-if="props.isComparison" class="block text-slate-400 text-start">{{ question.comparison || question.response }}</span>
                 </div>
-                <button type="button"
-                    class="btn-expand"
-                    :class="{'expanded': createPostResponseFormDict[i]}"
-                    @click="createPostResponseFormDict[i] = !createPostResponseFormDict[i]"
-                >
-                    <IconChevron />
-                </button>
             </div>
-
-            <CreatePostResponseForm 
-                v-if="!createPostResponseFormDict[i]" 
-                :q="question" 
-                :is-comparison="props.isComparison"  
-                :is-viewing-question="true" 
-                :is-custom-question="question.id < 0"
-                :index-of-q="i"
-                @store-changed="storeChangeHandler($event)"
-            />
         </li>
     </ul>
+
+    <div v-if="!questions.length" style="text-align: center;" :class="{'mt-10 mb-10': isComparison}">
+        <h2 class="heading">You haven't added any responses</h2>
+
+        <p class="subheading">Click 
+            <button type="button" 
+                class="underline text-indigo-500"
+                @click="emit('go-to-edit-section')"    
+            >here</button> to add some responses
+        </p>
+    </div>
 </template>
 <script setup>
 import { reactive, computed, watch } from 'vue';
@@ -57,7 +51,7 @@ const props = defineProps({
         type: Boolean,
         required: false,
         default: false,
-    }
+    },
 });
 
 const store = createQuestionStore();
@@ -73,7 +67,7 @@ const questions = computed(() => {
 
 const createPostResponseFormDict = reactive({});
 
-const emit = defineEmits(['question-form-completed']);
+const emit = defineEmits(['question-form-completed', 'go-to-edit-section']);
 
 function storeChangeHandler(indexOfQ) {
     // take the current question and close the response form once you add it!
@@ -83,8 +77,8 @@ function storeChangeHandler(indexOfQ) {
 
 watch(questions, (newValue) => {
     /**  
-     * Grab the index of the newest question that was added to yourReviewQuestions
-     * and set a value to the dictionary of `false` so you can open and close
+    * Grab the index of the newest question that was added to yourReviewQuestions
+    * and set a value to the dictionary of `false` so you can open and close
     */
     const index = questions.value.indexOf(newValue);
     createPostResponseFormDict[index] = false;

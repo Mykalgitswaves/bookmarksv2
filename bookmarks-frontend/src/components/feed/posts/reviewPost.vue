@@ -30,9 +30,11 @@
         </div>
 
         <div class="card-responses">
-            <div class="divider"></div>            
-                <p v-if="headline" class="fancy text-2xl">{{ headline }}</p>
-            <div class="divider"></div>
+            <div v-if="headline">
+                <div class="divider"></div>            
+                <p class="fancy text-xl">{{ headline }}</p>
+                <div class="divider"></div>
+            </div>
 
             <ul class="my-3 content-start">
                 <li v-for="(r, index) in props.responses" 
@@ -48,17 +50,28 @@
         </div>
 
         <div class="card-footer">
-            <button
-                type="button"
-                class="text-slate-600 flex items-center"
-                @click="navigateToCommentPage()"
-            >
-                <IconComment/>
-                
-                <span class="ml-2">
-                    {{ num_comments }} comments
-                </span>
-            </button>
+            <div class="flex gap-2">
+                <button
+                    type="button"
+                    class="text-slate-600 flex items-center"
+                    @click="navigateToCommentPage()"
+                >
+                    <IconComment/>
+                    
+                    <span class="ml-2">
+                        {{ num_comments }} comments
+                    </span>
+                </button>
+
+                <button v-if="posted_by_current_user"
+                    type="button"
+                    class="btn-small icon-btn btn-red-ghost ml-2"
+                    @click="setDeletePost(props.id)"
+                >
+                    <IconTrash />
+                    Delete post
+                </button>
+            </div>
         
             <button type="button" 
                 class="text-slate-600 flex items-center"
@@ -70,7 +83,29 @@
                 <span class="ml-2">{{ _likes }} likes</span>
             </button>
         </div>
-    </div> 
+    </div>
+
+    <teleport to="body" v-if="deletePostModal[id]"> 
+        <form class="modal delete" @submit.prevent="deletePost(id)">
+            <h2 class="fancy text-lg text-stone-600">Are you sure you want to delete your post for 
+                <br/><span class="text-indigo-500 italic">{{ book.title }}</span>?
+            </h2>
+
+            <div class="flex items-center justify-center gap-5 mt-5">
+                <button
+                    type="submit"
+                    class="btn btn-red"
+                >Delete</button>
+    
+                <button type="button"
+                    class="btn btn-ghost"
+                    @click="deletePostModal[id] = false;"
+                >
+                    Cancel
+                </button>
+            </div>
+        </form>
+    </teleport>    
 </template>
 <script setup>
 import { ref } from 'vue';
@@ -80,7 +115,7 @@ import { urls, navRoutes } from '../../../services/urls';
 import { postStore } from '../../../stores/postStore';
 import IconLike from '../../svg/icon-like.vue';
 import IconComment from '../../svg/icon-comment.vue';
-import IconBrain from '../../svg/icon-brain.vue';
+import IconTrash from  '../../svg/icon-trash.vue';
 import { createConfetti } from '../../../services/helpers.js';
 
 const props = defineProps({
@@ -137,6 +172,10 @@ const props = defineProps({
         type: Boolean,
         required: true,
     },
+    posted_by_current_user: {
+        type: Boolean,
+        required: true,
+    }
 });
 
 const router = useRouter();
@@ -145,7 +184,7 @@ const _likes = ref(props.likes)
 const isLiked = ref(props.liked_by_current_user);
 const postLikes = ref(props.likes);
 const { user } = route.params;
-
+const emit = defineEmits(['post-deleted']);
 
 async function AddLikeOrUnlike(){
     let url = isLiked.value ? 
@@ -161,6 +200,32 @@ async function AddLikeOrUnlike(){
         await createConfetti();
     }
 }
+
+/**
+ * -----------------------------------------------------------------------------------------------
+ * DELETING REVIEW POSTS
+ * -----------------------------------------------------------------------------------------------
+ */
+// We want to prompt users to make sure they are confident in deleting. hence the additional steps.
+const deletePostModal = ref({});
+
+// See above, this is so we dont open every modal at once.
+function setDeletePost(id) {
+    deletePostModal.value[id] = true;
+}
+// The actual delete function.
+async function deletePost(id){
+    await db.delete(urls.reviews.deletePost(id)).then(() => {
+        deletePostModal.value[id] = false;
+        emit('post-deleted', id);
+    });
+}
+/**
+ * -----------------------------------------------------------------------------------------------
+ * END OF DELETING REVIEW POSTS
+ * -----------------------------------------------------------------------------------------------
+ */
+
 
 function navigateToCommentPage() {
     // Not sure we need this here but doing it elsewhere so fuck it.

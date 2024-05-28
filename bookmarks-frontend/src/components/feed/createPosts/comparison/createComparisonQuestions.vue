@@ -1,69 +1,86 @@
 <template>
-    <div class="container mt-10">
+<ul v-if="initialized">
+    <li v-for="([questionType, questions], index) in qset"
+        :key="index"
+        :ref="(el) => activeQuestionCat.push(el)"
+    >
+        <button
+            :class="{'has-questions': questions.find((q) => q.response?.length > 0)}"
+            class="question-topic"
+            type="button"
+            @click="activeQuestionCat[index] = !activeQuestionCat[index]"
+        >
+            <Component :is="categoryIconMapping[questionType]" class="question-topic-icon"/>
+            <span class="fancy">{{ questionType === 'custom' ? 'Add your own thoughts' : ToTitleCase(questionType) }}</span>
 
-        <p class="text-xl text-stone-700 font-medium mt-10">Add comparisons</p>
+            <IconChevron :class="{'active-chevron': activeQuestionCat[index]}"/>
+        </button>
 
-        <div class="select-1">
-            <label for="comparison_dropdown">Pick a topic to create a comparison</label>
-            <select 
-                class="select-1"
-                name="comparison dropdown"
-                id="comparison_dropdown"
-                v-model="topic"
-                @change="(e) = (question.topic = e)"
-            >
-                <option 
-                    v-for="(topic, index) in topics"
-                    :key="index" 
-                    :value="topic"
-                >
-                    {{ topic === 'custom' ? 'Custom' : `The ${topic} of both books...`  }}
-                </option>
-            </select>
-        </div>
-        <div class="summary-update comparison mt-5">
-            <textarea name="" 
-                id="" 
-                cols="30" 
-                rows="10"
-                :placeholder="placeholder"
-                v-model="question.comparison"
-            />
-        </div>
+        <!-- Subsection of a particular category -->
+        <Transition name="content" tag="div">
+            <ul  v-if="questionType === 'custom' ? activeQuestionCat[index] : !activeQuestionCat[index]" class="container questions">
+                <li v-for="(question, i) in questions" 
+                    :key="question.id"
+                    class="mb-5"
+                >   
+                    <div v-if="question"
+                        class="my-2 text-lg question-border px-5 py-5 cursor-pointer w-100 box-btn"
+                        :class="{'active': state.has(question.id)}"
+                    >
+                        <form class="text-start w-100">
+                            <span v-if="question.id >= 0" class="block">{{ question?.q }}?</span>
+                        
+                            <textarea name="response" type="text" 
+                                :style="{ height: heights[question.id] + 'px' }"
+                                :id="question.id"
+                                class="create-question-response" 
+                                v-model="question.response"
+                                ref="textarea"
+                                :placeholder="question.id >= 0 ? 'type your response here...' : 'Add your own thoughts here...'"
+                                @keyup="debouncedAddQuestionToStore(question); debouncedGenQuestionHeight(question.id)"
+                            />
+                        </form>
+                    </div>
 
-        <div class="flex space-between">
-            <div>
-                <div class="mt-5">
-                    <label class="spoiler" for="comparisonSpoiler">
-                        <input id="comparisonSpoiler" type="checkbox" value="true" v-model="question.is_spoiler">
-                            <span class="mx-2 text-gray-600">Spoiler</span>
-                    </label>
-                </div>
+                    <div v-if="state.has(question.id)" class="flex justify-between items-center w-100">
+                        <p class="text-start text-indigo-400 text-sm">
+                            Question added
+                        </p>
+                        
+                        <button 
+                            type="button"
+                            class="text-red-600 w-20 box-btn-remove"
+                            @click="removeQuestionFromStore(question)"
+                        >
+                            <IconRemove style="height: 12px; width: 12px; fill: var(--red-400);" />
+                            Remove
+                        </button>
+                    </div>
 
-                <div class="is_ai my-5">
-                    <label for="add_irony">
-                        <input type="checkbox" value="true" v-model="question.is_add_irony">
-                            <IconIrony/>
-                            <span class="text-gray-600">Add irony...</span>
-                    </label>
-                </div>
-            </div>
+                    <!-- FOr custom questions you might want to add. -->
+                    <button v-if="(question.topic === 'custom') && (i === questions.length - 1)"
+                        type="button"
+                        class="btn btn-ghost btn-icon mt-2" 
+                        @click="addCustomQuestion()">
+                        <IconPlus />    
 
-            <button 
-                class="add-comparison-btn"
-                type="button"
-                @click="addQuestionToStoreFn(question)"
-            >
-                Add
-            </button>
-        </div>
-    </div>
+                        Add another response
+                    </button>
+                </li>
+            </ul>
+        </Transition>
+    </li>
+</ul>
 </template>
 <script setup>
-import { ref, watch, toRaw } from 'vue';
-import { questions, topics, Comparison, formatQuestionStoreForPost } from './comparison';
+import { ref, onUnmounted, reactive, onMounted, computed, watch } from 'vue';
+import { helpersCtrl, ToTitleCase } from '../../../../services/helpers';
+import { Comparison, formatQuestionStoreForPost, initialize, customQuestion, resetQuestions } from './comparison';
 import { createQuestionStore } from '../../../../stores/createPostStore';
-import IconIrony from '../../../svg/icon-irony.vue';
+import IconChevron from '../../../svg/icon-chevron.vue';
+import IconRemove from '../../../svg/icon-remove.vue';
+import IconPlus from '../../../svg/icon-plus.vue';
+import { categoryIconMapping } from '../../createPosts/questionCategories.js';
 
 const props = defineProps({
     books: {
@@ -73,69 +90,159 @@ const props = defineProps({
     headlines: {
         type: Array,
         required: false,
-    }
+    },
 });
 
 const store = createQuestionStore();
-let question = new Comparison();
-const topic = ref('')
+const { state } = store;
 const emit = defineEmits(['postable-store-data', 'question-added']);
-const placeholder = ref('');
+const questionMapping = reactive({});
+const activeQuestionCat = ref([]);
+const initialized = ref(false);
+const qset = computed(() => Object.entries(questionMapping));
+const { debounce } = helpersCtrl;
 
-watch(topic, (newValue) => {
-    placeholder.value = questions.find((q) => q.topic === newValue).q
-})
+onMounted(() => {
+    initialize(questionMapping)
+    initialized.value = true;
+});
 
-async function addQuestionToStoreFn(question) {
-    try { 
-        question.topic = toRaw(topic.value);
+onUnmounted(() => {
+    // this function resets the value of questionMapping
+    questionMapping.value = {};
+    resetQuestions(questionMapping);
+});
+
+function addCustomQuestion() {
+    Comparison.createBlankQuestion(customQuestion);
+    questionMapping.custom = Comparison.getQuestionsByTopic('custom');
+}
+
+const textarea = ref([]);
+const heights = ref({});
+const cachedQuestions = {};
+
+
+/**
+ * 
+ * @param {*} id 
+ * @param {*} optionalObjectOverride Used when removing custom questions so we can reset the height.
+ */
+function textAreaHeight(id, optionalObjectOverride) {
+    let question;
+    // Only loops through our questions once. saves some performance.
+    if (cachedQuestions[id]) {
+        question = cachedQuestions[id];
+    } else {
+       question = textarea.value.find((question) => parseInt(question.id, 10) === parseInt(id, 10));
+       cachedQuestions[id] = question;
+    }
+    
+    if (question) {
+        if(optionalObjectOverride){
+            heights.value[id] = parseInt(optionalObjectOverride.height, 10)
+        }
+        heights.value[id] = parseInt(question.scrollHeight, 10);
+    } else {
+        heights.value[id] = 30;
+    }
+
+    
+}
+
+function generateQuestionHeightWithCache(id) {   
+    textAreaHeight(id);
+    return heights.value[id];
+}
+
+const debouncedGenQuestionHeight = debounce(generateQuestionHeightWithCache, 100, true);
+
+function addQuestionToStoreFn(question) {
+    if(state.has(question)){
+        store.addOrUpdateQuestion(question);
+    } else {
+        question.topic;
         question.book_ids = [ props.books[0].id, props.books[1].id ];
-        question.comparator_id = questions.find((q) => (topic.value === q.topic)).pk;
+        question.comparator_id = question.id;
         question.small_img_url = [ props.books[0].small_img_url, props.books[1].small_img_url ]
         question.comparator_a_title = props.books[0].title;
         question.comparator_b_title = props.books[1].title;
+        console.log(question)
         store.addOrUpdateQuestion(question);
-
-        const postData = formatQuestionStoreForPost(store.arr, [props.headlines[0], props.headlines[1]]);
+    }
+        const postData = formatQuestionStoreForPost(store.arr, props.headlines);
 
         emit('postable-store-data', postData)
         emit('question-added');
-
-        resetQuestion()
-    }
-    catch(err) {
-        console.error(err)
-    }
 };
 
-function resetQuestion() {
-    question = new Comparison();
-    question.is_add_irony = false;
-}
+const debouncedAddQuestionToStore = debounce(addQuestionToStoreFn, 200, true);
 
+function removeQuestionFromStore(question){
+    if(question.topic === 'custom' && question.id !== -1){
+        let index = questionMapping.custom.indexOf(question)
+        questionMapping.custom.splice(index, 1);
+    }
+
+    question.response = '';
+    textAreaHeight(question.id, {height: 30})
+    store.deleteQuestion(question)
+};
+
+watch(props.headlines, () => {
+    const postData = formatQuestionStoreForPost(store.arr, props.headlines);
+    emit('postable-store-data', postData);
+});
 </script>
 
 <style scoped>
 
-.add-comparison-btn {
-    padding: var(--padding-sm);
-    background-color: var(--indigo-600);
-    color: var(--surface-primary);
-    align-self: center;
-    border-radius: var(--radius-sm);
+.create-question-response {
+    width: 100%;
+    border: none;
+    appearance: none;
+    resize: none;
+    color: var(--stone-600);
+    margin-right: 4px;
+    padding-top: 8px;
+    background-color: transparent
 }
 
-.add-topic {
+.create-question-response:focus {
+    border: none;
+    outline: none;
+}
+
+.active-chevron {
+    transform: rotate(180deg);
+}
+
+.questions .box-btn {
+    width: 100%;
+    padding: 1ch;
+    line-height: 1.2;
     display: flex;
+    justify-content: space-between;
     align-items: center;
-    color: #64748b;
-    transition-duration: 150ms;
-    text-align: left;
 }
 
-.add-topic:hover {
-    color: #1e293b;
-    transform: scale(1.05);
+
+.box-btn-remove {
+    display: flex;
+    column-gap: 4px;
+    align-items: center;
+    width: fit-content;
+    color: var(--red-400);
+    font-size: var(--font-sm);
+    transition-duration: 250ms;
+    transition-timing-function: ease;
 }
 
+.box-btn-remove:hover {
+    color: var(--red-500);
+}
+
+.add-question {
+    color: #818cf8;
+}
 </style>

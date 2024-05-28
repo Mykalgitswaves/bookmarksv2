@@ -59,6 +59,10 @@
     margin-left: 22px;
   }
 
+  .mr-auto {
+    margin-right: auto;
+  }
+
   .mb-0 {
     margin-bottom: 0 !important;
   }
@@ -102,9 +106,9 @@
   }
 
   .create-post-heading-text {
-    color: var(--slate-800);
+    color: var(--stone-600);
     font-size: var(--font-2xl);
-    font-weight: 500;  
+    font-family: var(--fancy-script);  
   }
 
   .create-post-heading-book-title {
@@ -129,4 +133,19 @@
     visibility: hidden !important;
     height: 0 !important;
     width: 0 !important;
+  }
+
+  .text-stone-600 {
+    color: var(--stone-600);
+  }
+
+  .m-tb-40 {
+    margin-top: 40px !important;
+    margin-bottom: 40px !important;
+  }
+
+  .hidden {
+    display: none !important;
+    visibility: hidden !important;
+    transition: var(--transition-short);
   }

@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia';
 import { ref } from 'vue';
+
 /**
  * Interface declaration for Question, contains properties id (of a question),
  * Q: The actual question itself, 
@@ -26,14 +27,14 @@ export const createQuestionStore = defineStore('questions', () => {
     
     // Add or update a question in the map
     function addOrUpdateQuestion(question) {
-        if (!state.has(question) || question.id < 0) {
+        if (!state.has(question.id) || question.id < 0) {
             state.set(question.id, question);
             updateArr();
         }
     }
           
     // Delete a question from the map based on id
-    function  deleteQuestion(question) {
+    function deleteQuestion(question) {
         state.delete(question.id);
         updateArr();
     }

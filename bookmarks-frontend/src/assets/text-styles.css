@@ -109,3 +109,19 @@
   color: var(--red-500);
   font-weight: 500;
 }
+
+.heading {
+  font-size: var(--font-2xl);
+  color: var(--stone-700);
+  font-weight: 500;
+}
+
+.heading.light {
+  font-size: var(--font-xl);
+  color: var(--stone-500);
+  font-weight: 300;
+}
+
+.subheading {
+  color: var(--stone-600);
+}

@@ -111,7 +111,7 @@
 }
 .comparison-headline {
     font-family: var(--fancy-script);
-    font-size: var(--font-2xl);
+    font-size: var(--font-xl);
     font-weight: 500;
     text-align: center;
     color: var(--stone-800);

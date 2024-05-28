@@ -132,5 +132,37 @@ export const db = {
         } catch(err) {
             console.error(err)
         }
+    },
+    delete: async function(url, params, debug, successRouterFunction, failureFunction) {
+        const token = helpersCtrl.getCookieByParam(['token']);
+        console.log(token)
+        try {
+            params = typeof params === Proxy ? toRaw(params) : params
+            const response = await fetch(url, {
+                method: 'DELETE',
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    Accept: 'application.json',
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(params)
+            });
+            const data = await response.json();
+
+            // Debug state
+            if(debug) {
+                console.log(response, 'response')
+                console.log(data, 'data')
+            }
+            // Success state
+            if(response.ok) {
+                if(successRouterFunction) {
+                    return data && successRouterFunction
+                }
+                return data
+            }
+        } catch(err) {
+            console.error(err)
+        }
     }
 }

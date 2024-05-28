@@ -50,9 +50,15 @@ export const helpersCtrl = {
     * @param {{bookId: Number}} details - contains id for book review
     * @param {{headline: String}} details - Headline for book review 
     */
-    formatReviewData: (questionList, book, headline) => {
+    formatReviewData: (rating, questionList, book, headline) => {
         questionList = typeof questionList === Proxy ? toRaw(questionList) : questionList
         const data = {};
+        data.rating = null;
+        
+        if(rating){
+            data.rating = parseInt(rating);
+        }
+
         data.book_id = book.id;
         data.title = book.title;
         data.small_img_url = book.small_img_url;
@@ -104,15 +110,16 @@ export const helpersCtrl = {
     debounce(func, wait, immediate) {
         var timeout;
         return function() {
-        var context = this, args = arguments;
-        var later = function() {
-            timeout = null;
-            if (!immediate) func.apply(context, args);
-        };
-        var callNow = immediate && !timeout;
-        clearTimeout(timeout);
-        timeout = setTimeout(later, wait);
-        if (callNow) func.apply(context, args);
+            var context = this, args = arguments;
+            var later = function() {
+                timeout = null;
+                if (!immediate) func.apply(context, args);
+            };
+
+            var callNow = immediate && !timeout;
+            clearTimeout(timeout);
+            timeout = setTimeout(later, wait);
+            if (callNow) func.apply(context, args);
         };
     },
 }
@@ -221,3 +228,10 @@ export const truncateText = (originalString, truncatedLength) => {
     }
     return originalString;
 }
+
+export function ToTitleCase(str) {
+    if (!str) {
+        return ""
+    }
+    return str.toLowerCase().replace(/\b\w/g, s => s.toUpperCase());
+  }

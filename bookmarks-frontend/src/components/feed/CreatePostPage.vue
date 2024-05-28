@@ -1,33 +1,44 @@
 <template> 
 <section class="post-section-wrapper">
-    <BackBtn/>  
-      
-    <component
-        :is="componentMapping[reviewType]"
-        @is-postable-data="handlePost"
+    <BackBtn />  
+
+    <createReviewPost 
+      v-if="reviewType === 'review'"
+      :is-postable-data="isPostableData"
+      @is-postable-data="setPostData" 
+      @post-data="postToEndpoint()"
     />
 
-    <button 
-        v-if="isPostableData"
-        type="button"
-        class="post-btn"
-        @click="postToEndpoint()"
-    >
-        <IconAddPost/>
-        post
-    </button>
+    <createComparisonPost 
+      v-if="reviewType === 'comparison'"
+      :is-postable-data="isPostableData"
+      @is-postable-data="setPostData"
+      @set-headlines="setHeadlines"
+      @post-data="postToEndpoint()"
+    />
 
+    <createUpdatePost 
+      v-if="reviewType === 'update'"
+      :is-postable-data="isPostableData"
+      @is-postable-data="setPostData"
+      @post-data="postToEndpoint()"
+    />
     <div class="mobile-menu-spacer sm:hidden"></div>
 </section>
 </template>
 <script setup>
-import { ref, watch } from 'vue';
-import { componentMapping, urlsMapping} from './createPostService';
+
+import createReviewPost from './createPosts/createReviewPost.vue';
+import createUpdatePost from './createPosts/createUpdatePost.vue';
+import createComparisonPost from './createPosts/createComparisonPost.vue';
+import { ref, watch, toRaw } from 'vue';
+import { urlsMapping } from './createPostService';
 import { createQuestionStore } from '../../stores/createPostStore'
 import { useRoute, useRouter } from 'vue-router';
 import { db } from '../../services/db';
 import IconAddPost from '../svg/icon-add-post.vue';
 import BackBtn from './partials/back-btn.vue';
+
 
 const isPostableData = ref(false);
 const postTypeMapping = ref('');
@@ -36,7 +47,13 @@ const router = useRouter();
 const route = useRoute();
 const { reviewType } = route.params
 
-function handlePost(e) {
+function setHeadlines(e){
+  if (emittedPostData.value) {
+    emittedPostData.value['book_specific_headlines'] = toRaw(e);
+  }
+}
+
+function setPostData(e) {
   emittedPostData.value = e;
 }
 // Make sure to clear out questions on successfull post.
@@ -52,22 +69,6 @@ async function postToEndpoint() {
 }
 
 watch(emittedPostData, () => {
-  isPostableData.value = true;
+    isPostableData.value = true;
 });
 </script>
-
-<style scoped>
-.post-btn {
-    max-width: 880px;
-    display: flex;
-    width: 100%;
-    justify-content: center;
-    align-items: center;
-    margin-top: calc(2 * var(--margin-md));
-    padding: var(--padding-sm);
-    border-radius: var(--radius-sm);
-    color: var(--surface-primary);
-    background-color: var(--indigo-500);
-}
-
-</style>

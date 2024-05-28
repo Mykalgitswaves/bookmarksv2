@@ -51,7 +51,7 @@
         <div v-if="comparisons?.length" class="card-responses">
             <div class="divider"></div>
             
-            <h3 class="text-slate-700 text-xl my-2">Commonalities</h3>
+            <h3 class="text-slate-700 text-xl my-2 fancy">Commonalities</h3>
             
             <div class="divider"></div>
             
@@ -71,14 +71,26 @@
 
         <!-- Actions -->
         <div class="card-footer">
-            <button
-                type="button"
-                class="text-slate-600 flex items-center"
-                @click="navigateToCommentPage()"
-            >
-                <IconComment/>
-                <span class="ml-2">{{ num_comments }} comments</span>
-            </button>
+            <div class="flex gap-2">
+                <button
+                    type="button"
+                    class="text-slate-600 flex items-center"
+                    @click="navigateToCommentPage()"
+                >
+                    <IconComment/>
+                    <span class="ml-2">{{ num_comments }} comments</span>
+                </button>
+                
+                <button v-if="posted_by_current_user"
+                    type="button"
+                    class="btn-small icon-btn btn-red-ghost ml-2"
+                    @click="setDeletePost(props.id)"
+                >
+                    <IconTrash />
+                    Delete post
+                </button>
+            </div>
+            
         
             <button 
                 type="button" 
@@ -91,6 +103,29 @@
             </button>
         </div>
     </div>
+    <teleport to="body" v-if="deletePostModal[id]"> 
+        <form class="modal delete" @submit.prevent="deletePost(id)">
+            <h2 class="fancy text-lg text-stone-600">Are you sure you want to delete your comparison post for 
+                <br/><span class="text-indigo-500 italic">{{ bookBlobs[0]?.title || 'Oops!' }}</span> 
+                <br/>&
+                <br/><span class="text-indigo-500 italic">{{ bookBlobs[1]?.title || 'Oops! something weird happened' }}</span>?
+            </h2>
+
+            <div class="flex items-center justify-center gap-5 mt-5">
+                <button
+                    type="submit"
+                    class="btn btn-red"
+                >Delete</button>
+    
+                <button type="button"
+                    class="btn btn-ghost"
+                    @click="deletePostModal[id] = false;"
+                >
+                    Cancel
+                </button>
+            </div>
+        </form>
+    </teleport>
 </template>
 <script setup>
 import IconLinkArrow from '../../svg/icon-arrow-link.vue';
@@ -102,6 +137,7 @@ import { db } from '../../../services/db';
 import { urls, navRoutes } from '../../../services/urls';
 import { useRoute, useRouter } from 'vue-router'
 import { createConfetti } from '../../../services/helpers';
+import IconTrash from  '../../svg/icon-trash.vue';
 
 const props = defineProps({
     bookBlobs: {
@@ -157,6 +193,10 @@ const props = defineProps({
         type: Number,
         required: true
     },
+    posted_by_current_user: {
+        type: Boolean,
+        required: true,
+    }
 });
 
 const showReview = reactive({});
@@ -167,6 +207,7 @@ const isLiked = ref(props.liked_by_current_user);
 const route = useRoute();
 const router = useRouter();
 const user = route.params.user;
+const emit = defineEmits(['post-deleted']);
 
 async function AddLikeOrUnlike(){
     let url = isLiked.value ? 
@@ -188,6 +229,31 @@ function navigateToCommentPage() {
     postStore.save(props.id);
     router.push(navRoutes.toPostPageFromFeed(user, props.id));
 }
+
+/**
+ * -----------------------------------------------------------------------------------------------
+ * DELETING COMPARISON POSTS
+ * -----------------------------------------------------------------------------------------------
+ */
+// We want to prompt users to make sure they are confident in deleting. hence the additional steps.
+const deletePostModal = ref({});
+
+// See above, this is so we dont open every modal at once.
+function setDeletePost(id) {
+    deletePostModal.value[id] = true;
+}
+// The actual delete function.
+async function deletePost(id){
+    await db.delete(urls.reviews.deletePost(id)).then(() => {
+        deletePostModal.value[id] = false;
+        emit('post-deleted', id);
+    });
+}
+/**
+ * -----------------------------------------------------------------------------------------------
+ * END OF DELETING COMPARISON POSTS
+ * -----------------------------------------------------------------------------------------------
+ */
 
 </script>
 <style scoped>
