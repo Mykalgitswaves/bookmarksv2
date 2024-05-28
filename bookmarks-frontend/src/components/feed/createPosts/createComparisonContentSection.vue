@@ -17,8 +17,12 @@
 
         <div v-show="step === 2">
             <CreateComparisonHeadlines class="mb-10" :books="books" :headlines="headlines" @headlines-changed="$emit('headlines-changed', $event)"/>
-            
+
+            <div class="divider"></div>
+
             <ViewComparisonQuestionsVue @go-to-edit-section="emit('go-to-edit-section')"/>
+            
+            <div class="divider"></div>
         </div>
     </section>
 

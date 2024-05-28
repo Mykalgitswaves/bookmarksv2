@@ -1,5 +1,5 @@
 <template>
-    <ul class="container questions mt-10">
+    <ul class="container questions" :class="{'mt-10': !isComparison}">
         <li v-for="(question, i) in questions" :key="i">
             <div class="my-3 text-lg question-border px-5 py-5 w-100 box-btn justify-between items-center">
                 <div class="text-start">
@@ -18,20 +18,10 @@
                     <span v-if="props.isComparison" class="block text-slate-400 text-start">{{ question.comparison || question.response }}</span>
                 </div>
             </div>
-
-            <!-- <CreatePostResponseForm 
-                v-if="!createPostResponseFormDict[i]" 
-                :q="question" 
-                :is-comparison="props.isComparison"  
-                :is-viewing-question="true" 
-                :is-custom-question="question.id < 0"
-                :index-of-q="i"
-                @store-changed="storeChangeHandler($event)"
-            /> -->
         </li>
     </ul>
 
-    <div v-if="!questions.length" style="text-align: center;">
+    <div v-if="!questions.length" style="text-align: center;" :class="{'mt-10 mb-10': isComparison}">
         <h2 class="heading">You haven't added any responses</h2>
 
         <p class="subheading">Click 
