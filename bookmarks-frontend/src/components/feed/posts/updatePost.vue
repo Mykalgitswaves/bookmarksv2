@@ -35,7 +35,7 @@
             <div v-if="props.headline">
                 <div class="divider"></div>
 
-                <p class="fancy text-2xl">{{ props.headline }}</p>
+                <p class="fancy text-xl">{{ props.headline }}</p>
                 
                 <div class="divider"></div>
             </div>

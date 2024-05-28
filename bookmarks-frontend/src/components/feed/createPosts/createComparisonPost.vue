@@ -11,18 +11,14 @@
                     class="toolbar-btn"
                     @click="decrementStep"
                 >
-                    <span v-if="step < 3">Previous</span>
-
-                    <span v-else>Edit</span>
+                    Edit
                 </button>
 
                 <button type="button"
                     class="toolbar-btn"
                     @click="incrementStep"
                 >
-                    <span v-if="step < 2">Next</span>
-
-                    <span v-else>Finalize</span>
+                    Finalize
                 </button>
             </div>
 
@@ -49,7 +45,17 @@
             @question-added="questionAddedFn"
             @postable-store-data="comparisonHandlerFn"  
             @go-to-books-selection="books = []"
+            @go-to-edit-section="decrementStep"
         />
+
+        <button 
+            type="button"
+            class="post-btn"
+            :disabled="step !== 2 || !isPostableData"
+            @click="emit('post-data')"
+        >
+            Post
+        </button>
     </div>
 </template>
 <script setup>
@@ -57,12 +63,19 @@ import { ref, computed } from 'vue';
 import CreateComparisonSelection from './comparison/createComparisonSelection.vue';
 import CreateComparisonContentSection from './createComparisonContentSection.vue';
 
+defineProps({
+    isPostableData: {
+        type: Boolean,
+        required: true,
+    }
+});
+
 const books = ref([]);
 const currentView = ref('add');
 const questionCount = ref(0);
 const headlines = ref([]);
 const step = ref(1);
-const emit = defineEmits(['is-postable-data', 'set-headlines']);
+const emit = defineEmits(['is-postable-data', 'set-headlines', 'post-data']);
 
 function headlineHandler(headlineObj) {
     headlines.value = Object.values(headlineObj);

@@ -6,7 +6,18 @@
 
         <SearchBooks @book-to-parent="bookHandler"/>
     </div>
-    <CreateUpdateFormVue v-if="book" :book="book" @update-complete="updateEmitHandler"/>    
+    <div v-if="book">
+        <CreateUpdateFormVue  :book="book" @update-complete="updateEmitHandler"/>
+
+        <button 
+            type="button"
+            class="post-btn"
+            :disabled="!isPostableData"
+            @click="emit('post-data')"
+        >
+            Post
+        </button>   
+    </div>
 </template>
 
 <script setup>
@@ -14,7 +25,14 @@ import { ref, toRaw } from 'vue';
 import SearchBooks from './searchBooks.vue';
 import CreateUpdateFormVue from './update/createUpdateForm.vue';
 
-const emit = defineEmits();
+defineProps({
+    isPostableData: {
+        type: Boolean,
+        required: true,
+    }
+});
+
+const emit = defineEmits(['post-data', 'is-postable-data']);
 const book = ref(null);
 let update = null;
 

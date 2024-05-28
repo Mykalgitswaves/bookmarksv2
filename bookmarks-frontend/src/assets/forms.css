@@ -400,7 +400,7 @@ ul:has(.comments-wrapper) {
 }
 
 .modal.delete {
-  --margin-left-offset: 0;
+  --margin-left-offset: 0%;
   position: fixed;
   text-align: center;
   left: calc(50% + var(--margin-left-offset));

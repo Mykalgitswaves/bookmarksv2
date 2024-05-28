@@ -32,7 +32,7 @@
         <div class="card-responses">
             <div v-if="headline">
                 <div class="divider"></div>            
-                <p class="fancy text-2xl">{{ headline }}</p>
+                <p class="fancy text-xl">{{ headline }}</p>
                 <div class="divider"></div>
             </div>
 

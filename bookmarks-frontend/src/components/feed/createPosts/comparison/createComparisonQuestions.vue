@@ -31,13 +31,13 @@
                             <span v-if="question.id >= 0" class="block">{{ question?.q }}?</span>
                         
                             <textarea name="response" type="text" 
-                                :style="{ height: debouncedGenQuestionHeight(question.id) + 'px' }"
+                                :style="{ height: heights[question.id] + 'px' }"
                                 :id="question.id"
                                 class="create-question-response" 
                                 v-model="question.response"
                                 ref="textarea"
                                 :placeholder="question.id >= 0 ? 'type your response here...' : 'Add your own thoughts here...'"
-                                @keyup="debouncedAddQuestionToStore(question)"
+                                @keyup="debouncedAddQuestionToStore(question); debouncedGenQuestionHeight(question.id)"
                             />
                         </form>
                     </div>
@@ -122,7 +122,13 @@ const textarea = ref([]);
 const heights = ref({});
 const cachedQuestions = {};
 
-function textAreaHeight(id) {
+
+/**
+ * 
+ * @param {*} id 
+ * @param {*} optionalObjectOverride Used when removing custom questions so we can reset the height.
+ */
+function textAreaHeight(id, optionalObjectOverride) {
     let question;
     // Only loops through our questions once. saves some performance.
     if (cachedQuestions[id]) {
@@ -133,10 +139,15 @@ function textAreaHeight(id) {
     }
     
     if (question) {
-        heights.value[id] = parseInt(question?.scrollHeight, 10);
+        if(optionalObjectOverride){
+            heights.value[id] = parseInt(optionalObjectOverride.height, 10)
+        }
+        heights.value[id] = parseInt(question.scrollHeight, 10);
     } else {
         heights.value[id] = 30;
     }
+
+    
 }
 
 function generateQuestionHeightWithCache(id) {   
@@ -144,7 +155,7 @@ function generateQuestionHeightWithCache(id) {
     return heights.value[id];
 }
 
-const debouncedGenQuestionHeight = debounce(generateQuestionHeightWithCache, 200, true);
+const debouncedGenQuestionHeight = debounce(generateQuestionHeightWithCache, 100, true);
 
 function addQuestionToStoreFn(question) {
     if(state.has(question)){
@@ -174,6 +185,7 @@ function removeQuestionFromStore(question){
     }
 
     question.response = '';
+    textAreaHeight(question.id, {height: 30})
     store.deleteQuestion(question)
 };
 

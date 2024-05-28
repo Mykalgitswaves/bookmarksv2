@@ -95,6 +95,15 @@
                         @go-to-edit-section="decrementStep"
                     />
                 </div>
+
+                <button 
+                    type="button"
+                    class="post-btn"
+                    :disabled="step !== 3 || !isPostableData"
+                    @click="emit('post-data')"
+                >
+                    Post
+                </button>
             </div>
         </div>
     </section>
@@ -109,6 +118,13 @@ import CreatePostHeadline from './createPostHeadline.vue';
 import CreateReviewQuestions from './createReviewQuestions.vue';
 import YourReviewQuestions from './yourReviewQuestions.vue';
 import ReviewRating from './ReviewRating.vue';
+
+defineProps({
+    isPostableData: {
+        type: Boolean,
+        required: true,
+    }
+});
 
 // get qs from data and add in entries.
 const questionCats = Array.from(Object.keys(postData.posts.review))

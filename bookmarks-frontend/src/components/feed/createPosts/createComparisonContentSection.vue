@@ -18,7 +18,7 @@
         <div v-show="step === 2">
             <CreateComparisonHeadlines class="mb-10" :books="books" :headlines="headlines" @headlines-changed="$emit('headlines-changed', $event)"/>
             
-            <ViewComparisonQuestionsVue/>
+            <ViewComparisonQuestionsVue @go-to-edit-section="emit('go-to-edit-section')"/>
         </div>
     </section>
 
@@ -39,7 +39,7 @@
 import CreateComparisonQuestionsVue from './comparison/createComparisonQuestions.vue';
 import CreateComparisonHeadlines from './comparison/createComparisonHeadlines.vue';
 import ViewComparisonQuestionsVue from './comparison/viewComparisonQuestions.vue';
-const emit = defineEmits(['go-to-books-selection', 'headlines-changed']);
+const emit = defineEmits(['go-to-books-selection', 'headlines-changed', 'go-to-edit-section']);
 
 defineProps({
     currentView: {

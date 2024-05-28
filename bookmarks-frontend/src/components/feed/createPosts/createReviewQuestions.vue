@@ -131,7 +131,6 @@ const throttledGenQuestionHeight = throttle(generateQuestionHeightWithCache, 100
 const { state } = store;
 
 const qset = computed(() => {
-    console.log(props.questionMap);
     return Array.from(Object.entries(props.questionMap));
 });
 

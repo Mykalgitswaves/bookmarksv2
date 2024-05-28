@@ -31,13 +31,13 @@
         </li>
     </ul>
 
-    <div v-if="!questions.length">
+    <div v-if="!questions.length" style="text-align: center;">
         <h2 class="heading">You haven't added any responses</h2>
 
         <p class="subheading">Click 
             <button type="button" 
                 class="underline text-indigo-500"
-                @click="$emit('go-to-edit-section')"    
+                @click="emit('go-to-edit-section')"    
             >here</button> to add some responses
         </p>
     </div>
