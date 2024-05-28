@@ -49,9 +49,10 @@
         />
 
         <button 
+            v-if="step === 2"
             type="button"
             class="post-btn"
-            :disabled="step !== 2 || !isPostableData"
+            :disabled="!isPostableData"
             @click="emit('post-data')"
         >
             Post
