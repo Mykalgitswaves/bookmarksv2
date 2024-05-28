@@ -1,5 +1,5 @@
 <template>
-    <div class="bookshelves-main-container">
+    <section class="bookshelves-main-container">
         <Bookshelves :bookshelves="bookshelvesCreatedByUser"
             :is_admin="true"
             :data-loaded="dataLoaded"
@@ -37,7 +37,7 @@
                 <a :href="navRoutes.toBookshelfSectionPage(user, 'explore')" class="underline text-indigo-500">Find new bookshelves</a>
             </div>
         </div>
-    </div>
+    </section>
 </template>
 <script setup>
 import Bookshelves from './bookshelves.vue'; 
