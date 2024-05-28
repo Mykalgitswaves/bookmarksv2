@@ -9,9 +9,10 @@
             <div class="toolbar">
                 <button type="button"
                     class="toolbar-btn"
-                    @click="decrementStep"
                 >
-                    Edit
+                    <span v-if="step === 1" @click="resetBookSelection">Change selection</span>
+
+                    <span v-else @click="decrementStep">Edit</span>
                 </button>
 
                 <button type="button"
@@ -108,6 +109,13 @@ function decrementStep() {
     if(step.value > 1) {
         step.value -= 1;
     }
+}
+
+function resetBookSelection(){
+    const event = new CustomEvent('reset-book-selection', {
+        detail: true,
+    });
+    window.dispatchEvent(event);
 }
 
 // for progress bar, duh.

@@ -6,10 +6,11 @@
     <button
         v-if="currentStep > 0 && !isDoneReviewing"
         type="button"
-        class="mb-5 flex items-center gap-2"
+        class="ml-auto mr-auto mb-5 flex items-center gap-2 text-indigo-500 italic underline"
         @click="clearFirstBook()"
     >
-        <IconEdit /><span class="text-indigo-500 italic">{{ firstBook }}</span>
+        {{ firstBook }}
+        <IconEdit style="height: 20px;"/>
     </button>
         
     <component
@@ -23,7 +24,7 @@
         <p class="text-center fancy text-2xl text-stone-600">Comparing <span class="text-indigo-500">{{ books[0].title }}</span><br/> 
             & <span class="text-indigo-500">{{ books[1].title }}</span>
         </p>
-        <button
+        <!-- <button
             type="button"
             class="cursor-pointer text-indigo-600"
             alt="edit selection"
@@ -31,12 +32,11 @@
         >
             <IconEdit />
             <span class="underline hidden">Edit selection</span>
-        </button>
+        </button> -->
     </div>
 </template>
 <script setup>
-
-import { ref, reactive, watch, computed, watchEffect } from 'vue';
+import { ref, reactive, watch, computed } from 'vue';
 import SearchBooks from '../searchBooks.vue';
 import IconEdit from '../../../svg/icon-edit.vue';
 
@@ -50,7 +50,6 @@ function bookOneHandler(e) {
     currentStep.value = 1;
 }
 
-
 function bookTwoHandler(e) {
     books.value.push(e)
     emit('books-selected', books.value);
@@ -61,6 +60,10 @@ function getFirstBook(){
     console.log('called getFirstBook FN')
     return books.value[0];
 }
+
+window.addEventListener('reset-book-selection', () => {
+    clearSecondBook()
+});
 
 // hopefully this is flexible and vue doesnt fuck up. We can run  with this for a bit.
 const bookMapping = reactive({
