@@ -1,6 +1,6 @@
 <template>
     <section v-if="books.length === 2" class="mt-10">
-        <div v-if="step === 1">
+        <div v-show="step === 1">
             <div class="mt-10 mb-10 text-center">
                 <h4 class="heading">Click into a topic to add comparisons for your post.</h4>
                 
@@ -15,7 +15,7 @@
             />
         </div>
 
-        <div v-if="step === 2">
+        <div v-show="step === 2">
             <CreateComparisonHeadlines class="mb-10" :books="books" :headlines="headlines" @headlines-changed="$emit('headlines-changed', $event)"/>
             
             <ViewComparisonQuestionsVue/>

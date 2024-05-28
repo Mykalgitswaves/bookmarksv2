@@ -20,26 +20,24 @@
         <Transition name="content" tag="div">
             <ul  v-if="questionType === 'custom' ? activeQuestionCat[index] : !activeQuestionCat[index]" class="container questions">
                 <li v-for="(question, i) in questions" 
-                    :key="i"
+                    :key="question.id"
                     class="mb-5"
                 >   
-                    <div v-if="question && (question?.id >= 0 || !question?.isHiddenCustomQuestion)"
+                    <div v-if="question"
                         class="my-2 text-lg question-border px-5 py-5 cursor-pointer w-100 box-btn"
                         :class="{'active': state.has(question.id)}"
                     >
                         <form class="text-start w-100">
                             <span v-if="question.id >= 0" class="block">{{ question?.q }}?</span>
-                            
-                            <!-- <span v-else class="block">{{ question?.placeholder }}</span> -->
                         
                             <textarea name="response" type="text" 
-                                :style="{ height: throttledGenQuestionHeight(question.id) + 'px' }"
+                                :style="{ height: debouncedGenQuestionHeight(question.id) + 'px' }"
                                 :id="question.id"
                                 class="create-question-response" 
                                 v-model="question.response"
                                 ref="textarea"
                                 :placeholder="question.id >= 0 ? 'type your response here...' : 'Add your own thoughts here...'"
-                                @keyup="throttledAddQuestionToStore(question)"
+                                @keyup="debouncedAddQuestionToStore(question)"
                             />
                         </form>
                     </div>
@@ -75,15 +73,14 @@
 </ul>
 </template>
 <script setup>
-import { ref, toRaw, reactive, onMounted, computed } from 'vue';
-import { helpersCtrl, throttle, ToTitleCase } from '../../../../services/helpers';
-import { questions, topics, Comparison, formatQuestionStoreForPost, initialize, customQuestion } from './comparison';
+import { ref, onUnmounted, reactive, onMounted, computed, watch } from 'vue';
+import { helpersCtrl, ToTitleCase } from '../../../../services/helpers';
+import { Comparison, formatQuestionStoreForPost, initialize, customQuestion, resetQuestions } from './comparison';
 import { createQuestionStore } from '../../../../stores/createPostStore';
 import IconChevron from '../../../svg/icon-chevron.vue';
 import IconRemove from '../../../svg/icon-remove.vue';
 import IconPlus from '../../../svg/icon-plus.vue';
 import { categoryIconMapping } from '../../createPosts/questionCategories.js';
-import { watch } from 'vue';
 
 const props = defineProps({
     books: {
@@ -102,10 +99,18 @@ const emit = defineEmits(['postable-store-data', 'question-added']);
 const questionMapping = reactive({});
 const activeQuestionCat = ref([]);
 const initialized = ref(false);
+const qset = computed(() => Object.entries(questionMapping));
+const { debounce } = helpersCtrl;
 
 onMounted(() => {
     initialize(questionMapping)
     initialized.value = true;
+});
+
+onUnmounted(() => {
+    // this function resets the value of questionMapping
+    questionMapping.value = {};
+    resetQuestions(questionMapping);
 });
 
 function addCustomQuestion() {
@@ -139,7 +144,7 @@ function generateQuestionHeightWithCache(id) {
     return heights.value[id];
 }
 
-const throttledGenQuestionHeight = throttle(generateQuestionHeightWithCache, 100);
+const debouncedGenQuestionHeight = debounce(generateQuestionHeightWithCache, 200, true);
 
 function addQuestionToStoreFn(question) {
     if(state.has(question)){
@@ -160,9 +165,7 @@ function addQuestionToStoreFn(question) {
         emit('question-added');
 };
 
-const throttledAddQuestionToStore = throttle(addQuestionToStoreFn, 100);
-
-const qset = computed(() => Object.entries(questionMapping));
+const debouncedAddQuestionToStore = debounce(addQuestionToStoreFn, 200, true);
 
 function removeQuestionFromStore(question){
     if(question.topic === 'custom' && question.id !== -1){

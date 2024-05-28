@@ -4,8 +4,8 @@
       
     <component
         :is="componentMapping[reviewType]"
-        @is-postable-data="handlePost"
-        @set-headlines="handleHeadlines"
+        @is-postable-data="setPostData"
+        @set-headlines="setHeadlines"
     />
 
     <button 
@@ -22,13 +22,14 @@
 </section>
 </template>
 <script setup>
-import { ref, watch, toRaw } from 'vue';
+import { ref, watch, toRaw, provide, onUnmounted } from 'vue';
 import { componentMapping, urlsMapping} from './createPostService';
 import { createQuestionStore } from '../../stores/createPostStore'
 import { useRoute, useRouter } from 'vue-router';
 import { db } from '../../services/db';
 import IconAddPost from '../svg/icon-add-post.vue';
 import BackBtn from './partials/back-btn.vue';
+
 
 const isPostableData = ref(false);
 const postTypeMapping = ref('');
@@ -37,11 +38,13 @@ const router = useRouter();
 const route = useRoute();
 const { reviewType } = route.params
 
-function handleHeadlines(e){
-  emittedPostData.value['book_specific_headlines'] = toRaw(e);
+function setHeadlines(e){
+  if (emittedPostData.value) {
+    emittedPostData.value['book_specific_headlines'] = toRaw(e);
+  }
 }
 
-function handlePost(e) {
+function setPostData(e) {
   emittedPostData.value = e;
 }
 // Make sure to clear out questions on successfull post.
@@ -59,8 +62,19 @@ async function postToEndpoint() {
 watch(emittedPostData, () => {
     isPostableData.value = true;
 });
-</script>
+/**
+ * We use this function to reset our cloned questions so we do not allow users 
+ * to load the create page again with prior answers saved in the browsers cache.
+ * this should probably be solved by vue intelligently rem
+ */
+const injectorKey = ref('initialized');
+provide('set-questions', injectorKey.value);
 
+onUnmounted(() => {
+  injectorKey.value = 'cleared';
+  provide('set-questions', injectorKey.value);
+});
+</script>
 <style scoped>
 .post-btn {
     max-width: 880px;

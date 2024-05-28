@@ -4,7 +4,7 @@ import { helpersCtrl } from "../../../../services/helpers";
 const { clone } = helpersCtrl;
 const { posts } = postData
 
-export const questions = clone(posts.comparison);
+let questions = clone(posts.comparison);
 export const topics = Object.keys(questions);
 export const customQuestion = clone(posts.comparison.custom[0]);
 
@@ -30,6 +30,7 @@ export class Comparison {
         this.is_add_irony = false
     };
 
+
     static createBlankQuestion(comparisonQuestionStore) {
         let _comparison = new Comparison();
         _comparison.topic = comparisonQuestionStore.topic;
@@ -40,24 +41,39 @@ export class Comparison {
             _comparison.id = -(customCount);
         }
         _comparison.q = comparisonQuestionStore.q;
-        console.log(_comparison)
         Comparison.instances.push(_comparison);
-        console.log(Comparison.instances)
     }
+
 
     static getQuestionsByTopic(topic) {
         return Comparison.instances.filter((_comparison) => _comparison.topic === topic);
     }
+
+    static clearInstances(){
+        Comparison.instances = [];
+    }
 };
+
 
 export function initialize(questionMapping) {
     // Populates the questionMapping object.
     Object.entries(questions).forEach(([questionCategory, questions]) => {
         questions.forEach((question) => Comparison.createBlankQuestion(question));
         questionMapping[questionCategory] = Comparison.getQuestionsByTopic(questionCategory);
-        console.log(questionMapping[questionCategory])
     });
 }
+
+
+/**
+ * reset questions then intialize question mapping to wipe any lingering responses.
+ * a wrapper around initalize.
+ * @param {*} questionMapping 
+ */
+export const resetQuestions = (questionMapping) => {
+    questions = clone(posts.comparison);
+    Comparison.clearInstances();
+    initialize(questionMapping);
+};
 
 /**
 * @param { store } array from pinia, send this your questions
