@@ -80,5 +80,5 @@ async function updateUser() {
     }
   }
 }
-// FUCK
+// FUCKs
 </script>
