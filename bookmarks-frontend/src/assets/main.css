@@ -10,6 +10,7 @@
 @import 'review-cards.css';
 @import 'settings.css';
 @import 'activities.css';
+@import 'bookshelves.css';
 
 @tailwind base;
 @tailwind components;

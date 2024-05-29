@@ -1,5 +1,19 @@
 <template>
     <section class="bookshelves-main-container">
+        <Bookshelves :bookshelves="wantToReadBookshelf"
+            :is_admin="true"
+            :is-unique="'want-to-read'"
+            :data-loaded="dataLoaded"
+        >
+            <template v-slot:heading>
+                <h1 class="bookshelf-wrapper-title font-medium fancy">Want to read 
+                    <span class="text-indigo-500">
+                        {{ wantToReadBookshelf?.books?.length }}
+                    </span>
+                </h1>
+            </template>
+        </Bookshelves>
+
         <Bookshelves :bookshelves="bookshelvesCreatedByUser"
             :is_admin="true"
             :data-loaded="dataLoaded"
@@ -49,12 +63,17 @@ import { useRoute } from 'vue-router';
 const route = useRoute();
 const { user } = route.params;
 const bookshelvesCreatedByUser = ref([]);
+const wantToReadBookshelf = ref(null);
 const dataLoaded = ref(false);
 
 async function getBookshelves(){
-    await db.get(urls.rtc.getBookshelvesCreatedByUser(user)).then((res) => {
+    const createdByUserPromise = await db.get(urls.rtc.getBookshelvesCreatedByUser(user));
+    const wantToReadPromise = await db.get(urls.rtc.getWantToRead(user));
+
+    Promise.all([createdByUserPromise, wantToReadPromise]).then(([createdByUser, wantToRead]) => {
+        bookshelvesCreatedByUser.value = createdByUser.bookshelves;
+        wantToReadBookshelf.value = [wantToRead.bookshelf];
         dataLoaded.value = true;
-        bookshelvesCreatedByUser.value = res.bookshelves;
     });
 };
 

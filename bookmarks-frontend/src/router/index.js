@@ -12,7 +12,7 @@ import SocialPage from '@/components/feed/social/SocialPage.vue';
 import SettingsPage from '@/components/feed/SettingsPage.vue';
 import UserPage from '@/components/feed/UserPage.vue';
 import BookshelvesPage from '@/components/feed/BookshelvesPage.vue';
-import EditBookshelf from '@/components/feed/bookshelves/EditBookshelf.vue';
+import ViewBookshelf from '@/components/feed/bookshelves/ViewBookshelf.vue';
 import EditBookshelfSettings from '@/components/feed/bookshelves/EditBookshelfSettings.vue'
 import BookshelvesMain from '@/components/feed/bookshelves/BookshelvesMain.vue';
 import ViewBookshelvesBySection from '@/components/feed/bookshelves/ViewBookshelvesBySection.vue';
@@ -104,7 +104,7 @@ export const router = createRouter({
             },
             {
               path: ':bookshelf',
-              component: EditBookshelf,
+              component: ViewBookshelf,
             },
             {
               path: ':bookshelf/edit',
