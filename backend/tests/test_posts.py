@@ -100,7 +100,7 @@ class TestPosts:
         
         print(response.json())
         review_id = response.json()["data"]["id"]
-        soft_delete_response = requests.put(f"{self.endpoint}/api/posts/post/{review_id}/delete", headers=headers)
+        soft_delete_response = requests.delete(f"{self.endpoint}/api/posts/post/{review_id}/delete", headers=headers)
         assert soft_delete_response.status_code == 200, "Testing soft delete review"
 
         delete_data = {
@@ -108,7 +108,7 @@ class TestPosts:
             "admin_credentials": self.admin_credentials
         }
 
-        hard_delete_response = requests.delete(f"{self.endpoint}/api/admin/delete_post_and_comments", json=delete_data)
+        hard_delete_response = requests.post(f"{self.endpoint}/api/admin/delete_post_and_comments", json=delete_data)
         assert hard_delete_response.status_code == 200, "Hard delete of test review"
 
     def test_create_review_book_not_in_db(self):
