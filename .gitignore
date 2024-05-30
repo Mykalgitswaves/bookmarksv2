@@ -13,3 +13,5 @@ app.log
 *.tfstate
 config.dev.json
 config.feature.json
+test_health.py
+health
