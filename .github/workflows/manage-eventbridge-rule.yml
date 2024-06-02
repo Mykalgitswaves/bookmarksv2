@@ -1,0 +1,47 @@
+name: Manage EventBridge Rule
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'backend/**'
+
+jobs:
+  enable_eventbridge_rule:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.10.9'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+
+    - name: Run tests
+      env:
+        PYTEST_SECRET: ${{ secrets.PYTEST_SECRET }}
+      run: |
+        cd backend/tests
+        echo "{\"ADMIN_CREDENTIALS\": \"$PYTEST_SECRET\"}" > config.json
+        pytest
+
+    - name: Configure AWS Credentials
+      if: success()
+      uses: aws-actions/configure-aws-credentials@v1
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: us-east-1
+
+    - name: Enable EventBridge Rule
+      if: success()
+      run: |
+        aws events enable-rule --name TriggerStepFunctionAt5AM_EST
