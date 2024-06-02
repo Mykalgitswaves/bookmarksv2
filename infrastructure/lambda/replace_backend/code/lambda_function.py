@@ -14,6 +14,7 @@ def lambda_handler(event, context):
 
     if len(response['TargetHealthDescriptions']) == 0:
         print('No instance to replace, just adding the new one')
+        old_instance_id = None
     else:
         old_instance_id = response['TargetHealthDescriptions'][0]['Target']['Id']
 
@@ -34,15 +35,36 @@ def lambda_handler(event, context):
             'body': 'no instances are healthy!'
         }
     
-    for target in response['TargetHealthDescriptions']:
-        if target['Target']['Id'] == new_instance_id and target['TargetHealth']['State'] == 'healthy':
-            break
-        else:
-            return {
-                'statusCode': 500,
-                'body': 'new instance is not healthy!'
-            }
+    new_instance_health = False
     
+    for target in response['TargetHealthDescriptions']:
+        if target['Target']['Id'] == new_instance_id:
+            if target['TargetHealth']['State'] == 'healthy':
+                print('new instance is healthy!')
+                new_instance_health = True
+
+            else:
+                elb.deregister_targets(
+                    TargetGroupArn=target_group_arn,
+                    Targets=[{'Id': new_instance_id}]
+                )
+
+                ec2.terminate_instances(InstanceIds=[new_instance_id])
+                
+                return {
+                    'statusCode': 500,
+                    'body': 'new instance is not healthy!'
+                }
+    
+    if not new_instance_health:
+
+        ec2.terminate_instances(InstanceIds=[new_instance_id])
+
+        return {
+            'statusCode': 500,
+            'body': 'new instance is not healthy!'
+        }
+
     if old_instance_id:
         elb.deregister_targets(
             TargetGroupArn=target_group_arn,

@@ -26,6 +26,36 @@ resource "aws_iam_role" "lambda_role" {
   assume_role_policy = data.aws_iam_policy_document.lambda_assume_role_policy.json
 }
 
+resource "aws_iam_policy" "lambda_ec2_elb_policy" {
+  name        = "lambda_ec2_elb_policy"
+  description = "Policy for Lambda to run EC2 instances"
+  policy      = jsonencode({
+    Version = "2012-10-17",
+    Statement = [
+      {
+        Effect   = "Allow",
+        Action   = [
+          "ec2:RunInstances",
+          "ec2:DescribeInstances",
+          "ec2:TerminateInstances",
+          "ec2:StopInstances",
+          "ec2:StartInstances",
+          "elasticloadbalancing:RegisterTargets",
+          "elasticloadbalancing:DeregisterTargets",
+          "elasticloadbalancing:DescribeTargetGroups",
+          "elasticloadbalancing:DescribeTargetHealth"
+        ],
+        Resource = "*"
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "lambda_ec2_policy_attachment" {
+  role       = aws_iam_role.lambda_role.name
+  policy_arn = aws_iam_policy.lambda_ec2_elb_policy.arn
+}
+
 data "archive_file" "python_lambda_package" {  
   type = "zip"  
   source_file = "${path.module}/code/lambda_function.py" 
