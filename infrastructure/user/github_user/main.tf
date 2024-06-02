@@ -1,0 +1,49 @@
+data "aws_caller_identity" "current" {}
+
+terraform {
+  backend "s3" {
+    bucket         	   = "terraform-backend-state-crab"
+    key              	   = "src/user/github_user/terraform.tfstate"
+    region         	   = "us-east-1"
+    encrypt        	   = true
+    dynamodb_table = "terraform-backend-locks"
+  }
+}
+
+resource "aws_iam_policy" "enable_eventbridge_rule_policy" {
+  name        = "EnableEventBridgeRulePolicy"
+  description = "Policy to allow enabling of EventBridge rule"
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Action = "events:EnableRule",
+        Effect   = "Allow",
+        Resource = "arn:aws:events:us-east-1:788511695961:rule/TriggerStepFunctionAt5AM_EST"
+      }
+    ]
+  })
+}
+
+resource "aws_iam_user" "github_actions_user" {
+  name = "github_actions_user"
+}
+
+resource "aws_iam_user_policy_attachment" "github_actions_user_policy_attachment" {
+  user       = aws_iam_user.github_actions_user.name
+  policy_arn = aws_iam_policy.enable_eventbridge_rule_policy.arn
+}
+
+resource "aws_iam_access_key" "github_actions_user_access_key" {
+  user = aws_iam_user.github_actions_user.name
+}
+
+output "github_actions_user_access_key_id" {
+  value = aws_iam_access_key.github_actions_user_access_key.id
+}
+
+output "github_actions_user_secret_access_key" {
+  value     = aws_iam_access_key.github_actions_user_access_key.secret
+  sensitive = true
+}

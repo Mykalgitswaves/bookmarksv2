@@ -51,9 +51,32 @@ resource "aws_iam_policy" "lambda_ec2_elb_policy" {
   })
 }
 
+resource "aws_iam_policy" "lambda_disable_eventbridge_rule_policy" {
+  name        = "LambdaDisableEventBridgeRulePolicy"
+  description = "IAM policy to allow Lambda to disable EventBridge rule"
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Action = [
+          "events:DisableRule"
+        ],
+        Effect   = "Allow",
+        Resource = "arn:aws:events:us-east-1:788511695961:rule/TriggerStepFunctionAt5AM_EST"
+      }
+    ]
+  })
+}
+
 resource "aws_iam_role_policy_attachment" "lambda_ec2_policy_attachment" {
   role       = aws_iam_role.lambda_role.name
   policy_arn = aws_iam_policy.lambda_ec2_elb_policy.arn
+}
+
+resource "aws_iam_role_policy_attachment" "lambda_event_bridge_policy_attachment" {
+  role       = aws_iam_role.lambda_role.name
+  policy_arn = aws_iam_policy.lambda_disable_eventbridge_rule_policy.arn
 }
 
 data "archive_file" "python_lambda_package" {  
