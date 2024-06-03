@@ -1,6 +1,7 @@
 from pydantic import BaseSettings
 from typing import List
 import json
+import os
 
 class Config(BaseSettings):
     #Uvicorn Configs
@@ -50,10 +51,19 @@ class Config(BaseSettings):
     MYSQL_DATABASE: str
     MYSQL_ECHO: bool
 
+environment = os.getenv("ENVIRONMENT", "feature")
+
+if environment.lower() == "prod":
+    config_file_path = "src/config/config.prod.json"
+elif environment.lower() == "dev":
+    config_file_path = "src/config/config.dev.json"
+else:
+    config_file_path = "src/config/config.feature.json"
+
 try:
-    with open("src/config/config.json", "r") as file:
+    with open(config_file_path, "r") as file:
         config = json.load(file)
 except:
-    with open("../src/config/config.json", "r") as file:
+    with open("../" + config_file_path, "r") as file:
         config = json.load(file)
 settings = Config(**config)
