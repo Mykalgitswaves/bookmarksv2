@@ -25,6 +25,13 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements.txt
 
+    - name: Configure AWS Credentials
+      uses: aws-actions/configure-aws-credentials@v1
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: us-east-1
+        
     - name: Fetch secrets from AWS Secrets Manager
       run: |
         aws secretsmanager get-secret-value --secret-id arn:aws:secretsmanager:us-east-1:788511695961:secret:dev/github-workflow-secrets-S6hWe8 --query SecretString --output text > backend/src/config/config.json 
@@ -43,13 +50,6 @@ jobs:
         echo "{\"ADMIN_CREDENTIALS\": \"$PYTEST_SECRET\"}" > config.json
         pytest
 
-    - name: Configure AWS Credentials
-      if: success()
-      uses: aws-actions/configure-aws-credentials@v1
-      with:
-        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        aws-region: us-east-1
 
     - name: Enable EventBridge Rule
       if: success()
