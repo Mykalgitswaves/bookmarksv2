@@ -25,6 +25,10 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements.txt
 
+    - name: Fetch secrets from AWS Secrets Manager
+      run: |
+        aws secretsmanager get-secret-value --secret-id arn:aws:secretsmanager:us-east-1:788511695961:secret:dev/github-workflow-secrets-S6hWe8 --query SecretString --output text > backend/src/config/config.json 
+
     - name: Start FastAPI application
       run: |
         cd backend

@@ -5,7 +5,6 @@ from fastapi.middleware.cors import CORSMiddleware
 from src.config.config import settings
 from src.api.endpoints import router as api_endpoint_router
 
-
 def initialize_backend_application() -> fastapi.FastAPI:
     app = fastapi.FastAPI()  # type: ignore
 
