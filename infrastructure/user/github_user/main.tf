@@ -26,6 +26,22 @@ resource "aws_iam_policy" "enable_eventbridge_rule_policy" {
   })
 }
 
+resource "aws_iam_policy" "get_github_secrets_policy" {
+  name        = "GetGithubSecretsPolicy"
+  description = "Policy to allow Get for Github secrets"
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+        {
+            Action   = "secretsmanager:GetSecretValue",
+            Effect   = "Allow",
+            Resource = "arn:aws:secretsmanager:us-east-1:788511695961:secret:dev/github-workflow-secrets-S6hWe8"
+        }
+    ]
+  })
+}
+
 resource "aws_iam_user" "github_actions_user" {
   name = "github_actions_user"
 }
@@ -33,6 +49,11 @@ resource "aws_iam_user" "github_actions_user" {
 resource "aws_iam_user_policy_attachment" "github_actions_user_policy_attachment" {
   user       = aws_iam_user.github_actions_user.name
   policy_arn = aws_iam_policy.enable_eventbridge_rule_policy.arn
+}
+
+resource "aws_iam_user_policy_attachment" "github_actions_user_policy_attachment_2" {
+  user       = aws_iam_user.github_actions_user.name
+  policy_arn = aws_iam_policy.get_github_secrets_policy.arn
 }
 
 resource "aws_iam_access_key" "github_actions_user_access_key" {
