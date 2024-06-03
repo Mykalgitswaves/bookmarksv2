@@ -25,6 +25,12 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements.txt
 
+    - name: Start FastAPI application
+      run: |
+        cd backend
+        nohup uvicorn src.main:backend_app --port 8000 &
+        sleep 10  # Give it a few seconds to start
+
     - name: Run tests
       env:
         PYTEST_SECRET: ${{ secrets.PYTEST_SECRET }}
