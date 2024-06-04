@@ -44,8 +44,6 @@
                 <slot name="empty-shelf"></slot>
             </div>
         </div>
-
-        <div v-if="bookshelves?.length" class="divider full-width"></div>
         
         <div class="flex gap-2 items-center" v-if="!isUnique">
             <button v-if="is_admin"

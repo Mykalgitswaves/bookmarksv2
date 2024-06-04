@@ -26,7 +26,7 @@
                     <p v-else class="collaborators-note">{{ contributorCount }} contributors added</p>   
                 </div>
 
-                <div v-if="isAdmin" class="mt-2 flex" >
+                <div v-if="isAdmin" class="mt-2 flex">
                     <button
                         type="button"
                         class="btn add-readers-btn"

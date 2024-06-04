@@ -1,7 +1,7 @@
 <template>
-    <WantToReadShelf v-if="isWantToRead"/>
+    <WantToReadShelf v-if="isWantToRead" />
 
-    <EditBookshelf v-else/>
+    <EditBookshelf v-else />
 </template>
 <script setup>
 import EditBookshelf from './EditBookshelf.vue';
