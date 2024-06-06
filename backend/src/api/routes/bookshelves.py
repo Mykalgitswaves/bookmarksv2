@@ -937,7 +937,10 @@ async def quick_add_book_to_bookshelf(
                         )
                     )
                 
-            return JSONResponse(content={"message": "Book added successfully"})
+            return JSONResponse(content={
+                    "message": "Book added successfully", 
+                    "book": jsonable_encoder(book_data.book)
+                })
         else:
             raise HTTPException(status_code=400, detail="Failed to add book to bookshelf")
     

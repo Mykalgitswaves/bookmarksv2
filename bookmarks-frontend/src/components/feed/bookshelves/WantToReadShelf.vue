@@ -24,7 +24,7 @@
                     class="btn add-readers-btn"
                     @click="currentView = 'edit-books'"
                 >
-                    Add books
+                    Edit books
                 </button>
 
                 <button 
@@ -32,7 +32,7 @@
                     class="btn add-readers-btn ml-5"
                     @click="currentView = 'add-books'"
                 >
-                    Edit books
+                    Add books
                 </button>
             </div>
         </div>
@@ -67,8 +67,10 @@
         </div>
 
         <!-- Where you search for books for adding -->
-        <SearchBooks v-if="currentView === 'add-books'"
-            @book-to-parent="(book) => addBook(book)"
+        <SearchBooks 
+            :centered="true"
+            v-if="currentView === 'add-books'"
+            @book-to-parent="(book) => addBookHandler(book)"
         />
     </section>
 
@@ -77,7 +79,7 @@
 <script setup>
 import { onMounted, ref} from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { getWantToReadshelfPromise } from './wantToRead.js';
+import { getWantToReadshelfPromise, addBook } from './wantToRead.js';
 import { goToBookshelfSettingsPage } from '../bookshelves/bookshelvesRtc';
 import IconEdit from '../../svg/icon-edit.vue';
 import BookshelfBooks from './BookshelfBooks.vue';
@@ -91,13 +93,25 @@ const bookshelfData = ref(null);
 const isAdmin = ref(false);
 const currentView = ref('edit-books');
 const loaded = ref(false);
+const books = ref([]);
 
 onMounted(async() => {
     const wantToReadShelfPromise = await getWantToReadshelfPromise(user);
     Promise.all([wantToReadShelfPromise]).then(([wantToReadShelf]) => {
         bookshelfData.value = wantToReadShelf.bookshelf;
+        books.value = wantToReadShelf.bookshelf.books;
         isAdmin.value = !!wantToReadShelf.bookshelf.created_by_current_user;
         loaded.value = true;
     });
 });
+
+async function addBookHandler(book) {
+    let responsePromise = await addBook(book);
+
+    if (responsePromise) {
+        debugger;
+        console.log({ book: responsePromise });
+        books.value.push({ book: responsePromise });
+    }
+}
 </script>

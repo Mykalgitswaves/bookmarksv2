@@ -1,3 +1,4 @@
+@import 'tailwind_imports.css';
 @import 'vars.css';
 @import 'text-styles.css';
 @import 'forms.css';
@@ -11,10 +12,6 @@
 @import 'settings.css';
 @import 'activities.css';
 @import 'bookshelves.css';
-
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
 
 .icon-star {
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' height='12' fill='currentColor' viewBox='0 96 960 960' width='48'%3E%3Cpath d='m323 851 157-94 157 95-42-178 138-120-182-16-71-168-71 167-182 16 138 120-42 178Zm-90 125 65-281L80 506l288-25 112-265 112 265 288 25-218 189 65 281-247-149-247 149Zm247-355Z' /%3E%3C/svg%3E");

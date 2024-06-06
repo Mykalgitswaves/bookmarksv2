@@ -1,11 +1,11 @@
-import { createRouter, createWebHistory } from 'vue-router'
-import SignUpView from '@/views/signup.vue'
-import CreateUserBooksView from '@/views/createuser.vue'
-import CreateUserWriterView from '@/views/createwriter.vue'
-import LoggedInView from '@/views/LoggedInReader.vue'
-import commentsPage from '@/components/feed/commentsPage.vue'
-import WorkFeed from '@/components/feed/WorkFeed.vue'
-import WorkPage from '@/components/feed/WorkPage.vue'
+import { createRouter, createWebHistory } from 'vue-router';
+import SignUpView from '@/views/signup.vue';
+import CreateUserBooksView from '@/views/createuser.vue';
+import CreateUserWriterView from '@/views/createwriter.vue';
+import LoggedInView from '@/views/LoggedInReader.vue';
+import commentsPage from '@/components/feed/commentsPage.vue';
+import WorkFeed from '@/components/feed/WorkFeed.vue';
+import WorkPage from '@/components/feed/WorkPage.vue';
 import AuthorPage from '@/components/feed/authors/AuthorPage.vue';
 import SearchPage from '@/components/feed/navigation/SearchPage.vue';
 import SocialPage from '@/components/feed/social/SocialPage.vue';
@@ -13,7 +13,7 @@ import SettingsPage from '@/components/feed/SettingsPage.vue';
 import UserPage from '@/components/feed/UserPage.vue';
 import BookshelvesPage from '@/components/feed/BookshelvesPage.vue';
 import ViewBookshelf from '@/components/feed/bookshelves/ViewBookshelf.vue';
-import EditBookshelfSettings from '@/components/feed/bookshelves/EditBookshelfSettings.vue'
+import EditBookshelfSettings from '@/components/feed/bookshelves/EditBookshelfSettings.vue';
 import BookshelvesMain from '@/components/feed/bookshelves/BookshelvesMain.vue';
 import ViewBookshelvesBySection from '@/components/feed/bookshelves/ViewBookshelvesBySection.vue';
 import CreateBookshelfForm from '@/components/feed/bookshelves/CreateBookshelf.vue';
@@ -30,12 +30,12 @@ export const router = createRouter({
     {
       path: '/create-user',
       name: 'CreateUser',
-      component: CreateUserBooksView
+      component: CreateUserBooksView,
     },
     {
       path: '/create-user-writer',
       name: 'CreateWriter',
-      component: CreateUserWriterView
+      component: CreateUserWriterView,
     },
     {
       // We need router here.
@@ -56,7 +56,7 @@ export const router = createRouter({
         {
           name: 'settings',
           path: 'settings',
-          component: SettingsPage
+          component: SettingsPage,
         },
         {
           // canonical
@@ -68,7 +68,7 @@ export const router = createRouter({
               //feed/:user_uuid/work/:work_uuid/version/:versiun_uuid
               name: 'work-versions-page',
               path: 'version/:version_uuid',
-              component: WorkPage
+              component: WorkPage,
             }
           ]
         },
@@ -84,15 +84,15 @@ export const router = createRouter({
         },
         {
           path: 'authors/:author',
-          component: AuthorPage
+          component: AuthorPage,
         },
         {
           path: 'search',
-          component: SearchPage
+          component: SearchPage,
         },
         {
           path: 'social',
-          component: SocialPage
+          component: SocialPage,
         },
         {
           path: 'bookshelves',
@@ -116,15 +116,15 @@ export const router = createRouter({
             },
             {
               path: 'create',
-              component: CreateBookshelfForm
-            }
+              component: CreateBookshelfForm,
+            },
           ]
         }
       ]
     },
     {
       path: '/home/:writer',
-      name: 'writersDesk'
+      name: 'writersDesk',
     },
   ]
 })
