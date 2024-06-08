@@ -1,5 +1,5 @@
-let baseUrl = 'http://127.0.0.1:8000/';
-let wsUrl = 'ws://127.0.0.1:8000/';
+let baseUrl = import.meta.env.VUE_APP_BASE_URL;
+let wsUrl = import.meta.env.VUE_APP_WS_URL;
 
 // For later when we want to add 
 // if (process.env.ENV === 'prod') {
