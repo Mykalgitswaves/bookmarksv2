@@ -13,7 +13,7 @@ import App from './App.vue'
 import router from './router'
 export const app = createApp(App)
 export const pinia = createPinia()
-export const baseURL = process.env.VUE_APP_BASE_URL;
+export const baseURL = import.meta.env.VUE_APP_BASE_URL;
 
 app.config.ignoredElements = ['sort-item', 'cts-sort-item'];
 app.config.productionTip = false;

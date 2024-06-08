@@ -98,7 +98,7 @@ import IconSend from '../svg/icon-send.vue';
 import Comments from './posts/comments.vue';
 import ComparisonPost from './posts/comparisonPost.vue';
 import UpdatePost from './posts/updatePost.vue';
-import ReviewPost from './posts/reviewPost.vue';
+import ReviewPost from './posts/ReviewPost.vue';
 import { componentMapping } from './createPostService';
 
 // Grab data from and put into a new object so we dont need to load post again
