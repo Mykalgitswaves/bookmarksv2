@@ -34,6 +34,15 @@ resource "aws_s3_bucket_website_configuration" "website_config" {
   # error_document {
   #   key = "error.html"
   # }
+
+   routing_rule {
+    condition {
+      key_prefix_equals = "dist/"
+    }
+    redirect {
+      replace_key_prefix_with = "/"
+    }
+  }
 }
 
 resource "aws_cloudfront_origin_access_identity" "my_oai" {
