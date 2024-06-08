@@ -14,7 +14,7 @@
                 :key="shelf?.id"
                 @click="goToBookshelfPage(user, shelf?.id)"
             >
-                <img class="bookshelf" :src="shelf?.book_img_urls[0] || noBookYetUrl" alt=""/>
+                <img class="bookshelf" :src="shelf?.book_img_urls && shelf?.book_img_urls[0] || noBookYetUrl" alt=""/>
 
                 <div>
                     <h4 class="bookshelf-title">{{ shelf?.title }}</h4>
@@ -44,10 +44,8 @@
                 <slot name="empty-shelf"></slot>
             </div>
         </div>
-
-        <div class="divider full-width"></div>
         
-        <div class="flex gap-2 items-center">
+        <div class="flex gap-2 items-center" v-if="!isUnique">
             <button v-if="is_admin"
                 type="button"
                 class="create-bookshelf-btn"
@@ -56,7 +54,7 @@
                 Create
             </button>
 
-            <button v-if="!isOnSectionPage" 
+            <button v-if="!isOnSectionPage && bookshelves?.length" 
                 type="button" 
                 class="create-bookshelf-btn"
                 @click="router.push(viewBookshelvesForSection(user, 'created_bookshelves'))"
@@ -92,6 +90,10 @@
             type: Boolean,
         },
         sectionId: {
+            type: String,
+            required: false,
+        },
+        isUnique: {
             type: String,
             required: false,
         },

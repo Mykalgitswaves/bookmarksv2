@@ -568,6 +568,7 @@ async def get_user_want_to_read(user_id: str,
             description=bookshelf.description,
             created_by=bookshelf.created_by,
             created_by_username=bookshelf.created_by_username,
+            current_user_is_admin=current_user.id == bookshelf.created_by,
             id=bookshelf.id,
             img_url=bookshelf.img_url,
             members=bookshelf.members,
@@ -590,8 +591,10 @@ async def get_user_want_to_read(user_id: str,
             visibility=bookshelf.visibility,
             members=bookshelf.members,
             created_by=bookshelf.created_by,
-            created_by_username=bookshelf.created_by_username
+            created_by_username=bookshelf.created_by_username,
+            current_user_is_admin=current_user.id == bookshelf.created_by
         )
+
         return JSONResponse(content={"bookshelf": jsonable_encoder(bookshelf_response)})
     else:
         raise HTTPException(status_code=403, detail="User is not authorized to view want to read bookshelf of another user")
@@ -934,7 +937,10 @@ async def quick_add_book_to_bookshelf(
                         )
                     )
                 
-            return JSONResponse(content={"message": "Book added successfully"})
+            return JSONResponse(content={
+                    "message": "Book added successfully", 
+                    "book": jsonable_encoder(book_data.book)
+                })
         else:
             raise HTTPException(status_code=400, detail="Failed to add book to bookshelf")
     

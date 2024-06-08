@@ -556,11 +556,11 @@ class BookshelfCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
         book_map = {
         book_id: {
             'item': book,
-            'description': getattr(note_for_shelf, 'note_for_shelf', None)
+            'description': note_for_shelf.get('note_for_shelf', None)
         }
         for book_id, book, note_for_shelf in zip(record["book_object_ids"], record["books"], record["book_note_for_shelves"])
-}
-        
+}     
+
         for ix, key in enumerate(record["book_ids"]):
             book = book_map[key]["item"]
             description = book_map[key]["description"]

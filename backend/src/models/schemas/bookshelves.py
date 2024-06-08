@@ -404,6 +404,7 @@ class BookshelfResponse(BaseModel):
     members: list[str]
     created_by: str
     created_by_username: str
+    created_by_current_user: bool | None = None
 
 class BookshelfResponseWantToRead(BaseModel):
     id: str
