@@ -76,16 +76,19 @@ resource "aws_cloudfront_distribution" "my_distribution" {
       }
     }
 
-    viewer_protocol_policy = "allow-all"
+    viewer_protocol_policy = "redirect-to-https"
 
     min_ttl                = 0
     default_ttl            = 3600
     max_ttl                = 86400
   }
 
+  price_class = "PriceClass_100"
+
   restrictions {
     geo_restriction {
-      restriction_type = "none"
+      restriction_type = "whitelist"
+      locations        = ["US", "CA"]
     }
   }
 
