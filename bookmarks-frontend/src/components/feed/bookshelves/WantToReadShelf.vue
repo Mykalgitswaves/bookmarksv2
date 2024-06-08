@@ -68,22 +68,41 @@
 
         <!-- Where you search for books for adding -->
         <SearchBooks 
+            v-if="currentView === 'add-books' && currentBook === null"
             :centered="true"
-            v-if="currentView === 'add-books'"
-            @book-to-parent="(book) => addBookHandler(book)"
+            @book-to-parent="(book) => setCurrentBook(book)"
         />
+
+        <div v-if="currentBook" class="ml-auto mr-auto mt-10 w-80">
+            <BookSearchResults :data="[currentBook]" :disabled="true"/>
+
+            <div class="mb-5 text-center">
+                <span class="text-stone-600 fancy">Reason you are adding this book</span>
+                
+                <textarea class="add-book-note" v-model="currentBook.note_for_shelf" name="" id="" cols="30" rows="5"/>
+            </div>
+
+            <div class="w-100 gap-2 flex items-center">
+                <button type="button" class="btn btn-submit w-50" @click="addBookHandler(currentBook)">Add book</button>
+
+                <button type="button" class="btn btn-ghost w-50" @click="currentBook = null">Cancel</button>
+            </div>
+        </div>
     </section>
 
     <div class="mobile-menu-spacer sm:hidden"></div>
 </template>
 <script setup>
-import { onMounted, ref} from 'vue';
+import { onMounted, ref, toRaw} from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { getWantToReadshelfPromise, addBook } from './wantToRead.js';
 import { goToBookshelfSettingsPage } from '../bookshelves/bookshelvesRtc';
+import { urls } from "../../../services/urls";
+import { db } from "../../../services/db";
 import IconEdit from '../../svg/icon-edit.vue';
 import BookshelfBooks from './BookshelfBooks.vue';
 import SearchBooks from '../createPosts/searchBooks.vue';
+import BookSearchResults from '../../create/booksearchresults.vue';
 
 
 const route = useRoute();
@@ -94,6 +113,7 @@ const isAdmin = ref(false);
 const currentView = ref('edit-books');
 const loaded = ref(false);
 const books = ref([]);
+const currentBook = ref(null);
 
 onMounted(async() => {
     const wantToReadShelfPromise = await getWantToReadshelfPromise(user);
@@ -105,13 +125,52 @@ onMounted(async() => {
     });
 });
 
-async function addBookHandler(book) {
-    let responsePromise = await addBook(book);
+function setCurrentBook(book) {
+    currentBook.value = book;
+    currentBook.value.note_for_shelf = '';
+    console.log(currentBook.value)
+}
 
-    if (responsePromise) {
-        debugger;
-        console.log({ book: responsePromise });
-        books.value.push({ book: responsePromise });
-    }
+async function addBookHandler(book) {
+    book = typeof book === 'proxy' ? toRaw(book) : book;
+    
+    let bookObject = {
+        title: book.title,
+        id: book.id,
+        small_img_url: book.small_img_url,
+        author_names: book.author_names,
+        note_for_shelf: book.note_for_shelf,
+    };
+
+    books.value.push({book: bookObject});
+
+    db.put(
+        urls.rtc.quickAddBook('want_to_read'),
+        { book: bookObject }
+    ).then((res) => {
+        currentBook.value = null;
+        currentView.value = 'edit-books';
+    });
 }
 </script>
+<style scoped>
+.add-book-note {
+    width: 100%;
+    border: none;
+    appearance: none;
+    resize: none;
+    color: var(--stone-600);
+    margin-right: 4px;
+    margin-top: 8px;
+    padding-top: 8px;
+    padding-left: 8px;
+    background-color: transparent;
+    border: 1px dotted var(--stone-200);
+    border-radius: var(--radius-sm);
+}
+
+.add-book-note:focus {
+    border-color: var(--indigo-500);
+    outline: none;
+}
+</style>

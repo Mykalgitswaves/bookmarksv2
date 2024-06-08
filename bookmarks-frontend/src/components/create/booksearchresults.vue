@@ -1,14 +1,14 @@
 <template>
-  <div class="px-4 pt-5">
+  <div :class="{'px-4 pt-5': !props.disabled}">
     <KeepAlive>
       <ul 
         v-for="book in books" 
         :key="book.id"
       >
-        <li
+        <li v-if="!props.disabled"
           @click="bookClickHandler(book);"
           :class="'flex flex-row gap-5 py-4 px-4 place-content-start bg-gray-100 rounded-md my-3 hover:bg-gray-200 max-w-[700px]' +
-            (isToggled[book.id] === true ? 'border-solid border-indigo-200 border-2 bg-indigo-50' : '')"
+            (isToggled[book.id] === true ? 'border-solid border-indigo-200 border-[1px] bg-indigo-50' : '')"
         >
           <img class="h-24" :src="book.small_img_url" />
           <div class="flex flex-col justify-center">
@@ -19,7 +19,22 @@
           </div>
         </li>
 
-        <div class="inline-block my-1" v-if="isToggled[book.id] && !props.isAuth">
+        <!-- This one is display only -->
+        <li v-else
+          class="flex flex-row gap-5 py-4 px-4 place-content-start 
+            rounded-md my-3 max-w-[700px] border-dotted border-indigo-200
+            border-[1px]"
+        >
+          <img class="h-24" :src="book.small_img_url" />
+          <div class="flex flex-col justify-center">
+            <p class="text-xl font-semibold text-gray-800">{{ book.title }}</p>
+            
+            <p v-for="name in book.author_names" :key="name" class="inline text-sm text-gray-800">{{ name }}</p>
+            <span class="text-sm text-gray-500">{{ book.publication_year }}</span>
+          </div>
+        </li>
+
+        <!-- <div class="inline-block my-1" v-if="isToggled[book.id] && !props.isAuth">
           <ul>
             <li v-for="index in reviewRange" :key="index" 
               class="inline-block"
@@ -35,7 +50,7 @@
               </button>
             </li>
           </ul>
-        </div>
+        </div> -->
       </ul>
     </KeepAlive>
   </div>
@@ -66,6 +81,11 @@ const reviewRange = ref(5)
       type: Boolean,
       required: false,
       default: false,
+    },
+    disabled: {
+      type: Boolean,
+      required: false,
+      default: false
     }
   })
   const emit = defineEmits();
