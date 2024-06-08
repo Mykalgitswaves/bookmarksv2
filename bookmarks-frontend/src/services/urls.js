@@ -1,5 +1,8 @@
-let baseUrl = import.meta.env.VUE_APP_BASE_URL;
-let wsUrl = import.meta.env.VUE_APP_WS_URL;
+let baseUrl = import.meta.env.VITE_BASE_URL;
+let wsUrl = import.meta.env.VITE_WS_URL;
+
+console.log('Base URL:', baseUrl);  // Add this line for debugging
+console.log('WebSocket URL:', wsUrl);  // Add this line for debugging
 
 // For later when we want to add 
 // if (process.env.ENV === 'prod') {
