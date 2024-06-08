@@ -1,9 +1,6 @@
 let baseUrl = import.meta.env.VITE_BASE_URL;
 let wsUrl = import.meta.env.VITE_WS_URL;
 
-console.log('Base URL:', baseUrl);  // Add this line for debugging
-console.log('WebSocket URL:', wsUrl);  // Add this line for debugging
-
 // For later when we want to add 
 // if (process.env.ENV === 'prod') {
 //     baseUrl = 'arbitraryName'
@@ -17,7 +14,7 @@ export const urls = {
         name: baseUrl + 'setup-reader/name',
         bookByText: (text) => (`${baseUrl}books/${text}`),
     },
-    authUrl: baseUrl + 'api/auth/verify/',
+    authUrl: baseUrl + 'api/auth/verify',
     booksByN: baseUrl + 'books/n/',
     login: baseUrl + 'api/auth/login',
     author: baseUrl + 'api/author/',
@@ -52,7 +49,7 @@ export const urls = {
         comparison: baseUrl + 'api/posts/create_comparison',
         createComment: () => (baseUrl + 'api/posts/comment/create'),
         // used in feed
-        getReviews: (user_id) => (baseUrl +`api/${user_id}/posts`),
+        getReviews: (user_id) => (baseUrl +`api/${user_id}/posts/`),
         getComparisons: (user_id) => (baseUrl + `api/${user_id}/comparisons`),
         // getting post data including initial comments on click of comment btn
         getPost: (post_id) => (baseUrl + `api/posts/post/${post_id}`),
@@ -68,7 +65,7 @@ export const urls = {
         getComments: (post_id) =>(baseUrl + `api/posts/post/${post_id}/comments`),
         // calling more comments (duh)
         getMoreComments: (comment_id) => (baseUrl + `api/review/comments/${comment_id}/replies`),
-        getFeed: () => (baseUrl + `api/posts`),
+        getFeed: () => (baseUrl + `api/posts/`),
     },
     books: {
         // for book page
