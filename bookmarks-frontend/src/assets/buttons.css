@@ -42,6 +42,17 @@
     border-radius: .25rem;
 }
 
+.btn.btn-submit {
+    background-color: var(--indigo-50);
+    color: var(--indigo-500);
+    border: 1px solid var(--indigo-400);
+    transition: var(--transition-short);
+}
+
+.btn.btn-submit:hover {
+    background-color: var(--indigo-100);
+}
+
 .btn.btn-red {
     background-color: var(--red-200);
     color: var(--red-500);

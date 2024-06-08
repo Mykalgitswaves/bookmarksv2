@@ -42,6 +42,41 @@ resource "aws_iam_policy" "get_github_secrets_policy" {
   })
 }
 
+resource "aws_iam_policy" "deploy_front_end_static_files_policy" {
+  name        = "DeployFrontEndStaticFilesPolicy"
+  description = "Policy to allow deployment of front end static files"
+
+  policy = jsonencode({
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": [
+        "s3:ListBucket",
+        "s3:GetObject",
+        "s3:PutObject",
+        "s3:DeleteObject"
+      ],
+      "Resource": [
+        "arn:aws:s3:::book-prod-front-end-static-files",
+        "arn:aws:s3:::book-prod-front-end-static-files/*"
+      ]
+    },
+    {
+      "Effect": "Allow",
+      "Action": [
+        "cloudfront:CreateInvalidation",
+        "cloudfront:GetDistribution",
+        "cloudfront:GetDistributionConfig",
+        "cloudfront:ListInvalidations"
+      ],
+      "Resource": "arn:aws:cloudfront::788511695961:distribution/EWRREJ7Z0ZU5W"
+    }
+  ]
+}
+)
+}
+
 resource "aws_iam_user" "github_actions_user" {
   name = "github_actions_user"
 }
@@ -54,6 +89,11 @@ resource "aws_iam_user_policy_attachment" "github_actions_user_policy_attachment
 resource "aws_iam_user_policy_attachment" "github_actions_user_policy_attachment_2" {
   user       = aws_iam_user.github_actions_user.name
   policy_arn = aws_iam_policy.get_github_secrets_policy.arn
+}
+
+resource "aws_iam_user_policy_attachment" "github_actions_user_policy_attachment_3" {
+  user       = aws_iam_user.github_actions_user.name
+  policy_arn = aws_iam_policy.deploy_front_end_static_files_policy.arn
 }
 
 resource "aws_iam_access_key" "github_actions_user_access_key" {

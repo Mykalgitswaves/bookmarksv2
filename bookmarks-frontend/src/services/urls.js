@@ -1,5 +1,12 @@
-const baseUrl = 'http://127.0.0.1:8000/';
-const wsUrl = 'ws://127.0.0.1:8000/';
+let baseUrl = 'http://127.0.0.1:8000/';
+let wsUrl = 'ws://127.0.0.1:8000/';
+
+// For later when we want to add 
+// if (process.env.ENV === 'prod') {
+//     baseUrl = 'arbitraryName'
+//      wsUrl = 'arbitraryName'
+// }
+
 export const urls = {
     // Note there is an extra slash after base so dont start paths with slash
     baseUrl: baseUrl,
@@ -72,6 +79,7 @@ export const urls = {
         getBookshelvesCreatedByUser: (user_id) => (baseUrl + `api/bookshelves/created_bookshelves/${user_id}`),
         getMemberBookshelves: (user_id) => (baseUrl + `api/bookshelves/member_bookshelves/${user_id}`),
         getExploreBookshelves: (user_id) => (baseUrl + `api/bookshelves/explore/${user_id}`),
+        getWantToRead: (user_id) => (baseUrl +  `api/bookshelves/want_to_read/${user_id}`),
         /**
          *  @param { obj[str] { contributor_id: contributor_id } }  - the user id of the person you want to add as a contributor to the shelf
          * contributors have write access to shelves. 
@@ -90,6 +98,7 @@ export const urls = {
         setShelfVisibility: (bookshelf_id) => (baseUrl + `api/bookshelves/${bookshelf_id}/update_visibility`),
         // ⚠️⚠️⚠️ Danger zone ⚠️⚠️⚠️.
         deleteBookshelf: (bookshelf_id) => (baseUrl + `api/bookshelves/${bookshelf_id}/delete`),
+        quickAddBook: (bookshelf_id) => (baseUrl + `api/bookshelves/quick_add/${bookshelf_id}`),
     },
 }
 

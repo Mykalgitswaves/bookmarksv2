@@ -13,7 +13,7 @@ import App from './App.vue'
 import router from './router'
 export const app = createApp(App)
 export const pinia = createPinia()
-export const baseURL = 'http://127.0.0.1:8000/';
+export const baseURL = process.env.VUE_APP_BASE_URL;
 
 app.config.ignoredElements = ['sort-item', 'cts-sort-item'];
 app.config.productionTip = false;

@@ -34,6 +34,7 @@ import { useStore } from '../../stores/page';
 import AuthorSearch from './authorSearch.vue';
 import { app_router } from '@/main.js';
 import { helpersCtrl } from '../../services/helpers';
+import { urls } from '../../services/urls';
 
 const { debounce } = helpersCtrl;
 const store = useBookStore()
