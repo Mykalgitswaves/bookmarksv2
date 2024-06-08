@@ -100,7 +100,7 @@ class TestPosts:
         
         print(response.json())
         review_id = response.json()["data"]["id"]
-        soft_delete_response = requests.put(f"{self.endpoint}/api/posts/post/{review_id}/delete", headers=headers)
+        soft_delete_response = requests.delete(f"{self.endpoint}/api/posts/post/{review_id}/delete", headers=headers)
         assert soft_delete_response.status_code == 200, "Testing soft delete review"
 
         delete_data = {
@@ -134,7 +134,7 @@ class TestPosts:
         
         print(response.json())
         review_id = response.json()["data"]["id"]
-        soft_delete_response = requests.put(f"{self.endpoint}/api/posts/post/{review_id}/delete", headers=headers)
+        soft_delete_response = requests.delete(f"{self.endpoint}/api/posts/post/{review_id}/delete", headers=headers)
         assert soft_delete_response.status_code == 200, "Testing soft delete review"
 
         delete_data = {
@@ -170,7 +170,7 @@ class TestPosts:
         
         print(response.json())
         update_id = response.json()["data"]["id"]
-        soft_delete_response = requests.put(f"{self.endpoint}/api/posts/post/{update_id}/delete", headers=headers)
+        soft_delete_response = requests.delete(f"{self.endpoint}/api/posts/post/{update_id}/delete", headers=headers)
         assert soft_delete_response.status_code == 200, "Testing soft delete update"
 
         delete_data = {
@@ -203,7 +203,7 @@ class TestPosts:
         
         print(response.json())
         update_id = response.json()["data"]["id"]
-        soft_delete_response = requests.put(f"{self.endpoint}/api/posts/post/{update_id}/delete", headers=headers)
+        soft_delete_response = requests.delete(f"{self.endpoint}/api/posts/post/{update_id}/delete", headers=headers)
         assert soft_delete_response.status_code == 200, "Testing soft delete update"
 
         delete_data = {
@@ -238,7 +238,7 @@ class TestPosts:
         
         print(response.json())
         comparison_id = response.json()["data"]["id"]
-        soft_delete_response = requests.put(f"{self.endpoint}/api/posts/post/{comparison_id}/delete", headers=headers)
+        soft_delete_response = requests.delete(f"{self.endpoint}/api/posts/post/{comparison_id}/delete", headers=headers)
         assert soft_delete_response.status_code == 200, "Testing soft delete comparison"
 
         delete_data = {
@@ -272,7 +272,7 @@ class TestPosts:
         
         print(response.json())
         recommendation_friend_id = response.json()["data"]["id"]
-        soft_delete_response = requests.put(f"{self.endpoint}/api/posts/post/{recommendation_friend_id}/delete", headers=headers)
+        soft_delete_response = requests.delete(f"{self.endpoint}/api/posts/post/{recommendation_friend_id}/delete", headers=headers)
         assert soft_delete_response.status_code == 200, "Testing soft delete recommendation_friend"
 
         delete_data = {
@@ -303,7 +303,7 @@ class TestPosts:
         
         print(response.json())
         recommendation_friend_id = response.json()["data"]["id"]
-        soft_delete_response = requests.put(f"{self.endpoint}/api/posts/post/{recommendation_friend_id}/delete", headers=headers)
+        soft_delete_response = requests.delete(f"{self.endpoint}/api/posts/post/{recommendation_friend_id}/delete", headers=headers)
         assert soft_delete_response.status_code == 200, "Testing soft delete recommendation_friend"
 
         delete_data = {
@@ -329,7 +329,7 @@ class TestPosts:
         
         print(response.json())
         milestone_id = response.json()["data"]["id"]
-        soft_delete_response = requests.put(f"{self.endpoint}/api/posts/post/{milestone_id}/delete", headers=headers)
+        soft_delete_response = requests.delete(f"{self.endpoint}/api/posts/post/{milestone_id}/delete", headers=headers)
         assert soft_delete_response.status_code == 200, "Testing soft delete milestone"
 
         delete_data = {
