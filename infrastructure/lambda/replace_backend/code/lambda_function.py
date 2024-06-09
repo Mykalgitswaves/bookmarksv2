@@ -27,7 +27,7 @@ def lambda_handler(event, context):
         Targets=[{'Id': new_instance_id}]
     )
 
-    time.sleep(30)
+    time.sleep(150)
 
     # Check if the new instance is healthy
     response = elb.describe_target_health(TargetGroupArn=target_group_arn)
