@@ -49,6 +49,7 @@ resource "aws_cloudfront_origin_access_identity" "my_oai" {
   comment = "My OAI for S3 bucket"
 }
 
+
 resource "aws_cloudfront_distribution" "my_distribution" {
   origin {
     domain_name = "${aws_s3_bucket.front_end.bucket_regional_domain_name}"
@@ -58,6 +59,11 @@ resource "aws_cloudfront_distribution" "my_distribution" {
       origin_access_identity =  aws_cloudfront_origin_access_identity.my_oai.cloudfront_access_identity_path
     }
   }
+
+  # origin {
+  #   domain_name = "backend-load-balancer-1064516976.us-east-1.elb.amazonaws.com"
+  #   origin_id   = "book-prod-load-balancer-origin"
+  # }
 
   enabled             = true
   is_ipv6_enabled     = true
@@ -76,7 +82,7 @@ resource "aws_cloudfront_distribution" "my_distribution" {
       }
     }
 
-    viewer_protocol_policy = "redirect-to-https"
+    viewer_protocol_policy = "allow-all"
 
     min_ttl                = 0
     default_ttl            = 3600

@@ -14,6 +14,7 @@ export const db = {
     authenticate: async (url, uuid) => {
         const router = useRouter();
         const accessTokenFromCookies = helpersCtrl.getCookieByParam(['token'])
+        
         try {
             const response = await fetch(url + '?' + new URLSearchParams({'uuid': uuid}), {
                 method: 'GET',
@@ -23,6 +24,7 @@ export const db = {
                 }
             })
             const data = response.json()
+            
             if(response.ok) {
                 return data
             } else {

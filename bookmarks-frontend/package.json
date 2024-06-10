@@ -2,7 +2,7 @@
   "name": "bookmarks-frontend",
   "version": "0.0.0",
   "private": true,
-  "proxy": "http://127.0.0.1:8000",
+  "proxy": ["http://127.0.0.1:8000","http://backend-load-balancer-1064516976.us-east-1.elb.amazonaws.com"],
   "scripts": {
     "dev": "vite",
     "build": "vite build && tailwindcss build src/assets/tailwind_imports.css -o dist/assets/tailwind.css",
