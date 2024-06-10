@@ -20,6 +20,14 @@ jobs:
       with:
         node-version: '19.7.0'
 
+    - name: Change tailwind.css path in index.html
+      run: |
+        cd bookmarks-frontend
+        echo "#!/bin/bash" > update_tailwind_path.sh
+        echo "sed -i 's|/dist/assets/tailwind.css|/assets/tailwind.css|g' ./index.html" >> update_tailwind_path.sh
+        chmod +x update_tailwind_path.sh
+        ./update_tailwind_path.sh
+
     - name: Install dependencies
       run: |
         cd bookmarks-frontend
