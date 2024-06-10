@@ -1,5 +1,5 @@
 import PostActivity from './PostActivity.vue';
-import CommentActivityContent from './commentActivityContent.vue';
+import CommentActivityContent from './CommentActivityContent.vue';
 import FriendActivity from './FriendActivity.vue';
 
 export const activityMap = {
