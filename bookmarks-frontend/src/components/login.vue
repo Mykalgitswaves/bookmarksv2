@@ -9,7 +9,7 @@
       @submit.prevent="submitForm()"
       method="POST"
     >
-      <label class="gray-700" for="login_username">Enter your username test</label>
+      <label class="gray-700" for="login_username">Enter your username</label>
 
       <input
         type="username"
