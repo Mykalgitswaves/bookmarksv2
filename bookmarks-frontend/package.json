@@ -5,7 +5,8 @@
   "proxy": ["http://127.0.0.1:8000","http://backend-load-balancer-1064516976.us-east-1.elb.amazonaws.com"],
   "scripts": {
     "dev": "vite",
-    "build": "vite build && tailwindcss build src/assets/tailwind_imports.css -o dist/assets/tailwind.css",
+    "build": "vite build",
+    "build:css": "tailwindcss build src/assets/tailwind_imports.css -o dist/assets/tailwind.css",
     "preview": "vite preview",
     "test:e2e": "start-server-and-test preview http://localhost:4173 'cypress run --e2e'",
     "test:e2e:dev": "start-server-and-test 'vite dev --port 4173' http://localhost:4173 'cypress open --e2e'",
