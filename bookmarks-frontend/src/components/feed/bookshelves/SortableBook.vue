@@ -3,8 +3,8 @@
         ref="input"
         for="bs-books"
         :class="['bs-b--book', { 'is-sorting': !isSorted && currentBook, 'sort-target': isSorted }]"
-        :disabled="(!isSorted && isLocked)"
-        @click="emit('set-sort', id)"
+        :disabled="!unique && (!isSorted && isLocked)"
+        @click="clickHandler"
     >
       <div class="sort">{{ order + 1 }}</div>
 
@@ -12,7 +12,7 @@
 
       <div class="meta">
         <p class="title">{{ bookTitle }}</p>
-        <p class="author">{{ author }}</p>
+        <p class="author">{{ formatAuthorProps(author) }}</p>
       </div>
 
       <input
@@ -26,6 +26,10 @@
         @click="emit('set-sort', id)"
       />
     </label>
+
+    <div v-if="noteForShelf" class="text-stone-500 weight-300 mr-auto">
+        <span class="ml-5">{{ truncateText(noteForShelf, 150) }}</span>
+    </div>
 
     <button
       v-if="shouldShowSwap()"
@@ -50,6 +54,7 @@
 <script setup>
 import { computed, ref } from 'vue';
 import { wsCurrentState } from './bookshelvesRtc';
+import { truncateText } from '../../../services/helpers';
 import IconDelete from '../../svg/icon-trash.vue';
 
 const props = defineProps({
@@ -82,10 +87,16 @@ const props = defineProps({
     },
     isEditing: {
         type: Boolean
-    }
+    },
+    noteForShelf: {
+        type: String
+    },
+    unique: {
+        type: String,
+    },
 });
 const input = ref('input');
-const emit = defineEmits(['set-sort']);
+const emit = defineEmits(['set-sort', 'show-book-controls-overlay', 'swapped-with']);
 
 const isSorted = computed(() => {
     if(props.currentBook){
@@ -104,6 +115,22 @@ function swapWith(index) {
     emit('swapped-with', data);
     input.value.scrollIntoView({ behavior: 'smooth', block: 'center' });
 };
+
+
+function formatAuthorProps(authorData){
+    if (authorData && Array.isArray(authorData) && authorData.length) {
+        return authorData[0];
+    }
+    return '';
+}
+
+function clickHandler(id){
+    if(props.unique === 'wantToRead' && !props.isEditing){
+        emit('show-book-controls-overlay', {'wantToRead': props.id});
+    }
+
+    emit('set-sort', id);
+}
 
 function shouldShowSwap() {
     if (!props.currentBook) {
@@ -138,7 +165,6 @@ const shouldShowBookToolbar = computed(() => {
 });
 
 const isLocked = computed(() => wsCurrentState.value === 'locked');
-
 
 </script>
 <styles scoped lang="scss">

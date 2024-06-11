@@ -14,16 +14,19 @@
                 :order="index"
                 :id="book?.id"
                 :bookTitle="book?.title"
-                :author="book?.author_names"
+                :author="book?.author_names || book?.authors"
                 :imgUrl="book?.small_img_url"
                 :next-book="books[index + 1]"
                 :prev-book="books[index - 1]"
                 :current-book="currentBook"
                 :index="index"
                 :is-editing="isEditing"
+                :note-for-shelf="book.note_for_shelf"
+                :unique="unique"
                 @set-sort="(data) => setSort(data)"
                 @swapped-with="(data) => swappedWithHandler(data)"
                 @removed-book="$emit('removed-book', $event)"
+                @show-book-controls-overlay="(bookPayload) => showBookControlsOverlayHandler(bookPayload)"
             />
         </li>
 
@@ -37,6 +40,22 @@
             >End</button>
         </li>
     </ul>
+
+    <teleport v-if="showBookControlsOverlay" to="body">
+        <div class="book-controls-overlay shadow-lg" v-if="currentBookForOverlay">
+            <div class="toolbar">
+                <p><b>{{ currentBookForOverlay.name || currentBookForOverlay.title }}</b></p> 
+
+                <button 
+                    type="button"
+                    role="close-modal"
+                    @click="currentBookForOverlay = null; showBookControlsOverlay = false;"
+                >
+                    <IconExit />
+                </button>
+            </div>
+        </div>
+    </teleport>
 
     <teleport v-if="currentBook !== null || canReorder || isEditing" to="body">
         <div class="sorting-footer">
@@ -66,6 +85,7 @@
 import { ref, computed, reactive, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import SortableBook from './SortableBook.vue';
+import IconExit from '../../svg/icon-exit.vue';
 
 const props = defineProps({
     books: {
@@ -88,6 +108,11 @@ const props = defineProps({
         type: Number,
         required: true,
     },
+    unique: {
+        type: String,
+        required: false,
+        default: '',
+    }
 });
 
 const route = useRoute();
@@ -180,9 +205,39 @@ function swappedWithHandler(book_data) {
     emit('send-bookdata-socket', bookdata);
 };
 
-</script>
+/**
+ * Book controls overlay functions.
+ */
+const currentBookForOverlay = ref(null);
+const showBookControlsOverlay = ref(false);
+// ------------------------------
+function showBookControlsOverlayHandler(payload){
+    showBookControlsOverlay.value = true;
+    let res = Object.values(payload)
+    let id = res[0];
+    if(!id) console.warn('No id found in payload');
+    currentBookForOverlay.value =  props.books.find((_book) => _book.id === id);
+}
 
+</script>
 <style scoped lang="scss">
+    .book-controls-overlay {
+        --inline-offset: -49%;
+        @media screen and (max-width: 768px) {
+            --inline-offset: -50%;
+        }
+
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(var(--inline-offset), -50%);
+        min-width: 40vw;
+        max-width: 480px;
+        min-height: 280px;
+        background-color: var(--gray-50);
+        border-radius: var(--radius-sm);
+    }
+
     .bookshelf-books {
         display: grid;
         // padding-top: var(--padding-sm);/

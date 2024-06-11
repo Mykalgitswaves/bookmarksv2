@@ -41,15 +41,13 @@
         <div v-if="loaded && currentView === 'edit-books'" class="mt-5">
             <BookshelfBooks 
                 v-if="books?.length"
+                :unique="'wantToRead'"
                 :is-admin="isAdmin"
                 :books="books"
                 :can-reorder="isReorderModeEnabled"
                 :is-editing="isEditingModeEnabled"    
                 :is-reordering="isReordering"
                 :unset-current-book="unsetKey"
-                @send-bookdata-socket="
-                    (bookdata) => reorder_books(bookdata)
-                "
                 @removed-book="(removed_book_id) => remove_book(removed_book_id)"
                 @cancelled-reorder="cancelledReorder"
                 @cancelled-edit=cancelledEdit
@@ -60,7 +58,7 @@
 
                 <button 
                     type="button"
-                    class="btn add-readers-btn mt-5"    
+                    class="btn underline text-indigo-500 mt-5"    
                     @click="currentView = 'add-books'"
                 >Add now</button>
             </div>
@@ -138,11 +136,11 @@ async function addBookHandler(book) {
         title: book.title,
         id: book.id,
         small_img_url: book.small_img_url,
-        author_names: book.author_names,
+        author_names: book.author_names || book.authors,
         note_for_shelf: book.note_for_shelf,
     };
 
-    books.value.push({book: bookObject});
+    books.value.push(bookObject);
 
     db.put(
         urls.rtc.quickAddBook('want_to_read'),

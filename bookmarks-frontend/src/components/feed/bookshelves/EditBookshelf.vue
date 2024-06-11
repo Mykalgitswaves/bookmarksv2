@@ -137,6 +137,7 @@
             <!-- Where you search for books for adding -->
             <SearchBooks 
                 v-if="isAdmin && currentView.value === 'add-books'"
+                :centered="true"
                 @book-to-parent="(book) => addBook(book)"  
             />
         </section>   
