@@ -60,14 +60,48 @@ resource "aws_cloudfront_distribution" "my_distribution" {
     }
   }
 
-  # origin {
-  #   domain_name = "backend-load-balancer-1064516976.us-east-1.elb.amazonaws.com"
-  #   origin_id   = "book-prod-load-balancer-origin"
-  # }
+  origin {
+    domain_name = "backend-load-balancer-1064516976.us-east-1.elb.amazonaws.com"
+    origin_id   = "backend-load-balancer-origin"
+
+    custom_origin_config {
+      http_port              = 80
+      https_port             = 443
+      origin_protocol_policy = "https-only"
+      origin_ssl_protocols   = ["TLSv1.2"]
+    }
+  }
+
+  ordered_cache_behavior {
+    path_pattern           = "/api/*"
+    target_origin_id       = "backend-load-balancer-origin"
+    viewer_protocol_policy = "redirect-to-https"
+
+    allowed_methods = ["GET", "HEAD", "OPTIONS", "PUT", "POST", "PATCH", "DELETE"]
+    cached_methods  = ["GET", "HEAD"]
+
+    forwarded_values {
+      query_string = true
+      cookies {
+        forward = "all"
+      }
+    }
+
+    min_ttl     = 0
+    default_ttl = 0
+    max_ttl     = 0
+  }
 
   enabled             = true
   is_ipv6_enabled     = true
   default_root_object = "index.html"
+
+  custom_error_response {
+    error_code            = 403
+    response_code         = 200
+    response_page_path    = "/index.html"
+    error_caching_min_ttl = 0
+  }
 
   default_cache_behavior {
     allowed_methods  = ["GET", "HEAD"]
@@ -89,6 +123,8 @@ resource "aws_cloudfront_distribution" "my_distribution" {
     max_ttl                = 86400
   }
 
+  aliases = ["hardcoverlit.com","www.hardcoverlit.com"]
+
   price_class = "PriceClass_100"
 
   restrictions {
@@ -99,7 +135,8 @@ resource "aws_cloudfront_distribution" "my_distribution" {
   }
 
   viewer_certificate {
-    cloudfront_default_certificate = true
+    acm_certificate_arn = "arn:aws:acm:us-east-1:788511695961:certificate/c6397802-86b3-4fa9-96a6-a3a0c12f6ded"
+    ssl_support_method = "sni-only"
   }
 }
 
