@@ -52,18 +52,6 @@
     >
       Username or password invalid please try a different login
     </span>
-    
-    <div class="grid mt-10 text-center">
-      <RouterLink to="/create-user">
-        <button type="button" class="my-2">
-            <span class="italic">For readers</span><br>
-
-            <span class="text-md text-indigo-600 font-semibold underline underline-offset-2">
-            create an account
-            </span>
-        </button>
-      </RouterLink>
-    </div>
 </section>
 </template>
 
