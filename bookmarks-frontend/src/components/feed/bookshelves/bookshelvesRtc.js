@@ -34,7 +34,18 @@ export const ws = {
     // This is set by the on message function. We can get really granular here and our ws manager in 
     // fastapi can help us with some parralellization issues.
 
+    // #TODO Add a get request using the login token to get a new returned token specifically for the websocket connection. 
     newSocket: async (connection_address) => {
+        // Get request that makes gets the token
+        /**
+         * db.get(urls.rtc.getWebsocketConnectionToken(connection_address)).then((res) => {
+         *   ws.client = res.token;
+         * }).finally(() => {
+         *   ws.connection_address = connection_address;
+         *   ws.socket = new WebSocket(urls.rtc.bookshelf(connection_address, ws.client)); 
+         * });
+         */
+
         ws.connection_address = connection_address;
         ws.socket = new WebSocket(urls.rtc.bookshelf(connection_address, ws.client)); // Assign the socket to ws.socket
     },

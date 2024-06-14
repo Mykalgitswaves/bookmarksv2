@@ -41,12 +41,14 @@
         </li>
     </ul>
 
+
+    <!-- This is for flow shelves -->
     <teleport v-if="showBookControlsOverlay" to="body">
         <div class="book-controls-overlay shadow-lg" v-if="currentBookForOverlay">
             <div class="toolbar">
                 <p><b>{{ currentBookForOverlay.name || currentBookForOverlay.title }}</b></p> 
 
-                <button 
+                <button     
                     type="button"
                     role="close-modal"
                     @click="currentBookForOverlay = null; showBookControlsOverlay = false;"
@@ -54,9 +56,19 @@
                     <IconExit />
                 </button>
             </div>
+
+            <div v-if="userShelves">
+                <select name="" id="" v-model="moveToSelectedShelfId">
+                    <option v-for="shelf in userShelves" :key="shelf.id" value="">
+                        {{ shelf.title }}
+                    </option>
+                </select>
+            </div>
         </div>
     </teleport>
+    <!-- endFlowShelves -->
 
+    <!-- Regular shelves -->
     <teleport v-if="currentBook !== null || canReorder || isEditing" to="body">
         <div class="sorting-footer">
             <div v-if="currentBook" class="s-f-book">
@@ -80,12 +92,16 @@
             </div>
         </div>    
     </teleport>
+    <!-- End regular shelves -->
 </template>
 <script setup>
-import { ref, computed, reactive, watch } from 'vue';
+import { ref, computed, watch, onMounted } from 'vue';
 import { useRoute } from 'vue-router';
 import SortableBook from './SortableBook.vue';
 import IconExit from '../../svg/icon-exit.vue';
+import { db } from '../../../services/db';
+import { urls } from '../../../services/urls';
+import { Bookshelves } from '../../../models/bookshelves';
 
 const props = defineProps({
     books: {
@@ -118,6 +134,33 @@ const props = defineProps({
 const route = useRoute();
 const { user } = route.params;
 const emit = defineEmits(['send-bookdata-socket', 'cancelled-reorder']);
+const userShelves = ref(null);
+const loaded = ref(false);
+const FLOWSHELVES = [Bookshelves.WANT_TO_READ, Bookshelves.CURRENTLY_READING, Bookshelves.FINISHED_READING];
+// This runs for all unique bookshelves to grab a list of user shelves so that people can move books between shelves.
+onMounted(async () => {
+    await db.get(
+        urls.rtc.minimalBookshelvesForLoggedInUser(user)
+    ).then((res) => {
+        userShelves.value = res.bookshelves;
+        
+    /**
+     * Flow shelf permissions are created for a specific user at creation of their profiles.
+     * They are not for general use. We need to only show these options for the user's own Flow Shelves. 
+     * This function makes them selectable for our overlay
+     * */ 
+    if (FLOWSHELVES.includes(props.unique)) {
+        FLOWSHELVES.forEach((shelf) => {
+            // We need to get the users visbiility for each shelf.
+            let _shelf = Bookshelves.formatFlowShelf(shelf, 'private')
+            userShelves.value.push(_shelf);
+        })
+    }
+    // End of the line
+    loaded.value = true;
+    });
+});
+
 
 // This is what will be sent via websocket over the wire.
 let bookdata = {
@@ -226,12 +269,12 @@ function showBookControlsOverlayHandler(payload){
         @media screen and (max-width: 768px) {
             --inline-offset: -50%;
         }
-
+        padding: 8px;
         position: fixed;
         top: 50%;
         left: 50%;
         transform: translate(var(--inline-offset), -50%);
-        min-width: 40vw;
+        min-width: 300px;
         max-width: 480px;
         min-height: 280px;
         background-color: var(--gray-50);

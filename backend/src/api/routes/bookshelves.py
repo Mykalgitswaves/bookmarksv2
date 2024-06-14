@@ -72,7 +72,7 @@ async def create_bookshelf(request:Request,
     bookshelf_id = bookshelf_repo.create_bookshelf(bookshelf)
     return {"bookshelf_id": bookshelf_id}
     
-    
+
 @router.get("/{bookshelf_id}", 
             name="bookshelf:get")
 async def get_bookshelf(bookshelf_id: str, 
@@ -729,7 +729,26 @@ async def get_user_want_to_read_preview(
         return JSONResponse(content={"bookshelf": jsonable_encoder(bookshelf)})
     else:
         raise HTTPException(status_code=404, detail="Want to read bookshelf not found")
-    
+
+
+@router.get("/minimal_shelves_for_user/{user_id}",
+            name="bookshelves:minimal_shelves_for_user")
+async def get_users_minimal_shelves(
+    user_id: str,
+    current_user: Annotated[User, Depends(get_current_active_user)],
+    bookshelf_repo: BookshelfCRUDRepositoryGraph = Depends(get_repository(repo_type=BookshelfCRUDRepositoryGraph))
+):
+    try:
+        user_id_obj = UserId(id=user_id)
+        if current_user.id == user_id_obj.id:
+            bookshelves = bookshelf_repo.get_minimal_shelves_for_user(user_id=user_id_obj.id)
+            if bookshelves:
+                return JSONResponse(content={"bookshelves": jsonable_encoder(bookshelves)})
+
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
 @router.get("/currently_reading/{user_id}/preview",
             name="bookshelf:currently_reading_preview")
 async def get_user_currently_reading_preview(

@@ -2,7 +2,8 @@
 <template>
   <section class="login-wrapper">
 
-    <h1 class="text-center text-4xl font-medium mb-16">Log in</h1>
+    <!-- <h1 class="text-center text-xl mb-5 fancy text-indigo-400">Hardcoverlit</h1> -->
+    <h1 class="text-center text-4xl mb-16 text-stone-600">Log in</h1>
 
     <form
       class="grid grid-cols-1 h-80 gap-2 place-content-center px-5"

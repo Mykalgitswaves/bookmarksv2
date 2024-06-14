@@ -41,7 +41,7 @@
         <div v-if="loaded && currentView === 'edit-books'" class="mt-5">
             <BookshelfBooks 
                 v-if="books?.length"
-                :unique="'wantToRead'"
+                :unique="Bookshelves.WANT_TO_READ.prefix"
                 :is-admin="isAdmin"
                 :books="books"
                 :can-reorder="isReorderModeEnabled"
@@ -101,7 +101,7 @@ import IconEdit from '../../svg/icon-edit.vue';
 import BookshelfBooks from './BookshelfBooks.vue';
 import SearchBooks from '../createPosts/searchBooks.vue';
 import BookSearchResults from '../../create/booksearchresults.vue';
-
+import { Bookshelves } from '../../../models/bookshelves';
 
 const route = useRoute();
 const router = useRouter();

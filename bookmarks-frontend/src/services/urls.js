@@ -76,6 +76,7 @@ export const urls = {
         createBookshelf: () => (baseUrl + `api/bookshelf/create`),
         createBookshelf: () => (baseUrl + `api/bookshelves/create`),
         bookShelfTest: (bookshelf_id) => (baseUrl + `api/bookshelves/${bookshelf_id}`),
+        minimalBookshelvesForLoggedInUser: (user_id) => (baseUrl + `api/bookshelves/minimal_shelves_for_user/${user_id}`),
         getBookshelvesCreatedByUser: (user_id) => (baseUrl + `api/bookshelves/created_bookshelves/${user_id}`),
         getMemberBookshelves: (user_id) => (baseUrl + `api/bookshelves/member_bookshelves/${user_id}`),
         getExploreBookshelves: (user_id) => (baseUrl + `api/bookshelves/explore/${user_id}`),

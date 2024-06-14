@@ -4,7 +4,7 @@
         for="bs-books"
         :class="['bs-b--book', { 'is-sorting': !isSorted && currentBook, 'sort-target': isSorted }]"
         :disabled="!unique && (!isSorted && isLocked)"
-        @click="clickHandler"
+        @click="showShelfControlsClickHandler"
     >
       <div class="sort">{{ order + 1 }}</div>
 
@@ -124,9 +124,13 @@ function formatAuthorProps(authorData){
     return '';
 }
 
-function clickHandler(id){
-    if(props.unique === 'wantToRead' && !props.isEditing){
-        emit('show-book-controls-overlay', {'wantToRead': props.id});
+// Show shelf controls for each book while not editing the shelves.
+function showShelfControlsClickHandler(id){
+    if(!props.isEditing){
+        let payload = {};
+
+        payload[props.unique] = props.id;
+        emit('show-book-controls-overlay', payload);
     }
 
     emit('set-sort', id);

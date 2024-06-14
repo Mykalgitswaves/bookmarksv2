@@ -1,6 +1,7 @@
 from src.database.graph.crud.base import BaseCRUDRepositoryGraph
 from src.models.schemas.bookshelves import (
     Bookshelf, 
+    MinimalBookshelf,
     BookshelfPage,
     BookshelfPreview, 
     BookshelfBook,
@@ -263,6 +264,35 @@ class BookshelfCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
             bookshelves.append(bookshelf)
         return bookshelves
     
+    def get_minimal_shelves_for_user(self, user_id):
+        with self.driver.session() as session:
+            result = session.read_transaction(self.get_minimal_shelves_for_user_query, user_id)
+        return result
+
+    @staticmethod
+    def get_minimal_shelves_for_user_query(tx, user_id):
+        query = (
+            """
+            MATCH (b:Bookshelf)<-[r:HAS_BOOKSHELF_ACCESS]-(u:User {id: $user_id})
+            WHERE r.type IN ["owner", "contributor"]
+            RETURN b.id as id,
+                b.title as title,
+                b.visibility as visibility
+            """
+        )
+        result = tx.run(query, user_id=user_id)
+        bookshelves = []
+        for record in result:
+            bookshelf = MinimalBookshelf(
+                id=record["id"],
+                title=record["title"],
+                visibility=record["visibility"]
+            )
+            bookshelves.append(bookshelf)
+
+        return bookshelves
+    
+
     def get_bookshelves_member_of_by_user(self, user_id):
         with self.driver.session() as session:
             result = session.read_transaction(self.get_bookshelves_member_of_by_user_query, user_id)

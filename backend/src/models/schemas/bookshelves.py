@@ -444,7 +444,12 @@ class BookshelfPage(BaseModel):
     follower_count: int = 0
     contributors: set = set()
     visibility: Literal['public', 'private', 'friends']
-    
+
+class MinimalBookshelf(BaseModel):
+    id: str
+    title: str
+    visibility: Literal['public', 'private', 'friends']
+
 class Bookshelf(BaseModel):
     created_by: str
     created_by_username: str
