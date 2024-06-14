@@ -2,7 +2,11 @@
     <label
         ref="input"
         for="bs-books"
-        :class="['bs-b--book', { 'is-sorting': !isSorted && currentBook, 'sort-target': isSorted }]"
+        :class="['bs-b--book', { 
+            'is-sorting': !isSorted && currentBook,
+            'sort-target': isSorted || currentBookForOverlay.id === id,
+            }
+        ]"
         :disabled="!unique && (!isSorted && isLocked)"
         @click="showShelfControlsClickHandler"
     >
@@ -94,6 +98,9 @@ const props = defineProps({
     unique: {
         type: String,
     },
+    currentBookForOverlay: {
+        type: Object
+    }
 });
 const input = ref('input');
 const emit = defineEmits(['set-sort', 'show-book-controls-overlay', 'swapped-with']);
@@ -143,6 +150,10 @@ function shouldShowSwap() {
 
     // We dont want to show swap buttons for editing books.
     if(props.isEditing){
+        return false;
+    }
+
+    if (props.currentBookForOverlay) {
         return false;
     }
 

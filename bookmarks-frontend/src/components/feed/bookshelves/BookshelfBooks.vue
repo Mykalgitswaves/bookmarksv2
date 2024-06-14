@@ -19,6 +19,7 @@
                 :next-book="books[index + 1]"
                 :prev-book="books[index - 1]"
                 :current-book="currentBook"
+                :current-book-for-overlay="currentBookForOverlay"
                 :index="index"
                 :is-editing="isEditing"
                 :note-for-shelf="book.note_for_shelf"
@@ -45,10 +46,11 @@
     <!-- This is for flow shelves -->
     <teleport v-if="showBookControlsOverlay" to="body">
         <div class="book-controls-overlay shadow-lg" v-if="currentBookForOverlay">
-            <div class="toolbar">
-                <p><b>{{ currentBookForOverlay.name || currentBookForOverlay.title }}</b></p> 
+            <div class="flex">
+                <span class="hidden">Book controls</span>
 
-                <button     
+                <button    
+                    class="ml-auto" 
                     type="button"
                     role="close-modal"
                     @click="currentBookForOverlay = null; showBookControlsOverlay = false;"
@@ -57,8 +59,14 @@
                 </button>
             </div>
 
+            <p class=" mb-5 text-center text-xl fancy text-indigo-500">
+                {{ currentBookForOverlay.name || currentBookForOverlay.title }}
+            </p>
+            <!-- Move to shelves select -->
             <div v-if="userShelves">
-                <select name="" id="" v-model="moveToSelectedShelfId">
+                <label for="moveToShelf">Move to shelf</label>
+                
+                <select name="" id="moveToShelf" v-model="moveToSelectedShelfId">
                     <option v-for="shelf in userShelves" :key="shelf.id" value="">
                         {{ shelf.title }}
                     </option>
@@ -269,16 +277,19 @@ function showBookControlsOverlayHandler(payload){
         @media screen and (max-width: 768px) {
             --inline-offset: -50%;
         }
-        padding: 8px;
+        padding-top: 8px;
+        padding-bottom: 8px;
+        padding-left: 14px;
+        padding-right: 14px;;
         position: fixed;
         top: 50%;
         left: 50%;
         transform: translate(var(--inline-offset), -50%);
-        min-width: 300px;
-        max-width: 480px;
+        width: clamp(300px, 100%, 500px);
         min-height: 280px;
-        background-color: var(--gray-50);
+        background-color: var(--semi-transparent-surface);
         border-radius: var(--radius-sm);
+        border: 1px solid var(--stone-200);
     }
 
     .bookshelf-books {
