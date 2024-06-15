@@ -60,17 +60,45 @@
             </div>
 
             <p class=" mb-5 text-center text-xl fancy text-indigo-500">
-                {{ currentBookForOverlay.name || currentBookForOverlay.title }}
+                {{ currentBookForOverlay.title }}
             </p>
             <!-- Move to shelves select -->
             <div v-if="userShelves">
-                <label for="moveToShelf">Move to shelf</label>
+                <label class="select-1" for="moveToShelf">
+                    <span class="text-stone-600">Move to shelf</span>
                 
-                <select name="" id="moveToShelf" v-model="moveToSelectedShelfId">
-                    <option v-for="shelf in userShelves" :key="shelf.id" value="">
-                        {{ shelf.title }}
-                    </option>
-                </select>
+                    <select class="block w-100 mt-2" name="" id="moveToShelf" v-model="moveToSelectedShelfData.shelf">
+                        <option v-for="shelf in userShelves" :key="shelf.id" :value="shelf.id">
+                            {{ shelf.title }}
+                        </option>
+                    </select>
+                </label>
+            </div>
+
+            <div v-if="moveToSelectedShelfData.shelf === Bookshelves.CURRENTLY_READING.prefix">
+                <div class="mt-5">
+                    <label class="text-stone-600" for="currentlyReading">
+                        <b>Optional: </b>
+                        Why are you starting this book?
+                    </label>
+
+                    <textarea class="w-100 mt-2 border-2 border-indigo-200 br-input-normal input-base-padding" 
+                        name="currently_reading_textarea"
+                        id="currentlyReading"
+                        v-model="moveToSelectedShelfData.note" 
+                    />
+                </div>
+
+                <div class="mt-5 flex space-between">
+                    <button class="btn btn-submit small" type="button">
+                        Move to shelf
+                    </button>
+                    
+                    <button class="btn btn-red btn-remove icon small" type="button">
+                        <IconTrash />
+                        <span class="hidden-on-mobile">Remove from current shelf</span>
+                    </button>
+                </div>
             </div>
         </div>
     </teleport>
@@ -107,6 +135,7 @@ import { ref, computed, watch, onMounted } from 'vue';
 import { useRoute } from 'vue-router';
 import SortableBook from './SortableBook.vue';
 import IconExit from '../../svg/icon-exit.vue';
+import IconTrash from '../../svg/icon-trash.vue';
 import { db } from '../../../services/db';
 import { urls } from '../../../services/urls';
 import { Bookshelves } from '../../../models/bookshelves';
@@ -142,32 +171,40 @@ const props = defineProps({
 const route = useRoute();
 const { user } = route.params;
 const emit = defineEmits(['send-bookdata-socket', 'cancelled-reorder']);
-const userShelves = ref(null);
+const userShelves = ref([]);
 const loaded = ref(false);
 const FLOWSHELVES = [Bookshelves.WANT_TO_READ, Bookshelves.CURRENTLY_READING, Bookshelves.FINISHED_READING];
-// This runs for all unique bookshelves to grab a list of user shelves so that people can move books between shelves.
+
+
+FLOWSHELVES.filter((shelf) => (shelf.prefix !== props.unique)).forEach(
+        (shelf) => {
+        // We need to get the users visbiility for each shelf.
+        let _shelf = Bookshelves.formatFlowShelf(shelf, 'private');
+        userShelves.value.push(_shelf);
+    }
+);
+
+
 onMounted(async () => {
     await db.get(
         urls.rtc.minimalBookshelvesForLoggedInUser(user)
     ).then((res) => {
-        userShelves.value = res.bookshelves;
-        
-    /**
-     * Flow shelf permissions are created for a specific user at creation of their profiles.
-     * They are not for general use. We need to only show these options for the user's own Flow Shelves. 
-     * This function makes them selectable for our overlay
-     * */ 
-    // if (FLOWSHELVES.includes(props.unique)) {
-        FLOWSHELVES.filter((shelf) => shelf.prefix !== props.unique).forEach((shelf) => {
-            // We need to get the users visbiility for each shelf.
-            let _shelf = Bookshelves.formatFlowShelf(shelf, 'private')
-            userShelves.value.unshift(_shelf);
-        })
-    // }
-    // End of the line
-    loaded.value = true;
+        userShelves.value.push(...res.bookshelves);
+        loaded.value = true;
     });
 });
+
+
+const moveToSelectedShelfData = ref({
+    note: '', 
+    shelf: '',
+});
+
+// used for moving books to diff shelves in flow shelves.
+function setCurrentBookForOverlayOnMoveToSelectedShelfData(bookData) {
+    console.log('setting move to selected shelf data for book');
+    moveToSelectedShelfData.value.book = bookData;
+};
 
 
 // This is what will be sent via websocket over the wire.
@@ -179,21 +216,23 @@ let bookdata = {
 };
 
 const currentBook = ref(null);
-
 watch(() => props.unsetCurrentBook, (newVal) => {
     if(newVal){
         currentBook.value = null;
     }
 });
 
+
 const selectedBookToBeMoved = computed(() => 
     `#${currentBook.value?.order ?? ''} ${currentBook.value?.title}`
 );
+
 
 // Used to set the current target
 function setCurrentBook(bookData) {
     currentBook.value = props.books.find((b)=> b.id === bookData);
 }
+
 
 // early step of swap, sets currentBook.
 function setSort(bookData) {
@@ -203,6 +242,7 @@ function setSort(bookData) {
         setCurrentBook(bookData);
     }
 };
+
 
 // When someone cancels.
 function resetSort() {
@@ -221,6 +261,7 @@ function resetSort() {
     }
 };
 
+
 // Specific function for swapping to end of list.
 function swapToEndOfList() {
     bookdata = {
@@ -233,6 +274,7 @@ function swapToEndOfList() {
     emit('send-bookdata-socket', bookdata);
 }
 
+
 function swapToBeginningOfList() {
     bookdata = {
         target_id: currentBook.value.id,
@@ -243,6 +285,7 @@ function swapToBeginningOfList() {
 
     emit('send-bookdata-socket', bookdata);
 }
+
 
 // Setting up data needed for EditBookshelf's reorder function.
 function swappedWithHandler(book_data) {
@@ -256,6 +299,7 @@ function swappedWithHandler(book_data) {
     emit('send-bookdata-socket', bookdata);
 };
 
+
 /**
  * Book controls overlay functions.
  */
@@ -268,8 +312,8 @@ function showBookControlsOverlayHandler(payload){
     let id = res[0];
     if(!id) console.warn('No id found in payload');
     currentBookForOverlay.value =  props.books.find((_book) => _book.id === id);
+    setCurrentBookForOverlayOnMoveToSelectedShelfData(currentBookForOverlay.value);
 }
-
 </script>
 <style scoped lang="scss">
     .book-controls-overlay {
@@ -277,8 +321,8 @@ function showBookControlsOverlayHandler(payload){
         @media screen and (max-width: 768px) {
             --inline-offset: -50%;
         }
-        padding-top: 8px;
-        padding-bottom: 8px;
+        padding-top: 18px;
+        padding-bottom: 18px;
         padding-left: 14px;
         padding-right: 14px;;
         position: fixed;

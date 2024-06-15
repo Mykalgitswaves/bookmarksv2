@@ -90,6 +90,18 @@
     background-color: var(--red-100);
 }
 
+.btn-remove.icon {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--red-500);
+    background-color: var(--surface-primary);
+}
+
+.btn.small {
+    font-size: var(--font-sm);
+}
+
 .post-btn {
     max-width: 880px;
     display: flex;
