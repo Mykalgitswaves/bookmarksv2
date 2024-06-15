@@ -87,7 +87,7 @@
                     {{ bookShelfComponentMap[currentView.value].heading(bookshelfData?.title) }}
                 </h3>
                 
-                <div v-if="currentView.value === 'edit-books' && !isReorderModeEnabled" class="flex gap-2">
+                <div v-if="currentView.value === 'edit-books' && !isReorderModeEnabled && !isEditingModeEnabled" class="flex gap-2">
                     <button class="btn reorder-btn"
                         :disabled="books.length <= 1"
                         @click="enterReorderMode()"
