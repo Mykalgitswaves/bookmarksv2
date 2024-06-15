@@ -45,7 +45,8 @@ export const ws = {
             ws.socket = new WebSocket(urls.rtc.bookshelf(connection_address, ws.secure_token));
         } catch (error) {
             console.error('Error creating new socket:', error);
-            // Handle the error as needed, e.g., show a message to the user
+
+            // How do we want to handle this?
         }
     },
     
