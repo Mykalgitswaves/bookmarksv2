@@ -51,6 +51,8 @@ resource "aws_cloudfront_origin_access_identity" "my_oai" {
 
 
 resource "aws_cloudfront_distribution" "my_distribution" {
+  web_acl_id = "arn:aws:wafv2:us-east-1:788511695961:global/webacl/clopudfront-waf/630343c7-c3ed-4027-ad63-653743a7229f"
+
   origin {
     domain_name = "${aws_s3_bucket.front_end.bucket_regional_domain_name}"
     origin_id   = "book-prod-front-end-static-files-origin"
@@ -80,12 +82,8 @@ resource "aws_cloudfront_distribution" "my_distribution" {
     allowed_methods = ["GET", "HEAD", "OPTIONS", "PUT", "POST", "PATCH", "DELETE"]
     cached_methods  = ["GET", "HEAD"]
 
-    forwarded_values {
-      query_string = true
-      cookies {
-        forward = "all"
-      }
-    }
+    cache_policy_id = "4135ea2d-6df8-44a3-9df3-4b5a84be39ad"
+    origin_request_policy_id = "216adef6-5c7f-47e4-b989-5492eafa07d3"
 
     min_ttl     = 0
     default_ttl = 0
@@ -112,7 +110,7 @@ resource "aws_cloudfront_distribution" "my_distribution" {
       query_string = true   
 
       cookies {
-        forward = "all"
+        forward = "none"
       }
     }
 
