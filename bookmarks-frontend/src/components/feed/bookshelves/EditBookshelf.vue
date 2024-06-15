@@ -278,9 +278,9 @@ function gotToAddBooksAndCreateSocketConnection(){
  * and subscribe to the socket connection.
  */
 async function enterReorderMode(){
-    isReorderModeEnabled.value = true;
     // Probably need a way to edit this so we dont keep things open for long. Can add in an edit btn to the ux
     await ws.createNewSocketConnection(route.params.bookshelf);
+    isReorderModeEnabled.value = true;
 }
 
 // This may be tricky to lock out the ws connection, people might try and reconnect to soon after disconnecting.
