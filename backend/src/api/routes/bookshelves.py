@@ -1034,6 +1034,7 @@ async def get_bookshelf_websocket_token(
     print('New User Established Connection to Bookshelf WS. Generating unique token...')
     token = jwt_generator.generate_bookshelf_websocket_token(user_id=current_user.id, bookshelf_id=bookshelf_id)
 
+    # Return token test
     return JSONResponse(content={"token": token})
     
 

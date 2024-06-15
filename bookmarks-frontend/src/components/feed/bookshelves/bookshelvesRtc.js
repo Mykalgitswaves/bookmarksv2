@@ -36,10 +36,17 @@ export const ws = {
 
     newSocket: async (connection_address) => {
         // Get request that gets the token
-        const res = await db.get(urls.rtc.getBookshelfWsToken(connection_address));
-        ws.secure_token = res.token;
-        ws.connection_address = connection_address;
-        ws.socket = new WebSocket(urls.rtc.bookshelf(connection_address, ws.secure_token));
+        try {
+            // Get request that gets the token
+            const res = await db.get(urls.rtc.getBookshelfWsToken(connection_address));
+    
+            ws.secure_token = res.token;
+            ws.connection_address = connection_address;
+            ws.socket = new WebSocket(urls.rtc.bookshelf(connection_address, ws.secure_token));
+        } catch (error) {
+            console.error('Error creating new socket:', error);
+            // Handle the error as needed, e.g., show a message to the user
+        }
     },
     
     createNewSocketConnection: async (connection_address) => {
