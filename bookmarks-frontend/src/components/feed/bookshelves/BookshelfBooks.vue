@@ -157,13 +157,13 @@ onMounted(async () => {
      * They are not for general use. We need to only show these options for the user's own Flow Shelves. 
      * This function makes them selectable for our overlay
      * */ 
-    if (FLOWSHELVES.includes(props.unique)) {
-        FLOWSHELVES.forEach((shelf) => {
+    // if (FLOWSHELVES.includes(props.unique)) {
+        FLOWSHELVES.filter((shelf) => shelf.prefix !== props.unique).forEach((shelf) => {
             // We need to get the users visbiility for each shelf.
             let _shelf = Bookshelves.formatFlowShelf(shelf, 'private')
-            userShelves.value.push(_shelf);
+            userShelves.value.unshift(_shelf);
         })
-    }
+    // }
     // End of the line
     loaded.value = true;
     });

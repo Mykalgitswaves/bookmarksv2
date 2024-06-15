@@ -13,10 +13,10 @@ export const Bookshelves = {
     },
 
     // Used for appending the list of bookshelves to moveable bookshelves.
-    formatFlowShelf: (shelf, user_visibility)=> {
+    formatFlowShelf: (shelf, user_visibility) => {
         return {
             id: shelf.prefix,
-            name: shelf.name,
+            title: shelf.name,
             visibility: user_visibility
         }
     },

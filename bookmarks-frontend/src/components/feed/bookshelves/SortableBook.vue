@@ -4,7 +4,7 @@
         for="bs-books"
         :class="['bs-b--book', { 
             'is-sorting': !isSorted && currentBook,
-            'sort-target': isSorted || currentBookForOverlay.id === id,
+            'sort-target': isSorted || isCurrentBookOnOverlay,
             }
         ]"
         :disabled="!unique && (!isSorted && isLocked)"
@@ -110,6 +110,10 @@ const isSorted = computed(() => {
         return props.currentBook.id === props.id;
     }
 });
+
+const isCurrentBookOnOverlay = computed(() => {
+    return !!(props.currentBookForOverlay?.id === props.id)
+})
 
 function swapWith(index) {
     // Pass in an index of the book you want to swap with!
