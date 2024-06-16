@@ -2,11 +2,15 @@
 
 cd /data/bookmarksv2
 
+eval "$(ssh-agent -s)"
+
+ssh-add /root/.ssh/id_rsa
+
 git pull -r
 
 systemctl restart book.service
 
-sleep 20
+sleep 40
 
 source /data/book_env/bin/activate
 

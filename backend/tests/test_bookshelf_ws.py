@@ -128,15 +128,18 @@ class TestBookshelfWS:
         response = requests.get(f"{self.endpoint}/api/bookshelves/{bookshelf_id}", headers=headers)
         assert response.status_code == 200, "Getting Bookshelf"
 
+        # Get the websocket token
+        response = requests.get(f"{self.endpoint}/api/bookshelves/{bookshelf_id}/get_token", headers=headers)
+        assert response.status_code == 200, "Getting Websocket Token"
+        ws_token = response.json()["token"]
+
         # Connect to the websocket
-        uri = f"ws://127.0.0.1:8000/api/bookshelves/ws/{bookshelf_id}?token={self.access_token}"
+        uri = f"ws://127.0.0.1:8000/api/bookshelves/ws/{bookshelf_id}?token={ws_token}"
         async with websockets.connect(uri) as ws:
             assert ws.open, "Websocket Connection"
 
             # Receive the websocket token
             response = await ws.recv()
-            ws_token = json.loads(response)['token']
-            assert ws_token, "Websocket Token Not Received"
 
             # Send data to the server
             small_img_url = "http://books.google.com/books/content?id=_uawAAAAIAAJ&printsec=frontcover&img=1&zoom=5&imgtk=AFLRE732DLT-Q5P4M6ll9fpW5DH-Lz-FrGxwAQptgERj0vxnZYrLz57WvWzJ5k8Rr-OVQdQBOAImZNKuZQkgOgOO1HH2l5tUMj62Zngs0JbkXfsQIy3PcS_v8oHhB3XB7M0irmn4gM9g&source=gbs_api"

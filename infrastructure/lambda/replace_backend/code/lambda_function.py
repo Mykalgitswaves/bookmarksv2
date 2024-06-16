@@ -5,7 +5,7 @@ ec2 = boto3.client('ec2')
 elb = boto3.client('elbv2')
 sns = boto3.client('sns')
 
-target_group_arn = 'arn:aws:elasticloadbalancing:us-east-1:788511695961:targetgroup/backend-target-group/4f0e31fe3e1b28be'
+target_group_arn = 'arn:aws:elasticloadbalancing:us-east-1:788511695961:targetgroup/backend-target-group/24748444b1436b51'
 topic_arn = 'arn:aws:sns:us-east-1:788511695961:deployment_notification'
 
 def lambda_handler(event, context):
@@ -27,7 +27,7 @@ def lambda_handler(event, context):
         Targets=[{'Id': new_instance_id}]
     )
 
-    time.sleep(30)
+    time.sleep(150)
 
     # Check if the new instance is healthy
     response = elb.describe_target_health(TargetGroupArn=target_group_arn)

@@ -1,0 +1,59 @@
+name: Deploy Frontend
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'bookmarks-frontend/**'
+
+jobs:
+  deploy_frontend:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v2
+      with:
+        node-version: '19.7.0'
+
+    - name: Change tailwind.css path in index.html
+      run: |
+        cd bookmarks-frontend
+        echo "#!/bin/bash" > update_tailwind_path.sh
+        echo "sed -i 's|/dist/assets/tailwind.css|/assets/tailwind.css|g' ./index.html" >> update_tailwind_path.sh
+        chmod +x update_tailwind_path.sh
+        ./update_tailwind_path.sh
+
+    - name: Install dependencies
+      run: |
+        cd bookmarks-frontend
+        npm install
+
+    # - name: Run tests
+    #   run: npm test
+
+    - name: Build project
+      run: |
+        cd bookmarks-frontend
+        npm run build -- --mode production
+        npm run build:css
+
+    - name: Deploy to S3
+      run: |
+        cd bookmarks-frontend
+        aws s3 sync ./dist s3://book-prod-front-end-static-files --delete
+      env:
+        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        AWS_REGION: 'us-east-1'
+
+    - name: Invalidate CloudFront
+      run: aws cloudfront create-invalidation --distribution-id EWRREJ7Z0ZU5W --paths "/*"
+      env:
+        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        AWS_REGION: 'us-east-1'

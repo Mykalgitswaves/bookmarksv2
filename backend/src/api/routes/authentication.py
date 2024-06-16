@@ -92,6 +92,7 @@ async def login(form_data:Annotated[LoginForm, Depends()],
                 email=form_data.email, 
                 password=form_data.password
             )
+            user.email = user.email.lower()
         except ValueError as e:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
         
@@ -101,6 +102,7 @@ async def login(form_data:Annotated[LoginForm, Depends()],
         try:
             user =  UserToken(username=form_data.username, 
                               password=form_data.password)
+            user.username = user.username.lower()
         except ValueError as e:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
         

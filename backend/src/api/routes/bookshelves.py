@@ -16,6 +16,7 @@ from typing import Annotated, Optional
 import asyncio
 
 from src.securities.authorizations.verify import get_current_active_user, get_bookshelf_websocket_user, get_current_user_no_exceptions
+from src.securities.authorizations.jwt import jwt_generator
 from src.api.utils.database import get_repository
 
 from src.database.graph.crud.bookshelves import BookshelfCRUDRepositoryGraph
@@ -45,6 +46,7 @@ from src.models.schemas.bookshelves import (
 )
 from src.api.websockets.bookshelves import bookshelf_ws_manager
 from src.api.background_tasks.google_books import google_books_background_tasks
+
 
 router = fastapi.APIRouter(prefix="/bookshelves", tags=["bookshelves"])
 
@@ -1031,6 +1033,61 @@ async def quick_add_book_to_bookshelf(
             else:
                 raise HTTPException(status_code=400, detail="Failed to add book to bookshelf")
 
+@router.get("/{bookshelf_id}/get_token",
+            name="bookshelf:get_token")
+async def get_bookshelf_websocket_token(
+    bookshelf_id: str,
+    current_user: Annotated[User, Depends(get_current_active_user)],
+    bookshelf_repo: BookshelfCRUDRepositoryGraph = Depends(get_repository(repo_type=BookshelfCRUDRepositoryGraph))
+    ):
+    """
+    Get the websocket token for a bookshelf
+    """
+    if bookshelf_id not in bookshelf_ws_manager.cache:
+        if bookshelf_id.startswith("want_to_read"):
+            _bookshelf = bookshelf_repo.get_user_want_to_read_by_shelf_id(bookshelf_id=bookshelf_id)
+        elif bookshelf_id.startswith("currently_reading"):
+            _bookshelf = bookshelf_repo.get_user_currently_reading_by_shelf_id(bookshelf_id=bookshelf_id)
+        elif bookshelf_id.startswith("finished_reading"):
+            _bookshelf = bookshelf_repo.get_user_finished_reading_by_shelf_id(bookshelf_id=bookshelf_id)
+        else:
+            _bookshelf = bookshelf_repo.get_bookshelf(bookshelf_id)
+    
+        if not _bookshelf:
+            raise HTTPException(status_code=404, detail="Bookshelf not found")
+        else:
+            if current_user.id not in _bookshelf.contributors:
+                raise HTTPException(status_code=403, detail="User is not authorized to edit this bookshelf")
+
+            else:
+                if bookshelf_id not in bookshelf_ws_manager.cache:
+                    _bookshelf_dll = Bookshelf(
+                        title=_bookshelf.title,
+                        description=_bookshelf.description,
+                        created_by=_bookshelf.created_by,
+                        created_by_username=_bookshelf.created_by_username,
+                        id=_bookshelf.id,
+                        img_url=_bookshelf.img_url,
+                        members=_bookshelf.members,
+                        follower_count=_bookshelf.follower_count,
+                        contributors=_bookshelf.contributors,
+                        visibility=_bookshelf.visibility
+                    )
+                    for book in _bookshelf.books:
+                        _bookshelf_dll.add_book_to_shelf(book, current_user.id)
+                    bookshelf_ws_manager.cache[bookshelf_id] = _bookshelf_dll
+    
+    if current_user.id not in bookshelf_ws_manager.cache[bookshelf_id].contributors:
+        print("user not in contributors")
+        raise HTTPException(status_code=403, detail="User is not authorized to connect to this bookshelf")
+    
+    print('New User Established Connection to Bookshelf WS. Generating unique token...')
+    token = jwt_generator.generate_bookshelf_websocket_token(user_id=current_user.id, bookshelf_id=bookshelf_id)
+
+    # Return token test
+    return JSONResponse(content={"token": token})
+    
+
 @router.websocket('/ws/{bookshelf_id}') 
 async def bookshelf_connection(websocket: WebSocket, 
                                bookshelf_id: str,
@@ -1039,16 +1096,18 @@ async def bookshelf_connection(websocket: WebSocket,
                                user_repo: UserCRUDRepositoryGraph = Depends(get_repository(repo_type=UserCRUDRepositoryGraph)),
                                book_repo: BookCRUDRepositoryGraph = Depends(get_repository(repo_type=BookCRUDRepositoryGraph))):
     print("entered bookshelf_connection")
+    
     try:
-        current_user = await get_current_user_no_exceptions(token=token, user_repo=user_repo)
+        current_user = await get_bookshelf_websocket_user(token=token)
     except:
         await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
         return
-    # This is responsible for the initial connection to the websocket.
-    if not current_user:
-        print("user missing")
+    
+    if current_user.bookshelf_id != bookshelf_id:
+        print("bookshelf_id mismatch")
         await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
         return
+
     if bookshelf_id not in bookshelf_ws_manager.cache:
         print("bookshelf missing")
     # THIS NEEDS TO REDIRECT TO THE /api/bookshelves/{bookshelf_id} endpoint
