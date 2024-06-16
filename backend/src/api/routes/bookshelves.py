@@ -1018,14 +1018,45 @@ async def quick_add_book_to_bookshelf(
             name="bookshelf:get_token")
 async def get_bookshelf_websocket_token(
     bookshelf_id: str,
-    current_user: Annotated[User, Depends(get_current_active_user)]
+    current_user: Annotated[User, Depends(get_current_active_user)],
+    bookshelf_repo: BookshelfCRUDRepositoryGraph = Depends(get_repository(repo_type=BookshelfCRUDRepositoryGraph))
     ):
     """
     Get the websocket token for a bookshelf
     """
     if bookshelf_id not in bookshelf_ws_manager.cache:
-        print("bookshelf not in cache")
-        raise HTTPException(status_code=404, detail="Bookshelf not found")
+        if bookshelf_id.startswith("want_to_read"):
+            _bookshelf = bookshelf_repo.get_user_want_to_read_by_shelf_id(bookshelf_id=bookshelf_id)
+        elif bookshelf_id.startswith("currently_reading"):
+            _bookshelf = bookshelf_repo.get_user_currently_reading_by_shelf_id(bookshelf_id=bookshelf_id)
+        elif bookshelf_id.startswith("finished_reading"):
+            _bookshelf = bookshelf_repo.get_user_finished_reading_by_shelf_id(bookshelf_id=bookshelf_id)
+        else:
+            _bookshelf = bookshelf_repo.get_bookshelf(bookshelf_id)
+    
+        if not _bookshelf:
+            raise HTTPException(status_code=404, detail="Bookshelf not found")
+        else:
+            if current_user.id not in _bookshelf.contributors:
+                raise HTTPException(status_code=403, detail="User is not authorized to edit this bookshelf")
+
+            else:
+                if bookshelf_id not in bookshelf_ws_manager.cache:
+                    _bookshelf_dll = Bookshelf(
+                        title=_bookshelf.title,
+                        description=_bookshelf.description,
+                        created_by=_bookshelf.created_by,
+                        created_by_username=_bookshelf.created_by_username,
+                        id=_bookshelf.id,
+                        img_url=_bookshelf.img_url,
+                        members=_bookshelf.members,
+                        follower_count=_bookshelf.follower_count,
+                        contributors=_bookshelf.contributors,
+                        visibility=_bookshelf.visibility
+                    )
+                    for book in _bookshelf.books:
+                        _bookshelf_dll.add_book_to_shelf(book, current_user.id)
+                    bookshelf_ws_manager.cache[bookshelf_id] = _bookshelf_dll
     
     if current_user.id not in bookshelf_ws_manager.cache[bookshelf_id].contributors:
         print("user not in contributors")
