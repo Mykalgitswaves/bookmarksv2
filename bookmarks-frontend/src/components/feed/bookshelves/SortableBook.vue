@@ -41,7 +41,7 @@
       type="button"
       @click="swapWith(index)"
     >
-      {{ index }}
+      {{ currentBook?.order > order ? order + 2 : order + 1  }}
     </button>
     
     <button v-if="shouldShowBookToolbar"
@@ -141,7 +141,6 @@ function showShelfControlsClickHandler(){
         payload[props.unique] = props.id;
         emit('show-book-controls-overlay', payload);
     }
-    console.log(props.id)
     emit('set-sort', props.id);
 }
 

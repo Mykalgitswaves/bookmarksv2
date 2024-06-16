@@ -61,13 +61,12 @@
                 :can-reorder="isEditingModeEnabled.value"
                 :is-editing="isEditingModeEnabled.value"    
                 :is-reordering="isReordering"
-                :unset-current-book="Bookshelves.unsetKey"
+                :unset-current-book="wantToReadUnsetKey"
                 @send-bookdata-socket="
                     (bookdata) => reorder_books(bookdata)
                 "
                 @removed-book="(removed_book_id) => remove_book(removed_book_id)"
-                @cancelled-reorder="cancelledReorder"
-                @cancelled-edit=cancelledEdit
+                @cancelled-edit="Bookshelves.exitEditingMode(isEditingModeEnabled)"
             />
 
             <div v-else>
@@ -105,10 +104,14 @@
         </div>
     </section>
 
+    <!-- Errors -->
+    <Transition name="content">
+        <ErrorToast v-if="error.isShowing" :message="error.message" :refresh="true"/>
+    </Transition>
     <div class="mobile-menu-spacer sm:hidden"></div>
 </template>
 <script setup>
-import { onMounted, ref, toRaw} from 'vue';
+import { onMounted, ref, toRaw, onBeforeUnmount} from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { getWantToReadshelfPromise, addBook } from './wantToRead.js';
 import { goToBookshelfSettingsPage } from '../bookshelves/bookshelvesRtc';
@@ -119,7 +122,7 @@ import BookshelfBooks from './BookshelfBooks.vue';
 import SearchBooks from '../createPosts/searchBooks.vue';
 import BookSearchResults from '../../create/booksearchresults.vue';
 import { Bookshelves } from '../../../models/bookshelves';
-import { ws } from '../bookshelves/bookshelvesRtc'
+import { ws, removeWsEventListener } from '../bookshelves/bookshelvesRtc'
 
 const route = useRoute();
 const router = useRouter();
@@ -133,6 +136,12 @@ const currentBook = ref(null);
 const isEditingModeEnabled = ref({value: false});
 // All bookshelves need isReordering
 const isReordering = ref(false);
+let wantToReadUnsetKey = 0;
+
+const error = ref({
+    message: '',
+    isShowing: false
+});
 
 onMounted(async() => {
     const wantToReadShelfPromise = await getWantToReadshelfPromise(user);
@@ -142,6 +151,26 @@ onMounted(async() => {
         isAdmin.value = !!wantToReadShelf.bookshelf.created_by_current_user;
         loaded.value = true;
     });
+});
+
+document.addEventListener('ws-loaded-data', (e) => {
+    console.log('ws data has arrived', ws.books, e)
+    // Grab the last added book to the shelf!
+    books.value = ws.books;
+});
+
+document.addEventListener('ws-connection-error', (e) => {
+    error.value.message = e.detail.message;
+    error.value.isShowing = true;
+    // Hide toast manually after three seconds.
+    setTimeout(() => {
+        error.value.isShowing = false;
+    }, 5000);
+
+    if(ws.socket.readyState === 3) {
+        console.log('socket is closed, reconnecting');
+        ws.createNewSocketConnection(route.params.bookshelf);
+    }
 });
 
 function setCurrentBook(book) {
@@ -176,13 +205,26 @@ async function addBookHandler(book) {
 // #TODO: Fix fix fix please please please. @kylearbide
 function reorder_books(bookData) {
     isReordering.value = true;
+    console.log(bookData, 'book data dude')
     bookData.type = 'reorder';
     // Send data to server
     ws.sendData(bookData);
     isReordering.value = false;
     // Forget what this is used for.
-    Bookshelves.unsetKey++;
+    wantToReadUnsetKey += 1;
 }
+
+// Need this for regular navigation.
+onBeforeUnmount(() => {
+    ws.unsubscribeFromSocketConnection();
+    removeWsEventListener();
+});
+
+// Need to send close frame for websocket
+window.onbeforeunload = () => {
+    ws.unsubscribeFromSocketConnection();
+    removeWsEventListener();
+};
 </script>
 <style scoped>
 .add-book-note {

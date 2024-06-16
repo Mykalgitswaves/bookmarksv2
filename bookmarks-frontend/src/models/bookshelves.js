@@ -35,4 +35,9 @@ export const Bookshelves = {
             isEditingValue.value = true;
         });
     },
+
+    exitEditingMode(isEditingValue) {
+        ws.unsubscribeFromSocketConnection()
+        isEditingValue.value = false;
+    }
 }

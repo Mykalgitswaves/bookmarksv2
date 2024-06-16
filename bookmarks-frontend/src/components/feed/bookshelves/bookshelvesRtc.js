@@ -73,7 +73,7 @@ export const ws = {
                     console.log('unlocked', data);
                     ws.current_state = 'unlocked';
                     // make sure we have bookshelves saved 
-                    if(data.data.length){
+                    if (data.data.length) {
                         ws.books = data.data;
                         // Used to reload data.
                         document.dispatchEvent(wsDataLoaded);

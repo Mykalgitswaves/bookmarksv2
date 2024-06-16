@@ -1564,7 +1564,7 @@ class BookshelfCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
     def update_books_in_bookshelf_query(tx, books, bookshelf_id):
         query = (
             """
-            MATCH (b:Bookshelf {id: $bookshelf_id})
+            MATCH (b {id: $bookshelf_id})
             SET b.books = $books, b.last_edited_date = datetime()
             RETURN b.id as id
             """

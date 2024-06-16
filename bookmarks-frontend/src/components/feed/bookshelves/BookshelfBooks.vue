@@ -2,7 +2,7 @@
     <ul class="bookshelf-books" ref="books" v-if="books.length">
         <li class="bs-b-wrapper">
             <button
-                v-if="(currentBook && currentBook.id !== books[0].id) && !isEditing"
+                v-if="currentBook && (currentBook?.id !== books[0].id) && isEditing"
                 class="swap-btn-target"
                 type="button"
                 @click="swapToBeginningOfList()"
@@ -34,7 +34,7 @@
         <!-- For swapping to end of the list. -->
         <li class="bs-b-wrapper">
             <button
-                v-if="(currentBook && currentBook.id !== books[books.length - 1].id) && !isEditing"
+                v-if="(currentBook && currentBook.id !== books[books.length - 1].id) && isEditing"
                 class="swap-btn-target"
                 type="button"
                 @click="swapToEndOfList()"
@@ -316,11 +316,8 @@ function resetSort() {
         next_book_id: null,
         author_id: user
     };
-    if(props.canReorder){
-        emit('cancelled-reorder')
-    } else if (props.isEditing){
-        emit('cancelled-edit')
-    }
+    
+    emit('cancelled-edit')
 };
 
 
@@ -369,12 +366,14 @@ const currentBookForOverlay = ref(null);
 const showBookControlsOverlay = ref(false);
 // ------------------------------
 function showBookControlsOverlayHandler(payload){
-    showBookControlsOverlay.value = true;
-    let res = Object.values(payload)
-    let id = res[0];
-    if(!id) console.warn('No id found in payload');
-    currentBookForOverlay.value =  props.books.find((_book) => _book.id === id);
-    setCurrentBookForOverlayOnMoveToSelectedShelfData(currentBookForOverlay.value);
+    if (!props.isEditing) {
+        showBookControlsOverlay.value = true;
+        let res = Object.values(payload)
+        let id = res[0];
+        if(!id) console.warn('No id found in payload');
+        currentBookForOverlay.value =  props.books.find((_book) => _book.id === id);
+        setCurrentBookForOverlayOnMoveToSelectedShelfData(currentBookForOverlay.value);
+    }
 }
 </script>
 <style scoped lang="scss">
@@ -391,7 +390,7 @@ function showBookControlsOverlayHandler(payload){
         top: 50%;
         left: 50%;
         transform: translate(var(--inline-offset), -50%);
-        width: clamp(300px, 100%, 800px);
+        width: clamp(300px, 90%, 800px);
         min-height: 280px;
         background-color: var(--semi-transparent-surface);
         border-radius: var(--radius-sm);
