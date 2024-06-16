@@ -99,6 +99,7 @@ export const urls = {
         // ⚠️⚠️⚠️ Danger zone ⚠️⚠️⚠️.
         deleteBookshelf: (bookshelf_id) => (baseUrl + `api/bookshelves/${bookshelf_id}/delete`),
         quickAddBook: (bookshelf_id) => (baseUrl + `api/bookshelves/quick_add/${bookshelf_id}`),
+        getBookshelfWsToken: (bookshelf_id) => (baseUrl + `api/bookshelves/${bookshelf_id}/get_token`),
     },
 }
 
