@@ -25,7 +25,7 @@ export const removeWsEventListener = () => {
 }
 
 export const ws = {
-    client: getCookieByParam(['token']),
+    // client: getCookieByParam(['token']),
     socket: null, // Initialize socket variable
     books: [],
     secure_token: null,
@@ -35,13 +35,24 @@ export const ws = {
     // fastapi can help us with some parralellization issues.
 
     newSocket: async (connection_address) => {
-        ws.connection_address = connection_address;
-        ws.socket = new WebSocket(urls.rtc.bookshelf(connection_address, ws.client)); // Assign the socket to ws.socket
+        // Get request that gets the token
+        try {
+            // Get request that gets the token
+            const res = await db.get(urls.rtc.getBookshelfWsToken(connection_address));
+    
+            ws.secure_token = res.token;
+            ws.connection_address = connection_address;
+            ws.socket = new WebSocket(urls.rtc.bookshelf(connection_address, ws.secure_token));
+        } catch (error) {
+            console.error('Error creating new socket:', error);
+
+            // How do we want to handle this?
+        }
     },
     
     createNewSocketConnection: async (connection_address) => {
         if (!ws.socket) {
-            ws.newSocket(connection_address); // Create a new socket if it doesn't exist or if it's closed
+            await ws.newSocket(connection_address); // Create a new socket if it doesn't exist or if it's closed
         
             ws.socket.onopen = (e) => { 
                 console.log('Socket opened at', ws.socket, e)
@@ -49,9 +60,9 @@ export const ws = {
 
             ws.socket.onmessage = (e) => {
                 const data = JSON.parse(e.data);
-                if(!ws.secure_token && data?.token){
-                    ws.secure_token = data.token;
-                }
+                // if(!ws.secure_token && data?.token){
+                //     ws.secure_token = data.token;
+                // }
                 // cases.
                 if(data?.state === 'locked'){
                     console.log('locked while reordering', data);
