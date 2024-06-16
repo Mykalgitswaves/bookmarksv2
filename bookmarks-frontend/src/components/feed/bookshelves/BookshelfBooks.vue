@@ -42,15 +42,17 @@
         </li>
     </ul>
 
-
+    <!-- ------------------------------------------------- -->
     <!-- This is for flow shelves -->
     <teleport v-if="showBookControlsOverlay" to="body">
-        <div class="book-controls-overlay shadow-lg" v-if="currentBookForOverlay">
+        <div class="book-controls-overlay shadow-lg" 
+            v-if="currentBookForOverlay"
+        >
             <div class="flex">
                 <span class="hidden">Book controls</span>
 
                 <button    
-                    class="ml-auto" 
+                    class="btn btn-ghost pl-0 pr-0 pt-0 pb-0 ml-auto" 
                     type="button"
                     role="close-modal"
                     @click="currentBookForOverlay = null; showBookControlsOverlay = false;"
@@ -65,7 +67,7 @@
             <!-- Move to shelves select -->
             <div v-if="userShelves">
                 <label class="select-1" for="moveToShelf">
-                    <span class="text-stone-600">Move to shelf</span>
+                    <span class="text-stone-600 bold">Move to shelf</span>
                 
                     <select class="block w-100 mt-2" name="" id="moveToShelf" v-model="moveToSelectedShelfData.shelf">
                         <option v-for="shelf in userShelves" :key="shelf.id" :value="shelf.id">
@@ -74,35 +76,58 @@
                     </select>
                 </label>
             </div>
-
+            <!-- Move to currently reading code -->
             <div v-if="moveToSelectedShelfData.shelf === Bookshelves.CURRENTLY_READING.prefix">
                 <div class="mt-5">
                     <label class="text-stone-600" for="currentlyReading">
                         <b>Optional: </b>
                         Why are you starting this book?
                     </label>
-
-                    <textarea class="w-100 mt-2 border-2 border-indigo-200 br-input-normal input-base-padding" 
-                        name="currently_reading_textarea"
+                    
+                    <textarea class="w-100 mt-2 border-2 border-indigo-200 br-input-normal input-base-padding min-height-textarea" 
+                        :ref="(el) => (currentlyReadingTextArea = el)"
+                        :style="{ 'height':  heights[Bookshelves.CURRENTLY_READING.prefix] + 'px' }"
+                        :name="Bookshelves.CURRENTLY_READING.prefix"
                         id="currentlyReading"
                         v-model="moveToSelectedShelfData.note" 
+                        @input="throttledScrollHeightForTextArea(currentlyReadingTextArea)"
                     />
                 </div>
 
-                <div class="mt-5 flex space-between">
+                <div class="mt-5  place-content-center">
                     <button class="btn btn-submit small" type="button">
                         Move to shelf
                     </button>
                     
-                    <button class="btn btn-red btn-remove icon small" type="button">
-                        <IconTrash />
-                        <span class="hidden-on-mobile">Remove from current shelf</span>
+                    <label class="flex items-center gap-2 mt-5" for="removeFromCurrentShelf">
+                        <input type="checkbox" v-model="moveToSelectedShelfData.isRemovingFromCurrentShelf">
+                        <span class="text-sm text-stone-500">Remove this book from the current shelf</span>
+                    </label>
+                </div>
+            </div>
+            <div v-else-if="moveToSelectedShelfData.shelf === Bookshelves.FINISHED_READING.prefix">
+                <div class="mt-5 place-content-center">
+                    <button class="btn btn-submit small" type="button">
+                        Move to shelf
+                    </button>
+                    
+                    <label class="flex items-center gap-2 mt-5" for="removeFromCurrentShelf">
+                        <input type="checkbox" v-model="moveToSelectedShelfData.isRemovingFromCurrentShelf">
+                        <span class="text-sm text-stone-500">Remove this book from the current shelf</span>
+                    </label>
+                </div>
+            </div>
+            <div v-else>
+                <div class="mt-5 place-content-center">
+                    <button class="btn btn-submit small" type="button">
+                        Move to shelf
                     </button>
                 </div>
             </div>
         </div>
     </teleport>
     <!-- endFlowShelves -->
+    <!-- ------------------------------------------------- -->
 
     <!-- Regular shelves -->
     <teleport v-if="currentBook !== null || canReorder || isEditing" to="body">
@@ -116,9 +141,7 @@
             </div>
 
             <h3 v-else>
-                <span v-if="canReorder">Click on a book to reorder</span> 
-
-                <span v-if="isEditing">Click on a book to edit</span> 
+                <span>Click on a book to edit</span> 
             </h3>
 
             <div class="sorting-footer-controls">
@@ -139,6 +162,7 @@ import IconTrash from '../../svg/icon-trash.vue';
 import { db } from '../../../services/db';
 import { urls } from '../../../services/urls';
 import { Bookshelves } from '../../../models/bookshelves';
+import { helpersCtrl } from '../../../services/helpers';
 
 const props = defineProps({
     books: {
@@ -174,7 +198,7 @@ const emit = defineEmits(['send-bookdata-socket', 'cancelled-reorder']);
 const userShelves = ref([]);
 const loaded = ref(false);
 const FLOWSHELVES = [Bookshelves.WANT_TO_READ, Bookshelves.CURRENTLY_READING, Bookshelves.FINISHED_READING];
-
+const currentlyReadingTextArea = ref(null);
 
 FLOWSHELVES.filter((shelf) => (shelf.prefix !== props.unique)).forEach(
         (shelf) => {
@@ -183,7 +207,6 @@ FLOWSHELVES.filter((shelf) => (shelf.prefix !== props.unique)).forEach(
         userShelves.value.push(_shelf);
     }
 );
-
 
 onMounted(async () => {
     await db.get(
@@ -198,13 +221,51 @@ onMounted(async () => {
 const moveToSelectedShelfData = ref({
     note: '', 
     shelf: '',
+    isRemovingFromCurrentShelf: false,
 });
+//  Two defaults for whether a shelf is WANT TO READ or CURRENTLY READING.
+if (props.unique === Bookshelves.WANT_TO_READ.prefix) {
+    moveToSelectedShelfData.value.shelf = Bookshelves.CURRENTLY_READING.prefix;
+}
 
-// used for moving books to diff shelves in flow shelves.
+if (props.unique === Bookshelves.CURRENTLY_READING.prefix) {
+    moveToSelectedShelfData.value.shelf = Bookshelves.FINISHED_READING.prefix;
+}
+
+// Used for moving books to diff shelves in flow shelves.
 function setCurrentBookForOverlayOnMoveToSelectedShelfData(bookData) {
     console.log('setting move to selected shelf data for book');
     moveToSelectedShelfData.value.book = bookData;
 };
+
+
+// ------------------------------
+// For getting height of the textarea.
+const { debounce } = helpersCtrl;
+const heights = ref({});
+
+// Defaults for heights
+heights.value[Bookshelves.CURRENTLY_READING.prefix] = 82;
+heights.value[Bookshelves.FINISHED_READING.prefix] = 82;
+heights.value[Bookshelves.WANT_TO_READ.prefix] = 82;
+
+function generatedHeightForTextArea(refEl) {
+    if (refEl.name === Bookshelves.CURRENTLY_READING.prefix) {
+        heights.value[Bookshelves.CURRENTLY_READING.prefix] = refEl.scrollHeight;
+    } 
+
+    if (refEl.name === Bookshelves.FINISHED_READING.prefix) {
+        heights.value[Bookshelves.FINISHED_READING.prefix] = refEl.scrollHeight;
+    }
+
+    if (refEl.name === Bookshelves.WANT_TO_READ.prefix) {
+        heights.value[Bookshelves.WANT_TO_READ.prefix] = refEl.scrollHeight;
+    }
+}
+
+const throttledScrollHeightForTextArea = debounce(generatedHeightForTextArea, 200, false);
+// End height functions
+// ------------------------------
 
 
 // This is what will be sent via websocket over the wire.
@@ -237,6 +298,7 @@ function setCurrentBook(bookData) {
 // early step of swap, sets currentBook.
 function setSort(bookData) {
     if(props.canReorder || props.isEditing){
+        console.log('here dude', bookData)
         console.assert(bookData !== (null || undefined));
         bookdata.target_id = bookData;
         setCurrentBook(bookData);
@@ -329,7 +391,7 @@ function showBookControlsOverlayHandler(payload){
         top: 50%;
         left: 50%;
         transform: translate(var(--inline-offset), -50%);
-        width: clamp(300px, 100%, 500px);
+        width: clamp(300px, 100%, 800px);
         min-height: 280px;
         background-color: var(--semi-transparent-surface);
         border-radius: var(--radius-sm);

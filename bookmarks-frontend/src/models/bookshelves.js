@@ -1,3 +1,5 @@
+import { ws } from "../components/feed/bookshelves/bookshelvesRtc";
+
 export const Bookshelves = {
     WANT_TO_READ: {
         prefix: "want_to_read",
@@ -26,5 +28,11 @@ export const Bookshelves = {
         await db.put(urls.rtc.quickAddBook(shelf_id), book_object).then((res) => {
             return res;
         });
-    }
+    },
+
+    async enterEditingMode(bookshelf, isEditingValue) {
+        await ws.createNewSocketConnection(bookshelf).then(() => {
+            isEditingValue.value = true;
+        });
+    },
 }

@@ -172,3 +172,15 @@
   .br-input-normal {
     border-radius: 4px;
   }
+
+  .min-height-textarea {
+    min-height: 52px;
+  }
+
+
+  .pblock-sm {
+    padding-left: var(--spacing-xs) !important;
+    padding-right: var(--spacing-xs) !important;
+  }
+
+  

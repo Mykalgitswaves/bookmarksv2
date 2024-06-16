@@ -17,23 +17,37 @@
         </div>
 
         <div class="bookshelf-top-toolbar">
-            <div class="mt-2 flex">
+            <div class="mt-2 flex w-100">
                 <!-- v-if="isAdmin" -->
+                <div class="w-80"> 
+                    <button
+                        type="button"
+                        class="btn add-readers-btn"
+                        :class="{'active': currentView === 'edit-books'}"
+                        @click="currentView = 'edit-books'"
+                    >
+                        View bookshelf
+                    </button>
+
+                    <button 
+                        type="button"
+                        class="btn add-readers-btn ml-5"
+                        :class="{'active': currentView === 'add-books'}"
+                        @click="currentView = 'add-books'"
+                    >
+                        Add books to shelf
+                    </button>
+                </div>
+
                 <button
                     type="button"
-                    class="btn add-readers-btn"
-                    @click="currentView = 'edit-books'"
+                    class="btn btn-ghost btn-icon pb-0 pblock-sm pt-0 ml-auto whitespace-nowrap"
+                    @click="Bookshelves.enterEditingMode(route.params.bookshelf, isEditingModeEnabled)"
                 >
-                    Edit books
-                </button>
-
-                <button 
-                    type="button"
-                    class="btn add-readers-btn ml-5"
-                    @click="currentView = 'add-books'"
-                >
-                    Add books
-                </button>
+                    <IconEdit />
+                    <span class="hidden-on-mobile text-sm">Edit books</span>
+                </button>  
+                
             </div>
         </div>
 
@@ -44,10 +58,13 @@
                 :unique="Bookshelves.WANT_TO_READ.prefix"
                 :is-admin="isAdmin"
                 :books="books"
-                :can-reorder="isReorderModeEnabled"
-                :is-editing="isEditingModeEnabled"    
+                :can-reorder="isEditingModeEnabled.value"
+                :is-editing="isEditingModeEnabled.value"    
                 :is-reordering="isReordering"
-                :unset-current-book="unsetKey"
+                :unset-current-book="Bookshelves.unsetKey"
+                @send-bookdata-socket="
+                    (bookdata) => reorder_books(bookdata)
+                "
                 @removed-book="(removed_book_id) => remove_book(removed_book_id)"
                 @cancelled-reorder="cancelledReorder"
                 @cancelled-edit=cancelledEdit
@@ -102,6 +119,7 @@ import BookshelfBooks from './BookshelfBooks.vue';
 import SearchBooks from '../createPosts/searchBooks.vue';
 import BookSearchResults from '../../create/booksearchresults.vue';
 import { Bookshelves } from '../../../models/bookshelves';
+import { ws } from '../bookshelves/bookshelvesRtc'
 
 const route = useRoute();
 const router = useRouter();
@@ -112,6 +130,9 @@ const currentView = ref('edit-books');
 const loaded = ref(false);
 const books = ref([]);
 const currentBook = ref(null);
+const isEditingModeEnabled = ref({value: false});
+// All bookshelves need isReordering
+const isReordering = ref(false);
 
 onMounted(async() => {
     const wantToReadShelfPromise = await getWantToReadshelfPromise(user);
@@ -149,6 +170,18 @@ async function addBookHandler(book) {
         currentBook.value = null;
         currentView.value = 'edit-books';
     });
+}
+
+//  Used to send and reorder data!
+// #TODO: Fix fix fix please please please. @kylearbide
+function reorder_books(bookData) {
+    isReordering.value = true;
+    bookData.type = 'reorder';
+    // Send data to server
+    ws.sendData(bookData);
+    isReordering.value = false;
+    // Forget what this is used for.
+    Bookshelves.unsetKey++;
 }
 </script>
 <style scoped>

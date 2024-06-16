@@ -3,11 +3,11 @@
         ref="input"
         for="bs-books"
         :class="['bs-b--book', { 
-            'is-sorting': !isSorted && currentBook,
-            'sort-target': isSorted || isCurrentBookOnOverlay,
+            'is-sorting': !isSorting && currentBook,
+            'sort-target': isSorting || isCurrentBookOnOverlay,
             }
         ]"
-        :disabled="!unique && (!isSorted && isLocked)"
+        :disabled="!unique && (!isSorting && isLocked)"
         @click="showShelfControlsClickHandler"
     >
       <div class="sort">{{ order + 1 }}</div>
@@ -24,10 +24,10 @@
         id="bs-books"
         :name="`bs-books-${id}`"
         type="radio"
-        :disabled="(!isSorted && isLocked)"
+        :disabled="(!isSorting && isLocked)"
         :value="name"
-        :checked="isSorted"
-        @click="emit('set-sort', id)"
+        :checked="isSorting"
+        @click="emit('set-sort', props.id)"
       />
     </label>
 
@@ -46,13 +46,11 @@
     
     <button v-if="shouldShowBookToolbar"
         type="button"
-        class="remove-btn-button"
+        class="btn btn-remove icon ml-auto"
         @click="$emit('removed-book', props.id)"
     >
-        <span class="flex items-center gap-2 text-stone-800">
             Remove from shelf
             <IconDelete />
-        </span>
     </button>
 </template>
 <script setup>
@@ -105,7 +103,7 @@ const props = defineProps({
 const input = ref('input');
 const emit = defineEmits(['set-sort', 'show-book-controls-overlay', 'swapped-with']);
 
-const isSorted = computed(() => {
+const isSorting = computed(() => {
     if(props.currentBook){
         return props.currentBook.id === props.id;
     }
@@ -136,15 +134,15 @@ function formatAuthorProps(authorData){
 }
 
 // Show shelf controls for each book while not editing the shelves.
-function showShelfControlsClickHandler(id){
+function showShelfControlsClickHandler(){
     if(!props.isEditing){
         let payload = {};
 
         payload[props.unique] = props.id;
         emit('show-book-controls-overlay', payload);
     }
-
-    emit('set-sort', id);
+    console.log(props.id)
+    emit('set-sort', props.id);
 }
 
 function shouldShowSwap() {
@@ -152,10 +150,10 @@ function shouldShowSwap() {
         return false; // If there's no current book, don't show the swap button
     }
 
-    // We dont want to show swap buttons for editing books.
-    if(props.isEditing){
-        return false;
-    }
+    // // We dont want to show swap buttons for editing books.
+    // if(props.isEditing){
+    //     return false;
+    // }
 
     if (props.currentBookForOverlay) {
         return false;
