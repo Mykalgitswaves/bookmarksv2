@@ -64,6 +64,7 @@
             <p class=" mb-5 text-center text-xl fancy text-indigo-500">
                 {{ currentBookForOverlay.title }}
             </p>
+
             <!-- Move to shelves select -->
             <div v-if="userShelves">
                 <label class="select-1" for="moveToShelf">
@@ -127,7 +128,7 @@
                 </div>
 
                 <div class="mt-5  place-content-center">
-                    <button class="btn btn-submit small" type="button" @click="moveToCurrentlyReading">
+                    <button class="btn btn-submit small" type="button" @click="moveToShelf(moveToSelectedShelfData.shelf)">
                         Move to shelf
                     </button>
                     
@@ -153,11 +154,19 @@
             </div>
 
             <!-- for everything else -->
-            <div v-if="notAFlowShelf">
+            <div v-if="!isFlowShelf">
                 <div class="mt-5 place-content-center">
-                    <button class="btn btn-submit small" type="button">
+                    <button 
+                        type="button" 
+                        class="btn btn-submit small" 
+                        @click="moveToShelf(moveToSelectedShelfData.shelf)"
+                    >
                         Move to shelf
                     </button>
+                    <label class="flex items-center gap-2 mt-5" for="removeFromCurrentShelf">
+                        <input type="checkbox" v-model="moveToSelectedShelfData.isRemovingFromCurrentShelf">
+                        <span class="text-sm text-stone-500">Remove this book from the current shelf</span>
+                    </label>
                 </div>
             </div>
         </div>
@@ -453,8 +462,12 @@ async function saveBookNoteForCurrentBook() {
         console.log(res);
     });
 }
-
-async function moveToCurrentlyReading() {
+/**
+ * @async
+ * @description: Wrapper around the Bookshelves.moveBookToShelf function.
+ * @param {*} bookshelf - bookshelf id of the shelf you want to move things to.
+ */
+async function moveToShelf(bookshelf) {
     const authors = toRaw(currentBookForOverlay.value.author_names) || toRaw(currentBookForOverlay.value.authors)
     const book = {
         title: currentBookForOverlay.value.title,
@@ -467,25 +480,24 @@ async function moveToCurrentlyReading() {
     if (moveToSelectedShelfData.value.isRemovingFromCurrentShelf) {
         currentShelf = route.params.shelf;
     }
-    
+
     try {
-        const response = await Bookshelves.moveBookToShelf(moveToSelectedShelfData.value.shelf, book, currentShelf);
+        const response = await Bookshelves.moveBookToShelf(bookshelf, book, currentShelf);
         console.log(response);
     } catch (error) {
         console.error(error);
     }
-   
 }
 // End of book controls overlay function
 // ------------------------------
 
 // For reggie shelves not flowshelves.
-const notAFlowShelf = computed(() => {
-    return !moveToSelectedShelfData.shelf === (
-        Bookshelves.FINISHED_READING.prefix || 
-        Bookshelves.CURRENTLY_READING.prefix || 
+const isFlowShelf = computed(() => {
+    return !![
+        Bookshelves.FINISHED_READING.prefix, 
+        Bookshelves.CURRENTLY_READING.prefix,
         Bookshelves.WANT_TO_READ.prefix
-    );
+    ].includes(moveToSelectedShelfData.value.shelf);
 });
 </script>
 <style scoped lang="scss">
