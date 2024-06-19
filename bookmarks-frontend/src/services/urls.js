@@ -101,6 +101,7 @@ export const urls = {
         deleteBookshelf: (bookshelf_id) => (baseUrl + `api/bookshelves/${bookshelf_id}/delete`),
         quickAddBook: (bookshelf_id) => (baseUrl + `api/bookshelves/quick_add/${bookshelf_id}`),
         getBookshelfWsToken: (bookshelf_id) => (baseUrl + `api/bookshelves/${bookshelf_id}/get_token`),
+        updateBookNoteForShelf: (bookshelf_id) => (baseUrl + `api/bookshelves/${bookshelf_id}/update_book_note`),
     },
 }
 

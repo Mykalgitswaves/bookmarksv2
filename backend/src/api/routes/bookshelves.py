@@ -464,7 +464,7 @@ async def update_book_note(request: Request,
                             current_user: Annotated[User, Depends(get_current_active_user)],
                             bookshelf_repo: BookshelfCRUDRepositoryGraph = Depends(get_repository(repo_type=BookshelfCRUDRepositoryGraph))):
     data = await request.json()
-
+    print(data)
     # Build the request data
     try:
         bookshelf = BookshelfBookNote(
@@ -1032,7 +1032,7 @@ async def quick_add_book_to_bookshelf(
                 return JSONResponse(content={"message": "Book added successfully"})
             else:
                 raise HTTPException(status_code=400, detail="Failed to add book to bookshelf")
-
+    
 @router.get("/{bookshelf_id}/get_token",
             name="bookshelf:get_token")
 async def get_bookshelf_websocket_token(

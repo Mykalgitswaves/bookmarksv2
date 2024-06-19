@@ -76,8 +76,40 @@
                     </select>
                 </label>
             </div>
-            <!-- Move to currently reading code -->
-            <div v-if="moveToSelectedShelfData.shelf === Bookshelves.CURRENTLY_READING.prefix">
+            
+            <div class="w-100" :class="{'mt-5': !editingCurrentBookNote}">
+                <button 
+                    v-if="moveToSelectedShelfData.shelf === Bookshelves.CURRENTLY_READING.prefix"
+                    type="button"
+                    class="text-stone-500 underline pl-2"
+                    @click="setOrUnsetEditingCurrentBookNote"
+                >
+                    <span v-if="!editingCurrentBookNote">Edit note for this book</span>
+                </button>
+            </div>
+
+            <div v-if="editingCurrentBookNote">
+                <textarea class="add-book-note" 
+                    id="current-book-note-for-shelf-textarea"
+                    :ref="(el) => (textAreas.wantToReadNoteTextArea = el)"
+                    name="note_for_shelf"
+                    :style="{ 'height':  heights.note_for_shelf + 'px' }"
+                    v-model="currentBookForOverlay.note_for_shelf"
+                    @input="throttledScrollHeightForTextArea(textAreas.wantToReadNoteTextArea)"
+                ></textarea>
+                <!-- Saving the note you just made -->
+                <div class="flex justify-between mt-5">
+                    <button type="button" class="btn btn-submit" @click="saveBookNoteForCurrentBook()">
+                        Save
+                    </button>
+                    <button type="button" class="btn btn-red" @click="setOrUnsetEditingCurrentBookNote">
+                        cancel
+                    </button>
+                </div>
+            </div>
+
+            <!-- Move to currently reading code and not editing current book note for shelf -->
+            <div v-if="moveToSelectedShelfData.shelf === Bookshelves.CURRENTLY_READING.prefix && !editingCurrentBookNote">
                 <div class="mt-5">
                     <label class="text-stone-600" for="currentlyReading">
                         <b>Optional: </b>
@@ -85,12 +117,12 @@
                     </label>
                     
                     <textarea class="w-100 mt-2 border-2 border-indigo-200 br-input-normal input-base-padding min-height-textarea" 
-                        :ref="(el) => (currentlyReadingTextArea = el)"
+                        :ref="(el) => (textAreas.currentlyReadingTextArea = el)"
                         :style="{ 'height':  heights[Bookshelves.CURRENTLY_READING.prefix] + 'px' }"
                         :name="Bookshelves.CURRENTLY_READING.prefix"
                         id="currentlyReading"
                         v-model="moveToSelectedShelfData.note" 
-                        @input="throttledScrollHeightForTextArea(currentlyReadingTextArea)"
+                        @input="throttledScrollHeightForTextArea(textAreas.currentlyReadingTextArea)"
                     />
                 </div>
 
@@ -105,7 +137,9 @@
                     </label>
                 </div>
             </div>
-            <div v-else-if="moveToSelectedShelfData.shelf === Bookshelves.FINISHED_READING.prefix">
+
+            <!-- Moving something to finished reading shelf -->
+            <div v-if="moveToSelectedShelfData.shelf === Bookshelves.FINISHED_READING.prefix">
                 <div class="mt-5 place-content-center">
                     <button class="btn btn-submit small" type="button">
                         Move to shelf
@@ -117,7 +151,9 @@
                     </label>
                 </div>
             </div>
-            <div v-else>
+
+            <!-- for everything else -->
+            <div v-if="notAFlowShelf">
                 <div class="mt-5 place-content-center">
                     <button class="btn btn-submit small" type="button">
                         Move to shelf
@@ -198,7 +234,6 @@ const emit = defineEmits(['send-bookdata-socket', 'cancelled-reorder']);
 const userShelves = ref([]);
 const loaded = ref(false);
 const FLOWSHELVES = [Bookshelves.WANT_TO_READ, Bookshelves.CURRENTLY_READING, Bookshelves.FINISHED_READING];
-const currentlyReadingTextArea = ref(null);
 
 FLOWSHELVES.filter((shelf) => (shelf.prefix !== props.unique)).forEach(
         (shelf) => {
@@ -238,6 +273,11 @@ function setCurrentBookForOverlayOnMoveToSelectedShelfData(bookData) {
     moveToSelectedShelfData.value.book = bookData;
 };
 
+// Default refs for the textareas we are adjusting.
+const textAreas = ref({
+    currentlyReadingTextArea: null,
+    wantToReadNoteTextArea: null,
+});
 
 // ------------------------------
 // For getting height of the textarea.
@@ -246,24 +286,39 @@ const heights = ref({});
 
 // Defaults for heights
 heights.value[Bookshelves.CURRENTLY_READING.prefix] = 82;
+heights.value.note_for_shelf = 82;
 heights.value[Bookshelves.FINISHED_READING.prefix] = 82;
 heights.value[Bookshelves.WANT_TO_READ.prefix] = 82;
 
 function generatedHeightForTextArea(refEl) {
+    // Heights should only increase, not decrease if the new height is less than the current height - don't set it.
     if (refEl.name === Bookshelves.CURRENTLY_READING.prefix) {
-        heights.value[Bookshelves.CURRENTLY_READING.prefix] = refEl.scrollHeight;
+        if (heights.value[Bookshelves.CURRENTLY_READING.prefix] > refEl.scrollHeight) {
+            heights.value[Bookshelves.CURRENTLY_READING.prefix] = refEl.scrollHeight;
+        }
     } 
 
     if (refEl.name === Bookshelves.FINISHED_READING.prefix) {
-        heights.value[Bookshelves.FINISHED_READING.prefix] = refEl.scrollHeight;
+        if (heights.value[Bookshelves.FINISHED_READING.prefix] > refEl.scrollHeight) {
+            heights.value[Bookshelves.FINISHED_READING.prefix] = refEl.scrollHeight;
+        }
     }
 
     if (refEl.name === Bookshelves.WANT_TO_READ.prefix) {
-        heights.value[Bookshelves.WANT_TO_READ.prefix] = refEl.scrollHeight;
+        if (heights.value[Bookshelves.WANT_TO_READ.prefix] > refEl.scrollHeight) {
+            heights.value[Bookshelves.WANT_TO_READ.prefix] = refEl.scrollHeight;
+        }
+    }
+
+    if(refEl.name === 'note_for_shelf') {
+        console.log(refEl.scrollHeight)
+        if (heights.value[Bookshelves.WANT_TO_READ.note_for_shelf] > refEl.scrollHeight) {
+            heights.value[Bookshelves.WANT_TO_READ.note_for_shelf] = refEl.scrollHeight;
+        }
     }
 }
 
-const throttledScrollHeightForTextArea = debounce(generatedHeightForTextArea, 200, false);
+const throttledScrollHeightForTextArea = debounce(generatedHeightForTextArea, 150, true);
 // End height functions
 // ------------------------------
 
@@ -364,6 +419,7 @@ function swappedWithHandler(book_data) {
  */
 const currentBookForOverlay = ref(null);
 const showBookControlsOverlay = ref(false);
+const editingCurrentBookNote = ref(false);
 // ------------------------------
 function showBookControlsOverlayHandler(payload){
     if (!props.isEditing) {
@@ -375,6 +431,39 @@ function showBookControlsOverlayHandler(payload){
         setCurrentBookForOverlayOnMoveToSelectedShelfData(currentBookForOverlay.value);
     }
 }
+
+function setOrUnsetEditingCurrentBookNote() {
+    if(editingCurrentBookNote.value){
+        editingCurrentBookNote.value = false;
+        heights.value.note_for_shelf = 82;
+    } else {
+        editingCurrentBookNote.value = true;
+    }
+}
+
+async function saveBookNoteForCurrentBook() {
+    let _data = {
+        book_id: currentBookForOverlay.value.id,
+        note_for_shelf: currentBookForOverlay.value.note_for_shelf,
+    };
+
+    console.log(_data);
+
+    db.put(urls.rtc.updateBookNoteForShelf(route.params.bookshelf), _data).then((res) => {
+        console.log(res);
+    });
+}
+// End of book controls overlay function
+// ------------------------------
+
+// For reggie shelves not flowshelves.
+const notAFlowShelf = computed(() => {
+    return !moveToSelectedShelfData.shelf === (
+        Bookshelves.FINISHED_READING.prefix || 
+        Bookshelves.CURRENTLY_READING.prefix || 
+        Bookshelves.WANT_TO_READ.prefix
+    );
+});
 </script>
 <style scoped lang="scss">
     .book-controls-overlay {

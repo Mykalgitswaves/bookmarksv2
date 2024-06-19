@@ -226,24 +226,3 @@ window.onbeforeunload = () => {
     removeWsEventListener();
 };
 </script>
-<style scoped>
-.add-book-note {
-    width: 100%;
-    border: none;
-    appearance: none;
-    resize: none;
-    color: var(--stone-600);
-    margin-right: 4px;
-    margin-top: 8px;
-    padding-top: 8px;
-    padding-left: 8px;
-    background-color: transparent;
-    border: 1px dotted var(--stone-200);
-    border-radius: var(--radius-sm);
-}
-
-.add-book-note:focus {
-    border-color: var(--indigo-500);
-    outline: none;
-}
-</style>
