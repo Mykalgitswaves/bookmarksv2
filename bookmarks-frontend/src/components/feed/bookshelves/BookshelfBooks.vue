@@ -127,7 +127,7 @@
                 </div>
 
                 <div class="mt-5  place-content-center">
-                    <button class="btn btn-submit small" type="button">
+                    <button class="btn btn-submit small" type="button" @click="moveToCurrentlyReading">
                         Move to shelf
                     </button>
                     
@@ -141,7 +141,7 @@
             <!-- Moving something to finished reading shelf -->
             <div v-if="moveToSelectedShelfData.shelf === Bookshelves.FINISHED_READING.prefix">
                 <div class="mt-5 place-content-center">
-                    <button class="btn btn-submit small" type="button">
+                    <button type="button" class="btn btn-submit small">
                         Move to shelf
                     </button>
                     
@@ -190,7 +190,7 @@
     <!-- End regular shelves -->
 </template>
 <script setup>
-import { ref, computed, watch, onMounted } from 'vue';
+import { ref, computed, watch, onMounted, toRaw } from 'vue';
 import { useRoute } from 'vue-router';
 import SortableBook from './SortableBook.vue';
 import IconExit from '../../svg/icon-exit.vue';
@@ -293,19 +293,19 @@ heights.value[Bookshelves.WANT_TO_READ.prefix] = 82;
 function generatedHeightForTextArea(refEl) {
     // Heights should only increase, not decrease if the new height is less than the current height - don't set it.
     if (refEl.name === Bookshelves.CURRENTLY_READING.prefix) {
-        if (heights.value[Bookshelves.CURRENTLY_READING.prefix] > refEl.scrollHeight) {
+        if (heights.value[Bookshelves.CURRENTLY_READING.prefix] < refEl.scrollHeight) {
             heights.value[Bookshelves.CURRENTLY_READING.prefix] = refEl.scrollHeight;
         }
     } 
 
     if (refEl.name === Bookshelves.FINISHED_READING.prefix) {
-        if (heights.value[Bookshelves.FINISHED_READING.prefix] > refEl.scrollHeight) {
+        if (heights.value[Bookshelves.FINISHED_READING.prefix] < refEl.scrollHeight) {
             heights.value[Bookshelves.FINISHED_READING.prefix] = refEl.scrollHeight;
         }
     }
 
     if (refEl.name === Bookshelves.WANT_TO_READ.prefix) {
-        if (heights.value[Bookshelves.WANT_TO_READ.prefix] > refEl.scrollHeight) {
+        if (heights.value[Bookshelves.WANT_TO_READ.prefix] < refEl.scrollHeight) {
             heights.value[Bookshelves.WANT_TO_READ.prefix] = refEl.scrollHeight;
         }
     }
@@ -452,6 +452,29 @@ async function saveBookNoteForCurrentBook() {
     db.put(urls.rtc.updateBookNoteForShelf(route.params.bookshelf), _data).then((res) => {
         console.log(res);
     });
+}
+
+async function moveToCurrentlyReading() {
+    const authors = toRaw(currentBookForOverlay.value.author_names) || toRaw(currentBookForOverlay.value.authors)
+    const book = {
+        title: currentBookForOverlay.value.title,
+        author_names: authors,
+        small_img_url: currentBookForOverlay.value.small_img_url,
+        id: currentBookForOverlay.value.id,
+        noteForShelf: currentBookForOverlay.value.note_for_shelf,
+    }
+    let currentShelf = '';
+    if (moveToSelectedShelfData.value.isRemovingFromCurrentShelf) {
+        currentShelf = route.params.shelf;
+    }
+    
+    try {
+        const response = await Bookshelves.moveBookToShelf(moveToSelectedShelfData.value.shelf, book, currentShelf);
+        console.log(response);
+    } catch (error) {
+        console.error(error);
+    }
+   
 }
 // End of book controls overlay function
 // ------------------------------
