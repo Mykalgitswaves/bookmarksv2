@@ -1,5 +1,20 @@
 <template>
     <section class="bookshelves-main-container">
+
+        <Bookshelves :bookshelves="[]"
+            :is_admin="true"
+            :is-unique="'currently-reading'"
+            :data-loaded="dataLoaded"
+        >
+            <template v-slot:heading>
+                <h1 class="bookshelf-wrapper-title font-medium fancy">Currently reading 
+                    <span class="text-indigo-500">
+                        {{ currentlyReading?.books?.length || 0 }} books
+                    </span>
+                </h1>
+            </template>
+        </Bookshelves>
+
         <Bookshelves :bookshelves="wantToReadBookshelf"
             :is_admin="true"
             :is-unique="'want-to-read'"
@@ -8,7 +23,7 @@
             <template v-slot:heading>
                 <h1 class="bookshelf-wrapper-title font-medium fancy">Want to read 
                     <span class="text-indigo-500">
-                        {{ wantToReadBookshelf?.books?.length }}
+                        {{ wantToReadBookshelf?.books?.length + 1 || 0 }} books
                     </span>
                 </h1>
             </template>
@@ -44,10 +59,10 @@
         </Bookshelves>
 
         <div>
-            <div class="pb-5">
+            <div>
                 <h1 class="bookshelf-wrapper-title font-medium fancy pb-5">Explore bookshelves</h1>
             </div>
-            <div class="pt-5">
+            <div>
                 <a :href="navRoutes.toBookshelfSectionPage(user, 'explore')" class="underline text-indigo-500">Find new bookshelves</a>
             </div>
         </div>
