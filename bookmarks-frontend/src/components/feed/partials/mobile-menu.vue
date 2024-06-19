@@ -1,55 +1,67 @@
 <template>
     <nav class="nav-menu">
     <button
+        ref="mobileMenuButton"
         class="btn relative" 
         type="button"
-        @click="isShowingMenu = !isShowingMenu"
+        @click="isMobileMenuShowing = !isMobileMenuShowing"
     >
         <IconMenu />
     </button>
 
-    <div id="nav_menu_sidebar" 
-        v-if="isShowingMenu" 
-        class="d_hidden nav-menu-sidebar" 
-        ref="mobileMenu"
-    >
-        <h3 class="n-m-s--header">Biblio</h3>
-        <div class="n-m-s--content">
-            <button 
-                class="n-m-s--li"
-                alt="settings"
-                @click="router.push(pathToSettings)"
-            >
-                Settings
-                <IconSettings />
-            </button>
+    <Transition name="content">
+        <div id="nav_menu_sidebar" 
+            v-show="isMobileMenuShowing" 
+            class="d_hidden nav-menu-sidebar" 
+            ref="mobileMenu"
+        >
+            <h3 class="n-m-s--header fancy">HardcoverLit</h3>
+
+            <div class="n-m-s--content">
+                <button 
+                    class="n-m-s--li fancy"
+                    alt="settings"
+                    @click="router.push(pathToSettings)"
+                >
+                    Settings
+                </button>
+            </div>
+
+            <div class="n-m-s--content">
+                <button 
+                    class="n-m-s--li fancy"
+                    alt="settings"
+                    @click="logOut"
+                >
+                    Log out
+                </button>
+            </div>
         </div>
-    </div>
+    </Transition>
 </nav> 
 </template>
 <script setup>
 import { onMounted, onUnmounted, ref, watch } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
-import IconSettings from '../../svg/icon-settings.vue';
 import IconMenu from '../../svg/icon-hmenu.vue';
-import { autoCloseElementWithRef } from  './autoclose';
+import { autoCloseElementWithRef, isMobileMenuShowing} from  './autoclose';
 const router = useRouter();
 const route = useRoute();
 const { user } = route.params;
 const pathToSettings = `/feed/${user}/settings`
 
-const isShowingMenu = ref(false);
 const mobileMenu = ref(null);
-// Handle all event listeners for clicking in and out of menu to auto close it.
+const mobileMenuButton = ref(null);
 
+// Handle all event listeners for clicking in and out of menu to auto close it.
 onMounted(() => {
-    
+    autoCloseElementWithRef([mobileMenu.value, mobileMenuButton.value]);
 });
 
-onUnmounted(() => {
-
-})
-
+function logOut() {
+    document.cookie = 'token'+'=; Max-Age=-99999999;';
+    router.push('/');
+}
 </script>
 <style scoped>
 .nav-menu {
@@ -88,7 +100,7 @@ onUnmounted(() => {
     transition: var(--transition-short);
     border-radius: var(--radius-sm);
     box-shadow: var(--shadow-lg);
-    overflow-y: clip;
+    overflow: clip;
 }
 
 .n-m-s--header {
@@ -96,7 +108,7 @@ onUnmounted(() => {
     padding: var(--padding-sm);
     padding-left: calc(var(--padding-sm) + var(--margin-shim-sm));
     font-size: var(--font-xl);
-    font-weight: 600;
+    font-weight: 400;
     color: var(--stone-600);
 }
 
