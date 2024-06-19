@@ -1,13 +1,21 @@
 <template>
     <nav class="nav-menu">
-    <button
-        ref="mobileMenuButton"
-        class="btn relative" 
-        type="button"
-        @click="isMobileMenuShowing = !isMobileMenuShowing"
-    >
-        <IconMenu />
-    </button>
+        <div class="flex space-between w-100 items-bottom">
+            <!-- We need to get our marketing site up and running tbd -->
+            <!-- href="https://www.hardcoverlit.com/home" -->
+            <!-- Switch this to an a tag finally -->
+            <h4 class="text-stone-600 fancy pt-2">HardcoverLit</h4>
+            
+            <button
+            ref="mobileMenuButton"
+            class="btn relative" 
+            type="button"
+            :class="{'active': isMobileMenuShowing}"
+            @click="isMobileMenuShowing = !isMobileMenuShowing"
+            >
+                <IconMenu />
+            </button>
+        </div>
 
     <Transition name="content">
         <div id="nav_menu_sidebar" 
@@ -86,6 +94,10 @@ function logOut() {
     height: 40px;
 }
 
+.btn.active {
+    background-color: var(--indigo-100);
+}
+
 .btn:hover {
     background-color: var(--gray-200);
     transform: scale(1.05);
@@ -101,6 +113,7 @@ function logOut() {
     border-radius: var(--radius-sm);
     box-shadow: var(--shadow-lg);
     overflow: clip;
+    border: 1px solid var(--indigo-200);
 }
 
 .n-m-s--header {
@@ -126,7 +139,7 @@ function logOut() {
 }
 
 .n-m-s--li:hover {
-    background-color: var(--stone-300);
+    background-color: var(--indigo-100);
     color: var(--stone-800);
 }
 </style>
