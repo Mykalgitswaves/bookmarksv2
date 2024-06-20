@@ -424,7 +424,7 @@ class BookshelfPreview(BaseModel):
     description: str
     books_count: int
     book_ids: list[str]
-    book_titles: list[str]
+    book_titles: list[str] | None
     img_url: str | None = None
     book_img_urls: list[str]
     visibility: Literal['public', 'private', 'friends']
