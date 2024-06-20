@@ -3,7 +3,7 @@
 
     <CurrentlyReadingShelf v-if="isCurrentlyReading" />
 
-    <EditBookshelf v-else />
+    <EditBookshelf v-if="!isWantToRead && !isCurrentlyReading" />
 
 </template>
 <script setup>
