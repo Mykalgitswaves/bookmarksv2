@@ -1,21 +1,24 @@
 <template>
     <h1 class="work-feed-heading">Currently Reading</h1>
 
-    <div class="currently-reading">
-        <div class="currently-reading-book">
-            <img class="book-img loading"/>
+    <!-- If loaded -->
+    <div class="currently-reading" v-if="currentlyReadingBooks?.length">
+        <div class="currently-reading-book" 
+            v-for="book in currentlyReadingBooks" 
+            :key="book.id"    
+        >
+            <img class="book-img" :src="book.small_img_url"/>
 
+            <h4 class="book-title loading">{{  book.title }}</h4>
             <div class="book-metadata">
-                <div>
-                    <h4 class="book-title loading">Book title</h4>
-
-                    <p class="progress">70 / 140</p>
-                </div>
-
-                <button>update</button>
+                <p class="progress">70 / 140</p>
+                <button type="button">update</button>
             </div>
         </div>
+    </div>
 
+    <!-- IF loading -->
+    <div class="currently-reading" v-else>
         <div class="currently-reading-book loading">
             <img class="book-img loading"/>
 
@@ -48,6 +51,34 @@
     </div>
 </template>
 <script setup>
+import { db } from '../../services/db';
+import { urls } from '../../services/urls';
+import { ref, onMounted, computed } from 'vue';
+import { useRoute } from 'vue-router';
+
+const route = useRoute();
+const { user } = route.params;
+const data = ref(null);
+
+onMounted(async() => {
+    db.get(urls.rtc.getCurrentlyReadingPreview(user)).then((res) => {
+        data.value = res.bookshelf;
+    });
+});
+
+const currentlyReadingBooks = computed(() => {
+    if (!data.value) return [];
+    let books = []; 
+    for(let i = 0; i < data.value.books_count; i++) {
+        let book = {
+            small_img_url: data.value.book_img_urls[i],
+            book_id: data.value.book_ids[i],
+            title: data.value.book_titles[i],
+        }
+        books.push(book);
+    }
+    return books;
+})
 
 </script>
 <style scoped lang="scss">
@@ -90,14 +121,16 @@
                 font-weight: 500;
             }
         }
+
         .book-img {
             border-radius: var(--radius-md);
+            width: 100%;
+            height: 240px;
+            object-fit: scale-down;
+            margin-bottom: 8px;
 
             &.loading{  
                 background-color: var(--stone-200);
-                width: 100%;
-                height: 240px;
-                margin-bottom: 8px;
             }
         }
 

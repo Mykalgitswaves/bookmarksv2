@@ -69,7 +69,29 @@ export const Bookshelves = {
         } catch (error) {
             console.error(error);
         }
+    },
+
+    async addBookHandler(book, booksRef, quickAddShelfName) {
+        book = typeof book === 'proxy' ? toRaw(book) : book;
+        
+        let bookObject = {
+            title: book.title,
+            id: book.id,
+            small_img_url: book.small_img_url,
+            author_names: book.author_names || book.authors,
+            note_for_shelf: book.note_for_shelf,
+        };
+
+        booksRef.push(bookObject);
+
+        db.put(
+            urls.rtc.quickAddBook(quickAddShelfName),
+            { book: bookObject }
+        ).then((res) => {
+            book = null;
+        });
     }
+
 }
 
 

@@ -1,69 +1,71 @@
 <template>
     <section class="bookshelves-main-container">
-
-        <Bookshelves :bookshelves="[]"
-            :is_admin="true"
-            :is-unique="'currently-reading'"
-            :data-loaded="dataLoaded"
-        >
-            <template v-slot:heading>
-                <h1 class="bookshelf-wrapper-title font-medium fancy">Currently reading 
-                    <span class="text-indigo-500">
-                        {{ currentlyReading?.books?.length || 0 }} books
-                    </span>
-                </h1>
-            </template>
-        </Bookshelves>
-
-        <Bookshelves :bookshelves="wantToReadBookshelf"
-            :is_admin="true"
-            :is-unique="'want-to-read'"
-            :data-loaded="dataLoaded"
-        >
-            <template v-slot:heading>
-                <h1 class="bookshelf-wrapper-title font-medium fancy">Want to read 
-                    <span class="text-indigo-500">
-                        {{ wantToReadBookshelf?.books?.length + 1 || 0 }} books
-                    </span>
-                </h1>
-            </template>
-        </Bookshelves>
-
-        <Bookshelves :bookshelves="bookshelvesCreatedByUser"
-            :is_admin="true"
-            :data-loaded="dataLoaded"
-        >
-            <template v-slot:heading>
-                <h1 class="bookshelf-wrapper-title font-medium fancy">Your bookshelves 
-                    <span class="text-indigo-500">
-                        {{ bookshelvesCreatedByUser?.length }}
-                    </span>
-                </h1>
-            </template>
-            
-            <template v-if="dataLoaded && !(bookshelvesCreatedByUser.length > 0)" 
-                v-slot:empty-shelf
+        <div v-if="dataLoaded">
+            <Bookshelves 
+                :bookshelves="currentlyReadingShelf"
+                :is_admin="true"
+                :is-unique="'currently-reading'"
+                :data-loaded="dataLoaded"
             >
-                <p>You haven't created any bookshelves yet</p>
-            </template>
-        </Bookshelves>
+                <template v-slot:heading>
+                    <h1 class="bookshelf-wrapper-title font-medium fancy">Currently reading 
+                        <span class="text-indigo-500">
+                            {{ currentlyReading?.books?.length || 0 }} books
+                        </span>
+                    </h1>
+                </template>
+            </Bookshelves>
 
-        <Bookshelves :bookshelves="[]" :data-loaded="true">
-            <template v-slot:heading>
-                <h1 class="bookshelf-wrapper-title font-medium fancy">Followed bookshelves</h1>
-            </template>
+            <Bookshelves :bookshelves="wantToReadBookshelf"
+                :is_admin="true"
+                :is-unique="'want-to-read'"
+                :data-loaded="dataLoaded"
+            >
+                <template v-slot:heading>
+                    <h1 class="bookshelf-wrapper-title font-medium fancy">Want to read 
+                        <span class="text-indigo-500">
+                            {{ wantToReadBookshelf?.books?.length + 1 || 0 }} books
+                        </span>
+                    </h1>
+                </template>
+            </Bookshelves>
 
-            <template v-slot:empty-shelf>
-                <p class="nowrap">You haven't followed any bookshelves yet</p>
-            </template>
-        </Bookshelves>
+            <Bookshelves :bookshelves="bookshelvesCreatedByUser"
+                :is_admin="true"
+                :data-loaded="dataLoaded"
+            >
+                <template v-slot:heading>
+                    <h1 class="bookshelf-wrapper-title font-medium fancy">You've created 
+                        <span class="text-indigo-500">
+                            {{ bookshelvesCreatedByUser?.length }} bookshelves
+                        </span>
+                    </h1>
+                </template>
+                
+                <template v-if="dataLoaded && !(bookshelvesCreatedByUser.length > 0)" 
+                    v-slot:empty-shelf
+                >
+                    <p>You haven't created any bookshelves yet</p>
+                </template>
+            </Bookshelves>
 
-        <div>
+            <Bookshelves :bookshelves="[]" :data-loaded="true">
+                <template v-slot:heading>
+                    <h1 class="bookshelf-wrapper-title font-medium fancy">Followed bookshelves</h1>
+                </template>
+
+                <template v-slot:empty-shelf>
+                    <p class="nowrap">You haven't followed any bookshelves yet</p>
+                </template>
+            </Bookshelves>
+
             <div>
-                <h1 class="bookshelf-wrapper-title font-medium fancy pb-5">Explore bookshelves</h1>
-            </div>
-            <div>
-                <a :href="navRoutes.toBookshelfSectionPage(user, 'explore')" class="underline text-indigo-500">Find new bookshelves</a>
+                <div>
+                    <h1 class="bookshelf-wrapper-title font-medium fancy pb-5">Explore bookshelves</h1>
+                </div>
+                <div>
+                    <a :href="navRoutes.toBookshelfSectionPage(user, 'explore')" class="underline text-indigo-500">Find new bookshelves</a>
+                </div>
             </div>
         </div>
     </section>
@@ -79,15 +81,18 @@ const route = useRoute();
 const { user } = route.params;
 const bookshelvesCreatedByUser = ref([]);
 const wantToReadBookshelf = ref(null);
+const currentlyReadingShelf = ref(null);
 const dataLoaded = ref(false);
 
 async function getBookshelves(){
     const createdByUserPromise = await db.get(urls.rtc.getBookshelvesCreatedByUser(user));
     const wantToReadPromise = await db.get(urls.rtc.getWantToRead(user));
+    const currentlyReadingPromise = await db.get(urls.rtc.getCurrentlyReading(user));
 
-    Promise.all([createdByUserPromise, wantToReadPromise]).then(([createdByUser, wantToRead]) => {
+    Promise.all([createdByUserPromise, wantToReadPromise, currentlyReadingPromise]).then(([createdByUser, wantToRead, currentlyReading]) => {
         bookshelvesCreatedByUser.value = createdByUser.bookshelves;
         wantToReadBookshelf.value = [wantToRead.bookshelf];
+        currentlyReadingShelf.value = [currentlyReading.bookshelf];
         dataLoaded.value = true;
     });
 };

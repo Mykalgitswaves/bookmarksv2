@@ -882,6 +882,7 @@ class BookshelfCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
                    shelf.img_url as img_url,
                    u.id as created_by,
                    u.username as created_by_username,
+                   collect(bb.title) as book_titles,
                    collect(bb.id) as book_object_ids,
                    collect(bb.small_img_url) as book_img_urls,
                    count(bb) as book_count
@@ -900,6 +901,7 @@ class BookshelfCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
             id=record["id"],
             title=record["title"],
             book_ids=record["book_ids"],
+            book_titles=record["book_titles"],
             description=record["description"],
             visibility=record["visibility"],
             img_url=record["img_url"],
@@ -1128,7 +1130,7 @@ class BookshelfCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
         query = (
             """
             MATCH (b:Bookshelf {id: $bookshelf_id})
-            match (book:Book {id:$book_id})
+            match (book:Book {id: $book_id})
             with b, book
             OPTIONAL MATCH (b)-[rr:CONTAINS_BOOK]->(book)
             WITH b, book, rr, EXISTS((b)-[:CONTAINS_BOOK]->(book)) AS relationshipExists

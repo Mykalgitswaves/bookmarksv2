@@ -936,7 +936,6 @@ async def quick_add_book_to_bookshelf(
                     google_books_background_tasks.update_book_google_id,
                     book_data.book.id,
                     book_repo)
-                
         if response:
             if bookshelf_id == 'want_to_read':
                 background_tasks.add_task(
@@ -996,8 +995,11 @@ async def quick_add_book_to_bookshelf(
             else:
                 # These are the normal bookshelf cases
                 if book_exists:
+                    # TODO Leave this until we fix problems with queries.
+                    print('normal bookshelf cases: book exists')
                     response = bookshelf_repo.create_book_in_bookshelf_rel(book_data.book, bookshelf_id, current_user.id)
                 else:
+                    print('normal bookshelf cases: book does not exist')
                     response = bookshelf_repo.create_book_in_bookshelf_rel_and_book(book_data.book, bookshelf_id, current_user.id)
                     
 
