@@ -84,6 +84,7 @@ function logOut() {
     padding: var(--padding-md);
     padding-top: var(--padding-sm);
     z-index: 1000;
+    background: linear-gradient(90deg, var(--surface-primary), transparent)
 }
 
 .btn {

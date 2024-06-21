@@ -4,7 +4,6 @@
     <CurrentlyReadingShelf v-if="isCurrentlyReading" />
 
     <EditBookshelf v-if="!isWantToRead && !isCurrentlyReading" />
-
 </template>
 <script setup>
 import EditBookshelf from './EditBookshelf.vue';
