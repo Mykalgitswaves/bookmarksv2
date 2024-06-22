@@ -196,6 +196,7 @@
     min-width: 300px;
     text-align: start;
     cursor: auto;
+    padding-left: 0;
 }
 
 .create-bookshelf-btn {
