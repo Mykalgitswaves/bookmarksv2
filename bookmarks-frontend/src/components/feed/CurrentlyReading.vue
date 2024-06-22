@@ -1,54 +1,36 @@
 <template>
     <h1 class="work-feed-heading">Currently Reading</h1>
+    
+        <!-- If loaded -->
+        <div class="currently-reading" v-if="currentlyReadingBooks?.length">
+            <div class="currently-reading-book" 
+                v-for="book in currentlyReadingBooks" 
+                :key="book.id"    
+            >
+                <img class="book-img" :src="book.small_img_url"/>
 
-    <!-- If loaded -->
-    <div class="currently-reading" v-if="currentlyReadingBooks?.length">
-        <div class="currently-reading-book" 
-            v-for="book in currentlyReadingBooks" 
-            :key="book.id"    
-        >
-            <img class="book-img" :src="book.small_img_url"/>
-
-            <h4 class="book-title loading">{{  book.title }}</h4>
-            <div class="book-metadata">
-                <p class="progress">70 / 140</p>
-                <button type="button">update</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- IF loading -->
-    <div class="currently-reading" v-else>
-        <div class="currently-reading-book loading">
-            <img class="book-img loading"/>
-
-            <div class="book-metadata">
-                <div>
-                    <h4 class="book-title loading">Book title</h4>
-
+                <h4 class="book-title">{{  book.title }}</h4>
+                <div class="book-metadata">
                     <p class="progress">70 / 140</p>
+                    <button type="button">update</button>
                 </div>
-
-                <button>update</button>
             </div>
         </div>
 
-        <div class="currently-reading-book">
-            <img class="book-img loading"/>
+        <!-- IF loading -->
+        <div class="currently-reading" v-else>
+            <div class="currently-reading-book loading">
+                <div class="book-img loading gradient"></div>
+            </div>
 
-            <div class="book-metadata">
-                <div>
-                    <h4 class="book-title loading">Book title</h4>
+            <div class="currently-reading-book loading">
+                <div class="book-img loading gradient"></div>
+            </div>
 
-                    <p class="progress">70 / 140</p>
-                </div>
-
-                <button type="button"
-                    class="btn"
-                >update</button>
+            <div class="currently-reading-book loading">
+                <div class="book-img loading gradient"></div>
             </div>
         </div>
-    </div>
 </template>
 <script setup>
 import { db } from '../../services/db';
@@ -83,7 +65,8 @@ const currentlyReadingBooks = computed(() => {
 </script>
 <style scoped lang="scss">
     .currently-reading {
-        --x-axis-offset: 28px;
+        --x-axis-offset: 24px;
+        --height: 320px;
         @media screen and (max-width: 768px) {
             --x-axis-offset: 14px;
         }
@@ -95,14 +78,17 @@ const currentlyReadingBooks = computed(() => {
         display: flex;
         column-gap: var(--margin-md);
         justify-content: start;
-        height: fit-content;
+        height: var(--height);
         overflow-x: scroll;
         padding-left: var(--x-axis-offset);
+        transition: var(--transition-short);
     }
 
     .currently-reading-book {
         --min-width-cr-card: 300px;
         min-width: var(--min-width-cr-card);
+        font-family: var(--fancy-script);
+        text-align: center;
 
         .book-metadata {
             display: flex;
@@ -128,11 +114,12 @@ const currentlyReadingBooks = computed(() => {
             height: 240px;
             object-fit: scale-down;
             margin-bottom: 8px;
+            border: 4px solid var(--hover-container-gradient);
 
             &.loading{  
                 background-color: var(--stone-200);
+                height: 300px;
             }
         }
-
     }
 </style>

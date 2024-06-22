@@ -4,7 +4,7 @@
             <!-- We need to get our marketing site up and running tbd -->
             <!-- href="https://www.hardcoverlit.com/home" -->
             <!-- Switch this to an a tag finally -->
-            <h4 class="text-stone-600 fancy pt-2">HardcoverLit</h4>
+            <h4 class="text-stone-600 fancy pl-2">HardcoverLit</h4>
             
             <button
             ref="mobileMenuButton"
