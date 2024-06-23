@@ -114,7 +114,6 @@ function logOut() {
     border-radius: var(--radius-sm);
     box-shadow: var(--shadow-lg);
     overflow: clip;
-    border: 1px solid var(--indigo-200);
 }
 
 .n-m-s--header {
