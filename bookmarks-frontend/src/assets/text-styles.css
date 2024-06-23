@@ -96,6 +96,7 @@
   padding-left: var(--margin-sm);
   font-family: var(--fancy-script);
   color: var(--stone-600);
+  line-height: 1;
 }
 
 .section-heading {

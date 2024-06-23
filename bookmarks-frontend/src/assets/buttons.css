@@ -76,7 +76,6 @@
 
 .btn.icon-btn, .btn-small.icon-btn {
     display: flex;
-    column-gap: 10px;
     align-items: center;
     justify-content: center;
 }

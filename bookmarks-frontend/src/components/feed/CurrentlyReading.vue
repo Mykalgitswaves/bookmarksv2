@@ -1,24 +1,32 @@
 <template>
-    <h1 class="work-feed-heading">Currently Reading</h1>
-    
+    <h1 class="work-feed-heading">Currently Reading
+        <br><span class="text-sm">Update books you are reading</span>
+
+    </h1>
         <!-- If loaded -->
         <div class="currently-reading" v-if="currentlyReadingBooks?.length">
             <div class="currently-reading-book" 
                 v-for="book in currentlyReadingBooks" 
-                :key="book.id"    
+                :key="book.id"   
+                role="button" 
+                @click="showCurrentlyReadingBookOverlay(book)"
             >
                 <img class="book-img" :src="book.small_img_url"/>
 
-                <h4 class="book-title">{{  book.title }}</h4>
+                <h4 class="book-title text-stone-500">{{ truncateText(book.title, 64) }}</h4>
+                
                 <div class="book-metadata">
                     <p class="progress">70 / 140</p>
-                    <button type="button">update</button>
                 </div>
             </div>
         </div>
 
         <!-- IF loading -->
         <div class="currently-reading" v-else>
+            <div class="currently-reading-book loading">
+                <div class="book-img loading gradient"></div>
+            </div>
+
             <div class="currently-reading-book loading">
                 <div class="book-img loading gradient"></div>
             </div>
@@ -37,6 +45,7 @@ import { db } from '../../services/db';
 import { urls } from '../../services/urls';
 import { ref, onMounted, computed } from 'vue';
 import { useRoute } from 'vue-router';
+import { truncateText } from '../../services/helpers';
 
 const route = useRoute();
 const { user } = route.params;
@@ -62,11 +71,15 @@ const currentlyReadingBooks = computed(() => {
     return books;
 })
 
+// function showCurrentlyReadingBookOverlay(book){
+//     currentlyReadingControls.value
+// }
+
 </script>
 <style scoped lang="scss">
     .currently-reading {
         --x-axis-offset: 24px;
-        --height: 320px;
+        --height: fit-content;
         @media screen and (max-width: 768px) {
             --x-axis-offset: 14px;
         }
@@ -80,8 +93,15 @@ const currentlyReadingBooks = computed(() => {
         justify-content: start;
         height: var(--height);
         overflow-x: scroll;
+        overflow-y: visible;
         padding-left: var(--x-axis-offset);
         transition: var(--transition-short);
+        -ms-overflow-style: none;  /* IE and Edge */
+        scrollbar-width: none;
+    }
+
+    .currently-reading::-webkit-scrollbar {
+        display: none;
     }
 
     .currently-reading-book {
@@ -89,6 +109,10 @@ const currentlyReadingBooks = computed(() => {
         min-width: var(--min-width-cr-card);
         font-family: var(--fancy-script);
         text-align: center;
+        position: relative;
+        border: 1px solid var(--surface-primary);
+        background-color: var(--surface-primary);
+        padding: 10px;
 
         .book-metadata {
             display: flex;
@@ -99,12 +123,14 @@ const currentlyReadingBooks = computed(() => {
             
             .book-title {
                 font-size: var(--font-xl);
-                color: var(--stone-700);
-                font-style: italic;
             }
+
             .progress {
                 color: var(--indigo-700);
-                font-weight: 500;
+                font-weight: 600;
+                position: absolute;
+                top: 10px;
+                left: 10px;
             }
         }
 
@@ -121,5 +147,12 @@ const currentlyReadingBooks = computed(() => {
                 height: 300px;
             }
         }
+    }
+
+    .currently-reading-book:not(:has(.gradient)):hover {
+        background-color: var(--stone-50);
+        border-radius: var(--radius-md);
+        cursor: pointer;
+        transition: background-color 350 ease-in-out;
     }
 </style>
