@@ -1,3 +1,5 @@
+import datetime
+
 from src.database.graph.crud.base import BaseCRUDRepositoryGraph
 from src.models.schemas.bookshelves import (
     Bookshelf, 
@@ -7,7 +9,9 @@ from src.models.schemas.bookshelves import (
     BookshelfBook,
     BookshelfContributor,
     BookshelfMember,
-    BookshelfFollower
+    BookshelfFollower,
+    CurrentlyReadingBookPreview,
+    CurrentlyReadingBookshelfPreview
 )
 
 class BookshelfCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
@@ -884,32 +888,47 @@ class BookshelfCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
                    u.username as created_by_username,
                    collect(bb.title) as book_titles,
                    collect(bb.id) as book_object_ids,
-                   collect(bb.small_img_url) as book_img_urls,
-                   count(bb) as book_count
+                   collect(bb.small_img_url) as book_small_img_urls,
+                   collect(bb.pages) as book_page_counts,
+                   count(bb) as book_count,
+                   collect(rr) as book_relationships
             """
         )
 
         result = tx.run(query, user_id=user_id)
         record = result.single()
         
-        book_map = dict(zip(record["book_object_ids"], record["book_img_urls"]))
-        first_four_books_imgs = []
-        for key in record["book_ids"][:4]:
-            first_four_books_imgs.append(book_map[key])
-            
-        bookshelf = BookshelfPreview(
+        book_list = [
+            CurrentlyReadingBookPreview(
+            id=book_id,
+            title=book_title,  
+            small_img_url=book_small_image_url,
+            note_for_shelf=getattr(book_rel, 'note_for_shelf', None),
+            current_page=getattr(book_rel, 'current_page', 0), 
+            total_pages=total_pages,
+            last_updated=getattr(book_rel, 'last_updated', datetime.datetime.min)  # Default to datetime.min if last_updated is None
+        )
+        for book_id,
+            book_title,
+            book_small_image_url, 
+            book_rel, 
+            total_pages in zip(record["book_object_ids"], 
+                               record["book_titles"],
+                               record["book_small_img_urls"], 
+                               record["book_relationships"],
+                               record["book_page_counts"])
+        ]
+        
+        sorted_book_list = sorted(book_list, key=lambda x: x.last_updated, reverse=True)
+        first_four_books = sorted_book_list[:4]
+                    
+        bookshelf = CurrentlyReadingBookshelfPreview(
             id=record["id"],
             title=record["title"],
-            book_ids=record["book_ids"],
-            book_titles=record["book_titles"],
             description=record["description"],
-            visibility=record["visibility"],
-            img_url=record["img_url"],
-            created_by=record["created_by"],
-            created_by_username=record["created_by_username"],
-            books_count=record["book_count"],
-            book_img_urls=first_four_books_imgs
-        )
+            books=first_four_books,
+            visibility=record["visibility"]
+            )
 
         return bookshelf
     
@@ -1246,6 +1265,7 @@ class BookshelfCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
                     b.books = COALESCE(b.books, []) + $book_id, 
                     b.last_edited_date = datetime(),
                     r.create_date = datetime(),
+                    r.last_updated = datetime(),
                     r.added_by_id = $user_id,
                     r.note_for_shelf = $note_for_shelf
                 RETURN NOT relationshipExists AS wasAdded
@@ -1385,6 +1405,7 @@ class BookshelfCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
                     b.books = COALESCE(b.books, []) + book.id, 
                     b.last_edited_date = datetime(),
                     r.create_date = datetime(),
+                    r.last_updated = datetime(),
                     r.added_by_id = $user_id,
                     r.note_for_shelf = $note_for_shelf
                 RETURN NOT relationshipExists AS wasAdded,
@@ -1648,6 +1669,44 @@ class BookshelfCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
         result = tx.run(query, bookshelf_id=bookshelf_id, book_id=book_id, note_for_shelf=note_for_shelf, user_id=user_id)
         response = result.single()
         return response is not None
+    
+    def update_currently_reading_page(
+        self,
+        user_id,
+        book_id,
+        new_current_page):
+        with self.driver.session() as session:
+            result = session.write_transaction(
+                self.update_currently_reading_page_query,
+                user_id,
+                book_id,
+                new_current_page)
+        return result
+    
+    @staticmethod
+    def update_currently_reading_page_query(
+        tx,
+        user_id,
+        book_id,
+        new_current_page):
+        
+        query = (
+            """
+            MATCH (u:User {id: $user_id})-[:HAS_READING_FLOW_SHELF]->(b:CurrentlyReadingShelf)
+            MATCH (b)-[r:CONTAINS_BOOK]->(book:Book {id: $book_id})
+            set r.current_page = $new_current_page
+            set r.last_update = datetime()
+            return book
+            """
+        )
+        
+        result = tx.run(query,
+                        user_id=user_id,
+                        book_id=book_id,
+                        new_current_page=new_current_page)
+        response = result.single()
+        return response is not None
+        
     
     def delete_book_from_bookshelf(self, book_to_remove, books, bookshelf_id):
         with self.driver.session() as session:

@@ -42,7 +42,8 @@ from src.models.schemas.bookshelves import (
     BookshelfVisibility,
     BookshelfUser,
     BookshelfPage,
-    BookshelfBookNote
+    BookshelfBookNote,
+    CurrentlyReadingPageUpdate
 )
 from src.api.websockets.bookshelves import bookshelf_ws_manager
 from src.api.background_tasks.google_books import google_books_background_tasks
@@ -774,6 +775,41 @@ async def get_user_currently_reading_preview(
         return JSONResponse(content={"bookshelf": jsonable_encoder(bookshelf)})
     else:
         raise HTTPException(status_code=404, detail="Currently reading bookshelf not found")
+    
+@router.put("/currently_reading/{user_id}/update_current_page",
+            name="bookshelf:update_current_page")
+async def update_book_current_page(
+        request: Request,
+        user_id: str,
+        current_user: Annotated[User, Depends(get_current_active_user)],
+        bookshelf_repo: BookshelfCRUDRepositoryGraph = Depends(get_repository(repo_type=BookshelfCRUDRepositoryGraph))
+        ):
+    
+    data = await request.json()
+    
+    try:
+        currently_reading_page_update = CurrentlyReadingPageUpdate(
+            user_id=user_id,
+            book_id=data['book_id'],
+            new_current_page=data['new_current_page'])
+    
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    
+    if current_user.id != currently_reading_page_update.user_id:
+        raise HTTPException(status_code=403, detail="User is not authorized to perform this action")
+    
+    result = bookshelf_repo.update_currently_reading_page(
+        user_id=currently_reading_page_update.user_id,
+        book_id=currently_reading_page_update.book_id,
+        new_current_page=currently_reading_page_update.new_current_page)
+
+    if result:
+        # Return 200
+        return JSONResponse(content={"message": "Current page updated"})
+    else:
+        raise HTTPException(status_code=404, detail="Error running query to update current page for book in currently reading bookshelf")
+
     
 @router.get("/finished_reading/{user_id}/preview",
             name="bookshelf:finished_reading_preview")
