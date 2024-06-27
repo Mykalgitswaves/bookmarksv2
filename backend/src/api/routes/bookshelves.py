@@ -750,8 +750,7 @@ async def get_users_minimal_shelves(
 
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
-
-
+    
 @router.get("/currently_reading/{user_id}/preview",
             name="bookshelf:currently_reading_preview")
 async def get_user_currently_reading_preview(
@@ -770,6 +769,31 @@ async def get_user_currently_reading_preview(
         raise HTTPException(status_code=403, detail="User is not authorized to preview currently reading bookshelf of another user")
     
     bookshelf = bookshelf_repo.get_user_currently_reading_preview(user_id=user_id_obj.id)
+
+    if bookshelf:
+        return JSONResponse(content={"bookshelf": jsonable_encoder(bookshelf)})
+    else:
+        raise HTTPException(status_code=404, detail="Currently reading bookshelf not found")
+
+
+@router.get("/currently_reading/{user_id}/front_page",
+            name="bookshelf:currently_reading_front_page")
+async def get_user_currently_reading_front_page(
+        user_id: str,
+        current_user: Annotated[User, Depends(get_current_active_user)],
+        bookshelf_repo: BookshelfCRUDRepositoryGraph = Depends(get_repository(repo_type=BookshelfCRUDRepositoryGraph))
+        ):
+    
+    try:
+        user_id_obj = UserId(id=user_id)
+    
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    
+    if current_user.id != user_id_obj.id:
+        raise HTTPException(status_code=403, detail="User is not authorized to preview currently reading bookshelf of another user")
+    
+    bookshelf = bookshelf_repo.get_user_currently_reading_front_page(user_id=user_id_obj.id)
 
     if bookshelf:
         return JSONResponse(content={"bookshelf": jsonable_encoder(bookshelf)})

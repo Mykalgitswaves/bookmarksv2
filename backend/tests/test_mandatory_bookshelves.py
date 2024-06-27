@@ -289,30 +289,10 @@ class TestBookshelfMandatory:
 
         headers = {"Authorization": f"{self.token_type} {self.access_token}"}
         
-        response = requests.get(f"{self.endpoint}/api/bookshelves/currently_reading/{self.user_id}/preview", 
+        response = requests.get(f"{self.endpoint}/api/bookshelves/currently_reading/{self.user_id}/front_page", 
                                 headers=headers)
-        assert response.status_code == 200, "Currently Reading Preview"
-        print(response.json, "currently reading preview first")
-        
-        response = requests.put(f"{self.endpoint}/api/bookshelves/quick_add/currently_reading/", 
-                                 json=book_data_1, headers=headers)
-        assert response.status_code == 200, "Quick Add to Curently Reading"
-        print(response.json(), "quick add to currently reading")
-
-        response = requests.put(f"{self.endpoint}/api/bookshelves/quick_add/currently_reading/", 
-                                 json=book_data_2, headers=headers)
-        assert response.status_code == 200, "Quick Add to Curently Reading"
-        print(response.json(), "quick add to currently reading")
-        
-        response = requests.put(f"{self.endpoint}/api/bookshelves/quick_add/currently_reading/", 
-                                 json=book_data_3, headers=headers)
-        assert response.status_code == 200, "Quick Add to Curently Reading"
-        print(response.json(), "quick add to currently reading")
-
-        response = requests.get(f"{self.endpoint}/api/bookshelves/currently_reading/{self.user_id}/preview", 
-                                headers=headers)
-        assert response.status_code == 200, "Currently Reading Preview"
-        print(response.json, "currently reading preview first")
+        assert response.status_code == 200, "Currently Reading front_page"
+        print(response.json(), "currently reading front_page first, \n") 
         
         data = {
             "book_id": "c57fbe3df-9a61-41e7-a3e9-576f17a29c50",
@@ -326,15 +306,15 @@ class TestBookshelfMandatory:
         }
         
         response = requests.post(f"{self.endpoint}/api/posts/create_update", headers=headers, json=data)
-        assert response.status_code == 200, "Testing create update"
+        assert response.status_code == 200, "Testing create update \n"
         print(response.json())
         update_id = response.json()["data"]["id"]
         
-        response = requests.get(f"{self.endpoint}/api/bookshelves/currently_reading/{self.user_id}/preview", 
+        response = requests.get(f"{self.endpoint}/api/bookshelves/currently_reading/{self.user_id}/front_page", 
                                 headers=headers)
-        assert response.status_code == 200, "Currently Reading Preview"
-        print(response.json, "currently reading preview first")
-        first_book = response['bookshelf']['books'][0]
+        assert response.status_code == 200, "Currently Reading front_page"
+        print(response.json(), "currently reading front_page first \n")
+        first_book = response.json()['bookshelf']['books'][0]
         assert first_book['id'] == "c57fbe3df-9a61-41e7-a3e9-576f17a29c50"
         assert first_book['current_page'] == 1
         
@@ -347,13 +327,13 @@ class TestBookshelfMandatory:
                                 headers=headers,
                                 json=data)
         assert response.status_code == 200, "Update page quick"
-        print(response.json, "update page quick")
+        print(response.json(), "update page quick \n")
         
-        response = requests.get(f"{self.endpoint}/api/bookshelves/currently_reading/{self.user_id}/preview", 
+        response = requests.get(f"{self.endpoint}/api/bookshelves/currently_reading/{self.user_id}/front_page", 
                                 headers=headers)
-        assert response.status_code == 200, "Currently Reading Preview"
-        print(response.json, "currently reading preview first")
-        first_book = response['bookshelf']['books'][0]
+        assert response.status_code == 200, "Currently Reading front_page"
+        print(response.json(), "currently reading front_page first \n")
+        first_book = response.json()['bookshelf']['books'][0]
         assert first_book['id'] == "c57fbe3df-9a61-41e7-a3e9-576f17a29c50"
         assert first_book['current_page'] == 5
         

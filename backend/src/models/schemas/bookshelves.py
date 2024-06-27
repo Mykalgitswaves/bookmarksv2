@@ -107,7 +107,7 @@ class CurrentlyReadingBookPreview(BaseModel):
     total_pages: int | None
     last_updated: datetime.datetime
     
-    @validator('created_date', pre=True, allow_reuse=True)
+    @validator('last_updated', pre=True, allow_reuse=True)
     def parse_neo4j_datetime(cls, v):
         if isinstance(v, Neo4jDateTime):
             # Convert Neo4jDateTime to Python datetime

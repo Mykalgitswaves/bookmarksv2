@@ -141,7 +141,7 @@ async def create_update(request: Request,
                             small_img_url=small_img_url)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
-    print(db_book)
+
     book_exists = True
     if book_id[0] == "g":
         book_exists = False
@@ -166,7 +166,7 @@ async def create_update(request: Request,
         update = post_repo.create_update(update)
     else:
         update = post_repo.create_update_and_book(update)
-    print(update)
+    
     if not book_exists:
         background_tasks.add_task(google_books_background_tasks.update_book_google_id,update.book.google_id,book_repo)
 
