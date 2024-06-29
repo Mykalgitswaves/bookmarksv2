@@ -1,10 +1,10 @@
 import datetime
 
-from pydantic import BaseModel, EmailStr, validator, Extra
+from pydantic import BaseModel, EmailStr, validator, Extra, Field
 from neo4j.time import DateTime as Neo4jDateTime
 
 class UserCreate(BaseModel):
-    username: str
+    username: str = Field(..., min_length=3, max_length=50)
     password: str
     email: EmailStr
 

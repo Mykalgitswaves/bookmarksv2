@@ -6,6 +6,7 @@ from fastapi.security import OAuth2PasswordRequestForm
 
 from src.database.graph.crud.users import UserCRUDRepositoryGraph
 from src.api.utils.database import get_repository
+from src.api.utils.helpers.login import is_strong_password
 
 from src.securities.authorizations.jwt import jwt_generator
 from src.securities.hashing.password import pwd_generator
@@ -45,6 +46,9 @@ async def signup(form_data:Annotated[SignUpForm, Depends()],
     except ValueError as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
     
+    if not is_strong_password(user_create.password):
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Password is not strong enough")
+
     # Check if the username is already taken
     username_taken = user_repo.is_username_taken(user_create.username)
     # Check if the email is already taken
