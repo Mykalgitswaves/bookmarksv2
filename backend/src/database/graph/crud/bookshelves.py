@@ -1715,6 +1715,25 @@ class BookshelfCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
         result = tx.run(query, bookshelf_id=bookshelf_id, book_id=book_id, note_for_shelf=note_for_shelf, user_id=user_id)
         response = result.single()
         return response is not None
+
+    def update_book_note_for_shelf_reading_flow(self, bookshelf_id, book_id, note_for_shelf, user_id):
+        with self.driver.session() as session:
+            result = session.write_transaction(self.update_book_note_for_shelf_reading_flow_query, bookshelf_id, book_id, note_for_shelf, user_id)
+        return result
+    
+    @staticmethod
+    def update_book_note_for_shelf_reading_flow_query(tx, bookshelf_id, book_id, note_for_shelf, user_id):
+        query = (
+            """
+            MATCH (b {id: $bookshelf_id})<-[r:HAS_READING_FLOW_SHELF]-(u:User {id: $user_id})
+            MATCH (b)-[rr:CONTAINS_BOOK]->(book:Book {id: $book_id})
+            SET rr.note_for_shelf = $note_for_shelf, b.last_edited_date = datetime()
+            RETURN b.id as id
+            """
+        )
+        result = tx.run(query, bookshelf_id=bookshelf_id, book_id=book_id, note_for_shelf=note_for_shelf, user_id=user_id)
+        response = result.single()
+        return response is not None    
     
     def update_currently_reading_page(
         self,

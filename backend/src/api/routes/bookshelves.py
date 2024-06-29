@@ -487,10 +487,18 @@ async def update_book_note(request: Request,
         # Check that the book was found in the bookshelf
         if status:
             # Update the book note in the database
-            repo_status = bookshelf_repo.update_book_note_for_shelf(bookshelf_id, 
+            prefixes = ["want_to_read", "currently_reading", "finished_reading"]
+            # if any of the prefixes are in the bookshelf_id, then we are dealing with a user bookshelf
+            if any(prefix in bookshelf_id for prefix in prefixes):
+                repo_status = bookshelf_repo.update_book_note_for_shelf_reading_flow(bookshelf_id, 
                                                       bookshelf.book_id, 
                                                       bookshelf.note_for_shelf,
                                                       current_user.id)
+            else:
+                repo_status = bookshelf_repo.update_book_note_for_shelf(bookshelf_id, 
+                                                        bookshelf.book_id, 
+                                                        bookshelf.note_for_shelf,
+                                                        current_user.id)
             
             # Check that the book note was updated in the database
             if repo_status:
@@ -1022,7 +1030,7 @@ async def quick_add_book_to_bookshelf(
                     "book": jsonable_encoder(book_data.book)
                 })
         else:
-            raise HTTPException(status_code=400, detail="Failed to add book to bookshelf")
+            raise HTTPException(status_code=400, detail="Failed to add book to bookshelf, it may already exist in the desitnation shelf")
     
     else: 
         # Check the cache for the bookshelf
