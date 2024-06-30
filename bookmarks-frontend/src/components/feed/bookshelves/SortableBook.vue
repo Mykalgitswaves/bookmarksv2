@@ -2,9 +2,13 @@
     <label
         ref="input"
         for="bs-books"
-        :class="['bs-b--book', { 'is-sorting': !isSorted && currentBook, 'sort-target': isSorted }]"
-        :disabled="(!isSorted && isLocked)"
-        @click="emit('set-sort', id)"
+        :class="['bs-b--book', { 
+            'is-sorting': !isSorting && currentBook,
+            'sort-target': isSorting || isCurrentBookOnOverlay,
+            }
+        ]"
+        :disabled="!unique && (!isSorting && isLocked)"
+        @click="showShelfControlsClickHandler"
     >
       <div class="sort">{{ order + 1 }}</div>
 
@@ -12,7 +16,7 @@
 
       <div class="meta">
         <p class="title">{{ bookTitle }}</p>
-        <p class="author">{{ author }}</p>
+        <p class="author">{{ formatAuthorProps(author) }}</p>
       </div>
 
       <input
@@ -20,12 +24,16 @@
         id="bs-books"
         :name="`bs-books-${id}`"
         type="radio"
-        :disabled="(!isSorted && isLocked)"
+        :disabled="(!isSorting && isLocked)"
         :value="name"
-        :checked="isSorted"
-        @click="emit('set-sort', id)"
+        :checked="isSorting"
+        @click="emit('set-sort', props.id)"
       />
     </label>
+
+    <div v-if="noteForShelf" class="text-stone-500 weight-300 mr-auto">
+        <span class="ml-5">{{ truncateText(noteForShelf, 150) }}</span>
+    </div>
 
     <button
       v-if="shouldShowSwap()"
@@ -33,23 +41,22 @@
       type="button"
       @click="swapWith(index)"
     >
-      {{ index }}
+      {{ currentBook?.order > order ? order + 2 : order + 1  }}
     </button>
     
     <button v-if="shouldShowBookToolbar"
         type="button"
-        class="remove-btn-button"
+        class="btn btn-remove icon ml-auto"
         @click="$emit('removed-book', props.id)"
     >
-        <span class="flex items-center gap-2 text-stone-800">
             Remove from shelf
             <IconDelete />
-        </span>
     </button>
 </template>
 <script setup>
 import { computed, ref } from 'vue';
 import { wsCurrentState } from './bookshelvesRtc';
+import { truncateText } from '../../../services/helpers';
 import IconDelete from '../../svg/icon-trash.vue';
 
 const props = defineProps({
@@ -82,16 +89,29 @@ const props = defineProps({
     },
     isEditing: {
         type: Boolean
+    },
+    noteForShelf: {
+        type: String
+    },
+    unique: {
+        type: String,
+    },
+    currentBookForOverlay: {
+        type: Object
     }
 });
 const input = ref('input');
-const emit = defineEmits(['set-sort']);
+const emit = defineEmits(['set-sort', 'show-book-controls-overlay', 'swapped-with']);
 
-const isSorted = computed(() => {
+const isSorting = computed(() => {
     if(props.currentBook){
         return props.currentBook.id === props.id;
     }
 });
+
+const isCurrentBookOnOverlay = computed(() => {
+    return !!(props.currentBookForOverlay?.id === props.id)
+})
 
 function swapWith(index) {
     // Pass in an index of the book you want to swap with!
@@ -105,13 +125,36 @@ function swapWith(index) {
     input.value.scrollIntoView({ behavior: 'smooth', block: 'center' });
 };
 
+
+function formatAuthorProps(authorData){
+    if (authorData && Array.isArray(authorData) && authorData.length) {
+        return authorData[0];
+    }
+    return '';
+}
+
+// Show shelf controls for each book while not editing the shelves.
+function showShelfControlsClickHandler(){
+    if(!props.isEditing){
+        let payload = {};
+
+        payload[props.unique] = props.id;
+        emit('show-book-controls-overlay', payload);
+    }
+    emit('set-sort', props.id);
+}
+
 function shouldShowSwap() {
     if (!props.currentBook) {
         return false; // If there's no current book, don't show the swap button
     }
 
-    // We dont want to show swap buttons for editing books.
-    if(props.isEditing){
+    // // We dont want to show swap buttons for editing books.
+    // if(props.isEditing){
+    //     return false;
+    // }
+
+    if (props.currentBookForOverlay) {
         return false;
     }
 
@@ -138,7 +181,6 @@ const shouldShowBookToolbar = computed(() => {
 });
 
 const isLocked = computed(() => wsCurrentState.value === 'locked');
-
 
 </script>
 <styles scoped lang="scss">

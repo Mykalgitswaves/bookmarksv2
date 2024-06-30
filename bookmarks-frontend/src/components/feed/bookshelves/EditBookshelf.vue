@@ -90,13 +90,6 @@
                 <div v-if="currentView.value === 'edit-books' && !isReorderModeEnabled && !isEditingModeEnabled" class="flex gap-2">
                     <button class="btn reorder-btn"
                         :disabled="books.length <= 1"
-                        @click="enterReorderMode()"
-                    >
-                        Reorder
-                    </button>
-
-                    <button class="btn reorder-btn"
-                        :disabled="books.length <= 1"
                         @click="enterEditMode()"
                     >
                         Edit
@@ -110,7 +103,7 @@
                         v-if="books?.length"
                         :is-admin="isAdmin"
                         :books="books"
-                        :can-reorder="isReorderModeEnabled"
+                        :can-reorder="isEditingModeEnabled"
                         :is-editing="isEditingModeEnabled"    
                         :is-reordering="isReordering"
                         :unset-current-book="unsetKey"
@@ -137,6 +130,7 @@
             <!-- Where you search for books for adding -->
             <SearchBooks 
                 v-if="isAdmin && currentView.value === 'add-books'"
+                :centered="true"
                 @book-to-parent="(book) => addBook(book)"  
             />
         </section>   
@@ -322,7 +316,10 @@ function remove_book(removed_book_id){
     ws.sendData(data);
     unsetKey++;
 }
-
+/**
+ * @description
+ * THiS IS WHAT MAKES YOUR BOOKS UPDATE IN REAL TIME WITH THE EVENT LISTENER DUDE.
+ */
 onMounted(() => {
     // Probably could do a better way to generate link in this file. We can figure out later i guess?
     bookshelfData.value = getBookshelf(route.params.bookshelf);

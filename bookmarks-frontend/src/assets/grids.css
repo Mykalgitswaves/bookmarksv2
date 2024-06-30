@@ -37,3 +37,8 @@
   .grid-auto-cols {
     grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
   }
+
+  .place-content-center {
+    display: grid;
+    place-content: center;
+  }

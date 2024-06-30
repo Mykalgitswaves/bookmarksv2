@@ -258,9 +258,99 @@ class TestBookshelfMandatory:
         response = requests.get(f"{self.endpoint}/api/posts/post/{response.json()['data'][0]['id']}", headers=headers)
         print(response.json())
         assert response.status_code == 200, "Get Post"
+        
+    def test_currently_reading_preview(self):
+        book_data_1 = {
+            "book" : {
+                "id" : "c707fd781-dd1a-4ba7-91f1-f1a2e7ecb872",
+                "author_names": ["Isaac Asimov"],
+                "title": "Foundation",
+                "small_img_url": "http://books.google.com/books/content?id=_uawAAAAIAAJ&printsec=frontcover&img=1&zoom=5&imgtk=AFLRE732DLT-Q5P4M6ll9fpW5DH-Lz-FrGxwAQptgERj0vxnZYrLz57WvWzJ5k8Rr-OVQdQBOAImZNKuZQkgOgOO1HH2l5tUMj62Zngs0JbkXfsQIy3PcS_v8oHhB3XB7M0irmn4gM9g&source=gbs_api"
+            }
+        }
+        
+        book_data_2 = {
+            	"book" : {
+                    "id" : "caaaedd16-11c7-4d74-8eb2-985537223d40",
+                    "author_names": ["Maggie O'Farrell"],
+                    "title": "The Marriage Portrait",
+                    "small_img_url": "http://books.google.com/books/content?id=AnuczwEACAAJ&printsec=frontcover&img=1&zoom=5&imgtk=AFLRE731cxkg3iRmy3ma5pIYhwtWMGlHSNK8oLk9FpLma-TJyfRdn-HbMz8tHjn3TPlvkBh-wPX7n2A6aVp-7_iymmoqcq7R62gaAt5Fp2cTuYIj34066LqjZMTdQiEnTodmHTSNLj9I&source=gbs_api"
+                }
+        }
 
+        book_data_3 = {
+            	"book" : {
+                    "id" : "c57fbe3df-9a61-41e7-a3e9-576f17a29c50",
+                    "author_names": ["Maya Phillips"],
+                    "title": "Nerd",
+                    "small_img_url": "http://books.google.com/books/publisher/content?id=483DEAAAQBAJ&printsec=frontcover&img=1&zoom=5&edge=curl&imgtk=AFLRE70x2bq6tvfuT2n_5ziJqrSWL2Lb1Iu5LiqLZTc0rH5AJTThqQ7K6N26LKGRoQe4LwJyjky9lPNdJs6nckmcOKhslPTVsyaT_jyJAAb9qHeZEM_wXHCLMLmVwyNBV_MuC4dxojW1&source=gbs_api"
+                }
+        }
 
+        headers = {"Authorization": f"{self.token_type} {self.access_token}"}
+        
+        response = requests.get(f"{self.endpoint}/api/bookshelves/currently_reading/{self.user_id}/front_page", 
+                                headers=headers)
+        assert response.status_code == 200, "Currently Reading front_page"
+        print(response.json(), "currently reading front_page first, \n") 
+        
+        data = {
+            "book_id": "c57fbe3df-9a61-41e7-a3e9-576f17a29c50",
+            "small_img_url": "http://books.google.com/books/publisher/content?id=483DEAAAQBAJ&printsec=frontcover&img=1&zoom=5&edge=curl&imgtk=AFLRE70x2bq6tvfuT2n_5ziJqrSWL2Lb1Iu5LiqLZTc0rH5AJTThqQ7K6N26LKGRoQe4LwJyjky9lPNdJs6nckmcOKhslPTVsyaT_jyJAAb9qHeZEM_wXHCLMLmVwyNBV_MuC4dxojW1&source=gbs_api",
+            "title": "Nerd",
+            "headline":"Test Headline",
+            "page": 1,
+            "response":"Test Response",
+            "is_spoiler":False,
+            "quote":"Test Quote"
+        }
+        
+        response = requests.post(f"{self.endpoint}/api/posts/create_update", headers=headers, json=data)
+        assert response.status_code == 200, "Testing create update \n"
+        print(response.json())
+        update_id = response.json()["data"]["id"]
+        
+        response = requests.get(f"{self.endpoint}/api/bookshelves/currently_reading/{self.user_id}/front_page", 
+                                headers=headers)
+        assert response.status_code == 200, "Currently Reading front_page"
+        print(response.json(), "currently reading front_page first \n")
+        first_book = response.json()['bookshelf']['books'][0]
+        assert first_book['id'] == "c57fbe3df-9a61-41e7-a3e9-576f17a29c50"
+        assert first_book['current_page'] == 1
+        
+        data = {
+            "book_id" : "c57fbe3df-9a61-41e7-a3e9-576f17a29c50",
+            "new_current_page": 5
+        }
+        
+        response = requests.put(f"{self.endpoint}/api/bookshelves/currently_reading/{self.user_id}/update_current_page", 
+                                headers=headers,
+                                json=data)
+        assert response.status_code == 200, "Update page quick"
+        print(response.json(), "update page quick \n")
+        
+        response = requests.get(f"{self.endpoint}/api/bookshelves/currently_reading/{self.user_id}/front_page", 
+                                headers=headers)
+        assert response.status_code == 200, "Currently Reading front_page"
+        print(response.json(), "currently reading front_page first \n")
+        first_book = response.json()['bookshelf']['books'][0]
+        assert first_book['id'] == "c57fbe3df-9a61-41e7-a3e9-576f17a29c50"
+        assert first_book['current_page'] == 5
+        
+        
+        
+        soft_delete_response = requests.delete(f"{self.endpoint}/api/posts/post/{update_id}/delete", headers=headers)
+        assert soft_delete_response.status_code == 200, "Testing soft delete update"
 
+        delete_data = {
+            "post_id": update_id,
+            "admin_credentials": self.admin_credentials
+        }
+
+        hard_delete_response = requests.post(f"{self.endpoint}/api/admin/delete_post_and_comments", json=delete_data)
+        assert hard_delete_response.status_code == 200, "Hard delete of test update"
+        
+        
 
 
 

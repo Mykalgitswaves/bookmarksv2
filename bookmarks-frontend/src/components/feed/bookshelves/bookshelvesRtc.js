@@ -34,6 +34,7 @@ export const ws = {
     // This is set by the on message function. We can get really granular here and our ws manager in 
     // fastapi can help us with some parralellization issues.
 
+    // #TODO Add a get request using the login token to get a new returned token specifically for the websocket connection. 
     newSocket: async (connection_address) => {
         // Get request that gets the token
         try {
@@ -72,7 +73,7 @@ export const ws = {
                     console.log('unlocked', data);
                     ws.current_state = 'unlocked';
                     // make sure we have bookshelves saved 
-                    if(data.data.length){
+                    if (data.data.length) {
                         ws.books = data.data;
                         // Used to reload data.
                         document.dispatchEvent(wsDataLoaded);

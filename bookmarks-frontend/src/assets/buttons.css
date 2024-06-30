@@ -76,7 +76,6 @@
 
 .btn.icon-btn, .btn-small.icon-btn {
     display: flex;
-    column-gap: 10px;
     align-items: center;
     justify-content: center;
 }
@@ -88,6 +87,18 @@
 
 .btn-red-ghost:hover {
     background-color: var(--red-100);
+}
+
+.btn-remove.icon {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--red-500);
+    background-color: var(--surface-primary);
+}
+
+.btn.small {
+    font-size: var(--font-sm);
 }
 
 .post-btn {

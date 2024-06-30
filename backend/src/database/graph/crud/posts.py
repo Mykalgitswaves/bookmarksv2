@@ -163,6 +163,8 @@ class PostCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
         query = """
             match (u:User {username:$username})
             match (b:Book {id:$book_id})
+            MATCH (u)-[:HAS_READING_FLOW_SHELF]->(shelf:CurrentlyReadingShelf)
+            OPTIONAL MATCH (shelf)-[rr:CONTAINS_BOOK]->(b)
             create (d:Update {id:randomUUID(), 
                             created_date:datetime(),
                             page:$page,
@@ -174,6 +176,8 @@ class PostCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
                             likes:0})
             create (u)-[p:POSTED]->(d)
             create (d)-[pp:POST_FOR_BOOK]->(b)
+            set rr.current_page = $page
+            set rr.last_updated = datetime()
             return d.created_date, d.id
             """
         result = tx.run(query, 
@@ -220,6 +224,8 @@ class PostCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
                             google_id:$book_id, 
                             title:$title, 
                             small_img_url:$small_img_url})
+            MATCH (u)-[:HAS_READING_FLOW_SHELF]->(shelf:CurrentlyReadingShelf)
+            OPTIONAL MATCH (shelf)-[rr:CONTAINS_BOOK]->(b)
             create (d:Update {id:randomUUID(), 
                             created_date:datetime(),
                             page:$page,
@@ -231,6 +237,8 @@ class PostCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
                             likes:0})
             create (u)-[p:POSTED]->(d)
             create (d)-[pp:POST_FOR_BOOK]->(b)
+            set rr.current_page = $page
+            set rr.last_updated = datetime()
             return d.created_date, d.id, b.id as book_id
             """
         result = tx.run(query, 

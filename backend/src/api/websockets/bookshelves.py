@@ -68,6 +68,7 @@ class BookshelfWSManager:
 
     async def reorder_books_and_send_updated_data(self, current_user, bookshelf_id, data, bookshelf_repo:BookshelfCRUDRepositoryGraph):
         _bookshelf = self.cache[bookshelf_id]
+
         if current_user.bookshelf_id != bookshelf_id:
             await self.send_data(data={"state": "error", 
                 "data": self.errors['INVALID_AUTHOR_PERMISSION'] },

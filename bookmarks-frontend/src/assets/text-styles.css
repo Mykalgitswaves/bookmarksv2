@@ -90,10 +90,13 @@
 
 /* Used for titles on work feed view */
 .work-feed-heading {
+  padding-top: var(--padding-md);
+  padding-bottom: var(--padding-md);
   font-size: var(--font-2xl);
   padding-left: var(--margin-sm);
   font-family: var(--fancy-script);
   color: var(--stone-600);
+  line-height: 1;
 }
 
 .section-heading {
