@@ -31,6 +31,15 @@
       />
     </label>
 
+    <div v-if="unique === Bookshelves.CURRENTLY_READING.prefix" class="mt-2">
+        <div class="progress-bar">
+            <span class="progress" :style="{'width': currentlyReadingProgress.progress }"></span>
+            <span class="remaining" :style="{'width': currentlyReadingProgress.remaining }"></span>
+        </div>
+
+        <button class="btn" type="button" @click="updateForCurrentlyReading"></button>
+    </div>
+
     <div v-if="noteForShelf" class="text-stone-500 weight-300 mr-auto">
         <span class="ml-5">{{ truncateText(noteForShelf, 150) }}</span>
     </div>
@@ -57,6 +66,7 @@
 import { computed, ref } from 'vue';
 import { wsCurrentState } from './bookshelvesRtc';
 import { truncateText } from '../../../services/helpers';
+import { Bookshelves } from '../../../models/bookshelves';
 import IconDelete from '../../svg/icon-trash.vue';
 
 const props = defineProps({
@@ -181,6 +191,18 @@ const shouldShowBookToolbar = computed(() => {
 });
 
 const isLocked = computed(() => wsCurrentState.value === 'locked');
+
+/**
+ * @description computed props for progress bars on currently reading shelf
+ */
+if (props.unique === Bookshelves.CURRENTLY_READING.prefix) {
+    const currentlyReadingProgress = computed(() => {
+        return { 
+            progress: currentBook.page || 0,
+            remaining: currentBook.num_of_pages || 0
+        }
+    });
+}
 
 </script>
 <styles scoped lang="scss">
