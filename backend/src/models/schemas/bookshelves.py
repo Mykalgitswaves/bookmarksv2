@@ -97,6 +97,8 @@ class BookshelfBook(BaseModel):
     small_img_url: str | None
     note_for_shelf: str | None = None
     google_id: str | None = None
+    current_page: int | None = None
+    total_pages: int | None = None
     
 class CurrentlyReadingBookPreview(BaseModel):
     id: str

@@ -756,7 +756,7 @@ class BookshelfCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
                    u as user,
                    collect(bb.id) as book_object_ids,
                    collect(bb) as books,
-                   collect(rr) as book_note_for_shelves
+                   collect(rr) as book_relationships
             """
         )
         
@@ -769,9 +769,10 @@ class BookshelfCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
         book_map = {
         book_id: {
             'item': book,
-            'description': note_for_shelf.get('note_for_shelf', None)
+            'description': book_relationship.get('note_for_shelf', None),
+            'current_page': book_relationship.get('current_page', 0)
         }
-        for book_id, book, note_for_shelf in zip(record["book_object_ids"], record["books"], record["book_note_for_shelves"])
+        for book_id, book, book_relationship in zip(record["book_object_ids"], record["books"], record["book_relationships"])
 }
         
         for ix, key in enumerate(record["book_ids"]):
@@ -822,7 +823,8 @@ class BookshelfCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
                    u as user,
                    collect(bb.id) as book_object_ids,
                    collect(bb) as books,
-                   collect(rr) as book_note_for_shelves
+                   collect(rr) as book_relationships,
+                   
             """
         )
         
@@ -830,7 +832,7 @@ class BookshelfCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
         book_objects = []
 
         record = result.single()
-
+        
         book_map = {
         book_id: {
             'item': book,
