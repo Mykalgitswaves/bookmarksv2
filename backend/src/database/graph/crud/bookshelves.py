@@ -786,7 +786,8 @@ class BookshelfCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
                 title=book["title"],
                 authors=book["author_names"],
                 small_img_url=book["small_img_url"],
-                note_for_shelf=description
+                note_for_shelf=description,
+                current_page=book_map[key]["current_page"]
             ))
         
         bookshelf = BookshelfPage(
