@@ -18,6 +18,7 @@
                 :imgUrl="book?.small_img_url"
                 :next-book="books[index + 1]"
                 :prev-book="books[index - 1]"
+                :book="book"
                 :current-book="currentBook"
                 :current-book-for-overlay="currentBookForOverlay"
                 :index="index"

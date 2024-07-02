@@ -31,10 +31,9 @@
       />
     </label>
 
-    <div v-if="unique === Bookshelves.CURRENTLY_READING.prefix" class="mt-2">
-        <div class="progress-bar">
-            <span class="progress" :style="{'width': currentlyReadingProgress.progress }"></span>
-            <span class="remaining" :style="{'width': currentlyReadingProgress.remaining }"></span>
+    <div v-if="unique === Bookshelves.CURRENTLY_READING.prefix && currentlyReadingProgress" class="w-100 mt-2 text-start">
+        <div class="progress-button">
+            {{ currentlyReadingProgress.progress + ' / ' + currentlyReadingProgress.remaining }} 
         </div>
 
         <button class="btn" type="button" @click="updateForCurrentlyReading"></button>
@@ -84,6 +83,10 @@ const props = defineProps({
     },
     imgUrl: {
         type: String,
+    },
+    book: {
+        type: Object,
+        required: true,
     },
     currentBook: {
         type: Object,
@@ -195,14 +198,15 @@ const isLocked = computed(() => wsCurrentState.value === 'locked');
 /**
  * @description computed props for progress bars on currently reading shelf
  */
-if (props.unique === Bookshelves.CURRENTLY_READING.prefix) {
-    const currentlyReadingProgress = computed(() => {
+const currentlyReadingProgress = computed(() => {
+    if (props.unique === Bookshelves.CURRENTLY_READING.prefix) {
         return { 
-            progress: currentBook.page || 0,
-            remaining: currentBook.num_of_pages || 0
+            progress: props.book.page || 0,
+            remaining: props.book.num_of_pages || 0
         }
-    });
-}
+    } 
+    return false;
+});
 
 </script>
 <styles scoped lang="scss">
