@@ -1,47 +1,78 @@
 <template>
-    <div class="spacing-wrap">
-        <h1 class="create-post-heading-text">Creating an update for <span class="create-post-heading-book-title">
+    <h1 class="create-post-heading-text text-center">Creating an update for <span class="create-post-heading-book-title">
             {{ book?.title }}</span>
         </h1>
+    <!-- Controls for navigating to diff steps. -->
+    <div>
+        <div class="toolbar">
+            <button type="button"
+                class="toolbar-btn"
+                :disabled="step === 1"
+                @click="step -= 1"
+            >
+                <span v-if="step < 3">Previous</span>
 
+                <span v-else>Edit</span>
+            </button>
+
+            <button type="button"
+                class="toolbar-btn"
+                :disabled="step === 3"
+                @click="step += 1"
+            >
+                <span v-if="step < 2">Next</span>
+
+                <span v-else>Finalize</span>
+            </button>
+        </div>
+
+
+        <p class="text-stone-600 mb-5 mt-2 text-center"><span class="text-indigo-500">{{ step }}</span> / 3</p>
+
+        <div class="toolbar-progress">
+            <div class="total" :style="{'width': progressTotal + '%'}"></div>
+            <div class="remaining" :style="{'width': remainderTotal + '%'}"></div>
+
+            <span class="stepper one" :class="{'active': step >= 1}"></span>
+            <span class="stepper two" :class="{'active': step >= 2}"></span>
+            <span class="stepper three" :class="{'active': step >= 3}"></span>
+        </div>
+    </div>
+
+    <div class="spacing-wrap">
         <div class="container grid">
-            <CreatePostHeadline @headline-changed="headlineHandler" :review-type="'update'"/>
-            
-            <div class="mt-5 mb-5">
-                <label class="input-number short" for="page-number">
-                    <p class="text-2xl font-medium mb-2 mt-5 text-slate-600">Im on page <span class="italic text-indigo-600">{{ page }}</span></p>
+            <div class="mb-5 ml-auto mr-auto w-90" v-if="step === 1">
+                <label class="input-number block mb-5 mt-10" for="page-number">
+                    <p class="text-2xl mb-2 mt-5 text-stone-600 fancy">Im on page <span class="italic text-indigo-600">{{ page }}</span></p>
                     <input
-                        class="short rounded-md"
+                        class="rounded-md"
                         id="page-number"
                         type="number" 
                         v-model="page"
                     >
                 </label>
-            </div>
-            
-            <div class="mb-5">
-                <label for="summary-update" class="text-slate-600 font-medium text-2xl mb-2 mt-5">
+
+                <label for="summary-update" class="text-stone-600 fancy text-2xl mb-2 mt-5">
                     A quote that stuck
                     <span class="label-note">Add a quote to base your update off of</span>
                 </label>
 
-                <div class="summary-update">
+                <div class="summary-update no-max">
                     <textarea
                         class="rounded-md quote-summary"
                         name=""
                         id="summary-update"
                         v-model="update.quote"
-                        max-length="400"
                     />
                 </div>
             </div>
 
 
-            <div class="mb-5">
-                <label class="text-slate-600 font-medium text-2xl mb-2 mt-5" for="summary-update">
+            <div class="mb-5 w-90 ml-auto mr-auto" v-if="step === 2">
+                <label class="block text-stone-600 fancy text-2xl mb-2 mt-5 " for="summary-update">
                     So far im thinking
                 </label>
-                <div  class="summary-update">
+                <div  class="summary-update no-max">
                     <textarea class="rounded-md"
                         id="summary-update"
                         cols="30"
@@ -52,30 +83,39 @@
             </div>
             
 
+            <CreatePostHeadline v-if="step === 3" @headline-changed="headlineHandler" :review-type="'update'"/>
+
             <div class="flex gap-5 space-between items-end">
-                <div class="self-start">
+                <div class="ml-auto mr-auto">
                     <label :for="update.id" class="flex items-center">
-                        <span class="text-slate-600 mr-2">Spoilers</span>
                         <input :id="update.id" 
                             type="checkbox"
                             v-model="update.is_spoiler"
                             value="true"
                             @change="emit('is-spoiler-event', update)"
-                        >
+                        />
+                        <span class="text-slate-600 ml-2">Does this update contain spoilers?</span>
                     </label>
                 </div>
+            </div>
+
+            <div class="w-100">
+                <button class="btn btn-submit">post</button>
             </div>
         </div>    
     </div>
 </template>
 <script setup>
-import { ref, watch, reactive } from 'vue';
+import { ref, watch, reactive, computed } from 'vue';
 import CreatePostHeadline from '../createPostHeadline.vue';
 import { helpersCtrl } from '../../../../services/helpers';
 
 const emit = defineEmits();
 const headline = ref('');
 const page = ref(0);
+const step = ref(1);
+const progressTotal = computed(() => Math.floor((step.value * 100) / 3));
+const remainderTotal = computed(() => 100 - progressTotal.value);
 const props = defineProps({
     book: {
         required: true
@@ -102,9 +142,13 @@ function headlineHandler(e) {
 watch(update, () => {
     return emit('update-complete', helpersCtrl.formatUpdateData(update));
 });
+
+
 </script>
 <style scoped>
  .spacing-wrap {
+        height: 50%;
+        min-height: 40vh;
         margin-top: var(--margin-md);
  }
 

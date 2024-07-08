@@ -38,6 +38,10 @@
     padding: 1ch;
 }
 
+.summary-update.no-max textarea {
+  max-width: none;
+}
+
 .summary-update.comparison textarea {
   margin-left: auto;
   margin-right: auto;

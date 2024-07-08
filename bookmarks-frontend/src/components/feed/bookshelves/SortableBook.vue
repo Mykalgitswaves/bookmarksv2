@@ -32,11 +32,13 @@
     </label>
 
     <div v-if="unique === Bookshelves.CURRENTLY_READING.prefix && currentlyReadingProgress" class="w-100 mt-2 text-start">
-        <div class="progress-button">
-            {{ currentlyReadingProgress.progress + ' / ' + currentlyReadingProgress.remaining }} 
+        <div class="progress-bar"></div>
+        <div class="progress-toolbar">
+            <span>{{ currentlyReadingProgress.progress + ' / ' + currentlyReadingProgress.remaining }}</span>
+            <button class="btn btn-ghost btn-small" type="button" @click="$emit('update-currently-reading-book', book)">
+                update progress
+            </button>
         </div>
-
-        <button class="btn" type="button" @click="updateForCurrentlyReading"></button>
     </div>
 
     <div v-if="noteForShelf" class="text-stone-500 weight-300 mr-auto">
@@ -114,7 +116,7 @@ const props = defineProps({
     }
 });
 const input = ref('input');
-const emit = defineEmits(['set-sort', 'show-book-controls-overlay', 'swapped-with']);
+const emit = defineEmits(['set-sort', 'show-book-controls-overlay', 'swapped-with', 'update-currently-reading-book']);
 
 const isSorting = computed(() => {
     if(props.currentBook){
@@ -207,6 +209,17 @@ const currentlyReadingProgress = computed(() => {
     } 
     return false;
 });
+
+/**
+ * currently reading bookshelf functions
+ * For shit related to SortableBook components in the context of a currently reading shelf
+ */
+
+
+
+/**
+ * End currently reading shelf functions
+ */
 
 </script>
 <styles scoped lang="scss">
@@ -319,5 +332,11 @@ const currentlyReadingProgress = computed(() => {
     .remove-btn-button:hover {
         color: var(--red-500);
         text-decoration: underline;
+    }
+
+    .progress-toolbar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
     }
 </styles>  

@@ -29,6 +29,7 @@
                 @swapped-with="(data) => swappedWithHandler(data)"
                 @removed-book="$emit('removed-book', $event)"
                 @show-book-controls-overlay="(bookPayload) => showBookControlsOverlayHandler(bookPayload)"
+                @update-currently-reading-book="(bookPayload) => showCreateUpdateOverlayHandler(bookPayload)"
             />
         </li>
 
@@ -42,6 +43,17 @@
             >End</button>
         </li>
     </ul>
+
+    <!-- ------------------------------------------------- -->
+    <!-- this is for creating updates on currently reading shelves-->
+    <teleport 
+        v-if="unique === Bookshelves.CURRENTLY_READING.prefix && isUpdatingCurrentlyReadingBook && currentBook" 
+        to="body"
+    >
+        <div class="book-controls-overlay shadow-lg">
+            <CreateUpdateForm :book="currentBook"/>
+        </div>
+    </teleport>
 
     <!-- ------------------------------------------------- -->
     <!-- This is for flow shelves -->
@@ -209,6 +221,7 @@ import { db } from '../../../services/db';
 import { urls } from '../../../services/urls';
 import { Bookshelves } from '../../../models/bookshelves';
 import { helpersCtrl } from '../../../services/helpers';
+import CreateUpdateForm from '../createPosts/update/createUpdateForm.vue';
 
 const props = defineProps({
     books: {
@@ -245,6 +258,7 @@ const userShelves = ref([]);
 const loaded = ref(false);
 const FLOWSHELVES = [Bookshelves.WANT_TO_READ, Bookshelves.CURRENTLY_READING, Bookshelves.FINISHED_READING];
 
+
 FLOWSHELVES.filter((shelf) => (shelf.prefix !== props.unique)).forEach(
         (shelf) => {
         // We need to get the users visbiility for each shelf.
@@ -252,6 +266,7 @@ FLOWSHELVES.filter((shelf) => (shelf.prefix !== props.unique)).forEach(
         userShelves.value.push(_shelf);
     }
 );
+
 
 onMounted(async () => {
     await db.get(
@@ -268,6 +283,8 @@ const moveToSelectedShelfData = ref({
     shelf: '',
     isRemovingFromCurrentShelf: false,
 });
+
+
 //  Two defaults for whether a shelf is WANT TO READ or CURRENTLY READING.
 if (props.unique === Bookshelves.WANT_TO_READ.prefix) {
     moveToSelectedShelfData.value.shelf = Bookshelves.CURRENTLY_READING.prefix;
@@ -277,11 +294,13 @@ if (props.unique === Bookshelves.CURRENTLY_READING.prefix) {
     moveToSelectedShelfData.value.shelf = Bookshelves.FINISHED_READING.prefix;
 }
 
+
 // Used for moving books to diff shelves in flow shelves.
 function setCurrentBookForOverlayOnMoveToSelectedShelfData(bookData) {
     console.log('setting move to selected shelf data for book');
     moveToSelectedShelfData.value.book = bookData;
 };
+
 
 // Default refs for the textareas we are adjusting.
 const textAreas = ref({
@@ -289,16 +308,19 @@ const textAreas = ref({
     wantToReadNoteTextArea: null,
 });
 
+
 // ------------------------------
 // For getting height of the textarea.
 const { debounce } = helpersCtrl;
 const heights = ref({});
+
 
 // Defaults for heights
 heights.value[Bookshelves.CURRENTLY_READING.prefix] = 82;
 heights.value.note_for_shelf = 82;
 heights.value[Bookshelves.FINISHED_READING.prefix] = 82;
 heights.value[Bookshelves.WANT_TO_READ.prefix] = 82;
+
 
 function generatedHeightForTextArea(refEl) {
     // Heights should only increase, not decrease if the new height is less than the current height - don't set it.
@@ -328,6 +350,7 @@ function generatedHeightForTextArea(refEl) {
     }
 }
 
+
 const throttledScrollHeightForTextArea = debounce(generatedHeightForTextArea, 150, true);
 // End height functions
 // ------------------------------
@@ -341,7 +364,10 @@ let bookdata = {
     author_id: user,
 };
 
+
 const currentBook = ref(null);
+
+
 watch(() => props.unsetCurrentBook, (newVal) => {
     if(newVal){
         currentBook.value = null;
@@ -425,12 +451,15 @@ function swappedWithHandler(book_data) {
 
 
 /**
- * Book controls overlay functions.
+ * Book controls overlay functions for generic shelves.
  */
 const currentBookForOverlay = ref(null);
+// note this is not the same overlay being used when you create a progress update
 const showBookControlsOverlay = ref(false);
 const editingCurrentBookNote = ref(false);
 // ------------------------------
+
+
 function showBookControlsOverlayHandler(payload){
     if (!props.isEditing) {
         showBookControlsOverlay.value = true;
@@ -442,6 +471,7 @@ function showBookControlsOverlayHandler(payload){
     }
 }
 
+
 function setOrUnsetEditingCurrentBookNote() {
     if(editingCurrentBookNote.value){
         editingCurrentBookNote.value = false;
@@ -450,6 +480,7 @@ function setOrUnsetEditingCurrentBookNote() {
         editingCurrentBookNote.value = true;
     }
 }
+
 
 async function saveBookNoteForCurrentBook() {
     let _data = {
@@ -463,6 +494,8 @@ async function saveBookNoteForCurrentBook() {
         console.log(res);
     });
 }
+
+
 /**
  * @async
  * @description: Wrapper around the Bookshelves.moveBookToShelf function.
@@ -492,6 +525,7 @@ async function moveToShelf(bookshelf) {
 // End of book controls overlay function
 // ------------------------------
 
+
 // For reggie shelves not flowshelves.
 const isFlowShelf = computed(() => {
     return !![
@@ -500,6 +534,24 @@ const isFlowShelf = computed(() => {
         Bookshelves.WANT_TO_READ.prefix
     ].includes(moveToSelectedShelfData.value.shelf);
 });
+
+
+/**
+ * Currently reading book update functionality
+ * -------------------------------------------
+ */
+
+const isUpdatingCurrentlyReadingBook = ref(false);
+
+function showCreateUpdateOverlayHandler(book) {
+    isUpdatingCurrentlyReadingBook.value = true;
+    currentBook.value = book;
+}
+
+
+/**
+ * Fin currently reading book update functionality
+ */
 </script>
 <style scoped lang="scss">
     .book-controls-overlay {
