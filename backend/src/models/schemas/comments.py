@@ -1,11 +1,13 @@
-from pydantic import BaseModel, validator
+from pydantic import BaseModel, validator, Field
 import datetime
 from neo4j.time import DateTime as Neo4jDateTime
+
+from src.config.config import settings
 
 class CommentCreate(BaseModel):
     post_id: str
     username: str
-    text: str
+    text: str = Field(..., max_length=settings.LARGE_TEXT_LENGTH)
     user_id: str = ""
     replied_to:str | None = None
 

@@ -68,7 +68,7 @@ async def create_review(request: Request,
                             title=title, 
                             small_img_url=small_img_url)
     except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail=jsonable_encoder(e.json()))
 
     book_exists = True
     if book_id[0] == "g":
@@ -90,7 +90,7 @@ async def create_review(request: Request,
                         rating=response.get('rating')
                 )
     except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail=jsonable_encoder(e.json()))
     
     if book_exists:
         review = post_repo.create_review(review)
@@ -140,7 +140,7 @@ async def create_update(request: Request,
                             title=title, 
                             small_img_url=small_img_url)
     except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail=jsonable_encoder(e.json()))
     print(db_book)
     book_exists = True
     if book_id[0] == "g":
@@ -160,7 +160,7 @@ async def create_update(request: Request,
                             spoiler=response.get('is_spoiler'),
                             quote=response.get('quote'))
     except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail=jsonable_encoder(e.json()))
         
     if book_exists:
         update = post_repo.create_update(update)
@@ -223,7 +223,7 @@ async def create_comparison(request: Request,
                 else:
                     raise ValueError("Book does not exist in the database")
             except ValueError as e:
-                raise HTTPException(status_code=400, detail=str(e))
+                raise HTTPException(status_code=400, detail=jsonable_encoder(e.json()))
             
     try:
         comparison = ComparisonCreate(
@@ -234,7 +234,7 @@ async def create_comparison(request: Request,
                                     responses=response['responses'],
                                     book_specific_headlines=response['book_specific_headlines'])
     except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail=jsonable_encoder(e.json()))
     
     if all_books_exist:
         comparison = post_repo.create_comparison(comparison)
@@ -279,7 +279,7 @@ async def create_recommendation_friend(request: Request,
                             title=title, 
                             small_img_url=small_img_url)
     except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail=jsonable_encoder(e.json()))
     
 
     book_exists = True
@@ -299,7 +299,7 @@ async def create_recommendation_friend(request: Request,
                                             to_user_text=response['to_user_text'],
                                             )
     except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail=jsonable_encoder(e.json()))
     
     if book_exists:
         recommendation = post_repo.create_recommendation_post(recommendation)
@@ -334,7 +334,7 @@ async def create_milestone(request: Request,
                                 user_username=current_user.username,
                                 num_books=response['num_books'])
     except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail=jsonable_encoder(e.json()))
     
     milestone = post_repo.create_milestone(milestone)
 
@@ -370,7 +370,7 @@ async def like_post(post_id: str,
     try:
         liked_post = LikedPost(username=current_user.username, post_id=post_id)
     except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail=jsonable_encoder(e.json()))
     
     if not current_user:
         raise HTTPException(401,"Unauthorized")
@@ -460,7 +460,7 @@ async def create_comment(request: Request,
                                 replied_to=response['replied_to'],
                                 text=response['text'])
     except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail=jsonable_encoder(e.json()))
     
     comment = comment_repo.create_comment(comment)
 

@@ -1,7 +1,9 @@
-from pydantic import BaseModel, validator
+from pydantic import BaseModel, validator, Field
+from typing_extensions import Annotated
 import datetime
 from neo4j.time import DateTime as Neo4jDateTime
 from src.models.schemas.books import BookPreview
+from src.config.config import settings
 
 class PostCreate(BaseModel):
     book: BookPreview
@@ -42,12 +44,24 @@ class CurrentlyReadingCreate(BaseModel):
     headline: str | None = None
 
 class ReviewCreate(PostCreate):
-    headline: str = ""
+    headline: str = Field("", max_length = settings.SMALL_TEXT_LENGTH) 
     questions: list[str] = []
     question_ids: list[int] = []
-    responses: list[str] = []
+    responses: list[str] = [] 
     spoilers: list[bool] = []
     rating: int | None = None
+
+    @validator('questions', each_item=True)
+    def check_length_questions(cls, v):
+        if len(v) > settings.MEDIUM_TEXT_LENGTH:
+            raise ValueError(f"Each string in questions must be at most {settings.MEDIUM_TEXT_LENGTH} characters long")
+        return v
+
+    @validator('responses', each_item=True)
+    def check_length_responses(cls, v):
+        if len(v) > settings.LARGE_TEXT_LENGTH:
+            raise ValueError(f"Each string in responses must be at most {settings.LARGE_TEXT_LENGTH} characters long")
+        return v
 
 class WantToReadPost(Post):
     headline: str = ""
@@ -67,10 +81,10 @@ class ReviewPost(Post):
     rating: int | None = None
     
 class UpdateCreate(PostCreate):
-    page: int
-    response: str
+    page: int = Field(..., ge = 0, le=10000)
+    response: str = Field("", max_length = settings.LARGE_TEXT_LENGTH) 
     spoiler: bool
-    headline: str = ""
+    headline: str = Field("", max_length = settings.SMALL_TEXT_LENGTH) 
     quote: str = ""
 
 
@@ -89,6 +103,24 @@ class ComparisonCreate(BaseModel):
     comparator_ids: list[str]
     responses: list[str]
     book_specific_headlines: list[str]
+
+    @validator('comparators', each_item=True)
+    def check_length_comparators(cls, v):
+        if len(v) > settings.SMALL_TEXT_LENGTH:
+            raise ValueError(f"Each string in comparators must be at most {settings.SMALL_TEXT_LENGTH} characters long")
+        return v
+
+    @validator('responses', each_item=True)
+    def check_length_responses(cls, v):
+        if len(v) > settings.LARGE_TEXT_LENGTH:
+            raise ValueError(f"Each string in responses must be at most {settings.LARGE_TEXT_LENGTH} characters long")
+        return v
+    
+    @validator('book_specific_headlines', each_item=True)
+    def check_length_book_specific_headlines(cls, v):
+        if len(v) > settings.SMALL_TEXT_LENGTH:
+            raise ValueError(f"Each string in book_specific_headlines must be at most {settings.SMALL_TEXT_LENGTH} characters long")
+        return v
 
 class ComparisonPost(BaseModel):
     id: str

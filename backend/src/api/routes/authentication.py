@@ -15,6 +15,7 @@ from src.models.schemas.users import UserInResponse, UserCreate, UserLogin, User
 from src.models.schemas.forms import SignUpForm, LoginForm
 from src.models.schemas.token import Token
 from src.securities.authorizations.verify import get_current_active_user
+from src.config.config import settings
 
 
 router = fastapi.APIRouter(prefix="/auth", tags=["authentication"])
@@ -45,6 +46,9 @@ async def signup(form_data:Annotated[SignUpForm, Depends()],
         )
     except ValueError as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+    
+    if len(user_create.email) > settings.SMALL_TEXT_LENGTH:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Email is too long")
     
     if not is_strong_password(user_create.password):
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Password is not strong enough")
@@ -116,11 +120,11 @@ async def login(form_data:Annotated[LoginForm, Depends()],
     
     # Check if the user exists in the database
     if not user_in_db:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Username or password incorrect")
     
     # Check if the password is valid
     if not pwd_generator.is_password_authenticated(user.password, user_in_db.password):
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid password")
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Username or password incorrect")
     
     # Generate access token
     access_token = jwt_generator.generate_access_token(username=user_in_db.username)

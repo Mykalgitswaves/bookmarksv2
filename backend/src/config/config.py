@@ -51,6 +51,13 @@ class Config(BaseSettings):
     MYSQL_DATABASE: str
     MYSQL_ECHO: bool
 
+    #Text length configs
+    XSMALL_TEXT_LENGTH: int
+    SMALL_TEXT_LENGTH: int
+    MEDIUM_TEXT_LENGTH: int
+    LARGE_TEXT_LENGTH: int
+    XLARGE_TEXT_LENGTH: int
+
 environment = os.getenv("ENVIRONMENT", "feature")
 
 if environment.lower() == "prod":

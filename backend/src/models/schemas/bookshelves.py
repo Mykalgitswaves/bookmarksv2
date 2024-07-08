@@ -1,4 +1,4 @@
-from pydantic import BaseModel, validator
+from pydantic import BaseModel, validator, Field
 from pydantic.typing import Literal
 import datetime
 from neo4j.time import DateTime as Neo4jDateTime
@@ -14,15 +14,16 @@ from src.utils.exceptions.bookshelves import (
     EmptyShelfError,
     InvalidAuthorPermission
 )
+from src.config.config import settings
 
 class BookshelfId(BaseModel):
     id: str
 
 class BookshelfTitle(BookshelfId):
-    title: str
+    title: str = Field(..., min_length=1, max_length=settings.XSMALL_TEXT_LENGTH)
 
 class BookshelfDescription(BookshelfId):
-    description: str
+    description: str = Field(..., min_length=1, max_length=settings.LARGE_TEXT_LENGTH)
 
 class BookshelfVisibility(BookshelfId):
     visibility: Literal['public', 'private', 'friends']
@@ -31,7 +32,7 @@ class BookshelfUser(BookshelfId):
     user_id: str
 
 class BookshelfBookNote(BookshelfId):
-    note_for_shelf: str | None
+    note_for_shelf: str | None = Field(None, max_length=settings.MEDIUM_TEXT_LENGTH)
     book_id: str
 
 class BookshelfContributor(BaseModel):
@@ -57,8 +58,8 @@ class BookshelfFollower(BookshelfContributor):
     pass
 
 class BookshelfCreate(BaseModel):
-    title: str
-    description: str
+    title: str = Field(..., max_length=settings.XSMALL_TEXT_LENGTH)
+    description: str = Field(..., max_length=settings.LARGE_TEXT_LENGTH)
     created_by: str
     visibility: Literal['public', 'private', 'friends']
     # created_date: datetime.datetime
