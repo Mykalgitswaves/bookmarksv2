@@ -35,7 +35,7 @@ onMounted(() => {
   @media only screen and (min-width: 768px) {
     .main-layout {
       justify-content: start;
-      padding-left: 3rem;
+      padding-left: 12vw;
     }
     .sidebar {
       display: flex;

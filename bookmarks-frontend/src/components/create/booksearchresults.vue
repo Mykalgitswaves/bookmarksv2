@@ -14,7 +14,7 @@
           <div class="flex flex-col justify-center">
             <p class="text-xl font-semibold text-gray-800">{{ book.title }}</p>
             
-            <p v-for="name in book.author_names" :key="name" class="inline text-sm text-gray-800">{{ name }}</p>
+            <p v-for="name in book.author_names" :key="name" claass="inline text-sm text-gray-800">{{ name }}</p>
             <span class="text-sm text-gray-500">{{ book.publication_year }}</span>
           </div>
         </li>
@@ -92,7 +92,7 @@ const reviewRange = ref(5)
 
   const books = computed(() => (props.data));
 
-  
+  console.log(books[0])
 
   function addScore(object){
     // set to map obj cause its better ds for this.

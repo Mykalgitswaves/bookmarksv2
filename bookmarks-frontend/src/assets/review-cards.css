@@ -130,10 +130,10 @@
     padding: 0 16px;
     margin-top: 16px;
     margin-bottom: 16px;
-    padding-left: var(--spacing-md);
-    padding-right: var(--spacing-md);
-    margin-left: var(--spacing-md);
-    margin-right: var(--spacing-md);
+    /* padding-left: var(--spacing-md);
+    padding-right: var(--spacing-md); */
+    /* margin-left: var(--spacing-md);
+    margin-right: var(--spacing-md); */
 }
 
 .card-commonalities h3 {

@@ -55,7 +55,7 @@
 
             <!-- Did you like it buttons -->
             <div v-if="step === 1">
-                <ReviewRating @set-rating="(_rating) => rating = _rating" />
+                <ReviewRating @set-rating="(_rating) => setRatingAndIncrementStep(_rating)" />
             </div>
 
             <!-- Adding questions -->
@@ -81,6 +81,10 @@
 
             <div v-if="step === 3">
                 <div class="m-tb-40">
+                    <div v-if="rating" class="fancy text-stone-500 pb-5">
+                        {{ ratingSummary }} 
+                    </div>
+
                     <img class="book-img" :src="book?.small_img_url || book.img_url" alt="">
                     <!-- Setting headlines -->
                     <CreatePostHeadline 
@@ -169,6 +173,16 @@ const questionMapping = reactive({
     // 'all': allQuestions,
 });
 
+const ratingMapping = {
+    1: 'didn\'t love',
+    2: 'liked',
+    3: 'loved',
+};
+
+const ratingSummary = () => {
+    return `You ${ratingMapping[rating.value]} ${ book.value.title || book.value.name }`;
+};
+
 const progressTotal = computed(() => Math.floor((step.value * 100) / 3));
 const remainderTotal = computed(() => 100 - progressTotal.value);
 
@@ -235,6 +249,13 @@ function decrementStep() {
     if(step.value > 1) {
         step.value -= 1;
     }
+}
+
+function setRatingAndIncrementStep(_rating) {
+    rating.value = _rating;
+    setTimeout(() => {
+        incrementStep();
+    }, 100);
 }
 
 // Add a watcher to emit up when something is added, doesn't seem to capture when entries

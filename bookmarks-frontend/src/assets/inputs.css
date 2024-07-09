@@ -81,6 +81,10 @@
     border: 2px solid #c7d2fe;
 }
 
+.select-1 select.block {
+  display: block;
+}
+
 .spoiler {
     font-family: system-ui, sans-serif;
     display: grid;
@@ -213,4 +217,11 @@ input[type="checkbox"] {
     right: 10px;
     top: 50%;
     transform: translateY(-50%);
+  }
+
+  .input-base-padding {
+    padding-left: var(--padding-sm);
+    padding-right: var(--padding-sm);
+    padding-top: var(--spacing-xs);
+    padding-bottom: var(--spacing-xs);
   }

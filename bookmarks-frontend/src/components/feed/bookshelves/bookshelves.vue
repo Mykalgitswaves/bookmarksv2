@@ -26,8 +26,8 @@
 
         <!-- loading indicatorrrr -->
         <div :aria-busy="!!props.dataLoaded" class="bookshelves loading"> 
-            <div v-if="!props.dataLoaded" class="bookshelf-container" >
-                <img class="bookshelf" :src="noBookYetUrl" alt="">
+            <div v-if="!props.dataLoaded" class="bookshelf-container gradient" >
+                <div class="bookshelf gradient"></div>
 
                 <div>
                     <h4 class="bookshelf-title">loading...</h4>
@@ -196,6 +196,7 @@
     min-width: 300px;
     text-align: start;
     cursor: auto;
+    padding-left: 0;
 }
 
 .create-bookshelf-btn {

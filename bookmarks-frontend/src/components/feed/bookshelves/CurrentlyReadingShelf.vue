@@ -23,8 +23,8 @@
                     <button
                         type="button"
                         class="btn add-readers-btn"
-                        :class="{'active': currentView === 'edit-books'}"
-                        @click="currentView = 'edit-books'"
+                        :class="{'active': currentView === 'view-books'}"
+                        @click="currentView = 'view-books'"
                     >
                         View bookshelf
                     </button>
@@ -52,16 +52,15 @@
         </div>
 
         <!-- Add and view books -->
-        <div v-if="loaded && currentView === 'edit-books'" class="mt-5">
+        <div v-if="loaded && currentView === 'view-books'" class="mt-5">
             <BookshelfBooks 
                 v-if="books?.length"
-                :unique="Bookshelves.WANT_TO_READ.prefix"
+                :unique="Bookshelves.CURRENTLY_READING.prefix"
                 :is-admin="isAdmin"
                 :books="books"
-                :can-reorder="isEditingModeEnabled.value"
-                :is-editing="isEditingModeEnabled.value"    
+                :is-editing="isEditingModeEnabled"    
                 :is-reordering="isReordering"
-                :unset-current-book="wantToReadUnsetKey"
+                :unset-current-book="unsetKey"
                 @send-bookdata-socket="
                     (bookdata) => reorder_books(bookdata)
                 "
@@ -97,7 +96,12 @@
             </div>
 
             <div class="w-100 gap-2 flex items-center">
-                <button type="button" class="btn btn-submit w-50" @click="addBookHandler(currentBook)">Add book</button>
+                <button type="button" class="btn btn-submit w-50" @click="
+                    Bookshelves.addBookHandler(currentBook, books, 'currently_reading'); 
+                    currentBook = null; 
+                    currentView = 'view-books'"
+                >Add book
+                </button>
 
                 <button type="button" class="btn btn-ghost w-50" @click="currentBook = null">Cancel</button>
             </div>
@@ -106,123 +110,84 @@
 
     <!-- Errors -->
     <Transition name="content">
-        <ErrorToast v-if="error.isShowing" :message="error.message" :refresh="true"/>
+        <ErrorToast v-if="error?.isShowing" :message="error.message" :refresh="true"/>
     </Transition>
+
     <div class="mobile-menu-spacer sm:hidden"></div>
 </template>
 <script setup>
-import { onMounted, ref, toRaw, onBeforeUnmount} from 'vue';
-import { useRoute, useRouter } from 'vue-router';
-import { getWantToReadshelfPromise, addBook } from './wantToRead.js';
-import { goToBookshelfSettingsPage } from '../bookshelves/bookshelvesRtc';
-import { urls } from "../../../services/urls";
-import { db } from "../../../services/db";
-import IconEdit from '../../svg/icon-edit.vue';
+import { ref, onMounted } from 'vue';
+import { db } from '../../../services/db';
+import { urls } from '../../../services/urls';
+import { useRoute } from 'vue-router';
+import { Bookshelves } from '../../../models/bookshelves';
 import BookshelfBooks from './BookshelfBooks.vue';
 import SearchBooks from '../createPosts/searchBooks.vue';
 import BookSearchResults from '../../create/booksearchresults.vue';
-import { Bookshelves } from '../../../models/bookshelves';
-import { ws, removeWsEventListener } from '../bookshelves/bookshelvesRtc'
-
+// // // // // // // // // // // // // 
+// -- -- -- --- Routes --- -- -- -- // 
 const route = useRoute();
-const router = useRouter();
 const { user } = route.params;
-const bookshelfData = ref(null);
-const isAdmin = ref(false);
-const currentView = ref('edit-books');
+// // // // // // // // // // // // // 
+
+
+// // // // // // // // // // // // // 
+// - View variables and booleans -  // 
+const currentView = ref('view-books');
 const loaded = ref(false);
-const books = ref([]);
+const isEditingModeEnabled = ref(false);
+const bookshelfData = ref(null);
 const currentBook = ref(null);
-const isEditingModeEnabled = ref({value: false});
-// All bookshelves need isReordering
-const isReordering = ref(false);
-let wantToReadUnsetKey = 0;
-
 const error = ref({
+    isShowing: false,
     message: '',
-    isShowing: false
 });
+const books = ref([]);
+const isAdmin = ref(false);
+let unsetKey = 0;
+// // // // // // // // // // // // //
 
-onMounted(async() => {
-    const wantToReadShelfPromise = await getWantToReadshelfPromise(user);
-    Promise.all([wantToReadShelfPromise]).then(([wantToReadShelf]) => {
-        bookshelfData.value = wantToReadShelf.bookshelf;
-        books.value = wantToReadShelf.bookshelf.books;
-        isAdmin.value = !!wantToReadShelf.bookshelf.created_by_current_user;
+
+// Initial load for shit inside // //
+// onMounted so stuff can break and /
+// not ruin app, it just returns // /
+// // // // // // // // // // // // //
+onMounted(async () => {
+    db.get(urls.rtc.getCurrentlyReading(user))
+    .then((res) => {
+        bookshelfData.value = res.bookshelf;
+        books.value = res.bookshelf.books;
+        isAdmin.value = !!(user === res.bookshelf.created_by)
         loaded.value = true;
+    }).catch((err) => {
+        console.error(err)
+    });
+
+    // Web socket related listeners
+    document.addEventListener('ws-loaded-data', (e) => {
+        books.value = ws.books;
+    });
+
+    document.addEventListener('ws-connection-error', (e) => {
+        error.value.message = e.detail.message;
+        error.value.isShowing = true;
+        // Hide toast manually after three seconds.
+        setTimeout(() => {
+            error.value.isShowing = false;
+        }, 5000);
+
+        if(ws.socket.readyState === 3) {
+            console.warn('socket is closed, reconnecting');
+            ws.createNewSocketConnection(route.params.bookshelf);
+        }
     });
 });
 
-document.addEventListener('ws-loaded-data', (e) => {
-    console.log('ws data has arrived', ws.books, e)
-    // Grab the last added book to the shelf!
-    books.value = ws.books;
-});
 
-document.addEventListener('ws-connection-error', (e) => {
-    error.value.message = e.detail.message;
-    error.value.isShowing = true;
-    // Hide toast manually after three seconds.
-    setTimeout(() => {
-        error.value.isShowing = false;
-    }, 5000);
-
-    if(ws.socket.readyState === 3) {
-        console.log('socket is closed, reconnecting');
-        ws.createNewSocketConnection(route.params.bookshelf);
-    }
-});
-
+// -- -- --- Functions --- -- -- // 
+// // // // // // // // // // // //
 function setCurrentBook(book) {
     currentBook.value = book;
     currentBook.value.note_for_shelf = '';
-    console.log(currentBook.value)
 }
-
-async function addBookHandler(book) {
-    book = typeof book === 'proxy' ? toRaw(book) : book;
-    
-    let bookObject = {
-        title: book.title,
-        id: book.id,
-        small_img_url: book.small_img_url,
-        author_names: book.author_names || book.authors,
-        note_for_shelf: book.note_for_shelf,
-    };
-
-    books.value.push(bookObject);
-
-    db.put(
-        urls.rtc.quickAddBook('want_to_read'),
-        { book: bookObject }
-    ).then((res) => {
-        currentBook.value = null;
-        currentView.value = 'edit-books';
-    });
-}
-
-//  Used to send and reorder data!
-// #TODO: Fix fix fix please please please. @kylearbide
-function reorder_books(bookData) {
-    isReordering.value = true;
-    console.log(bookData, 'book data dude')
-    bookData.type = 'reorder';
-    // Send data to server
-    ws.sendData(bookData);
-    isReordering.value = false;
-    // Forget what this is used for.
-    wantToReadUnsetKey += 1;
-}
-
-// Need this for regular navigation.
-onBeforeUnmount(() => {
-    ws.unsubscribeFromSocketConnection();
-    removeWsEventListener();
-});
-
-// Need to send close frame for websocket
-window.onbeforeunload = () => {
-    ws.unsubscribeFromSocketConnection();
-    removeWsEventListener();
-};
 </script>

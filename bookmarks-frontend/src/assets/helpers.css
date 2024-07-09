@@ -153,3 +153,55 @@
   .b-light {
     border: 1px solid var(--stone-100);
   }
+
+  .text-stone-500 {
+    color: var(--stone-500)
+  }
+
+  .weight-300 {
+    font-weight: 300;
+  }
+
+  @media screen and (max-width: 768px) {
+    .hidden-on-mobile {
+      visibility: hidden;
+      display: none;
+    }
+  }
+
+  .br-input-normal {
+    border-radius: 4px;
+  }
+
+  .min-height-textarea {
+    min-height: 52px;
+  }
+
+
+  .pblock-sm {
+    padding-left: var(--spacing-xs) !important;
+    padding-right: var(--spacing-xs) !important;
+  }
+  
+  /* Gradient animation */
+  .gradient {
+    animation-duration: 1.8s;
+    animation-fill-mode: forwards;
+    animation-iteration-count: infinite;
+    animation-name: placeHolderShimmer;
+    animation-timing-function: linear;
+    background: var(--stone-50);
+    background: linear-gradient(to right, var(--stone-100) 8%, var(--stone-200) 38%, var(--stone-100) 54%);
+    background-size: 1000px 640px;
+    
+    position: relative;
+}
+
+@keyframes placeHolderShimmer{
+    0%{
+        background-position: -468px 0
+    }
+    100%{
+        background-position: 468px 0
+    }
+}

@@ -104,12 +104,22 @@ export const db = {
         }
     },
     // Can use raw params not strinfigied,can even pass in proxy
-    put: async (url, params, debug, successRouterFunction) => {
+    put: async (url, requestData, debug, successRouterFunction, queryParams) => {
         const token = helpersCtrl.getCookieByParam(['token']);
         console.log(token)
         // Check if you are passing in proxy and if you are convert it to a raw object before posting to database.
         try {
-        params = typeof params === Proxy ? toRaw(params) : params
+        requestData = typeof requestData === Proxy ? toRaw(requestData) : requestData
+
+        // Modify url to include query params.
+        if (queryParams) {
+            // Make sure we aren't fucking up this part of the request.
+            if (!url.endsWith('/')) {
+                url = url + '/';
+            }
+            
+            url = url + '?' + new URLSearchParams(queryParams);
+        }
             const response = await fetch(url, {
                 method: 'put',
                 headers: {
@@ -117,7 +127,7 @@ export const db = {
                     Accept: 'application.json',
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify(params)
+                body: JSON.stringify(requestData)
             });
             const data = await response.json();
 

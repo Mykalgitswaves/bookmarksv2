@@ -98,6 +98,27 @@ class BookshelfBook(BaseModel):
     small_img_url: str | None
     note_for_shelf: str | None = None
     google_id: str | None = None
+    
+class CurrentlyReadingBookPreview(BaseModel):
+    id: str
+    title: str
+    small_img_url: str | None
+    note_for_shelf:str | None
+    current_page: int
+    total_pages: int | None
+    last_updated: datetime.datetime
+    
+    @validator('last_updated', pre=True, allow_reuse=True)
+    def parse_neo4j_datetime(cls, v):
+        if isinstance(v, Neo4jDateTime):
+            # Convert Neo4jDateTime to Python datetime
+            return v.to_native()
+        return v
+
+class CurrentlyReadingPageUpdate(BaseModel):
+    user_id: str
+    book_id: str
+    new_current_page: int
 
 class Node:
     def __init__(self, book):
@@ -425,6 +446,7 @@ class BookshelfPreview(BaseModel):
     description: str
     books_count: int
     book_ids: list[str]
+    book_titles: list[str] | None
     img_url: str | None = None
     book_img_urls: list[str]
     visibility: Literal['public', 'private', 'friends']
@@ -432,6 +454,14 @@ class BookshelfPreview(BaseModel):
     created_by: str
     created_by_username: str
     follower_count: int = 0
+    
+class CurrentlyReadingBookshelfPreview(BaseModel):
+    id: str
+    title: str
+    description: str
+    books: list[CurrentlyReadingBookPreview]
+    visibility: Literal['public', 'private', 'friends']
+    
 
 class BookshelfPage(BaseModel):
     created_by: str
@@ -445,7 +475,12 @@ class BookshelfPage(BaseModel):
     follower_count: int = 0
     contributors: set = set()
     visibility: Literal['public', 'private', 'friends']
-    
+
+class MinimalBookshelf(BaseModel):
+    id: str
+    title: str
+    visibility: Literal['public', 'private', 'friends']
+
 class Bookshelf(BaseModel):
     created_by: str
     created_by_username: str

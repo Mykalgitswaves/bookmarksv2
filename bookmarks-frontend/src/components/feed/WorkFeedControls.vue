@@ -33,7 +33,7 @@
       </div>
 
 
-      <div class="btn-relative">
+      <!-- <div class="btn-relative">
         <button
           v-if="!toggleCreateReviewType"
           ref="create-review-btn"
@@ -71,7 +71,7 @@
             </div>
           </div>
         </div>
-      </div>
+      </div> -->
     </div>
 </template>
 <script setup>
@@ -108,7 +108,7 @@ function closeModal(reactiveKey) {
     column-gap: 10px;
     justify-content: space-between;
     padding: 10px;
-    top: 5px;
+    top: 40px;
   }
 
   .text-white {

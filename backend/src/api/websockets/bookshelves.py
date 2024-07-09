@@ -28,14 +28,14 @@ class BookshelfWSManager:
 
         books, book_ids = jsonable_encoder(self.cache[bookshelf_id].get_books())
 
-        print('New User Established Connection to Bookshelf WS. Generating unique token...')
-        token = jwt_generator.generate_bookshelf_websocket_token(user_id=user_id, bookshelf_id=bookshelf_id)
+        # print('New User Established Connection to Bookshelf WS. Generating unique token...')
+        # token = jwt_generator.generate_bookshelf_websocket_token(user_id=user_id, bookshelf_id=bookshelf_id)
 
         # SHOULD THIS BE A SEND JSON INSTEAD? NO NEED TO SEND A MESSAGE TO THE ENTIRE GROUP
         # await self.send_data(data={
         #     "state": "unlocked", "data": books }, bookshelf_id=bookshelf_id)
         await ws.send_json(data={
-            "state": "unlocked", "data": books, "token":token})
+            "state": "unlocked", "data": books})
         
 
     async def disconnect(self, bookshelf_id: str, ws: WebSocket):
@@ -43,7 +43,7 @@ class BookshelfWSManager:
         if not self.ac[bookshelf_id]:
             del self.ac[bookshelf_id]
             del self.locks[bookshelf_id]
-            del self.cache[bookshelf_id]
+            # del self.cache[bookshelf_id]
         await ws.close()
 
     async def disconnect_without_close(self, bookshelf_id: str, ws: WebSocket):
@@ -51,7 +51,7 @@ class BookshelfWSManager:
         if not self.ac[bookshelf_id]:
             del self.ac[bookshelf_id]
             del self.locks[bookshelf_id]
-            del self.cache[bookshelf_id]
+            # del self.cache[bookshelf_id]
         # await ws.close()    
         # if self.cache[bookshelf_id]: 
         #     # If cache exists and there is no one else in the pool 
@@ -68,6 +68,7 @@ class BookshelfWSManager:
 
     async def reorder_books_and_send_updated_data(self, current_user, bookshelf_id, data, bookshelf_repo:BookshelfCRUDRepositoryGraph):
         _bookshelf = self.cache[bookshelf_id]
+
         if current_user.bookshelf_id != bookshelf_id:
             await self.send_data(data={"state": "error", 
                 "data": self.errors['INVALID_AUTHOR_PERMISSION'] },

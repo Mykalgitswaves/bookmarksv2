@@ -87,14 +87,7 @@
                     {{ bookShelfComponentMap[currentView.value].heading(bookshelfData?.title) }}
                 </h3>
                 
-                <div v-if="currentView.value === 'edit-books' && !isReorderModeEnabled" class="flex gap-2">
-                    <button class="btn reorder-btn"
-                        :disabled="books.length <= 1"
-                        @click="enterReorderMode()"
-                    >
-                        Reorder
-                    </button>
-
+                <div v-if="currentView.value === 'edit-books' && !isReorderModeEnabled && !isEditingModeEnabled" class="flex gap-2">
                     <button class="btn reorder-btn"
                         :disabled="books.length <= 1"
                         @click="enterEditMode()"
@@ -110,7 +103,7 @@
                         v-if="books?.length"
                         :is-admin="isAdmin"
                         :books="books"
-                        :can-reorder="isReorderModeEnabled"
+                        :can-reorder="isEditingModeEnabled"
                         :is-editing="isEditingModeEnabled"    
                         :is-reordering="isReordering"
                         :unset-current-book="unsetKey"
@@ -137,6 +130,7 @@
             <!-- Where you search for books for adding -->
             <SearchBooks 
                 v-if="isAdmin && currentView.value === 'add-books'"
+                :centered="true"
                 @book-to-parent="(book) => addBook(book)"  
             />
         </section>   
@@ -278,9 +272,9 @@ function gotToAddBooksAndCreateSocketConnection(){
  * and subscribe to the socket connection.
  */
 async function enterReorderMode(){
-    isReorderModeEnabled.value = true;
     // Probably need a way to edit this so we dont keep things open for long. Can add in an edit btn to the ux
     await ws.createNewSocketConnection(route.params.bookshelf);
+    isReorderModeEnabled.value = true;
 }
 
 // This may be tricky to lock out the ws connection, people might try and reconnect to soon after disconnecting.
@@ -322,7 +316,10 @@ function remove_book(removed_book_id){
     ws.sendData(data);
     unsetKey++;
 }
-
+/**
+ * @description
+ * THiS IS WHAT MAKES YOUR BOOKS UPDATE IN REAL TIME WITH THE EVENT LISTENER DUDE.
+ */
 onMounted(() => {
     // Probably could do a better way to generate link in this file. We can figure out later i guess?
     bookshelfData.value = getBookshelf(route.params.bookshelf);

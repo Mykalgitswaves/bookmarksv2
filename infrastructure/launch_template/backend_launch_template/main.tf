@@ -14,7 +14,7 @@ resource "aws_launch_template" "backend_template" {
   name = "backend-launch-template-05-29"
   description = "Launch template for provisioning backend instances created on 5-29-2024"
   
-  image_id = "ami-0752be9f468b49a3f"
+  image_id = "ami-018767bcdc37544d4"
   instance_type = "t3.small"
   key_name = "bookmarks-web-server"
 
