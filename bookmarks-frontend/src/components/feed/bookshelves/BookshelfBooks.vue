@@ -50,8 +50,13 @@
         v-if="unique === Bookshelves.CURRENTLY_READING.prefix && isUpdatingCurrentlyReadingBook && currentBook" 
         to="body"
     >
+
         <div class="book-controls-overlay shadow-lg">
-            <CreateUpdateForm :book="currentBook"/>
+            <button type="button" class="btn btn-small icon" @click="resetSort()">
+                <IconExit />
+            </button>
+
+            <CreateUpdateForm :book="currentBook" @post-update="$emit('post-update', $event)"/>
         </div>
     </teleport>
 
@@ -188,7 +193,7 @@
     <!-- ------------------------------------------------- -->
 
     <!-- Regular shelves -->
-    <teleport v-if="currentBook !== null || canReorder || isEditing" to="body">
+    <teleport v-if="(currentBook !== null || canReorder || isEditing) && !isUpdatingCurrentlyReadingBook " to="body">
         <div class="sorting-footer">
             <div v-if="currentBook" class="s-f-book">
                 <img :src="currentBook.small_img_url" class="s-f--current-book-img" alt="">
@@ -212,11 +217,10 @@
     <!-- End regular shelves -->
 </template>
 <script setup>
-import { ref, computed, watch, onMounted, toRaw } from 'vue';
+import { ref, computed, watch, onMounted, toRaw, defineExpose } from 'vue';
 import { useRoute } from 'vue-router';
 import SortableBook from './SortableBook.vue';
 import IconExit from '../../svg/icon-exit.vue';
-import IconTrash from '../../svg/icon-trash.vue';
 import { db } from '../../../services/db';
 import { urls } from '../../../services/urls';
 import { Bookshelves } from '../../../models/bookshelves';
@@ -354,6 +358,11 @@ function generatedHeightForTextArea(refEl) {
 const throttledScrollHeightForTextArea = debounce(generatedHeightForTextArea, 150, true);
 // End height functions
 // ------------------------------
+
+// ------------------------------------------------------
+// Functions that have to do with server stuff and setting 
+// / unsetting current books
+// ------------------------------------------------------
 
 
 // This is what will be sent via websocket over the wire.
@@ -548,6 +557,8 @@ function showCreateUpdateOverlayHandler(book) {
     currentBook.value = book;
 }
 
+// Expose macros for flow shelf capabilities
+defineExpose({ currentBook });
 
 /**
  * Fin currently reading book update functionality
@@ -572,6 +583,8 @@ function showCreateUpdateOverlayHandler(book) {
         background-color: var(--semi-transparent-surface);
         border-radius: var(--radius-sm);
         border: 1px solid var(--stone-200);
+        max-height: 87vh;
+        overflow-y: scroll;
     }
 
     .bookshelf-books {

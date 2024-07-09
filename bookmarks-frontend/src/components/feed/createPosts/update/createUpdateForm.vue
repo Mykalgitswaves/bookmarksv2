@@ -40,7 +40,7 @@
     </div>
 
     <div class="spacing-wrap">
-        <div class="container grid">
+        <div class="container">
             <div class="mb-5 ml-auto mr-auto w-90" v-if="step === 1">
                 <label class="input-number block mb-5 mt-10" for="page-number">
                     <p class="text-2xl mb-2 mt-5 text-stone-600 fancy">Im on page <span class="italic text-indigo-600">{{ page }}</span></p>
@@ -83,24 +83,44 @@
             </div>
             
 
-            <CreatePostHeadline v-if="step === 3" @headline-changed="headlineHandler" :review-type="'update'"/>
+            
 
-            <div class="flex gap-5 space-between items-end">
-                <div class="ml-auto mr-auto">
-                    <label :for="update.id" class="flex items-center">
-                        <input :id="update.id" 
-                            type="checkbox"
-                            v-model="update.is_spoiler"
-                            value="true"
-                            @change="emit('is-spoiler-event', update)"
-                        />
-                        <span class="text-slate-600 ml-2">Does this update contain spoilers?</span>
-                    </label>
+
+            <div v-if="step === 3" class="ml-auto mr-auto">
+                <CreatePostHeadline 
+                    v-if="update.response.length"
+                    :review-type="'update'"
+                    :text-centered="true"
+                    @headline-changed="headlineHandler" 
+                />
+
+                <h3 v-if="update.page" class="text-center fancy text-2xl mt-5 text-indigo-500">Page {{ update.page }}</h3>
+
+                <div class="mt-5 mb-5">
+                    <CreateUpdateFormResponses :update="update" @go-to-edit-section="step = 2"/>
                 </div>
-            </div>
 
-            <div class="w-100">
-                <button class="btn btn-submit">post</button>
+                <div v-if="update.response.length" class="flex gap-5 space-between items-end my-5" >
+                    <div>
+                        <label :for="update.id" class="flex items-center">
+                            <input :id="update.id" 
+                                type="checkbox"
+                                v-model="update.is_spoiler"
+                                value="true"
+                                @change="emit('is-spoiler-event', update)"
+                            />
+                            <span class="text-slate-600 ml-2">Does this update contain spoilers?</span>
+                        </label>
+                    </div>
+                </div>
+
+                <button 
+                    v-if="isPostableUpdate"
+                    class="btn btn-submit w-100"
+                    @click="emit('post-update', helpersCtrl.formatUpdateData(update))"
+                >
+                    post update
+                </button>
             </div>
         </div>    
     </div>
@@ -108,7 +128,15 @@
 <script setup>
 import { ref, watch, reactive, computed } from 'vue';
 import CreatePostHeadline from '../createPostHeadline.vue';
+import CreateUpdateFormResponses from './CreateUpdateFormResponses.vue';
 import { helpersCtrl } from '../../../../services/helpers';
+
+const props = defineProps({
+    book: {
+        type: Object,
+        required: true,
+    },
+});
 
 const emit = defineEmits();
 const headline = ref('');
@@ -116,12 +144,7 @@ const page = ref(0);
 const step = ref(1);
 const progressTotal = computed(() => Math.floor((step.value * 100) / 3));
 const remainderTotal = computed(() => 100 - progressTotal.value);
-const props = defineProps({
-    book: {
-        required: true
-    }
 
-})
 
 const update = reactive({
     headline: '',
@@ -143,6 +166,7 @@ watch(update, () => {
     return emit('update-complete', helpersCtrl.formatUpdateData(update));
 });
 
+const isPostableUpdate = computed(() => (update.response.length || update.page));
 
 </script>
 <style scoped>

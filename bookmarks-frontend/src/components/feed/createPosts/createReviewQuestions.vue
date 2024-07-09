@@ -19,7 +19,9 @@
 
             <!-- Subsection of a particular category -->
             <Transition name="content" tag="div">
-                <ul  v-if="questionType[0] === 'custom' ? activeQuestionCat[index] : !activeQuestionCat[index]" class="container questions">
+                <ul  v-if="questionType[0] === 'custom' ? activeQuestionCat[index] : !activeQuestionCat[index]" 
+                    class="container questions"
+                >
                     <li v-for="(question, i) in questionType[1]" 
                         :key="i"
                         class="mb-5"
@@ -34,13 +36,13 @@
                                 <!-- <span v-else class="block">{{ question?.placeholder }}</span> -->
                             
                                 <textarea name="response" type="text" 
-                                    :style="{ height: throttledGenQuestionHeight(question.id) + 'px' }"
+                                    :style="{ height: heights[question.id] + 'px' }"
                                     :id="question.id"
                                     class="create-question-response" 
                                     v-model="question.response"
                                     ref="textarea"
                                     :placeholder="question.id >= 0 ? 'type your response here...' : 'Add your own thoughts here...'"
-                                    @keyup="debouncedUpdateQuestion(question)"
+                                    @keyup="debouncedUpdateQuestion(question); throttledGenQuestionHeight(question.id)"
                                 />
                             </form>
                         </div>
