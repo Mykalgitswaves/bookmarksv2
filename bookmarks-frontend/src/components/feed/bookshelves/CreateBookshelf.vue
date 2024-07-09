@@ -5,12 +5,12 @@
         <div>
             <label for="bookshelf_title" class="title-input">
                 <p>Add a title for your bookshelf</p>
-                <input id="bookshelf_title" type="text" v-model="model.bookshelf_name">
+                <input id="bookshelf_title" type="text" v-model="model.bookshelf_name" :maxlength="XSMALL_TEXT_LENGTH">
             </label>
 
             <label for="bookshelf_description" class="summary-update bookshelf">
                 <p>Add a description for your bookshelf</p>
-                <textarea id="bookshelf_description" v-model="model.bookshelf_description"/>
+                <textarea id="bookshelf_description" v-model="model.bookshelf_description" :maxlength="MEDIUM_TEXT_LENGTH"/>
             </label>
 
             <button 
@@ -37,6 +37,7 @@
     import { useRoute, useRouter } from 'vue-router'
     import { urls } from '../../../services/urls';
     import { db } from '../../../services/db';
+    import { XSMALL_TEXT_LENGTH, MEDIUM_TEXT_LENGTH } from '../../../services/forms';    
     const route = useRoute();
     const router = useRouter();
     // All shelves start as private.

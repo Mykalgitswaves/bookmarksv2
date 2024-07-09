@@ -85,7 +85,7 @@ class UpdateCreate(PostCreate):
     response: str = Field("", max_length = settings.LARGE_TEXT_LENGTH) 
     spoiler: bool
     headline: str = Field("", max_length = settings.SMALL_TEXT_LENGTH) 
-    quote: str = ""
+    quote: str = Field("", max_length = settings.MEDIUM_TEXT_LENGTH) 
 
 
 class UpdatePost(Post):

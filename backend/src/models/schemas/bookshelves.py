@@ -59,7 +59,7 @@ class BookshelfFollower(BookshelfContributor):
 
 class BookshelfCreate(BaseModel):
     title: str = Field(..., max_length=settings.XSMALL_TEXT_LENGTH)
-    description: str = Field(..., max_length=settings.LARGE_TEXT_LENGTH)
+    description: str = Field(..., max_length=settings.MEDIUM_TEXT_LENGTH)
     created_by: str
     visibility: Literal['public', 'private', 'friends']
     # created_date: datetime.datetime
