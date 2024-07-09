@@ -83,7 +83,12 @@
                 <div class="m-tb-40">
                     <img class="book-img" :src="book?.small_img_url || book.img_url" alt="">
                     <!-- Setting headlines -->
-                    <CreatePostHeadline :prop-headline="headline" @headline-changed="headlineHandler" :review-version="true"/>
+                    <CreatePostHeadline 
+                        :headline-error="headlineError" 
+                        :prop-headline="headline" 
+                        :review-version="true"
+                        @headline-changed="headlineHandler" 
+                    />
 
                     <div class="divider m-tb-40"></div>
 
@@ -120,6 +125,10 @@ import YourReviewQuestions from './yourReviewQuestions.vue';
 import ReviewRating from './ReviewRating.vue';
 
 defineProps({
+    headlineError: {
+        type: String,
+        required: false
+    },
     isPostableData: {
         type: Boolean,
         required: true,

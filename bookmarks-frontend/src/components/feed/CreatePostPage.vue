@@ -4,6 +4,7 @@
 
     <createReviewPost 
       v-if="reviewType === 'review'"
+      :headline-error="headlineError"
       :is-postable-data="isPostableData"
       @is-postable-data="setPostData" 
       @post-data="postToEndpoint()"
@@ -31,7 +32,7 @@
 import createReviewPost from './createPosts/createReviewPost.vue';
 import createUpdatePost from './createPosts/createUpdatePost.vue';
 import createComparisonPost from './createPosts/createComparisonPost.vue';
-import { ref, watch, toRaw } from 'vue';
+import { ref, watch, toRaw } from 'vue'; 
 import { urlsMapping } from './createPostService';
 import { createQuestionStore } from '../../stores/createPostStore'
 import { useRoute, useRouter } from 'vue-router';
@@ -58,7 +59,7 @@ function setPostData(e) {
 }
 // Make sure to clear out questions on successfull post.
 const store = createQuestionStore();
-// const errors = ref([]);
+const headlineError = ref(null);
 
 async function catchErrors(error){
   if (error.status === 400){
@@ -68,13 +69,15 @@ async function catchErrors(error){
     if (Array.isArray(errorDetail)) {
       errorDetail.forEach((e) => {
         // Display the error message on page
-        // errors.value.push(e);
         if (e.loc[0] === "responses"){
           let index = e.loc[1];
           let question = store.arr[index];
           question.error = e.msg;
           store.addOrUpdateQuestion(question)
-        } 
+        }
+        else if (e.loc[0] === "headline"){
+          headlineError.value = e.msg;
+        }
       });
     }
     else {
