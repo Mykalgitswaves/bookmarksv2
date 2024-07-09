@@ -33,14 +33,17 @@
                                 
                                 <!-- <span v-else class="block">{{ question?.placeholder }}</span> -->
                             
-                                <textarea name="response" type="text" 
-                                    :style="{ height: throttledGenQuestionHeight(question.id) + 'px' }"
+                                <textarea 
+                                    name="response" 
+                                    type="text" 
+                                    :style="{ 'height': heights[question.id] + 'px' }"
                                     :id="question.id"
                                     class="create-question-response" 
                                     v-model="question.response"
                                     ref="textarea"
+                                    :maxlength="LARGE_TEXT_LENGTH"
                                     :placeholder="question.id >= 0 ? 'type your response here...' : 'Add your own thoughts here...'"
-                                    @keyup="debouncedUpdateQuestion(question)"
+                                    @keyup="debouncedUpdateQuestion(question); throttledGenQuestionHeight(question.id)"
                                 />
                             </form>
                         </div>
@@ -81,6 +84,7 @@ import IconChevron from '../../svg/icon-chevron.vue';
 import IconRemove from '../../svg/icon-remove.vue';
 import IconPlus from '../../svg/icon-plus.vue';
 import { categoryIconMapping } from '../createPosts/questionCategories.js';
+import { LARGE_TEXT_LENGTH } from '../../../services/forms'
 
 const props = defineProps({
     questionMap: {
@@ -119,6 +123,9 @@ function textAreaHeight(id) {
     } else {
         heights.value[id] = 30;
     }
+
+    console.log(heights.value[id], 'from inside textAreaHeight fn');
+    console.log(id, 'from inside textAreaHeight fn');
 }
 
 function generateQuestionHeightWithCache(id) {   
@@ -146,7 +153,7 @@ function updateQuestion(question) {
     if(!question.response.length){
         return;
     }
-    console.log(question, 'from inside update question fn');
+    // console.log(question, 'from inside update question fn');
     store.addOrUpdateQuestion(question);
     // Maybe add more logic in here to emit the shit.
     emit('question-updated');

@@ -159,6 +159,7 @@
     border: dotted 2px rgb(229 231 235);
     transition-duration: 250ms;
     border-radius: var(--radius-sm);
+    word-break: break-all;    
   }
   
   .question-border:hover {
@@ -170,6 +171,11 @@
   .question-border.active {
     border-color: var(--indigo-200);
     background-color: var(--indigo-50);
+  }
+
+  .question-border.error {
+    border-color: var(--red-400);
+    background-color: var(--red-50);
   }
   
   /* -------------------------------------------  */

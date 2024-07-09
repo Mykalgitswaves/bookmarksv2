@@ -58,14 +58,42 @@ function setPostData(e) {
 }
 // Make sure to clear out questions on successfull post.
 const store = createQuestionStore();
+// const errors = ref([]);
+
+async function catchErrors(error){
+  if (error.status === 400){
+    // Parse error.detail
+    const errorDetail = JSON.parse(error.detail);
+    // Check if errorDetail is an array
+    if (Array.isArray(errorDetail)) {
+      errorDetail.forEach((e) => {
+        // Display the error message on page
+        // errors.value.push(e);
+        if (e.loc[0] === "responses"){
+          let index = e.loc[1];
+          let question = store.arr[index];
+          question.error = e.msg;
+          store.addOrUpdateQuestion(question)
+        } 
+      });
+    }
+    else {
+      // Display the error message on page
+      // errors.value.push(errorDetail);
+    } 
+  }
+}
+
+async function onSuccess(){
+  postTypeMapping.value = '';
+  // Set to null after request is sent.
+  emittedPostData.value = null;
+  store.clearQuestions();
+  router.push({name: 'home-feed', params: { user: route.params.user }})
+}
+
 async function postToEndpoint() {
-    await db.post(urlsMapping[reviewType], emittedPostData, true).then(() => {
-      postTypeMapping.value = '';
-      // Set to null after request is sent.
-      emittedPostData.value = null;
-      store.clearQuestions();
-      router.push({name: 'home-feed', params: { user: route.params.user }})
-  });
+    await db.post(urlsMapping[reviewType], emittedPostData, true, onSuccess, catchErrors)
 }
 
 watch(emittedPostData, () => {

@@ -1,7 +1,9 @@
 <template>
     <ul class="container questions" :class="{'mt-10': !isComparison}">
         <li v-for="(question, i) in questions" :key="i">
-            <div class="my-3 text-lg question-border px-5 py-5 w-100 box-btn justify-between items-center">
+            <div class="my-3 text-lg question-border px-5 py-5 w-100 box-btn justify-between items-center"
+                :class="{'error': question.error}"
+            >
                 <div class="text-start">
                     <!-- If we are looking at a custom review type question. -->
                     <span v-if="!props.isComparison && question.id < 0" class="block fancy">Your response</span>
@@ -18,6 +20,7 @@
                     <span v-if="props.isComparison" class="block text-slate-400 text-start">{{ question.comparison || question.response }}</span>
                 </div>
             </div>
+            <div v-if="question.error" class="text-start text-red-500 text-sm">{{ question.error }}</div> 
         </li>
     </ul>
 
