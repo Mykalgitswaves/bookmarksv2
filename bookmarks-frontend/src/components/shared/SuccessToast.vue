@@ -41,4 +41,15 @@ const emits = defineEmits('dismiss')
     z-index: 1000000;
 }
 
+.toast-preview {
+    height: 45px;
+    width: auto;
+    aspect-ratio: 1/3;
+    border-radius: var(--radius-sm);
+}
+
+
+.toast-link {
+    
+}
 </style>

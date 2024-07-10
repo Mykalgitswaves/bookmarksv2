@@ -32,13 +32,29 @@
     </label>
 
     <div v-if="unique === Bookshelves.CURRENTLY_READING.prefix && currentlyReadingProgress" class="w-100 mt-2 text-start">
-        <div class="progress-bar"></div>
         <div class="progress-toolbar">
-            <span>{{ currentlyReadingProgress.progress + ' / ' + currentlyReadingProgress.remaining }}</span>
+            <button class="badge badge-small badge-purple mt-auto"
+                type="button"
+                @click="showProgressBar = !showProgressBar"
+            >
+                {{ currentlyReadingProgress.progress + ' / ' + currentlyReadingProgress.remaining }}
+            </button>
+
             <button class="btn btn-ghost btn-small" type="button" @click="$emit('update-currently-reading-book', book)">
                 update progress
             </button>
         </div>
+
+        <KeepAlive>
+            <Transition name="content">
+                <BookProgressBar 
+                    v-if="showProgressBar" 
+                    :book="book" 
+                    :current-page="currentlyReadingProgress.progress" 
+                    :total-pages="currentlyReadingProgress.remaining"
+                />
+            </Transition>
+        </KeepAlive>
     </div>
 
     <div v-if="noteForShelf" class="text-stone-500 weight-300 mr-auto">
@@ -69,7 +85,7 @@ import { wsCurrentState } from './bookshelvesRtc';
 import { truncateText } from '../../../services/helpers';
 import { Bookshelves } from '../../../models/bookshelves';
 import IconDelete from '../../svg/icon-trash.vue';
-
+import BookProgressBar from './BookProgressBar.vue';
 const props = defineProps({
     order: {
         type: Number,
@@ -115,6 +131,7 @@ const props = defineProps({
         type: Object
     }
 });
+
 const input = ref('input');
 const emit = defineEmits(['set-sort', 'show-book-controls-overlay', 'swapped-with', 'update-currently-reading-book']);
 
@@ -203,8 +220,8 @@ const isLocked = computed(() => wsCurrentState.value === 'locked');
 const currentlyReadingProgress = computed(() => {
     if (props.unique === Bookshelves.CURRENTLY_READING.prefix) {
         return { 
-            progress: props.book.page || 0,
-            remaining: props.book.num_of_pages || 0
+            progress: props.book.current_page ||= 0,
+            remaining: props.book.total_pages ||= 0,
         }
     } 
     return false;
@@ -215,7 +232,7 @@ const currentlyReadingProgress = computed(() => {
  * For shit related to SortableBook components in the context of a currently reading shelf
  */
 
-
+const showProgressBar = ref(false);
 
 /**
  * End currently reading shelf functions

@@ -36,7 +36,7 @@ export const db = {
         }
     },
         // Note params must be an object for this to work. Use key value.
-    get: async (url, params, debug, successRouterFunction) => {
+    get: async (url, params, debug, successRouterFunction, failureFunction) => {
         params = (typeof params === Proxy ? toRaw(params) : params)
         try {
             const token = helpersCtrl.getCookieByParam(['token'])
@@ -57,6 +57,10 @@ export const db = {
                     }
                     console.log('returning', data)
                     return data
+                }
+
+                if (!response.ok && failureFunction) {
+                    failureFunction(data)
                 }
         } catch(err) { return console.error(err); }
     },

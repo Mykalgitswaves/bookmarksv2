@@ -48,22 +48,27 @@
                         class="rounded-md"
                         id="page-number"
                         type="number" 
-                        v-model="page"
+                        v-model="update.page"
                     >
                 </label>
+                <slot name="set-current-page">
+                    
+                </slot>
 
-                <label for="summary-update" class="text-stone-600 fancy text-2xl mb-2 mt-5">
-                    A quote that stuck
-                    <span class="label-note">Add a quote to base your update off of</span>
-                </label>
+                <div>
+                    <label for="summary-update" class="text-stone-600 fancy text-2xl mb-2 mt-5">
+                        (Optional) A quote that stuck
+                        <span class="label-note">Add a quote to base your update off of</span>
+                    </label>
 
-                <div class="summary-update no-max">
-                    <textarea
-                        class="rounded-md quote-summary"
-                        name=""
-                        id="summary-update"
-                        v-model="update.quote"
-                    />
+                    <div class="summary-update no-max">
+                        <textarea
+                            class="rounded-md quote-summary"
+                            name=""
+                            id="summary-update"
+                            v-model="update.quote"
+                        />
+                    </div>
                 </div>
             </div>
 
@@ -167,7 +172,6 @@ watch(update, () => {
 });
 
 const isPostableUpdate = computed(() => (update.response.length || update.page));
-
 </script>
 <style scoped>
  .spacing-wrap {

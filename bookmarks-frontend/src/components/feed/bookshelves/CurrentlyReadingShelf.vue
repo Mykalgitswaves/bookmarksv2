@@ -68,7 +68,8 @@
                 @removed-book="(removed_book_id) => remove_book(removed_book_id)"
                 @cancelled-edit="Bookshelves.exitEditingMode(isEditingModeEnabled)"
                 @post-update="(updatePayload) => createUpdatePost(updatePayload)"
-            />
+            >
+            </BookshelfBooks>
 
             <div v-else>
                 <p class="text-no-books-added">No books have been added to this shelf yet.</p>

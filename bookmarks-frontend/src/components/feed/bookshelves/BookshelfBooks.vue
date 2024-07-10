@@ -56,7 +56,11 @@
                 <IconExit />
             </button>
 
-            <CreateUpdateForm :book="currentBook" @post-update="$emit('post-update', $event)"/>
+            <CreateUpdateForm :book="currentBook" @post-update="$emit('post-update', $event)">
+                <template #set-current-page>
+                    <button type="button" @click="setCurrentPageOnly">update page and skip review</button>
+                </template>
+            </CreateUpdateForm>
         </div>
     </teleport>
 
