@@ -663,7 +663,37 @@ async def get_user_currently_reading(
         return JSONResponse(content={"bookshelf": jsonable_encoder(bookshelf_response)})
     else:
         raise HTTPException(status_code=403, detail="User is not authorized to view want to read bookshelf of another user")
+
+
+@router.get("/currently_reading/${user_id}/currently_reading_book/${book_id}/updates_for_current_page",  name="bookshelf:updates_for_currently_reading_page")
+async def get_updates_for_page_in_currently_reading(
+        user_id: str,
+        book_id: str,
+        current_page: int,
+        current_user: Annotated[User, Depends(get_current_active_user)],
+        bookshelf_repo: BookshelfCRUDRepositoryGraph = Depends(get_repository(repo_type=BookshelfCRUDRepositoryGraph))
+):
+    """
+    Returns currently reading updates based on a page passed in as a query param.
+    """
+    if current_user.id != user_id:
+        raise HTTPException(status_code=500, detail="Unauthorized")
     
+    try:
+        user_id_obj = UserId(id=user_id)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+    updates = bookshelf_repo.get_update_previews_for_currently_reading_shelf_by_book(
+        user_id=user_id_obj.id,
+        book_id=book_id,
+        current_page=current_page,
+    )
+
+    if not updates:
+        return HTTPException(status_code=404, detail="Update not found")
+    
+
 # Finished Reading bookshelf get for user 
 @router.get("/finished_reading/{user_id}",
             name="bookshelf:want_to_read")

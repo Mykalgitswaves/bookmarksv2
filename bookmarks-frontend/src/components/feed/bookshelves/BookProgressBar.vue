@@ -3,6 +3,7 @@
         <span class="progress-bar" :style="{'width': (currentPage / totalPages) * 100 + '%'}"></span>
         <span class="progress-bar remainder" :style="{'width': (currentPage - totalPages / totalPages) * 100 + '%'}"></span>
     </div>
+    
     <div class="update-previews">
 
     </div>
@@ -37,7 +38,7 @@ function successFunction(data) {
 
 onMounted(async () => {
     // #TODO: Fix this so that it calls updates for books in a shelf so we can render previews for them inside update bookshelves.
-    await db.get(urls.rtc.updatesByBookInCurrentlyReading(route.params.user, props.book.id), {}, null, successFunction, null);
+    await db.get(urls.rtc.getUpdatesForCurrentlyReadingPage(route.params.user, props.book.id), {}, null, successFunction, null);
 });
 </script>
 <style scoped>
