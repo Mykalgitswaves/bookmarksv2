@@ -333,7 +333,7 @@ class TestBookshelfMandatory:
         assert len(response.json()['updates']) == 1, "Currently Reading updates for current page data"
 
         response = requests.get(
-            f"{self.endpoint}/api/bookshelves/currently_reading/{self.user_id}/currently_reading_book/c57fbe3df-9a61-41e7-a3e9-576f17a29c50/progress_bar",
+            f"{self.endpoint}/api/bookshelves/progress_bar/{self.user_id}/book/c57fbe3df-9a61-41e7-a3e9-576f17a29c50/updates",
             headers=headers)
         assert response.status_code == 200, "Currently Reading progress bar"
         print(response.json(), "currently reading progress bar response \n")
