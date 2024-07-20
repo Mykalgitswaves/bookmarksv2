@@ -462,7 +462,12 @@ class CurrentlyReadingBookshelfPreview(BaseModel):
     description: str
     books: list[CurrentlyReadingBookPreview]
     visibility: Literal['public', 'private', 'friends']
-    
+
+class CurrentlyReadingUpdatePreview(BaseModel):
+    id: str
+    headline: str
+    page: int
+    created_date: str
 
 class BookshelfPage(BaseModel):
     created_by: str

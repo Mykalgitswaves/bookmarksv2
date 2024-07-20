@@ -11,7 +11,8 @@ from src.models.schemas.bookshelves import (
     BookshelfMember,
     BookshelfFollower,
     CurrentlyReadingBookPreview,
-    CurrentlyReadingBookshelfPreview
+    CurrentlyReadingBookshelfPreview,
+    CurrentlyReadingUpdatePreview,
 )
 
 class BookshelfCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
@@ -296,6 +297,52 @@ class BookshelfCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
 
         return bookshelves
     
+    def get_update_previews_for_currently_reading_shelf_by_range(self, user_id, book_id, starting_page_for_range, end_of_range, updates_per_page):
+        with self.driver.session() as session:
+            result = session.read_transaction(self.get_update_previews_for_currently_reading_shelf_by_range_query(
+                user_id=user_id, 
+                book_id=book_id,
+                starting_page_for_range=starting_page_for_range,
+                end_of_range=end_of_range,
+                updates_per_page=updates_per_page,
+            ))
+        return result
+    
+    @staticmethod
+    def get_update_previews_for_currently_reading_shelf_by_range(tx, user_id, book_id, starting_page_for_range, end_of_range, updates_per_page):
+        query = (
+            """
+            MATCH (p:Update {deleted:false})<-[pr:POSTED]-(u:User {user_id: $user_id})
+            MATCH (p)-[br:POST_FOR_BOOK]-(b:Book {id: $book_id}) 
+            WHERE p.page >= $starting_page_for_range AND p.page <= $end_of_range
+            LIMIT $updates_per_page
+            RETURN 
+                p.page,
+                p.headline,
+                p.id,
+                p.created_date
+            """
+        )
+        result = tx.run(query, 
+            user_id=user_id,
+            book_id=book_id,
+            starting_page_for_range=starting_page_for_range,
+            end_of_range=end_of_range,
+            updates_per_page=updates_per_page,
+        )
+        
+        updates = []
+        for record in result:
+            update = CurrentlyReadingUpdatePreview(
+                id=record['id'],
+                page=record.get('page', 0),
+                headline=record.get('headline', ''),
+                created_date=record['created_date'],
+            )
+
+            updates.append(update)
+
+        return updates        
 
     def get_bookshelves_member_of_by_user(self, user_id):
         with self.driver.session() as session:

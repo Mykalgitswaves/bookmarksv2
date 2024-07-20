@@ -666,10 +666,12 @@ async def get_user_currently_reading(
 
 
 @router.get("/currently_reading/${user_id}/currently_reading_book/${book_id}/updates_for_current_page",  name="bookshelf:updates_for_currently_reading_page")
-async def get_updates_for_page_in_currently_reading(
+async def updates_for_currently_reading_book_by_page_range(
         user_id: str,
         book_id: str,
-        current_page: int,
+        starting_page_for_range: int | None,
+        size_of_range: int | None,
+        updates_per_page: int | None,
         current_user: Annotated[User, Depends(get_current_active_user)],
         bookshelf_repo: BookshelfCRUDRepositoryGraph = Depends(get_repository(repo_type=BookshelfCRUDRepositoryGraph))
 ):
@@ -684,10 +686,16 @@ async def get_updates_for_page_in_currently_reading(
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
-    updates = bookshelf_repo.get_update_previews_for_currently_reading_shelf_by_book(
+    # Default values for range size and updates per page.
+    size_of_range = size_of_range if not None else 20
+    updates_per_page = updates_per_page if not None else 10
+
+    updates = bookshelf_repo.get_update_previews_for_currently_reading_shelf_by_range(
         user_id=user_id_obj.id,
         book_id=book_id,
-        current_page=current_page,
+        starting_page_for_range=starting_page_for_range,
+        end_of_range=int(size_of_range + starting_page_for_range),
+        updates_per_page=5 
     )
 
     if not updates:
