@@ -1,4 +1,5 @@
 import datetime
+from collections import Counter
 
 from src.database.graph.crud.base import BaseCRUDRepositoryGraph
 from src.models.schemas.bookshelves import (
@@ -13,7 +14,8 @@ from src.models.schemas.bookshelves import (
     CurrentlyReadingBookPreview,
     CurrentlyReadingBookshelfPreview,
     CurrentlyReadingUpdatePreview,
-    CurrentlyReadingUpdateFilter
+    CurrentlyReadingUpdateFilter,
+    BookshelfProgressBar
 )
 from src.models.schemas.users import UserId
 
@@ -351,7 +353,6 @@ class BookshelfCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
                 created_date=record['p.created_date'],
                 user= UserId(id=update_filters.user_id)
             )
-            print("adding update")
             updates.append(update)
 
         if result:
@@ -359,11 +360,52 @@ class BookshelfCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
         else:
             additional_updates_not_shown = 0       
 
-        print(updates)
         return {
             "updates": updates,
             "additional_updates_not_shown": additional_updates_not_shown
-        }       
+        }
+
+    def get_updates_progress_bar(
+            self,
+            user_id: str,
+            book_id: str
+    ):
+        """
+        Gets the progress bar for a specific book and user.
+        """
+        with self.driver.session() as session:
+            result = session.read_transaction(
+                self.get_updates_progress_bar_query,
+                user_id,
+                book_id
+            )
+        return result
+    
+    @staticmethod
+    def get_updates_progress_bar_query(tx, user_id, book_id):
+        query = (
+            """
+            MATCH (b:Book {id: $book_id})
+            OPTIONAL MATCH (b)<-[:POST_FOR_BOOK]-(p:Update {deleted:false})<-[pr:POSTED]-(u:User {id: $user_id})
+            RETURN 
+                COLLECT(p.page) AS post_pages,
+                b.pages AS total_pages
+            """
+        )
+        result = tx.run(query, user_id=user_id, book_id=book_id)
+        record = result.single()
+        page_values = record.get("post_pages", [])
+        total_pages = record.get("total_pages", 0)
+
+        page_dist = Counter(page_values)
+        
+        progress_bar = BookshelfProgressBar(
+            page_dist=page_dist,
+            total_pages=total_pages,
+            default_page_range=total_pages/6
+        )
+        
+        return progress_bar
 
     def get_bookshelves_member_of_by_user(self, user_id):
         with self.driver.session() as session:

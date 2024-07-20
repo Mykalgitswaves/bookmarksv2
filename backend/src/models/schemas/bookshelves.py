@@ -483,6 +483,11 @@ class CurrentlyReadingUpdatePreview(BaseModel):
             # Convert Neo4jDateTime to Python datetime
             return v.to_native()
         return v
+    
+class BookshelfProgressBar(BaseModel):
+    page_dist: dict
+    total_pages: int
+    default_page_range: int
 
 class BookshelfPage(BaseModel):
     created_by: str
