@@ -463,11 +463,26 @@ class CurrentlyReadingBookshelfPreview(BaseModel):
     books: list[CurrentlyReadingBookPreview]
     visibility: Literal['public', 'private', 'friends']
 
+class CurrentlyReadingUpdateFilter(BaseModel):
+    user_id: str
+    book_id: str
+    starting_page_for_range: int
+    size_of_range: int
+    updates_per_page: int
+
 class CurrentlyReadingUpdatePreview(BaseModel):
     id: str
     headline: str
     page: int
-    created_date: str
+    created_date: datetime.datetime
+    user: Any
+    
+    @validator('created_date', pre=True, allow_reuse=True)
+    def parse_neo4j_datetime(cls, v):
+        if isinstance(v, Neo4jDateTime):
+            # Convert Neo4jDateTime to Python datetime
+            return v.to_native()
+        return v
 
 class BookshelfPage(BaseModel):
     created_by: str

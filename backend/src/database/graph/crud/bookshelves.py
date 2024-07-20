@@ -13,7 +13,9 @@ from src.models.schemas.bookshelves import (
     CurrentlyReadingBookPreview,
     CurrentlyReadingBookshelfPreview,
     CurrentlyReadingUpdatePreview,
+    CurrentlyReadingUpdateFilter
 )
+from src.models.schemas.users import UserId
 
 class BookshelfCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
     def get_bookshelf(self, bookshelf_id):
@@ -297,52 +299,71 @@ class BookshelfCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
 
         return bookshelves
     
-    def get_update_previews_for_currently_reading_shelf_by_range(self, user_id, book_id, starting_page_for_range, end_of_range, updates_per_page):
+    def get_update_previews_for_currently_reading_shelf_by_range(
+            self, 
+            update_filters: CurrentlyReadingUpdateFilter
+        ):
+        """Gets all the updates for a specific book within a range of pages any shelf.
+        
+        """
         with self.driver.session() as session:
-            result = session.read_transaction(self.get_update_previews_for_currently_reading_shelf_by_range_query(
-                user_id=user_id, 
-                book_id=book_id,
-                starting_page_for_range=starting_page_for_range,
-                end_of_range=end_of_range,
-                updates_per_page=updates_per_page,
-            ))
+            result = session.read_transaction(
+                self.get_update_previews_for_currently_reading_shelf_by_range_query,
+                update_filters
+            )
         return result
     
     @staticmethod
-    def get_update_previews_for_currently_reading_shelf_by_range(tx, user_id, book_id, starting_page_for_range, end_of_range, updates_per_page):
+    def get_update_previews_for_currently_reading_shelf_by_range_query(
+        tx, 
+        update_filters: CurrentlyReadingUpdateFilter
+    ):
         query = (
             """
-            MATCH (p:Update {deleted:false})<-[pr:POSTED]-(u:User {user_id: $user_id})
+            MATCH (p:Update {deleted:false})<-[pr:POSTED]-(u:User {id: $user_id})
             MATCH (p)-[br:POST_FOR_BOOK]-(b:Book {id: $book_id}) 
             WHERE p.page >= $starting_page_for_range AND p.page <= $end_of_range
+            WITH p, COUNT(p) AS total_count
+            ORDER BY p.page 
             LIMIT $updates_per_page
             RETURN 
                 p.page,
                 p.headline,
                 p.id,
-                p.created_date
+                p.created_date,
+                total_count
             """
         )
         result = tx.run(query, 
-            user_id=user_id,
-            book_id=book_id,
-            starting_page_for_range=starting_page_for_range,
-            end_of_range=end_of_range,
-            updates_per_page=updates_per_page,
+            user_id=update_filters.user_id,
+            book_id=update_filters.book_id,
+            starting_page_for_range=update_filters.starting_page_for_range,
+            end_of_range=update_filters.starting_page_for_range+update_filters.size_of_range,
+            updates_per_page=update_filters.updates_per_page
         )
         
         updates = []
         for record in result:
             update = CurrentlyReadingUpdatePreview(
-                id=record['id'],
-                page=record.get('page', 0),
-                headline=record.get('headline', ''),
-                created_date=record['created_date'],
+                id=record['p.id'],
+                page=record.get('p.page', 0),
+                headline=record.get('p.headline', ''),
+                created_date=record['p.created_date'],
+                user= UserId(id=update_filters.user_id)
             )
-
+            print("adding update")
             updates.append(update)
 
-        return updates        
+        if result:
+            additional_updates_not_shown = max(record['total_count']-update_filters.updates_per_page, 0)
+        else:
+            additional_updates_not_shown = 0       
+
+        print(updates)
+        return {
+            "updates": updates,
+            "additional_updates_not_shown": additional_updates_not_shown
+        }       
 
     def get_bookshelves_member_of_by_user(self, user_id):
         with self.driver.session() as session:
