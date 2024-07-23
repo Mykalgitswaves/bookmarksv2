@@ -485,7 +485,7 @@ class CurrentlyReadingUpdatePreview(BaseModel):
         return v
     
 class BookshelfProgressBar(BaseModel):
-    page_dist: dict
+    weights: List[float]
     total_pages: int
     default_page_range: int
 

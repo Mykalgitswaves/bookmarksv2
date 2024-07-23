@@ -1,18 +1,24 @@
 <template>
-    <div class="progress-bar-container">
-        <span class="progress-bar" :style="{'width': (currentPage / totalPages) * 100 + '%'}"></span>
-        <span class="progress-bar remainder" :style="{'width': (currentPage - totalPages / totalPages) * 100 + '%'}"></span>
-    </div>
-    
     <div class="update-previews">
-
+        <PreviewCanvas
+            v-if="loaded"
+            :progress-bar-data="progressBarData"
+            :preview-data="updatePreviewData" 
+            :total-pages="totalPages"
+            @modelValue:changed="(pagePayload) => debouncedSearchForUpdates(pagePayload)"
+        />
+        
+        <PreviewSearchResults :post-previews="updatePreviewData.updates" />
     </div>
 </template>
 <script setup>
-import { computed, ref, onMounted } from 'vue';
+import { computed, ref, onBeforeMount } from 'vue';
 import { useRoute } from 'vue-router';
 import { db } from '../../../services/db';
 import { urls } from '../../../services/urls';
+import { helpersCtrl} from '../../../services/helpers';
+import PreviewCanvas from './PreviewCanvas.vue';
+import PreviewSearchResults from './PreviewSearchResults.vue';
 
 const props = defineProps({
     book: {
@@ -27,19 +33,76 @@ const props = defineProps({
     },
 });
 
-const updatePreviews = ref([]);
+const rangeSize = ref(Math.ceil(props.totalPages / 6));
+const errorMessages = ref([]);
+
+const updatePreviewData = ref({
+    updates: [],
+    remainingUpdates: null,
+});
+
+const progressBarData = ref({
+    defaultPageRange: rangeSize.value,
+    weights: null,
+});
+
 const loaded = ref(false);
 const route = useRoute();
 
-function successFunction(data) {
-    updatePreviews.value = data.res.updates;
-    loaded.value = true;
+const { debounce, throttle } = helpersCtrl;
+const { user } = route.params;
+
+async function searchForUpdates(page) {
+    return await db.get(
+        urls.rtc.getUpdatesForCurrentlyReadingPageRange(user, props.book.id),
+        {
+            starting_page_for_range: page,
+            size_of_range: rangeSize.value,
+        }, false,
+    );
 }
 
-onMounted(async () => {
+function updatesSuccessFunction(data){
+        updatePreviewData.value.updates = data.updates;
+        updatePreviewData.value.remainingUpdates = data.additional_updates_not_shown;
+}
+
+onBeforeMount(async () => {
     // #TODO: Fix this so that it calls updates for books in a shelf so we can render previews for them inside update bookshelves.
-    await db.get(urls.rtc.getUpdatesForCurrentlyReadingPage(route.params.user, props.book.id), {}, null, successFunction, null);
+    function progressSuccessFunction(data) {
+        progressBarData.value.weights = data.weights;
+        progressBarData.value.defaultPageRange = data.default_page_range;
+    }
+
+    
+    const { user } = route.params;
+    
+    const progressBarRequest = await db.get(
+        urls.rtc.getProgressBarForBookUpdates(user, props.book.id), 
+        null, false,
+    );
+
+    const updatesRequest = await searchForUpdates(0);
+
+    Promise.all([progressBarRequest, updatesRequest]).then(([progressResData, updatesResData]) => {
+        progressSuccessFunction(progressResData)
+        updatesSuccessFunction(updatesResData)
+        loaded.value = true;
+    }).catch((err) => {
+        errorMessages.value = err;
+    });
 });
+
+function _undebouncedDebounceFunctionToDebounce(page) {
+    console.log('yo dude', page)
+    const rawUpdates = searchForUpdates(page)
+    Promise.resolve(rawUpdates).then(data => {
+        updatesSuccessFunction(data)
+    })
+}
+
+const debouncedSearchForUpdates = debounce(_undebouncedDebounceFunctionToDebounce, 400, false);
+
 </script>
 <style scoped>
 .progress-bar-container {

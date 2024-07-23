@@ -40,7 +40,8 @@ export const db = {
         params = (typeof params === Proxy ? toRaw(params) : params)
         try {
             const token = helpersCtrl.getCookieByParam(['token'])
-            const response = await fetch(url + '?' + new URLSearchParams(params), {
+            url = params ? url + '?' + new URLSearchParams(params) : url;
+            const response = await fetch(url, {
                 method: 'GET',
                 headers: {
                     Authorization: `Bearer ${token}`

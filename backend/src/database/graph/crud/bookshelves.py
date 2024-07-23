@@ -355,10 +355,11 @@ class BookshelfCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
             )
             updates.append(update)
 
-        if result:
+        
+        try:
             additional_updates_not_shown = max(record['total_count']-update_filters.updates_per_page, 0)
-        else:
-            additional_updates_not_shown = 0       
+        except:
+            additional_updates_not_shown = 0 
 
         return {
             "updates": updates,
@@ -399,8 +400,18 @@ class BookshelfCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
 
         page_dist = Counter(page_values)
         
+        # Initialize the array with zeros
+        weights = [0] * total_pages
+        
+        # Fill in the weights from the dictionary
+        for page, num_posts in page_dist.items():
+            norm_page = min(page, total_pages - 1)
+            weights[norm_page] += int(num_posts)
+        max_weight = max(weights)
+        norm_weights = [weight / max_weight for weight in weights]
+
         progress_bar = BookshelfProgressBar(
-            page_dist=page_dist,
+            weights=norm_weights,
             total_pages=total_pages,
             default_page_range=total_pages/6
         )

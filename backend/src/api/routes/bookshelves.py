@@ -703,9 +703,9 @@ async def updates_for_currently_reading_book_by_page_range(
     else:
         return JSONResponse(content=jsonable_encoder(updates))
     
-@router.get("/currently_reading/{user_id}/currently_reading_book/{book_id}/progress_bar",  
+@router.get("/progress_bar/{user_id}/book/{book_id}/updates",  
             name="bookshelf:progress_bar")
-async def get_currently_reading_book_progress_bar(
+async def get_book_updates_progress_bar(
         user_id: str,
         book_id: str,
         current_user: Annotated[User, Depends(get_current_active_user)],
