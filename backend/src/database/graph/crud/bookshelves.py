@@ -401,14 +401,18 @@ class BookshelfCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
         page_dist = Counter(page_values)
         
         # Initialize the array with zeros
-        weights = [0] * total_pages
+        weights = [0] * 10
         
         # Fill in the weights from the dictionary
         for page, num_posts in page_dist.items():
             norm_page = min(page, total_pages - 1)
-            weights[norm_page] += int(num_posts)
+            index = norm_page // (total_pages // 10)
+            weights[index] += int(num_posts)
         max_weight = max(weights)
-        norm_weights = [weight / max_weight for weight in weights]
+        if max_weight != 0:
+            norm_weights = [weight / max_weight for weight in weights]
+        else:
+            norm_weights = weights
 
         progress_bar = BookshelfProgressBar(
             weights=norm_weights,
