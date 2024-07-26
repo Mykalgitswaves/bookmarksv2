@@ -33,12 +33,20 @@
 
     <div v-if="unique === Bookshelves.CURRENTLY_READING.prefix && currentlyReadingProgress" class="w-100 mt-2 text-start">
         <div class="progress-toolbar">
-            <button class="badge badge-small badge-purple mt-auto"
-                type="button"
-                @click="showProgressBar = !showProgressBar"
-            >
-                {{ currentlyReadingProgress.progress + ' / ' + currentlyReadingProgress.remaining }}
-            </button>
+            <div class="flex items-center justify-center">
+                <button class="badge badge-small badge-purple mt-auto mr-2"
+                    type="button"
+                    @click="showProgressBar = !showProgressBar"
+                >
+                    {{ currentlyReadingProgress.progress + ' / ' + currentlyReadingProgress.remaining }}
+                </button>
+
+                <InlineTooltip alignment="left" color="purple">
+                    <template #message>
+                        Click on the pages to view your progress on this book
+                    </template>
+                </InlineTooltip>
+            </div>
 
             <button class="btn btn-ghost btn-small" type="button" @click="$emit('update-currently-reading-book', book)">
                 update progress
@@ -86,6 +94,8 @@ import { truncateText } from '../../../services/helpers';
 import { Bookshelves } from '../../../models/bookshelves';
 import IconDelete from '../../svg/icon-trash.vue';
 import BookProgressBar from './BookProgressBar.vue';
+import InlineTooltip from '../../shared/InlineTooltip.vue';
+
 const props = defineProps({
     order: {
         type: Number,

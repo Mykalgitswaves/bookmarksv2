@@ -70,7 +70,7 @@ onMounted(() => {
     weights.forEach((weight, index, array) => {
         const position = index / (array.length - 1);
         const r = Math.max((weight * 255), 255);
-        const color = `rgba(${r}, 20, 56, ${weight})`; // Using black as base color
+        const color = `rgba(${r}, 50, 75, ${weight})`; // Using black as base color
         gradient.addColorStop(position, color);
     });
 
@@ -109,7 +109,7 @@ input[type="range"] {
 /* WebKit browsers (Chrome, Safari) */
 input[type="range"]::-webkit-slider-thumb {
     appearance: none;
-    width: 20px;
+    width: 16%;
     height: 20px;
     background-color: var(--indigo-500);
     cursor: pointer;
@@ -119,17 +119,21 @@ input[type="range"]::-webkit-slider-thumb {
 
 /* Firefox */
 input[type="range"]::-moz-range-thumb {
-    width: 20px;
+    width: 16%;
     height: 40px;
-    background-color: green;
+    background-color: var(--indigo-500);
     cursor: pointer;
+    opacity: .2;
+    border-radius: 4px;
 }
 
 /* IE and Edge */
 input[type="range"]::-ms-thumb {
-    width: 20px;
+    width: 16%;
     height: 40px;
-    background-color: green;
+    background-color: var(--indigo-500);
     cursor: pointer;
+    opacity: .2;
+    border-radius: 4px;
 }
 </style>
