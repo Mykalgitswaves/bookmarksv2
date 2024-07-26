@@ -8,7 +8,11 @@
             @modelValue:changed="(pagePayload) => debouncedSearchForUpdates(pagePayload)"
         />
         
-        <PreviewSearchResults :post-previews="updatePreviewData.updates" />
+        <PreviewSearchResults 
+            :book-id="book.id"
+            :post-previews="updatePreviewData.updates" 
+            :is-loading-results="loading"    
+        />
     </div>
 </template>
 <script setup>
@@ -33,16 +37,20 @@ const props = defineProps({
     },
 });
 
-const rangeSize = ref(Math.ceil(props.totalPages / 6));
+let rangeSize = Math.ceil(props.totalPages / 6);
 const errorMessages = ref([]);
+const startingPage = ref(0);
 
 const updatePreviewData = ref({
     updates: [],
     remainingUpdates: null,
 });
 
+
+const updateCache = {};
+
 const progressBarData = ref({
-    defaultPageRange: rangeSize.value,
+    defaultPageRange: rangeSize,
     weights: null,
 });
 
@@ -57,14 +65,16 @@ async function searchForUpdates(page) {
         urls.rtc.getUpdatesForCurrentlyReadingPageRange(user, props.book.id),
         {
             starting_page_for_range: page,
-            size_of_range: rangeSize.value,
+            size_of_range: rangeSize,
         }, false,
     );
 }
 
-function updatesSuccessFunction(data){
+function updatesSuccessFunction(data) {
+        updateCache[startingPage.value] = data.updates;
+
         updatePreviewData.value.updates = data.updates;
-        updatePreviewData.value.remainingUpdates = data.additional_updates_not_shown;
+        updatePreviewData.value.remainingUpdates = data.additional_updates_not_shown ? data.additional_updates_not_shown : updatePreviewData.value.remainingUpdates;
 }
 
 onBeforeMount(async () => {
@@ -94,11 +104,18 @@ onBeforeMount(async () => {
 });
 
 function _undebouncedDebounceFunctionToDebounce(page) {
-    console.log('yo dude', page)
+    startingPage.value = page;
+
+    const updates = updateCache[page];
+    if (updates?.length) {
+        updatesSuccessFunction({updates: updates});
+        return
+    }
+
     const rawUpdates = searchForUpdates(page)
     Promise.resolve(rawUpdates).then(data => {
         updatesSuccessFunction(data)
-    })
+    });
 }
 
 const debouncedSearchForUpdates = debounce(_undebouncedDebounceFunctionToDebounce, 400, false);

@@ -1,5 +1,9 @@
 <template>
-    <p class="text-stone-300 font-sm">Viewing reviews for pages: {{ currentPageRangeStart + '-' + pageRangeEnd }}</p>
+    <p class="text-stone-500 text-sm">Viewing reviews for pages:
+        <span class="text-indigo-500">
+            {{ currentPageRangeStart + '-' + pageRangeEnd }}
+        </span>
+    </p>
     <div class="range">
         <canvas ref="canvasRef"></canvas>
         <input type="range" :max="props.totalPages" v-model="currentPageRangeStart"/>
