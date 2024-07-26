@@ -1,5 +1,5 @@
 <template>
-    <div class="update-previews" v-if="loaded">
+    <div v-if="loaded" class="update-previews">
         <PreviewCanvas
             :progress-bar-data="progressBarData"
             :preview-data="updatePreviewData" 
@@ -13,7 +13,7 @@
             :is-loading-results="loading"    
         />
     </div>
-    
+
     <div v-else>
         <h3 class="text-stone-500 text-xl fancy text-center">Loading</h3>
     </div>
