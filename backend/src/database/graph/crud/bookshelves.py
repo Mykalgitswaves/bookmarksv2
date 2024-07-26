@@ -406,7 +406,7 @@ class BookshelfCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
         # Fill in the weights from the dictionary
         for page, num_posts in page_dist.items():
             norm_page = min(page, total_pages - 1)
-            index = norm_page // (total_pages // 10)
+            index = int(norm_page // (total_pages / 10))
             weights[index] += int(num_posts)
         max_weight = max(weights)
         if max_weight != 0:
