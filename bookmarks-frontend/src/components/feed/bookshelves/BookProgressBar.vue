@@ -1,10 +1,21 @@
 <template>
     <div v-if="loaded" class="update-previews">
+        <select name="" id="" v-model="searchType">
+            <option value="page">page</option>
+            <option value="tag">tag</option>
+        </select>
+
         <PreviewCanvas
+            v-if="searchType === 'page'"
             :progress-bar-data="progressBarData"
             :preview-data="updatePreviewData" 
             :total-pages="totalPages"
-            @modelValue:changed="(pagePayload) => debouncedSearchForUpdates(pagePayload)"
+            @modelValue:changed="(pagePayload) => debouncedSearchForUpdatesByPageRange(pagePayload)"
+        />
+
+        <SearchBarForUpdates 
+            v-if="searchType === 'tag'"
+            @modelValue:changed="(searchPayload) => debouncedSearchForUpdatesByTag(searchPayload)"
         />
         
         <PreviewSearchResults 
@@ -43,6 +54,7 @@ const props = defineProps({
 let rangeSize = Math.ceil(props.totalPages / 6);
 const errorMessages = ref([]);
 const startingPage = ref(0);
+const searchType= ref('page');
 
 const updatePreviewData = ref({
     updates: [],
@@ -121,7 +133,7 @@ function _undebouncedDebounceFunctionToDebounce(page) {
     });
 }
 
-const debouncedSearchForUpdates = debounce(_undebouncedDebounceFunctionToDebounce, 400, false);
+const debouncedSearchForUpdatesByPageRange = debounce(_undebouncedDebounceFunctionToDebounce, 400, false);
 
 </script>
 <style scoped>

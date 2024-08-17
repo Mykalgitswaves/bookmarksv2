@@ -51,9 +51,12 @@
                         v-model="update.page"
                     >
                 </label>
-                <slot name="set-current-page">
-                    
-                </slot>
+
+                <div class="text-center">
+                    <slot name="set-current-page">
+                        
+                    </slot>
+                </div>
 
                 <div>
                     <label for="summary-update" class="text-stone-600 fancy text-2xl mb-2 mt-5">

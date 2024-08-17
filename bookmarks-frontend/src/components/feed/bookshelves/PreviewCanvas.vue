@@ -1,5 +1,5 @@
 <template>
-    <p class="text-stone-500 text-sm">Viewing reviews for pages:
+    <p class="text-stone-500 text-sm">Viewing updates for pages:
         <span class="text-indigo-500">
             {{ currentPageRangeStart + '-' + pageRangeEnd }}
         </span>

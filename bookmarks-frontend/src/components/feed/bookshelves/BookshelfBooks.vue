@@ -58,7 +58,9 @@
 
             <CreateUpdateForm :book="currentBook" @post-update="$emit('post-update', $event)">
                 <template #set-current-page>
-                    <button type="button" @click="setCurrentPageOnly">update page and skip review</button>
+                    <button type="button" class="pt-5 pb-5 text-stone-600 underline" @click="setCurrentPageOnly">
+                        Update page and skip review
+                    </button>
                 </template>
             </CreateUpdateForm>
         </div>
