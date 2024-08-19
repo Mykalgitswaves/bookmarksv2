@@ -1,6 +1,6 @@
 <template>
     <div v-if="loaded" class="update-previews">
-        <select name="" id="" v-model="searchType">
+        <select name="" id="" v-model="searchType" disabled>
             <option value="page">page</option>
             <option value="tag">tag</option>
         </select>

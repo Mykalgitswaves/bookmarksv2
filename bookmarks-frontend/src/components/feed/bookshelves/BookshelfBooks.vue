@@ -57,11 +57,7 @@
             </button>
 
             <CreateUpdateForm :book="currentBook" @post-update="$emit('post-update', $event)">
-                <template #set-current-page>
-                    <button type="button" class="pt-5 pb-5 text-stone-600 underline" @click="setCurrentPageOnly">
-                        Update page and skip review
-                    </button>
-                </template>
+                
             </CreateUpdateForm>
         </div>
     </teleport>
@@ -165,16 +161,32 @@
 
             <!-- Moving something to finished reading shelf -->
             <div v-if="moveToSelectedShelfData.shelf === Bookshelves.FINISHED_READING.prefix">
-                <div class="mt-5 place-content-center">
-                    <button type="button" class="btn btn-submit small">
-                        Move to shelf
-                    </button>
-                    
-                    <label class="flex items-center gap-2 mt-5" for="removeFromCurrentShelf">
+                <div class="mt-5 place-content-center" 
+                    v-if="!isMakingReviewFromCurrentlyReading"
+                >
+                    <label class="flex items-center gap-2 mb-5 ml-auto mr-auto" for="removeFromCurrentShelf">
                         <input type="checkbox" v-model="moveToSelectedShelfData.isRemovingFromCurrentShelf">
                         <span class="text-sm text-stone-500">Remove this book from the current shelf</span>
                     </label>
+
+                    <button 
+                        type="button" 
+                        class="btn btn-submit small"
+                        @click="isMakingReviewFromCurrentlyReading = true"
+                    >
+                        Move to shelf
+                    </button>    
                 </div>
+                
+                <!-- Force users to create reviews from post data -->
+                <CreateReviewPost
+                    v-if="isMakingReviewFromCurrentlyReading"
+                    :book="currentBookForOverlay"
+                    :is-postable-data="postableReviewData"
+                    @is-postable-data="(updatedPostableData) => 
+                        updatePostableDataHandler(updatedPostableData)
+                    "
+                />
             </div>
 
             <!-- for everything else -->
@@ -232,6 +244,7 @@ import { urls } from '../../../services/urls';
 import { Bookshelves } from '../../../models/bookshelves';
 import { helpersCtrl } from '../../../services/helpers';
 import CreateUpdateForm from '../createPosts/update/createUpdateForm.vue';
+import CreateReviewPost from '../createPosts/createReviewPost.vue'
 
 const props = defineProps({
     books: {
@@ -267,7 +280,6 @@ const emit = defineEmits(['send-bookdata-socket', 'cancelled-reorder']);
 const userShelves = ref([]);
 const loaded = ref(false);
 const FLOWSHELVES = [Bookshelves.WANT_TO_READ, Bookshelves.CURRENTLY_READING, Bookshelves.FINISHED_READING];
-
 
 FLOWSHELVES.filter((shelf) => (shelf.prefix !== props.unique)).forEach(
         (shelf) => {
@@ -563,6 +575,40 @@ function showCreateUpdateOverlayHandler(book) {
     currentBook.value = book;
 }
 
+
+/**
+ * @finished_reading_shelf_functions
+ * Functions for moving books in currently reading to finished reading shelf 
+ * 
+ * --------------------------------------------------------------------------------------
+ * @function updatePostableDataHander
+ * @description does the fancy logic needed to let us know whether or not we can move from one shelf to another.
+ * @dependency – postableReviewData -  a ref that is mutated by the function
+ * @param {Object} updatedpostableData - payload from createReviewPost component emit
+ * @returns { Void|null } nothing
+ * --------------------------------------------------------------------------------------
+ * 
+ * --------------------------------------------------------------------------------------
+ *  
+ */
+
+ // dependency for the ui, needs to be a ref.
+ const isMakingReviewFromCurrentlyReading = ref(false);
+ // dependency for function
+ const postableReviewData = ref({});
+
+ function updatePostableDataHandler(updatedpostableData) {
+    console.log(updatedpostableData)
+    postableReviewData.value = updatedpostableData;
+ }
+
+ /**
+  * end of functions
+  * -------------------------------------------------------------------------------------
+  * -------------------------------------------------------------------------------------
+  */
+
+  
 // Expose macros for flow shelf capabilities
 defineExpose({ currentBook });
 
