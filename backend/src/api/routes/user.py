@@ -7,12 +7,15 @@ from typing import Annotated, Optional
 from src.models.schemas.users import UserInResponse, User, UserUsername, UserBio, UserEmail, UserProfileImg, UserPassword, UserId
 from src.models.schemas.social import FriendRequestCreate, BlockUserCreate, FollowUserCreate, FriendDelete
 from src.api.utils.database import get_repository
+from src.api.utils.helpers.login import is_strong_password
 from src.database.graph.crud.users import UserCRUDRepositoryGraph
 from src.securities.authorizations.verify import get_current_active_user
 
 from src.securities.hashing.password import pwd_generator
 from src.securities.authorizations.jwt import jwt_generator
 from src.models.schemas.token import Token
+from src.config.config import settings
+
 
 router = fastapi.APIRouter(prefix="/user", tags=["user"])
 
@@ -104,7 +107,7 @@ async def update_username(request: Request,
         try:
             new_username = UserUsername(username=new_username)
         except ValueError as e:
-            raise HTTPException(status_code=400, detail=str(e))
+            raise HTTPException(status_code=400, detail=jsonable_encoder(e.json()))
 
         # Check if the username is already taken
         username_taken = user_repo.is_username_taken(new_username.username)
@@ -143,7 +146,7 @@ async def update_bio(request: Request,
         try:
             new_bio = UserBio(bio=new_bio)
         except ValueError as e:
-            raise HTTPException(status_code=400, detail=str(e))
+            raise HTTPException(status_code=400, detail=jsonable_encoder(e.json()))
 
         response = user_repo.update_bio(user_id=user_id, new_bio=new_bio.bio)
         if response:
@@ -170,6 +173,9 @@ async def update_email(request: Request,
             new_email = UserEmail(email=new_email)
         except ValueError as e:
             raise HTTPException(status_code=400, detail=str(e))
+        
+        if len(new_email.email) > settings.SMALL_TEXT_LENGTH:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=[{"msg":"Email is too long"}])
         
         response = user_repo.update_email(user_id=user_id, new_email=new_email.email)
         if response:
@@ -221,7 +227,10 @@ async def update_password(request: Request,
         try:
             new_password = UserPassword(password=new_password)
         except ValueError as e:
-            raise HTTPException(status_code=400, detail=str(e))
+            raise HTTPException(status_code=400, detail=jsonable_encoder(e.json()))
+        
+        if not is_strong_password(new_password.password):
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=[{"msg":"Password is not strong enough"}])
         
 
         response = user_repo.update_password(new_password = pwd_generator.generate_hashed_password(new_password.password), user_id=user_id)

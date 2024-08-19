@@ -10,14 +10,14 @@
                 <img class="book-img" :src="books[0]?.small_img_url || book.img_url" alt="">
 
                 <span class="mx-2 text-stone-600 text-sm underline text-center">{{ props.books[0]?.title }}</span>
-                <input id="book1headline" type="text" v-model="models.comparator_a_headline">
+                <input id="book1headline" type="text" v-model="models.comparator_a_headline" :maxlength="SMALL_TEXT_LENGTH">
             </label>
 
             <label for="book2headline">
                 <img class="book-img" :src="books[1]?.small_img_url || book.img_url" alt="">
 
                 <span class="mx-2 text-stone-600 text-sm underline text-center">{{ props.books[1]?.title }}</span>
-                <input id="book2headline" type="text" v-model="models.comparator_b_headline">
+                <input id="book2headline" type="text" v-model="models.comparator_b_headline" :maxlength="SMALL_TEXT_LENGTH">
             </label>
         </div>
     </div>
@@ -25,6 +25,7 @@
 
 <script setup>
 import {reactive, watchEffect} from 'vue';
+import { SMALL_TEXT_LENGTH } from '../../../../services/forms';
 
 const props = defineProps({
     books: {

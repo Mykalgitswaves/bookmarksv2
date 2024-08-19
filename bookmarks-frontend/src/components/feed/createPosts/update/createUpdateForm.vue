@@ -72,6 +72,7 @@
                             v-model="update.quote"
                         />
                     </div>
+
                 </div>
             </div>
 
@@ -86,6 +87,7 @@
                         cols="30"
                         rows="10"
                         v-model="update.response"
+                        :maxlength="LARGE_TEXT_LENGTH"
                     />
                 </div>
             </div>
@@ -138,6 +140,7 @@ import { ref, watch, reactive, computed } from 'vue';
 import CreatePostHeadline from '../createPostHeadline.vue';
 import CreateUpdateFormResponses from './CreateUpdateFormResponses.vue';
 import { helpersCtrl } from '../../../../services/helpers';
+import { MEDIUM_TEXT_LENGTH, LARGE_TEXT_LENGTH } from '../../../../services/forms'
 
 const props = defineProps({
     book: {

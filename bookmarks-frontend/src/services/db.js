@@ -91,13 +91,16 @@ export const db = {
             // Success state
             if(response.ok) {
                 if(successRouterFunction) {
+                    console.log('successRouterFunction')
                     successRouterFunction(data)
                 }
                 return data
             }
+            debugger;
             if(!response.ok){
+                debugger;
                 if(failureFunction){
-                    failureFunction(data)
+                    failureFunction({...data, status: response.status})
                 }
             }
             
