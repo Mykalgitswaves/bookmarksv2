@@ -123,7 +123,11 @@ import CreateReviewQuestions from './createReviewQuestions.vue';
 import YourReviewQuestions from './yourReviewQuestions.vue';
 import ReviewRating from './ReviewRating.vue';
 
-defineProps({
+const props = defineProps({
+    book: {
+        type: Object,
+        required: false,
+    },
     isPostableData: {
         type: Boolean,
         required: true,
@@ -134,7 +138,7 @@ defineProps({
 const questionCats = Array.from(Object.keys(postData.posts.review))
 
 // Refs
-const book = ref(null);
+const book = ref(props.book ? props.book : null);
 const { clone, debounce } = helpersCtrl;
 const currentTopic = ref('Your post');
 

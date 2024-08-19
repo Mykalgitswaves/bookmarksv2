@@ -97,6 +97,8 @@ class BookshelfBook(BaseModel):
     small_img_url: str | None
     note_for_shelf: str | None = None
     google_id: str | None = None
+    current_page: int | None = None
+    total_pages: int | None = None
     
 class CurrentlyReadingBookPreview(BaseModel):
     id: str
@@ -460,7 +462,32 @@ class CurrentlyReadingBookshelfPreview(BaseModel):
     description: str
     books: list[CurrentlyReadingBookPreview]
     visibility: Literal['public', 'private', 'friends']
+
+class CurrentlyReadingUpdateFilter(BaseModel):
+    user_id: str
+    book_id: str
+    starting_page_for_range: int
+    size_of_range: int
+    updates_per_page: int
+
+class CurrentlyReadingUpdatePreview(BaseModel):
+    id: str
+    headline: str
+    page: int
+    created_date: datetime.datetime
+    user: Any
     
+    @validator('created_date', pre=True, allow_reuse=True)
+    def parse_neo4j_datetime(cls, v):
+        if isinstance(v, Neo4jDateTime):
+            # Convert Neo4jDateTime to Python datetime
+            return v.to_native()
+        return v
+    
+class BookshelfProgressBar(BaseModel):
+    weights: List[float]
+    total_pages: int
+    default_page_range: int
 
 class BookshelfPage(BaseModel):
     created_by: str

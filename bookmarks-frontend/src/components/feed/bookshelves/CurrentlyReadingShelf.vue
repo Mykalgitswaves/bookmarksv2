@@ -55,10 +55,11 @@
         <div v-if="loaded && currentView === 'view-books'" class="mt-5">
             <BookshelfBooks 
                 v-if="books?.length"
+                ref="bookshelfBooks"
                 :unique="Bookshelves.CURRENTLY_READING.prefix"
                 :is-admin="isAdmin"
                 :books="books"
-                :is-editing="isEditingModeEnabled"    
+                :is-editing="isEditingModeEnabled.value"    
                 :is-reordering="isReordering"
                 :unset-current-book="unsetKey"
                 @send-bookdata-socket="
@@ -66,7 +67,9 @@
                 "
                 @removed-book="(removed_book_id) => remove_book(removed_book_id)"
                 @cancelled-edit="Bookshelves.exitEditingMode(isEditingModeEnabled)"
-            />
+                @post-update="(updatePayload) => createUpdatePost(updatePayload)"
+            >
+            </BookshelfBooks>
 
             <div v-else>
                 <p class="text-no-books-added">No books have been added to this shelf yet.</p>
@@ -113,6 +116,10 @@
         <ErrorToast v-if="error?.isShowing" :message="error.message" :refresh="true"/>
     </Transition>
 
+    <Transition name="content">
+        <SuccessToast v-if="toast" :toast="toast" /> 
+    </Transition>
+
     <div class="mobile-menu-spacer sm:hidden"></div>
 </template>
 <script setup>
@@ -121,9 +128,12 @@ import { db } from '../../../services/db';
 import { urls } from '../../../services/urls';
 import { useRoute } from 'vue-router';
 import { Bookshelves } from '../../../models/bookshelves';
+import { ws, removeWsEventListener } from '../bookshelves/bookshelvesRtc'
 import BookshelfBooks from './BookshelfBooks.vue';
 import SearchBooks from '../createPosts/searchBooks.vue';
 import BookSearchResults from '../../create/booksearchresults.vue';
+import ErrorToast from '../../shared/ErrorToast.vue';
+import SuccessToast from '../../shared/SuccessToast.vue';
 // // // // // // // // // // // // // 
 // -- -- -- --- Routes --- -- -- -- // 
 const route = useRoute();
@@ -135,7 +145,7 @@ const { user } = route.params;
 // - View variables and booleans -  // 
 const currentView = ref('view-books');
 const loaded = ref(false);
-const isEditingModeEnabled = ref(false);
+const isEditingModeEnabled = ref({value: false});
 const bookshelfData = ref(null);
 const currentBook = ref(null);
 const error = ref({
@@ -145,6 +155,8 @@ const error = ref({
 const books = ref([]);
 const isAdmin = ref(false);
 let unsetKey = 0;
+const bookshelfBooks = ref(null);
+const toast = ref(null);
 // // // // // // // // // // // // //
 
 
@@ -186,8 +198,16 @@ onMounted(async () => {
 
 // -- -- --- Functions --- -- -- // 
 // // // // // // // // // // // //
+
 function setCurrentBook(book) {
     currentBook.value = book;
     currentBook.value.note_for_shelf = '';
+} 
+
+async function createUpdatePost(updatePayload) { 
+    await db.post(urls.reviews.update, updatePayload, true).then((res) => {
+       bookshelfBooks.value.currentBook = null;
+       toast.value = Bookshelves.createToastForPost(res.data);
+  });
 }
 </script>

@@ -83,6 +83,9 @@ export const urls = {
         getWantToRead: (user_id) => (baseUrl +  `api/bookshelves/want_to_read/${user_id}`),
         getCurrentlyReading: (user_id) => (baseUrl + `api/bookshelves/currently_reading/${user_id}`),
         getCurrentlyReadingPreview: (user_id) => (baseUrl + `api/bookshelves/currently_reading/${user_id}/preview`),
+        getUpdatesForCurrentlyReadingPageRange: (user_id, book_id) => (baseUrl + `api/bookshelves/currently_reading/${user_id}/currently_reading_book/${book_id}/updates_for_current_page`),
+        getProgressBarForBookUpdates: (user_id, book_id) => (baseUrl + `api/bookshelves/progress_bar/${user_id}/book/${book_id}/updates`),
+        setCurrentPageOnCurrentlyReading: (user_id) => (baseUrl + `api/bookshelves/currently_reading/${user_id}/update_current_page`),
         /**
          *  @param { obj[str] { contributor_id: contributor_id } }  - the user id of the person you want to add as a contributor to the shelf
          * contributors have write access to shelves. 

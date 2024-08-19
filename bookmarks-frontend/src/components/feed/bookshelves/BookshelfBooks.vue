@@ -18,6 +18,7 @@
                 :imgUrl="book?.small_img_url"
                 :next-book="books[index + 1]"
                 :prev-book="books[index - 1]"
+                :book="book"
                 :current-book="currentBook"
                 :current-book-for-overlay="currentBookForOverlay"
                 :index="index"
@@ -28,6 +29,7 @@
                 @swapped-with="(data) => swappedWithHandler(data)"
                 @removed-book="$emit('removed-book', $event)"
                 @show-book-controls-overlay="(bookPayload) => showBookControlsOverlayHandler(bookPayload)"
+                @update-currently-reading-book="(bookPayload) => showCreateUpdateOverlayHandler(bookPayload)"
             />
         </li>
 
@@ -41,6 +43,24 @@
             >End</button>
         </li>
     </ul>
+
+    <!-- ------------------------------------------------- -->
+    <!-- this is for creating updates on currently reading shelves-->
+    <teleport 
+        v-if="unique === Bookshelves.CURRENTLY_READING.prefix && isUpdatingCurrentlyReadingBook && currentBook" 
+        to="body"
+    >
+
+        <div class="book-controls-overlay shadow-lg">
+            <button type="button" class="btn btn-small icon" @click="resetSort()">
+                <IconExit />
+            </button>
+
+            <CreateUpdateForm :book="currentBook" @post-update="$emit('post-update', $event)">
+                
+            </CreateUpdateForm>
+        </div>
+    </teleport>
 
     <!-- ------------------------------------------------- -->
     <!-- This is for flow shelves -->
@@ -141,16 +161,32 @@
 
             <!-- Moving something to finished reading shelf -->
             <div v-if="moveToSelectedShelfData.shelf === Bookshelves.FINISHED_READING.prefix">
-                <div class="mt-5 place-content-center">
-                    <button type="button" class="btn btn-submit small">
-                        Move to shelf
-                    </button>
-                    
-                    <label class="flex items-center gap-2 mt-5" for="removeFromCurrentShelf">
+                <div class="mt-5 place-content-center" 
+                    v-if="!isMakingReviewFromCurrentlyReading"
+                >
+                    <label class="flex items-center gap-2 mb-5 ml-auto mr-auto" for="removeFromCurrentShelf">
                         <input type="checkbox" v-model="moveToSelectedShelfData.isRemovingFromCurrentShelf">
                         <span class="text-sm text-stone-500">Remove this book from the current shelf</span>
                     </label>
+
+                    <button 
+                        type="button" 
+                        class="btn btn-submit small"
+                        @click="isMakingReviewFromCurrentlyReading = true"
+                    >
+                        Move to shelf
+                    </button>    
                 </div>
+                
+                <!-- Force users to create reviews from post data -->
+                <CreateReviewPost
+                    v-if="isMakingReviewFromCurrentlyReading"
+                    :book="currentBookForOverlay"
+                    :is-postable-data="postableReviewData"
+                    @is-postable-data="(updatedPostableData) => 
+                        updatePostableDataHandler(updatedPostableData)
+                    "
+                />
             </div>
 
             <!-- for everything else -->
@@ -175,7 +211,7 @@
     <!-- ------------------------------------------------- -->
 
     <!-- Regular shelves -->
-    <teleport v-if="currentBook !== null || canReorder || isEditing" to="body">
+    <teleport v-if="(currentBook !== null || canReorder || isEditing) && !isUpdatingCurrentlyReadingBook " to="body">
         <div class="sorting-footer">
             <div v-if="currentBook" class="s-f-book">
                 <img :src="currentBook.small_img_url" class="s-f--current-book-img" alt="">
@@ -199,15 +235,16 @@
     <!-- End regular shelves -->
 </template>
 <script setup>
-import { ref, computed, watch, onMounted, toRaw } from 'vue';
+import { ref, computed, watch, onMounted, toRaw, defineExpose } from 'vue';
 import { useRoute } from 'vue-router';
 import SortableBook from './SortableBook.vue';
 import IconExit from '../../svg/icon-exit.vue';
-import IconTrash from '../../svg/icon-trash.vue';
 import { db } from '../../../services/db';
 import { urls } from '../../../services/urls';
 import { Bookshelves } from '../../../models/bookshelves';
 import { helpersCtrl } from '../../../services/helpers';
+import CreateUpdateForm from '../createPosts/update/createUpdateForm.vue';
+import CreateReviewPost from '../createPosts/createReviewPost.vue'
 
 const props = defineProps({
     books: {
@@ -252,6 +289,7 @@ FLOWSHELVES.filter((shelf) => (shelf.prefix !== props.unique)).forEach(
     }
 );
 
+
 onMounted(async () => {
     await db.get(
         urls.rtc.minimalBookshelvesForLoggedInUser(user)
@@ -267,6 +305,8 @@ const moveToSelectedShelfData = ref({
     shelf: '',
     isRemovingFromCurrentShelf: false,
 });
+
+
 //  Two defaults for whether a shelf is WANT TO READ or CURRENTLY READING.
 if (props.unique === Bookshelves.WANT_TO_READ.prefix) {
     moveToSelectedShelfData.value.shelf = Bookshelves.CURRENTLY_READING.prefix;
@@ -276,11 +316,13 @@ if (props.unique === Bookshelves.CURRENTLY_READING.prefix) {
     moveToSelectedShelfData.value.shelf = Bookshelves.FINISHED_READING.prefix;
 }
 
+
 // Used for moving books to diff shelves in flow shelves.
 function setCurrentBookForOverlayOnMoveToSelectedShelfData(bookData) {
     console.log('setting move to selected shelf data for book');
     moveToSelectedShelfData.value.book = bookData;
 };
+
 
 // Default refs for the textareas we are adjusting.
 const textAreas = ref({
@@ -288,16 +330,19 @@ const textAreas = ref({
     wantToReadNoteTextArea: null,
 });
 
+
 // ------------------------------
 // For getting height of the textarea.
 const { debounce } = helpersCtrl;
 const heights = ref({});
+
 
 // Defaults for heights
 heights.value[Bookshelves.CURRENTLY_READING.prefix] = 82;
 heights.value.note_for_shelf = 82;
 heights.value[Bookshelves.FINISHED_READING.prefix] = 82;
 heights.value[Bookshelves.WANT_TO_READ.prefix] = 82;
+
 
 function generatedHeightForTextArea(refEl) {
     // Heights should only increase, not decrease if the new height is less than the current height - don't set it.
@@ -327,9 +372,15 @@ function generatedHeightForTextArea(refEl) {
     }
 }
 
+
 const throttledScrollHeightForTextArea = debounce(generatedHeightForTextArea, 150, true);
 // End height functions
 // ------------------------------
+
+// ------------------------------------------------------
+// Functions that have to do with server stuff and setting 
+// / unsetting current books
+// ------------------------------------------------------
 
 
 // This is what will be sent via websocket over the wire.
@@ -340,7 +391,10 @@ let bookdata = {
     author_id: user,
 };
 
+
 const currentBook = ref(null);
+
+
 watch(() => props.unsetCurrentBook, (newVal) => {
     if(newVal){
         currentBook.value = null;
@@ -424,12 +478,15 @@ function swappedWithHandler(book_data) {
 
 
 /**
- * Book controls overlay functions.
+ * Book controls overlay functions for generic shelves.
  */
 const currentBookForOverlay = ref(null);
+// note this is not the same overlay being used when you create a progress update
 const showBookControlsOverlay = ref(false);
 const editingCurrentBookNote = ref(false);
 // ------------------------------
+
+
 function showBookControlsOverlayHandler(payload){
     if (!props.isEditing) {
         showBookControlsOverlay.value = true;
@@ -441,6 +498,7 @@ function showBookControlsOverlayHandler(payload){
     }
 }
 
+
 function setOrUnsetEditingCurrentBookNote() {
     if(editingCurrentBookNote.value){
         editingCurrentBookNote.value = false;
@@ -449,6 +507,7 @@ function setOrUnsetEditingCurrentBookNote() {
         editingCurrentBookNote.value = true;
     }
 }
+
 
 async function saveBookNoteForCurrentBook() {
     let _data = {
@@ -462,6 +521,8 @@ async function saveBookNoteForCurrentBook() {
         console.log(res);
     });
 }
+
+
 /**
  * @async
  * @description: Wrapper around the Bookshelves.moveBookToShelf function.
@@ -491,6 +552,7 @@ async function moveToShelf(bookshelf) {
 // End of book controls overlay function
 // ------------------------------
 
+
 // For reggie shelves not flowshelves.
 const isFlowShelf = computed(() => {
     return !![
@@ -499,6 +561,60 @@ const isFlowShelf = computed(() => {
         Bookshelves.WANT_TO_READ.prefix
     ].includes(moveToSelectedShelfData.value.shelf);
 });
+
+
+/**
+ * Currently reading book update functionality
+ * -------------------------------------------
+ */
+
+const isUpdatingCurrentlyReadingBook = ref(false);
+
+function showCreateUpdateOverlayHandler(book) {
+    isUpdatingCurrentlyReadingBook.value = true;
+    currentBook.value = book;
+}
+
+
+/**
+ * @finished_reading_shelf_functions
+ * Functions for moving books in currently reading to finished reading shelf 
+ * 
+ * --------------------------------------------------------------------------------------
+ * @function updatePostableDataHander
+ * @description does the fancy logic needed to let us know whether or not we can move from one shelf to another.
+ * @dependency – postableReviewData -  a ref that is mutated by the function
+ * @param {Object} updatedpostableData - payload from createReviewPost component emit
+ * @returns { Void|null } nothing
+ * --------------------------------------------------------------------------------------
+ * 
+ * --------------------------------------------------------------------------------------
+ *  
+ */
+
+ // dependency for the ui, needs to be a ref.
+ const isMakingReviewFromCurrentlyReading = ref(false);
+ // dependency for function
+ const postableReviewData = ref({});
+
+ function updatePostableDataHandler(updatedpostableData) {
+    console.log(updatedpostableData)
+    postableReviewData.value = updatedpostableData;
+ }
+
+ /**
+  * end of functions
+  * -------------------------------------------------------------------------------------
+  * -------------------------------------------------------------------------------------
+  */
+
+  
+// Expose macros for flow shelf capabilities
+defineExpose({ currentBook });
+
+/**
+ * Fin currently reading book update functionality
+ */
 </script>
 <style scoped lang="scss">
     .book-controls-overlay {
@@ -519,6 +635,8 @@ const isFlowShelf = computed(() => {
         background-color: var(--semi-transparent-surface);
         border-radius: var(--radius-sm);
         border: 1px solid var(--stone-200);
+        max-height: 87vh;
+        overflow-y: scroll;
     }
 
     .bookshelf-books {

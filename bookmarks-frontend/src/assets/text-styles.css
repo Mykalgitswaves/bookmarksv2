@@ -10,6 +10,18 @@
   color: var(--slate-600);
 }
 
+.text-stone-300 {
+  color: var(--stone-300);
+}
+
+.text-stone-400 {
+  color: var(--stone-400);
+}
+
+.text-stone-500 {
+  color: var(--stone-500);
+}
+
 .text-stone-700 {
   color: var(--stone-700);
 }

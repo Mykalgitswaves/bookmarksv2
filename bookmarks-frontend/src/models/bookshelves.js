@@ -44,6 +44,26 @@ export const Bookshelves = {
     },
 
     /**
+     * @description formats response data to pass into success toast component.
+     * @param { Object } responseData response from server after posting an update 
+     * @returns  { toastData {
+     *      previewImg[string],
+     *      url[string],
+     *      bookTitle[string],
+     *      trunctatedHeadline[string],
+     * } } formatted toastData containing ^^^
+     */
+    createToastForPost(responseData) {
+        const toastData = {};
+        toastData.previewImg = responseData.book?.small_img_url;
+        toastData.url = urls.reviews.getPost(responseData.id);
+        toastData.bookTitle = responseData.book.title;
+        toastData.trunctatedHeadline = responseData.headline?.length ? helpersCtrl.truncate(responseData.headline, 45) : '';
+
+        return toastData;
+    },
+
+    /**
      * @async
      * @description promise for moving books to a different shelf. 
      * Optional query param str for removing the book from a current shelf. 

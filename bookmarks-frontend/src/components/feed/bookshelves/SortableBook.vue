@@ -31,6 +31,40 @@
       />
     </label>
 
+    <div v-if="unique === Bookshelves.CURRENTLY_READING.prefix && currentlyReadingProgress" class="w-100 mt-2 text-start">
+        <div class="progress-toolbar">
+            <div class="flex items-center justify-center">
+                <button class="badge badge-small badge-purple mt-auto mr-2"
+                    type="button"
+                    @click="showProgressBar = !showProgressBar"
+                >
+                    {{ currentlyReadingProgress.progress + ' / ' + currentlyReadingProgress.remaining }}
+                </button>
+
+                <InlineTooltip alignment="left" color="purple">
+                    <template #message>
+                        Click on the pages to view your progress on this book
+                    </template>
+                </InlineTooltip>
+            </div>
+
+            <button class="btn btn-ghost btn-small" type="button" @click="$emit('update-currently-reading-book', book)">
+                update progress
+            </button>
+        </div>
+
+        <KeepAlive>
+            <Transition name="content">
+                <BookProgressBar 
+                    v-if="showProgressBar" 
+                    :book="book" 
+                    :current-page="currentlyReadingProgress.progress" 
+                    :total-pages="currentlyReadingProgress.remaining"
+                />
+            </Transition>
+        </KeepAlive>
+    </div>
+
     <div v-if="noteForShelf" class="text-stone-500 weight-300 mr-auto">
         <span class="ml-5">{{ truncateText(noteForShelf, 150) }}</span>
     </div>
@@ -57,7 +91,10 @@
 import { computed, ref } from 'vue';
 import { wsCurrentState } from './bookshelvesRtc';
 import { truncateText } from '../../../services/helpers';
+import { Bookshelves } from '../../../models/bookshelves';
 import IconDelete from '../../svg/icon-trash.vue';
+import BookProgressBar from './BookProgressBar.vue';
+import InlineTooltip from '../../shared/InlineTooltip.vue';
 
 const props = defineProps({
     order: {
@@ -74,6 +111,10 @@ const props = defineProps({
     },
     imgUrl: {
         type: String,
+    },
+    book: {
+        type: Object,
+        required: true,
     },
     currentBook: {
         type: Object,
@@ -100,8 +141,9 @@ const props = defineProps({
         type: Object
     }
 });
+
 const input = ref('input');
-const emit = defineEmits(['set-sort', 'show-book-controls-overlay', 'swapped-with']);
+const emit = defineEmits(['set-sort', 'show-book-controls-overlay', 'swapped-with', 'update-currently-reading-book']);
 
 const isSorting = computed(() => {
     if(props.currentBook){
@@ -181,6 +223,30 @@ const shouldShowBookToolbar = computed(() => {
 });
 
 const isLocked = computed(() => wsCurrentState.value === 'locked');
+
+/**
+ * @description computed props for progress bars on currently reading shelf
+ */
+const currentlyReadingProgress = computed(() => {
+    if (props.unique === Bookshelves.CURRENTLY_READING.prefix) {
+        return { 
+            progress: props.book.current_page ||= 0,
+            remaining: props.book.total_pages ||= 0,
+        }
+    } 
+    return false;
+});
+
+/**
+ * currently reading bookshelf functions
+ * For shit related to SortableBook components in the context of a currently reading shelf
+ */
+
+const showProgressBar = ref(false);
+
+/**
+ * End currently reading shelf functions
+ */
 
 </script>
 <styles scoped lang="scss">
@@ -293,5 +359,11 @@ const isLocked = computed(() => wsCurrentState.value === 'locked');
     .remove-btn-button:hover {
         color: var(--red-500);
         text-decoration: underline;
+    }
+
+    .progress-toolbar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
     }
 </styles>  
