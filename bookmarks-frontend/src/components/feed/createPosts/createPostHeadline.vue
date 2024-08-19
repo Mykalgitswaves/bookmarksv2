@@ -1,10 +1,8 @@
 <template>
-    <div class>
+    <div :class="{'text-center': textCentered}">
         <p class="mb-2 mt-5 text-stone-600">Add a headline for your {{ props.reviewType }}.</p>
         
-        <label 
-            for="headline"
-        >
+        <label for="headline">
             <input 
                 id="headline" 
                 type="text"
@@ -40,7 +38,11 @@ const props = defineProps({
     reviewVersion: {
         type: Boolean,
         default: false,
-    }
+    },
+    textCentered: {
+        type: Boolean,
+        required: false,
+    },
 });
 const headline = ref('')
 

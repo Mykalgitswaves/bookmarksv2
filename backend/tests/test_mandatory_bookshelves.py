@@ -317,6 +317,27 @@ class TestBookshelfMandatory:
         first_book = response.json()['bookshelf']['books'][0]
         assert first_book['id'] == "c57fbe3df-9a61-41e7-a3e9-576f17a29c50"
         assert first_book['current_page'] == 1
+
+        data = {
+            "starting_page_for_range": 0,
+            "size_of_range": 20,
+        }
+
+        response = requests.get(
+            f"{self.endpoint}/api/bookshelves/currently_reading/{self.user_id}/currently_reading_book/c57fbe3df-9a61-41e7-a3e9-576f17a29c50/updates_for_current_page",
+            headers=headers,
+            params=data)
+        assert response.status_code == 200, "Currently Reading updates for current page"
+        print(response.json(), "currently reading updates for current page \n")
+        assert response.json()['additional_updates_not_shown'] == 0, "Currently Reading updates for current page counts"
+        assert len(response.json()['updates']) == 1, "Currently Reading updates for current page data"
+
+        response = requests.get(
+            f"{self.endpoint}/api/bookshelves/progress_bar/{self.user_id}/book/c57fbe3df-9a61-41e7-a3e9-576f17a29c50/updates",
+            headers=headers)
+        assert response.status_code == 200, "Currently Reading progress bar"
+        print(response.json(), "currently reading progress bar response \n")
+        assert response.json()['page_dist'] == {"1": 1}, "Currently Reading progress bar"
         
         data = {
             "book_id" : "c57fbe3df-9a61-41e7-a3e9-576f17a29c50",

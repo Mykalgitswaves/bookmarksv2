@@ -76,12 +76,11 @@ export const helpersCtrl = {
         data.book_id = update.book_id;
         data.title = update.book_title;
         data.small_img_url = update.small_img_url;
-        data.page = update.page;
+        data.page = parseInt(update.page, 10);
         data.headline = update.headline;
         data.response = update.response;
         data.is_spoiler = update.is_spoiler;
         data.quote = update.quote;
-
         return data;
     },
     /**

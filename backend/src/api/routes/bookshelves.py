@@ -43,7 +43,8 @@ from src.models.schemas.bookshelves import (
     BookshelfUser,
     BookshelfPage,
     BookshelfBookNote,
-    CurrentlyReadingPageUpdate
+    CurrentlyReadingPageUpdate,
+    CurrentlyReadingUpdateFilter
 )
 from src.api.websockets.bookshelves import bookshelf_ws_manager
 from src.api.background_tasks.google_books import google_books_background_tasks
@@ -663,7 +664,67 @@ async def get_user_currently_reading(
         return JSONResponse(content={"bookshelf": jsonable_encoder(bookshelf_response)})
     else:
         raise HTTPException(status_code=403, detail="User is not authorized to view want to read bookshelf of another user")
+
+
+@router.get("/currently_reading/{user_id}/currently_reading_book/{book_id}/updates_for_current_page",  
+            name="bookshelf:updates_for_currently_reading_page")
+async def updates_for_currently_reading_book_by_page_range(
+        user_id: str,
+        book_id: str,
+        starting_page_for_range: int,
+        size_of_range: int,
+        current_user: Annotated[User, Depends(get_current_active_user)],
+        updates_per_page: int = 5,
+        bookshelf_repo: BookshelfCRUDRepositoryGraph = Depends(get_repository(repo_type=BookshelfCRUDRepositoryGraph))
+):
+    """
+    Returns currently reading updates based on a page passed in as a query param.
+    """
+    if current_user.id != user_id:
+        raise HTTPException(status_code=403, detail="Unauthorized")
     
+    try:
+        update_filters = CurrentlyReadingUpdateFilter(
+            user_id=user_id,
+            book_id=book_id,
+            starting_page_for_range=starting_page_for_range,
+            size_of_range=size_of_range,
+            updates_per_page=updates_per_page
+            )
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+    updates = bookshelf_repo.get_update_previews_for_currently_reading_shelf_by_range(
+        update_filters
+    )
+
+    if not updates:
+        return HTTPException(status_code=404, detail="Update not found")
+    else:
+        return JSONResponse(content=jsonable_encoder(updates))
+    
+@router.get("/progress_bar/{user_id}/book/{book_id}/updates",  
+            name="bookshelf:progress_bar")
+async def get_book_updates_progress_bar(
+        user_id: str,
+        book_id: str,
+        current_user: Annotated[User, Depends(get_current_active_user)],
+        bookshelf_repo: BookshelfCRUDRepositoryGraph = Depends(get_repository(repo_type=BookshelfCRUDRepositoryGraph))
+):
+    """
+    Returns the progress bar for a book in a currently reading bookshelf.
+    """
+    if current_user.id != user_id:
+        raise HTTPException(status_code=403, detail="Unauthorized")
+    
+    progress_bar = bookshelf_repo.get_updates_progress_bar(
+        user_id, 
+        book_id)
+    
+    if not progress_bar:
+        return HTTPException(status_code=404, detail="Progress bar not found")
+    else:
+        return JSONResponse(content=jsonable_encoder(progress_bar))
 # Finished Reading bookshelf get for user 
 @router.get("/finished_reading/{user_id}",
             name="bookshelf:want_to_read")

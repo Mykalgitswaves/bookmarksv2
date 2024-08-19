@@ -19,7 +19,9 @@
 
             <!-- Subsection of a particular category -->
             <Transition name="content" tag="div">
-                <ul  v-if="questionType[0] === 'custom' ? activeQuestionCat[index] : !activeQuestionCat[index]" class="container questions">
+                <ul  v-if="questionType[0] === 'custom' ? activeQuestionCat[index] : !activeQuestionCat[index]" 
+                    class="container questions"
+                >
                     <li v-for="(question, i) in questionType[1]" 
                         :key="i"
                         class="mb-5"
