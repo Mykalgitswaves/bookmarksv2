@@ -3,6 +3,7 @@ import fastapi
 from src.api.routes.admin import router as admin_router
 from src.api.routes.authentication import router as authentication_router
 from src.api.routes.authors import router as authors_router
+from src.api.routes.bookclubs import router as bookclubs_router
 from src.api.routes.books import router as books_router
 from src.api.routes.bookshelves import router as bookshelves_router
 from src.api.routes.genres import router as genres_router
@@ -17,6 +18,7 @@ router = fastapi.APIRouter()
 router.include_router(router=admin_router)
 router.include_router(router=authentication_router)
 router.include_router(router=authors_router)
+router.include_router(router=bookclubs_router)
 router.include_router(router=books_router)
 router.include_router(router=bookshelves_router)
 router.include_router(router=genres_router)
