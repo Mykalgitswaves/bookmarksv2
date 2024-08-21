@@ -8,16 +8,19 @@ from src.api.utils.database import get_repository
 from src.book_apis.google_books.search import google_books_search
 from src.database.graph.crud.bookclubs import BookClubCRUDRepositoryGraph
 from src.database.graph.crud.users import UserCRUDRepositoryGraph
+from src.models.schemas import bookclubs as BookClubSchemas
+from src.models.schemas.users import User
 from src.securities.authorizations.verify import get_current_active_user
 
 router = fastapi.APIRouter(prefix="/bookclubs", tags=["bookclubs"])
 
 ### Create Book Club Form 1 ################################################################################################
 
-router.post("/create",
+@router.post("/create",
             name="bookclub:create")
-def create_bookclub(
+async def create_bookclub(
         request: Request,
+        current_user:  Annotated[User, Depends(get_current_active_user)],
         bookclub_repo: BookClubCRUDRepositoryGraph = 
             Depends(get_repository(repo_type=BookClubCRUDRepositoryGraph))
 ) -> None:
@@ -29,26 +32,45 @@ def create_bookclub(
         request: The request object that contains the following attributes:
             user_id (str): User who submitted the request (validated with 
             current user)
-            bookclub_name (str): Name of the bookclub
-            bookclub_description (str): Description of the bookclub
-            bookclub_pace (dict | None): OPTIONAL A dictionary that contains 
+            name (str): Name of the bookclub
+            description (str): Description of the bookclub
+            book_club_pace (dict | None): OPTIONAL A dictionary that contains 
             the following attributes:
                         num_books (int): Number of books in interval (MAX 100)
-                        num_time_period (int): Number of the respective time (MAX 100)
+                        num_time_period (int): Number of the respective 
+                        time (MAX 100)
                         period
                         time_period (str): One of (days, weeks, months)
     Returns:
         200 success code
 
-Raises:
+    Raises:
         400 missing or invalid data fields
     """
+    data = await request.json()
+
+    if current_user.id != data.get("user_id"):
+        raise HTTPException(status_code=400, detail="Invalid user_id")
+
+    try:
+        book_club = BookClubSchemas.BookClubCreate(**data)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    
+    response = bookclub_repo.create_bookclub(book_club)
+
+    if not response:
+        raise HTTPException(status_code=400, detail="Unable to create bookclub")
+    else:
+        return JSONResponse(
+            status_code=200, 
+            content={"message": "Bookclub created"})
 
 ### Invite Members Page ################################################################################################
 
-router.get("/search/users/{param}",
+@router.get("/search/users/{param}",
             name="bookclub:search_users")
-def search_users_not_in_club(
+async def search_users_not_in_club(
         param: str,
         user_repo: UserCRUDRepositoryGraph = 
             Depends(get_repository(repo_type=UserCRUDRepositoryGraph))
@@ -66,9 +88,9 @@ def search_users_not_in_club(
             user_username(str): username of the user
     """
 
-router.put("/invite",
+@router.put("/invite",
             name="bookclub:invite")
-def invite_users_to_club(
+async def invite_users_to_club(
         request: Request,
         bookclub_repo: BookClubCRUDRepositoryGraph = 
             Depends(get_repository(repo_type=BookClubCRUDRepositoryGraph))
@@ -90,9 +112,9 @@ def invite_users_to_club(
 
 ### Book Clubs Select Page ################################################################################################
 
-router.get("/owned/{user_id}",
+@router.get("/owned/{user_id}",
             name="bookclub:get_owned")
-def get_owned_bookclubs(
+async def get_owned_bookclubs(
         user_id: str,
         limit: Optional[int] = None,
         bookclub_repo: BookClubCRUDRepositoryGraph = 
@@ -115,9 +137,9 @@ def get_owned_bookclubs(
                 book_id (str); The uuid for the current book
     """
 
-router.get("/member/{user_id}",
+@router.get("/member/{user_id}",
             name="bookclub:get_member")
-def get_member_bookclubs(
+async def get_member_bookclubs(
         user_id: str,
         limit: Optional[int] = None,
         bookclub_repo: BookClubCRUDRepositoryGraph = 
@@ -142,7 +164,7 @@ def get_member_bookclubs(
 
 ### Book Club Invites Page ################################################################################################
 
-router.get("/invites/{user_id}",
+@router.get("/invites/{user_id}",
             name="bookclub:get_invites")
 def get_bookclub_invites(
         user_id: str,
@@ -165,9 +187,9 @@ def get_bookclub_invites(
             num_mutual_friends (int): The number of mutual friends in the bookclub
     """
 
-router.put("/invites/accept/{bookclub_id}",
+@router.put("/invites/accept/{bookclub_id}",
             name="bookclub:accept_invite")
-def accept_bookclub_invite(
+async def accept_bookclub_invite(
         bookclub_id: str,
         bookclub_repo: BookClubCRUDRepositoryGraph = 
             Depends(get_repository(repo_type=BookClubCRUDRepositoryGraph))
@@ -185,9 +207,9 @@ def accept_bookclub_invite(
         404 if no invite exists
     """
 
-router.put("/invites/decline/{bookclub_id}",
+@router.put("/invites/decline/{bookclub_id}",
             name="bookclub:decline_invite")
-def decline_bookclub_invite(
+async def decline_bookclub_invite(
         bookclub_id: str,
         bookclub_repo: BookClubCRUDRepositoryGraph = 
             Depends(get_repository(repo_type=BookClubCRUDRepositoryGraph))
