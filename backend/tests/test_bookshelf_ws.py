@@ -21,7 +21,7 @@ def setup_class(request):
     request.cls.endpoint = "http://127.0.0.1:8000"
     request.cls.username = "testuser123_shelves"
     request.cls.email = "testuser_shelves@testemail.com"
-    request.cls.password = "testpassword"
+    request.cls.password = "testPassword1!"
 
     request.cls.admin_credentials = config["ADMIN_CREDENTIALS"]
 
@@ -40,7 +40,7 @@ def setup_class(request):
 
     request.cls.username_2 = "testuser123_shelves_2"
     request.cls.email_2 = "testuser_shelves_2@testemail.com"
-    request.cls.password_2 = "testpassword"
+    request.cls.password_2 = "testpassworD1!"
 
     request.cls.admin_credentials = config["ADMIN_CREDENTIALS"]
 

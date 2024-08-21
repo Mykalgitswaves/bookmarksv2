@@ -18,7 +18,7 @@ def setup_class(request):
     request.cls.endpoint = "http://127.0.0.1:8000"
     request.cls.username = "testuser123"
     request.cls.email = "testuser@testemail.com"
-    request.cls.password = "testpassword"
+    request.cls.password = "testPassword1!"
     request.cls.search_term = "Foundation"
     request.cls.book_id_in_db = "c707fd781-dd1a-4ba7-91f1-f1a2e7ecb872"
     request.cls.google_book_id_in_db = "g_uawAAAAIAAJ"

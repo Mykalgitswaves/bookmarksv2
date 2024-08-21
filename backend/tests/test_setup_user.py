@@ -14,7 +14,7 @@ def setup_class(request):
     request.cls.endpoint = "http://127.0.0.1:8000"
     request.cls.username = "testuser123"
     request.cls.email = "testuser@testemail.com"
-    request.cls.password = "testpassword"
+    request.cls.password = "testpassworD1!"
     request.cls.full_name = "Test User"
     request.cls.genres = ["76667bea-1e4c-4928-9718-ad498f4c1fc2","348af800-1ccc-4885-b80a-ca0f3e0de508"]
     request.cls.authors = ["1","2"]
