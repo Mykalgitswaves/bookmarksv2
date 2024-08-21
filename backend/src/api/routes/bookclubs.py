@@ -2,7 +2,7 @@ import fastapi
 from fastapi import HTTPException, Depends, BackgroundTasks, Query, Request
 from fastapi.encoders import jsonable_encoder
 from fastapi.responses import JSONResponse
-from typing import Annotated, Optional, List, Any
+from typing import Annotated, Optional, List, Any, Mapping
 
 from src.api.utils.database import get_repository
 from src.book_apis.google_books.search import google_books_search
@@ -21,7 +21,7 @@ router = fastapi.APIRouter(prefix="/bookclubs", tags=["bookclubs"])
 async def create_bookclub(
         request: Request,
         current_user:  Annotated[User, Depends(get_current_active_user)],
-        bookclub_repo: BookClubCRUDRepositoryGraph = 
+        book_club_repo: BookClubCRUDRepositoryGraph = 
             Depends(get_repository(repo_type=BookClubCRUDRepositoryGraph))
 ) -> None:
     """
@@ -57,28 +57,31 @@ async def create_bookclub(
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     
-    response = bookclub_repo.create_bookclub(book_club)
+    response = book_club_repo.create_bookclub(book_club)
 
     if not response:
         raise HTTPException(status_code=400, detail="Unable to create bookclub")
     else:
         return JSONResponse(
             status_code=200, 
-            content={"message": "Bookclub created"})
+            content={"book_club_id": response})
 
 ### Invite Members Page ################################################################################################
 
-@router.get("/search/users/{param}",
+@router.get("/{book_club_id}/search/users/{param}",
             name="bookclub:search_users")
 async def search_users_not_in_club(
+        book_club_id: str,
         param: str,
-        user_repo: UserCRUDRepositoryGraph = 
-            Depends(get_repository(repo_type=UserCRUDRepositoryGraph))
-) -> List[Any]:
+        limit: Optional[int] = 10,
+        book_club_repo: BookClubCRUDRepositoryGraph =
+            Depends(get_repository(repo_type=BookClubCRUDRepositoryGraph))
+) -> List[Mapping[str, str]]:
     """
     Searches for existing users, excludes users already in the club
 
     Args:
+        book_club_id (str): The id of the bookclub
         param (str): the search string
 
     Returns:
@@ -88,11 +91,25 @@ async def search_users_not_in_club(
             user_username(str): username of the user
     """
 
+    try:
+        search_param = BookClubSchemas.BookClubInviteSearch(
+            book_club_id=book_club_id,
+            param=param,
+            limit=limit
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    
+    users = book_club_repo.search_users_not_in_club(search_param)
+
+    return JSONResponse(content={"users":jsonable_encoder(users)})
+
+
 @router.put("/invite",
             name="bookclub:invite")
 async def invite_users_to_club(
         request: Request,
-        bookclub_repo: BookClubCRUDRepositoryGraph = 
+        book_club_repo: BookClubCRUDRepositoryGraph = 
             Depends(get_repository(repo_type=BookClubCRUDRepositoryGraph))
 ) -> None:
     """
@@ -117,7 +134,7 @@ async def invite_users_to_club(
 async def get_owned_bookclubs(
         user_id: str,
         limit: Optional[int] = None,
-        bookclub_repo: BookClubCRUDRepositoryGraph = 
+        book_club_repo: BookClubCRUDRepositoryGraph = 
             Depends(get_repository(repo_type=BookClubCRUDRepositoryGraph))
 ) -> List[Any]:
     """
@@ -142,7 +159,7 @@ async def get_owned_bookclubs(
 async def get_member_bookclubs(
         user_id: str,
         limit: Optional[int] = None,
-        bookclub_repo: BookClubCRUDRepositoryGraph = 
+        book_club_repo: BookClubCRUDRepositoryGraph = 
             Depends(get_repository(repo_type=BookClubCRUDRepositoryGraph))
 ) -> List[Any]:
     """
@@ -169,7 +186,7 @@ async def get_member_bookclubs(
 def get_bookclub_invites(
         user_id: str,
         limit: Optional[int] = None,
-        bookclub_repo: BookClubCRUDRepositoryGraph = 
+        book_club_repo: BookClubCRUDRepositoryGraph = 
             Depends(get_repository(repo_type=BookClubCRUDRepositoryGraph))
 ) -> List[Any]:
     """
@@ -191,7 +208,7 @@ def get_bookclub_invites(
             name="bookclub:accept_invite")
 async def accept_bookclub_invite(
         bookclub_id: str,
-        bookclub_repo: BookClubCRUDRepositoryGraph = 
+        book_club_repo: BookClubCRUDRepositoryGraph = 
             Depends(get_repository(repo_type=BookClubCRUDRepositoryGraph))
 ) -> None:
     """
@@ -211,7 +228,7 @@ async def accept_bookclub_invite(
             name="bookclub:decline_invite")
 async def decline_bookclub_invite(
         bookclub_id: str,
-        bookclub_repo: BookClubCRUDRepositoryGraph = 
+        book_club_repo: BookClubCRUDRepositoryGraph = 
             Depends(get_repository(repo_type=BookClubCRUDRepositoryGraph))
 ) -> None:
     """

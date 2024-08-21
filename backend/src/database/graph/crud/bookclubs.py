@@ -78,4 +78,55 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
         else:
             return response["book_club_id"]
 
+    def search_users_not_in_club(
+            self, 
+            search_param: BookClubSchemas.BookClubInviteSearch
+        ) -> None:
+        """
+        Searches for users not in the club
+
+        Args:
+            search_param (BookClubSchemas.BookClubInviteSearch): The search parameters
         
+        Returns:
+            users: an array of users that match the search string. User information
+            contains:
+                user_id(str): Id of the user
+                user_username(str): username of the user
+        """
+        with self.driver.session() as session:
+            result = session.write_transaction(self.search_users_not_in_club_query, search_param)
+        return result
+    
+    @staticmethod
+    def search_users_not_in_club_query(
+        tx,
+        search_param: BookClubSchemas.BookClubInviteSearch
+        ) -> None:
+
+        query = (
+        """
+        CALL db.index.fulltext.queryNodes('userFullText', $search_query)
+        YIELD node, score
+        WHERE NOT (node)-[:IS_MEMBER_OF|OWNS_BOOK_CLUB]->(:BookClub {id: $book_club_id})
+        RETURN node, score
+        ORDER BY score DESC
+        LIMIT $limit
+        """)
+
+        result = tx.run(
+            query,
+            search_query=search_param.param,
+            book_club_id=search_param.book_club_id,
+            limit=search_param.limit
+        )
+
+        users = []
+        for record in result:
+            print(record)
+            users.append({
+                "user_id": record["node"]["id"],
+                "user_username": record["node"]["username"]
+            })
+        
+        return users
