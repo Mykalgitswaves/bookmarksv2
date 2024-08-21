@@ -73,6 +73,7 @@ async def create_bookclub(
 async def search_users_not_in_club(
         book_club_id: str,
         param: str,
+        current_user:  Annotated[User, Depends(get_current_active_user)],
         limit: Optional[int] = 10,
         book_club_repo: BookClubCRUDRepositoryGraph =
             Depends(get_repository(repo_type=BookClubCRUDRepositoryGraph))
@@ -105,10 +106,11 @@ async def search_users_not_in_club(
     return JSONResponse(content={"users":jsonable_encoder(users)})
 
 
-@router.put("/invite",
+@router.post("/invite",
             name="bookclub:invite")
 async def invite_users_to_club(
         request: Request,
+        current_user:  Annotated[User, Depends(get_current_active_user)],
         book_club_repo: BookClubCRUDRepositoryGraph = 
             Depends(get_repository(repo_type=BookClubCRUDRepositoryGraph))
 ) -> None:
@@ -119,6 +121,7 @@ async def invite_users_to_club(
         request: The request object that contains the following atrtributes:
             user_ids Array[str]: An array of all the existing hardcover lit user ids to invite to the club
             emails Array[str]: An array of email addresses to send an invite to
+            book_club_id (str): The id of the bookclub to invite to
 
     Returns:
         200 success code
@@ -126,6 +129,27 @@ async def invite_users_to_club(
     Raises:
         400 for invalid user_ids or invalid emails
     """
+
+    data = await request.json()
+
+    try:
+        invite = BookClubSchemas.BookClubInvite(
+            book_club_id=data.get("book_club_id"),
+            user_id=current_user.id,
+            user_ids=data.get("user_ids"),
+            emails=data.get("emails")
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    
+    response = book_club_repo.create_bookclub_invites(invite)
+    
+    # TODO: Send email to users
+
+    if not response:
+        raise HTTPException(status_code=400, detail="Unable to invite users to club")
+    else:
+        return JSONResponse(status_code=200, content={"message": "Invites sent"})
 
 ### Book Clubs Select Page ################################################################################################
 

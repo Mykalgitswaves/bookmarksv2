@@ -111,3 +111,21 @@ class TestBookClubs:
 
         assert response.status_code == 200, "Searching Users Not In Club"
         print(response.json())
+    
+    def test_invite_users_to_club(self):
+        """
+        Test case to check the invite users to club endpoint
+        """
+
+        headers = {"Authorization": f"{self.token_type} {self.access_token}"}
+
+        data = {
+            "user_ids": [self.user_id_2],
+            "emails": ["random_email@gmail.com"],
+            "book_club_id": self.book_club_id
+        }
+
+        response = requests.post(f"{self.endpoint}/api/bookclubs/invite", headers=headers, json=data)
+
+        assert response.status_code == 200, "Inviting Users to Club"
+        print(response.json())

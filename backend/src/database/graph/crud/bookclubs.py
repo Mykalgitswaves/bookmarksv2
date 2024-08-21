@@ -78,6 +78,74 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
         else:
             return response["book_club_id"]
 
+    def create_bookclub_invites(
+            self,
+            invite: BookClubSchemas.BookClubInvite
+        ) -> None:
+        """
+        Creates invites for the bookclub
+
+        Args:
+            invite (BookClubSchemas.BookClubInvite): The invite to create
+        """
+        with self.driver.session() as session:
+            result = session.write_transaction(self.create_bookclub_invites_query, invite)
+        return result
+    
+    @staticmethod
+    def create_bookclub_invites_query(
+        tx, 
+        invite: BookClubSchemas.BookClubInvite
+        ) -> None:
+        
+        query = (
+            """
+            MATCH (b:BookClub {id: $book_club_id})<-[r:OWNS_BOOK_CLUB]-(u:User {id: $user_id})
+            UNWIND $user_ids as user_id
+            MATCH (invited_user:User {id: user_id})
+            MERGE (invited_user)-[:RECEIVED_INVITE]->(user_invite:BookClubInvite)-[:INVITE_FOR]->(b)
+            ON CREATE SET user_invite.id = "club_invite_" + randomUUID(),
+                          user_invite.created_date = datetime()
+            MERGE (u)-[:SENT_INVITE]->(user_invite)
+
+            WITH b, u
+            UNWIND $emails as email
+            OPTIONAL MATCH (existing_user:User {email: email})
+
+            FOREACH (_ IN CASE WHEN existing_user IS NULL THEN [1] ELSE [] END |
+                MERGE (invited_user:InvitedUser {email: email})
+                ON CREATE SET invited_user.id = "invited_user_" + randomUUID(),
+                            invited_user.created_date = datetime()
+                MERGE (invited_user)-[:RECEIVED_INVITE]->(user_invite_email:BookClubInvite)-[:INVITE_FOR]->(b)
+                ON CREATE SET user_invite_email.id = "club_invite_" + randomUUID(),
+                              user_invite_email.created_date = datetime()
+                MERGE (u)-[:SENT_INVITE]->(user_invite_email)
+            )
+
+            FOREACH (_ IN CASE WHEN existing_user IS NOT NULL THEN [1] ELSE [] END |
+                MERGE (existing_user)-[:RECEIVED_INVITE]->(user_invite_email:BookClubInvite)-[:INVITE_FOR]->(b)
+                ON CREATE SET user_invite_email.id = "club_invite_" + randomUUID(),
+                              user_invite_email.created_date = datetime()
+                MERGE (u)-[:SENT_INVITE]->(user_invite_email)
+            )
+
+            RETURN b.id as book_club_id
+            """)
+
+        result = tx.run(
+            query,
+            book_club_id=invite.book_club_id,
+            user_ids=invite.user_ids,
+            emails=invite.emails,
+            user_id=invite.user_id
+        )
+        
+        response = result.single()
+        if response:
+            return response["book_club_id"]
+        else:
+            return False
+
     def search_users_not_in_club(
             self, 
             search_param: BookClubSchemas.BookClubInviteSearch
@@ -95,7 +163,7 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
                 user_username(str): username of the user
         """
         with self.driver.session() as session:
-            result = session.write_transaction(self.search_users_not_in_club_query, search_param)
+            result = session.read_transaction(self.search_users_not_in_club_query, search_param)
         return result
     
     @staticmethod
