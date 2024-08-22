@@ -174,19 +174,33 @@
                         class="btn btn-submit small"
                         @click="isMakingReviewFromCurrentlyReading = true"
                     >
-                        Move to shelf
-                    </button>    
+                        I finished reading this book
+                    </button>
                 </div>
-                
+
                 <!-- Force users to create reviews from post data -->
-                <CreateReviewPost
-                    v-if="isMakingReviewFromCurrentlyReading"
-                    :book="currentBookForOverlay"
-                    :is-postable-data="postableReviewData"
-                    @is-postable-data="(updatedPostableData) => 
-                        updatePostableDataHandler(updatedPostableData)
-                    "
-                />
+                <div>
+                    <CreateReviewPost
+                        v-if="isMakingReviewFromCurrentlyReading"
+                        :book="currentBookForOverlay"
+                        :is-postable-data="postableReviewData"
+                        :unique="Bookshelves.CURRENTLY_READING.prefix"
+                        @is-postable-data="(updatedPostableData) => 
+                            updatePostableDataHandler(updatedPostableData)"
+                        @post-data="postReviewAndMoveBookToShelf()"
+                    />
+                </div>
+            </div>
+            
+            <div v-if="moveToSelectedShelfData.shelf === Bookshelves.WANT_TO_READ.prefix"
+                class="mt-5 place-content-center"
+            >
+                <button type="button" 
+                    class="btn btn-submit small" 
+                    @click="moveToShelf(moveToSelectedShelfData.shelf)"
+                >
+                    Move to shelf
+                </button>
             </div>
 
             <!-- for everything else -->
@@ -582,24 +596,30 @@ function showCreateUpdateOverlayHandler(book) {
  * 
  * --------------------------------------------------------------------------------------
  * @function updatePostableDataHander
- * @description does the fancy logic needed to let us know whether or not we can move from one shelf to another.
+ * @description Does the fancy logic needed to let us know whether or not we can move from one shelf to another.
  * @dependency – postableReviewData -  a ref that is mutated by the function
  * @param {Object} updatedpostableData - payload from createReviewPost component emit
  * @returns { Void|null } nothing
  * --------------------------------------------------------------------------------------
- * 
- * --------------------------------------------------------------------------------------
- *  
  */
-
+ 
  // dependency for the ui, needs to be a ref.
  const isMakingReviewFromCurrentlyReading = ref(false);
  // dependency for function
  const postableReviewData = ref({});
 
  function updatePostableDataHandler(updatedpostableData) {
-    console.log(updatedpostableData)
     postableReviewData.value = updatedpostableData;
+ }
+
+ /**
+ * --------------------------------------------------------------------------------------
+ * @function postReviewandMoveBookToShelf
+ * @description 
+ */
+
+ function postReviewAndMoveBookToShelf() {
+
  }
 
  /**
