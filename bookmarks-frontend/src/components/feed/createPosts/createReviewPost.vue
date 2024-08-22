@@ -1,5 +1,5 @@
 <template>
-    <section>
+    <section :class="quickReview ? 'p-20' : ''">
         <BackBtn/>
         <div v-if="!book">
             <p class="text-2xl mb-2 mt-5 font-semibold text-center">The content monster is hungry for your thoughts 🍪. <br/>
@@ -11,7 +11,12 @@
 
         <div v-if="book" class="container text-center">
             <div class="my-5">
-                <p class="create-post-heading-text">You're reviewing
+                <p class="create-post-heading-text">
+                {{ 
+                    quickReview 
+                    ? 'You\'ve finished reading ' 
+                    : 'You\'re reviewing' 
+                }}
                     <span class=" create-post-heading-book-title">
                         {{ book.title }}
                     </span>
@@ -62,7 +67,9 @@
             <div v-if="step === 2">
 
                 <div class="mt-10 mb-10">
-                    <h4 class="heading">Click into a topic to add questions to your review.</h4>
+                    <h4 class="heading">
+                        Click into a topic to add to your review.
+                    </h4>
 
                     <p class="subheading">Pick from some pre-made prompts or add your own</p>
                 </div>
@@ -111,7 +118,7 @@
                     :disabled="step !== 3 || !isPostableData"
                     @click="emit('post-data')"
                 >
-                    Post
+                    {{ quickReview ? 'Move to shelf and post review' : 'Post' }}
                 </button>
             </div>
         </div>
@@ -127,7 +134,8 @@ import CreatePostHeadline from './createPostHeadline.vue';
 import CreateReviewQuestions from './createReviewQuestions.vue';
 import YourReviewQuestions from './yourReviewQuestions.vue';
 import ReviewRating from './ReviewRating.vue';
-   
+import { Bookshelves } from '../../../models/bookshelves';
+
 const props = defineProps({
     headlineError: {
         type: String,
@@ -140,6 +148,14 @@ const props = defineProps({
     isPostableData: {
         type: Boolean,
         required: true,
+    },
+    /**
+     * @description – param used to designate specific component instance where logic / functionality of createReviewPost may differ
+     * @variant Bookshelves.currentlyReading.prefix this is for users that are moving books from currently reading into finished reading  
+     */
+    unique: {
+        type: String,
+        required: false,
     }
 });
 
@@ -278,6 +294,13 @@ watch(headline, () => {
 watch(currentTopic, () => {
     characterQuestions = JSON.parse(JSON.stringify(postData.posts.review[currentTopic.value]));
 });
+// end of watchers
+
+let quickReview = false;
+// start of unique logic.
+if (props.unique === Bookshelves.CURRENTLY_READING.prefix) {
+    quickReview = true;
+}
 </script>
 
 <style scoped>
