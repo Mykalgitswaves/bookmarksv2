@@ -43,7 +43,7 @@ async def create_bookclub(
                 time_period (str): One of (days, weeks, months)
                 name (str): Name of the pace
     Returns:
-        200 success code
+        book_club_id (str): The id of the bookclub created
 
     Raises:
         400 missing or invalid data fields
