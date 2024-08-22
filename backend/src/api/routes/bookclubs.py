@@ -36,11 +36,12 @@ async def create_bookclub(
             description (str): Description of the bookclub
             book_club_pace (dict | None): OPTIONAL A dictionary that contains 
             the following attributes:
-                        num_books (int): Number of books in interval (MAX 100)
-                        num_time_period (int): Number of the respective 
-                        time (MAX 100)
-                        period
-                        time_period (str): One of (days, weeks, months)
+                num_books (int): Number of books in interval (MAX 100)
+                num_time_period (int): Number of the respective 
+                time (MAX 100)
+                period
+                time_period (str): One of (days, weeks, months)
+                name (str): Name of the pace
     Returns:
         200 success code
 
