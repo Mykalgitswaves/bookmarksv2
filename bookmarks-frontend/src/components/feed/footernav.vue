@@ -81,6 +81,23 @@
 
             <p class="fancy text-stone-600">Connections</p>
         </div>
+
+        <div class="nav-button-group hover:bg-gray-200"
+            v-show="!isSearchBarActive"
+            @click="goToBookClubsPage(user)"
+            aria-roledescription="navigation button"
+        >
+            <button 
+                class="footer-nav-button"
+                alt="feed"
+                typ="button"
+                @click="goToBookClubsPage(user)"
+            >
+            clubs
+            </button>
+
+            <p class="fancy text-stone-600">Book clubs</p>
+        </div>
     </footer>
 
     <Transition name="content" tag="div">
@@ -110,7 +127,8 @@ import { goToSearchPage,
     goToFeedPage,
     goToSocialPage,
     goToUserPage,
-    goToBookshelvesPage
+    goToBookshelvesPage,
+    goToBookClubsPage
 } from './footernavService';
 import { debounce, throttle } from 'lodash';
 

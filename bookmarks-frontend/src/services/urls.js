@@ -117,4 +117,6 @@ export const navRoutes = {
     toBookPageFromPost: (current_user, book_id) => (`/feed/${current_user}/works/${book_id}`),
     toPostPageFromFeed: (current_user, post_id) => (`/feed/${current_user}/post/${post_id}`),
     toBookshelfSectionPage: (current_user, shelfType) => (`/feed/${current_user}/bookshelves/by/${shelfType}`),
+    toBookClubsPage: (current_user) => (`/feed/${current_user}/bookclubs/`),
+    toCreateClubPage: (current_user) => (`/feed/${current_user}/bookclubs/create/`),
 }
