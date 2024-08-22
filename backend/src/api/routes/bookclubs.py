@@ -61,7 +61,9 @@ async def create_bookclub(
     response = book_club_repo.create_bookclub(book_club)
 
     if not response:
-        raise HTTPException(status_code=400, detail="Unable to create bookclub")
+        raise HTTPException(
+            status_code=400, 
+            detail="Unable to create bookclub")
     else:
         return JSONResponse(
             status_code=200, 
@@ -120,7 +122,8 @@ async def invite_users_to_club(
 
     Args:
         request: The request object that contains the following atrtributes:
-            user_ids Array[str]: An array of all the existing hardcover lit user ids to invite to the club
+            user_ids Array[str]: An array of all the existing hardcover lit user 
+            ids to invite to the club
             emails Array[str]: An array of email addresses to send an invite to
             book_club_id (str): The id of the bookclub to invite to
 
@@ -148,7 +151,9 @@ async def invite_users_to_club(
     # TODO: Send email to users
 
     if not response:
-        raise HTTPException(status_code=400, detail="Unable to invite users to club")
+        raise HTTPException(
+            status_code=400, 
+            detail="Unable to invite users to club")
     else:
         return JSONResponse(status_code=200, content={"message": "Invites sent"})
 
@@ -172,8 +177,10 @@ async def get_owned_bookclubs(
     Returns:
         bookclubs (array): An array of bookclub object, each that contains:
             bookclub_name (str): Name of the bookclub
-            pace (int | None): The number of chapeter ahead or behind of the club pace. None if no currently reading book
-            currently_reading_book (Book| None): The book object for the current book which contains:
+            pace (int | None): The number of chapeter ahead or behind of the 
+            club pace. None if no currently reading book
+            currently_reading_book (Book| None): The book object for the 
+            current book which contains:
                 book_title (str): The title of the current book
                 book_img_url (str): The image for the current book
                 book_id (str); The uuid for the current book
@@ -197,8 +204,10 @@ async def get_member_bookclubs(
     Returns:
         bookclubs (array): An array of bookclub object, each that contains:
             bookclub_name (str): Name of the bookclub
-            pace (int | None): The number of chapeter ahead or behind of the club pace. None if no currently reading book
-            currently_reading_book (Book| None): The book object for the current book which contains:
+            pace (int | None): The number of chapeter ahead or behind of the club pace. 
+            None if no currently reading book
+            currently_reading_book (Book| None): The book object for the current book 
+            which contains:
                 book_title (str): The title of the current book
                 book_img_url (str): The image for the current book
                 book_id (str); The uuid for the current book
@@ -219,7 +228,8 @@ def get_bookclub_invites(
 
     Args:
         user_id (str): The user id of the current user
-        limit (int): Optional: the number of invites to include in the response (max)
+        limit (int): Optional: the number of invites to include in the 
+        response (max)
 
     Returns:
         invites (array): an array of invites sent to the user, each invite includes:
