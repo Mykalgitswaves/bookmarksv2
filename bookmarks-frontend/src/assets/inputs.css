@@ -36,6 +36,12 @@
     width: 100%;
     max-width: 600px;
     padding: 1ch;
+    resize: none;
+    min-height: 140px;
+}
+
+.summary-update.bookclub textarea {
+  max-width: 100%;
 }
 
 .summary-update.no-max textarea {

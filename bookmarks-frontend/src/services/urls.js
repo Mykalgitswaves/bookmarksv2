@@ -108,6 +108,10 @@ export const urls = {
         getBookshelfWsToken: (bookshelf_id) => (baseUrl + `api/bookshelves/${bookshelf_id}/get_token`),
         updateBookNoteForShelf: (bookshelf_id) => (baseUrl + `api/bookshelves/${bookshelf_id}/update_book_note`),
     },
+    bookclubs: {
+        prefix: 'api/bookclubs/',
+        create: () => (baseUrl + prefix + 'create'),
+    }
 }
 
 // Methods for navigating to and from places.

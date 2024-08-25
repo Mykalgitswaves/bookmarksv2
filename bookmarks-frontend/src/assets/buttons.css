@@ -49,6 +49,10 @@
     transition: var(--transition-short);
 }
 
+.btn.btn-wide {
+    width: 100%;
+}
+
 .btn.btn-submit:hover {
     background-color: var(--indigo-100);
 }
