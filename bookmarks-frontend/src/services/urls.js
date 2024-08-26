@@ -1,6 +1,5 @@
 let baseUrl = import.meta.env.VITE_BASE_URL;
 let wsUrl = import.meta.env.VITE_WS_URL;
-
 // For later when we want to add 
 // if (process.env.ENV === 'prod') {
 //     baseUrl = 'arbitraryName'
@@ -109,8 +108,7 @@ export const urls = {
         updateBookNoteForShelf: (bookshelf_id) => (baseUrl + `api/bookshelves/${bookshelf_id}/update_book_note`),
     },
     bookclubs: {
-        prefix: 'api/bookclubs/',
-        create: () => (baseUrl + prefix + 'create'),
+        create: () => (baseUrl + 'api/bookclubs/create'),
     }
 }
 
@@ -123,4 +121,5 @@ export const navRoutes = {
     toBookshelfSectionPage: (current_user, shelfType) => (`/feed/${current_user}/bookshelves/by/${shelfType}`),
     toBookClubsPage: (current_user) => (`/feed/${current_user}/bookclubs/`),
     toCreateClubPage: (current_user) => (`/feed/${current_user}/bookclubs/create/`),
+    toBookClub: (current_user, bookclub_id) => (`feed/${current_user}/bookclubs/${bookclub_id}`);
 }

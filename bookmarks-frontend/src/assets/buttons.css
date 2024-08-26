@@ -63,6 +63,19 @@
     transition: var(--transition-short);
 }
 
+.btn.disabled {
+    border: 1px solid var(--stone-300);
+    color: var(--stone-500);
+    transition: var(--transition-short);
+    background-color: var(--surface-primary);
+    cursor: not-allowed;
+}
+
+.btn.disabled:hover {
+    background-color: var(--surface-primary);
+}
+
+
 .btn.btn-red:hover {
     background-color: var(--red-300);
 }

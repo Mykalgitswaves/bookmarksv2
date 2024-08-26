@@ -9,11 +9,15 @@
     padding-bottom: 5px;
 }
 
-.input-number input[type="number"] {
+.input-number {
     display: block;
     border: solid 2px #c7d2fe;
     padding: 10px 8px;
     border-radius: 4px;
+}
+
+.input-number.short {
+  max-width: 88px;
 }
 
 .title-input input {
