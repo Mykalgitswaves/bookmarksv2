@@ -74,6 +74,7 @@ class TestBookClubs:
     @classmethod
     def setup_class(cls):
         cls.book_club_id = None  # Initialize book_club_id
+        cls.invite_id = None  # Initialize invite_id
 
     def test_create_bookclub(self):
         """
@@ -126,7 +127,72 @@ class TestBookClubs:
 
         response = requests.post(f"{self.endpoint}/api/bookclubs/invite", headers=headers, json=data)
 
+        print(response.json())
         assert response.status_code == 200, "Inviting Users to Club"
+
+    def test_get_invites(self):
+        """
+        Test case to check the get invites endpoint
+        """
+
+        headers = {"Authorization": f"{self.token_type_2} {self.access_token_2}"}
+
+        response = requests.get(f"{self.endpoint}/api/bookclubs/invites/{self.user_id_2}", headers=headers)
+
+        assert response.status_code == 200, "Getting Invites"
+        print(response.json())
+        assert len(response.json()['invites']) > 0, "No Invites Found"
+        self.__class__.invite_id = response.json()['invites'][0]['invite_id']
+
+    def test_decline_invite(self):
+        """
+        Test case to check the decline invite endpoint
+        """
+
+        headers = {"Authorization": f"{self.token_type_2} {self.access_token_2}"}
+
+        endpoint = f"{self.endpoint}/api/bookclubs/invites/decline/{self.invite_id}"
+
+        response = requests.put(endpoint, headers=headers)
+
+        assert response.status_code == 200, "Declining Invite"
+        print(response.json())
+
+    def test_accept_invite(self):
+        """
+        Test case to check the accept invite endpoint
+        """
+
+        headers = {"Authorization": f"{self.token_type} {self.access_token}"}
+
+        data = {
+            "user_ids": [self.user_id_2],
+            "emails": ["random_email@gmail.com"],
+            "book_club_id": self.book_club_id
+        }
+
+        response = requests.post(f"{self.endpoint}/api/bookclubs/invite", headers=headers, json=data)
+
+        print(response.json())
+        assert response.status_code == 200, "Inviting Users to Club"
+
+        headers = {"Authorization": f"{self.token_type_2} {self.access_token_2}"}
+
+        response = requests.get(f"{self.endpoint}/api/bookclubs/invites/{self.user_id_2}", headers=headers)
+
+        assert response.status_code == 200, "Getting Invites"
+        print(response.json())
+        assert len(response.json()['invites']) > 0, "No Invites Found"
+        invite_id = response.json()['invites'][0]['invite_id']
+
+
+        headers = {"Authorization": f"{self.token_type_2} {self.access_token_2}"}
+
+        endpoint = f"{self.endpoint}/api/bookclubs/invites/accept/{invite_id}"
+
+        response = requests.put(endpoint, headers=headers)
+
+        assert response.status_code == 200, "Accepting Invite"
         print(response.json())
 
     def test_get_owned_clubs(self):
@@ -159,10 +225,10 @@ class TestBookClubs:
 
         print(response.json())
         assert response.status_code == 200, "Getting Member Clubs"
-        # assert len(response.json()['bookclubs']) > 0, "No Member Clubs Found"
+        assert len(response.json()['bookclubs']) > 0, "No Member Clubs Found"
 
         response = requests.get(f"{self.endpoint}/api/bookclubs/member/{self.user_id_2}?limit=1", headers=headers)
 
         assert response.status_code == 200, "Getting Member Clubs with limit"
-        # assert len(response.json()['bookclubs']) == 1, "Incorrect number of clubs returned"
+        assert len(response.json()['bookclubs']) == 1, "Incorrect number of clubs returned"
         print(response.json())
