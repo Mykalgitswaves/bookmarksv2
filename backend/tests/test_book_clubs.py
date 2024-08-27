@@ -1,5 +1,4 @@
 import pytest
-from httpx import AsyncClient
 import requests
 import json
 import time
@@ -128,4 +127,42 @@ class TestBookClubs:
         response = requests.post(f"{self.endpoint}/api/bookclubs/invite", headers=headers, json=data)
 
         assert response.status_code == 200, "Inviting Users to Club"
+        print(response.json())
+
+    def test_get_owned_clubs(self):
+        """
+        Test case to check the get owned clubs endpoint
+        """
+
+        headers = {"Authorization": f"{self.token_type} {self.access_token}"}
+
+        response = requests.get(f"{self.endpoint}/api/bookclubs/owned/{self.user_id}", headers=headers)
+
+        assert response.status_code == 200, "Getting Owned Clubs"
+        assert len(response.json()['bookclubs']) > 0, "No Owned Clubs Found"
+        print(response.json())
+
+        response = requests.get(f"{self.endpoint}/api/bookclubs/owned/{self.user_id}?limit=1", headers=headers)
+
+        assert response.status_code == 200, "Getting Owned Clubs with limit"
+        assert len(response.json()['bookclubs']) == 1, "Incorrect number of clubs returned"
+        print(response.json())
+
+    def test_get_member_clubs(self):
+        """
+        Test case to check the get member clubs endpoint
+        """
+
+        headers = {"Authorization": f"{self.token_type} {self.access_token}"}
+
+        response = requests.get(f"{self.endpoint}/api/bookclubs/member/{self.user_id_2}", headers=headers)
+
+        print(response.json())
+        assert response.status_code == 200, "Getting Member Clubs"
+        # assert len(response.json()['bookclubs']) > 0, "No Member Clubs Found"
+
+        response = requests.get(f"{self.endpoint}/api/bookclubs/member/{self.user_id_2}?limit=1", headers=headers)
+
+        assert response.status_code == 200, "Getting Member Clubs with limit"
+        # assert len(response.json()['bookclubs']) == 1, "Incorrect number of clubs returned"
         print(response.json())
