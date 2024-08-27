@@ -17,7 +17,7 @@ def setup_class(request):
     request.cls.endpoint = "http://127.0.0.1:8000"
     request.cls.username = "testuser123"
     request.cls.email = "testuser@testemail.com"
-    request.cls.password = "testpassword"
+    request.cls.password = "testPassword1!"
 
     yield
 

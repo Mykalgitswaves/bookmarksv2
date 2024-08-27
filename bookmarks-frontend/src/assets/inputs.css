@@ -9,11 +9,15 @@
     padding-bottom: 5px;
 }
 
-.input-number input[type="number"] {
+.input-number {
     display: block;
     border: solid 2px #c7d2fe;
     padding: 10px 8px;
     border-radius: 4px;
+}
+
+.input-number.short {
+  max-width: 88px;
 }
 
 .title-input input {
@@ -36,6 +40,12 @@
     width: 100%;
     max-width: 600px;
     padding: 1ch;
+    resize: none;
+    min-height: 140px;
+}
+
+.summary-update.bookclub textarea {
+  max-width: 100%;
 }
 
 .summary-update.no-max textarea {

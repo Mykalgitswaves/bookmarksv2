@@ -68,7 +68,7 @@ watch(modelValue, (newValue) => {
     flex-wrap: wrap;
     column-gap: 20px;
     row-gap: 20px;
-    margin-top: 40px;
+    margin-top: 20px;
     justify-items: center;
 }
 

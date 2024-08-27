@@ -14,7 +14,7 @@ def setup_class(request):
     request.cls.endpoint = "http://127.0.0.1:8000"
     request.cls.username = "testuser123"
     request.cls.email = "testuser@testemail.com"
-    request.cls.password = "testpassword"
+    request.cls.password = "testPassword1!"
     request.cls.full_name = "Test User"
     
     headers = {"Content-Type": "application/x-www-form-urlencoded"}  # Set Content-Type to application/json
@@ -32,7 +32,7 @@ def setup_class(request):
 
     request.cls.username_friend = "friend_user123"
     request.cls.email_friend = "frienduser@testemail.com"
-    request.cls.password_friend = "testpassword"
+    request.cls.password_friend = "testPassword1!"
     request.cls.full_name_friend = "Friend User"
     
     data = {

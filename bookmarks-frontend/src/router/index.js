@@ -18,6 +18,10 @@ import BookshelvesMain from '@/components/feed/bookshelves/BookshelvesMain.vue';
 import ViewBookshelvesBySection from '@/components/feed/bookshelves/ViewBookshelvesBySection.vue';
 import CreateBookshelfForm from '@/components/feed/bookshelves/CreateBookshelf.vue';
 import CreatePostPage from '@/components/feed/CreatePostPage.vue';
+import BookClubsIndex from '@/components/feed/bookclubs/BookClubsIndex.vue';
+import CreateBookClubs from '@/components/feed/bookclubs/create/CreateBookClubs.vue';
+import BookClubsHome from '@/components/feed/bookclubs/home/BookClubsHome.vue';
+import BookClub from '@/components/feed/bookclubs/club/BookClub.vue';
 
 export const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -119,7 +123,25 @@ export const router = createRouter({
               component: CreateBookshelfForm,
             },
           ]
-        }
+        },
+        {
+          path: 'bookclubs',
+          component: BookClubsIndex,
+          children: [
+            {
+              path: '',
+              component: BookClubsHome
+            },
+            {
+              path: 'create',
+              component: CreateBookClubs,
+            },
+            {
+              path: ':bookclub',
+              component: BookClub
+            }
+          ]
+        },
       ]
     },
     {

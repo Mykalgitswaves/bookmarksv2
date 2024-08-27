@@ -1,6 +1,5 @@
 let baseUrl = import.meta.env.VITE_BASE_URL;
 let wsUrl = import.meta.env.VITE_WS_URL;
-
 // For later when we want to add 
 // if (process.env.ENV === 'prod') {
 //     baseUrl = 'arbitraryName'
@@ -108,6 +107,9 @@ export const urls = {
         getBookshelfWsToken: (bookshelf_id) => (baseUrl + `api/bookshelves/${bookshelf_id}/get_token`),
         updateBookNoteForShelf: (bookshelf_id) => (baseUrl + `api/bookshelves/${bookshelf_id}/update_book_note`),
     },
+    bookclubs: {
+        create: () => (baseUrl + 'api/bookclubs/create'),
+    }
 }
 
 // Methods for navigating to and from places.
@@ -117,4 +119,7 @@ export const navRoutes = {
     toBookPageFromPost: (current_user, book_id) => (`/feed/${current_user}/works/${book_id}`),
     toPostPageFromFeed: (current_user, post_id) => (`/feed/${current_user}/post/${post_id}`),
     toBookshelfSectionPage: (current_user, shelfType) => (`/feed/${current_user}/bookshelves/by/${shelfType}`),
+    toBookClubsPage: (current_user) => (`/feed/${current_user}/bookclubs/`),
+    toCreateClubPage: (current_user) => (`/feed/${current_user}/bookclubs/create/`),
+    toBookClub: (current_user, bookclub_id) => (`feed/${current_user}/bookclubs/${bookclub_id}`);
 }
