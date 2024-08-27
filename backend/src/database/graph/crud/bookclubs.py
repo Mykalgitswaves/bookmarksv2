@@ -1,3 +1,7 @@
+from datetime import datetime
+from neo4j.time import DateTime as Neo4jDateTime
+from typing import List
+
 from src.database.graph.crud.base import BaseCRUDRepositoryGraph
 from src.models.schemas import bookclubs as BookClubSchemas
 
@@ -145,6 +149,282 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
             return response["book_club_id"]
         else:
             return False
+        
+    def get_owned_book_clubs(
+            self,
+            book_club_param: BookClubSchemas.BookClubList
+    ) -> List[BookClubSchemas.BookClubPreview]:
+        """
+        Get the book clubs owned by the user
+
+        Args:
+            book_club_param (BookClubSchemas.BookClubList): The search 
+            parameters
+        
+        Returns:
+            book_clubs: an array of book clubs owned by the user. Book club 
+            information contains:
+                book_club_id(str): Id of the book club
+                book_club_name(str): Name of the book club
+                pace(int): Pace of the book club
+                currently_reading_book(list): List of books currently being 
+                read
+        """
+        with self.driver.session() as session:
+            result = session.read_transaction(
+                self.get_owned_book_clubs_query, 
+                book_club_param)
+        return result
+    
+    @staticmethod
+    def get_owned_book_clubs_query(
+        tx,
+        book_club_param: BookClubSchemas.BookClubList
+        ) -> List[BookClubSchemas.BookClubPreview]:
+        
+        query = (
+            """
+            MATCH (u:User {id: $user_id})-[:OWNS_BOOK_CLUB]->(b:BookClub)
+            OPTIONAL MATCH (b)-[reading:IS_READING]-(book:BookClubBook)
+            OPTIONAL MATCH (u)-[user_progress:IS_READING_FOR_CLUB]->(book)
+            OPTIONAL MATCH (book)-[:IS_EQUIVALENT_TO]-(actual_book:Book)
+            return b.id as book_club_id,
+                   b.name as book_club_name,
+                   reading.started_date as started_date,
+                   reading.selected_finish_date as expected_finish_date,
+                   user_progress.current_chapter as current_chapter,
+                   actual_book.title as currently_reading_book_title,
+                   actual_book.small_img_url as currently_reading_book_small_img_url,
+                   actual_book.id as currently_reading_book_id,
+                   book.chapters as total_chapters
+            """
+        )
+
+        query_w_limit = (
+            """
+            MATCH (u:User {id: $user_id})-[:OWNS_BOOK_CLUB]->(b:BookClub)
+            OPTIONAL MATCH (b)-[reading:IS_READING]-(book:BookClubBook)
+            OPTIONAL MATCH (u)-[user_progress:IS_READING_FOR_CLUB]->(book)
+            OPTIONAL MATCH (book)-[:IS_EQUIVALENT_TO]-(actual_book:Book)
+            return b.id as book_club_id,
+                   b.name as book_club_name,
+                   reading.started_date as started_date,
+                   reading.selected_finish_date as expected_finish_date,
+                   user_progress.current_chapter as current_chapter,
+                   actual_book.title as currently_reading_book_title,
+                   actual_book.small_img_url as currently_reading_book_small_img_url,
+                   actual_book.id as currently_reading_book_id,
+                   book.chapters as total_chapters
+            LIMIT $limit
+            """
+        )
+
+        if book_club_param.limit:
+            result = tx.run(
+                query_w_limit,
+                user_id=book_club_param.user_id,
+                limit=book_club_param.limit
+            )
+        else:
+            result = tx.run(
+                query,
+                user_id=book_club_param.user_id
+            )
+
+        book_clubs = []
+        for record in result:
+            # Get the currently reading book if it exists
+            if record.get("currently_reading_book_id"):
+                current_book = BookClubSchemas.BookClubCurrentlyReading(
+                    book_id=record.get("currently_reading_book_id"),
+                    title=record.get("currently_reading_book_title"),
+                    small_img_url=record.get(
+                        "currently_reading_book_small_img_url")
+                )
+            else:
+                current_book = None
+
+            # Calculate the pace offset if all the required fields are present
+            if (
+                record.get("expected_finish_date") 
+                and record.get("total_chapters") 
+                and record.get("current_chapter")
+            ):
+                started_date = record.get("started_date")
+                expected_finish_date = record.get("expected_finish_date")
+                total_chapters = record.get("total_chapters")
+                current_chapter = record.get("current_chapter")
+
+                if isinstance(started_date, Neo4jDateTime):
+                    started_date = started_date.to_native()
+
+                if isinstance(expected_finish_date, Neo4jDateTime):
+                    expected_finish_date = expected_finish_date.to_native()
+
+                current_date = datetime.now()
+
+                # Calculate total reading duration in days
+                total_days = (expected_finish_date - started_date).days
+                # Calculate elapsed days since the start
+                elapsed_days = (current_date - started_date).days
+
+                # Calculate expected chapters by the current date
+                expected_chapters = (elapsed_days / total_days) * total_chapters
+
+                # Calculate offset from the expected chapter
+                pace_offset = current_chapter - round(expected_chapters)
+
+            else:
+                pace_offset = None
+
+            book_clubs.append(
+                BookClubSchemas.BookClubPreview(
+                    book_club_id=record["book_club_id"],
+                    book_club_name=record["book_club_name"],
+                    pace=pace_offset,
+                    currently_reading_book=current_book
+                )
+            )
+        
+        return book_clubs
+    
+    def get_member_book_clubs(
+            self,
+            book_club_param: BookClubSchemas.BookClubList
+    ) -> List[BookClubSchemas.BookClubPreview]:
+        """
+        Get the book clubs where user is a member
+
+        Args:
+            book_club_param (BookClubSchemas.BookClubList): The search 
+            parameters
+        
+        Returns:
+            book_clubs: an array of book clubs where user is a member. 
+            Book club information contains:
+                book_club_id(str): Id of the book club
+                book_club_name(str): Name of the book club
+                pace(int): Pace of the book club
+                currently_reading_book(list): List of books currently being 
+                read
+        """
+        with self.driver.session() as session:
+            result = session.read_transaction(
+                self.get_member_book_clubs_query, 
+                book_club_param)
+        return result
+    
+    @staticmethod
+    def get_member_book_clubs_query(
+        tx,
+        book_club_param: BookClubSchemas.BookClubList
+        ) -> List[BookClubSchemas.BookClubPreview]:
+        
+        query = (
+            """
+            MATCH (u:User {id: $user_id})-[:IS_MEMBER_OF]->(b:BookClub)
+            OPTIONAL MATCH (b)-[reading:IS_READING]-(book:BookClubBook)
+            OPTIONAL MATCH (u)-[user_progress:IS_READING_FOR_CLUB]->(book)
+            OPTIONAL MATCH (book)-[:IS_EQUIVALENT_TO]-(actual_book:Book)
+            return b.id as book_club_id,
+                   b.name as book_club_name,
+                   reading.started_date as started_date,
+                   reading.selected_finish_date as expected_finish_date,
+                   user_progress.current_chapter as current_chapter,
+                   actual_book.title as currently_reading_book_title,
+                   actual_book.small_img_url as currently_reading_book_small_img_url,
+                   actual_book.id as currently_reading_book_id,
+                   book.chapters as total_chapters
+            """
+        )
+
+        query_w_limit = (
+            """
+            MATCH (u:User {id: $user_id})-[:IS_MEMBER_OF]->(b:BookClub)
+            OPTIONAL MATCH (b)-[reading:IS_READING]-(book:BookClubBook)
+            OPTIONAL MATCH (u)-[user_progress:IS_READING_FOR_CLUB]->(book)
+            OPTIONAL MATCH (book)-[:IS_EQUIVALENT_TO]-(actual_book:Book)
+            return b.id as book_club_id,
+                   b.name as book_club_name,
+                   reading.started_date as started_date,
+                   reading.selected_finish_date as expected_finish_date,
+                   user_progress.current_chapter as current_chapter,
+                   actual_book.title as currently_reading_book_title,
+                   actual_book.small_img_url as currently_reading_book_small_img_url,
+                   actual_book.id as currently_reading_book_id,
+                   book.chapters as total_chapters
+            LIMIT $limit
+            """
+        )
+
+        if book_club_param.limit:
+            result = tx.run(
+                query_w_limit,
+                user_id=book_club_param.user_id,
+                limit=book_club_param.limit
+            )
+        else:
+            result = tx.run(
+                query,
+                user_id=book_club_param.user_id
+            )
+
+        book_clubs = []
+        for record in result:
+            # Get the currently reading book if it exists
+            if record.get("currently_reading_book_id"):
+                current_book = BookClubSchemas.BookClubCurrentlyReading(
+                    book_id=record.get("currently_reading_book_id"),
+                    title=record.get("currently_reading_book_title"),
+                    small_img_url=record.get(
+                        "currently_reading_book_small_img_url")
+                )
+            else:
+                current_book = None
+
+            # Calculate the pace offset if all the required fields are present
+            if (
+                record.get("expected_finish_date") 
+                and record.get("total_chapters") 
+                and record.get("current_chapter")
+            ):
+                started_date = record.get("started_date")
+                expected_finish_date = record.get("expected_finish_date")
+                total_chapters = record.get("total_chapters")
+                current_chapter = record.get("current_chapter")
+
+                if isinstance(started_date, Neo4jDateTime):
+                    started_date = started_date.to_native()
+
+                if isinstance(expected_finish_date, Neo4jDateTime):
+                    expected_finish_date = expected_finish_date.to_native()
+
+                current_date = datetime.now()
+
+                # Calculate total reading duration in days
+                total_days = (expected_finish_date - started_date).days
+                # Calculate elapsed days since the start
+                elapsed_days = (current_date - started_date).days
+
+                # Calculate expected chapters by the current date
+                expected_chapters = (elapsed_days / total_days) * total_chapters
+
+                # Calculate offset from the expected chapter
+                pace_offset = current_chapter - round(expected_chapters)
+
+            else:
+                pace_offset = None
+
+            book_clubs.append(
+                BookClubSchemas.BookClubPreview(
+                    book_club_id=record["book_club_id"],
+                    book_club_name=record["book_club_name"],
+                    pace=pace_offset,
+                    currently_reading_book=current_book
+                )
+            )
+        
+        return book_clubs
 
     def search_users_not_in_club(
             self, 

@@ -163,6 +163,7 @@ async def invite_users_to_club(
             name="bookclub:get_owned")
 async def get_owned_bookclubs(
         user_id: str,
+        current_user:  Annotated[User, Depends(get_current_active_user)],
         limit: Optional[int] = None,
         book_club_repo: BookClubCRUDRepositoryGraph = 
             Depends(get_repository(repo_type=BookClubCRUDRepositoryGraph))
@@ -176,8 +177,9 @@ async def get_owned_bookclubs(
 
     Returns:
         bookclubs (array): An array of bookclub object, each that contains:
-            bookclub_name (str): Name of the bookclub
-            pace (int | None): The number of chapeter ahead or behind of the 
+            book_club_name (str): Name of the bookclub
+            book_club_id(str): The uuid for the bookclub
+            pace (int | None): The number of chapters ahead or behind of the 
             club pace. None if no currently reading book
             currently_reading_book (Book| None): The book object for the 
             current book which contains:
@@ -186,10 +188,24 @@ async def get_owned_bookclubs(
                 book_id (str); The uuid for the current book
     """
 
+    try:
+        book_club_params = BookClubSchemas.BookClubList(
+            user_id=user_id,
+            limit=limit
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    
+    book_clubs = book_club_repo.get_owned_book_clubs(book_club_params)
+
+    return JSONResponse(content={"bookclubs":jsonable_encoder(book_clubs)})
+
+
 @router.get("/member/{user_id}",
             name="bookclub:get_member")
 async def get_member_bookclubs(
         user_id: str,
+        current_user:  Annotated[User, Depends(get_current_active_user)],
         limit: Optional[int] = None,
         book_club_repo: BookClubCRUDRepositoryGraph = 
             Depends(get_repository(repo_type=BookClubCRUDRepositoryGraph))
@@ -212,6 +228,18 @@ async def get_member_bookclubs(
                 book_img_url (str): The image for the current book
                 book_id (str); The uuid for the current book
     """
+
+    try:
+        book_club_params = BookClubSchemas.BookClubList(
+            user_id=user_id,
+            limit=limit
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    
+    book_clubs = book_club_repo.get_member_book_clubs(book_club_params)
+
+    return JSONResponse(content={"bookclubs":jsonable_encoder(book_clubs)})
 
 ### Book Club Invites Page ################################################################################################
 
