@@ -108,7 +108,9 @@ export const urls = {
         updateBookNoteForShelf: (bookshelf_id) => (baseUrl + `api/bookshelves/${bookshelf_id}/update_book_note`),
     },
     bookclubs: {
-        create: () => (baseUrl + 'api/bookclubs/create'),
+        create: () => (baseUrl + 'api/bookclubs/create/'),
+        getClubsOwnedByUser: (user_id) =>  (baseUrl + `api/bookclubs/owned/${user_id}/`),
+        getClub: (bookclub_id) => (baseUrl + `api/bookclubs/club/${bookclub_id}`),
     }
 }
 
@@ -121,5 +123,5 @@ export const navRoutes = {
     toBookshelfSectionPage: (current_user, shelfType) => (`/feed/${current_user}/bookshelves/by/${shelfType}`),
     toBookClubsPage: (current_user) => (`/feed/${current_user}/bookclubs/`),
     toCreateClubPage: (current_user) => (`/feed/${current_user}/bookclubs/create/`),
-    toBookClub: (current_user, bookclub_id) => (`feed/${current_user}/bookclubs/${bookclub_id}`);
+    toBookClub: (current_user, bookclub_id) => (`/feed/${current_user}/bookclubs/${bookclub_id}/`),
 }

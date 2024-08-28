@@ -1,43 +1,51 @@
 <template>
-<div>
+    <div>
         <h1 class="text-4xl fancy text-stone-700 mb-10 mt-10">Bookclubs</h1>
 
         <div class="bookclubs-list">
             <h2 class="text-2xl fancy text-stone-600">Clubs you've joined</h2>
-            
-            <div v-if="bookClubsJoinedByCurrentUser?.length" class="mb-5">
-            <!-- TODO turn into component like bookshelves -->
+            <div v-if="loaded">
+                
+                <!-- TODO turn into component like bookshelves -->
+                
+
+                <p class="text-lg font-medium text-stone-500 mt-5 mb-5">
+                    You haven't joined any clubs yet.
+                </p>
+
+                <div class="toolbar" v-if="bookClubsJoinedByCurrentUser?.length">
+                    <!-- todo: add modal for viewing all clubs. -->
+                    <button 
+                        type="button" 
+                        class="btn btn-ghost small"
+                    >View all bookclubs</button>
+                </div>
             </div>
 
-            <p v-else class="text-lg font-medium text-stone-500 mt-5 mb-5">
-                You haven't joined any clubs yet.
-            </p>
+            <!-- loading -->
+            <div v-if="!loaded">
 
-            <div class="toolbar" v-if="bookClubsJoinedByCurrentUser?.length">
-                <!-- todo: add modal for viewing all clubs. -->
-                <button 
-                    type="button" 
-                    class="btn btn-ghost small"
-                >View all bookclubs</button>
             </div>
         </div>
 
         <div class="bookclubs-list">
-            <h2 class="fancy text-2xl text-stone-600 mb-5">Clubs you own</h2>    
+            <h2 class="fancy text-2xl text-stone-600 mb-5">Clubs you own</h2>  
             
-            <ul v-if="bookClubsOwnedByCurrentUser?.length">
-                <li v-for="club in bookClubsOwnedByCurrentUser">
+            <div v-if="loaded" class="mb-5 mt-5">
+                <BookClubPreview 
+                    v-for="bookclub in bookClubsOwnedByCurrentUser"
+                    :bookclub="bookclub"
+                    :user="user"
+                />
+            </div>
 
-                </li>
-            </ul>
-
-            <p v-else class="text-lg font-medium text-stone-500 mb-5">
-                You haven't created any clubs yet.
+            <!-- loading -->
+            <p v-else>
+                You haven't created any clubs yet.    
             </p>
-            
+
             <div class="toolbar">
-                <button 
-                    class="btn btn-submit small" 
+                <button class="btn btn-submit small" 
                     @click="router.push(toCreateClubPage(user))"
                 >
                     Create club
@@ -47,19 +55,79 @@
     </div>
 </template>
 <script setup>
+import { db } from '../../../../services/db';
+import { urls } from '../../../../services/urls';
 import { navRoutes } from '../../../../services/urls';
+import { ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
+import BookClubPreview from './BookClubPreview.vue';
+
+
 /**
- * @nav_constants
+ * ----------------------------------------------------------------------------
+ * @constants
  * @description constants for navigation on the page. 
+ * ----------------------------------------------------------------------------
  */
 
 const { toCreateClubPage } = navRoutes;
 const route = useRoute();
 const { user } = route.params
 const router = useRouter();
+
+const loaded = ref(false);
+let bookClubsOwnedByCurrentUser;
+let errors;
+
 /**
+ * ----------------------------------------------------------------------------
  * END OF CONSTANTS 
+ * ----------------------------------------------------------------------------
+ */
+
+/**
+ * ----------------------------------------------------------------------------
+ * @functions
+ * @loadClubsCreatedByUser
+ * ----------------------------------------------------------------------------
+ */
+
+
+async function loadClubsCreatedByUser() {
+    db.get(urls.bookclubs.getClubsOwnedByUser(user), null, false, 
+        (res) => {
+            bookClubsOwnedByCurrentUser = res.bookclubs;
+            loaded.value = true;
+        },
+        (err) => {
+            errors = err;
+            loaded.value = true;
+        }
+    );
+}
+
+
+/**
+ * ----------------------------------------------------------------------------
+ * @end_of_function_definitions
+ * ----------------------------------------------------------------------------
+ */
+
+
+/**
+ * ----------------------------------------------------------------------------
+ * @setup_load
+ * ----------------------------------------------------------------------------
+ */
+
+
+loadClubsCreatedByUser();
+
+
+/**
+ * ----------------------------------------------------------------------------
+ * @setup_load
+ * ----------------------------------------------------------------------------
  */
 </script>
 <style scoped>

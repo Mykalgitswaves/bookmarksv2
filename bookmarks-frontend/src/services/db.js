@@ -54,7 +54,7 @@ export const db = {
                 }
                 if(response.ok || response.status === 200) {
                     if(successRouterFunction) {
-                        return data && successRouterFunction
+                        successRouterFunction(data)
                     }
                     console.log('returning', data)
                     return data
