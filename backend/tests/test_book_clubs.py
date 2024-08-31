@@ -167,7 +167,7 @@ class TestBookClubs:
 
         data = {
             "user_ids": [self.user_id_2],
-            "emails": ["random_email@gmail.com"],
+            "emails": ["hardcoverlit@gmail.com"],
             "book_club_id": self.book_club_id
         }
 

@@ -11,6 +11,7 @@ from src.database.graph.crud.users import UserCRUDRepositoryGraph
 from src.models.schemas import bookclubs as BookClubSchemas
 from src.models.schemas.users import User
 from src.securities.authorizations.verify import get_current_active_user
+from src.utils.helpers.email.email_client import email_client
 
 router = fastapi.APIRouter(prefix="/bookclubs", tags=["bookclubs"])
 
@@ -148,7 +149,10 @@ async def invite_users_to_club(
     
     response = book_club_repo.create_bookclub_invites(invite)
     
-    # TODO: Send email to users
+    for email in invite.emails:
+        email_client.send_invite_email(
+            email, 
+            "Someone Invited You to Join a Book Club!")
 
     if not response:
         raise HTTPException(
