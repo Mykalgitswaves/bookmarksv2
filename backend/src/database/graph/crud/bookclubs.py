@@ -425,6 +425,102 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
             )
         
         return book_clubs
+    
+    def get_book_club_invites(
+            self,
+            invite_params: BookClubSchemas.BookClubList
+        ) -> List[BookClubSchemas.BookClubInvitePreview]:
+        """
+        Gets all the invites sent to the user
+
+        Args:
+            invite_params (BookClubSchemas.BookClubList): The search 
+            parameters
+
+        Returns:
+            A list of the book club invites
+        """
+
+        with self.driver.session() as session:
+            result = session.read_transaction(
+                self.get_book_club_invites_query, 
+                invite_params)
+        return result
+    
+    @staticmethod
+    def get_book_club_invites_query(
+        tx,
+        invite_params: BookClubSchemas.BookClubList
+        ) -> List[BookClubSchemas.BookClubInvitePreview]:
+
+        query = (
+            """
+            MATCH (u:User {id: $user_id})-[:RECEIVED_INVITE]->(i:BookClubInvite)-[:INVITE_FOR]->(b:BookClub)
+            MATCH (owner:User)-[:OWNS_BOOK_CLUB]->(b)
+            OPTIONAL MATCH (u)-[owner_friend:FRIENDED]-(owner)
+            WITH i, b, owner, owner_friend
+            OPTIONAL MATCH (u)-[mutual_friend:FRIENDED]-(mutual:User)-[user_member:IS_MEMBER_OF]->(b)
+            WITH i, b, owner, owner_friend, count(mutual) as num_mutual_friends
+            RETURN i.id as invite_id,
+                   b.id as book_club_id,
+                   b.name as book_club_name,
+                   owner.username as book_club_owner_name,
+                   num_mutual_friends,
+                   owner_friend IS NOT NULL as is_owner_friend,
+                   i.created_date as datetime_invited
+            """
+        )
+
+        query_w_limit = (
+            """
+            MATCH (u:User {id: $user_id})-[:RECEIVED_INVITE]->(i:BookClubInvite)-[:INVITE_FOR]->(b:BookClub)
+            MATCH (owner:User)-[:OWNS_BOOK_CLUB]->(b)
+            OPTIONAL MATCH (u)-[owner_friend:FRIENDED]-(owner)
+            WITH i, b, owner, owner_friend
+            OPTIONAL MATCH (u)-[mutual_friend:FRIENDED]-(mutual:User)-[user_member:IS_MEMBER_OF]->(b)
+            WITH i, b, owner, owner_friend, count(mutual) as num_mutual_friends
+            RETURN i.id as invite_id,
+                   b.id as book_club_id,
+                   b.name as book_club_name,
+                   owner.username as book_club_owner_name,
+                   num_mutual_friends,
+                   owner_friend IS NOT NULL as is_owner_friend,
+                   i.created_date as datetime_invited
+            LIMIT $limit
+            """
+        )
+
+        if invite_params.limit:
+            result = tx.run(
+                query_w_limit,
+                user_id=invite_params.user_id,
+                limit=invite_params.limit
+            )
+        else:
+            result = tx.run(
+                query,
+                user_id=invite_params.user_id
+            )
+
+        invites = []
+        for record in result:
+            
+            invite = BookClubSchemas.BookClubInvitePreview(
+                        invite_id=record["invite_id"],
+                        book_club_id=record["book_club_id"],
+                        book_club_name=record["book_club_name"],
+                        book_club_owner_name=record["book_club_owner_name"],
+                        num_mutual_friends=record["num_mutual_friends"],
+                        datetime_invited=record["datetime_invited"]
+                    )
+            
+            if record["is_owner_friend"]:
+                invite.num_mutual_friends += 1
+
+            invites.append(invite)
+
+        return invites
+
 
     def search_users_not_in_club(
             self, 
@@ -434,11 +530,12 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
         Searches for users not in the club
 
         Args:
-            search_param (BookClubSchemas.BookClubInviteSearch): The search parameters
+            search_param (BookClubSchemas.BookClubInviteSearch): The search 
+            parameters
         
         Returns:
-            users: an array of users that match the search string. User information
-            contains:
+            users: an array of users that match the search string. User 
+            information contains:
                 user_id(str): Id of the user
                 user_username(str): username of the user
         """
@@ -478,3 +575,96 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
             })
         
         return users
+    
+    def update_accept_book_club_invite(
+            self,
+            invite: BookClubSchemas.BookClubInviteResponse
+    ) -> bool:
+        """
+        Accepts the book club invite
+
+        Args:
+            invite (BookClubSchemas.BookClubInviteResponse): The invite 
+            response
+        
+        Returns:
+            True if the invite was accepted, False otherwise
+        """
+        with self.driver.session() as session:
+            result = session.write_transaction(
+                self.update_accept_book_club_invite_query, 
+                invite)
+        return result
+    
+    @staticmethod
+    def update_accept_book_club_invite_query(
+        tx,
+        invite: BookClubSchemas.BookClubInviteResponse
+        ) -> bool:
+
+        query = (
+            """
+            MATCH (u:User {id: $user_id})-[:RECEIVED_INVITE]->(i:BookClubInvite {id: $invite_id})-[:INVITE_FOR]->(b:BookClub)
+            MERGE (u)-[:IS_MEMBER_OF]->(b)
+            DETACH DELETE i
+            RETURN count(i) as deleted
+            """
+        )
+
+        result = tx.run(
+            query,
+            user_id=invite.user_id,
+            invite_id=invite.invite_id
+        )
+
+        response = result.single()
+        if response["deleted"] == 1:
+            return True
+        else:
+            return False
+        
+    def update_decline_book_club_invite(
+            self,
+            invite: BookClubSchemas.BookClubInviteResponse
+    ) -> bool:
+        """
+        declines the book club invite
+
+        Args:
+            invite (BookClubSchemas.BookClubInviteResponse): The invite
+            response
+        
+        Returns:
+            True if the invite was declined, False otherwise
+        """
+        with self.driver.session() as session:
+            result = session.write_transaction(
+                self.update_decline_book_club_invite_query, 
+                invite)
+        return result
+    
+    @staticmethod
+    def update_decline_book_club_invite_query(
+        tx,
+        invite: BookClubSchemas.BookClubInviteResponse
+        ) -> bool:
+
+        query = (
+            """
+            MATCH (u:User {id: $user_id})-[:RECEIVED_INVITE]->(i:BookClubInvite {id: $invite_id})-[:INVITE_FOR]->(b:BookClub)
+            DETACH DELETE i
+            RETURN count(i) as deleted
+            """
+        )
+
+        result = tx.run(
+            query,
+            user_id=invite.user_id,
+            invite_id=invite.invite_id
+        )
+
+        response = result.single()
+        if response["deleted"] == 1:
+            return True
+        else:
+            return False
