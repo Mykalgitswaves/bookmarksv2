@@ -1,6 +1,14 @@
 <template>
-    <div class="container">
+    <div class="bookclub-header">
         
+    </div>
+    
+    <div class="club-feed">
+
+    </div>
+
+    <div class="club-nav">
+
     </div>
 </template>
 <script setup>
