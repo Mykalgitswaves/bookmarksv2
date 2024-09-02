@@ -39,9 +39,9 @@ Args:
 
 Returns:
  member_paces (array): an array, where each object is a dictionary which contains the following values. The array is sorted by member_pace descending:
-  member_id (str): the uuid of the member
-  member_username (str): the username of the member
-  member_pace (int):  the current chapter of the member
+  id (str): the uuid of the member
+  username (str): the username of the member
+  pace (int):  the current chapter of the member
   is_current_user (bool): Flag for if this member is the current user
 """
 
@@ -51,7 +51,8 @@ Creates an update post for the book club
 
 Args:
  request: A request object that contains the following fields:
-  user_id (str): The id of the user creating the post
+  user (dict): A user object containing the following fields:\
+    id (str): The id of the user
   chapter (int): The chapter that the update is posted for
   response (str | None): The response that was created with the update
   headline (str): The headline for the post
@@ -81,6 +82,7 @@ Returns:
   num_comments (int) the number of comments on a post
   liked_by_current_user (bool): whether the post was liked by the current user
   posted_by_current_user (bool): whether the post was posted by the current user
+  type (str): the type of the post. As of now can be one of update and update_no_text
 """
 
 LIKE AND COMMENT endpoints can be re-used from regular feed
