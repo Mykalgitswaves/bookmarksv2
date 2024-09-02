@@ -1,0 +1,86 @@
+Backend API Requirements
+
+Club feed page
+GET {book_club_id}/currently_reading_preview
+"""
+Gets the current book for a club and returns a preview for the feed page.
+
+Args:
+ book_club_id: The id of the book club to get
+
+Returns:
+ currently_reading: a dictionary object that returns the following fields:
+  title (str): The title of the currently reading book
+  authors (List[str]): The authors of the currently reading book
+  small_img_url (str): The image of the book cover
+  page (int): The number of pages in the book
+
+
+GET {book_club_id}/user_pace
+"""
+Gets the users pace, the expected pace of the club, and the average pace of the club
+
+Args:
+ book_club_id: The id of the bookclub to get
+
+Returns:
+ paces: a dictionary object that contains the following values:
+  expected_pace (int): The expected chapter based on the estimated finish date of the club, rounded to the closest int
+  user_pace (int): The current chapter of the user
+  club_pace (int): The average chapter of the club members, rounded to the closest int
+  total_chapters (int): The total number of chapters, inputted by the club admin
+
+GET {book_club_id}/club_members_pace
+"""
+Gets the current chapter of each member in the club
+
+Args:
+ book_club_id: The id of the book club to get
+
+Returns:
+ member_paces (array): an array, where each object is a dictionary which contains the following values. The array is sorted by member_pace descending:
+  member_id (str): the uuid of the member
+  member_username (str): the username of the member
+  member_pace (int):  the current chapter of the member
+  is_current_user (bool): Flag for if this member is the current user
+"""
+
+POST {book_club_id}/update/create
+"""
+Creates an update post for the book club
+
+Args:
+ request: A request object that contains the following fields:
+  user_id (str): The id of the user creating the post
+  chapter (int): The chapter that the update is posted for
+  response (str | None): The response that was created with the update
+  headline (str): The headline for the post
+
+Returns:
+  200 response for a successful post
+"""
+
+GET {book_club_id}/feed?filter={bool}
+"""
+Gets the feed for a specific book club
+
+Args:
+ book_club_id: The id for the book club
+ filter (bool): Whether or not to filter out updates ahead of the current chapter for the current user. Defaults to True
+
+Returns:
+ posts: A list of posts in chronological order, posts can only be updates. A post object will contain:
+  id: the uuid of the post
+  headline (str | None): the headline for the post
+  created_date (datetime): the created datetime for the post
+  chapter (int): the chapter for the post
+  response (str | None): the response for the post
+  user_id (str): the id of the user who made the post
+  user_username (str): the username of the user who made the post
+  likes (int) the number of likes on a post
+  num_comments (int) the number of comments on a post
+  liked_by_current_user (bool): whether the post was liked by the current user
+  posted_by_current_user (bool): whether the post was posted by the current user
+"""
+
+LIKE AND COMMENT endpoints can be re-used from regular feed
