@@ -363,4 +363,211 @@ async def decline_bookclub_invite(
             status_code=404, 
             detail="Invite not found")
     else:
-        return JSONResponse(status_code=200, content={"message": "Invite declined"})
+        return JSONResponse(
+            status_code=200, 
+            content={"message": "Invite declined"})
+    
+### Club feed page ################################################################################################
+
+@router.get("/{book_club_id}/currently_reading_preview",
+            name="bookclub:currently_reading_preview")
+async def get_currently_reading_preview(
+    book_club_id: str,
+    current_user:  Annotated[User, Depends(get_current_active_user)],
+    book_club_repo: BookClubCRUDRepositoryGraph = 
+        Depends(get_repository(repo_type=BookClubCRUDRepositoryGraph))
+) -> Any:
+    """
+    Gets the current book for a club and returns a preview for the feed page.
+
+    Args:
+        book_club_id: The id of the book club to get
+
+    Returns:
+        currently_reading: a dictionary object that returns the following fields:
+            title (str): The title of the currently reading book
+            authors (List[str]): The authors of the currently reading book
+            small_img_url (str): The image of the book cover
+            page (int): The number of pages in the book
+    """
+
+@router.get("/{book_club_id}/user_pace",
+            name="bookclub:user_pace")
+async def get_user_pace(
+    book_club_id: str,
+    current_user:  Annotated[User, Depends(get_current_active_user)],
+    book_club_repo: BookClubCRUDRepositoryGraph = 
+        Depends(get_repository(repo_type=BookClubCRUDRepositoryGraph))
+) -> Any:
+    """
+    Gets the users pace, the expected pace of the club, and the average pace of
+    the club
+
+    Args:
+        book_club_id: The id of the bookclub to get
+
+    Returns:
+        paces: a dictionary object that contains the following values:
+        expected_pace (int): The expected chapter based on the estimated finish
+            date of the club, rounded to the closest int
+        user_pace (int): The current chapter of the user
+        club_pace (int): The average chapter of the club members, rounded to
+            the closest int
+        total_chapters (int): The total number of chapters, inputted by the
+            club admin
+    """
+
+@router.get("{book_club_id}/club_members_pace",
+            name="bookclub:club_members_pace")
+async def get_club_members_pace(
+    book_club_id: str,
+    current_user:  Annotated[User, Depends(get_current_active_user)],
+    book_club_repo: BookClubCRUDRepositoryGraph = 
+        Depends(get_repository(repo_type=BookClubCRUDRepositoryGraph))
+) -> Any:
+    """
+    Gets the current chapter of each member in the club
+
+    Args:
+        book_club_id: The id of the book club to get
+
+    Returns:
+        member_paces (array): an array, where each object is a dictionary which
+        contains the following values. The array is sorted by member_pace 
+        descending:
+            id (str): the uuid of the member
+            username (str): the username of the member
+            pace (int):  the current chapter of the member
+            is_current_user (bool): Flag for if this member is the current user
+    """
+
+@router.post("{book_club_id}/update/create",
+             name="bookclub:update_create")
+async def create_update_post_club(
+    request: Request,
+    book_club_id: str,
+    current_user:  Annotated[User, Depends(get_current_active_user)],
+    book_club_repo: BookClubCRUDRepositoryGraph = 
+        Depends(get_repository(repo_type=BookClubCRUDRepositoryGraph))
+) -> None:
+    """
+    Creates an update post for the book club
+
+    Args:
+        request: A request object that contains the following fields:
+        user (dict): A user object containing the following fields:
+            id (str): The id of the user
+        chapter (int): The chapter that the update is posted for
+        response (str | None): The response that was created with the update
+        headline (str): The headline for the post
+
+    Returns:
+        200 response for a successful post
+    """
+
+@router.get("{book_club_id}/feed",
+            name="bookclub:get_feed")
+async def get_club_feed(
+    book_club_id: str,
+    current_user: Annotated[User, Depends(get_current_active_user)],
+    filter: Optional[bool] = True,
+    book_club_repo: BookClubCRUDRepositoryGraph = 
+        Depends(get_repository(repo_type=BookClubCRUDRepositoryGraph))
+) -> List[Any]:
+    """
+    Gets the feed for a specific book club
+
+Args:
+    book_club_id: The id for the book club
+    filter (bool): Whether or not to filter out updates ahead of the current 
+        chapter for the current user. Defaults to True
+
+Returns:
+    posts: A list of posts in chronological order, posts can only be updates. 
+    A post object will contain:
+        id: the uuid of the post
+        headline (str | None): the headline for the post
+        created_date (datetime): the created datetime for the post
+        chapter (int): the chapter for the post
+        response (str | None): the response for the post
+        user_id (str): the id of the user who made the post
+        user_username (str): the username of the user who made the post
+        likes (int) the number of likes on a post
+        num_comments (int) the number of comments on a post
+        liked_by_current_user (bool): whether the post was liked by the 
+            current user
+        posted_by_current_user (bool): whether the post was posted by the 
+            current user
+        type (str): the type of the post. As of now can be one of update 
+            and update_no_text
+    """
+### Currently Reading Settings Page ########################################################################################
+
+@router.post("{book_club_id}/currently_reading/start",
+            name="bookclub:start_book")
+async def start_book_for_club(
+    book_club_id:str,
+    request:Request,
+    current_user: Annotated[User, Depends(get_current_active_user)],
+    book_club_repo: BookClubCRUDRepositoryGraph = 
+        Depends(get_repository(repo_type=BookClubCRUDRepositoryGraph))
+) -> None:
+    """
+    Sets a clubs currently reading book
+
+    Args:
+        book_club_id: The id of the book club
+        request: A request object that contains the following values:
+            expected_finish_date (datetime): The date selected as the expected finish date
+            book (dict): A book object that contains the following values:
+                id (str): The id of the book
+                chapters (int): The number of chapters in the book
+
+    Returns:
+        200 response
+
+    Raises:
+        400 if user is not the club admin
+    """
+
+@router.post("{book_club_id}/currently_reading/finish",
+             name="bookclub:finish_book")
+async def finish_book_for_club(
+    book_club_id:str,
+    current_user: Annotated[User, Depends(get_current_active_user)],
+    book_club_repo: BookClubCRUDRepositoryGraph = 
+        Depends(get_repository(repo_type=BookClubCRUDRepositoryGraph))
+) -> None:
+    """
+    Set the currently reading book as finished
+
+    Args:
+        book_club_id: The id of the book club
+
+    Returns:
+        200 response
+
+    Raises:
+        400 if current user is not the club admin
+    """
+
+@router.post("{book_club_id}/currently_reading/stop",
+             name="bookclub:stop_book")
+async def stop_book_for_club(
+    book_club_id:str,
+    current_user: Annotated[User, Depends(get_current_active_user)],
+    book_club_repo: BookClubCRUDRepositoryGraph = 
+        Depends(get_repository(repo_type=BookClubCRUDRepositoryGraph))
+) -> None:
+    """
+    Set the currently reading book as quit
+
+    Args:
+        book_club_id: The id of the book club
+
+    Returns:
+        200 response
+
+    Raises:
+        400 if current user is not the club admin
+    """
