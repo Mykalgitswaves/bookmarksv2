@@ -16,7 +16,7 @@
 
         <div v-else class="currently-reading-book none">
             <h3 class="text-lg text-stone-600">
-                
+
             </h3>
         </div>
     </div>
@@ -26,7 +26,7 @@ import { helpersCtrl } from '../../../../services/helpers';
 
 defineProps({
     book: {
-        type: Book,
+        type: Object,
     }
 })
 </script>

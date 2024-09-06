@@ -16,8 +16,10 @@
                 <IconSettings />
             </button>
         </div>
+
         <div class="club-main">
-            <CurrentlyReadingBook :currently-reading-book="club.currently_reading_book"/>
+            <CurrentlyReadingBook :book="club.currently_reading_book"/>
+            
         </div>
 
         <div class="club-nav">
