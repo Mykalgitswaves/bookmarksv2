@@ -68,8 +68,10 @@ class BookClubList(BaseModel):
     user_id: str
     limit: int | None
 
+
 class BookClubPreview(BaseBookClub):
     pass
+
 
 class MinimalBookClub(BaseBookClub):
     # Making this extend bookclub preview for when we have more data to gather

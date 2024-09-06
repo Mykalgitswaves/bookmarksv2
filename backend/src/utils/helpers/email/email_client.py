@@ -5,12 +5,12 @@ from src.config.config import settings
 
 class EmailClient:
     def __init__(self):
-        self.mail_server = '' #settings.MAIL_SERVER 
-        self.mail_port = '' #settings.MAIL_PORT 
-        self.mail_username = '' #settings.MAIL_USERNAME
-        self.mail_password = '' #settings.MAIL_PASSWORD
-        self.mail_from = '' #settings.MAIL_FROM
-        self.mail_from_name = '' #settings.MAIL_FROM_NAME
+        self.mail_server =  settings.MAIL_SERVER 
+        self.mail_port = settings.MAIL_PORT 
+        self.mail_username = settings.MAIL_USERNAME
+        self.mail_password = settings.MAIL_PASSWORD
+        self.mail_from = settings.MAIL_FROM
+        self.mail_from_name = settings.MAIL_FROM_NAME
 
         self.invite_body = """
         <html>
