@@ -122,6 +122,7 @@ export const urls = {
         getClubFeed: (bookclub_id) => (baseUrl + `api/bookclubs/${bookclub_id}/feed`),
         getClubPace: (bookclub_id) => (baseUrl + `api/bookclubs/${bookclub_id}/club_members_pace`),
         getPaceForUserInClub: (bookclub_id) => (baseUrl + `api/bookclubs/${bookclub_id}/user_pace`),
+        getMinimalClub: (bookclub_id, user_id) => (baseUrl + `api/bookclubs/${bookclub_id}/minimal_preview/${user_id}/user`)
     }
 }
 

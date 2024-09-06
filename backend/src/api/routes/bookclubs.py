@@ -366,6 +366,30 @@ async def decline_bookclub_invite(
         return JSONResponse(
             status_code=200, 
             content={"message": "Invite declined"})
+
+@router.get("/{book_club_id}/minimal_preview/{user_id}/user", name="bookclub:minimal_preview")
+async def get_book_club_minimal_preview(
+    book_club_id: str,
+    user_id: str,
+    current_user:  Annotated[User, Depends(get_current_active_user)],
+    book_club_repo: BookClubCRUDRepositoryGraph = 
+        Depends(get_repository(repo_type=BookClubCRUDRepositoryGraph))
+):
+    """
+    gets an minimal preview for a bookclub via clubs uuid. 
+    """
+    if current_user.id != user_id:
+        raise HTTPException(status_code=400, detail="Unauthorized")
+
+    try:
+        book_club = book_club_repo.get_minimal_book_club(book_club_id=book_club_id, user_id=user_id)
+    except:
+        raise HTTPException(
+            status_code=404,
+            detail="Bookclub not found"
+        )
+    
+    return JSONResponse(content={"book_club":jsonable_encoder(book_club)})
     
 ### Club feed page ################################################################################################
 

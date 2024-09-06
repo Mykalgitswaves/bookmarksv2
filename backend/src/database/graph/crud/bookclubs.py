@@ -150,6 +150,64 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
         else:
             return False
         
+    def get_minimal_book_club(
+            self,
+            book_club_id: str,
+            user_id: str
+    ):
+        """
+        Gets a minimal bookclub
+        """
+        with self.driver.session() as session:
+            result = session.read_transaction(
+                self.get_minimal_book_club_query, 
+                book_club_id, 
+                user_id
+            )
+        return result
+    
+    @staticmethod
+    def get_minimal_book_club_query(tx, book_club_id, user_id):
+        query = """
+            match(b:BookClub {id: $book_club_id})
+            match(u:User {id: $user_id})
+            OPTIONAL MATCH (b)-[reading:IS_READING]-(book:BookClubBook)
+            OPTIONAL MATCH (u)-[user_progress:IS_READING_FOR_CLUB]->(book)
+            OPTIONAL MATCH (book)-[:IS_EQUIVALENT_TO]-(actual_book:Book)
+            return b.id as book_club_id,
+                   b.name as book_club_name,
+                   reading.started_date as started_date,
+                   reading.selected_finish_date as expected_finish_date,
+                   user_progress.current_chapter as current_chapter,
+                   actual_book.title as currently_reading_book_title,
+                   actual_book.small_img_url as currently_reading_book_small_img_url,
+                   actual_book.id as currently_reading_book_id,
+                   book.chapters as total_chapters
+        """
+        result = tx.run(query, book_club_id=book_club_id, user_id=user_id)
+        record = result.single()
+
+        if record.get("currently_reading_book_id"):
+            current_book = BookClubSchemas.BookClubCurrentlyReading(
+                book_id=record.get("currently_reading_book_id"),
+                title=record.get("currently_reading_book_title"),
+                small_img_url=record.get(
+                    "currently_reading_book_small_img_url")
+            )
+        else:
+            current_book = {}
+
+        pace_offset = BookClubSchemas.BaseBookClub.get_pace_offset(record)
+
+        minimal_bookclub = BookClubSchemas.MinimalBookClub(
+            book_club_id=record["book_club_id"],
+            book_club_name=record["book_club_name"],
+            pace=pace_offset,
+            currently_reading_book=current_book
+        )   
+
+        return minimal_bookclub
+
     def get_owned_book_clubs(
             self,
             book_club_param: BookClubSchemas.BookClubList
@@ -243,39 +301,9 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
                 )
             else:
                 current_book = None
-
+            
             # Calculate the pace offset if all the required fields are present
-            if (
-                record.get("expected_finish_date") 
-                and record.get("total_chapters") 
-                and record.get("current_chapter")
-            ):
-                started_date = record.get("started_date")
-                expected_finish_date = record.get("expected_finish_date")
-                total_chapters = record.get("total_chapters")
-                current_chapter = record.get("current_chapter")
-
-                if isinstance(started_date, Neo4jDateTime):
-                    started_date = started_date.to_native()
-
-                if isinstance(expected_finish_date, Neo4jDateTime):
-                    expected_finish_date = expected_finish_date.to_native()
-
-                current_date = datetime.now()
-
-                # Calculate total reading duration in days
-                total_days = (expected_finish_date - started_date).days
-                # Calculate elapsed days since the start
-                elapsed_days = (current_date - started_date).days
-
-                # Calculate expected chapters by the current date
-                expected_chapters = (elapsed_days / total_days) * total_chapters
-
-                # Calculate offset from the expected chapter
-                pace_offset = current_chapter - round(expected_chapters)
-
-            else:
-                pace_offset = None
+            pace_offset = BookClubSchemas.BaseBookClub.get_pace_offset(record)
 
             book_clubs.append(
                 BookClubSchemas.BookClubPreview(
