@@ -4,11 +4,10 @@
 
         <div class="bookclubs-list">
             <h2 class="text-2xl fancy text-stone-600">Clubs you've joined</h2>
+
             <div v-if="loaded">
                 
                 <!-- TODO turn into component like bookshelves -->
-                
-
                 <p class="text-lg font-medium text-stone-500 mt-5 mb-5">
                     You haven't joined any clubs yet.
                 </p>

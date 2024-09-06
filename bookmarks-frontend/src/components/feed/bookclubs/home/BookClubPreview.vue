@@ -2,9 +2,13 @@
     <div class="bookclub-preview">
 
         <!-- Hold off on this until I get an href working... -->
-        <!-- <img src="" alt="" /> -->
+        <img v-if="bookclub.currently_reading_book?.img" 
+            class="currently-reading-img" 
+            :src="bookclub.currently_reading_book?.img" 
+            alt="" 
+        />
 
-        <div class="placeholder"></div>
+        <div v-else class="placeholder"></div>
 
         <div class="metadata">
             <h3 class="title">
