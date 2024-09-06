@@ -108,9 +108,20 @@ export const urls = {
         updateBookNoteForShelf: (bookshelf_id) => (baseUrl + `api/bookshelves/${bookshelf_id}/update_book_note`),
     },
     bookclubs: {
+        // Create / POST
         create: () => (baseUrl + 'api/bookclubs/create/'),
+        createClubUpdate: (bookclub_id) => (baseUrl + `api/bookclubs/${bookclub_id}/update/create`),
+        startCurrentlyReadingBookForClub: 
+            (bookclub_id) => (baseUrl + `api/bookclubs/${bookclub_id}/currently_reading/start`),
+        finishCurrentlyReadingBookForClub: 
+            (bookclub_id) => (baseUrl + `api/bookclubs/${bookclub_id}/currently_reading/finish`),
+        stopCurrentlyReadingBookForClub: 
+            (bookclub_id) => (baseUrl + `api/bookclubs/${bookclub_id}/currently_reading/stop`),
+        // Read / GETS
         getClubsOwnedByUser: (user_id) =>  (baseUrl + `api/bookclubs/owned/${user_id}/`),
-        getClub: (bookclub_id) => (baseUrl + `api/bookclubs/club/${bookclub_id}`),
+        getClubFeed: (bookclub_id) => (baseUrl + `api/bookclubs/${bookclub_id}/feed`),
+        getClubPace: (bookclub_id) => (baseUrl + `api/bookclubs/${bookclub_id}/club_members_pace`),
+        getPaceForUserInClub: (bookclub_id) => (baseUrl + `api/bookclubs/${bookclub_id}/user_pace`),
     }
 }
 

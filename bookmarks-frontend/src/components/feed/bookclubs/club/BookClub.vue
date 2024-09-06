@@ -13,7 +13,7 @@
 </template>
 <script setup>
 import { ref } from 'vue';
-import { useRoute } from 'vue';
+import { useRoute } from 'vue-router';
 import { db } from '../../../../services/db';
 import { urls } from '../../../../services/urls';
 
@@ -24,10 +24,10 @@ import { urls } from '../../../../services/urls';
  */
 
 const route = useRoute();
-const { user } = route.params;
+const { user, bookclub } = route.params;
 const loaded = ref(false);
 let error;
-let bookclub;
+let club;
 
 /**
  * ----------------------------------------------------------------------------
@@ -45,16 +45,16 @@ let bookclub;
 
 
 async function loadBookClub() {
-    db.get(urls.bookclubs.getClub(user), null, false, 
+    db.get(urls.bookclubs.getClubFeed(bookclub), null, false, 
         (res) => {
-            bookclub = res.bookclub;
+            club = res.bookclub;
             loaded.value = true;
         },
         (err) => {
             error = err;
             loaded.value = true;
         }
-    )
+    );
 }
 
 
