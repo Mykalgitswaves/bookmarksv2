@@ -393,28 +393,6 @@ async def get_book_club_minimal_preview(
     
 ### Club feed page ################################################################################################
 
-@router.get("/{book_club_id}/currently_reading_preview",
-            name="bookclub:currently_reading_preview")
-async def get_currently_reading_preview(
-    book_club_id: str,
-    current_user:  Annotated[User, Depends(get_current_active_user)],
-    book_club_repo: BookClubCRUDRepositoryGraph = 
-        Depends(get_repository(repo_type=BookClubCRUDRepositoryGraph))
-) -> Any:
-    """
-    Gets the current book for a club and returns a preview for the feed page.
-
-    Args:
-        book_club_id: The id of the book club to get
-
-    Returns:
-        currently_reading: a dictionary object that returns the following fields:
-            title (str): The title of the currently reading book
-            authors (List[str]): The authors of the currently reading book
-            small_img_url (str): The image of the book cover
-            page (int): The number of pages in the book
-    """
-
 @router.get("/{book_club_id}/user_pace",
             name="bookclub:user_pace")
 async def get_user_pace(
@@ -441,6 +419,17 @@ async def get_user_pace(
             club admin
     """
 
+    paces = book_club_repo.get_user_pace(book_club_id, current_user.id)
+    
+    if paces:
+        return JSONResponse(
+            status_code=200, 
+            content={"paces": jsonable_encoder(paces)})
+    else:
+        raise HTTPException(
+            status_code=404, 
+            detail="Invite not found")
+        
 @router.get("{book_club_id}/club_members_pace",
             name="bookclub:club_members_pace")
 async def get_club_members_pace(
@@ -464,6 +453,19 @@ async def get_club_members_pace(
             pace (int):  the current chapter of the member
             is_current_user (bool): Flag for if this member is the current user
     """
+
+    member_paces = book_club_repo.get_member_paces(
+        book_club_id,
+        current_user.id)
+    
+    if member_paces is not None:
+        return JSONResponse(
+            status_code=200, 
+            content={"member_paces": jsonable_encoder(member_paces)})
+    else:
+        raise HTTPException(
+            status_code=404, 
+            detail="Invite not found")
 
 @router.post("{book_club_id}/update/create",
              name="bookclub:update_create")
@@ -537,7 +539,8 @@ async def start_book_for_club(
         Depends(get_repository(repo_type=BookClubCRUDRepositoryGraph))
 ) -> None:
     """
-    Sets a clubs currently reading book
+    Sets a clubs currently reading book. Does not execute if book club
+    is already reading a book.
 
     Args:
         book_club_id: The id of the book club
@@ -553,6 +556,35 @@ async def start_book_for_club(
     Raises:
         400 if user is not the club admin
     """
+
+    data = await request.json()
+
+    try:
+        start_currently_reading = BookClubSchemas.StartCurrentlyReading(
+            expected_finish_date=data.get("expected_finish_date"),
+            book=data.get("book"),
+            user_id=current_user.id,
+            id=book_club_id
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    
+    if (not start_currently_reading.book.get("id") or 
+            not start_currently_reading.book.get("chapters")):
+        raise HTTPException(status_code=400, detail="Missing required value")
+    
+    result = book_club_repo.create_currently_reading_club(
+        start_currently_reading)
+    
+    if result:
+        return JSONResponse(
+            status_code=200, 
+            content={"message": "Book set as currently reading"})
+    else:
+        raise HTTPException(
+            status_code=404, 
+            detail="Error starting book")
+
 
 @router.post("{book_club_id}/currently_reading/finish",
              name="bookclub:finish_book")
@@ -574,6 +606,19 @@ async def finish_book_for_club(
     Raises:
         400 if current user is not the club admin
     """
+    result = book_club_repo.update_finished_reading(
+        book_club_id,
+        current_user.id
+    )
+
+    if result:
+        return JSONResponse(
+            status_code=200, 
+            content={"message": "Book set as finished reading"})
+    else:
+        raise HTTPException(
+            status_code=404, 
+            detail="Error finishing book")
 
 @router.post("{book_club_id}/currently_reading/stop",
              name="bookclub:stop_book")
@@ -595,3 +640,16 @@ async def stop_book_for_club(
     Raises:
         400 if current user is not the club admin
     """
+    result = book_club_repo.update_stopped_reading(
+        book_club_id,
+        current_user.id
+    )
+
+    if result:
+        return JSONResponse(
+            status_code=200, 
+            content={"message": "Book set as stopped reading"})
+    else:
+        raise HTTPException(
+            status_code=404, 
+            detail="Error finishing book")

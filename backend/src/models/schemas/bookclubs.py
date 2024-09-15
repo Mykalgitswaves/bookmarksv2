@@ -100,3 +100,15 @@ class BookClubInvitePreview(BaseModel):
 class BookClubInviteResponse(BaseModel):
     invite_id: str
     user_id: str
+
+class BookClubPaces(BaseModel):
+    expected_pace: int
+    user_pace: int
+    club_pace: int
+    total_chapters: int
+
+class StartCurrentlyReading(BaseModel):
+    expected_finish_date: datetime.datetime
+    book: dict
+    user_id: str
+    id: str

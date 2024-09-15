@@ -150,6 +150,57 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
         else:
             return False
         
+    def create_currently_reading_club(
+            self,
+            currently_reading_obj: BookClubSchemas.StartCurrentlyReading
+    ):
+        with self.driver.session() as session:
+            result = session.write_transaction(
+                self.create_currently_reading_club_query, 
+                currently_reading_obj)
+        return result
+    
+    @staticmethod
+    def create_currently_reading_club_query(
+        tx,
+        currently_reading_obj: BookClubSchemas.StartCurrentlyReading
+    ):
+        query = (
+            """
+            MATCH (u:User {id:$user_id})-[:OWNS_BOOK_CLUB]-(b:BookClub {id:$book_club_id})
+            WITH u, b
+            WHERE NOT EXISTS {
+                MATCH (b)-[:IS_READING]->(:BookClubBook)
+            }
+            MATCH (book:Book {id:$book_id})
+            CREATE (bc_book:BookClubBook {
+                id: "book_club_book_" + randomUUID(),
+                chapters: $chapters
+            })
+            CREATE (bc_book)-[:IS_EQUIVALENT_TO]->(book)
+            MERGE (b)-[:IS_READING {
+                started_date: datetime(),
+                selected_finish_date: $finish_date
+            }]->(bc_book)
+            WITH b, bc_book
+            MATCH (member:User)-[:IS_MEMBER_OF|OWNS_BOOK_CLUB]->(b)
+            MERGE (member)-[:IS_READING_FOR_CLUB]->(bc_book)
+            RETURN bc_book.id as book_club_book_id
+            """
+        )
+
+        result = tx.run(
+            query,
+            user_id=currently_reading_obj.user_id,
+            book_club_id=currently_reading_obj.id,
+            book_id=currently_reading_obj.book['id'],
+            chapters=currently_reading_obj.book['chapters'] 
+        )
+
+        response = result.single()
+        return response.get("book_club_book_id") != None
+        
+        
     def get_minimal_book_club(
             self,
             book_club_id: str,
@@ -549,6 +600,133 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
 
         return invites
 
+    def get_user_pace(
+            self,
+            book_club_id: str,
+            user_id: str
+    ) -> BookClubSchemas.BookClubPaces:
+        """
+        Gets the pace of the user in the book club
+
+        Args:
+            book_club_id (str): The id of the book club
+            user_id (str): The id of the user
+        
+        Returns:
+            pace: The pace of the user in the book club
+        """
+        with self.driver.session() as session:
+            result = session.read_transaction(
+                self.get_user_pace_query, 
+                book_club_id, 
+                user_id
+            )
+        return result
+    
+    @staticmethod
+    def get_user_pace_query(tx, book_club_id, user_id):
+
+        query = (
+            """
+            MATCH (u:User {id: $user_id})-[:IS_MEMBER_OF|OWNS_BOOK_CLUB]->(b:BookClub {id: $book_club_id})
+            MATCH (b)-[club_reading:IS_READING]->(book:BookClubBook)
+            MATCH (u)-[user_reading:IS_READING_FOR_CLUB]->(book)
+            MATCH (:User)-[members_reading:IS_READING_FOR_CLUB]->(book)
+            return user_reading.current_chapter as current_chapter,
+                   club_reading.started_date as started_date,
+                   club_reading.selected_finish_date as expected_finish_date,
+                   book.chapter as total_chapters,
+                   avg(members_reading.current_chapter) as average_member_chapter
+            """
+        )
+
+        result = tx.run(
+                query,
+                book_club_id=book_club_id,
+                user_id=user_id
+            )
+        
+        response = result.single()
+
+        if response:
+            paces = BookClubSchemas.BookClubPaces(
+                user_pace=response.get("current_chapter"),
+                total_chapters=response.get("total_chapters"),
+                club_pace=round(response.get("average_member_chapter",0)),
+                expected_pace=BookClubSchemas.BaseBookClub.get_pace_offset(
+                    response)
+            )
+            return paces
+        
+    def get_member_paces(
+            self,
+            book_club_id:str,
+            user_id:str
+    ) -> List[dict]:
+        """
+        Gets the current chapter of each member in the club
+
+        Args:
+            book_club_id: The id of the book club to get
+
+        Returns:
+            member_paces (array): an array, where each object is a dictionary which
+            contains the following values. The array is sorted by member_pace 
+            descending:
+                id (str): the uuid of the member
+                username (str): the username of the member
+                pace (int):  the current chapter of the member
+                is_current_user (bool): Flag for if this member is the current user
+        """
+
+        with self.driver.session() as session:
+            result = session.read_transaction(
+                self.get_member_paces_query, 
+                book_club_id, 
+                user_id
+            )
+        return result
+    
+    @staticmethod
+    def get_member_paces_query(
+        tx,
+        book_club_id: str,
+        user_id: str
+    ):
+        
+        query = (
+            """
+            MATCH (u:User {id:$user_id})-[:IS_MEMBER_OF|OWNS_BOOK_CLUB]->(b:BookClub {id:$book_club_id})
+            MATCH (b)-[club_reading:IS_READING]->(book:BookClubBook)
+            MATCH (u)-[user_reading:IS_READING_FOR_CLUB]->(book)
+            MATCH (members:User)-[members_reading:IS_READING_FOR_CLUB]->(book)
+            return  u.id as user_id,
+                    members,
+                    members_reading
+            """
+        )
+
+        
+        result = tx.run(
+            query,
+            book_club_id=book_club_id,
+            user_id=user_id
+        )
+
+        member_paces = []
+        for response in result:
+            member_pace = {
+                "id":response.get("members.id"),
+                "username":response.get("members.username"),
+                "pace":response.get("members_reading.current_chapter"),
+                "is_current_user": response.get("members.id") == user_id
+            }
+
+            member_paces.append(member_pace)
+
+        # Checks if the user is even a member of the club before returning
+        if response.get("user_id"):
+            return member_paces        
 
     def search_users_not_in_club(
             self, 
@@ -603,6 +781,7 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
             })
         
         return users
+    
     
     def update_accept_book_club_invite(
             self,
@@ -696,3 +875,97 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
             return True
         else:
             return False
+        
+    def update_finished_reading(
+        self,
+        book_club_id: str,
+        user_id: str
+    ):
+        with self.driver.session() as session:
+            result = session.write_transaction(
+                self.update_finished_reading_query, 
+                book_club_id,
+                user_id)
+        return result
+    
+    @staticmethod
+    def update_finished_reading_query(
+        tx,
+        book_club_id: str,
+        user_id: str
+    ):
+        query = (
+            """
+            MATCH (u:User {id:$user_id})-[:OWNS_BOOK_CLUB]->(b:BookClub {id:$book_club_id})
+            MATCH (b)-[reading:IS_READING]->(bc_book:BookClubBook)
+            CREATE (b)-[finished:FINISHED_READING {
+                started_date: reading.started_date,
+                selected_finish_date: reading.selected_finish_date,
+                actual_finish_date: datetime()
+            }]->(bc_book)
+            WITH bc_book, reading
+            MATCH (member:User)-[member_reading:IS_READING_FOR_CLUB]->(bc_book)
+            CREATE (member)-[member_finished:FINISHED_READING_FOR_CLUB {
+                last_updated: member_reading.last_updated,
+                current_chapter: member_reading.current_chapter
+            }]->(bc_book)
+            DELETE reading, member_reading
+            RETURN bc_book.id as book_id
+            """
+        )
+
+        result = tx.run(
+            query,
+            user_id=user_id,
+            book_club_id=book_club_id
+        )
+
+        response=result.single()
+        return response.get("book_id") != None
+    
+    def update_stopped_reading(
+        self,
+        book_club_id: str,
+        user_id: str
+    ):
+        with self.driver.session() as session:
+            result = session.write_transaction(
+                self.update_stopped_reading_query, 
+                book_club_id,
+                user_id)
+        return result
+    
+    @staticmethod
+    def update_stopped_reading_query(
+        tx,
+        book_club_id: str,
+        user_id: str
+    ):
+        query = (
+            """
+            MATCH (u:User {id:$user_id})-[:OWNS_BOOK_CLUB]->(b:BookClub {id:$book_club_id})
+            MATCH (b)-[reading:IS_READING]->(bc_book:BookClubBook)
+            CREATE (b)-[stopped:STOPPED_READING {
+                started_date: reading.started_date,
+                selected_finish_date: reading.selected_finish_date,
+                actual_finish_date: datetime()
+            }]->(bc_book)
+            WITH bc_book, reading
+            MATCH (member:User)-[member_reading:IS_READING_FOR_CLUB]->(bc_book)
+            CREATE (member)-[member_stopped:STOPPED_READING_FOR_CLUB {
+                last_updated: member_reading.last_updated,
+                current_chapter: member_reading.current_chapter
+            }]->(bc_book)
+            DELETE reading, member_reading
+            RETURN bc_book.id as book_id
+            """
+        )
+
+        result = tx.run(
+            query,
+            user_id=user_id,
+            book_club_id=book_club_id
+        )
+
+        response=result.single()
+        return response.get("book_id") != None
