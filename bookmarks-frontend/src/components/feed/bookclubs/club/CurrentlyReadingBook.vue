@@ -16,7 +16,14 @@
 
         <div v-else class="currently-reading-book none">
             <h3 class="text-lg text-stone-600">
-
+                This club isn't currently reading anything, 
+                <button role="navigation" 
+                    type="button" 
+                    class="text text-sm text-indigo-600 underline"
+                    @click="$emit('currently-reading-settings')"
+                >
+                    set one now!
+                </button>
             </h3>
         </div>
     </div>

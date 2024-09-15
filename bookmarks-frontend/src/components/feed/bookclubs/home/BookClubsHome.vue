@@ -22,9 +22,16 @@
             </div>
 
             <!-- loading -->
-            <div v-if="!loaded">
-
-            </div>
+            <Transition name="content" tag="div">
+                <TransitionGroup
+                    v-if="!loaded" 
+                    class="loading-card-grid"
+                    name="content"
+                    tag="div"
+                >        
+                    <LoadingCard />
+                </TransitionGroup>
+            </Transition>
         </div>
 
         <div class="bookclubs-list">
@@ -60,7 +67,7 @@ import { navRoutes } from '../../../../services/urls';
 import { ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import BookClubPreview from './BookClubPreview.vue';
-
+import LoadingCard from '@/components/shared/LoadingCard.vue';
 
 /**
  * ----------------------------------------------------------------------------
@@ -136,7 +143,7 @@ loadClubsCreatedByUser();
     border: 1px solid var(--stone-500);
     margin-top: 14px;
     margin-bottom: 14px;
-    
+    min-height: 100px;
     & .toolbar {
         border-top: 1px solid var(--stone-300);
         padding-top: 14px;
@@ -145,5 +152,11 @@ loadClubsCreatedByUser();
         justify-content: start;
         column-gap: 14px;
     }
+}
+
+.loading-card-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    column-gap: 40px;
 }
 </style>

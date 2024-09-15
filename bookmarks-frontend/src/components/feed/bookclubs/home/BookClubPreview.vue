@@ -20,7 +20,7 @@
             </p>
             <p v-else class="currently-reading">Not currently reading</p>
 
-            <a class="link" :href="navRoutes.toBookClub(user, bookclub.book_club_id)">Go to club</a>
+            <a class="link" :href="navRoutes.toBookClubFeed(user, bookclub.book_club_id)">Go to club</a>
         </div>
     </div>
 </template>

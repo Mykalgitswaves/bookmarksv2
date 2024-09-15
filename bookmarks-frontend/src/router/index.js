@@ -138,7 +138,21 @@ export const router = createRouter({
             },
             {
               path: ':bookclub',
-              component: BookClub
+              component: BookClub,
+              children: [
+                {
+                  path: 'feed',
+                  name: 'feed'
+                },
+                {
+                  path: 'settings/currently-reading',
+                  name: 'currentlyReading'
+                },
+                {
+                  path: 'settings/manage-members',
+                  name: 'manageMembers',
+                }
+              ]
             }
           ]
         },

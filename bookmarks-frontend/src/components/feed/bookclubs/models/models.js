@@ -39,5 +39,25 @@ export const BookClub = {
             time_period: paceIntervals.WEEK,
             name: paceNames.BLAZING,
         }
+    },
+}
+
+
+export const ClubUpdatePost = {
+        cls:  'club_update_post'
+}
+
+export const ClubReviewPost = {
+    cls: 'club_review_post'
+}
+
+export const Invitation = {
+    cls: 'invitation',
+    
+    statuses: {
+        uninvited: 'uninvited',
+        invited: 'invited',
+        accepted: 'accepted',
+        refused: 'refused',
     }
 }

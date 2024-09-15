@@ -1,45 +1,55 @@
 <template>
-    <section v-if="loaded" class="mt-10">   
-        <div class="bookclub-header flex justify-between items-start">
-            <div>
-                <h1 class="text-3xl fancy text-stone-700">
-                    {{ club.book_club_name }}
-                </h1>
-                
-                <p class="text-stone-500 mt-5">
-                    {{ club.description || 'Add a description for your book club' }}    
-                </p>
+    <section> 
+            <div v-if="loaded">
+                <BookClubFeed 
+                    v-if="currentView === subComponentRoutes.feed" 
+                    :club="club"
+                />
+
+                <ClubMemberSettingsMain 
+                    v-else-if="currentView === subComponentRoutes.settings.manageMembers"
+                    :club="club"
+                />
             </div>
 
-            <button type="button" class="pt-5 text-indigo-400">
-                <span class="visually-hidden">Settings</span>
-                <IconSettings />
-            </button>
-        </div>
-
-        <div class="club-main">
-            <CurrentlyReadingBook :book="club.currently_reading_book"/>
-            
-        </div>
-
-        <div class="club-nav">
-
-        </div>
+            <div v-else class="bookclub-header text-center">
+                <h3 class="text-xl fancy text-stone-700">Sit tight, your club is loading...</h3>
+                
+                <LoadingCard />
+               
+            </div>
     </section>
-    <section v-else class="mt-10">
-        <div class="bookclub-header text-center">
-            <h3 class="text-xl fancy text-stone-700">Sit tight, your club is loading...</h3>
-        </div>
-    </section>
+
+    <!-- <teleport to="main-layout"> -->
+        <nav role="navigation" 
+            class="book-club-nav"
+        >
+            <a :href="navRoutes.bookClubSettingsManageMembersIndex(user, bookclub)"
+                class="btn btn-ghost text-sm"
+                :class="{'active': currentView === subComponentRoutes.settings.manageMembers}"
+            >
+                Club settings
+            </a>
+
+            <a :href="navRoutes.bookClubSettingsCurrentlyReading(user, bookclub)"
+                class="btn btn-ghost text-sm"
+                :class="{'active': currentView === subComponentRoutes.settings.currentlyReading}"
+            >
+                Currently reading
+            </a>
+        </nav>
+    <!-- </teleport>     -->
 </template>
 <script setup>
-import { ref } from 'vue';
-import { useRoute } from 'vue-router';
+import { ref, computed } from 'vue';
+import { useRouter, useRoute } from 'vue-router';
 import { db } from '../../../../services/db';
-import { urls } from '../../../../services/urls';
-import CurrentlyReadingBook from './CurrentlyReadingBook.vue';
+import { navRoutes, urls } from '../../../../services/urls';
 // svg
 import IconSettings from '../../../svg/icon-settings.vue';
+// subcomponent views!
+import BookClubFeed from './BookClubFeed.vue';
+import ClubMemberSettingsMain from './invite/ClubMemberSettingsMain.vue';
 
 /**
  * ----------------------------------------------------------------------------
@@ -48,10 +58,35 @@ import IconSettings from '../../../svg/icon-settings.vue';
  */
 
 const route = useRoute();
+const router = useRouter();
 const { user, bookclub } = route.params;
 const loaded = ref(false);
+
 let error;
 let club;
+
+const subComponentRoutes = {
+    feed: 'feed',
+    settings: {
+        currentlyReading: 'currently-reading',
+        manageMembers: 'manage-members',
+    }
+}
+
+const currentView = computed(() => {
+    console.log(user, route.params)
+    if (route.path === navRoutes.toBookClubFeed(user, bookclub)) {
+        console.log('feed')
+        return subComponentRoutes.feed;
+    } else if (route.path === navRoutes.bookClubSettingsCurrentlyReading(user, bookclub)) {
+        console.log('currently-reading')
+        return subComponentRoutes.settings.currentlyReading;
+    } else if (route.path === navRoutes.bookClubSettingsManageMembersIndex(user, bookclub)) {
+        console.log('manage-members')
+        return subComponentRoutes.settings.manageMembers;
+    }
+});
+
 
 /**
  * ----------------------------------------------------------------------------
@@ -69,11 +104,15 @@ let club;
 
 
 async function loadBookClub() {
+    console.log(route.params)
     const clubPromise = db.get(urls.bookclubs.getMinimalClub(bookclub, user), null, false, 
         (res) => {
+            console.log('this worked')
+            debugger;
             club = res.book_club;
         },
         (err) => {
+            console.log('this failed')
             error = err;
         }
     );
@@ -104,11 +143,31 @@ async function loadBookClub() {
  * ----------------------------------------------------------------------------
  */
 </script>
-<style scoped>
+<style>
 .bookclub-header {
     background-color: var(--stone-100);
     padding: 20px 40px;
     border-radius: var(--radius-md);
 }
 
+.club-main-padding {
+    padding: 20px 40px;
+}
+
+/* .book-club-nav {
+    display: none;
+} */
+
+/* @media screen and (min-width: 768px) { */
+    .book-club-nav {
+        display: flex;
+        column-gap: 8px;
+        align-items: center;
+        position: fixed;
+        bottom: 20px;
+        left: 50%;
+        transform: translateX(-33%);
+        width: 100%;
+    }
+/* } */
 </style>
