@@ -994,7 +994,9 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
             MATCH (user:User {id:$user_id})-[:OWNS_BOOK_CLUB]->(b:BookClub)
             OPTIONAL MATCH (b)-[:HAS_PACE]->(pace:BookClubPace)
             OPTIONAL MATCH (b)-[]->(book:BookClubBook)
-            DETACH DELETE pace, book, b
+            OPTIONAL MATCH (b)-[]-(invites:BookClubInvite)
+            OPTIONAL MATCH (invites)-[]-(test_emails:InvitedUser)
+            DETACH DELETE pace, book, b, invites, test_emails
             return user.id as user_id
             """
         )
