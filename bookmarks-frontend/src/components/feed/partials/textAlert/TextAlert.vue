@@ -1,6 +1,6 @@
 <template>
 <div :class="alertVariantCss()">
-    <component class="icon" :is="TEXT_ALERT[variant].icon()" />
+    <component class="icon" :is="TEXT_ALERT[variant].icon" />
 
     <div>
         <h3 class="alert-heading">
@@ -13,18 +13,18 @@
     </div>
 </div>
 </template>
-<script>
+<script setup>
 import { TEXT_ALERT } from './textAlert.js';
 
 const props = defineProps({
     variant: {
         type: String,
         required: false,
-        default: TextAlert.default,
+        default: TEXT_ALERT.default,
         validator(props, variant) {
             // if a variant is provided, check it, otherwise resort to
             // default which we know is true.
-            return variant ? TextAlert.variants.includes(variant) : true;
+            return variant ? TEXT_ALERT.variants.includes(variant) : true;
         },
     }
 });
@@ -40,22 +40,35 @@ const alertVariantCss = () => (`text-alert ${props.variant}`);
     display: grid;
     grid-template-columns: 40px 1fr;
     column-gap: 14px;
+    margin-left: auto;
+    margin-right: auto;
     
+    svg {
+        max-width: 40px;
+        height: auto;
+        align-self: start;
+        margin-top: 10px;
+    }
+
     .alert-heading {
-        font-size: var(--font-2xl);
+        font-size: var(--font-lg);
         line-height: 1.5;
         font-family: var(--fancy-script);
     }
-
+    
     .alert-content {
         padding-top: .5rem;
-        font-size: var(--font-lg);
+        font-size: var(--font-sm);
         color: var(--stone-500);
     }
 
     &.info {
-        background-color: var(--blue-100);
+        background-color: var(--blue-50);
         border-color: var(--blue-500);
+        
+        svg {
+            color: var(--blue-500)
+        }
 
         .alert-heading {
             color: var(--stone-600);
@@ -65,7 +78,11 @@ const alertVariantCss = () => (`text-alert ${props.variant}`);
     &.warning {
         background-color: var(--orange-100);
         border-color: var(--orange-500);
-        
+
+        svg {
+            color: var(--orange-400);
+        }
+
         .alert-heading {
             color: var(--stone-600);
         }

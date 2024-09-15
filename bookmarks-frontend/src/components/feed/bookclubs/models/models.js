@@ -53,11 +53,46 @@ export const ClubReviewPost = {
 
 export const Invitation = {
     cls: 'invitation',
-    
+    // Invites might be to users that are not members of our app.
+    // We need to specify...
+
+    types: {
+        email: 'email',
+        existing_user: 'existing_user',
+    },
+
     statuses: {
         uninvited: 'uninvited',
         invited: 'invited',
         accepted: 'accepted',
         refused: 'refused',
     }
-}
+};
+
+// Default for new invitations
+export class BaseInvitation {
+    static invitations = [];
+
+    constructor() {
+        this.id = BaseInvitation.invitations.length + 1;
+        this.email = '';
+        this.user_id = '';
+        this.selected = false;
+        this.type = Invitation.types.email;
+        this.status = Invitation.statuses.uninvited;
+
+        BaseInvitation.invitations.push(this);
+    }
+    
+    /**
+     * 
+     * @param { int } id 
+     * @returns Void
+     */
+    static delete(id) {
+        let inviteToDelete = this.invitations.find(invitation => invitation.id === id);
+        let index = this.invitations.indexOf(inviteToDelete)
+        this.invitations.splice(index, 1);
+        // TODO: think about adding some unit test coverage for this class
+    }   
+};

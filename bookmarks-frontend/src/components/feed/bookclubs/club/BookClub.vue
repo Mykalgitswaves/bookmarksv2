@@ -12,11 +12,9 @@
                 />
             </div>
 
-            <div v-else class="bookclub-header text-center">
+            <!-- more loading states -->
+            <div v-else class="bookclub-header text-center gradient">
                 <h3 class="text-xl fancy text-stone-700">Sit tight, your club is loading...</h3>
-                
-                <LoadingCard />
-               
             </div>
     </section>
 
@@ -108,7 +106,6 @@ async function loadBookClub() {
     const clubPromise = db.get(urls.bookclubs.getMinimalClub(bookclub, user), null, false, 
         (res) => {
             console.log('this worked')
-            debugger;
             club = res.book_club;
         },
         (err) => {

@@ -34,6 +34,8 @@
     </div>
 
     <SendMemberInvitations />
+
+    <div class="mobile-menu-spacer sm:hidden"></div>
 </template>
 <script setup>
 import { ref } from 'vue';

@@ -1,4 +1,6 @@
-
+import IconWarning from './icons/IconWarning.vue';
+import IconInfo from './icons/IconInfo.vue';
+import IconError from './icons/IconError.vue';
 
 export const TEXT_ALERT = {
     default: 'warning',
@@ -7,11 +9,11 @@ export const TEXT_ALERT = {
     ],
     info: {
         cls: 'info',
-        icon: () => {},
+        icon: IconInfo,
     },
     warning: {
         cls: 'warning',
-        icon: () => {},
+        icon: IconWarning,
     }, 
     error: {
         cls: 'error',

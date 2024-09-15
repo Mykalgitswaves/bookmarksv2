@@ -67,6 +67,10 @@
     margin-bottom: 0 !important;
   }
 
+  .mb-4 {
+    margin-bottom: 4px;
+  }
+
   .mt-0 {
     margin-top: 0 !important;
   }
@@ -81,6 +85,11 @@
   
   .pb-0 {
     padding-bottom: 0 !important;
+  }
+
+
+  .pb-4 {
+    padding-bottom: 4px;
   }
 
   .pt-0 {
