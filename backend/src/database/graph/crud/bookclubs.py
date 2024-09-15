@@ -184,7 +184,10 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
             }]->(bc_book)
             WITH b, bc_book
             MATCH (member:User)-[:IS_MEMBER_OF|OWNS_BOOK_CLUB]->(b)
-            MERGE (member)-[:IS_READING_FOR_CLUB]->(bc_book)
+            MERGE (member)-[:IS_READING_FOR_CLUB {
+                last_updated: datetime(),
+                current_chapter: 0
+            }]->(bc_book)
             RETURN bc_book.id as book_club_book_id
             """
         )
@@ -194,11 +197,12 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
             user_id=currently_reading_obj.user_id,
             book_club_id=currently_reading_obj.id,
             book_id=currently_reading_obj.book['id'],
-            chapters=currently_reading_obj.book['chapters'] 
+            chapters=currently_reading_obj.book['chapters'],
+            finish_date=currently_reading_obj.expected_finish_date
         )
 
         response = result.single()
-        return response.get("book_club_book_id") != None
+        return response.get("book_club_book_id") is not None
         
         
     def get_minimal_book_club(
@@ -635,7 +639,7 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
             return user_reading.current_chapter as current_chapter,
                    club_reading.started_date as started_date,
                    club_reading.selected_finish_date as expected_finish_date,
-                   book.chapter as total_chapters,
+                   book.chapters as total_chapters,
                    avg(members_reading.current_chapter) as average_member_chapter
             """
         )
@@ -921,7 +925,7 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
         )
 
         response=result.single()
-        return response.get("book_id") != None
+        return response.get("book_id") is not None
     
     def update_stopped_reading(
         self,
@@ -968,4 +972,37 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
         )
 
         response=result.single()
-        return response.get("book_id") != None
+        return response.get("book_id") is not None
+    
+    def delete_book_club_data(
+        self,
+        user_id: str
+    ):
+        with self.driver.session() as session:
+            result = session.write_transaction(
+                self.delete_book_club_data_query,
+                user_id)
+        return result
+    
+    @staticmethod
+    def delete_book_club_data_query(
+        tx,
+        user_id: str
+    ):
+        query = (
+            """
+            MATCH (user:User {id:$user_id})-[:OWNS_BOOK_CLUB]->(b:BookClub)
+            OPTIONAL MATCH (b)-[:HAS_PACE]->(pace:BookClubPace)
+            OPTIONAL MATCH (b)-[]->(book:BookClubBook)
+            DETACH DELETE pace, book, b
+            return user.id as user_id
+            """
+        )
+
+        result = tx.run(
+            query,
+            user_id=user_id
+        )
+
+        response = result.single()
+        return response.get("user_id") is not None

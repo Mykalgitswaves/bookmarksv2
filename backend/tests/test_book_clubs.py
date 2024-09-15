@@ -2,6 +2,7 @@ import pytest
 import requests
 import json
 import time
+from datetime import datetime, timezone
 
 @pytest.fixture(scope="class")
 def setup_class(request):
@@ -54,7 +55,31 @@ def setup_class(request):
     request.cls.token_type_2 = response.json()["token_type"]
     request.cls.user_id_2 = response.json()["user_id"]
 
+    request.cls.username_3 = "test_user133_clubs_3"
+    request.cls.email_3 = "testuser_clubs_3@testemail.com"
+    request.cls.password_3 = "testPassword1!"
+
+    request.cls.admin_credentials = config["ADMIN_CREDENTIALS"]
+
+    headers = {"Content-Type": "application/x-www-form-urlencoded"}  # Set Content-Type to application/json
+    data = {
+        "username": request.cls.username_3,
+        "email": request.cls.email_3,
+        "password": request.cls.password_3,
+    }
+    response = requests.post(f"{request.cls.endpoint}/api/auth/signup", headers=headers, data=data)
+    assert response.status_code == 200, "Creating Test User"
+
+    request.cls.access_token_3 = response.json()["access_token"]
+    request.cls.token_type_3 = response.json()["token_type"]
+    request.cls.user_id_3 = response.json()["user_id"]
+
     yield
+
+    response = requests.post(f"{request.cls.endpoint}/api/admin/delete_user_book_club_data", 
+                             json={"user_id": request.cls.user_id, "admin_credentials": config["ADMIN_CREDENTIALS"]})
+
+    assert response.status_code == 200, "Cleanup: Test book club deletion failed"
 
     response = requests.post(f"{request.cls.endpoint}/api/admin/delete_user_by_username", 
                              json={"username": request.cls.username, "admin_credentials": config["ADMIN_CREDENTIALS"]})
@@ -63,6 +88,11 @@ def setup_class(request):
 
     response = requests.post(f"{request.cls.endpoint}/api/admin/delete_user_by_username", 
                              json={"username": request.cls.username_2, "admin_credentials": config["ADMIN_CREDENTIALS"]})
+
+    assert response.status_code == 200, "Cleanup: Test user deletion failed"
+
+    response = requests.post(f"{request.cls.endpoint}/api/admin/delete_user_by_username", 
+                             json={"username": request.cls.username_3, "admin_credentials": config["ADMIN_CREDENTIALS"]})
 
     assert response.status_code == 200, "Cleanup: Test user deletion failed"
 
@@ -75,6 +105,7 @@ class TestBookClubs:
     def setup_class(cls):
         cls.book_club_id = None  # Initialize book_club_id
         cls.invite_id = None  # Initialize invite_id
+        cls.invite_id_2 = None
 
     def test_create_bookclub(self):
         """
@@ -120,8 +151,8 @@ class TestBookClubs:
         headers = {"Authorization": f"{self.token_type} {self.access_token}"}
 
         data = {
-            "user_ids": [self.user_id_2],
-            "emails": ["random_email@gmail.com"],
+            "user_ids": [self.user_id_2,self.user_id_3],
+            "emails": ["random_email@hardcoverlit.com"],
             "book_club_id": self.book_club_id
         }
 
@@ -143,6 +174,15 @@ class TestBookClubs:
         print(response.json())
         assert len(response.json()['invites']) > 0, "No Invites Found"
         self.__class__.invite_id = response.json()['invites'][0]['invite_id']
+
+        headers = {"Authorization": f"{self.token_type_3} {self.access_token_3}"}
+
+        response = requests.get(f"{self.endpoint}/api/bookclubs/invites/{self.user_id_3}", headers=headers)
+
+        assert response.status_code == 200, "Getting Invites"
+        print(response.json())
+        assert len(response.json()['invites']) > 0, "No Invites Found"
+        self.__class__.invite_id_2 = response.json()['invites'][0]['invite_id']
 
     def test_decline_invite(self):
         """
@@ -195,6 +235,15 @@ class TestBookClubs:
         assert response.status_code == 200, "Accepting Invite"
         print(response.json())
 
+
+        headers = {"Authorization": f"{self.token_type_3} {self.access_token_3}"}
+
+        endpoint = f"{self.endpoint}/api/bookclubs/invites/accept/{self.invite_id_2}"
+
+        response = requests.put(endpoint, headers=headers)
+
+        assert response.status_code == 200, "Accepting Invite"
+
     def test_get_owned_clubs(self):
         """
         Test case to check the get owned clubs endpoint
@@ -232,3 +281,83 @@ class TestBookClubs:
         assert response.status_code == 200, "Getting Member Clubs with limit"
         assert len(response.json()['bookclubs']) == 1, "Incorrect number of clubs returned"
         print(response.json())
+
+    def test_currently_reading_books(self):
+        """
+        Test case to check the currently reading book endpoints
+        """
+
+        headers = {"Authorization": f"{self.token_type} {self.access_token}"}
+
+        data = {
+            "expected_finish_date": datetime.now(timezone.utc).isoformat(),
+            "book": {
+                "id": "c707fd781-dd1a-4ba7-91f1-f1a2e7ecb872",
+                "chapters": 10
+            }
+        }
+
+        endpoint = (
+            f"{self.endpoint}/api/bookclubs/{self.book_club_id}/"
+            "currently_reading/start")
+
+        response = requests.post(endpoint, json=data, headers=headers)
+        assert response.status_code == 200, "Starting a currently reading book"
+
+        endpoint = (
+            f"{self.endpoint}/api/bookclubs/{self.book_club_id}/"
+            "currently_reading/stop")
+
+        response = requests.post(endpoint, headers=headers)
+        assert response.status_code == 200, "Stopping a currently reading book"
+
+        endpoint = (
+            f"{self.endpoint}/api/bookclubs/{self.book_club_id}/"
+            "currently_reading/start")
+
+        response = requests.post(endpoint, json=data, headers=headers)
+        assert response.status_code == 200, "Starting a currently reading book"
+
+        endpoint = (
+            f"{self.endpoint}/api/bookclubs/{self.book_club_id}/"
+            "currently_reading/finish")
+
+        response = requests.post(endpoint, headers=headers)
+        assert response.status_code == 200, "Finishing a currently reading book"
+
+        endpoint = (
+            f"{self.endpoint}/api/bookclubs/{self.book_club_id}/"
+            "currently_reading/start")
+
+        response = requests.post(endpoint, json=data, headers=headers)
+        assert response.status_code == 200, "Starting a currently reading book"
+
+    def test_pace_endpoints(self):
+        """
+        Tests the pace related endpoints for owner and members
+        """
+
+        headers = {"Authorization": f"{self.token_type} {self.access_token}"}
+
+        endpoint = (
+                f"{self.endpoint}/api/bookclubs/{self.book_club_id}/"
+                "user_pace")
+        
+        response = requests.get(endpoint, headers=headers)
+        assert response.status_code == 200, "Getting user pace"
+
+        headers_2 = {"Authorization": f"{self.token_type_2} {self.access_token_2}"}
+        
+        response = requests.get(endpoint, headers=headers_2)
+        assert response.status_code == 200, "Getting user pace"
+
+        endpoint = (
+                f"{self.endpoint}/api/bookclubs/{self.book_club_id}/"
+                "club_members_pace")
+        
+        response = requests.get(endpoint, headers=headers)
+        assert response.status_code == 200, "Getting club members pace"
+        
+        response = requests.get(endpoint, headers=headers_2)
+        assert response.status_code == 200, "Getting club members pace"
+

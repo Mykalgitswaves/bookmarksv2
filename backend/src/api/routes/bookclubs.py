@@ -1,3 +1,4 @@
+from datetime import datetime
 import fastapi
 from fastapi import HTTPException, Depends, BackgroundTasks, Query, Request
 from fastapi.encoders import jsonable_encoder
@@ -430,7 +431,7 @@ async def get_user_pace(
             status_code=404, 
             detail="Invite not found")
         
-@router.get("{book_club_id}/club_members_pace",
+@router.get("/{book_club_id}/club_members_pace",
             name="bookclub:club_members_pace")
 async def get_club_members_pace(
     book_club_id: str,
@@ -467,7 +468,7 @@ async def get_club_members_pace(
             status_code=404, 
             detail="Invite not found")
 
-@router.post("{book_club_id}/update/create",
+@router.post("/{book_club_id}/update/create",
              name="bookclub:update_create")
 async def create_update_post_club(
     request: Request,
@@ -529,7 +530,7 @@ Returns:
     """
 ### Currently Reading Settings Page ########################################################################################
 
-@router.post("{book_club_id}/currently_reading/start",
+@router.post("/{book_club_id}/currently_reading/start",
             name="bookclub:start_book")
 async def start_book_for_club(
     book_club_id:str,
@@ -561,7 +562,8 @@ async def start_book_for_club(
 
     try:
         start_currently_reading = BookClubSchemas.StartCurrentlyReading(
-            expected_finish_date=data.get("expected_finish_date"),
+            expected_finish_date=datetime.fromisoformat(
+                data.get("expected_finish_date")),
             book=data.get("book"),
             user_id=current_user.id,
             id=book_club_id
@@ -586,7 +588,7 @@ async def start_book_for_club(
             detail="Error starting book")
 
 
-@router.post("{book_club_id}/currently_reading/finish",
+@router.post("/{book_club_id}/currently_reading/finish",
              name="bookclub:finish_book")
 async def finish_book_for_club(
     book_club_id:str,
@@ -620,7 +622,7 @@ async def finish_book_for_club(
             status_code=404, 
             detail="Error finishing book")
 
-@router.post("{book_club_id}/currently_reading/stop",
+@router.post("/{book_club_id}/currently_reading/stop",
              name="bookclub:stop_book")
 async def stop_book_for_club(
     book_club_id:str,

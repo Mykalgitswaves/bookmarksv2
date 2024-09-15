@@ -7,6 +7,7 @@ from src.database.sql.models.users import UserTest
 from src.database.graph.crud.users import UserCRUDRepositoryGraph
 from src.database.graph.crud.books import BookCRUDRepositoryGraph
 from src.database.graph.crud.posts import PostCRUDRepositoryGraph
+from src.database.graph.crud.bookclubs import BookClubCRUDRepositoryGraph
 from src.api.utils.database import get_repository, get_sql_repository
 from src.config.config import settings
 
@@ -111,3 +112,34 @@ async def delete_user_sql(request: Request,
     response = await user_repo.delete_user(user_id)
 
     return response
+
+@router.post("/delete_user_book_club_data",
+             name="admin:delete_club")
+async def delete_user_book_club_data(
+    request: Request,
+    book_club_repo: BookClubCRUDRepositoryGraph = 
+        Depends(get_repository(repo_type=BookClubCRUDRepositoryGraph))
+):
+    """
+    Deletes a users book club data, including all book club books, book clubs, 
+    and paces.
+
+    Args:
+        request: a request object that contains:
+            admin_credentials: the admin credentials for the user
+            user_id: the user
+    """
+
+    data = await request.json()
+    
+    user_id = data.get("user_id")
+    admin_credentials = data.get("admin_credentials")
+    
+    if admin_credentials != settings.ADMIN_CREDENTIALS:
+        raise fastapi.HTTPException(status_code=403, detail="Forbidden")
+    else:
+        response = book_club_repo.delete_book_club_data(user_id)
+        if response:
+            return HTTPException(status_code=200, detail="Post deleted")
+        else:
+            return HTTPException(status_code=404, detail="Post not found")
