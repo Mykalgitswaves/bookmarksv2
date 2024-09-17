@@ -30,8 +30,7 @@ class BaseBookClub(BaseModel):
                 expected_finish_date = expected_finish_date.to_native()
 
             current_date = datetime.now(timezone.utc)
-            print(expected_finish_date)
-            print(started_date)
+
             # Calculate total reading duration in days
             total_days = (expected_finish_date - started_date).days
             # Calculate elapsed days since the start
