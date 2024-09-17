@@ -482,15 +482,44 @@ async def create_update_post_club(
 
     Args:
         request: A request object that contains the following fields:
-        user (dict): A user object containing the following fields:
-            id (str): The id of the user
-        chapter (int): The chapter that the update is posted for
-        response (str | None): The response that was created with the update
-        headline (str): The headline for the post
+            user (dict): A user object containing the following fields:
+                id (str): The id of the user
+            chapter (int): The chapter that the update is posted for
+            response (str | None): The response that was created with the update
+            headline (str): The headline for the post
+            quote (str): The quote to include with the post
 
     Returns:
         200 response for a successful post
     """
+    data = await request.json()
+
+    if not data.get("user"):
+        raise HTTPException(status_code=400, detail="User is a required field")
+    
+    if data.get("user").get("id") != current_user.id:
+        raise HTTPException(status_code=400, detail="Unauthorized")
+    
+    try:
+        update_data = BookClubSchemas.UpdatePost(
+            user=data.get("user"),
+            chapter=data.get("chapter"),
+            response=data.get("response"),
+            headline=data.get("headline"),
+            id=book_club_id
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    
+    if update_data.get("response"):
+        response = book_club_repo.create_update_post(update_data)
+    else:
+        response = book_club_repo.create_update_post_no_text(update_data)
+
+    if response:
+        return JSONResponse(
+            status_code=200, 
+            content={"message":"Post created"})
 
 @router.get("{book_club_id}/feed",
             name="bookclub:get_feed")

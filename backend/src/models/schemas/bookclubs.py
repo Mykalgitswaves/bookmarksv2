@@ -112,3 +112,11 @@ class StartCurrentlyReading(BaseModel):
     book: dict
     user_id: str
     id: str
+
+class UpdatePost(BaseModel):
+    user: dict
+    chapter: int
+    response: str | None
+    headline: str | None
+    quote: str | None
+    id: str

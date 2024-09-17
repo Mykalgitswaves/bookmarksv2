@@ -203,7 +203,102 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
 
         response = result.single()
         return response.get("book_club_book_id") is not None
+    
+    def create_update_post(
+            self,
+            update_data:BookClubSchemas.UpdatePost
+    ) -> bool:
+        with self.driver.session() as session:
+            result = session.write_transaction(
+                self.create_update_post_query, 
+                update_data)
+        return result
+    
+    @staticmethod
+    def create_update_post_query(
+            tx,
+            update_data:BookClubSchemas.UpdatePost
+    ) -> bool:
         
+        query = (
+            """
+            MATCH (u:User {id: $user_id})-[:IS_MEMBER_OF|OWNS_BOOK_CLUB]-(b:BookClub {id:$book_club_id})
+            MATCH (b)-[:IS_READING]->(book:BookClubBook)
+            MATCH (u)-[user_reading:IS_READING_FOR_CLUB]->(book)
+            CREATE (update:ClubUpdate {
+                id: "club_update_" + randomUUID(),
+                created_date: datetime(),
+                chapter: $chapter,
+                deleted: False,
+                headline: $headline,
+                response: $response,
+                quote: $quote,
+                likes: 0
+            })
+            MERGE (u)-[:POSTED]->(update)-[:POST_FOR_CLUB_BOOK]->(book)
+            SET user_reading.current_chapter = $chapter,
+                user_reading.last_updated = datetime()
+            RETURN book.id as book_id
+            """
+        )
+
+        result = tx.run(
+            query,
+            user_id=update_data.user['id'],
+            book_club_id=update_data.id,
+            chapter=update_data.chapter,
+            headline=update_data.headline,
+            response=update_data.response,
+            quote=update_data.quote
+        )
+
+        response = result.single()
+        return response.get("book_id") is not None
+    
+    def create_update_post_no_text(
+            self,
+            update_data:BookClubSchemas.UpdatePost
+    ) -> bool:
+        with self.driver.session() as session:
+            result = session.write_transaction(
+                self.create_update_post_no_text_query, 
+                update_data)
+        return result
+    
+    @staticmethod
+    def create_update_post_no_text_query(
+            tx,
+            update_data:BookClubSchemas.UpdatePost
+    ) -> bool:
+        
+        query = (
+            """
+            MATCH (u:User {id: $user_id})-[:IS_MEMBER_OF|OWNS_BOOK_CLUB]-(b:BookClub {id:$book_club_id})
+            MATCH (b)-[:IS_READING]->(book:BookClubBook)
+            MATCH (u)-[user_reading:IS_READING_FOR_CLUB]->(book)
+            CREATE (update:ClubUpdateNoText {
+                id: "club_update_" + randomUUID(),
+                created_date: datetime(),
+                chapter: $chapter,
+                deleted: False,
+                likes: 0
+            })
+            MERGE (u)-[:POSTED]->(update)-[:POST_FOR_CLUB_BOOK]->(book)
+            SET user_reading.current_chapter = $chapter,
+                user_reading.last_updated = datetime()
+            RETURN book.id as book_id
+            """
+        )
+
+        result = tx.run(
+            query,
+            user_id=update_data.user['id'],
+            book_club_id=update_data.id,
+            chapter=update_data.chapter
+        )
+
+        response = result.single()
+        return response.get("book_id") is not None
         
     def get_minimal_book_club(
             self,
