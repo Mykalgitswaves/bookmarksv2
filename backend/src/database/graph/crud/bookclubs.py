@@ -466,37 +466,7 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
                 current_book = None
 
             # Calculate the pace offset if all the required fields are present
-            if (
-                record.get("expected_finish_date") 
-                and record.get("total_chapters") 
-                and record.get("current_chapter")
-            ):
-                started_date = record.get("started_date")
-                expected_finish_date = record.get("expected_finish_date")
-                total_chapters = record.get("total_chapters")
-                current_chapter = record.get("current_chapter")
-
-                if isinstance(started_date, Neo4jDateTime):
-                    started_date = started_date.to_native()
-
-                if isinstance(expected_finish_date, Neo4jDateTime):
-                    expected_finish_date = expected_finish_date.to_native()
-
-                current_date = datetime.now()
-
-                # Calculate total reading duration in days
-                total_days = (expected_finish_date - started_date).days
-                # Calculate elapsed days since the start
-                elapsed_days = (current_date - started_date).days
-
-                # Calculate expected chapters by the current date
-                expected_chapters = (elapsed_days / total_days) * total_chapters
-
-                # Calculate offset from the expected chapter
-                pace_offset = current_chapter - round(expected_chapters)
-
-            else:
-                pace_offset = None
+            pace_offset = BookClubSchemas.BaseBookClub.get_pace_offset(record)
 
             book_clubs.append(
                 BookClubSchemas.BookClubPreview(
