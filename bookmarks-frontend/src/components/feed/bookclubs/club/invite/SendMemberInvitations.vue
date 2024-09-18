@@ -41,9 +41,10 @@
                     >
 
                     <!-- Add placeholder for searched existing user here. -->
-                    <SearchedUser 
-                        :selected-user="selectedUser" 
-                        @open-overlay="isShowingSearchOverlay = true"
+                    <SearchUserOverlay 
+                        v-if="invite.type === Invitation.types.existing_user"
+                        :book-club-id="route.params.bookclub" 
+                        @user-selected="(userId) => selectedExistingUser(userId)"
                     />
                 </div>
 
@@ -51,8 +52,7 @@
 
                 <div class="flex gap-2">
                     <!-- Only show this if you aren't searching for a user -->
-                    <button v-if="(invite.status === Invitation.statuses.uninvited) 
-                        && !isSearchingForUser[index]"
+                    <button v-if="(invite.status === Invitation.statuses.uninvited)"
                         type="button"
                         :disabled="submitting"
                         class="btn btn-small btn-ghost text-indigo-500"
@@ -91,12 +91,6 @@
                 Send all invites
             </button>   
         </div>
-
-        <SearchForExistingUser 
-            v-if="invite.type === Invitation.types.existing_user" 
-            :book-club-id="route.params.bookclub"
-            @modelValue:updated="(response) => console.log(response)"
-        />
     </TransitionGroup>
     </form>
 
@@ -108,7 +102,7 @@ import { Invitation, BaseInvitation } from '../../models/models';
 import { db } from  '../../../../../services/db';
 import { urls } from  '../../../../../services/urls';
 import TextAlert from '@/components/feed/partials/textAlert/TextAlert.vue';
-import SearchForExistingUser from './SearchForExistingUser.vue'
+import SearchUserOverlay from './SearchUserOverlay.vue'
 import IconSend from '@/components/svg/icon-send.vue';
 import IconTrash from '@/components/svg/icon-trash.vue';
 
@@ -139,16 +133,16 @@ const invitations = ref([
 // Not overengineering i promise. Using a computed variable to auto update truthyness of
 // whether any of our invites should see the search bar. Used for css nerdage below.
 // To give us enough room for the whole search bar.
-const isSearchingForUser = computed(() => {
-    let result = {};
-    invitations.value.forEach((invite, index) => {
-        // If they have not sent an invite and have existing_user selected
-        result[index + 1] = !!(
-            invite.type === Invitation.types.existing_user && invite.status === Invitation.statuses.uninvited
-        )
-    });
-    return result;
-});
+// const isSearchingForUser = computed(() => {
+//     let result = {};
+//     invitations.value.forEach((invite, index) => {
+//         // If they have not sent an invite and have existing_user selected
+//         result[index + 1] = !!(
+//             invite.type === Invitation.types.existing_user && invite.status === Invitation.statuses.uninvited
+//         )
+//     });
+//     return result;
+// });
 
 // These two are pretty easy to get.
 function addInvitationToForm() {
@@ -178,6 +172,36 @@ function inviteContactByType(invite, payload) {
 }
 
 /**
+ * @definition Look through emails by type and status to find those who match the emails submitted via request so we can update the js objects floating around in the ui. Probably not the best way to do this but unless we return a dictionary with more shit in it you never know.
+ * @param {*} payload 
+ */
+function updateInvitesStatus(payload){
+    let emails = payload.emails;
+    let userIds = payload.user_ids;
+
+    invitations.value.forEach((invite) => {
+        if ((
+                emails.length && 
+                invite.type === Invitation.types.email &&  
+                emails.includes(invite.email) && 
+                invite.status === Invitation.statuses.uninvited
+            ) || (
+                usersIds.length && 
+                invite.type === Invitation.types.existing_user && 
+                userIds.includes(invite.user_id) &&
+                invite.status === Invitation.statuses.uninvited
+            ) 
+        ) {
+            invite.status = Invitation.statuses.invited;
+        }
+    });
+}
+
+function selectedExistingUser(userId) {
+    console.log(userId);
+}
+
+/**
  * @invite_promises
  * @desrciption functions for sending `mass` or `individual invites` and loading data 
  * @function sendInvites
@@ -203,8 +227,7 @@ function inviteContactByType(invite, payload) {
 
         db.post(urls.bookclubs.sendInvites(), payload, null, 
             (res) => {
-                debugger;
-                console.log(res)
+                updateInvitesStatus(payload);
             },
             (error) => {
                 error.value = error;
