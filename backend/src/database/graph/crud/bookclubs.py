@@ -117,6 +117,47 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
             OPTIONAL MATCH (existing_user:User {email: email})
 
             FOREACH (_ IN CASE WHEN existing_user IS NULL THEN [1] ELSE [] END |
+                MERGE (invited_new_user:InvitedUser {email: email})
+                ON CREATE SET invited_new_user.id = "invited_user_" + randomUUID(),
+                            invited_new_user.created_date = datetime()
+                MERGE (invited_new_user)-[:RECEIVED_INVITE]->(user_invite_email:BookClubInvite)-[:INVITE_FOR]->(b)
+                ON CREATE SET user_invite_email.id = "club_invite_" + randomUUID(),
+                              user_invite_email.created_date = datetime()
+                MERGE (u)-[:SENT_INVITE]->(user_invite_email)
+            )
+
+            FOREACH (_ IN CASE WHEN existing_user IS NOT NULL THEN [1] ELSE [] END |
+                MERGE (existing_user)-[:RECEIVED_INVITE]->(user_invite_email:BookClubInvite)-[:INVITE_FOR]->(b)
+                ON CREATE SET user_invite_email.id = "club_invite_" + randomUUID(),
+                              user_invite_email.created_date = datetime()
+                MERGE (u)-[:SENT_INVITE]->(user_invite_email)
+            )
+
+            RETURN b.id as book_club_id
+            """)
+        
+        query_just_users = (
+            """
+            MATCH (b:BookClub {id: $book_club_id})<-[r:OWNS_BOOK_CLUB]-(u:User {id: $user_id})
+            UNWIND $user_ids as user_id
+            MATCH (invited_user:User {id: user_id})
+            MERGE (invited_user)-[:RECEIVED_INVITE]->(user_invite:BookClubInvite)-[:INVITE_FOR]->(b)
+            ON CREATE SET user_invite.id = "club_invite_" + randomUUID(),
+                          user_invite.created_date = datetime()
+            MERGE (u)-[:SENT_INVITE]->(user_invite)
+
+            RETURN b.id as book_club_id
+            """)
+        
+        query_just_emails = (
+            """
+            MATCH (b:BookClub {id: $book_club_id})<-[r:OWNS_BOOK_CLUB]-(u:User {id: $user_id})
+
+            WITH b, u
+            UNWIND $emails as email
+            OPTIONAL MATCH (existing_user:User {email: email})
+
+            FOREACH (_ IN CASE WHEN existing_user IS NULL THEN [1] ELSE [] END |
                 MERGE (invited_user:InvitedUser {email: email})
                 ON CREATE SET invited_user.id = "invited_user_" + randomUUID(),
                             invited_user.created_date = datetime()
@@ -135,14 +176,33 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
 
             RETURN b.id as book_club_id
             """)
+        if not invite.user_ids and not invite.emails:
+            return False
+        
+        elif not invite.user_ids:
+            result = tx.run(
+                query_just_emails,
+                book_club_id=invite.book_club_id,
+                emails=invite.emails,
+                user_id=invite.user_id
+            )
 
-        result = tx.run(
-            query,
-            book_club_id=invite.book_club_id,
-            user_ids=invite.user_ids,
-            emails=invite.emails,
-            user_id=invite.user_id
-        )
+        elif not invite.emails:
+            result = tx.run(
+                query_just_users,
+                book_club_id=invite.book_club_id,
+                user_ids=invite.user_ids,
+                user_id=invite.user_id
+            )
+
+        else:
+            result = tx.run(
+                query,
+                book_club_id=invite.book_club_id,
+                user_ids=invite.user_ids,
+                user_id=invite.user_id,
+                emails=invite.emails
+            )
         
         response = result.single()
         if response:

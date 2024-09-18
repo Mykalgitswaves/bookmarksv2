@@ -151,8 +151,30 @@ class TestBookClubs:
         headers = {"Authorization": f"{self.token_type} {self.access_token}"}
 
         data = {
-            "user_ids": [self.user_id_2,self.user_id_3],
+            "user_ids": [self.user_id_2],
             "emails": ["random_email@hardcoverlit.com"],
+            "book_club_id": self.book_club_id
+        }
+
+        response = requests.post(f"{self.endpoint}/api/bookclubs/invite", headers=headers, json=data)
+
+        print(response.json())
+        assert response.status_code == 200, "Inviting Users to Club"
+
+        data = {
+            "user_ids": [],
+            "emails": ["random_email_2@hardcoverlit.com"],
+            "book_club_id": self.book_club_id
+        }
+
+        response = requests.post(f"{self.endpoint}/api/bookclubs/invite", headers=headers, json=data)
+
+        print(response.json())
+        assert response.status_code == 200, "Inviting Users to Club"
+
+        data = {
+            "user_ids": [self.user_id_3],
+            "emails": [],
             "book_club_id": self.book_club_id
         }
 
