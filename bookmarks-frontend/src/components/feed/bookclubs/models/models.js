@@ -85,7 +85,6 @@ export class BaseInvitation {
     }
     
     /**
-     * 
      * @param { int } id 
      * @returns Void
      */

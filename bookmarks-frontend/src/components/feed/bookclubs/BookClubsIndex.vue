@@ -1,7 +1,7 @@
 <template>
     <BackBtn/>
 
-    <section class="container">
+    <section>
         <RouterView></RouterView>
     </section>
 </template>

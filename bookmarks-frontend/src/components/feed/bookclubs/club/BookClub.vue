@@ -19,23 +19,7 @@
     </section>
 
     <!-- <teleport to="main-layout"> -->
-        <nav role="navigation" 
-            class="book-club-nav"
-        >
-            <a :href="navRoutes.bookClubSettingsManageMembersIndex(user, bookclub)"
-                class="btn btn-ghost text-sm"
-                :class="{'active': currentView === subComponentRoutes.settings.manageMembers}"
-            >
-                Club settings
-            </a>
-
-            <a :href="navRoutes.bookClubSettingsCurrentlyReading(user, bookclub)"
-                class="btn btn-ghost text-sm"
-                :class="{'active': currentView === subComponentRoutes.settings.currentlyReading}"
-            >
-                Currently reading
-            </a>
-        </nav>
+        
     <!-- </teleport>     -->
 </template>
 <script setup>

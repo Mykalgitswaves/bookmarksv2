@@ -1,7 +1,6 @@
 <template>
     <div>
-        <h1 class="text-4xl fancy text-stone-700 mb-10 mt-10">Bookclubs</h1>
-
+        <h1 class="text-4xl fancy text-stone-700 mb-10 mt-10 ml_20_px">Bookclubs</h1>
         <div class="bookclubs-list">
             <h2 class="text-2xl fancy text-stone-600">Clubs you've joined</h2>
 
@@ -20,18 +19,6 @@
                     >View all bookclubs</button>
                 </div>
             </div>
-
-            <!-- loading -->
-            <Transition name="content" tag="div">
-                <TransitionGroup
-                    v-if="!loaded" 
-                    class="loading-card-grid"
-                    name="content"
-                    tag="div"
-                >        
-                    <LoadingCard />
-                </TransitionGroup>
-            </Transition>
         </div>
 
         <div class="bookclubs-list">
@@ -140,9 +127,12 @@ loadClubsCreatedByUser();
 .bookclubs-list {
     padding: 14px; 
     border-radius: var(--radius-md);
-    border: 1px solid var(--stone-500);
+    border: 1px solid var(--stone-300);
+    max-width: 768px;
     margin-top: 14px;
     margin-bottom: 14px;
+    margin-left: 20px;
+    margin-right: 20px;
     min-height: 100px;
     & .toolbar {
         border-top: 1px solid var(--stone-300);
@@ -152,6 +142,10 @@ loadClubsCreatedByUser();
         justify-content: start;
         column-gap: 14px;
     }
+}
+
+.ml_20_px {
+    margin-left: 20px;
 }
 
 .loading-card-grid {

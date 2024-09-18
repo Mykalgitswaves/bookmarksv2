@@ -48,7 +48,7 @@ const props = defineProps({
 
 const emit = defineEmits(['friends'])
 const { debounce } = helpersCtrl;
-const searchData = ref('')
+const searchData = ref('');
 
 async function searchRequest() {
     await db.get(urls.user.searchUsersFriends(searchData.value), { 'bookshelf_id': props.bookshelfId }).then((res) => {

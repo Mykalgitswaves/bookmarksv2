@@ -28,3 +28,8 @@ export function goToBookshelfPage(user, bookshelf_id) {
 export function goToBookClubsPage(user) {
     router.push(navRoutes.toBookClubsPage(user));
 }
+
+export const FooterViews = {
+    default: 'default',
+    bookclubs: 'bookclubs'
+}

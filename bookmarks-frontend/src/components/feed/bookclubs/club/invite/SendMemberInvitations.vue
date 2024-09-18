@@ -9,7 +9,7 @@
         </template>
     </TextAlert>
 
-    <form @submit.prevent="submitInvites" v-if="invitations.length">
+    <form @submit.prevent="sendInvites(null, invitations)" v-if="invitations.length">
         <TransitionGroup name="content" tag="div" class="invitations">
             <div 
                 v-for="(invite, index) in invitations"
@@ -19,8 +19,6 @@
                     'existing-user': invite.type === Invitation.types.existing_user
                 }"
             >
-                <input type="checkbox" v-model="invite.selected">
-
                 <div>
                     <div class="flex gap-2 items-center pb-4">
                         <label for="user_type" class="text-sm text-stone-500 block nowrap">
@@ -29,12 +27,12 @@
 
                         <select class="select" name="" id="user_type" v-model="invite.type">
                             <option value="email">email</option>
-                            <option value="existing-user">existing user</option>
+                            <option value="existing_user">existing user</option>
                         </select>
                     </div>
                     
                     <input v-if="invite.type === Invitation.types.email" 
-                        class="input border-2 fancy input--invitation w-100 pl-5"
+                        class="input border-2 fancy input--invitation w-100 pl-5 py-2"
                         type="email" 
                         id="email" 
                         :name="invite.id"
@@ -42,7 +40,11 @@
                         v-model="invitations[index].email" 
                     >
 
-                    <!-- Add search by existing user here. -->
+                    <!-- Add placeholder for searched existing user here. -->
+                    <SearchedUser 
+                        :selected-user="selectedUser" 
+                        @open-overlay="isShowingSearchOverlay = true"
+                    />
                 </div>
 
                 <p class="italic text-stone-600 text-center">{{ invite.status }}</p>
@@ -52,8 +54,10 @@
                     <button v-if="(invite.status === Invitation.statuses.uninvited) 
                         && !isSearchingForUser[index]"
                         type="button"
+                        :disabled="submitting"
                         class="btn btn-small btn-ghost text-indigo-500"
-                        @click="submitInvites(index)"
+                        :class="{submitting: 'btn-ghost'}"
+                        @click="sendInvites(invite)"
                     >
                         <IconSend />
                     </button>
@@ -78,10 +82,21 @@
                 Invite another person
             </button>
 
-            <button v-if="invitations.length > 1" type="submit" class="btn btn-tiny btn-submit text-sm">
+                <button v-if="invitations.length > 1" 
+                    type="submit"
+                    :disabled="submitting"
+                    class="btn btn-tiny btn-submit text-sm"
+                    :class="{submitting: 'btn-ghost'}"
+                >
                 Send all invites
             </button>   
         </div>
+
+        <SearchForExistingUser 
+            v-if="invite.type === Invitation.types.existing_user" 
+            :book-club-id="route.params.bookclub"
+            @modelValue:updated="(response) => console.log(response)"
+        />
     </TransitionGroup>
     </form>
 
@@ -92,9 +107,10 @@ import { useRoute } from 'vue-router';
 import { Invitation, BaseInvitation } from '../../models/models';
 import { db } from  '../../../../../services/db';
 import { urls } from  '../../../../../services/urls';
+import TextAlert from '@/components/feed/partials/textAlert/TextAlert.vue';
+import SearchForExistingUser from './SearchForExistingUser.vue'
 import IconSend from '@/components/svg/icon-send.vue';
 import IconTrash from '@/components/svg/icon-trash.vue';
-import TextAlert from '@/components/feed/partials/textAlert/TextAlert.vue';
 
 const props = defineProps({
     memberData: {
@@ -103,19 +119,35 @@ const props = defineProps({
     }
 });
 
+/**
+ * @constants
+ */
+const submitting = ref(false);
+const isShowingSearchOverlay = ref(false);
 const route = useRoute()
-const { params } = route;
-let invitation = new BaseInvitation();
 
+const invitation = new BaseInvitation();
 const invitations = ref([
     invitation
 ]);
+/**
+ * @end_of_constants
+ */
+
+// TODO: finish searching for user before being able to add a new one.
 
 // Not overengineering i promise. Using a computed variable to auto update truthyness of
 // whether any of our invites should see the search bar. Used for css nerdage below.
 // To give us enough room for the whole search bar.
-let isSearchingForUser = computed(() => {
-    
+const isSearchingForUser = computed(() => {
+    let result = {};
+    invitations.value.forEach((invite, index) => {
+        // If they have not sent an invite and have existing_user selected
+        result[index + 1] = !!(
+            invite.type === Invitation.types.existing_user && invite.status === Invitation.statuses.uninvited
+        )
+    });
+    return result;
 });
 
 // These two are pretty easy to get.
@@ -134,40 +166,52 @@ function removeInvitationFromForm() {
 }
 
 /**
+ * @definition helper function to fill up the payload object 
+ * with correct values based on invite type.
+ * @param {*} invite 
+ * @param {*} payload 
+ */
+function inviteContactByType(invite, payload) {
+    invite.type === Invitation.types.email ? 
+        payload.emails.push(invite.email) :
+        payload.user_ids.push(invite.user_id);
+}
+
+/**
  * @invite_promises
  * @desrciption functions for sending `mass` or `individual invites` and loading data 
  * @function sendInvites
  * @function loadInvites
  */
-    async function sendInvites(selectedIndex, data) {
+    async function sendInvites(invite, invitations) {
+        submitting.value = true;
         let payload = {
             user_ids: [],
             emails: [],
-            bookclub_id: params.bookclub,
+            book_club_id: route.params.bookclub,
         };
 
-        let rawInvitations = invitations.value;
-        // Note index in a template v-for loop is 1 based.
-        for(let index = 0; i < rawInvitations.length; i++) {
-            let invitation = rawInvitations[index];
-            if (selectedIndex && selectedIndex === index) {
-                // Break out of loop early in case you are only looking for a specific index.
-                emails.push(invitation.email);
-                break;
-                // Otherwise throw em all in there.
-            } else if (!selectedIndex) {
-                emails.push(invitation.email)
-            }
-        };    
+        if (invite) {
+            inviteContactByType(invite, payload)
+        } 
+
+        // otherwise you are sending the whole form.
+        if (!invite && invitations?.length) {
+            invitations.forEach((_invite) => inviteContactByType(_invite, payload));
+        }
+
 
         db.post(urls.bookclubs.sendInvites(), payload, null, 
             (res) => {
-                
+                debugger;
+                console.log(res)
             },
             (error) => {
-                
+                error.value = error;
             }
-        )
+        ).then(() => {
+            submitting.value = false;
+        })
     }
 /**
  * @end
@@ -187,11 +231,11 @@ function removeInvitationFromForm() {
 .invite {
     display: grid;
     align-items: end;
-    grid-template-columns: 16px 1fr min-content min-content;
+    grid-template-columns: 1fr min-content min-content;
     column-gap: 8px;
 
     &.existing-user {
-        grid-template-columns: 16px 1fr;
+        /* grid-template-columns: 16px 1fr; */
     }
 }
 
