@@ -1,5 +1,5 @@
 <template>
-    <section> 
+    <section class="section-width section-wrapper"> 
             <div v-if="loaded">
                 <BookClubFeed 
                     v-if="currentView === subComponentRoutes.feed" 

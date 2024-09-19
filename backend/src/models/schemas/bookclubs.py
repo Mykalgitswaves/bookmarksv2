@@ -12,6 +12,13 @@ class BaseBookClub(BaseModel):
     book_club_name: str
     currently_reading_book: Any | None = None
     pace: int | None
+    
+    errors = {
+        'unauthorized': {
+            'status_code': 500,
+            'detail': "Unauthorized, you do not have permission to make this request"
+        },
+    }
 
     def get_pace_offset(record):
         if (record.get("expected_finish_date") 
@@ -64,6 +71,7 @@ class BookClubInvite(BaseModel):
     user_ids: List[str]
     emails: List[EmailStr]
 
+
 class BookClubList(BaseModel):
     user_id: str
     limit: int | None
@@ -96,7 +104,23 @@ class BookClubInvitePreview(BaseModel):
             # Convert Neo4jDateTime to Python datetime
             return v.to_native()
         return v
+
+
+
+# We don't need any info ab the club they were invited to 
+# in this since it is only viewable from a particular clubs settings.
+class BookClubInviteAdminPreview(BaseModel):
+    invite_id: str
+    invited_user: Mapping[str, str]
+    datetime_invited: datetime
     
+    @validator('datetime_invited', pre=True, allow_reuse=True)
+    def parse_neo4j_datetime(cls, v):
+        if isinstance(v, Neo4jDateTime):
+            # Convert Neo4jDateTime to Python datetime
+            return v.to_native()
+        return v
+
 class BookClubInviteResponse(BaseModel):
     invite_id: str
     user_id: str

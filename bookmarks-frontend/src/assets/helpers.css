@@ -225,6 +225,12 @@
     padding-right: var(--spacing-xs) !important;
   }
   
+.loading-box {
+  min-height: 60px;
+  display: grid;
+  place-content: center;
+}
+
   /* Gradient animation */
   .gradient {
     animation-duration: 1.8s;

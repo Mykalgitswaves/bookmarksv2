@@ -634,6 +634,62 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
         
         return book_clubs
     
+    
+    def get_invites_for_book_club(
+        self,
+        user_id,
+        book_club_id
+    ) -> List[BookClubSchemas.BookClubInvite]:
+        """
+        Gets all bookclub invites sent from a particular club
+        """
+        with self.driver.session() as session:
+            result = session.read_transaction(
+                self.get_invites_for_book_club_query,
+                user_id=user_id, 
+                book_club_id=book_club_id
+            )
+        return result
+    
+
+    @staticmethod
+    def get_invites_for_book_club_query(
+        tx, 
+        user_id, 
+        book_club_id
+    ):
+        query = """
+            MATCH (u:User {id: $user_id})-[:OWNS_BOOK_CLUB]->(bc:BookClub {id: $book_club_id})
+            OPTIONAL MATCH (invited_user:User)-[]->(i:BookClubInvite)-[:INVITE_FOR]->(bc)
+            RETURN invited_user.id as invited_user_id,
+                invited_user.username as invited_user_username,
+                invited_user.email as invited_user_email,
+                i.id as invite_id,
+                i.created_date as datetime_invited
+        """
+        result = tx.run(
+                query,
+                user_id=user_id,
+                book_club_id=book_club_id
+            )
+    
+        invites = []
+        if result:
+            for record in result:
+                invite = BookClubSchemas.BookClubInviteAdminPreview(
+                            invite_id=record["invite_id"],
+                            invited_user={
+                                "id": record["invited_user_id"],
+                                "username": record.get('invited_user_username', ''),
+                                "email":record.get('invited_user_email', '')
+                            },
+                            datetime_invited=record["datetime_invited"],
+                        )
+                invites.append(invite)
+            return invites
+        else:
+            return False
+
     def get_book_club_invites(
             self,
             invite_params: BookClubSchemas.BookClubList

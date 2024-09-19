@@ -123,6 +123,7 @@ export const urls = {
         getClubPace: (bookclub_id) => (baseUrl + `api/bookclubs/${bookclub_id}/club_members_pace`),
         getPaceForUserInClub: (bookclub_id) => (baseUrl + `api/bookclubs/${bookclub_id}/user_pace`),
         getMinimalClub: (bookclub_id, user_id) => (baseUrl + `api/bookclubs/${bookclub_id}/minimal_preview/${user_id}/user`),
+        getInvitesForClub: (bookclub_id) => (baseUrl + `api/bookclubs/${bookclub_id}/club_invites`),
         // Sending and loading invitation / member stuff.
         sendInvites: () => (baseUrl + `api/bookclubs/invite`),
         searchUsersNotInClub: (bookClubId, searchParam) => 

@@ -95,3 +95,26 @@ export class BaseInvitation {
         // TODO: think about adding some unit test coverage for this class
     }   
 };
+
+export class SentInvitation {
+    constructor(invite){
+        this.id = invite.invite_id;
+        this.invitedUser = {
+            email: invite.invited_user.email,
+            username: invite.invited_user.username,
+            id: invite.invited_user.id
+        },
+        this.status = Invitation.statuses.invited;
+        this.invited_on = formattedDateTime(invite.datetime_invited)
+        
+        function formattedDateTime(dateTime){
+             const date = new Date(dateTime)
+             const utcDate = new Date(date.toUTCString()); // Convert to UTC
+
+            // Formatting the date in the desired format: "Weekday, HH:mm:ss YYYY"
+            const options = { weekday: 'short', hour: '2-digit', minute: '2-digit', second: '2-digit', year: 'numeric', timeZone: 'UTC' };
+            return utcDate.toLocaleDateString('en-GB', options).replace(',', ''); // Formatting
+        }
+    }
+
+}

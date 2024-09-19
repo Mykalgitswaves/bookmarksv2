@@ -442,6 +442,7 @@ ul:has(.comments-wrapper) {
   
   &.w-border {
       border-top: 1px solid var(--stone-100);
+      border-bottom: 1px solid var(--stone-100);
   }
 }
 

@@ -33,7 +33,7 @@
         </div>
     </div>
 
-    <SendMemberInvitations />
+    <MemberInvitations />
 
     <div class="mobile-menu-spacer sm:hidden"></div>
 </template>
@@ -42,7 +42,7 @@ import { ref } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { navRoutes } from '../../../../../services/urls';
 import BackBtn from '../../../partials/back-btn.vue';
-import SendMemberInvitations from './SendMemberInvitations.vue';
+import MemberInvitations from './MemberInvitations.vue';
 
 const props = defineProps({
     club: {

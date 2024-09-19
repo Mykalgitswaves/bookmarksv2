@@ -205,7 +205,6 @@ async def get_owned_bookclubs(
 
     return JSONResponse(content={"bookclubs":jsonable_encoder(book_clubs)})
 
-
 @router.get("/member/{user_id}",
             name="bookclub:get_member")
 async def get_member_bookclubs(
@@ -684,3 +683,30 @@ async def stop_book_for_club(
         raise HTTPException(
             status_code=404, 
             detail="Error finishing book")
+
+
+@router.get("/{book_club_id}/club_invites",
+    name="bookclub:invites_for_club"
+)
+async def invites_for_bookclub(
+    book_club_id: str,
+    current_user: Annotated[User, Depends(get_current_active_user)],
+    book_club_repo: BookClubCRUDRepositoryGraph = 
+        Depends(get_repository(repo_type=BookClubCRUDRepositoryGraph))
+) -> None:
+    """
+    gets all outstanding invites for an admins view of bookclub members setting 
+    """
+    invites = book_club_repo.get_invites_for_book_club(
+        book_club_id=book_club_id,
+        user_id=current_user.id
+    )
+
+    if invites:
+        return JSONResponse(
+            status_code=200,
+            content={"invites": jsonable_encoder(invites)}
+        )
+    else:
+        print(BookClubSchemas.BaseBookClub.errors)
+        raise HTTPException(**BookClubSchemas.BaseBookClub.errors['unauthorized'])

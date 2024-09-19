@@ -48,14 +48,12 @@
                     />
                 </div>
 
-                <p class="italic text-stone-600 text-center">{{ invite.status }}</p>
-
                 <div class="flex gap-2">
                     <!-- Only show this if you aren't searching for a user -->
                     <button v-if="(invite.status === Invitation.statuses.uninvited)"
                         type="button"
                         :disabled="submitting"
-                        class="btn btn-small btn-ghost text-indigo-500"
+                        class="btn btn-ghost text-indigo-500"
                         :class="{submitting: 'btn-ghost'}"
                         @click="sendInvites(invite)"
                     >
@@ -64,7 +62,7 @@
 
                     <button
                         v-if="index !== 0 && index + 1 === invitations.length"
-                        class="btn btn-red btn-tiny" 
+                        class="btn btn-red" 
                         type="button"
                         @click="removeInvitationFromForm()" 
                     >
@@ -94,11 +92,32 @@
     </TransitionGroup>
     </form>
 
+    <!-- Sent invitations go below -->
+    <Transition name="content" tag="div">
+        <div v-if="loaded">
+            <h3 class="text-2xl text-stone-600 fancy">Invited readers</h3>
+
+            <div class="invitations sent">
+                <div v-for="invite in sentInvitations" :key="invite.id" class="sent-invite">
+                    <div>
+                        <p class="fancy text-stone-600">
+                            {{ invite.invitedUser.username || invite.invitedUser.email }}
+                        </p>
+                        <p class="text-sm text-stone-400">
+                            Invited on: {{ invite.invited_on }}
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div v-else class="gradient fancy text-center text-2xl loading-box">loading invitations</div>
+    </Transition>
 </template>
 <script setup>
 import { ref, computed } from 'vue';
 import { useRoute } from 'vue-router';
-import { Invitation, BaseInvitation } from '../../models/models';
+import { Invitation, BaseInvitation, SentInvitation } from '../../models/models';
 import { db } from  '../../../../../services/db';
 import { urls } from  '../../../../../services/urls';
 import TextAlert from '@/components/feed/partials/textAlert/TextAlert.vue';
@@ -116,6 +135,7 @@ const props = defineProps({
 /**
  * @constants
  */
+
 const submitting = ref(false);
 const isShowingSearchOverlay = ref(false);
 const route = useRoute()
@@ -124,6 +144,9 @@ const invitation = new BaseInvitation();
 const invitations = ref([
     invitation
 ]);
+const loaded = ref(false);
+const sentInvitations = ref([]);
+
 /**
  * @end_of_constants
  */
@@ -171,6 +194,16 @@ function inviteContactByType(invite, payload) {
         payload.user_ids.push(invite.user_id);
 }
 
+function populateInvitesForClub(invites) {
+    if (!invites.length) return;
+
+    invites.forEach((invite) => {
+        const sentInvite = new SentInvitation(invite);
+        console.log(sentInvite)
+        sentInvitations.value.push(sentInvite);
+    });
+}
+
 /**
  * @definition Look through emails by type and status to find those who match the emails submitted via request so we can update the js objects floating around in the ui. Probably not the best way to do this but unless we return a dictionary with more shit in it you never know.
  * @param {*} payload 
@@ -207,38 +240,65 @@ function selectedExistingUser(userId) {
  * @function sendInvites
  * @function loadInvites
  */
-    async function sendInvites(invite, invitations) {
-        submitting.value = true;
-        let payload = {
-            user_ids: [],
-            emails: [],
-            book_club_id: route.params.bookclub,
-        };
+async function sendInvites(invite, invitations) {
+    submitting.value = true;
+    let payload = {
+        user_ids: [],
+        emails: [],
+        book_club_id: route.params.bookclub,
+    };
 
-        if (invite) {
-            inviteContactByType(invite, payload)
-        } 
+    if (invite) {
+        inviteContactByType(invite, payload)
+    } 
 
-        // otherwise you are sending the whole form.
-        if (!invite && invitations?.length) {
-            invitations.forEach((_invite) => inviteContactByType(_invite, payload));
-        }
-
-
-        db.post(urls.bookclubs.sendInvites(), payload, null, 
-            (res) => {
-                updateInvitesStatus(payload);
-            },
-            (error) => {
-                error.value = error;
-            }
-        ).then(() => {
-            submitting.value = false;
-        })
+    // otherwise you are sending the whole form.
+    if (!invite && invitations?.length) {
+        invitations.forEach((_invite) => inviteContactByType(_invite, payload));
     }
+
+
+    db.post(urls.bookclubs.sendInvites(), payload, null, 
+        (res) => {
+            updateInvitesStatus(payload);
+        },
+        (error) => {
+            error.value = error;
+        }
+    ).then(() => {
+        submitting.value = false;
+    })
+}
+
+async function loadInvites(){
+    db.get(urls.bookclubs.getInvitesForClub(route.params.bookclub), 
+        null,
+        null,
+        (res) => {
+            populateInvitesForClub(res.invites);
+            loaded.value = true;
+        }, 
+        (error) => {
+            console.log(error);
+        }
+    );
+}
 /**
  * @end
  */
+
+
+/**
+ * @load_data_in_setup_hook
+ */
+
+ loadInvites();
+
+ /**
+  * @end_load_data
+  */
+
+
 </script>
 <style scoped>
 .invitations {
