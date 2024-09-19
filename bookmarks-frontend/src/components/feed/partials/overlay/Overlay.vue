@@ -34,7 +34,7 @@ import IconExit from '@/components/svg/icon-exit.vue'
     left: 50%;
     transform: translate(-50%, -50%);
     max-width: 768px;
-    min-width: 300px;
+    min-width: 60vw;
     padding: 8px 14px;
     border-radius: 14px; 
     background-color: var(--surface-primary);

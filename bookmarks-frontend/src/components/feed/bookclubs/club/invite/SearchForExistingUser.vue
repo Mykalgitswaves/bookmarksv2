@@ -21,14 +21,14 @@ const props = defineProps({
     }
 });
 
-const emit = defineEmits(['modelValue:updated'])
+const emit = defineEmits(['model-value:updated'])
 const modelData = ref('');
 const { debounce } = helpersCtrl;
 
-async function search(){
+function search(){
     db.get(urls.bookclubs.searchUsersNotInClub(props.bookClubId, modelData.value), null, 
         (res) => {
-            emit('modelValue:updated', res);
+            emit('model-value:updated', res.users);
         },
         (err) => {
             console.error(err);

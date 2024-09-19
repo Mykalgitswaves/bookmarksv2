@@ -11,7 +11,10 @@
                     :club="club"
                 />
 
-                <CurrentlyReadingSettings />
+                <CurrentlyReadingSettings 
+                    v-else-if="currentView === subComponentRoutes.settings.currentlyReading"
+                    :club="club"    
+                />
             </div>
 
             <!-- more loading states -->
@@ -30,11 +33,12 @@ import { useRouter, useRoute } from 'vue-router';
 import { db } from '../../../../services/db';
 import { navRoutes, urls } from '../../../../services/urls';
 // svg
-import IconSettings from '../../../svg/icon-settings.vue';
+// import IconSettings from '../../../svg/icon-settings.vue';
 // subcomponent views!
 import BookClubFeed from './BookClubFeed.vue';
 import ClubMemberSettingsMain from './invite/ClubMemberSettingsMain.vue';
 import CurrentlyReadingSettings from '../currently-reading/CurrentlyReadingSettings.vue';
+
 /**
  * ----------------------------------------------------------------------------
  * @constants

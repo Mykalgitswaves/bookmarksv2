@@ -1,6 +1,6 @@
 <template>  
     <button 
-        class="btn btn-small w-60 btn-submit"
+        class="btn btn-tiny w-30 btn-submit"
         type="button" 
         role="navigation"
         @click="isOverlayShowing = true"
@@ -15,8 +15,23 @@
         <template #overlay-header>        
             <SearchForExistingUser  
                 :book-club-id="bookClubId"
-                @modelValue:updated="(users) => populateUserPreviewsFromSearch(users)"
+                @model-value:updated="populateUserPreviewsFromSearch"
             />
+        </template>
+        <template #overlay-main>
+            <div class="searched-users">
+                <p v-if="!searchedUsers.length">search for a user to add</p>
+
+                <div v-else>
+                    <div v-for="(user, index) in searchedUsers" :key="index" class="flex gap-2 p-5 border-2 border-indigo-300">
+                        <p>
+                            {{ user.user_username }}
+                        </p>
+                    
+                    <button type="button" class="btn btn-ghost" @click="$emit('selected-user', user.user_id)">select</button>
+                    </div>
+                </div>
+            </div>
         </template>
     </Overlay>
 </template>
@@ -39,14 +54,14 @@ const emit = defineEmits(['user-selected']);
  */
 
 const isOverlayShowing = ref(false);
-
+const searchedUsers = ref([]);
 /**
  * @end_of_constants
  */
 
-
+// This doesnt work.
 function populateUserPreviewsFromSearch (users) {
-    console.log(users)
+    searchedUsers.value = users;
 };
 </script>
 <style scoped></style>
