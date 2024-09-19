@@ -106,13 +106,21 @@
                     <IconBack />
 
                     <span class="text-sm sm:hidden">
-                        Back to main
+                        Back
                     </span>
                 </a>
             </div>
 
             <div class="nav-button-group hover:bg-gray-200">
-                <a :href="navRoutes.bookClubSettingsManageMembersIndex((route.params.user || ''), route.params.bookclub)"
+                <a :href="navRoutes.toBookClubFeed(route.params.user, route.params.bookclub)"
+                    class="footer-nav-button text-sm"
+                >
+                    Club Feed
+                </a>
+            </div>
+            
+            <div class="nav-button-group hover:bg-gray-200">
+                <a :href="navRoutes.bookClubSettingsManageMembersIndex(route.params.user, route.params.bookclub)"
                     class="footer-nav-button text-sm"
                 >
                     Club settings
@@ -120,7 +128,7 @@
             </div>
 
             <div class="nav-button-group hover:bg-gray-200">
-                <a :href="navRoutes.bookClubSettingsCurrentlyReading((route.params.user || ''), route.params.bookclub)"
+                <a :href="navRoutes.bookClubSettingsCurrentlyReading(route.params.user, route.params.bookclub)"
                     class="footer-nav-button text-sm"
                 >
                     Currently reading

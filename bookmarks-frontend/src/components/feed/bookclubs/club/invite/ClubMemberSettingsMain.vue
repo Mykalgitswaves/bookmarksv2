@@ -19,7 +19,7 @@
                 class="btn btn-toolbar"
                 :class="{'active': currentView === views.invitations}"
             >
-                Invitations: <i>{{ pendingInvitations || '0' }}</i>
+                Invitations:
                 
             </button>
 

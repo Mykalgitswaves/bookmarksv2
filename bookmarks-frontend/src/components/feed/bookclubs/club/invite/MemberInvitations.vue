@@ -111,11 +111,11 @@
             </div>
         </div>
 
-        <div v-else class="gradient fancy text-center text-2xl loading-box">loading invitations</div>
+        <div v-else class="gradient fancy text-center text-xl loading-box">loading invitations</div>
     </Transition>
 </template>
 <script setup>
-import { ref, computed } from 'vue';
+import { ref } from 'vue';
 import { useRoute } from 'vue-router';
 import { Invitation, BaseInvitation, SentInvitation } from '../../models/models';
 import { db } from  '../../../../../services/db';
