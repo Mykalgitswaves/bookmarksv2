@@ -148,12 +148,112 @@ async def invite_users_to_club(
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     
-    response = book_club_repo.create_bookclub_invites(invite)
+    response = book_club_repo.create_bookclub_invites_dep(invite)
     
     for email in invite.emails:
         email_client.send_invite_email(
             email, 
             "Someone Invited You to Join a Book Club!")
+
+    if not response:
+        raise HTTPException(
+            status_code=400, 
+            detail="Unable to invite users to club")
+    else:
+        return JSONResponse(status_code=200, content={"message": "Invites sent"})
+    
+@router.post("/invite_new",
+            name="bookclub:invite_new")
+async def invite_users_to_club_new(
+        request: Request,
+        current_user:  Annotated[User, Depends(get_current_active_user)],
+        book_club_repo: BookClubCRUDRepositoryGraph = 
+            Depends(get_repository(repo_type=BookClubCRUDRepositoryGraph))
+) -> None:
+    """
+    Invites members to join the bookclub. One of user_id or email must be 
+    present
+
+    Args:
+        request: The request object that contains the following attributes:
+            invites: a dictionary that contains the following key:
+                (key) temp_id: The temporary id for the invite:
+                (value) a dictionary that contains the following fields:
+                    user_id: OPTIONAL the user_id to invite to the club
+                    email: OPTIONAL the email to invite to the club
+            book_club_id: the id of the bookclub
+            
+
+        example:
+            {
+                0: {
+                    "user_id": "bigpapi420"
+                },
+                1: {
+                    "user_id": "smallpapi419"
+                },
+                2: {
+                    "email": "email@email.com"
+                }
+            }
+
+    Returns:
+        a dictionary of the temp ids, permanent ids, and status
+
+        example:
+            {
+                0: {
+                    "id": "club_invite_uuid_1",
+                    "status": "invite_sent"
+                },
+                1: {
+                    "id": "club_invite_uuid_2",
+                    "status": "invite_not_sent"
+                },
+                2: {
+                    "id": "club_invite_uuid_3",
+                    "status": "already_member"
+                }
+            }
+
+    Raises:
+        400 for invalid user_ids or invalid emails
+    """
+
+    data = await request.json()
+    invites = data.get("invites")
+
+    user_ids = [invites[item].get("user_id") 
+                for item in invites 
+                if (invites[item].get("user_id") and 
+                    invites[item].get("user_id") != current_user.id)]
+    
+    emails = [invites[item].get("email") 
+              for item in invites 
+              if invites[item].get("email") and not invites[item].get("user_id")]
+    
+    if not user_ids and not emails:
+        raise HTTPException(
+            status_code=400, 
+            detail="No data sent")
+
+    try:
+        invite_obj = BookClubSchemas.BookClubInvite(
+            book_club_id=data.get("book_club_id"),
+            user_id=current_user.id,
+            user_ids=user_ids,
+            emails=emails
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    
+    response = book_club_repo.create_bookclub_invites(invite_obj)
+    
+    if invite_obj.emails:
+        for email in invite_obj.emails:
+            email_client.send_invite_email(
+                email, 
+                "Someone Invited You to Join a Book Club!")
 
     if not response:
         raise HTTPException(

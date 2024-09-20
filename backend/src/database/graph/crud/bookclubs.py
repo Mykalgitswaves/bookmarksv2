@@ -81,7 +81,7 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
             return False
         else:
             return response["book_club_id"]
-
+        
     def create_bookclub_invites(
             self,
             invite: BookClubSchemas.BookClubInvite
@@ -98,6 +98,131 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
     
     @staticmethod
     def create_bookclub_invites_query(
+        tx, 
+        invite: BookClubSchemas.BookClubInvite
+        ) -> None:
+        
+        query_just_users = (
+            """
+            MATCH (b:BookClub {id: $book_club_id})<-[:OWNS_BOOK_CLUB]-(u:User {id: $user_id})
+            UNWIND $user_ids AS uid
+            MATCH (invited_user:User {id: uid})
+
+            OPTIONAL MATCH (invited_user)-[:IS_MEMBER_OF]->(b)
+            OPTIONAL MATCH (invited_user)-[:RECEIVED_INVITE]->(existing_invite:BookClubInvite)-[:INVITE_FOR]->(b)
+
+            WITH b, u, invited_user, existing_invite,
+                CASE 
+                    WHEN (invited_user)-[:IS_MEMBER_OF]->(b) THEN 'already_member'
+                    WHEN existing_invite IS NOT NULL THEN 'invite_already_sent'
+                    ELSE 'invite_sent'
+                END AS action
+
+            FOREACH (_ IN CASE WHEN action <> 'already_member' THEN [1] ELSE [] END |
+                MERGE (invited_user)-[:RECEIVED_INVITE]->(user_invite:BookClubInvite)-[:INVITE_FOR]->(b)
+                ON CREATE SET user_invite.id = "club_invite_" + randomUUID(),
+                            user_invite.created_date = datetime()
+                MERGE (u)-[:SENT_INVITE]->(user_invite)
+            )
+
+            RETURN b.id AS book_club_id, 
+                   invited_user.id AS user_id, 
+                   action
+            """)
+        
+        query_just_emails = (
+            """
+            MATCH (b:BookClub {id: $book_club_id})<-[:OWNS_BOOK_CLUB]-(u:User {id: $user_id})
+            UNWIND $emails AS email
+
+            // Attempt to match an existing user by email
+            OPTIONAL MATCH (existing_user:User {email: email})
+
+            // Check if the existing user is a member of the book club
+            OPTIONAL MATCH (existing_user)-[:IS_MEMBER_OF|OWNS_BOOK_CLUB]->(b)
+
+            // Check if the existing user has already received an invite
+            OPTIONAL MATCH (existing_user)-[:RECEIVED_INVITE]->(existing_invite:BookClubInvite)-[:INVITE_FOR]->(b)
+
+            // Check if an InvitedUser node already exists for this email
+            OPTIONAL MATCH (invited_user:InvitedUser {email: email})
+
+            // Determine the action to take for each email
+            WITH b, u, email, existing_user, existing_invite, invited_user,
+                CASE
+                    WHEN existing_user IS NOT NULL AND (existing_user)-[:IS_MEMBER_OF|OWNS_BOOK_CLUB]->(b) THEN 'already_member'
+                    ELSE 'invite_sent'
+                END AS action
+
+            // Handle invites for new emails (users not in the system)
+            FOREACH (_ IN CASE WHEN action = 'invite_sent' AND existing_user IS NULL THEN [1] ELSE [] END |
+                MERGE (new_invited_user:InvitedUser {email: email})
+                ON CREATE SET new_invited_user.id = "invited_user_" + randomUUID(),
+                            new_invited_user.created_date = datetime()
+                MERGE (new_invited_user)-[:RECEIVED_INVITE]->(user_invite_email:BookClubInvite)-[:INVITE_FOR]->(b)
+                ON CREATE SET user_invite_email.id = "club_invite_" + randomUUID(),
+                            user_invite_email.created_date = datetime()
+                MERGE (u)-[:SENT_INVITE]->(user_invite_email)
+            )
+
+            // Handle invites for existing users not yet invited
+            FOREACH (_ IN CASE WHEN action = 'invite_sent' AND existing_user IS NOT NULL THEN [1] ELSE [] END |
+                MERGE (existing_user)-[:RECEIVED_INVITE]->(user_invite_email:BookClubInvite)-[:INVITE_FOR]->(b)
+                ON CREATE SET user_invite_email.id = "club_invite_" + randomUUID(),
+                            user_invite_email.created_date = datetime()
+                MERGE (u)-[:SENT_INVITE]->(user_invite_email)
+            )
+
+            // Return the result for each email
+            RETURN b.id AS book_club_id, 
+                   email, 
+                   action,
+                   user_invite_email.id as invite_id
+            """)  
+        
+        print(invite.__dict__)
+        invite_statuses = {}
+        if invite.user_ids:
+            result = tx.run(
+                query_just_users,
+                book_club_id=invite.book_club_id,
+                user_ids=invite.user_ids,
+                user_id=invite.user_id
+            )
+
+            for response in result:
+                print(response.data())
+            breakpoint()
+
+        if invite.emails:
+            result = tx.run(
+                query_just_emails,
+                book_club_id=invite.book_club_id,
+                emails=invite.emails,
+                user_id=invite.user_id
+            )
+            for response in result:
+                print(result.__dict__)
+
+        return invite_statuses
+
+    def create_bookclub_invites_dep(
+            self,
+            invite: BookClubSchemas.BookClubInvite
+        ) -> None:
+        """
+        DEPRECATED
+        Creates invites for the bookclub
+
+        Args:
+            invite (BookClubSchemas.BookClubInvite): The invite to create
+        """
+        with self.driver.session() as session:
+            result = session.write_transaction(self.create_bookclub_invites_dep_query, invite)
+        return result
+    
+    @staticmethod
+    def create_bookclub_invites_dep_query(
         tx, 
         invite: BookClubSchemas.BookClubInvite
         ) -> None:

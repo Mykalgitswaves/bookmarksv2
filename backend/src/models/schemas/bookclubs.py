@@ -68,8 +68,8 @@ class BookClubInviteSearch(BaseModel):
 class BookClubInvite(BaseModel):
     book_club_id: str
     user_id: str
-    user_ids: List[str]
-    emails: List[EmailStr]
+    user_ids: List[str] | None = None
+    emails: List[EmailStr] | None = None
 
 
 class BookClubList(BaseModel):

@@ -74,6 +74,25 @@ def setup_class(request):
     request.cls.token_type_3 = response.json()["token_type"]
     request.cls.user_id_3 = response.json()["user_id"]
 
+    request.cls.username_4 = "test_user144_clubs_4"
+    request.cls.email_4 = "testuser_clubs_4@testemail.com"
+    request.cls.password_4 = "testPassword1!"
+
+    request.cls.admin_credentials = config["ADMIN_CREDENTIALS"]
+
+    headers = {"Content-Type": "application/x-www-form-urlencoded"}  # Set Content-Type to application/json
+    data = {
+        "username": request.cls.username_4,
+        "email": request.cls.email_4,
+        "password": request.cls.password_4,
+    }
+    response = requests.post(f"{request.cls.endpoint}/api/auth/signup", headers=headers, data=data)
+    assert response.status_code == 200, "Creating Test User"
+
+    request.cls.access_token_4 = response.json()["access_token"]
+    request.cls.token_type_4 = response.json()["token_type"]
+    request.cls.user_id_4 = response.json()["user_id"]
+
     yield
 
     response = requests.post(f"{request.cls.endpoint}/api/admin/delete_user_book_club_data", 
@@ -93,6 +112,11 @@ def setup_class(request):
 
     response = requests.post(f"{request.cls.endpoint}/api/admin/delete_user_by_username", 
                              json={"username": request.cls.username_3, "admin_credentials": config["ADMIN_CREDENTIALS"]})
+
+    assert response.status_code == 200, "Cleanup: Test user deletion failed"
+
+    response = requests.post(f"{request.cls.endpoint}/api/admin/delete_user_by_username", 
+                             json={"username": request.cls.username_4, "admin_credentials": config["ADMIN_CREDENTIALS"]})
 
     assert response.status_code == 200, "Cleanup: Test user deletion failed"
 
@@ -257,14 +281,40 @@ class TestBookClubs:
         assert response.status_code == 200, "Accepting Invite"
         print(response.json())
 
+    def test_new_send_invite(self):
+        """
+        Tests the new invite endpoint
+        """
+        headers = {"Authorization": f"{self.token_type} {self.access_token}"}
 
-        headers = {"Authorization": f"{self.token_type_3} {self.access_token_3}"}
+        data = {
+            "invites" : { 
+                0: {
+                "user_id": self.user_id_2
+                },
+                1: {
+                    "user_id": self.user_id_3
+                },
+                2: {
+                    "user_id": self.user_id_4
+                },
+                3: {
+                    "email": "hardcoverlit@gmail.com"
+                },
+                4: {
+                    "email": "hardcoverlitnew@gmail.com"
+                }
+            },
+            "book_club_id":self.book_club_id
+        }
 
-        endpoint = f"{self.endpoint}/api/bookclubs/invites/accept/{self.invite_id_2}"
+        response = requests.post(
+            f"{self.endpoint}/api/bookclubs/invite_new", 
+            headers=headers, 
+            json=data)
 
-        response = requests.put(endpoint, headers=headers)
-
-        assert response.status_code == 200, "Accepting Invite"
+        print(response.json())
+        assert response.status_code == 200, "Inviting Users to Club"
 
     def test_get_owned_clubs(self):
         """
