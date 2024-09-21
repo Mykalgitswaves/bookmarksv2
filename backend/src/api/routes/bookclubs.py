@@ -260,9 +260,18 @@ async def invite_users_to_club_new(
     for item in invites:
         invite = invites[item]
         if invite.get("user_id"):
-            invite.update({"status":response[invite.get("user_id")].get("status")})
+            if not response.get(invite.get("user_id")):
+                invite.update({"status":"error"})
+            else:
+                invite.update({
+                    "status":response[invite.get("user_id")].get("status")})
         elif invite.get("email"):
-            invite.update({"status":response[invite.get("email")].get("status")})
+            if not response.get(invite.get("email")):
+                invite.update({"status":"error"})
+            else:
+                invite.update({
+                    "status":response[invite.get("email")].get("status")})
+        
 
     return invites
 
