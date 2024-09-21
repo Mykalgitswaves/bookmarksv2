@@ -13,12 +13,12 @@ class BaseBookClub(BaseModel):
     currently_reading_book: Any | None = None
     pace: int | None
     
-    errors = {
-        'unauthorized': {
-            'status_code': 500,
-            'detail': "Unauthorized, you do not have permission to make this request"
-        },
-    }
+    # errors = {
+    #     'unauthorized': {
+    #         'status_code': 500,
+    #         'detail': "Unauthorized, you do not have permission to make this request"
+    #     },
+    # }
 
     def get_pace_offset(record):
         if (record.get("expected_finish_date") 
