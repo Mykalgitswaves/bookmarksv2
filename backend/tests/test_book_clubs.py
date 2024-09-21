@@ -290,7 +290,7 @@ class TestBookClubs:
         data = {
             "invites" : { 
                 0: {
-                "user_id": self.user_id_2
+                    "user_id": self.user_id_2
                 },
                 1: {
                     "user_id": self.user_id_3
@@ -303,6 +303,9 @@ class TestBookClubs:
                 },
                 4: {
                     "email": "hardcoverlitnew@gmail.com"
+                },
+                5: {
+                    "email": "testuser_clubs_2@testemail.com"
                 }
             },
             "book_club_id":self.book_club_id

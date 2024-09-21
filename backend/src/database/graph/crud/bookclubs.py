@@ -176,8 +176,7 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
             // Return the result for each email
             RETURN b.id AS book_club_id, 
                    email, 
-                   action,
-                   user_invite_email.id as invite_id
+                   action
             """)  
         
         print(invite.__dict__)
@@ -191,8 +190,16 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
             )
 
             for response in result:
-                print(response.data())
-            breakpoint()
+                if not response.get("user_id"):
+                    continue
+                invite_statuses.update(
+                    {
+                        response.get("user_id"): {
+                            "status": response.get("action")
+                        }
+                    }
+                )
+            
 
         if invite.emails:
             result = tx.run(
@@ -202,7 +209,15 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
                 user_id=invite.user_id
             )
             for response in result:
-                print(result.__dict__)
+                if not response.get("email"):
+                    continue
+                invite_statuses.update(
+                    {
+                        response.get("email"): {
+                            "status": response.get("action")
+                        }
+                    }
+                )
 
         return invite_statuses
 

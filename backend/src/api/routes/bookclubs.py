@@ -251,16 +251,20 @@ async def invite_users_to_club_new(
     
     if invite_obj.emails:
         for email in invite_obj.emails:
-            email_client.send_invite_email(
-                email, 
-                "Someone Invited You to Join a Book Club!")
+            if email in response:
+                if response[email] != "already_member":
+                    email_client.send_invite_email(
+                        email, 
+                        "Someone Invited You to Join a Book Club!")
+                    
+    for item in invites:
+        invite = invites[item]
+        if invite.get("user_id"):
+            invite.update({"status":response[invite.get("user_id")].get("status")})
+        elif invite.get("email"):
+            invite.update({"status":response[invite.get("email")].get("status")})
 
-    if not response:
-        raise HTTPException(
-            status_code=400, 
-            detail="Unable to invite users to club")
-    else:
-        return JSONResponse(status_code=200, content={"message": "Invites sent"})
+    return invites
 
 ### Book Clubs Select Page ################################################################################################
 
