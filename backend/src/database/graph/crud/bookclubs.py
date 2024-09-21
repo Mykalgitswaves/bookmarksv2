@@ -177,9 +177,18 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
             RETURN b.id AS book_club_id, 
                    email, 
                    action
+            """)
+
+        query_get_id = (
+            """
+            UNWIND $user_identifiers as user_identifier
+            MATCH (user:InvitedUser|User)
+            WHERE user.email = user_identifier or user.id = user_identifier
+            MATCH (user)-[:RECEIVED_INVITE]->(user_invite:BookClubInvite)-[:INVITE_FOR]->(b:BookClub {id:$book_club_id})
+            RETURN user_identifier,
+                   user_invite.id as invite_id
             """)  
         
-        print(invite.__dict__)
         invite_statuses = {}
         if invite.user_ids:
             result = tx.run(
@@ -218,6 +227,21 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
                         }
                     }
                 )
+        
+        user_identifiers = [identifier 
+                            for identifier in invite_statuses
+                            if invite_statuses[identifier].get("status") in ["invite_sent","invite_already_sent"]]
+        
+        if user_identifiers:
+            result = tx.run(
+                query_get_id,
+                book_club_id=invite.book_club_id,
+                user_identifiers=user_identifiers
+            )
+            for response in result:
+                if response.get("user_identifier") in invite_statuses:
+                    invite_statuses[response.get("user_identifier")]['id'] = response.get("invite_id")
+                    
 
         return invite_statuses
 

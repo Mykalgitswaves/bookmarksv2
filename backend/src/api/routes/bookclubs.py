@@ -208,7 +208,7 @@ async def invite_users_to_club_new(
                 },
                 1: {
                     "id": "club_invite_uuid_2",
-                    "status": "invite_not_sent"
+                    "status": "error"
                 },
                 2: {
                     "id": "club_invite_uuid_3",
@@ -265,12 +265,19 @@ async def invite_users_to_club_new(
             else:
                 invite.update({
                     "status":response[invite.get("user_id")].get("status")})
+                if response.get(invite.get("user_id")).get("id"):
+                    invite.update({
+                    "id":response[invite.get("user_id")].get("id")})
+            
         elif invite.get("email"):
             if not response.get(invite.get("email")):
                 invite.update({"status":"error"})
             else:
                 invite.update({
                     "status":response[invite.get("email")].get("status")})
+                if response.get(invite.get("email")).get("id"):
+                    invite.update({
+                    "id":response[invite.get("email")].get("id")})
         
 
     return invites
