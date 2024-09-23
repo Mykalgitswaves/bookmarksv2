@@ -620,7 +620,7 @@ async def create_update_post_club(
         raise HTTPException(status_code=400, detail="Unauthorized")
     
     try:
-        update_data = BookClubSchemas.UpdatePost(
+        update_data = BookClubSchemas.CreateUpdatePost(
             user=data.get("user"),
             chapter=data.get("chapter"),
             response=data.get("response"),
@@ -630,7 +630,7 @@ async def create_update_post_club(
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     
-    if update_data.get("response"):
+    if update_data.response:
         response = book_club_repo.create_update_post(update_data)
     else:
         response = book_club_repo.create_update_post_no_text(update_data)
@@ -639,15 +639,21 @@ async def create_update_post_club(
         return JSONResponse(
             status_code=200, 
             content={"message":"Post created"})
+    else:
+        raise HTTPException(
+            status_code=404, 
+            detail="Error creating post")
 
-@router.get("{book_club_id}/feed",
+@router.get("/{book_club_id}/feed",
             name="bookclub:get_feed")
 async def get_club_feed(
     book_club_id: str,
     current_user: Annotated[User, Depends(get_current_active_user)],
     filter: Optional[bool] = True,
     book_club_repo: BookClubCRUDRepositoryGraph = 
-        Depends(get_repository(repo_type=BookClubCRUDRepositoryGraph))
+        Depends(get_repository(repo_type=BookClubCRUDRepositoryGraph)),
+    skip: Optional[int] = 0,
+    limit: Optional[int] = 10
 ) -> List[Any]:
     """
     Gets the feed for a specific book club
@@ -676,6 +682,18 @@ Returns:
         type (str): the type of the post. As of now can be one of update 
             and update_no_text
     """
+    
+    posts = book_club_repo.get_book_club_feed(
+        book_club_id=book_club_id,
+        user_id=current_user.id,
+        skip=skip,
+        limit=limit,
+        filter=filter)
+    
+    return JSONResponse(
+        status_code=200,
+        content={"posts": jsonable_encoder(posts)})
+    
 ### Currently Reading Settings Page ########################################################################################
 
 @router.post("/{book_club_id}/currently_reading/start",

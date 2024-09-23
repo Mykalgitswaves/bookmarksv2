@@ -4,6 +4,7 @@ from typing import List
 
 from src.database.graph.crud.base import BaseCRUDRepositoryGraph
 from src.models.schemas import bookclubs as BookClubSchemas
+from src.models.schemas.books import BookPreview
 
 class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
     def create_bookclub(
@@ -430,7 +431,7 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
     
     def create_update_post(
             self,
-            update_data:BookClubSchemas.UpdatePost
+            update_data:BookClubSchemas.CreateUpdatePost
     ) -> bool:
         with self.driver.session() as session:
             result = session.write_transaction(
@@ -441,7 +442,7 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
     @staticmethod
     def create_update_post_query(
             tx,
-            update_data:BookClubSchemas.UpdatePost
+            update_data:BookClubSchemas.CreateUpdatePost
     ) -> bool:
         
         query = (
@@ -481,7 +482,7 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
     
     def create_update_post_no_text(
             self,
-            update_data:BookClubSchemas.UpdatePost
+            update_data:BookClubSchemas.CreateUpdatePost
     ) -> bool:
         with self.driver.session() as session:
             result = session.write_transaction(
@@ -492,7 +493,7 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
     @staticmethod
     def create_update_post_no_text_query(
             tx,
-            update_data:BookClubSchemas.UpdatePost
+            update_data:BookClubSchemas.CreateUpdatePost
     ) -> bool:
         
         query = (
@@ -1075,7 +1076,139 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
 
         # Checks if the user is even a member of the club before returning
         if response.get("user_id"):
-            return member_paces        
+            return member_paces
+        
+    def get_book_club_feed(
+            self,
+            book_club_id: str,
+            user_id: str,
+            skip: int,
+            limit: int,
+            filter: bool
+    ) -> List[BookClubSchemas.UpdatePost]:
+        """
+        Gets the book club feed for the user
+        """
+        with self.driver.session() as session:
+            result = session.read_transaction(
+                self.get_book_club_feed_query, 
+                book_club_id, 
+                user_id,
+                skip,
+                limit,
+                filter
+            )
+        return result
+    
+    @staticmethod
+    def get_book_club_feed_query(
+        tx,
+        book_club_id: str,
+        user_id: str,
+        skip: int,
+        limit: int,
+        filter: bool
+    ):
+        
+        query = (
+            """
+            MATCH (cu:User {id: $user_id})-[:IS_MEMBER_OF|OWNS_BOOK_CLUB]->(b:BookClub {id: $book_club_id})
+            MATCH (b)-[:IS_READING]->(book:BookClubBook)
+            MATCH (post {deleted:false})-[:POST_FOR_CLUB_BOOK]->(book)
+            WHERE post:ClubUpdate OR post:ClubUpdateNoText
+            match (post)<-[pr:POSTED]-(u:User)
+            optional match (cu)-[lr:LIKES]->(post)
+            optional match (book)-[br:IS_EQUIVALENT_TO]-(canon_book:Book)
+            optional match (comments:Comment {deleted:false})<-[:HAS_COMMENT]-(post)
+            RETURN post, labels(post), u.username, canon_book, u.id,
+            CASE WHEN lr IS NOT NULL THEN true ELSE false END AS liked_by_current_user,
+            CASE WHEN u.id = $user_id THEN true ELSE false END AS posted_by_current_user,
+            count(comments) as num_comments
+            order by post.created_date desc
+            skip $skip
+            limit $limit
+            """
+        )
+        
+        query_w_filter = (
+            """
+            MATCH (cu:User {id: $user_id})-[:IS_MEMBER_OF|OWNS_BOOK_CLUB]->(b:BookClub {id: $book_club_id})
+            MATCH (b)-[club_reading:IS_READING]->(book:BookClubBook)
+            MATCH (cu)-[user_reading:IS_READING_FOR_CLUB]->(book:BookClubBook)
+            MATCH (post:ClubUpdate|ClubUpdateNoText {deleted:false})-[:POST_FOR_CLUB_BOOK]->(book)
+            WHERE post.chapter <= user_reading.current_chapter
+            match (post)<-[pr:POSTED]-(u:User)
+            optional match (cu)-[lr:LIKES]->(post)
+            optional match (book)-[br:IS_EQUIVALENT_TO]-(canon_book:Book)
+            optional match (comments:Comment {deleted:false})<-[:HAS_COMMENT]-(post)
+            RETURN post, labels(post), u.username, canon_book, u.id, user_reading.current_chapter,
+            CASE WHEN lr IS NOT NULL THEN true ELSE false END AS liked_by_current_user,
+            CASE WHEN u.id = $user_id THEN true ELSE false END AS posted_by_current_user,
+            count(comments) as num_comments
+            order by post.created_date desc
+            skip $skip
+            limit $limit
+            """
+        )
+        print(filter)
+        if filter:
+            result = tx.run(
+                query_w_filter,
+                book_club_id=book_club_id,
+                user_id=user_id,
+                skip=skip,
+                limit=limit
+            )
+        else:
+            result = tx.run(
+                query,
+                book_club_id=book_club_id,
+                user_id=user_id,
+                skip=skip,
+                limit=limit
+            )
+        
+        posts = []            
+        for response in result:
+            book = BookPreview(
+                id=response['canon_book'].get("id"),
+                title=response['canon_book'].get("title"),
+                small_img_url=response['canon_book'].get("small_img_url"),
+                google_id=response['canon_book'].get("google_id")
+            )
+            
+            if response.get("labels(post)") == ["ClubUpdate"]:
+                post = BookClubSchemas.UpdatePost(
+                    id=response['post'].get("id"),
+                    headline=response['post'].get("headline", ""),
+                    response=response['post'].get("response"),
+                    quote=response['post'].get("quote"),
+                    chapter=response['post'].get("chapter"),
+                    created_date=response['post'].get("created_date"),
+                    user_id=response.get("u.id"),
+                    user_username=response.get("u.username"),
+                    liked_by_current_user=response.get("liked_by_current_user"),
+                    posted_by_current_user=response.get("posted_by_current_user"),
+                    num_comments=response.get("num_comments"),
+                    book=book
+                )
+                
+            elif response.get("labels(post)") == ["ClubUpdateNoText"]:
+                post = BookClubSchemas.UpdatePostNoText(
+                    id=response['post'].get("id"),
+                    chapter=response['post'].get("chapter"),
+                    created_date=response['post'].get("created_date"),
+                    user_id=response.get("u.id"),
+                    user_username=response.get("u.username"),
+                    liked_by_current_user=response.get("liked_by_current_user"),
+                    posted_by_current_user=response.get("posted_by_current_user"),
+                    num_comments=response.get("num_comments"),
+                    book=book
+                )
+                
+            posts.append(post)
+            
+        return posts
 
     def search_users_not_in_club(
             self, 

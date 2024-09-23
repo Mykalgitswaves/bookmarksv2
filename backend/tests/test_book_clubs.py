@@ -436,3 +436,102 @@ class TestBookClubs:
         response = requests.get(endpoint, headers=headers_2)
         assert response.status_code == 200, "Getting club members pace"
 
+    def test_create_update(self):
+        headers = {"Authorization": f"{self.token_type} {self.access_token}"}
+        data = {
+            "user":{
+                "id": self.user_id
+            },
+            "chapter": 1,
+            "response": "I am reading this book",
+            "headline": "This is a headline",
+            "quote": "This is a quote"      
+        }
+        
+        endpoint = (
+            f"{self.endpoint}/api/bookclubs/{self.book_club_id}/"
+            "update/create")
+        
+        response = requests.post(endpoint, json=data, headers=headers)
+        
+        assert response.status_code == 200, "Creating an update"
+        print(response.json())
+        
+        data = {
+            "user":{
+                "id": self.user_id
+            },
+            "chapter": 2,
+            "response": "I am reading this book",
+            "headline": "This is a headline",    
+        }
+
+        response = requests.post(endpoint, json=data, headers=headers)
+        
+        assert response.status_code == 200, "Creating an update"
+        print(response.json())
+        
+        headers = {"Authorization": f"{self.token_type_2} {self.access_token_2}"}
+        data = {
+            "user":{
+                "id": self.user_id_2
+            },
+            "chapter": 7,
+            "response": "I am reading this book",
+        }
+        
+        endpoint = (
+            f"{self.endpoint}/api/bookclubs/{self.book_club_id}/"
+            "update/create")
+        
+        response = requests.post(endpoint, json=data, headers=headers)
+        
+        assert response.status_code == 200, "Creating an update"
+        print(response.json())
+        
+        data = {
+            "user":{
+                "id": self.user_id_2
+            },
+            "chapter": 8
+        }
+
+        response = requests.post(endpoint, json=data, headers=headers)
+        
+        assert response.status_code == 200, "Creating an update"
+        print(response.json())
+        
+    def test_get_feed(self):
+        headers = {"Authorization": f"{self.token_type} {self.access_token}"}
+        
+        endpoint = (
+            f"{self.endpoint}/api/bookclubs/{self.book_club_id}/"
+            "feed")
+        
+        response = requests.get(endpoint, headers=headers)
+        
+        assert response.status_code == 200, "Getting feed"
+        print(response.json())
+        
+        headers = {"Authorization": f"{self.token_type_2} {self.access_token_2}"}
+        
+        endpoint = (
+            f"{self.endpoint}/api/bookclubs/{self.book_club_id}/"
+            "feed")
+        
+        response = requests.get(endpoint, headers=headers)
+        
+        assert response.status_code == 200, "Getting feed"
+        print(response.json())
+        
+        endpoint = (
+            f"{self.endpoint}/api/bookclubs/{self.book_club_id}/"
+            "feed")
+        
+        response = requests.get(
+            endpoint, 
+            headers=headers, 
+            params={"filter":False})
+        
+        assert response.status_code == 200, "Getting feed"
+        print(response.json())

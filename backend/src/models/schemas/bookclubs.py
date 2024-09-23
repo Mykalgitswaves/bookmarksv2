@@ -7,6 +7,8 @@ from pydantic import (
 )
 from typing import Mapping, List, Any
 
+from src.models.schemas.posts import Post
+
 class BaseBookClub(BaseModel):
     book_club_id: str
     book_club_name: str
@@ -137,10 +139,20 @@ class StartCurrentlyReading(BaseModel):
     user_id: str
     id: str
 
-class UpdatePost(BaseModel):
+class CreateUpdatePost(BaseModel):
     user: dict
     chapter: int
     response: str | None
     headline: str | None
     quote: str | None
     id: str
+    
+class UpdatePost(Post):
+    chapter: int
+    response: str
+    headline: str = ""
+    type: str = "club_update"
+    quote: str = None
+    
+class UpdatePostNoText(Post):
+    type: str = "club_update_no_text"
