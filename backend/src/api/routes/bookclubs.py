@@ -852,7 +852,7 @@ async def invites_for_bookclub(
 ### AWARDS ENDPOINTS #######################
 
 @router.get("/{book_club_id}/awards",
-            name=bookclub:get_awards)
+            name="bookclub:get_awards")
 async def get_awards():
         """
         Gets all the awards available for the current book
