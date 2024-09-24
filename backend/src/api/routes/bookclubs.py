@@ -848,3 +848,45 @@ async def invites_for_bookclub(
     else:
         print(BookClubSchemas.BaseBookClub.errors)
         raise HTTPException(**BookClubSchemas.BaseBookClub.errors['unauthorized'])
+        
+### AWARDS ENDPOINTS #######################
+
+@router.get("/{book_club_id}/awards",
+            name=bookclub:get_awards)
+async def get_awards():
+        """
+        Gets all the awards available for the current book
+        in a club. Optionally it can return the number of 
+        times this user has used the award, the total number
+        of times the user can use the award, and the number of times
+        the award has been applied to a post and by which users
+        
+        Args:
+                book_club_id: (str) the book club id
+                allowed_uses: (optional,bool) whether to include
+                        the number of allowed uses for the award this book
+                current_uses: (optional, bool) whether to include
+                        the number of times the user has used the award this book
+                post_id: (optional,str) The post id. returns the data related to
+                        how many times this award has been granted to the post
+        
+        Returns:
+                awards: a list that contains the following object
+                        award: a dictionary that contains the following fields
+                                id: (str) the id of the award
+                                name: (str) the name of the award
+                                type: (str) the type of award
+                                description: (str) description for the award
+                                remaining_uses: (int) if included as flag, the number of
+                                        times this award can be granted per book
+                                current_uses: (int) if included as flag, the number of 
+                                        times this award has been used for the current book
+                                grants: if the post_id is included, this is a list that contains
+                                        the following grant objects
+                                        granted_date (datetime) the date the award was granted
+                                        user: a user object that contains the following data
+                                                id: the id of the user that granted the award
+                                                username: the username of the user that granted the
+                                                        award
+        """
+        
