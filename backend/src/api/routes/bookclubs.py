@@ -5,8 +5,11 @@ from fastapi.encoders import jsonable_encoder
 from fastapi.responses import JSONResponse
 from typing import Annotated, Optional, List, Any, Mapping
 
+from src.api.background_tasks.google_books import google_books_background_tasks
 from src.api.utils.database import get_repository
 from src.book_apis.google_books.search import google_books_search
+from src.book_apis.google_books.pull_books import google_books_pull
+from src.database.graph.crud.books import BookCRUDRepositoryGraph
 from src.database.graph.crud.bookclubs import BookClubCRUDRepositoryGraph
 from src.database.graph.crud.users import UserCRUDRepositoryGraph
 from src.models.schemas import bookclubs as BookClubSchemas
@@ -702,8 +705,11 @@ async def start_book_for_club(
     book_club_id:str,
     request:Request,
     current_user: Annotated[User, Depends(get_current_active_user)],
+    background_tasks:BackgroundTasks,
     book_club_repo: BookClubCRUDRepositoryGraph = 
-        Depends(get_repository(repo_type=BookClubCRUDRepositoryGraph))
+        Depends(get_repository(repo_type=BookClubCRUDRepositoryGraph)),
+    book_repo: BookCRUDRepositoryGraph = 
+        Depends(get_repository(repo_type=BookCRUDRepositoryGraph))
 ) -> None:
     """
     Sets a clubs currently reading book. Does not execute if book club
@@ -741,8 +747,36 @@ async def start_book_for_club(
             not start_currently_reading.book.get("chapters")):
         raise HTTPException(status_code=400, detail="Missing required value")
     
-    result = book_club_repo.create_currently_reading_club(
-        start_currently_reading)
+    book_exists = True
+    if start_currently_reading.book['id'][0] == "g":
+        book_exists = False
+        canonical_book = book_repo.get_canonical_book_by_google_id_extended(
+            start_currently_reading.book['id']) 
+        if canonical_book:
+            book_exists = True
+            start_currently_reading.book['id'].book = {
+                "id":canonical_book.id,
+                "chapters":start_currently_reading.book['chapters']}
+
+    if book_exists:
+        result = book_club_repo.create_currently_reading_club(
+            start_currently_reading)
+    else:
+        google_book = google_books_pull.pull_google_book(
+            start_currently_reading.book['id'],
+            book_repo
+        )
+        result = book_club_repo.create_currently_reading_club_and_book(
+            start_currently_reading,
+            google_book.title,
+            google_book.small_img_url,
+            google_book.author_names)
+        
+        if result:
+            background_tasks.add_task(
+                google_books_background_tasks.update_book_google_id,
+                start_currently_reading.book["id"],
+                book_repo)
     
     if result:
         return JSONResponse(

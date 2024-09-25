@@ -429,6 +429,78 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
         response = result.single()
         return response.get("book_club_book_id") is not None
     
+    def create_currently_reading_club_and_book(
+            self,
+            currently_reading_obj: BookClubSchemas.StartCurrentlyReading,
+            title: str,
+            small_img_url: str,
+            author_names: List[str]
+    ):
+        with self.driver.session() as session:
+            result = session.write_transaction(
+                self.create_currently_reading_club_and_book_query, 
+                currently_reading_obj,
+                title,
+                small_img_url,
+                author_names)
+        return result
+    
+    @staticmethod
+    def create_currently_reading_club_and_book_query(
+        tx,
+        currently_reading_obj: BookClubSchemas.StartCurrentlyReading,
+        title: str,
+        small_img_url: str,
+        author_names: List[str]
+    ):
+        query = (
+            """
+            MATCH (u:User {id:$user_id})-[:OWNS_BOOK_CLUB]-(b:BookClub {id:$book_club_id})
+            create (book:Book {
+                id:"c"+randomUUID(),
+                google_id:$book_id, 
+                title:$title, 
+                small_img_url:$small_img_url, 
+                author_names: $author_names
+            })
+            WITH u, b
+            WHERE NOT EXISTS {
+                MATCH (b)-[:IS_READING]->(:BookClubBook)
+            }
+            CREATE (bc_book:BookClubBook {
+                id: "book_club_book_" + randomUUID(),
+                chapters: $chapters
+            })
+            CREATE (bc_book)-[:IS_EQUIVALENT_TO]->(book)
+            MERGE (b)-[:IS_READING {
+                started_date: datetime(),
+                selected_finish_date: $finish_date
+            }]->(bc_book)
+            WITH b, bc_book
+            MATCH (member:User)-[:IS_MEMBER_OF|OWNS_BOOK_CLUB]->(b)
+            MERGE (member)-[:IS_READING_FOR_CLUB {
+                last_updated: datetime(),
+                current_chapter: 0
+            }]->(bc_book)
+            RETURN bc_book.id as book_club_book_id
+            """
+        )
+
+        result = tx.run(
+            query,
+            user_id=currently_reading_obj.user_id,
+            book_club_id=currently_reading_obj.id,
+            book_id=currently_reading_obj.book['id'],
+            chapters=currently_reading_obj.book['chapters'],
+            finish_date=currently_reading_obj.expected_finish_date,
+            title=title,
+            small_img_url=small_img_url,
+            author_names=author_names
+        )
+
+        response = result.single()
+        return response.get("book_club_book_id") is not None
+    
     def create_update_post(
             self,
             update_data:BookClubSchemas.CreateUpdatePost

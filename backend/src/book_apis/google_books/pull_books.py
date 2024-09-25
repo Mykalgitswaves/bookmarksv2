@@ -109,16 +109,16 @@ class GoogleBooksPull(GoogleBooks):
             responses = r.json()
             if 'items' not in responses:
                 if 'error' in responses:
-                    print(responses)
-                    print(isbn)
+                    # print(responses)
+                    # print(isbn)
                     time.sleep(20)
                     count += 1
                     if count >= 5:
                         raise Exception("Timed out conisistently")
                     else:
                         self.pull_google_book_or_add_isbn(isbn, book_repo, count)
-                print(responses)
-                print(isbn)
+                # print(responses)
+                # print(isbn)
                 return None
             
             for response in responses['items']:
