@@ -13,12 +13,16 @@ from src.config.config import settings
 
 router = fastapi.APIRouter(prefix="/admin", tags=["admin"])
 
-@router.post("/delete_user_by_username", 
-             name="admin:delete_user_by_username")
-async def delete_user_by_username(request: Request,
-                 user_repo: UserCRUDRepositoryGraph = Depends(get_repository(repo_type=UserCRUDRepositoryGraph))):
+
+@router.post("/delete_user_by_username", name="admin:delete_user_by_username")
+async def delete_user_by_username(
+    request: Request,
+    user_repo: UserCRUDRepositoryGraph = Depends(
+        get_repository(repo_type=UserCRUDRepositoryGraph)
+    ),
+):
     data = await request.json()
-    
+
     username = data.get("username")
     admin_credentials = data.get("admin_credentials")
 
@@ -31,15 +35,22 @@ async def delete_user_by_username(request: Request,
         else:
             return HTTPException(status_code=404, detail="User not found")
 
-@router.post("/delete_book_and_versions_by_google_id", 
-             name="admin:delete_book_and_versions_by_google_id")
-async def delete_book_and_versions_by_google_id(request: Request,
-                            book_repo: BookCRUDRepositoryGraph = Depends(get_repository(repo_type=BookCRUDRepositoryGraph))):
+
+@router.post(
+    "/delete_book_and_versions_by_google_id",
+    name="admin:delete_book_and_versions_by_google_id",
+)
+async def delete_book_and_versions_by_google_id(
+    request: Request,
+    book_repo: BookCRUDRepositoryGraph = Depends(
+        get_repository(repo_type=BookCRUDRepositoryGraph)
+    ),
+):
     data = await request.json()
-    
+
     google_id = data.get("google_id")
     admin_credentials = data.get("admin_credentials")
-    
+
     if admin_credentials != settings.ADMIN_CREDENTIALS:
         raise fastapi.HTTPException(status_code=403, detail="Forbidden")
     else:
@@ -48,16 +59,20 @@ async def delete_book_and_versions_by_google_id(request: Request,
             return HTTPException(status_code=200, detail="Book deleted")
         else:
             return HTTPException(status_code=404, detail="Book not found")
-        
-@router.post("/delete_post_and_comments", 
-             name="admin:delete_post_and_comments")
-async def delete_post_and_comments(request: Request,
-                            post_repo: PostCRUDRepositoryGraph = Depends(get_repository(repo_type=PostCRUDRepositoryGraph))):
+
+
+@router.post("/delete_post_and_comments", name="admin:delete_post_and_comments")
+async def delete_post_and_comments(
+    request: Request,
+    post_repo: PostCRUDRepositoryGraph = Depends(
+        get_repository(repo_type=PostCRUDRepositoryGraph)
+    ),
+):
     data = await request.json()
-    
+
     post_id = data.get("post_id")
     admin_credentials = data.get("admin_credentials")
-    
+
     if admin_credentials != settings.ADMIN_CREDENTIALS:
         raise fastapi.HTTPException(status_code=403, detail="Forbidden")
     else:
@@ -66,33 +81,37 @@ async def delete_post_and_comments(request: Request,
             return HTTPException(status_code=200, detail="Post deleted")
         else:
             return HTTPException(status_code=404, detail="Post not found")
-        
-@router.post("/create_user_sql",
-             name="admin:create_user_sql")
-async def create_user_sql(request: Request,
-                       user_repo: UserRepository = Depends(get_sql_repository(repo_type=UserRepository))):
+
+
+@router.post("/create_user_sql", name="admin:create_user_sql")
+async def create_user_sql(
+    request: Request,
+    user_repo: UserRepository = Depends(get_sql_repository(repo_type=UserRepository)),
+):
     data = await request.json()
-    
+
     admin_credentials = data.get("admin_credentials")
-    
+
     if admin_credentials != settings.ADMIN_CREDENTIALS:
         raise fastapi.HTTPException(status_code=403, detail="Forbidden")
-    
+
     user = UserTest(
         username=data.get("username"),
         email=data.get("email"),
         full_name=data.get("full_name"),
-        user_id=data.get("user_id")
+        user_id=data.get("user_id"),
     )
-    
+
     response = await user_repo.create_user(user)
-    
+
     return response
 
-@router.get("/get_user_sql",
-            name="admin:get_user_sql")
-async def get_user_sql(request: Request,
-                       user_repo: UserRepository = Depends(get_sql_repository(repo_type=UserRepository))):
+
+@router.get("/get_user_sql", name="admin:get_user_sql")
+async def get_user_sql(
+    request: Request,
+    user_repo: UserRepository = Depends(get_sql_repository(repo_type=UserRepository)),
+):
     data = await request.json()
 
     user_id = data.get("user_id")
@@ -101,10 +120,12 @@ async def get_user_sql(request: Request,
 
     return response
 
-@router.delete("/delete_user_sql",
-                name="admin:delete_user_sql")
-async def delete_user_sql(request: Request,
-                          user_repo: UserRepository = Depends(get_sql_repository(repo_type=UserRepository))):
+
+@router.delete("/delete_user_sql", name="admin:delete_user_sql")
+async def delete_user_sql(
+    request: Request,
+    user_repo: UserRepository = Depends(get_sql_repository(repo_type=UserRepository)),
+):
     data = await request.json()
 
     user_id = data.get("user_id")
@@ -113,15 +134,16 @@ async def delete_user_sql(request: Request,
 
     return response
 
-@router.post("/delete_user_book_club_data",
-             name="admin:delete_club")
+
+@router.post("/delete_user_book_club_data", name="admin:delete_club")
 async def delete_user_book_club_data(
     request: Request,
-    book_club_repo: BookClubCRUDRepositoryGraph = 
-        Depends(get_repository(repo_type=BookClubCRUDRepositoryGraph))
+    book_club_repo: BookClubCRUDRepositoryGraph = Depends(
+        get_repository(repo_type=BookClubCRUDRepositoryGraph)
+    ),
 ):
     """
-    Deletes a users book club data, including all book club books, book clubs, 
+    Deletes a users book club data, including all book club books, book clubs,
     and paces.
 
     Args:
@@ -131,10 +153,10 @@ async def delete_user_book_club_data(
     """
 
     data = await request.json()
-    
+
     user_id = data.get("user_id")
     admin_credentials = data.get("admin_credentials")
-    
+
     if admin_credentials != settings.ADMIN_CREDENTIALS:
         raise fastapi.HTTPException(status_code=403, detail="Forbidden")
     else:
