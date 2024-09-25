@@ -850,43 +850,103 @@ async def invites_for_bookclub(
         raise HTTPException(**BookClubSchemas.BaseBookClub.errors['unauthorized'])
         
 ### AWARDS ENDPOINTS #######################
-
 @router.get("/{book_club_id}/awards",
             name="bookclub:get_awards")
-async def get_awards():
-        """
-        Gets all the awards available for the current book
-        in a club. Optionally it can return the number of 
-        times this user has used the award, the total number
-        of times the user can use the award, and the number of times
-        the award has been applied to a post and by which users
+async def get_awards(
+    book_club_id: str,
+    current_user: Annotated[User, Depends(get_current_active_user)],
+    allowed_uses: Optional[bool] = False,
+    current_uses: Optional[bool] = False,
+    post_id: Optional[str] = None,
+    book_club_repo: BookClubCRUDRepositoryGraph = 
+        Depends(get_repository(repo_type=BookClubCRUDRepositoryGraph))
+) -> Any:
+    """
+    Gets all the awards available for the current book
+    in a club. Optionally it can return the number of 
+    times this user has used the award, the total number
+    of times the user can use the award, and the number of times
+    the award has been applied to a post and by which users
+    
+    Args:
+        book_club_id: (str) the book club id
+        allowed_uses: (optional,bool) whether to include
+                the number of allowed uses for the award this book
+        current_uses: (optional, bool) whether to include
+                the number of times the user has used the award this book
+        post_id: (optional,str) The post id. returns the data related to
+                how many times this award has been granted to the post
+    
+    Returns:
+        awards: a list that contains the following object
+            award: a dictionary that contains the following fields
+                id: (str) the id of the award
+                name: (str) the name of the award
+                type: (str) the type of award
+                description: (str) description for the award
+                remaining_uses: (int) if included as flag, the number of
+                    times this award can be granted per book
+                current_uses: (int) if included as flag, the number of 
+                    times this award has been used for the current book
+                grants: if the post_id is included, this is a list that contains
+                    the following grant objects
+                        granted_date (datetime) the date the award was granted
+                        user: a user object that contains the following data
+                            id: the id of the user that granted the award
+                            username: the username of the user that granted the
+                                award
+    """
+
+@router.put("/{book_club_id}/post/{post_id}/award/{award_id}",
+            name="bookclub:put_award")
+async def put_award(
+    book_club_id: str,
+    post_id: str,
+    award_id: str,
+    current_user: Annotated[User, Depends(get_current_active_user)],
+    book_club_repo: BookClubCRUDRepositoryGraph = 
+        Depends(get_repository(repo_type=BookClubCRUDRepositoryGraph))
+) -> None:
+    """
+    Attaches an award to a post in a club
+    
+    Args:
+        book_club_id: (str) the book club id
+        post_id: (str) the id of the post
+        award_id: (str) the id of the award
+    
+    Returns:
+        200 status code if awards is attached
+
+    Raises:
+        401 if not proper permissions
+        403 if the user has no awards left to grant
+    """
+
+@router.delete("/{book_club_id}/post/{post_id}/award/{award_id}",
+                name="bookclub:delete_award")
+async def delete_award(
+    book_club_id: str,
+    post_id: str,
+    award_id: str,
+    current_user: Annotated[User, Depends(get_current_active_user)],
+    book_club_repo: BookClubCRUDRepositoryGraph = 
+        Depends(get_repository(repo_type=BookClubCRUDRepositoryGraph))
+) -> None:
+    """
+    Removes an award from a post in a club
+    
+    Args:
+        book_club_id: (str) the book club id
+        post_id: (str) the id of the post
+        award_id: (str) the id of the award
+    
+    Returns:
+        200 status code if award is removed
+
+    Raises:
+        401 if not proper permissions
+        404 if the award is not found on the post
+    """
         
-        Args:
-                book_club_id: (str) the book club id
-                allowed_uses: (optional,bool) whether to include
-                        the number of allowed uses for the award this book
-                current_uses: (optional, bool) whether to include
-                        the number of times the user has used the award this book
-                post_id: (optional,str) The post id. returns the data related to
-                        how many times this award has been granted to the post
-        
-        Returns:
-                awards: a list that contains the following object
-                        award: a dictionary that contains the following fields
-                                id: (str) the id of the award
-                                name: (str) the name of the award
-                                type: (str) the type of award
-                                description: (str) description for the award
-                                remaining_uses: (int) if included as flag, the number of
-                                        times this award can be granted per book
-                                current_uses: (int) if included as flag, the number of 
-                                        times this award has been used for the current book
-                                grants: if the post_id is included, this is a list that contains
-                                        the following grant objects
-                                        granted_date (datetime) the date the award was granted
-                                        user: a user object that contains the following data
-                                                id: the id of the user that granted the award
-                                                username: the username of the user that granted the
-                                                        award
-        """
         
