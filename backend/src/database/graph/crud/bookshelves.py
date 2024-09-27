@@ -1425,7 +1425,8 @@ class BookshelfCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
                     r.create_date = datetime(),
                     r.added_by_id = $user_id,
                     r.note_for_shelf = $note_for_shelf
-                RETURN NOT relationshipExists AS wasAdded
+                RETURN NOT relationshipExists AS wasAdded,
+                       b.id as bookshelf_id
                 """
             )
         elif bookshelf_type == "currently_reading":
@@ -1444,7 +1445,8 @@ class BookshelfCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
                     r.last_updated = datetime(),
                     r.added_by_id = $user_id,
                     r.note_for_shelf = $note_for_shelf
-                RETURN NOT relationshipExists AS wasAdded
+                RETURN NOT relationshipExists AS wasAdded,
+                       b.id as bookshelf_id
                 """
             )
         elif bookshelf_type == "finished_reading":
@@ -1462,7 +1464,8 @@ class BookshelfCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
                     r.create_date = datetime(),
                     r.added_by_id = $user_id,
                     r.note_for_shelf = $note_for_shelf
-                RETURN NOT relationshipExists AS wasAdded
+                RETURN NOT relationshipExists AS wasAdded,
+                       b.id as bookshelf_id
                 """
             )
         else:
@@ -1474,9 +1477,8 @@ class BookshelfCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
             note_for_shelf=book_to_add.note_for_shelf, 
             user_id=user_id)
         response = result.single()
-        if not response:
-            return False
-        return response['wasAdded']
+        
+        return response.get('wasAdded',False), response.get('bookshelf_id','')
     
     def create_book_in_reading_flow_bookshelf_rel_with_shelf_id(
             self, 
@@ -1561,7 +1563,8 @@ class BookshelfCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
                     r.added_by_id = $user_id,
                     r.note_for_shelf = $note_for_shelf
                 RETURN NOT relationshipExists AS wasAdded,
-                        book.id as id
+                        book.id as id,
+                        b.id as bookshelf_id
                 """
             )
         elif bookshelf_type == "currently_reading":
@@ -1585,7 +1588,8 @@ class BookshelfCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
                     r.added_by_id = $user_id,
                     r.note_for_shelf = $note_for_shelf
                 RETURN NOT relationshipExists AS wasAdded,
-                        book.id as id
+                        book.id as id,
+                        b.id as bookshelf_id
                 """
             )
         elif bookshelf_type == "finished_reading":
@@ -1608,7 +1612,8 @@ class BookshelfCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
                     r.added_by_id = $user_id,
                     r.note_for_shelf = $note_for_shelf
                 RETURN NOT relationshipExists AS wasAdded,
-                        book.id as id
+                        book.id as id,
+                        b.id as bookshelf_id
                 """
             )
         else:
@@ -1624,11 +1629,10 @@ class BookshelfCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
             user_id=user_id)
 
         response = result.single()
-        if not response:
-            return False
-        if response['wasAdded']:
-            return response['id']
-        return False
+        
+        if response.get('wasAdded'):
+            return response['id'], response['bookshelf_id']
+        return False, False
     
     def create_book_in_reading_flow_bookshelf_rel_with_shelf_id_and_book(
             self, 

@@ -1055,17 +1055,26 @@ async def quick_add_book_to_bookshelf(
     if bookshelf_id in prefixes:
         # Check if the book exists in the database
         if book_exists:
-            response = bookshelf_repo.create_book_in_reading_flow_bookshelf_rel(book_data.book, bookshelf_id, current_user.id)
+            response, bookshelf_id_from_db = bookshelf_repo.create_book_in_reading_flow_bookshelf_rel(book_data.book, bookshelf_id, current_user.id)
         else:
-            response = bookshelf_repo.create_book_in_reading_flow_bookshelf_rel_and_book(book_data.book, bookshelf_id, current_user.id)
-
+            book_id, bookshelf_id_from_db = bookshelf_repo.create_book_in_reading_flow_bookshelf_rel_and_book(book_data.book, bookshelf_id, current_user.id)
+            
+            if book_id:
+                response = True
             # Run background task to update the google book
             if response:
                 background_tasks.add_task(
                     google_books_background_tasks.update_book_google_id,
                     book_data.book.id,
                     book_repo)
+                
+                book_data.book.id = book_id
         if response:
+            if bookshelf_id_from_db in bookshelf_ws_manager.cache:
+                await bookshelf_ws_manager.add_book_only_to_cache(
+                    bookshelf_id=bookshelf_id_from_db, 
+                    data=book_data)
+                
             if bookshelf_id == 'want_to_read':
                 background_tasks.add_task(
                         post_repo.create_want_to_read_post,
