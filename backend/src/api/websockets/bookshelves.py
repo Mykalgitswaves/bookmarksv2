@@ -292,6 +292,7 @@ class BookshelfWSManager:
             bookshelf_repo:BookshelfCRUDRepositoryGraph, 
             book_repo:BookCRUDRepositoryGraph,
             book_exists:bool):
+
         prefixes = ["want_to_read", "currently_reading", "finished_reading"]
         
         _bookshelf = self.cache[bookshelf_id]

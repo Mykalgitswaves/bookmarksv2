@@ -121,5 +121,5 @@ export const navRoutes = {
     toBookshelfSectionPage: (current_user, shelfType) => (`/feed/${current_user}/bookshelves/by/${shelfType}`),
     toBookClubsPage: (current_user) => (`/feed/${current_user}/bookclubs/`),
     toCreateClubPage: (current_user) => (`/feed/${current_user}/bookclubs/create/`),
-    toBookClub: (current_user, bookclub_id) => (`feed/${current_user}/bookclubs/${bookclub_id}`);
+    toBookClub: (current_user, bookclub_id) => (`feed/${current_user}/bookclubs/${bookclub_id}`)
 }
