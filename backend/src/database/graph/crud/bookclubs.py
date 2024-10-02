@@ -596,6 +596,59 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
 
         response = result.single()
         return response.get("book_id") is not None
+    
+    
+    def create_award_for_post(
+            self,
+            create_award: BookClubSchemas.CreateAward
+    ):
+        with self.driver.session() as session:
+            result = session.read_transaction(
+                self.create_award_for_post_query, 
+                create_award
+            )
+        return result
+    
+    @staticmethod
+    def create_award_for_post_query(
+        tx,
+        create_award: BookClubSchemas.CreateAward
+    ):
+        query = (
+            """
+            MATCH (u:User {id:$user_id})-[:IS_MEMBER_OF|OWNS_BOOK_CLUB]->(club:BookClub {id:$book_club_id})
+            MATCH (club)-[:IS_READING]->(book:BookClubBook)
+            MATCH (book)<-[award_rel:AWARD_FOR_BOOK]-(award:ClubAward {$award_id})
+            MATCH (post:ClubUpdate|ClubUpdateNoText {id:$post_id})-[:POST_FOR_CLUB_BOOK]->(book)
+            OPTIONAL MATCH (u)-[:GRANTED]->(club_award:ClubAwardForPost)-[:IS_CHILD_OF]->(award)
+            WITH u, award, COUNT(club_award) AS existing_award_count
+                WHERE existing_award_count < award_rel.grants_per_member
+                CREATE (created_award:ClubAwardForPost {
+                    id: "post_award_" + randomUUID(),
+                    created_date: datetime()
+                })
+                MERGE (u)-[:GRANTED]->(created_award)-[:IS_CHILD_OF]->(award)
+            RETURN existing_award_count, award_rel.grants_per_member as grants_per_member
+            """
+        )
+
+        result = tx.run(
+            query,
+            user_id=create_award.user_id,
+            book_club_id=create_award.book_club_id,
+            award_id=create_award.award_id,
+            post_id=create_award.post_id
+        )
+
+        response = result.single()
+
+        if response.get("existing_award_count"):
+            if response.get("existing_award_count") <= response.get("grants_per_member"):
+                return "award created"
+            else:
+                return "limit reached"
+        else:
+            return "unauthorized"
         
     def get_minimal_book_club(
             self,
@@ -1296,6 +1349,7 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
             )
         return result
 
+    @staticmethod
     def get_awards_query(
             tx,
             book_club_id: str,
@@ -1370,6 +1424,7 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
             )
         return result
 
+    @staticmethod
     def get_awards_with_grants_query(
             tx,
             book_club_id: str,
@@ -1447,7 +1502,7 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
                 )
 
         return awards
-    
+
     def search_users_not_in_club(
             self, 
             search_param: BookClubSchemas.BookClubInviteSearch
@@ -1724,3 +1779,85 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
 
         response = result.single()
         return response.get("user_id") is not None
+    
+    def delete_award_for_post(
+            self,
+            delete_award: BookClubSchemas.DeleteAward
+    ):
+        with self.driver.session() as session:
+            result = session.read_transaction(
+                self.delete_award_for_post_query, 
+                delete_award
+            )
+        return result
+    
+    @staticmethod
+    def delete_award_for_post_query(
+        tx,
+        delete_award: BookClubSchemas.DeleteAward
+    ):
+        query = (
+            """
+            MATCH (u:User {id:$user_id})-[:IS_MEMBER_OF|OWNS_BOOK_CLUB]->(club:BookClub {id:$book_club_id})
+            MATCH (club)-[:IS_READING]->(book:BookClubBook)
+            MATCH (book)<-[award_rel:AWARD_FOR_BOOK]-(award:ClubAward {$award_id})
+            MATCH (post:ClubUpdate|ClubUpdateNoText {id:$post_id})-[:POST_FOR_CLUB_BOOK]->(book)
+            MATCH (u)-[:GRANTED]->(club_award:ClubAwardForPost)-[:IS_CHILD_OF]->(award)
+            DETACH DELETE club_award
+            RETURN award.id as award_id
+            """
+        )
+
+        result = tx.run(
+            query,
+            user_id=delete_award.user_id,
+            book_club_id=delete_award.book_club_id,
+            award_id=delete_award.award_id,
+            post_id=delete_award.post_id
+        )
+
+        response = result.single()
+
+        if response.get("award_id"):
+            return True
+        else:
+            return False
+        
+    def delete_award_for_post_by_id(
+            self,
+            delete_award: BookClubSchemas.DeleteAward
+    ):
+        with self.driver.session() as session:
+            result = session.read_transaction(
+                self.delete_award_for_post_by_id_query, 
+                delete_award
+            )
+        return result
+    
+    @staticmethod
+    def delete_award_for_post_by_id_query(
+        tx,
+        delete_award: BookClubSchemas.DeleteAward
+    ):
+        query = (
+            """
+            MATCH (u:User {id:$user_id})-[:IS_MEMBER_OF|OWNS_BOOK_CLUB]->(club:BookClub {id:$book_club_id})
+            MATCH (u)-[:GRANTED]->(club_award:ClubAwardForPost {id:award_id})
+            DETACH DELETE club_award
+            RETURN club.id as club_id
+            """
+        )
+
+        result = tx.run(
+            query,
+            user_id=delete_award.user_id,
+            book_club_id=delete_award.book_club_id,
+            award_id=delete_award.award_id
+        )
+
+        response = result.single()
+
+        if response.get("club_id"):
+            return True
+        else:
+            return False

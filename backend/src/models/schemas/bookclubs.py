@@ -170,3 +170,12 @@ class Award(BaseAward):
 class AwardWithGrants(BaseAward):
     current_uses: int | None = None
     grants: List
+
+class CreateAward(BaseModel):
+    post_id: str
+    award_id: str
+    user_id: str
+    book_club_id: str
+
+class DeleteAward(CreateAward):
+    pass

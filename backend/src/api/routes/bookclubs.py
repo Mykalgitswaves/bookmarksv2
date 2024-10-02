@@ -949,6 +949,31 @@ async def put_award(
         403 if the user has no awards left to grant
     """
 
+    try:
+        create_award = BookClubSchemas.CreateAward(
+            post_id=post_id,
+            award_id=award_id,
+            user_id=current_user.id,
+            book_club_id=book_club_id
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    
+    response = book_club_repo.create_award_for_post(
+        create_award
+    )
+
+    if response == "award created":
+        return JSONResponse(
+        status_code=200, content={"message": "award added"}
+        )
+    elif response == "unauthorized":
+        raise HTTPException(status_code=401, detail="unauthorized")
+    else:
+        raise HTTPException(
+            status_code=403, 
+            detail="maximum number of grants reached")
+
 
 @router.delete(
     "/{book_club_id}/post/{post_id}/award/{award_id}", name="bookclub:delete_award"
@@ -968,12 +993,41 @@ async def delete_award(
     Args:
         book_club_id: (str) the book club id
         post_id: (str) the id of the post
-        award_id: (str) the id of the award
+        award_id: (str) the id of the award. This can be a granted award or
+            the general award.
 
     Returns:
         200 status code if award is removed
 
     Raises:
-        401 if not proper permissions
-        404 if the award is not found on the post
+        404 if award not found
     """
+
+    try:
+        delete_award = BookClubSchemas.DeleteAward(
+            post_id=post_id,
+            award_id=award_id,
+            user_id=current_user.id,
+            book_club_id=book_club_id
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    
+
+    if award_id.startswith("post_award_"):
+        response = book_club_repo.delete_award_for_post_by_id(
+            delete_award
+        )
+    else:
+        response = book_club_repo.delete_award_for_post(
+            delete_award
+        )
+
+    if response:
+        return JSONResponse(
+        status_code=200, content={"message": "award deleted"}
+        )
+    else:
+        raise HTTPException(
+            status_code=404, 
+            detail="award not found")
