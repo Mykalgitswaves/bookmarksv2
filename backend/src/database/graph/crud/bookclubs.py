@@ -911,21 +911,20 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
             )
     
         invites = []
-        if result:
-            for record in result:
-                invite = BookClubSchemas.BookClubInviteAdminPreview(
-                            invite_id=record["invite_id"],
-                            invited_user={
-                                "id": record["invited_user_id"],
-                                "username": record.get('invited_user_username', ''),
-                                "email":record.get('invited_user_email', '')
-                            },
-                            datetime_invited=record["datetime_invited"],
-                        )
-                invites.append(invite)
-            return invites
-        else:
-            return False
+        
+        for record in result:
+            invite = BookClubSchemas.BookClubInviteAdminPreview(
+                        invite_id=record["invite_id"],
+                        invited_user={
+                            "id": record["invited_user_id"],
+                            "username": record.get('invited_user_username', ''),
+                            "email":record.get('invited_user_email', '')
+                        },
+                        datetime_invited=record["datetime_invited"],
+                    )
+            invites.append(invite)
+        return invites
+        
 
     def get_book_club_invites(
             self,
@@ -1222,7 +1221,7 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
             limit $limit
             """
         )
-        print(filter)
+        
         if filter:
             result = tx.run(
                 query_w_filter,
@@ -1282,6 +1281,173 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
             
         return posts
 
+    def get_awards(
+            self,
+            book_club_id: str,
+            user_id: str,
+            current_uses: bool
+    ) -> List:
+        with self.driver.session() as session:
+            result = session.read_transaction(
+                self.get_awards_query, 
+                book_club_id,
+                user_id,
+                current_uses
+            )
+        return result
+
+    def get_awards_query(
+            tx,
+            book_club_id: str,
+            user_id: str,
+            current_uses: bool
+    ):
+        query = (
+            """
+            MATCH (u:User {id:$user_id})-[:IS_MEMBER_OF|OWNS_BOOK_CLUB]->(club:BookClub {id:$book_club_id})
+            MATCH (club)-[:IS_READING]->(book:BookClubBook)
+            MATCH (award:ClubAward)-[award_rel:AWARD_FOR_BOOK]->(book)
+            RETURN award,
+                   award_rel.grants_per_member as allowed_uses
+            """
+        )
+
+        query_w_current_uses = (
+            """
+            MATCH (u:User {id:$user_id})-[:IS_MEMBER_OF|OWNS_BOOK_CLUB]->(club:BookClub {id:$book_club_id})
+            MATCH (club)-[:IS_READING]->(book:BookClubBook)
+            MATCH (award:ClubAward)-[award_rel:AWARD_FOR_BOOK]->(book)
+            MATCH (award)<-[:CHILD_OF]-(post_award:ClubAwardForPost)<-[:GRANTED]-(u)
+            RETURN award,
+                   award_rel.grants_per_member as allowed_uses,
+                   count(post_award) as current_uses
+            """
+        )
+
+        if current_uses:
+            result = tx.run(
+                query_w_current_uses,
+                book_club_id=book_club_id,
+                user_id=user_id
+            )
+        else:
+            result = tx.run(
+                query,
+                book_club_id=book_club_id,
+                user_id=user_id
+            )
+        
+        awards = []
+        for response in result:
+            award_response = response['award']
+            awards.append(
+                BookClubSchemas.Award(
+                    id=award_response['id'],
+                    name=award_response['name'],
+                    type=award_response.get('type'),
+                    description=award_response.get('description'),
+                    allowed_uses=response.get('allowed_uses'),
+                    current_uses=response.get('current_uses')
+                )
+            )
+
+        return awards
+                
+    def get_awards_with_grants(
+            self,
+            book_club_id: str,
+            user_id: str,
+            current_uses: bool,
+            post_id: str
+    ) -> List:
+        with self.driver.session() as session:
+            result = session.read_transaction(
+                self.get_awards_with_grants_query, 
+                book_club_id,
+                user_id,
+                current_uses,
+                post_id
+            )
+        return result
+
+    def get_awards_with_grants_query(
+            tx,
+            book_club_id: str,
+            user_id: str,
+            current_uses: bool,
+            post_id: str
+    ):
+        query = (
+            """
+            MATCH (u:User {id:$user_id})-[:IS_MEMBER_OF|OWNS_BOOK_CLUB]->(club:BookClub {id:$book_club_id})
+            MATCH (club)-[:IS_READING]->(book:BookClubBook)
+            MATCH (award:ClubAward)-[award_rel:AWARD_FOR_BOOK]->(book)
+            OPTIONAL MATCH (award)<-[:CHILD_OF]-(post_award:ClubAwardForPost)-[:AWARD_FOR_POST]->(post:ClubUpdate|ClubUpdateNoText {id:$post_id})
+            RETURN award,
+                   award_rel.grants_per_member as allowed_uses,
+                   collect({post_award: post_award, grant_user: grant_user}) AS post_awards
+            """
+        )
+
+        query_w_current_uses = (
+            """
+            MATCH (u:User {id:$user_id})-[:IS_MEMBER_OF|OWNS_BOOK_CLUB]->(club:BookClub {id:$book_club_id})
+            MATCH (club)-[:IS_READING]->(book:BookClubBook)
+            MATCH (award:ClubAward)-[award_rel:AWARD_FOR_BOOK]->(book)
+            OPTIONAL MATCH (award)<-[:CHILD_OF]-(user_grants:ClubAwardForPost)<-[:GRANTED]-(u)
+            OPTIONAL MATCH (award)<-[:CHILD_OF]-(post_award:ClubAwardForPost)-[:AWARD_FOR_POST]->(post:ClubUpdate|ClubUpdateNoText {id:$post_id})
+            OPTIONAL MATCH (post_award)<-[:GRANTED]-(grant_user:User)
+            WITH award, award_rel,
+                collect(DISTINCT user_grants) AS user_grants_list,
+                collect({post_award: post_award, grant_user: grant_user}) AS post_awards
+            RETURN award,
+                   award_rel.grants_per_member as allowed_uses,
+                   size(user_grants_list) as current_uses,
+                   post_awards
+            """
+        )
+
+        if current_uses:
+            result = tx.run(
+                query_w_current_uses,
+                book_club_id=book_club_id,
+                user_id=user_id,
+                post_id=post_id
+            )
+        else:
+            result = tx.run(
+                query,
+                book_club_id=book_club_id,
+                user_id=user_id,
+                post_id=post_id
+            )
+        
+        awards = []
+        for response in result:
+            award_response = response['award']
+            award = BookClubSchemas.AwardWithGrants(
+                    id=award_response['id'],
+                    name=award_response['name'],
+                    type=award_response.get('type'),
+                    description=award_response.get('description'),
+                    allowed_uses=response.get('allowed_uses'),
+                    current_uses=response.get('current_uses'),
+                    grants=[]
+                )
+            
+            for grant in response.get("post_awards",[]):
+                award.grants.append(
+                    {
+                        "granted_date":grant.get("post_award").get("created_date").to_native(),
+                        "user": {
+                            "id": grant.get("grant_user").get("id"),
+                            "username":  grant.get("grant_user").get("username")
+                        }
+                    }
+                )
+
+        return awards
+    
     def search_users_not_in_club(
             self, 
             search_param: BookClubSchemas.BookClubInviteSearch

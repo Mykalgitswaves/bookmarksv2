@@ -156,3 +156,17 @@ class UpdatePost(Post):
     
 class UpdatePostNoText(Post):
     type: str = "club_update_no_text"
+
+class BaseAward(BaseModel):
+    id: str
+    name: str
+    type: str
+    description: str
+    allowed_uses: int
+
+class Award(BaseAward):
+    current_uses: int | None = None
+
+class AwardWithGrants(BaseAward):
+    current_uses: int | None = None
+    grants: List

@@ -846,17 +846,15 @@ async def invites_for_bookclub(
     """
     gets all outstanding invites for an admins view of bookclub members setting
     """
+
     invites = book_club_repo.get_invites_for_book_club(
         book_club_id=book_club_id, user_id=current_user.id
     )
-
-    if invites:
-        return JSONResponse(
-            status_code=200, content={"invites": jsonable_encoder(invites)}
-        )
-    else:
-        print(BookClubSchemas.BaseBookClub.errors)
-        raise HTTPException(**BookClubSchemas.BaseBookClub.errors["unauthorized"])
+    
+    return JSONResponse(
+        status_code=200, content={"invites": jsonable_encoder(invites)}
+    )
+    
 
 
 ### AWARDS ENDPOINTS #######################
@@ -864,7 +862,6 @@ async def invites_for_bookclub(
 async def get_awards(
     book_club_id: str,
     current_user: Annotated[User, Depends(get_current_active_user)],
-    allowed_uses: Optional[bool] = False,
     current_uses: Optional[bool] = False,
     post_id: Optional[str] = None,
     book_club_repo: BookClubCRUDRepositoryGraph = Depends(
@@ -880,8 +877,6 @@ async def get_awards(
 
     Args:
         book_club_id: (str) the book club id
-        allowed_uses: (optional,bool) whether to include
-                the number of allowed uses for the award this book
         current_uses: (optional, bool) whether to include
                 the number of times the user has used the award this book
         post_id: (optional,str) The post id. returns the data related to
@@ -894,7 +889,7 @@ async def get_awards(
                 name: (str) the name of the award
                 type: (str) the type of award
                 description: (str) description for the award
-                remaining_uses: (int) if included as flag, the number of
+                allowed_uses: (int) the number of
                     times this award can be granted per book
                 current_uses: (int) if included as flag, the number of
                     times this award has been used for the current book
@@ -906,6 +901,24 @@ async def get_awards(
                             username: the username of the user that granted the
                                 award
     """
+
+    if post_id:
+        awards = book_club_repo.get_awards_with_grants(
+            book_club_id,
+            current_user.id,
+            current_uses,
+            post_id
+        )
+    else:
+        awards = book_club_repo.get_awards(
+            book_club_id,
+            current_user.id,
+            current_uses
+        )
+
+    return JSONResponse(
+        status_code=200, content={"awards": jsonable_encoder(awards)}
+    )
 
 
 @router.put(
