@@ -130,6 +130,8 @@ class TestBookClubs:
         cls.book_club_id = None  # Initialize book_club_id
         cls.invite_id = None  # Initialize invite_id
         cls.invite_id_2 = None
+        cls.post_id = None
+        cls.award_id = None
 
     def test_create_bookclub(self):
         """
@@ -513,6 +515,8 @@ class TestBookClubs:
         assert response.status_code == 200, "Getting feed"
         print(response.json())
         
+        self.__class__.post_id = response.json()['posts'][0]['id']
+
         headers = {"Authorization": f"{self.token_type_2} {self.access_token_2}"}
         
         endpoint = (
@@ -535,3 +539,101 @@ class TestBookClubs:
         
         assert response.status_code == 200, "Getting feed"
         print(response.json())
+
+    def test_get_awards(self):
+        headers = {"Authorization": f"{self.token_type} {self.access_token}"}
+        
+        endpoint = (
+            f"{self.endpoint}/api/bookclubs/{self.book_club_id}/"
+            "awards")
+        
+        response = requests.get(endpoint, headers=headers)
+        
+        assert response.status_code == 200, "Getting awards"
+        print(response.json())
+        self.__class__.award_id = response.json()['awards'][0]['id']
+
+        headers = {"Authorization": f"{self.token_type} {self.access_token}"}
+        
+        endpoint = (
+            f"{self.endpoint}/api/bookclubs/{self.book_club_id}/"
+            "awards")
+        
+        query_params = {"current_uses":True}
+
+        response = requests.get(endpoint, headers=headers, params=query_params)
+        
+        assert response.status_code == 200, "Getting awards"
+        print(response.json())
+
+    def test_put_awards(self):
+        headers = {"Authorization": f"{self.token_type} {self.access_token}"}
+
+        endpoint = (
+            f"{self.endpoint}/api/bookclubs/{self.book_club_id}/"
+            f"post/{self.post_id}/award/{self.award_id}")
+        
+        response = requests.put(endpoint, headers=headers)
+        print(response.json())
+        assert response.status_code == 200, "Putting Award"
+
+        headers = {"Authorization": f"{self.token_type} {self.access_token}"}
+
+        endpoint = (
+            f"{self.endpoint}/api/bookclubs/{self.book_club_id}/"
+            f"post/{self.post_id}/award/{self.award_id}")
+        
+        response = requests.put(endpoint, headers=headers)
+        print(response.json())
+        assert response.status_code == 401, "Putting Award"
+        
+        headers = {"Authorization": f"{self.token_type} {self.access_token}"}
+
+        endpoint = (
+            f"{self.endpoint}/api/bookclubs/{self.book_club_id}/"
+            f"post/{self.post_id}/award/{self.award_id}")
+        
+        response = requests.delete(endpoint, headers=headers)
+        print(response.json())
+        assert response.status_code == 200, "deleting award"
+
+        headers = {"Authorization": f"{self.token_type} {self.access_token}"}
+
+        endpoint = (
+            f"{self.endpoint}/api/bookclubs/{self.book_club_id}/"
+            f"post/{self.post_id}/award/{self.award_id}")
+        
+        response = requests.put(endpoint, headers=headers)
+        print(response.json())
+        assert response.status_code == 200, "Putting Award"
+
+    def test_getting_awards_with_post(self):
+        headers = {"Authorization": f"{self.token_type} {self.access_token}"}
+        
+        endpoint = (
+            f"{self.endpoint}/api/bookclubs/{self.book_club_id}/"
+            "awards")
+        
+        query_params = {
+            "post_id": self.post_id
+        }
+        
+        response = requests.get(endpoint, headers=headers, params=query_params)
+        print(response.json())
+        assert response.status_code == 200, "Getting awards"
+
+        headers = {"Authorization": f"{self.token_type} {self.access_token}"}
+        
+        endpoint = (
+            f"{self.endpoint}/api/bookclubs/{self.book_club_id}/"
+            "awards")
+        
+        query_params = {
+            "post_id": self.post_id,
+            "current_uses": True
+        }
+        
+        response = requests.get(endpoint, headers=headers, params=query_params)
+        print(response.json())
+        assert response.status_code == 200, "Getting awards"
+

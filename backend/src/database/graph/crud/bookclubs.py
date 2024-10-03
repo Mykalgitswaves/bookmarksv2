@@ -413,6 +413,9 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
                 last_updated: datetime(),
                 current_chapter: 0
             }]->(bc_book)
+            WITH b, bc_book
+            MATCH (awards:ClubAward)
+            MERGE (awards)-[:AWARD_FOR_BOOK {grants_per_member:1}]->(bc_book)
             RETURN bc_book.id as book_club_book_id
             """
         )
@@ -482,6 +485,9 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
                 last_updated: datetime(),
                 current_chapter: 0
             }]->(bc_book)
+            WITH b, bc_book
+            MATCH (awards:ClubAward)
+            MERGE (awards)-[:AWARD_FOR_BOOK {grants_per_member:1}]->(bc_book)
             RETURN bc_book.id as book_club_book_id
             """
         )
@@ -603,7 +609,7 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
             create_award: BookClubSchemas.CreateAward
     ):
         with self.driver.session() as session:
-            result = session.read_transaction(
+            result = session.write_transaction(
                 self.create_award_for_post_query, 
                 create_award
             )
@@ -618,16 +624,17 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
             """
             MATCH (u:User {id:$user_id})-[:IS_MEMBER_OF|OWNS_BOOK_CLUB]->(club:BookClub {id:$book_club_id})
             MATCH (club)-[:IS_READING]->(book:BookClubBook)
-            MATCH (book)<-[award_rel:AWARD_FOR_BOOK]-(award:ClubAward {$award_id})
+            MATCH (book)<-[award_rel:AWARD_FOR_BOOK]-(award:ClubAward {id:$award_id})
             MATCH (post:ClubUpdate|ClubUpdateNoText {id:$post_id})-[:POST_FOR_CLUB_BOOK]->(book)
             OPTIONAL MATCH (u)-[:GRANTED]->(club_award:ClubAwardForPost)-[:IS_CHILD_OF]->(award)
-            WITH u, award, COUNT(club_award) AS existing_award_count
+            WITH u, award, COUNT(club_award) AS existing_award_count, award_rel
                 WHERE existing_award_count < award_rel.grants_per_member
                 CREATE (created_award:ClubAwardForPost {
                     id: "post_award_" + randomUUID(),
                     created_date: datetime()
                 })
                 MERGE (u)-[:GRANTED]->(created_award)-[:IS_CHILD_OF]->(award)
+                MERGE (created_award)-[:AWARD_FOR_POST]->(post)
             RETURN existing_award_count, award_rel.grants_per_member as grants_per_member
             """
         )
@@ -642,7 +649,7 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
 
         response = result.single()
 
-        if response.get("existing_award_count"):
+        if response:
             if response.get("existing_award_count") <= response.get("grants_per_member"):
                 return "award created"
             else:
@@ -1371,7 +1378,7 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
             MATCH (u:User {id:$user_id})-[:IS_MEMBER_OF|OWNS_BOOK_CLUB]->(club:BookClub {id:$book_club_id})
             MATCH (club)-[:IS_READING]->(book:BookClubBook)
             MATCH (award:ClubAward)-[award_rel:AWARD_FOR_BOOK]->(book)
-            MATCH (award)<-[:CHILD_OF]-(post_award:ClubAwardForPost)<-[:GRANTED]-(u)
+            OPTIONAL MATCH (award)<-[:CHILD_OF]-(post_award:ClubAwardForPost)<-[:GRANTED]-(u)
             RETURN award,
                    award_rel.grants_per_member as allowed_uses,
                    count(post_award) as current_uses
@@ -1438,6 +1445,7 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
             MATCH (club)-[:IS_READING]->(book:BookClubBook)
             MATCH (award:ClubAward)-[award_rel:AWARD_FOR_BOOK]->(book)
             OPTIONAL MATCH (award)<-[:CHILD_OF]-(post_award:ClubAwardForPost)-[:AWARD_FOR_POST]->(post:ClubUpdate|ClubUpdateNoText {id:$post_id})
+            OPTIONAL MATCH (post_award)<-[:GRANTED]-(grant_user:User)
             RETURN award,
                    award_rel.grants_per_member as allowed_uses,
                    collect({post_award: post_award, grant_user: grant_user}) AS post_awards
@@ -1489,17 +1497,20 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
                     current_uses=response.get('current_uses'),
                     grants=[]
                 )
-            
+            print(response.get("post_awards"))
             for grant in response.get("post_awards",[]):
-                award.grants.append(
-                    {
-                        "granted_date":grant.get("post_award").get("created_date").to_native(),
-                        "user": {
-                            "id": grant.get("grant_user").get("id"),
-                            "username":  grant.get("grant_user").get("username")
+                print(grant)
+                if grant.get("post_award"):
+                    award.grants.append(
+                        {
+                            "granted_date":grant.get("post_award").get("created_date").to_native(),
+                            "user": {
+                                "id": grant.get("grant_user").get("id"),
+                                "username":  grant.get("grant_user").get("username")
+                            }
                         }
-                    }
-                )
+                    )
+            awards.append(award)
 
         return awards
 
@@ -1785,7 +1796,7 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
             delete_award: BookClubSchemas.DeleteAward
     ):
         with self.driver.session() as session:
-            result = session.read_transaction(
+            result = session.write_transaction(
                 self.delete_award_for_post_query, 
                 delete_award
             )
@@ -1800,7 +1811,7 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
             """
             MATCH (u:User {id:$user_id})-[:IS_MEMBER_OF|OWNS_BOOK_CLUB]->(club:BookClub {id:$book_club_id})
             MATCH (club)-[:IS_READING]->(book:BookClubBook)
-            MATCH (book)<-[award_rel:AWARD_FOR_BOOK]-(award:ClubAward {$award_id})
+            MATCH (book)<-[award_rel:AWARD_FOR_BOOK]-(award:ClubAward {id:$award_id})
             MATCH (post:ClubUpdate|ClubUpdateNoText {id:$post_id})-[:POST_FOR_CLUB_BOOK]->(book)
             MATCH (u)-[:GRANTED]->(club_award:ClubAwardForPost)-[:IS_CHILD_OF]->(award)
             DETACH DELETE club_award
@@ -1828,7 +1839,7 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
             delete_award: BookClubSchemas.DeleteAward
     ):
         with self.driver.session() as session:
-            result = session.read_transaction(
+            result = session.write_transaction(
                 self.delete_award_for_post_by_id_query, 
                 delete_award
             )
@@ -1842,7 +1853,7 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
         query = (
             """
             MATCH (u:User {id:$user_id})-[:IS_MEMBER_OF|OWNS_BOOK_CLUB]->(club:BookClub {id:$book_club_id})
-            MATCH (u)-[:GRANTED]->(club_award:ClubAwardForPost {id:award_id})
+            MATCH (u)-[:GRANTED]->(club_award:ClubAwardForPost {id:$award_id})
             DETACH DELETE club_award
             RETURN club.id as club_id
             """
