@@ -627,7 +627,7 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
             MATCH (book)<-[award_rel:AWARD_FOR_BOOK]-(award:ClubAward {id:$award_id})
             MATCH (post:ClubUpdate|ClubUpdateNoText {id:$post_id})-[:POST_FOR_CLUB_BOOK]->(book)
             OPTIONAL MATCH (u)-[:GRANTED]->(club_award:ClubAwardForPost)-[:IS_CHILD_OF]->(award)
-            WITH u, award, COUNT(club_award) AS existing_award_count, award_rel
+            WITH u, award, COUNT(club_award) AS existing_award_count, award_rel, post
                 WHERE existing_award_count < award_rel.grants_per_member
                 CREATE (created_award:ClubAwardForPost {
                     id: "post_award_" + randomUUID(),
@@ -1444,7 +1444,9 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
             MATCH (u:User {id:$user_id})-[:IS_MEMBER_OF|OWNS_BOOK_CLUB]->(club:BookClub {id:$book_club_id})
             MATCH (club)-[:IS_READING]->(book:BookClubBook)
             MATCH (award:ClubAward)-[award_rel:AWARD_FOR_BOOK]->(book)
-            OPTIONAL MATCH (award)<-[:CHILD_OF]-(post_award:ClubAwardForPost)-[:AWARD_FOR_POST]->(post:ClubUpdate|ClubUpdateNoText {id:$post_id})
+            OPTIONAL MATCH (post:ClubUpdate|ClubUpdateNoText {id:$post_id})
+            OPTIONAL MATCH (post_award)-[:IS_CHILD_OF]->(award)
+            OPTIONAL MATCH (post)<-[:AWARD_FOR_POST]-(post_award)
             OPTIONAL MATCH (post_award)<-[:GRANTED]-(grant_user:User)
             RETURN award,
                    award_rel.grants_per_member as allowed_uses,
@@ -1457,16 +1459,16 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
             MATCH (u:User {id:$user_id})-[:IS_MEMBER_OF|OWNS_BOOK_CLUB]->(club:BookClub {id:$book_club_id})
             MATCH (club)-[:IS_READING]->(book:BookClubBook)
             MATCH (award:ClubAward)-[award_rel:AWARD_FOR_BOOK]->(book)
-            OPTIONAL MATCH (award)<-[:CHILD_OF]-(user_grants:ClubAwardForPost)<-[:GRANTED]-(u)
-            OPTIONAL MATCH (award)<-[:CHILD_OF]-(post_award:ClubAwardForPost)-[:AWARD_FOR_POST]->(post:ClubUpdate|ClubUpdateNoText {id:$post_id})
+            OPTIONAL MATCH (award)<-[:IS_CHILD_OF]-(user_grants:ClubAwardForPost)<-[:GRANTED]-(u)
+            OPTIONAL MATCH (post:ClubUpdate|ClubUpdateNoText {id:$post_id})
+            OPTIONAL MATCH (post_award)-[:IS_CHILD_OF]->(award)
+            OPTIONAL MATCH (post)<-[:AWARD_FOR_POST]-(post_award)
             OPTIONAL MATCH (post_award)<-[:GRANTED]-(grant_user:User)
-            WITH award, award_rel,
-                collect(DISTINCT user_grants) AS user_grants_list,
-                collect({post_award: post_award, grant_user: grant_user}) AS post_awards
+            WITH award, award_rel, user_grants, grant_user, post_award
             RETURN award,
                    award_rel.grants_per_member as allowed_uses,
-                   size(user_grants_list) as current_uses,
-                   post_awards
+                   count(user_grants) as current_uses,
+                   collect({post_award: post_award, grant_user: grant_user}) AS post_awards
             """
         )
 
@@ -1484,7 +1486,6 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
                 user_id=user_id,
                 post_id=post_id
             )
-        
         awards = []
         for response in result:
             award_response = response['award']
@@ -1497,9 +1498,7 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
                     current_uses=response.get('current_uses'),
                     grants=[]
                 )
-            print(response.get("post_awards"))
             for grant in response.get("post_awards",[]):
-                print(grant)
                 if grant.get("post_award"):
                     award.grants.append(
                         {
@@ -1511,6 +1510,8 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
                         }
                     )
             awards.append(award)
+
+        # breakpoint()
 
         return awards
 
@@ -1778,7 +1779,9 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
             OPTIONAL MATCH (b)-[]->(book:BookClubBook)
             OPTIONAL MATCH (b)-[]-(invites:BookClubInvite)
             OPTIONAL MATCH (invites)-[]-(test_emails:InvitedUser)
-            DETACH DELETE pace, book, b, invites, test_emails
+            OPTIONAL MATCH (user)-[]-(awards:ClubAwardForPost)
+            OPTIONAL MATCH (b)-[]-(posts:ClubUpdate|ClubUpdateNoText)
+            DETACH DELETE pace, book, b, invites, test_emails, awards, posts
             return user.id as user_id
             """
         )
