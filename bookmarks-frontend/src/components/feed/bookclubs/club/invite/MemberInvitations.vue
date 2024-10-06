@@ -19,33 +19,21 @@
                     'existing-user': invite.type === Invitation.types.existing_user
                 }"
             >
-                <div>
-                    <div class="flex gap-2 items-center pb-4">
-                        <label for="user_type" class="text-sm text-stone-500 block nowrap">
-                            Add by:
-                        </label>
-
-                        <select class="select" name="" id="user_type" v-model="invite.type">
-                            <option value="email">email</option>
-                            <option value="existing_user">existing user</option>
-                        </select>
-                    </div>
-                    
-                    <input v-if="invite.type === Invitation.types.email" 
-                        class="input border-2 fancy input--invitation w-100 pl-5 py-2"
-                        type="email" 
-                        id="email" 
-                        :name="invite.id"
-                        placeholder="email" 
-                        v-model="invitations[index].email" 
-                    >
-
+                <div class="flex items-center gap-2">
                     <!-- Add placeholder for searched existing user here. -->
                     <SearchUserOverlay 
-                        v-if="invite.type === Invitation.types.existing_user"
                         :book-club-id="route.params.bookclub" 
                         @user-selected="(userId) => selectedExistingUser(userId)"
                     />
+
+                    <input 
+                        class="input border-2 fancy input--invitation w-100 pl-5 py-2"
+                        type="email"
+                        id="email"
+                        :name="invite.id"
+                        placeholder="or enter an email"
+                        v-model="invitations[index].email" 
+                    >
                 </div>
 
                 <div class="flex gap-2">
@@ -101,7 +89,7 @@
                 <div v-for="invite in sentInvitations" :key="invite.id" class="sent-invite">
                     <div>
                         <p class="fancy text-stone-600">
-                            {{ invite.invitedUser.username || invite.invitedUser.email }}
+                            {{ invite.username || invite.email }}
                         </p>
                         <p class="text-sm text-stone-400">
                             Invited on: {{ invite.invited_on }}
@@ -117,7 +105,7 @@
 <script setup>
 import { ref } from 'vue';
 import { useRoute } from 'vue-router';
-import { Invitation, BaseInvitation, SentInvitation } from '../../models/models';
+import { Invitation, BaseInvitation } from '../../models/models';
 import { db } from  '../../../../../services/db';
 import { urls } from  '../../../../../services/urls';
 import TextAlert from '@/components/feed/partials/textAlert/TextAlert.vue';
@@ -196,42 +184,28 @@ function inviteContactByType(invite, payload) {
 
 function populateInvitesForClub(invites) {
     if (!invites.length) return;
-
+ 
     invites.forEach((invite) => {
-        const sentInvite = new SentInvitation(invite);
-        console.log(sentInvite)
+        const sentInvite = new BaseInvitation(invite);
         sentInvitations.value.push(sentInvite);
     });
 }
 
-/**
- * @definition Look through emails by type and status to find those who match the emails submitted via request so we can update the js objects floating around in the ui. Probably not the best way to do this but unless we return a dictionary with more shit in it you never know.
- * @param {*} payload 
- */
-function updateInvitesStatus(payload){
-    let emails = payload.emails;
-    let userIds = payload.user_ids;
 
-    invitations.value.forEach((invite) => {
-        if ((
-                emails.length && 
-                invite.type === Invitation.types.email &&  
-                emails.includes(invite.email) && 
-                invite.status === Invitation.statuses.uninvited
-            ) || (
-                usersIds.length && 
-                invite.type === Invitation.types.existing_user && 
-                userIds.includes(invite.user_id) &&
-                invite.status === Invitation.statuses.uninvited
-            ) 
-        ) {
-            invite.status = Invitation.statuses.invited;
-        }
+function cleanUpOldInvitesAndUpdateSentInvitesList(invitesMap) {
+    Object.values(invitesMap).forEach(([id, invite]) => {
+        // Oñ^2 but what are you going to do?
+        let inviteInList = invitations.value.find((invitation) => invitation.id === id);
+        let index = invitations.value.indexOf(inviteInList);
+        
+        // delete the old invite and remove it from the ui;
+        inviteInList.delete();
+        invitations.value.splice(index, 1);
+
+        // then recreate it in the sent invites list
+        const sentInvite = new BaseInvitation(invite)
+        sentInvitations.value.push(sentInvite);
     });
-}
-
-function selectedExistingUser(userId) {
-    console.log(userId);
 }
 
 /**
@@ -260,7 +234,7 @@ async function sendInvites(invite, invitations) {
 
     db.post(urls.bookclubs.sendInvites(), payload, null, 
         (res) => {
-            updateInvitesStatus(payload);
+            cleanUpOldInvitesAndUpdateSentInvitesList(res.invites)
         },
         (error) => {
             error.value = error;

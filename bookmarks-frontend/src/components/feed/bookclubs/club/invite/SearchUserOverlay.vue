@@ -1,17 +1,14 @@
 <template>  
     <button 
-        class="btn btn-tiny w-30 btn-submit"
+        class="btn btn-tiny w-30 btn-submit self-center nowrap"
         type="button" 
         role="navigation"
-        @click="isOverlayShowing = true"
+        @click="openOverlay()"
     >
-        Search for user
+        Search for an existing user
     </button>
 
-    <Overlay 
-        v-if="isOverlayShowing" 
-        @close-overlay="isOverlayShowing = false"
-    >
+    <Overlay ref="overlay">
         <template #overlay-header>        
             <SearchForExistingUser  
                 :book-club-id="bookClubId"
@@ -20,9 +17,7 @@
         </template>
         <template #overlay-main>
             <div class="searched-users">
-                <p v-if="!searchedUsers.length">search for a user to add</p>
-
-                <div v-else>
+                <div v-if="searchedUsers.length">
                     <div v-for="(user, index) in searchedUsers" :key="index" class="flex gap-2 p-5 border-2 border-indigo-300">
                         <p>
                             {{ user.user_username }}
@@ -49,6 +44,9 @@ defineProps({
 
 const emit = defineEmits(['user-selected']);
 
+const overlay = ref(null);
+
+
 /**
  * @constants
  */
@@ -63,5 +61,10 @@ const searchedUsers = ref([]);
 function populateUserPreviewsFromSearch (users) {
     searchedUsers.value = users;
 };
+
+function openOverlay() {
+    const { dialogRef } = overlay.value;
+    dialogRef.showModal();
+}
 </script>
 <style scoped></style>

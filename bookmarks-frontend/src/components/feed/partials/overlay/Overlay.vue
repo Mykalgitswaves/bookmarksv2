@@ -1,6 +1,5 @@
 <template>
-    <teleport to="body" tag="div">
-        <div class="overlay">
+    <dialog ref="dialogRef" class="overlay">
             <div class="controls">
                 <!-- just in case you need special shit up top -->
                 <slot name="overlay-controls-header"></slot>
@@ -9,7 +8,7 @@
                     type="button" 
                     class="btn btn-tiny text-stone-600"
                     role="navigation"
-                    @click="$emit('close-overlay')"    
+                    @click="dialogRef.close()"    
                 >
                     <IconExit />
                 </button>
@@ -20,19 +19,21 @@
             <slot name="overlay-main" class="overlay-main"></slot>
 
             <slot name="overlay-footer" class="overlay-footer"></slot>
-        </div>
-    </teleport>
+    </dialog>
 </template>
 <script setup>
+import { ref, onMounted, defineExpose } from 'vue';
 import IconExit from '@/components/svg/icon-exit.vue'
+
+const dialogRef = ref(null);
+
+defineExpose({
+    dialogRef
+});
 </script>
 <style scoped>
 .overlay {
-    display: block;
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
+    height: fit-content;
     max-width: 768px;
     min-width: 60vw;
     padding: 8px 14px;
@@ -40,6 +41,8 @@ import IconExit from '@/components/svg/icon-exit.vue'
     background-color: var(--surface-primary);
     box-shadow: var(--shadow-lg);
     min-height: 280px;
+    border: none;
+    overflow-y: scroll;
 
     .controls {
         display: flex;

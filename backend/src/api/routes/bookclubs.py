@@ -110,8 +110,9 @@ async def search_users_not_in_club(
 
     return JSONResponse(content={"users": jsonable_encoder(users)})
 
-
-@router.post("/invite", name="bookclub:invite")
+# TODO: delete this shit
+@router.post("/invite_legacy",
+            name="bookclub:invite")
 async def invite_users_to_club(
     request: Request,
     current_user: Annotated[User, Depends(get_current_active_user)],
@@ -159,9 +160,9 @@ async def invite_users_to_club(
         raise HTTPException(status_code=400, detail="Unable to invite users to club")
     else:
         return JSONResponse(status_code=200, content={"message": "Invites sent"})
-
-
-@router.post("/invite_new", name="bookclub:invite_new")
+    
+@router.post("/invite",
+            name="bookclub:invite_new")
 async def invite_users_to_club_new(
     request: Request,
     current_user: Annotated[User, Depends(get_current_active_user)],
