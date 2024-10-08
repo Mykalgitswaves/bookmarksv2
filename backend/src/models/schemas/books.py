@@ -9,6 +9,7 @@ class BookPreview(BaseModel):
     title: str
     small_img_url: str | None = None
     google_id: str | None = None
+    author_names: list[str] = []
 
 class BookSearchInput(BaseModel):
     text: str

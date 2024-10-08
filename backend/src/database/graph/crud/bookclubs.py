@@ -205,7 +205,8 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
                 invite_statuses.update(
                     {
                         response.get("user_id"): {
-                            "status": response.get("action")
+                            "status": response.get("action"),
+                            "id": response.get("invite_id")
                         }
                     }
                 )
@@ -1514,6 +1515,77 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
         # breakpoint()
 
         return awards
+    
+    def get_book_club_name_and_current_book(
+            self,
+            book_club_id: str    
+        ):
+        """
+        Get the name of the book club and the current book being read
+        
+        Args:
+            book_club_id (str): The id of the book club
+
+        Returns:
+            {
+                book_club_name (str): The name of the book club
+                current_book (BookPreview): The current book being read
+            }
+        """
+        with self.driver.session() as session:
+            result = session.read_transaction(
+                self.get_book_club_name_and_current_book_query, 
+                book_club_id
+            )
+        return result
+    
+    @staticmethod
+    def get_book_club_name_and_current_book_query(
+        tx,
+        book_club_id: str
+    ):
+        query = (
+            """
+            MATCH (b:BookClub {id: $book_club_id})
+            OPTIONAL MATCH (b)-[:IS_READING]->(book:BookClubBook)
+            OPTIONAL MATCH (book)-[:IS_EQUIVALENT_TO]-(actual_book:Book)
+            RETURN b.name as book_club_name,
+                   actual_book.id as book_id,
+                   actual_book.title as book_title,
+                   actual_book.small_img_url as book_small_img_url,
+                   actual_book.author_names as book_author_names
+            """
+        )
+
+        result = tx.run(
+            query,
+            book_club_id=book_club_id
+        )
+
+        response = result.single()
+
+        if not response:
+            return {
+                "book_club_name": None,
+                "current_book": None
+            }
+
+        if response.get("book_id"):
+            book = BookPreview(
+                id=response.get("book_id"),
+                title=response.get("book_title"),
+                small_img_url=response.get("book_small_img_url")
+            )
+
+            return {
+                "book_club_name": response.get("book_club_name"),
+                "current_book": book
+            }
+        else:
+            return {
+                "book_club_name": response.get("book_club_name"),
+                "current_book": None
+            }
 
     def search_users_not_in_club(
             self, 

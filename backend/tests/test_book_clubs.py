@@ -182,7 +182,7 @@ class TestBookClubs:
             "book_club_id": self.book_club_id
         }
 
-        response = requests.post(f"{self.endpoint}/api/bookclubs/invite", headers=headers, json=data)
+        response = requests.post(f"{self.endpoint}/api/bookclubs/invite_legacy", headers=headers, json=data)
 
         print(response.json())
         assert response.status_code == 200, "Inviting Users to Club"
@@ -193,7 +193,7 @@ class TestBookClubs:
             "book_club_id": self.book_club_id
         }
 
-        response = requests.post(f"{self.endpoint}/api/bookclubs/invite", headers=headers, json=data)
+        response = requests.post(f"{self.endpoint}/api/bookclubs/invite_legacy", headers=headers, json=data)
 
         print(response.json())
         assert response.status_code == 200, "Inviting Users to Club"
@@ -204,7 +204,7 @@ class TestBookClubs:
             "book_club_id": self.book_club_id
         }
 
-        response = requests.post(f"{self.endpoint}/api/bookclubs/invite", headers=headers, json=data)
+        response = requests.post(f"{self.endpoint}/api/bookclubs/invite_legacy", headers=headers, json=data)
 
         print(response.json())
         assert response.status_code == 200, "Inviting Users to Club"
@@ -259,7 +259,7 @@ class TestBookClubs:
             "book_club_id": self.book_club_id
         }
 
-        response = requests.post(f"{self.endpoint}/api/bookclubs/invite", headers=headers, json=data)
+        response = requests.post(f"{self.endpoint}/api/bookclubs/invite_legacy", headers=headers, json=data)
 
         print(response.json())
         assert response.status_code == 200, "Inviting Users to Club"
@@ -314,7 +314,7 @@ class TestBookClubs:
         }
 
         response = requests.post(
-            f"{self.endpoint}/api/bookclubs/invite_new", 
+            f"{self.endpoint}/api/bookclubs/invite", 
             headers=headers, 
             json=data)
 
@@ -636,4 +636,5 @@ class TestBookClubs:
         response = requests.get(endpoint, headers=headers, params=query_params)
         print(response.json())
         assert response.status_code == 200, "Getting awards"
+        time.sleep(10)
 

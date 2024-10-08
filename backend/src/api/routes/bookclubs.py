@@ -152,9 +152,10 @@ async def invite_users_to_club(
     response = book_club_repo.create_bookclub_invites_dep(invite)
 
     for email in invite.emails:
-        email_client.send_invite_email(
-            email, "Someone Invited You to Join a Book Club!"
-        )
+        # email_client.send_invite_email(
+        #     email, "Someone Invited You to Join a Book Club!"
+        # )
+        pass
 
     if not response:
         raise HTTPException(status_code=400, detail="Unable to invite users to club")
@@ -166,6 +167,7 @@ async def invite_users_to_club(
 async def invite_users_to_club_new(
     request: Request,
     current_user: Annotated[User, Depends(get_current_active_user)],
+    background_tasks: BackgroundTasks,
     book_club_repo: BookClubCRUDRepositoryGraph = Depends(
         get_repository(repo_type=BookClubCRUDRepositoryGraph)
     ),
@@ -256,9 +258,16 @@ async def invite_users_to_club_new(
     if invite_obj.emails:
         for email in invite_obj.emails:
             if email in response:
-                if response[email] != "already_member":
-                    email_client.send_invite_email(
-                        email, "Someone Invited You to Join a Book Club!"
+                if response[email]['status'] != "already_member":
+                    print(response[email])
+                    background_tasks.add_task(
+                        email_client.send_invite_email,
+                        email,
+                        response[email]['id'],
+                        invite_obj.book_club_id,
+                        current_user.username,
+                        "Someone Invited You to Join a Book Club!",
+                        book_club_repo
                     )
 
     for item in invites:
