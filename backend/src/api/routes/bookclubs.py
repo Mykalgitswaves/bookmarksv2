@@ -223,8 +223,8 @@ async def invite_users_to_club_new(
     """
 
     data = await request.json()
-    invites = data.get("invites")
 
+    invites = data.get("invites")
     user_ids = [
         invites[item].get("user_id")
         for item in invites
@@ -237,7 +237,7 @@ async def invite_users_to_club_new(
     emails = [
         invites[item].get("email")
         for item in invites
-        if invites[item].get("email") and not invites[item].get("user_id")
+        if invites[item].get("email") and not invites[item].get("user_ids")
     ]
 
     if not user_ids and not emails:
@@ -487,6 +487,32 @@ async def decline_bookclub_invite(
     else:
         return JSONResponse(status_code=200, content={"message": "Invite declined"})
 
+
+@router.get(
+    "/{book_club_id}/members/{user_id}", name="bookclub:get_members_for_book_club
+)
+async def get_members_for_book_club(
+    book_club_id: str,
+    user_id: str,
+    current_user: Annotated[User, Depends(get_current_active_user)],
+    book_club_repo: BookClubCRUDRepositoryGraph = Depends(
+        get_repository(repo_type=BookClubCRUDRepositoryGraph)
+    ),
+) -> list:
+    """
+    Returns a list of members for a book_club
+    """
+    # We should maybe think about doing this implicitly with some decorator, since we repeat it so many places.
+    if current_user.id != user_id:
+        raise HTTPException(status_code=400, detail="Unauthorized")
+    try:
+        book_club_members = book_club_repo.get_members_for_book_club(
+            book_club_id=book_club_id, user_id=user_id
+        )
+    except:
+        raise HTTPException(status_code=420, detail="Something weirds a-foot 🫥")
+
+    return JSONResponse(content={"members": jsonable_encoder(book_club_members)})
 
 @router.get(
     "/{book_club_id}/minimal_preview/{user_id}/user", name="bookclub:minimal_preview"

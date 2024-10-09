@@ -5,7 +5,7 @@
         </template> 
 
         <template #alert-content>
-            Send your prospective members invitations either individually, by clicking the send button next to their names OR all at once by selecting multiple with the checkbox and clicking the blue "send invites" button below. 
+            Send your prospective members invitations by clicking the send button next to their names OR all at once.
         </template>
     </TextAlert>
 
@@ -16,10 +16,11 @@
                 :key="invite.id"
                 class="invite" 
                 :class="{
-                    'existing-user': invite.type === Invitation.types.existing_user
+                    'existing-user': invite.type === Invitation.types.existing_user,
+                    'created-invite': invite.user_id
                 }"
             >
-                <div class="flex items-center gap-2">
+                <div v-if="!invite.user_id" class="flex items-center gap-2">
                     <!-- Add placeholder for searched existing user here. -->
                     <SearchUserOverlay 
                         :book-club-id="route.params.bookclub" 
@@ -35,6 +36,10 @@
                         v-model="invitations[index].email" 
                     >
                 </div>
+                <!-- This means you made an invite but haven't sent it yet. -->
+                <h3 v-else class="fancy text-stone-600 text-lg">
+                    {{ invite.username }}
+                </h3>
 
                 <div class="flex gap-2">
                     <!-- Only show this if you aren't searching for a user -->
@@ -108,6 +113,7 @@ import { useRoute } from 'vue-router';
 import { Invitation, BaseInvitation } from '../../models/models';
 import { db } from  '../../../../../services/db';
 import { urls } from  '../../../../../services/urls';
+import { createConfetti } from '../../../../../services/helpers';
 import TextAlert from '@/components/feed/partials/textAlert/TextAlert.vue';
 import SearchUserOverlay from './SearchUserOverlay.vue'
 import IconSend from '@/components/svg/icon-send.vue';
@@ -139,21 +145,6 @@ const sentInvitations = ref([]);
  * @end_of_constants
  */
 
-// TODO: finish searching for user before being able to add a new one.
-
-// Not overengineering i promise. Using a computed variable to auto update truthyness of
-// whether any of our invites should see the search bar. Used for css nerdage below.
-// To give us enough room for the whole search bar.
-// const isSearchingForUser = computed(() => {
-//     let result = {};
-//     invitations.value.forEach((invite, index) => {
-//         // If they have not sent an invite and have existing_user selected
-//         result[index + 1] = !!(
-//             invite.type === Invitation.types.existing_user && invite.status === Invitation.statuses.uninvited
-//         )
-//     });
-//     return result;
-// });
 
 // These two are pretty easy to get.
 function addInvitationToForm() {
@@ -164,10 +155,18 @@ function addInvitationToForm() {
 function removeInvitationFromForm() {
     let invs = invitations.value;    
     let lastInv = invs[invs.length - 1]
-    BaseInvitation.delete(lastInv.id);
+    lastInv.delete();
     // Delete it from the instance of BaseInvitations 
     // after you remove it from the ui.
     invitations.value.pop();
+}
+
+function selectedExistingUser(user) {
+    let existingUserInvitation = new BaseInvitation();
+    existingUserInvitation.user_id = user.user_id
+    existingUserInvitation.type = Invitation.types.existing_user;
+    existingUserInvitation.username = user.user_username
+    invitations.value.push(existingUserInvitation);
 }
 
 /**
@@ -190,7 +189,6 @@ function populateInvitesForClub(invites) {
         sentInvitations.value.push(sentInvite);
     });
 }
-
 
 function cleanUpOldInvitesAndUpdateSentInvitesList(invitesMap) {
     Object.values(invitesMap).forEach(([id, invite]) => {
@@ -233,8 +231,9 @@ async function sendInvites(invite, invitations) {
 
 
     db.post(urls.bookclubs.sendInvites(), payload, null, 
-        (res) => {
-            cleanUpOldInvitesAndUpdateSentInvitesList(res.invites)
+        async (res) => {
+            await createConfetti();
+            cleanUpOldInvitesAndUpdateSentInvitesList(res.invites);
         },
         (error) => {
             error.value = error;
@@ -293,6 +292,12 @@ async function loadInvites(){
 
     &.existing-user {
         /* grid-template-columns: 16px 1fr; */
+    }
+
+    &.created-invite {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
     }
 }
 

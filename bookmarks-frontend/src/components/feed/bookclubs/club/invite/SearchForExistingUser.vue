@@ -26,12 +26,12 @@ const modelData = ref('');
 const { debounce } = helpersCtrl;
 
 function search(){
-    db.get(urls.bookclubs.searchUsersNotInClub(props.bookClubId, modelData.value), null, 
+    db.get(urls.bookclubs.searchUsersNotInClub(props.bookClubId, modelData.value), null, false, 
         (res) => {
-            emit('model-value:updated', res.users);
+            emit('model-value-updated', res.users);
         },
         (err) => {
-            console.error(err);
+            console.log(err);
         }
     );
 } 

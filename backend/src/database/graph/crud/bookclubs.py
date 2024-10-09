@@ -716,6 +716,26 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
 
         return minimal_bookclub
 
+    def get_members_for_book_club(self, book_club_id, user_id):
+        """
+        Gets a minimal bookclub
+        """
+        with self.driver.session() as session:
+            result = session.read_transaction(
+                self.get_members_for_book_club_query, 
+                book_club_id, 
+                user_id
+            )
+        return result
+    
+    def get_members_for_book_club_query(tx, book_club_id, user_id):
+        query = """
+            match(b:BookClub {id: $book_club_id})
+            optional match(member:User)-[r:IS_MEMBER_OF]->(b)
+            return member
+        """
+        result = tx.run(query, book_club_id=book_club_id)
+
     def get_owned_book_clubs(
             self,
             book_club_param: BookClubSchemas.BookClubList
@@ -1512,7 +1532,6 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
                     )
             awards.append(award)
 
-        # breakpoint()
 
         return awards
     

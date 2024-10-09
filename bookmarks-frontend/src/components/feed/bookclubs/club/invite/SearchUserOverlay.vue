@@ -12,18 +12,25 @@
         <template #overlay-header>        
             <SearchForExistingUser  
                 :book-club-id="bookClubId"
-                @model-value:updated="populateUserPreviewsFromSearch"
+                @model-value-updated="(users) => populateUserPreviewsFromSearch(users)"
             />
         </template>
+
         <template #overlay-main>
             <div class="searched-users">
-                <div v-if="searchedUsers.length">
-                    <div v-for="(user, index) in searchedUsers" :key="index" class="flex gap-2 p-5 border-2 border-indigo-300">
-                        <p>
+                <div>
+                    <div v-for="(user, index) in searchedUsers" :key="index" class="searched-user">
+                        <p class="text-lg text-stone-600 fancy mr-auto">
                             {{ user.user_username }}
                         </p>
                     
-                    <button type="button" class="btn btn-ghost" @click="$emit('selected-user', user.user_id)">select</button>
+                        <button 
+                            type="button"
+                            class="btn btn-ghost btn-tiny" 
+                            @click="selectAndCloseModal(user)"
+                        >
+                            Add invite for user
+                        </button>
                     </div>
                 </div>
             </div>
@@ -43,9 +50,7 @@ defineProps({
 });
 
 const emit = defineEmits(['user-selected']);
-
 const overlay = ref(null);
-
 
 /**
  * @constants
@@ -66,5 +71,17 @@ function openOverlay() {
     const { dialogRef } = overlay.value;
     dialogRef.showModal();
 }
+
+function selectAndCloseModal(user) {
+    emit('user-selected', user); 
+    const { dialogRef } = overlay.value;
+    dialogRef.close();
+}
 </script>
-<style scoped></style>
+<style scoped>
+.searched-user {
+    display: flex;
+    align-items: center;
+    margin: 4px;
+}
+</style>

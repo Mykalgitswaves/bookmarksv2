@@ -72,7 +72,7 @@ export const Invitation = {
 // Default for new invitations
 export class BaseInvitation {
     static invitations = []
-    
+
     constructor(invite) {
         if (!invite) {
             this.id = crypto.randomUUID();
@@ -112,3 +112,25 @@ export class BaseInvitation {
         delete this;
     };
 };
+
+const ROLES = {
+    
+};
+
+export class Member {
+
+    constructor(member) {
+        if (member) {
+            this.user_id = member.user.user_id;
+            this.username = member.user.username;
+            this.email = member.user.email;
+            this.role = member.role;
+        } else {
+            this.id = crypto.randomUUID();
+            this.email = '';
+            this.user_id = '';
+            this.role = '';
+        }
+    }
+
+}
