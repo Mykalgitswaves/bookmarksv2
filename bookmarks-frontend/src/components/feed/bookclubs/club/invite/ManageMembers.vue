@@ -30,9 +30,7 @@ const route = useRoute();
  * @loadMembersPromise
  */
 function loadMembers() {
-    debugger;
-    let url = urls.bookclubs.getMembersForBookClub(route.params.bookclub, route.params.user);
-    db.get(url, null, false, 
+    db.get(urls.bookclubs.getMembersForBookClub(route.params.bookclub, route.params.user), null, false, 
     (res) => {
         
     }, 

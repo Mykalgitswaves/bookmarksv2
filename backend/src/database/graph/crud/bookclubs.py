@@ -727,14 +727,21 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
                 user_id
             )
         return result
-    
+
+    @staticmethod
     def get_members_for_book_club_query(tx, book_club_id, user_id):
         query = """
-            match(b:BookClub {id: $book_club_id})
+            MATCH (u:User {id: $user_id})-[:OWNS_BOOK_CLUB|IS_MEMBER_OF]->(b:BookClub {id: $book_club_id})
             optional match(member:User)-[r:IS_MEMBER_OF]->(b)
             return member
         """
         result = tx.run(query, book_club_id=book_club_id)
+        
+        if not result:
+            return False
+        members = []
+        for response in result:
+            print(response)
 
     def get_owned_book_clubs(
             self,

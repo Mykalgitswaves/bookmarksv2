@@ -250,13 +250,13 @@
 </template>
 <script setup>
 import { ref, computed, watch, onMounted, toRaw, defineExpose } from 'vue';
-import { useRoute } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 import SortableBook from './SortableBook.vue';
 import IconExit from '../../svg/icon-exit.vue';
 import { db } from '../../../services/db';
-import { urls } from '../../../services/urls';
+import { urls, navRoutes } from '../../../services/urls';
 import { Bookshelves } from '../../../models/bookshelves';
-import { helpersCtrl } from '../../../services/helpers';
+import { helpersCtrl, createConfetti } from '../../../services/helpers';
 import CreateUpdateForm from '../createPosts/update/createUpdateForm.vue';
 import CreateReviewPost from '../createPosts/createReviewPost.vue'
 
@@ -289,6 +289,7 @@ const props = defineProps({
 });
 
 const route = useRoute();
+const router = useRouter();
 const { user } = route.params;
 const emit = defineEmits(['send-bookdata-socket', 'cancelled-reorder']);
 const userShelves = ref([]);
@@ -619,7 +620,38 @@ function showCreateUpdateOverlayHandler(book) {
  */
 
  function postReviewAndMoveBookToShelf() {
+    const postBookPromise = db.post(
+        urls.reviews.review, 
+        postableReviewData.value, 
+        true, 
+    (res) => {
+        console.log(res, 'succeeded')
+    },
+    (err) => {
+        console.log(err, 'something weird happend');
+    });
 
+    const moveBookToShelfPromise = db.put(
+        urls.rtc.quickAddBook(Bookshelves.FINISHED_READING.prefix), 
+        {
+            book: {
+                title: currentBookForOverlay.value.title,
+                author_names: currentBookForOverlay.value.authors,
+                small_img_url: currentBookForOverlay.value.small_img_url,
+                id: currentBookForOverlay.value.id,
+            },
+            note: '',
+        }, 
+        true,
+    );
+
+    Promise.all([postBookPromise, moveBookToShelfPromise]).then(() => {
+        createConfetti();
+        
+        setTimeout(() => {
+            router.push(navRoutes.toLoggedInFeed(route.params.user))
+        }, 1);
+    }).catch((err) => console.log(err));
  }
 
  /**

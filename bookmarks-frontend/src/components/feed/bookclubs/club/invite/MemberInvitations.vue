@@ -48,7 +48,7 @@
                         :disabled="submitting"
                         class="btn btn-ghost text-indigo-500"
                         :class="{submitting: 'btn-ghost'}"
-                        @click="sendInvites(invite)"
+                        @click="sendInvites([invite, index])"
                     >
                         <IconSend />
                     </button>
@@ -175,10 +175,14 @@ function selectedExistingUser(user) {
  * @param {*} invite 
  * @param {*} payload 
  */
-function inviteContactByType(invite, payload) {
-    invite.type === Invitation.types.email ? 
-        payload.emails.push(invite.email) :
-        payload.user_ids.push(invite.user_id);
+function inviteContactByType(invite, index, payload) {
+    if (invite.type === Invitation.types.email) {
+        payload.invites[index] = {}
+        payload.invites[index].email = invite.email
+    } else {
+        payload.invites[index] = {}
+        payload.invites[index].user_id = invite.user_id
+    }
 }
 
 function populateInvitesForClub(invites) {
@@ -212,21 +216,23 @@ function cleanUpOldInvitesAndUpdateSentInvitesList(invitesMap) {
  * @function sendInvites
  * @function loadInvites
  */
-async function sendInvites(invite, invitations) {
+async function sendInvites(inviteMatrix, invitations) {
     submitting.value = true;
     let payload = {
-        user_ids: [],
-        emails: [],
+        invites: {},
         book_club_id: route.params.bookclub,
     };
 
-    if (invite) {
-        inviteContactByType(invite, payload)
+    if (inviteMatrix) {
+        let invite = inviteMatrix[0];
+        let index = inviteMatrix[1];
+
+        inviteContactByType(invite, index, payload)
     } 
 
     // otherwise you are sending the whole form.
-    if (!invite && invitations?.length) {
-        invitations.forEach((_invite) => inviteContactByType(_invite, payload));
+    if (!inviteMatrix && invitations?.length) {
+        invitations.forEach((_invite, index) => inviteContactByType(_invite, index, payload));
     }
 
 

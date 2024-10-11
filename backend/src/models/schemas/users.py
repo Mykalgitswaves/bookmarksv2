@@ -17,13 +17,15 @@ class UserToken(BaseModel):
     username: str
     password: str
 
-class User(BaseModel):
+class BaseUser(BaseModel):
     id: str
     username: str
     email: EmailStr
-    disabled: bool
-    created_date: datetime.datetime
+    disabled: bool = False
+
+class User(BaseUser):
     profile_img_url: str = None
+    created_date: datetime.datetime
 
     @validator('created_date', pre=True, allow_reuse=True)
     def parse_neo4j_datetime(cls, v):
@@ -81,3 +83,6 @@ class UserProfileImg(BaseModel):
 
 class UserPassword(BaseModel):
     password: str
+
+class Member(BaseUser):
+    role: str

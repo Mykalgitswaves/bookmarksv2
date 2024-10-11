@@ -489,7 +489,7 @@ async def decline_bookclub_invite(
 
 
 @router.get(
-    "/{book_club_id}/members/{user_id}", name="bookclub:get_members_for_book_club
+    "/{book_club_id}/members/{user_id}", name="bookclub:get_members_for_book_club"
 )
 async def get_members_for_book_club(
     book_club_id: str,
@@ -505,12 +505,12 @@ async def get_members_for_book_club(
     # We should maybe think about doing this implicitly with some decorator, since we repeat it so many places.
     if current_user.id != user_id:
         raise HTTPException(status_code=400, detail="Unauthorized")
-    try:
-        book_club_members = book_club_repo.get_members_for_book_club(
-            book_club_id=book_club_id, user_id=user_id
-        )
-    except:
-        raise HTTPException(status_code=420, detail="Something weirds a-foot 🫥")
+    # try:
+    book_club_members = book_club_repo.get_members_for_book_club(
+        book_club_id=book_club_id, user_id=user_id
+    )
+    # except:
+    #     raise HTTPException(status_code=420, detail="Something weirds a-foot 🫥")
 
     return JSONResponse(content={"members": jsonable_encoder(book_club_members)})
 
