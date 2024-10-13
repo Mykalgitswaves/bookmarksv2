@@ -716,6 +716,50 @@ async def get_club_feed(
     return JSONResponse(status_code=200, content={"posts": jsonable_encoder(posts)})
 
 
+@router.delete("/{book_club_id}/remove_member", name="bookclub:remove_member_from_book_club")
+async def remove_member_from_book_club(
+    book_club_id: str,
+    request: Request,
+    current_user: Annotated[User, Depends(get_current_active_user)],
+    background_tasks: BackgroundTasks,
+    book_club_repo: BookClubCRUDRepositoryGraph = Depends(
+        get_repository(repo_type=BookClubCRUDRepositoryGraph)
+    ),
+) -> None:
+    """
+    For owners of a book_club, allow them to remove members of their book_club.
+    Args: 
+        request: {
+            user_id: str,
+            #the id of a user who is going to be removed from club.
+        }
+    Returns:
+        200 response
+
+    Raises:
+        400 if user is not the club admin
+    """
+
+    data = await request.json()
+    member_id_to_remove = data.get('user_id')
+    
+    if current_user and member_id_to_remove and book_club_id:
+        try:
+            deleted_relationship_count = book_club_repo.remove_member_from_book_club(
+                acting_user_id=current_user.id, 
+                member_id_to_remove=member_id_to_remove,
+                book_club_id=book_club_id,        
+            )
+            if deleted_relationship_count:
+                return JSONResponse(
+                    status_code=200, content={"data": f"Removed {int(deleted_relationship_count)} members from club"}
+                )
+        except:
+            raise HTTPException(status_code=400, detail='Something STRANGE just happened, we are looking into it on our end.')
+    else:
+        raise HTTPException(status_code=500, detail='dude, we NEED a user_id to remove.')
+
+
 ### Currently Reading Settings Page ########################################################################################
 
 

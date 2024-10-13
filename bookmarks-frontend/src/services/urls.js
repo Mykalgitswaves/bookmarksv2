@@ -130,6 +130,8 @@ export const urls = {
             (baseUrl + `api/bookclubs/${bookClubId}/search/users/${searchParam}`),
         getMembersForBookClub: (bookclub_id, user_id) => 
             (baseUrl + `api/bookclubs/${bookclub_id}/members/${user_id}`),
+        // DANGER DUDE
+        removeMemberFromBookClub: (bookclub_id) => (baseUrl + `api/bookclubs/${bookclub_id}/remove_member`)
     }
 }
 

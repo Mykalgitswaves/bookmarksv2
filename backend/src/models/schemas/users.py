@@ -84,5 +84,11 @@ class UserProfileImg(BaseModel):
 class UserPassword(BaseModel):
     password: str
 
+#@klyearbide TODO: We should define these things 
+MEMBER_ROLES = [
+    ('ADMIN', 'admin'),
+    ('READER', 'reader'),
+]
+
 class Member(BaseUser):
-    role: str
+    role: str | None

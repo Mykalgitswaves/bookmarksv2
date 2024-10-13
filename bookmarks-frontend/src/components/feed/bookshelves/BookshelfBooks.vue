@@ -611,7 +611,7 @@ function showCreateUpdateOverlayHandler(book) {
 
  function updatePostableDataHandler(updatedpostableData) {
     postableReviewData.value = updatedpostableData;
- }
+ };
 
  /**
  * --------------------------------------------------------------------------------------
@@ -645,14 +645,14 @@ function showCreateUpdateOverlayHandler(book) {
         true,
     );
 
+    // Confetti, then reroute to the posted book review.
     Promise.all([postBookPromise, moveBookToShelfPromise]).then(() => {
         createConfetti();
-        
         setTimeout(() => {
-            router.push(navRoutes.toLoggedInFeed(route.params.user))
+            router.push(navRoutes.toLoggedInFeed(route.params.user));
         }, 1);
     }).catch((err) => console.log(err));
- }
+ };
 
  /**
   * end of functions

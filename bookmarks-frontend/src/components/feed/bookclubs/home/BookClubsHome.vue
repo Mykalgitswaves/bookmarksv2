@@ -1,7 +1,7 @@
 <template>
-    <div>
+    <div class="">
         <h1 class="text-4xl fancy text-stone-700 mb-10 mt-10 ml_20_px">Bookclubs</h1>
-        <div class="bookclubs-list">
+        <div class="bookclubs">
             <h2 class="text-2xl fancy text-stone-600">Clubs you've joined</h2>
 
             <div v-if="loaded">
@@ -21,10 +21,10 @@
             </div>
         </div>
 
-        <div class="bookclubs-list">
+        <div class="bookclubs">
             <h2 class="fancy text-2xl text-stone-600 mb-5">Clubs you own</h2>  
             
-            <div v-if="loaded" class="mb-5 mt-5">
+            <div v-if="loaded" class="mb-5 mt-5 bookclubs-list">
                 <BookClubPreview 
                     v-for="bookclub in bookClubsOwnedByCurrentUser"
                     :bookclub="bookclub"
@@ -124,16 +124,17 @@ loadClubsCreatedByUser();
  */
 </script>
 <style scoped>
-.bookclubs-list {
+.bookclubs {
     padding: 14px; 
     border-radius: var(--radius-md);
     border: 1px solid var(--stone-300);
     max-width: 768px;
     margin-top: 14px;
     margin-bottom: 14px;
-    margin-left: 20px;
-    margin-right: 20px;
+    margin-left: 40px;
+    margin-right: 40px;
     min-height: 100px;
+
     & .toolbar {
         border-top: 1px solid var(--stone-300);
         padding-top: 14px;
@@ -141,6 +142,11 @@ loadClubsCreatedByUser();
         align-items: center;
         justify-content: start;
         column-gap: 14px;
+    }
+
+    .bookclubs-list {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
     }
 }
 

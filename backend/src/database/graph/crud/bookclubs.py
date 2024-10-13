@@ -5,6 +5,7 @@ from typing import List
 from src.database.graph.crud.base import BaseCRUDRepositoryGraph
 from src.models.schemas import bookclubs as BookClubSchemas
 from src.models.schemas.books import BookPreview
+from src.models.schemas.users import Member 
 
 class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
     def create_bookclub(
@@ -732,16 +733,61 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
     def get_members_for_book_club_query(tx, book_club_id, user_id):
         query = """
             MATCH (u:User {id: $user_id})-[:OWNS_BOOK_CLUB|IS_MEMBER_OF]->(b:BookClub {id: $book_club_id})
-            optional match(member:User)-[r:IS_MEMBER_OF]->(b)
-            return member
+            MATCH(member:User {disabled: False})-[r:IS_MEMBER_OF]->(b)
+                return member.id as id, 
+                    member.username as username,
+                    member.email as email
         """
-        result = tx.run(query, book_club_id=book_club_id)
-        
+
+        result = tx.run(query, book_club_id=book_club_id, user_id=user_id)
         if not result:
             return False
+
         members = []
-        for response in result:
-            print(response)
+
+        for record in result:
+            member = Member(
+                id=record['id'],
+                username=record['username'],
+                email=record['email'],
+            )
+            members.append(member)
+        return members
+
+    def remove_member_from_book_club(self, acting_user_id, member_id_to_remove, book_club_id):
+        """
+        ADMIN ONLY: Removes a member from a book_club
+        """
+        with self.driver.session() as session:
+            result = session.write_transaction(
+                self.remove_member_from_book_club_query, 
+                acting_user_id=acting_user_id,
+                member_id_to_remove=member_id_to_remove,
+                book_club_id=book_club_id,
+            )
+        return result
+
+    @staticmethod
+    def remove_member_from_book_club_query(tx, acting_user_id, member_id_to_remove, book_club_id) -> int:
+        query = """
+            MATCH (u:User {id: $acting_user_id})-[:OWNS_BOOK_CLUB]-(bc:BookClub {id: $book_club_id})
+            OPTIONAL MATCH (bc)<-[rr:IS_MEMBER_OF]-(memberToRemove: User {id: $member_id_to_remove})
+            WITH rr
+            WHERE rr IS NOT NULL
+            DELETE rr
+            RETURN COUNT(rr) AS relationshipsDeleted
+        """
+        
+        result = tx.run(query,
+            acting_user_id=acting_user_id,
+            member_id_to_remove=member_id_to_remove,
+            book_club_id=book_club_id
+        )
+        if result.peek():
+            record = result.single()
+            return record.get('relationshipsDeleted')
+        else:
+            return FALSE
 
     def get_owned_book_clubs(
             self,
@@ -985,7 +1031,7 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
     ):
         query = """
             MATCH (u:User {id: $user_id})-[:OWNS_BOOK_CLUB]->(bc:BookClub {id: $book_club_id})
-            OPTIONAL MATCH (invited_user:User)-[]->(i:BookClubInvite)-[:INVITE_FOR]->(bc)
+            MATCH (invited_user:User)-[]->(i:BookClubInvite)-[:INVITE_FOR]->(bc)
             RETURN invited_user.id as invited_user_id,
                 invited_user.username as invited_user_username,
                 invited_user.email as invited_user_email,
