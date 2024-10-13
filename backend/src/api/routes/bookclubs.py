@@ -13,7 +13,7 @@ from src.database.graph.crud.books import BookCRUDRepositoryGraph
 from src.database.graph.crud.bookclubs import BookClubCRUDRepositoryGraph
 from src.database.graph.crud.users import UserCRUDRepositoryGraph
 from src.models.schemas import bookclubs as BookClubSchemas
-from src.models.schemas.users import User
+from src.models.schemas.users import User, UserId
 from src.securities.authorizations.verify import get_current_active_user
 from src.utils.helpers.email.email_client import email_client
 
@@ -721,7 +721,6 @@ async def remove_member_from_book_club(
     book_club_id: str,
     request: Request,
     current_user: Annotated[User, Depends(get_current_active_user)],
-    background_tasks: BackgroundTasks,
     book_club_repo: BookClubCRUDRepositoryGraph = Depends(
         get_repository(repo_type=BookClubCRUDRepositoryGraph)
     ),
@@ -729,10 +728,9 @@ async def remove_member_from_book_club(
     """
     For owners of a book_club, allow them to remove members of their book_club.
     Args: 
-        request: {
-            user_id: str,
-            #the id of a user who is going to be removed from club.
-        }
+        request: A request object that contains the following fields:
+            user_id (str): the id of a user who is going to be removed from club.
+        
     Returns:
         200 response
 
@@ -741,23 +739,27 @@ async def remove_member_from_book_club(
     """
 
     data = await request.json()
-    member_id_to_remove = data.get('user_id')
+    try:
+        member_id_to_remove = UserId(id=data.get('user_id'))
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
     
-    if current_user and member_id_to_remove and book_club_id:
-        try:
-            deleted_relationship_count = book_club_repo.remove_member_from_book_club(
-                acting_user_id=current_user.id, 
-                member_id_to_remove=member_id_to_remove,
-                book_club_id=book_club_id,        
-            )
-            if deleted_relationship_count:
-                return JSONResponse(
-                    status_code=200, content={"data": f"Removed {int(deleted_relationship_count)} members from club"}
-                )
-        except:
-            raise HTTPException(status_code=400, detail='Something STRANGE just happened, we are looking into it on our end.')
+   
+    # try:
+    deleted_relationship_count = book_club_repo.delete_member_from_book_club(
+        current_user_id=current_user.id, 
+        member_id_to_remove=member_id_to_remove.id,
+        book_club_id=book_club_id,        
+    )
+    if deleted_relationship_count:
+        return JSONResponse(
+            status_code=200, content={"content": "member removed"}
+        )
     else:
-        raise HTTPException(status_code=500, detail='dude, we NEED a user_id to remove.')
+        raise HTTPException(status_code=401, detail='Unauthorized')
+        
+    # except:
+    #     raise HTTPException(status_code=400, detail='Something STRANGE just happened, we are looking into it on our end.')
 
 
 ### Currently Reading Settings Page ########################################################################################

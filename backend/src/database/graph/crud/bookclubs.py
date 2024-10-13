@@ -792,40 +792,51 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
             members.append(member)
         return members
 
-    def remove_member_from_book_club(self, acting_user_id, member_id_to_remove, book_club_id):
+    def delete_member_from_book_club(
+            self, 
+            current_user_id:str, 
+            member_id_to_remove:str, 
+            book_club_id:str):
         """
-        ADMIN ONLY: Removes a member from a book_club
+        Removes a member from a book club. Can only be done by the owner of the 
+        book club
+
+        Args:
+            current_user_id (str): The id of the user performing the action
+            member_id_to_remove (str): The id of the user to remove
+            book_club_id (str): The id of the book club to remove the user from
+
+        Returns:
+            bool: True if the user was removed, False otherwise
         """
         with self.driver.session() as session:
             result = session.write_transaction(
-                self.remove_member_from_book_club_query, 
-                acting_user_id=acting_user_id,
+                self.delete_member_from_book_club_query, 
+                current_user_id=current_user_id,
                 member_id_to_remove=member_id_to_remove,
                 book_club_id=book_club_id,
             )
         return result
 
     @staticmethod
-    def remove_member_from_book_club_query(tx, acting_user_id, member_id_to_remove, book_club_id) -> int:
+    def delete_member_from_book_club_query(tx, current_user_id, member_id_to_remove, book_club_id) -> int:
         query = """
-            MATCH (u:User {id: $acting_user_id})-[:OWNS_BOOK_CLUB]-(bc:BookClub {id: $book_club_id})
-            OPTIONAL MATCH (bc)<-[rr:IS_MEMBER_OF]-(memberToRemove: User {id: $member_id_to_remove})
-            WITH rr
-            WHERE rr IS NOT NULL
-            DELETE rr
-            RETURN COUNT(rr) AS relationshipsDeleted
+            MATCH (u:User {id: $current_user_id})-[:OWNS_BOOK_CLUB]-(bc:BookClub {id: $book_club_id})
+            MATCH (bc)<-[rr:IS_MEMBER_OF]-(memberToRemove:User {id: $member_id_to_remove})
+            OPTIONAL MATCH (memberToRemove)-[r:IS_READING_FOR_CLUB]->(book:BookClubBook)
+            DELETE rr, r
+            RETURN memberToRemove.id
         """
         
         result = tx.run(query,
-            acting_user_id=acting_user_id,
+            current_user_id=current_user_id,
             member_id_to_remove=member_id_to_remove,
             book_club_id=book_club_id
         )
-        if result.peek():
-            record = result.single()
-            return record.get('relationshipsDeleted')
+        if result:
+            return True
         else:
-            return FALSE
+            return False
 
     def get_owned_book_clubs(
             self,

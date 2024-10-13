@@ -636,5 +636,19 @@ class TestBookClubs:
         response = requests.get(endpoint, headers=headers, params=query_params)
         print(response.json())
         assert response.status_code == 200, "Getting awards"
+
+    def test_deleting_member(self):
+        headers = {"Authorization": f"{self.token_type} {self.access_token}"}
+
+        endpoint = (
+            f"{self.endpoint}/api/bookclubs/{self.book_club_id}/"
+            "remove_member")
+        
+        data = {
+            "user_id": self.user_id_2
+        }
+
+        response = requests.delete(endpoint, headers=headers, json=data)
+        assert response.status_code == 200, "Deleting Member"
         time.sleep(10)
 
