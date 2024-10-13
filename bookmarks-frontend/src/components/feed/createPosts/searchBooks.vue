@@ -24,7 +24,9 @@
     </form>
 
     <BookSearchResults 
-      class="max-w-[600px] mx-auto" 
+      :style="maxHeight ? `max-height: ${maxHeight}; overflow-y: scroll;`: ''"
+      :class="{'max-w-[600px]': !isMaxWidthUnset}"
+      class="mx-auto" 
       :data="books" 
       :is-auth="true"
       :is-comparison="props.isComparison"
@@ -32,7 +34,7 @@
     />
 </template>
 <script setup>
-import { ref, computed, watch } from 'vue';
+import { ref, computed, watch, useAttrs } from 'vue';
 import BookSearchResults from '../../create/booksearchresults.vue';
 import { db } from '../../../services/db';
 import { urls } from '../../../services/urls';
@@ -54,6 +56,10 @@ const props = defineProps({
     type: Function,
     default: () => '',
     required: false,
+  },
+  maxHeight: {
+    type: String,
+    required: false,
   }
 });
 
@@ -62,6 +68,9 @@ const { debounce } = helpersCtrl;
 const searchResultsArray = ref(null);
 const book = ref(null);
 const inputRef = ref([]);
+
+const attrs = useAttrs();
+const isMaxWidthUnset = !!Object.keys(attrs).includes('max-width-unset')
 
 async function searchBooks(e) {
   searchResultsArray.value = await db.get(urls.create.searchBook(e.target.value))

@@ -131,7 +131,8 @@ export const urls = {
         getMembersForBookClub: (bookclub_id, user_id) => 
             (baseUrl + `api/bookclubs/${bookclub_id}/members/${user_id}`),
         // DANGER DUDE
-        removeMemberFromBookClub: (bookclub_id) => (baseUrl + `api/bookclubs/${bookclub_id}/remove_member`)
+        removeMemberFromBookClub: (bookclub_id) => (baseUrl + `api/bookclubs/${bookclub_id}/remove_member`),
+        getCurrentlyReadingForClub: (bookclub_id) => (baseUrl + `api/bookclubs/${bookclub_id}/currently_reading`)
     }
 }
 
@@ -146,6 +147,8 @@ export const navRoutes = {
     toCreateClubPage: (current_user) => (`/feed/${current_user}/bookclubs/create/`),
     toBookClubFeed: (current_user, bookclub_id) => (`/feed/${current_user}/bookclubs/${bookclub_id}/`),
     // Used for component routing inside of bookclubs app.
+    toSetCurrentlyReadingPage: (current_user, bookclub_id) => 
+        (`/feed/${current_user}/bookclubs/${bookclub_id}/settings/currently-reading/set`),
     bookClubSettingsCurrentlyReading: (current_user, bookclub_id) => 
         (`/feed/${current_user}/bookclubs/${bookclub_id}/settings/currently-reading`),
     bookClubSettingsManageMembersIndex: (current_user, bookclub_id) => 

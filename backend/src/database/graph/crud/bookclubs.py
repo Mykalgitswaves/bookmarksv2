@@ -376,7 +376,45 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
             return response["book_club_id"]
         else:
             return False
-        
+    
+    def get_currently_reading_book_or_none(
+        self,
+        user_id: str,
+        book_club_id: str,
+    ):
+        with self.driver.session() as session:
+            result = session.read_transaction(
+                self.get_currently_reading_book_or_none_query,
+                user_id=user_id,
+                book_club_id=book_club_id,
+            )
+        return result
+    
+    @staticmethod
+    def get_currently_reading_book_or_none_query(tx, user_id, book_club_id):
+        query = """
+        MATCH (u:User {id: $user_id})-[:IS_MEMBER_OF]->(bc:BookClub {id: $book_club_id})
+        OPTIONAL MATCH (bc)-[:CURRENTLY_READING]->(currentlyReadingBook:Book)
+        RETURN currentlyReadingBook
+        """
+
+        result = tx.run(
+            query,
+            user_id=user_id,
+            book_club_id=book_club_id,
+        )
+
+        if result.peek():
+            record = result.single()
+            current_book = BookClubSchemas.BookClubCurrentlyReading(
+                book_id=record.get("currentlyReadingBook.id"),
+                title=record.get("currentlyReadingBook.title"),
+                small_img_url=record.get("currentlyReadingBook.small_img_url"),
+            )
+            return current_book
+        else:
+            return None
+
     def create_currently_reading_club(
             self,
             currently_reading_obj: BookClubSchemas.StartCurrentlyReading

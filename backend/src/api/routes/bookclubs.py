@@ -762,7 +762,24 @@ async def remove_member_from_book_club(
 
 ### Currently Reading Settings Page ########################################################################################
 
+@router.get("/{book_club_id}/currently_reading", name="bookclub:get_currently_reading")
+async def get_currently_reading(
+    book_club_id: str,
+    current_user: Annotated[User, Depends(get_current_active_user)],
+    book_club_repo: BookClubCRUDRepositoryGraph = Depends(
+        get_repository(repo_type=BookClubCRUDRepositoryGraph)
+    ),
+):
+    """
+    basic endpoint to grab a book clubs currently reading shelf if it exists.
+    """
 
+    currently_reading_book = book_club_repo.get_currently_reading_book_or_none(
+        user_id=current_user.id,
+        book_club_id=book_club_id,
+    )  
+    return JSONResponse(status_code=200, content={"currently_reading_book": jsonable_encoder(currently_reading_book)})
+    
 @router.post("/{book_club_id}/currently_reading/start", name="bookclub:start_book")
 async def start_book_for_club(
     book_club_id: str,
