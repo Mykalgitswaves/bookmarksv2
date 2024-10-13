@@ -1101,7 +1101,7 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
                         invited_user={
                             "id": record["invited_user_id"],
                             "username": record.get('invited_user_username', ''),
-                            "email":record.get('invited_user_email', '')
+                            "email":record.get('invited_user_email', 'no email for this invite'),
                         },
                         datetime_invited=record["datetime_invited"],
                     )

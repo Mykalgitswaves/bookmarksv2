@@ -27,6 +27,8 @@
             </div>
         </TransitionGroup>
     </section>
+    
+    <div class="mobile-menu-spacer sm:hidden"></div>
 </template>
 <script setup>
 import { db } from '../../../../services/db';

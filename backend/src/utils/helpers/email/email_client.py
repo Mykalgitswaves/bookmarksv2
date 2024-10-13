@@ -1,4 +1,5 @@
 from email.mime.text import MIMEText
+from jinja2 import Template, Environment, FileSystemLoader
 import smtplib
 
 from src.config.config import settings
@@ -12,6 +13,7 @@ class EmailClient:
         self.mail_password = settings.MAIL_PASSWORD
         self.mail_from = settings.MAIL_FROM
         self.mail_from_name = settings.MAIL_FROM_NAME
+        self.template_loader = FileSystemLoader('./src/utils/helpers/email/templates/')
 
     def send_invite_email(
             self, 
@@ -25,44 +27,37 @@ class EmailClient:
         response = book_club_repo.get_book_club_name_and_current_book(
             book_club_id)
         
+        with open("./src/utils/helpers/email/templates/invite.html", "r") as file:
+            template_str = file.read()
+        
+        jinja_template = Environment(loader=self.template_loader).from_string(template_str)
         book_club_name = response['book_club_name']
-
+        # jinja_template = Template(template_str)
+        
         if response['book_club_name'] is None:
             raise ValueError("Book club not found")
+        
+        email_context = {
+            'invite_user_username': invite_user_username,
+            'book_club_name': book_club_name,
+            'invite_id': invite_id,
+        }
 
         if response['current_book'] is None:
-            invite_body = f"""
-            <html>
-                <body>
-                    <p>Hi,</p>
-                    <p>{invite_user_username} have been invited to join {book_club_name}.</p>
-                    <p>Please click the link below to register.</p>
-                    <a href="hardcoverlit.com/{invite_id}">Click here to register</a>
-                    <p>Thanks</p>
-                </body>
-            </html>
-            """
-        else:
-            current_book_title = response['current_book'].title
-            current_book_img = response['current_book'].small_img_url
-            current_book_authors = ", ".join(response['current_book'].author_names)
-            
-            invite_body = f"""
-            <html>
-                <body>
-                    <p>Hi,</p>
-                    <p>{invite_user_username} have been invited to join {book_club_name}.</p>
-                    <p>They are reading {current_book_title} by {current_book_authors}.</p>
-                    <p>Please click the link below to register.</p>
-                    <a href="hardcoverlit.com/{invite_id}">Click here to register</a>
-                    <p>Thanks</p>
-                </body>
-            </html>
-            """
+            email_context['current_book'] = False
+            email_content = jinja_template.render(email_context)
 
-        print(invite_body)
+        else:
+            email_context['current_book'] = True
+            email_context['current_book_title'] = response['current_book'].title
+            email_context['current_book_img'] = response['current_book'].small_img_url
+            email_context['current_book_authors'] = ", ".join(response['current_book'].author_names)
+
+            email_content = jinja_template.render(email_context)
+
+        print(email_content)
         
-        msg = MIMEText(invite_body, 'html')
+        msg = MIMEText(email_content, 'html')
         msg['Subject'] = subject
         msg['From'] = f"{self.mail_from_name} <{self.mail_from}>"
         msg['To'] = to_email
