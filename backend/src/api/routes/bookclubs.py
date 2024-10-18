@@ -1,9 +1,10 @@
-from datetime import datetime
+from datetime import datetime, timezone
 import fastapi
 from fastapi import HTTPException, Depends, BackgroundTasks, Query, Request
 from fastapi.encoders import jsonable_encoder
 from fastapi.responses import JSONResponse
 from typing import Annotated, Optional, List, Any, Mapping
+from neo4j.time import DateTime
 
 from src.api.background_tasks.google_books import google_books_background_tasks
 from src.api.utils.database import get_repository
@@ -817,10 +818,12 @@ async def start_book_for_club(
     data = await request.json()
 
     try:
+        expected_finish_datetime = datetime.fromisoformat(data.get("expected_finish_date"))
+        if expected_finish_datetime.tzinfo is None:
+            expected_finish_datetime = expected_finish_datetime.replace(tzinfo=timezone.utc)
+
         start_currently_reading = BookClubSchemas.StartCurrentlyReading(
-            expected_finish_date=datetime.fromisoformat(
-                data.get("expected_finish_date")
-            ),
+            expected_finish_date=expected_finish_datetime,
             book=data.get("book"),
             user_id=current_user.id,
             id=book_club_id,
@@ -841,10 +844,8 @@ async def start_book_for_club(
         )
         if canonical_book:
             book_exists = True
-            start_currently_reading.book["id"].book = {
-                "id": canonical_book.id,
-                "chapters": start_currently_reading.book["chapters"],
-            }
+            start_currently_reading.book['id'] = canonical_book.id
+            start_currently_reading.book['chapters'] = start_currently_reading.book["chapters"]
 
     if book_exists:
         result = book_club_repo.create_currently_reading_club(start_currently_reading)
@@ -1130,3 +1131,38 @@ async def delete_award(
         raise HTTPException(
             status_code=404, 
             detail="award not found")
+
+# TODO: Don't allow anyone else to use these but michael and kyle
+# TEST ENDPOINTS FOR EMAIL STUFF
+
+@router.get("/{book_club_id}/preview_emails/{email_type}", name='bookclubs:test_emails')
+async def test_emails(
+    book_club_id: str,
+    current_user: Annotated[User, Depends(get_current_active_user)],
+    book_club_repo: BookClubCRUDRepositoryGraph = Depends(
+        get_repository(repo_type=BookClubCRUDRepositoryGraph)
+    ),
+    email_type: str = 'invite',
+):  
+    # ONlY MICHAEL CAN VIEW FOR NOW? 
+    if current_user.id != 'a0f86d40-4915-4773-8aa1-844d1bfd0b41':
+        return HTTPException(status_code=400, detail='YOU CANT DO THAT BECAUSE YOU ARENT MICHAEL OR KYLE')
+    # Maybe think about other places we want to test this shit?
+    if email_type == 'invite':
+        invites = book_club_repo.get_invites_for_book_club(
+            book_club_id=book_club_id, user_id=current_user.id
+        )
+
+        preview_invite = invites[0] 
+        if preview_invite is None:
+            raise HTTPException(status_code=300, detail='No invites for this club have been created')
+        email = email_client.send_invite_email(
+                to_email=preview_invite.invited_user['email'],
+                invite_id=preview_invite.invite_id,
+                book_club_id=book_club_id,
+                invite_user_username=current_user.username,
+                subject="Someone Invited You to Join a Book Club!",
+                book_club_repo=book_club_repo,
+                is_debug=True
+        )
+        return JSONResponse(status_code=200, content={'email': jsonable_encoder(email)})

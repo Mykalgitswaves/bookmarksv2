@@ -22,6 +22,9 @@
                 :book="club.currently_reading_book" 
                 @currently-reading-settings=""
             />
+            
+            <!-- Sticky toolbar containing buttons for creating and filtering posts -->
+            <BookClubFeedActions :book="club.currently_reading_book" :club="club" />
 
             <div v-if="loaded">
                 <!-- index for now until we can grab the id from the updates -->
@@ -35,6 +38,7 @@
 </template>
 <script setup>
 import CurrentlyReadingBook from './CurrentlyReadingBook.vue';
+import BookClubFeedActions from './BookClubFeedActions.vue';
 import ClubPost from './posts/ClubPost.vue';
 import { ref } from 'vue';
 import { db } from '../../../../services/db';

@@ -130,9 +130,14 @@ export const urls = {
             (baseUrl + `api/bookclubs/${bookClubId}/search/users/${searchParam}`),
         getMembersForBookClub: (bookclub_id, user_id) => 
             (baseUrl + `api/bookclubs/${bookclub_id}/members/${user_id}`),
+        getCurrentlyReadingForClub: (bookclub_id) => (baseUrl + `api/bookclubs/${bookclub_id}/currently_reading`),
+        setCurrentlyReadingBook: (bookclub_id) => (baseUrl + `api/bookclubs/${bookclub_id}/currently_reading/start`),
+        getPaceForReadersInClub: (bookclub_id) => (baseUrl + `api/bookclubs/${bookclub_id}/user_pace`),
+        previewEmailInvitesForClub: (bookclub_id, type) => (baseUrl + `api/bookclubs/${bookclub_id}/preview_emails/${type}`),
         // DANGER DUDE
         removeMemberFromBookClub: (bookclub_id) => (baseUrl + `api/bookclubs/${bookclub_id}/remove_member`),
-        getCurrentlyReadingForClub: (bookclub_id) => (baseUrl + `api/bookclubs/${bookclub_id}/currently_reading`)
+        // INVITE STUFF
+        loadClubDataForInvite: (bookclub_id) => (baseUrl + `api/bookclubs/${bookclub_id}/club_for_invite`),
     }
 }
 

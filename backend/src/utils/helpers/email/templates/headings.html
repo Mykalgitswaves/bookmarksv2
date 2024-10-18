@@ -1,0 +1,31 @@
+{% macro large(text='', color='#404040', is_fancy=true) -%}
+    <h2 style="
+        font-family: 
+            {% if is_fancy %}
+                {{ styles.font_family.fancy }}
+            {% else %}
+                {{ styles.font_family.base }}  
+            {% endif %};
+        font-size: {{ styles.font_sizes.lg }};
+        color: {{ color }};
+        font-weight: 500;
+    ">
+        {{ text }}
+    </h2>
+{%- endmacro %}
+
+{% macro extra_large(text='', color='#404040', is_fancy=true) -%}
+    <h2 style="
+        font-family: 
+            {% if is_fancy %}
+                {{ styles.font_family.fancy }}
+            {% else %}
+                {{ styles.font_family.base }}  
+            {% endif %};
+        font-size: {{ styles.font_sizes['2xl'] }};
+        color: {{ color }};
+        font-weight: 500;
+    ">
+        {{ text }}
+    </h2>
+{%- endmacro %}

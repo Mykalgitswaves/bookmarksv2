@@ -134,7 +134,7 @@ class BookClubPaces(BaseModel):
     total_chapters: int
 
 class StartCurrentlyReading(BaseModel):
-    expected_finish_date: datetime
+    expected_finish_date: datetime 
     book: dict
     user_id: str
     id: str

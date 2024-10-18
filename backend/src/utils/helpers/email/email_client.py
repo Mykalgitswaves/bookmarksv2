@@ -4,6 +4,7 @@ import smtplib
 
 from src.config.config import settings
 from src.database.graph.crud.bookclubs import BookClubCRUDRepositoryGraph
+from src.utils.helpers.email.templates.style_variables import styles
 
 class EmailClient:
     def __init__(self):
@@ -22,10 +23,12 @@ class EmailClient:
             book_club_id:str,
             invite_user_username:str,
             subject:str,
-            book_club_repo:BookClubCRUDRepositoryGraph):
+            book_club_repo:BookClubCRUDRepositoryGraph,
+            is_debug: bool = False):
 
         response = book_club_repo.get_book_club_name_and_current_book(
-            book_club_id)
+            book_club_id
+        )
         
         with open("./src/utils/helpers/email/templates/invite.html", "r") as file:
             template_str = file.read()
@@ -36,11 +39,12 @@ class EmailClient:
         
         if response['book_club_name'] is None:
             raise ValueError("Book club not found")
-        
+
         email_context = {
             'invite_user_username': invite_user_username,
             'book_club_name': book_club_name,
             'invite_id': invite_id,
+            'styles': styles,
         }
 
         if response['current_book'] is None:
@@ -61,10 +65,13 @@ class EmailClient:
         msg['Subject'] = subject
         msg['From'] = f"{self.mail_from_name} <{self.mail_from}>"
         msg['To'] = to_email
-
-        with smtplib.SMTP_SSL(self.mail_server, self.mail_port) as smtp_server:
-            smtp_server.login(self.mail_from, self.mail_password)
-            smtp_server.sendmail(self.mail_from, to_email, msg.as_string())
-            print("Message sent!")
+        
+        if not is_debug:
+            with smtplib.SMTP_SSL(self.mail_server, self.mail_port) as smtp_server:
+                smtp_server.login(self.mail_from, self.mail_password)
+                smtp_server.sendmail(self.mail_from, to_email, msg.as_string())
+                print("Message sent!")
+        else: 
+            return email_content
 
 email_client = EmailClient()

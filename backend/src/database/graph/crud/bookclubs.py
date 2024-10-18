@@ -394,7 +394,7 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
     def get_currently_reading_book_or_none_query(tx, user_id, book_club_id):
         query = """
         MATCH (u:User {id: $user_id})-[:IS_MEMBER_OF]->(bc:BookClub {id: $book_club_id})
-        OPTIONAL MATCH (bc)-[:CURRENTLY_READING]->(currentlyReadingBook:Book)
+        OPTIONAL MATCH (bc)-[:CURRENTLY_READING]->(currentlyReadingBook:BookClubBook)
         RETURN currentlyReadingBook
         """
 
@@ -459,18 +459,19 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
             RETURN bc_book.id as book_club_book_id
             """
         )
-
+        
+        expected_finish_date = Neo4jDateTime.from_native(currently_reading_obj.expected_finish_date)
         result = tx.run(
             query,
             user_id=currently_reading_obj.user_id,
             book_club_id=currently_reading_obj.id,
             book_id=currently_reading_obj.book['id'],
             chapters=currently_reading_obj.book['chapters'],
-            finish_date=currently_reading_obj.expected_finish_date
+            finish_date=expected_finish_date,
         )
 
         response = result.single()
-        return response.get("book_club_book_id") is not None
+        return response is not None
     
     def create_currently_reading_club_and_book(
             self,
@@ -506,7 +507,7 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
                 small_img_url:$small_img_url, 
                 author_names: $author_names
             })
-            WITH u, b
+            WITH u, b, book
             WHERE NOT EXISTS {
                 MATCH (b)-[:IS_READING]->(:BookClubBook)
             }
@@ -545,7 +546,7 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
         )
 
         response = result.single()
-        return response.get("book_club_book_id") is not None
+        return response is not None
     
     def create_update_post(
             self,

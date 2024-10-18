@@ -3,6 +3,7 @@ import requests
 import json
 import time
 from datetime import datetime, timezone
+from bs4 import BeautifulSoup
 
 @pytest.fixture(scope="class")
 def setup_class(request):

@@ -38,7 +38,7 @@
     <MemberInvitations v-if="currentView === views.invitations" />
 
     <ManageMembers v-if="currentView === views.manageMembers" />
-
+    
     <div class="mobile-menu-spacer sm:hidden"></div>
 </template>
 <script setup>

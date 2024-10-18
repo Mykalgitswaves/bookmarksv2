@@ -81,6 +81,13 @@
                 >
                 Send all invites
             </button>   
+
+            <button 
+                class="btn btn-tiny btn-green text-sm"
+                type="button"
+                @click="previewEmailInvite">
+                Preview an invite email
+            </button>
         </div>
     </TransitionGroup>
     </form>
@@ -106,6 +113,12 @@
 
         <div v-else class="gradient fancy text-center text-xl loading-box">loading invitations</div>
     </Transition>
+
+    <Overlay ref="previewOverlay" v-if="!!previewEmailHTML">
+        <template #overlay-main>
+            <div v-html="previewEmailHTML"></div>
+        </template>
+    </Overlay>
 </template>
 <script setup>
 import { ref } from 'vue';
@@ -118,6 +131,7 @@ import TextAlert from '@/components/feed/partials/textAlert/TextAlert.vue';
 import SearchUserOverlay from './SearchUserOverlay.vue'
 import IconSend from '@/components/svg/icon-send.vue';
 import IconTrash from '@/components/svg/icon-trash.vue';
+import Overlay from '@/components/feed/partials/overlay/Overlay.vue';
 
 const props = defineProps({
     memberData: {
@@ -134,6 +148,9 @@ const submitting = ref(false);
 const isShowingSearchOverlay = ref(false);
 const route = useRoute()
 
+const previewEmailHTML = ref('');
+const previewOverlay = ref(null);
+
 const invitation = new BaseInvitation();
 const invitations = ref([
     invitation
@@ -145,6 +162,11 @@ const sentInvitations = ref([]);
  * @end_of_constants
  */
 
+
+function closeOverlay() {
+    const { dialogRef } = overlay.value;
+    dialogRef.close();
+}
 
 // These two are pretty easy to get.
 function addInvitationToForm() {
@@ -252,7 +274,7 @@ async function sendInvites(inviteMatrix, invitations) {
 async function loadInvites(){
     db.get(urls.bookclubs.getInvitesForClub(route.params.bookclub), 
         null,
-        null,
+        false,
         (res) => {
             populateInvitesForClub(res.invites);
             loaded.value = true;
@@ -262,6 +284,16 @@ async function loadInvites(){
         }
     );
 }
+
+async function previewEmailInvite() {
+    db.get(urls.bookclubs.previewEmailInvitesForClub(route.params.bookclub, 'invite'), 
+    null, false, 
+    (res) => {
+        previewEmailHTML.value = res.email;
+        const { dialogRef } = previewOverlay.value;
+        dialogRef.showModal();
+    }, (err) => { console.log(err); });
+};
 /**
  * @end
  */

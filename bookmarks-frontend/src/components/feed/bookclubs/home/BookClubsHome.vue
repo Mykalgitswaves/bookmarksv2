@@ -145,8 +145,14 @@ loadClubsCreatedByUser();
     }
 
     .bookclubs-list {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
+        display: flex;
+        justify-content: space-around;
+        flex-wrap: wrap;
+        column-gap: 20px;
+        row-gap: 20px;
+        & * {
+            flex-basis: 40%;
+        }
     }
 }
 

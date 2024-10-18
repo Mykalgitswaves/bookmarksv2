@@ -2,23 +2,24 @@
     <div class="bookclub-preview">
 
         <!-- Hold off on this until I get an href working... -->
-        <img v-if="bookclub.currently_reading_book?.img" 
+        <img v-if="bookclub?.currently_reading_book?.small_img_url"
             class="currently-reading-img" 
-            :src="bookclub.currently_reading_book?.img" 
+            :src="bookclub.currently_reading_book.small_img_url" 
             alt="" 
         />
 
-        <div v-else class="placeholder"></div>
-
         <div class="metadata">
-            <h3 class="title">
-                {{ bookclub.book_club_name}}
-            </h3>
+            <div>
+                <h3 class="title">
+                    {{ bookclub.book_club_name}}
+                </h3>
 
-            <p v-if="bookclub.currently_reading_book" class="currently-reading">
-                {{ bookclub.currently_reading_book }}
-            </p>
-            <p v-else class="currently-reading">Not currently reading</p>
+                <p v-if="bookclub.currently_reading_book" class="currently-reading">
+                    Currently Reading: <i>{{ bookclub.currently_reading_book.title }}</i>
+                </p>
+
+                <p v-else class="currently-reading">Not currently reading anything</p>
+            </div>
 
             <a class="link" :href="navRoutes.toBookClubFeed(user, bookclub.book_club_id)">Go to club</a>
         </div>
@@ -47,8 +48,9 @@ const props = defineProps({
     border: 1px solid var(--stone-300);
     display: flex;
     justify-content: start;
+    flex-direction: row-reverse;
     align-items: center;
-    column-gap: 14px;
+    column-gap: 20px;
     width: fit-content;
     /* max-width: 1fr; */
 
@@ -60,11 +62,16 @@ const props = defineProps({
 
     & .currently-reading {
         color: var(--stone-500);
-        margin-bottom: 12px;
         font-size: var(--font-sm);
     }
 
+    & .currently-reading-img {
+        height: 80%;
+        border-radius: var(--radius-sm);
+    }
+
     & .link {
+        padding-top: 30px;
         color: var(--blue-400);
         font-size: var(--font-sm);
         text-decoration: underline;
