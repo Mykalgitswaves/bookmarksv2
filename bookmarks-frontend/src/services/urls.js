@@ -139,6 +139,7 @@ export const urls = {
         removeMemberFromBookClub: (bookclub_id) => (baseUrl + `api/bookclubs/${bookclub_id}/remove_member`),
         // INVITE STUFF
         loadClubDataForInvite: (bookclub_id) => (baseUrl + `api/bookclubs/${bookclub_id}/club_for_invite`),
+        getInvitesForUser: (user_id) =>  (baseUrl + `api/bookclubs/invites/${user_id}`)
     }
 }
 
