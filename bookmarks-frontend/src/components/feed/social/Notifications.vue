@@ -10,13 +10,13 @@
     </button>
     
     <dialog ref="notificationSidebar" class="sidebar-menu">
-        <div class="pt-5 pb-5">
+        <div class="pt-5 pb-5 flex items-center">
+            <h4 class="text-stone-700 text-lg fancy">Notifications {{ invites.length ? invites.length + 1 : 0 }}</h4>
             <CloseButton class="ml-auto" @close="notificationSidebar.close()"/>
-
         </div>
 
         <div v-if="loaded">
-            <h3 class="fancy text-stone-600 text-2xl">Bookclubs</h3>
+            <h3 class="fancy text-stone-600 text-xl">Bookclubs</h3>
             <!-- IF YOU HAVE INVITES -->
             <div v-if="invites">
                 <div v-for="invite in invites" :key="invite.id" class="notifications bookclub">
@@ -28,12 +28,12 @@
             </div>
 
             <!-- NO INVITES CHAT -->
-            <div v-else class="fancy text-xl text-stone-500 text-center">
+            <div v-else class="fancy text-lg text-stone-500 text-center">
                 you don't have any outstanding invites
             </div>
         </div>
 
-        <div v-else class="gradient fancy text-center text-xl loading-box">
+        <div v-else class="gradient fancy text-center text-lg loading-box">
             <h3>Loading activity</h3>
         </div>
         <!-- TODO: Add other notifications once bookclubs are done -->
@@ -72,7 +72,7 @@ function showOrHideSideBar() {
 let invites = [];
 
 // Chat SC suffix is short for successcallback, im using slang chat.
-const loadInvitesSC = (res) => (invites.push(res.invites))
+const loadInvitesSC = (res) => (invites = res.invites)
 const loadInvitesEC = (err) => console.warn(err);
 
 
