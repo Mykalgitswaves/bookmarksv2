@@ -42,10 +42,10 @@
     <div class="spacing-wrap">
         <div class="container">
             <div class="mb-5 ml-auto mr-auto w-90" v-if="step === 1">
-                <label class="input-number block mb-5 mt-10" for="page-number">
+                <label class="block mb-5 mt-10" for="page-number">
                     <p class="text-2xl mb-2 mt-5 text-stone-600 fancy">Im on page <span class="italic text-indigo-600">{{ page }}</span></p>
                     <input
-                        class="rounded-md"
+                        class="input-number rounded-md"
                         id="page-number"
                         type="number" 
                         v-model="update.page"

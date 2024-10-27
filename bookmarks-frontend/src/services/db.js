@@ -1,6 +1,7 @@
 import { toRaw } from 'vue'
 import { useRouter } from 'vue-router'
 import { helpersCtrl } from './helpers';
+import { memCache } from './memCache';
 /**
 // @param successRouterFunction: This is an optional param to control the routes after a successfull request,
  must be passed in as a regular function

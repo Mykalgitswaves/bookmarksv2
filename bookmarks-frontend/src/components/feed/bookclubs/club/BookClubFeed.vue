@@ -22,9 +22,21 @@
                 :book="club.currently_reading_book" 
                 @currently-reading-settings=""
             />
-            
+
             <!-- Sticky toolbar containing buttons for creating and filtering posts -->
-            <BookClubFeedActions :book="club.currently_reading_book" :club="club" />
+            <BookClubFeedActions @start-club-update-post-flow="showUpdateForm()" />
+
+            <Overlay ref="updateOverlay">
+                <template #overlay-header>
+
+                </template>
+                <template #overlay-main>
+                    <CreateUpdateForm 
+                        :book="club.currently_reading_book" 
+                        @update-complete="(update) => postUpdateForBookClub(update)"
+                    />
+                </template>
+            </Overlay>
 
             <div v-if="loaded">
                 <!-- index for now until we can grab the id from the updates -->
@@ -40,6 +52,8 @@
 import CurrentlyReadingBook from './CurrentlyReadingBook.vue';
 import BookClubFeedActions from './BookClubFeedActions.vue';
 import ClubPost from './posts/ClubPost.vue';
+import Overlay from '@/components/feed/partials/overlay/Overlay.vue';
+import CreateUpdateForm from '@/components/feed/createPosts/update/createUpdateForm.vue';
 import { ref } from 'vue';
 import { db } from '../../../../services/db';
 import { urls } from '../../../../services/urls';
@@ -51,22 +65,41 @@ const props = defineProps({
     }
 });
 
-let bookClubPosts = [];
+const data = ref({});
 const loaded = ref(false);
 
+const updateOverlay = ref(null);
+function showUpdateForm() {
+    const { dialogRef } = updateOverlay.value;
+    dialogRef?.showModal();
+};
+
 /**
- * @load_data
+ * @load
  * @description – Reruns every time the club loads
  */
-// db.get(urls.bookclubs.getClubFeed(props.club.book_club_id), 
-//     null,
-//     false,
-//     (res) => {
-//         bookClubPosts = res.updates
-//         loaded.value = true;
-//     }, (err) => {
-//         errors = err;
-//         loaded.value = true;
-//     }
-// );
+function loadClubFeed(){
+    db.get(urls.bookclubs.getClubFeed(route.params.bookclub), null, false, (res) => {
+        debugger;
+        data.value = res;
+    },
+    (err) => {
+        console.log(err);
+    });
+};
+
+
+
+function postUpdateForBookClub(update) {
+    db.post(urls.bookclubs.postUpdateForBookClub(route.params.bookclub), {}, false, 
+        (res) => {
+            console.log(res);
+            // Refresh;
+            loadClubFeed();
+        },
+        (err) => {
+            console.warn(err);
+        },
+    );
+};
 </script>

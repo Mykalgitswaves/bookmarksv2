@@ -47,15 +47,54 @@
     {% else %}
         <section>
             <table>
-                <tr>    
+                <tr></tr>
                     <td>
-                        <p>Hi,</p>
-                        <p>{{ invite_user_username }} have been invited to join {{ book_club_name }}.</p>
-                        <p>They are reading {{ current_book_title }} by {{ current_book_authors }}.</p>
+                        <div style="
+                            width: 80%; 
+                            padding: 40px;
+                            border-radius: {{ styles.radius.md }};
+                            text-align: center;    
+                            background-color: #ffffff;
+                            border: 1px solid {{ styles.stone['300'] }};
+                            margin: 40px auto;
+                        ">
+                            {{ large(text=heading_text) }}
+                            
+                            <!-- TODO: FINISH THIS SHIT! -->
+                            <div>
+                                Currently reading:
+                                <table width="100" style="
+                                height: 100px; 
+                                padding: 8px;
+                                border-radius: 8px;
+                                border: 1px solid {{ styles.stone['400'] }};
+                            ">
+                                    <tr>
+                                        <td style="height: 100px; border-radius: 4px; overflow-x: clip;">
+                                            <img src="{{ current_book_img }}" alt="">
+                                        </td>
+                                        <td>
+                                            {{ large(text=current_book_title) }}
+                                            <p>By {{ current_book_authors }}</p>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </div>
 
-                        <p>Please click the link below to register.</p>
-                        <a href="hardcoverlit.com/{{ invite_id }}">Click here to register</a>
-                        <p>Thanks</p>
+                            <p style="
+                                padding-top: {{ styles.spacing.xs }}; 
+                                margin-top: 24px; 
+                                margin-bottom: 14px; 
+                                text-align: center;
+                                font-size: {{ styles.font_sizes.base }};
+                                color: {{ styles.stone['700'] }};
+                                font-weight: 400;
+                            ">
+                                Please click the link below to register.
+                            </p>
+
+                            {{ link_button(button_text='Sign up and join club', link_href=book_club_href, background_color=styles.indigo['600'], text_color='#ffffff', is_fancy=false ) }}
+                        </div>
                     </td>
                 </tr>
             </table>

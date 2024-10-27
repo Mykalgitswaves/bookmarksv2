@@ -1,21 +1,16 @@
 <template>
-    <nav class="nav-menu">
-        <div class="flex space-between w-100 items-bottom">
-            <!-- We need to get our marketing site up and running tbd -->
-            <!-- href="https://www.hardcoverlit.com/home" -->
-            <!-- Switch this to an a tag finally -->
-            <h4 class="text-stone-600 fancy pl-2">HardcoverLit</h4>
-            
-            <button
+        <!-- We need to get our marketing site up and running tbd -->
+        <!-- href="https://www.hardcoverlit.com/home" -->
+        <!-- Switch this to an a tag finally -->
+        <button
             ref="mobileMenuButton"
             class="btn relative" 
             type="button"
             :class="{'active': isMobileMenuShowing}"
             @click="isMobileMenuShowing = !isMobileMenuShowing"
-            >
-                <IconMenu />
-            </button>
-        </div>
+        >
+            <IconMenu />
+        </button>
 
     <Transition name="content">
         <div id="nav_menu_sidebar" 
@@ -46,7 +41,6 @@
             </div>
         </div>
     </Transition>
-</nav> 
 </template>
 <script setup>
 import { onMounted, onUnmounted, ref, watch } from 'vue';
@@ -72,21 +66,6 @@ function logOut() {
 }
 </script>
 <style scoped>
-.nav-menu {
-    position: sticky;
-    height: 40px;
-    margin-bottom: 10px;
-    top: 0;
-    right: 0;
-    width: 100%;
-    display: flex;
-    justify-content: end;
-    padding: var(--padding-md);
-    padding-top: var(--padding-sm);
-    z-index: 1000;
-    background: linear-gradient(90deg, var(--surface-primary), transparent)
-}
-
 .btn {
     background-color: var(--gray-50);
     padding: var(--btn-padding-sm);
