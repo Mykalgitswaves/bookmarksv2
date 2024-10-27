@@ -4,9 +4,9 @@
       <h4 class="text-stone-600 fancy pl-2">HardcoverLit</h4>
 
       <div class="flex gap-2 items-bottom">
-          <Notifications/>
+          <Notifications />
           
-          <MobileMenu/>
+          <MobileMenu />
       </div>
     </div>
   </nav>

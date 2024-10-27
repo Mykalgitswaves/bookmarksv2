@@ -38,7 +38,7 @@ export const urls = {
         getUsersFriendRequests: (user_id) => (baseUrl + `api/user/${user_id}/friend_requests`),
         searchUsersFriends: (param) => (baseUrl + `api/search/friends/${param}`),
         getFriends: (user_id) => (baseUrl + `api/user/${user_id}/friends`),
-        getNotificationCount: (user_id) => (baseUrl + `api/user/${user_id}/notifications`),
+        getNotificationCount: (user_id) => (baseUrl + `api/user/${user_id}/notifications_count`),
     },
     create: {
         searchBook: (text) => (`${baseUrl}api/search/book/${text}`)

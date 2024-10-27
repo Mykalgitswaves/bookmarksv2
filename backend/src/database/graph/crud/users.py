@@ -585,6 +585,25 @@ class UserCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
         
         return blocked_user_list
     
+    #################################################################
+    #################################################################
+    ## Activity queries!
+    #################################################################
+    #################################################################
+
+    # Comments!
+    def get_activity_comments(self, username:str, user_id:str, skip:int, limit:int):
+        """
+        Returns paginated comment activities related to a user
+        """
+        # TODO: DO THIS 
+        pass
+
+    @staticmethod
+    def get_activity_comments_query(tx, username:str, user_id:str, skip:int, limit:int):
+        # TODO: THIS
+        pass
+
     def get_activity_list(self, username:str, user_id:str, skip:int, limit:int):
         """
         Returns all activity related to a user
