@@ -23,7 +23,6 @@
 <script setup>
 import { db } from '../../../services/db';
 import { urls } from '../../../services/urls';
-import { refreshNotifications } from './notificationService';
 import { computed, ref } from 'vue';
 import { useRoute } from 'vue-router';
 import IconBellNotificationActive from '../../svg/icon-bell-notification-active.vue';
@@ -47,8 +46,7 @@ function showOrHideSideBar() {
  * @promises 
  */
 
-const notifications = ref([]);
-notifications.value = Promise.resolve(refreshNotifications(route.params.user));
+
 
 </script>
 <style scoped>
@@ -60,12 +58,22 @@ notifications.value = Promise.resolve(refreshNotifications(route.params.user));
     transition: all 250ms ease-in-out;
 }
 
-.sidebar-menu {
+@starting-style {
+    .sidebar-menu {
+        opacity: 0;
+        height: 0;
+        right: -9999px;
+    }
+}
+
+.sidebar-menu[open] {
     --mobile-sidebar-width: 70vw;
     @media screen and (min-width: 768px) {
         --mobile-sidebar-width: 700px;
     }
-     
+
+    transition-behavior: allow-discrete;
+    transition: 300ms ease;
     width: var(--mobile-sidebar-width);
     min-width: 300px; /** For mobile */
     border: 1px solid var(--stone-200);
