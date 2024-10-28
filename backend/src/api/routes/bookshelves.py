@@ -1160,9 +1160,9 @@ async def update_book_current_page(
     "/finished_reading/{user_id}/preview", name="bookshelf:finished_reading_preview"
 )
 async def get_user_finished_reading_preview(
-    user_id: str,
-    current_user: Annotated[User, Depends(get_current_active_user)],
-    bookshelf_repo: BookshelfCRUDRepositoryGraph = Depends(
+    user_id:str,
+    current_user:Annotated[User, Depends(get_current_active_user)],
+    bookshelf_repo:BookshelfCRUDRepositoryGraph = Depends(
         get_repository(repo_type=BookshelfCRUDRepositoryGraph)
     ),
 ):

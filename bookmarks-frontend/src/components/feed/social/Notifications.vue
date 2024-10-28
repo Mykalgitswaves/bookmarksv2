@@ -1,5 +1,6 @@
 <template>
-    <button ref="mobileMenuButton"
+    <button 
+        ref="notificationsButton"
         class="btn btn-ghost btn-tiny btn-icon h-40 transition" 
         type="button"
         @click="showOrHideSideBar"
@@ -11,14 +12,15 @@
     
     <dialog ref="notificationSidebar" class="sidebar-menu">
         <div class="pt-5 pb-5 flex items-center">
-            <h4 class="text-stone-700 text-lg fancy">Notifications {{ invites.length ? invites.length + 1 : 0 }}</h4>
+            <h4 class="text-stone-500 text-lg italic">{{ invites.length ? invites.length + 1 : 0 }} Notifications </h4>
+
             <CloseButton class="ml-auto" @close="notificationSidebar.close()"/>
         </div>
 
         <div v-if="loaded">
             <h3 class="fancy text-stone-600 text-xl">Bookclubs</h3>
             <!-- IF YOU HAVE INVITES -->
-            <div v-if="invites">
+            <div v-if="invites.length">
                 <div v-for="invite in invites" :key="invite.id" class="notifications bookclub">
                 <!-- 
                 invites are going to look like:
@@ -28,7 +30,7 @@
             </div>
 
             <!-- NO INVITES CHAT -->
-            <div v-else class="fancy text-lg text-stone-500 text-center">
+            <div v-else class="fancy text-base text-stone-500">
                 you don't have any outstanding invites
             </div>
         </div>
@@ -42,7 +44,7 @@
 <script setup>
 import { db } from '../../../services/db';
 import { urls } from '../../../services/urls';
-import { computed, ref } from 'vue';
+import { onBeforeUnmount, ref, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import IconBellNotificationActive from '../../svg/icon-bell-notification-active.vue';
 import IconBellNotificationInert from '../../svg/icon-bell-notification-inert.vue';
@@ -54,16 +56,48 @@ import CloseButton from '../partials/CloseButton.vue'
 
 const route = useRoute();
 const notificationSidebar = ref(null);
+const notificationsButton = ref(null);
 const loaded = ref(false);
-const isOpen = computed(() => notificationSidebar.value?.open);
+const isOpen = ref(false);
 
 /**
  * @UI_functions
  */
 function showOrHideSideBar() {
-    !isOpen.value ? notificationSidebar.value?.showModal() : notificationSidebar.value?.close();
+    if (notificationSidebar.value) {
+        if (!notificationSidebar.value.open) { 
+            notificationSidebar.value.showModal(); 
+            isOpen.value = true; 
+        } else {
+            notificationSidebar.value.close();
+            isOpen.value = false;
+        } 
+    }
 }
 
+
+function handleClickOutside(event){
+    if (
+        notificationSidebar.value 
+        && notificationSidebar.value.open 
+        && !(notificationSidebar.value.contains(event.target) || 
+        notificationsButton.value.contains(event.target))
+    ) {
+        notificationSidebar.value.close();
+        isOpen.value = false;
+    }
+}
+
+// Make a watcher for an event listener when someone clicks outside the dialog. 
+watch(
+    isOpen, 
+    (newValue) => {
+        if (newValue) {
+            document.addEventListener('click', (event) => handleClickOutside(event));
+            watch();
+        }
+    },
+);
 
 /**
  * @promises 
@@ -85,8 +119,12 @@ function load() {
 /**
  * @FIRE
  */
+
 load();
 
+onBeforeUnmount(() => {
+    document.removeEventListener('click', handleClickOutside)
+});
 </script>
 <style scoped>
 .h-40 {
@@ -123,6 +161,10 @@ load();
     padding: 24px;
     padding-top: 0;
     background-color: var(--stone-50);
+}
+
+.sidebar-menu::backdrop {
+  display:none
 }
 
 .notification {
