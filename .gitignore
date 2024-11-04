@@ -16,3 +16,5 @@ config.feature.json
 config.prod.json
 test_health.py
 health
+.vscode
+test.ipynb
