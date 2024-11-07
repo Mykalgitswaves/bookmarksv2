@@ -16,7 +16,7 @@ export const helpersCtrl = {
     },
     // Takes a list of strings and concatenates them with commas depending on the index.
     commanatoredString: (list) => {
-        if (!list.length) throw new Error("commanatoredString needs a list with values! No empty ones brah");
+        if (!list?.length) throw new Error("commanatoredString needs a list with values! No empty ones brah");
         
         if (!list || !list.length) {
             return null;
@@ -85,7 +85,7 @@ export const helpersCtrl = {
         data.is_spoiler = update.is_spoiler;
         data.quote = update.quote;
         data.chapter = update.chapter;
-        
+
         return data;
     },
     /**
