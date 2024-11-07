@@ -21,13 +21,21 @@
                 <p v-else class="currently-reading">Not currently reading anything</p>
             </div>
 
-            <a class="link" :href="navRoutes.toBookClubFeed(user, bookclub.book_club_id)">Go to club</a>
+            <button 
+                class="link" 
+                @click="router.push(
+                    navRoutes.toBookClubFeed(user, bookclub.book_club_id))"
+            >
+            Go to club
+            </button>
         </div>
     </div>
 </template>
 <script setup>
 import { navRoutes } from '../../../../services/urls';
+import { useRouter } from 'vue-router'
 
+const router = useRouter();
 const props = defineProps({
     bookclub: {
         type: Object,

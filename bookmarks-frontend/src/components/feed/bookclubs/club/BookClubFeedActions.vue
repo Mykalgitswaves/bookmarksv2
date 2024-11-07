@@ -9,44 +9,47 @@
             Update
         </button>
 
-        <TransitionGroup name="content" tag="div" class="btn-relative">
-            <button 
-                ref="show-modal-btn"
-                class="btn btn-ghost btn-tiny text-sm btn-icon"
-                type="button"
-                @click="modals.selectDropdown = !modals.selectDropdown"
-            >
-                Filter
-            </button>
-
-            <div v-close-modal="{
-                exclude: ['show-modal-btn'],
-                handler: closeModal,
-                args: ['selectDropdown']
-            }">
-                <div v-if="modals.selectDropdown"
-                    class="popout-flyout shadow-lg filter"
+        <div class="flex gap-2">
+            <TransitionGroup name="content" tag="div" class="btn-relative">
+                <button 
+                    ref="show-modal-btn"
+                    class="btn btn-ghost btn-tiny text-sm btn-icon"
+                    type="button"
+                    @click="modals.selectDropdown = !modals.selectDropdown"
                 >
-                    <button 
-                        type="button" 
-                        v-for="(option, index) in filterOptions"
-                        :key="index"
-                        @click="currentFilterOptions[option] = true"  
+                    Filter
+                </button>
+
+                <div v-close-modal="{
+                    exclude: ['show-modal-btn'],
+                    handler: closeModal,
+                    args: ['selectDropdown']
+                }">
+                    <div v-if="modals.selectDropdown"
+                        class="popout-flyout shadow-lg filter"
                     >
-                        <span class="text-stone-600 text-sm hover:text-stone-700">
-                            {{ option }}
-                        </span>
-                    </button>
+                        <button 
+                            type="button" 
+                            v-for="(option, index) in filterOptions"
+                            :key="index"
+                            @click="currentFilterOptions[option] = true"  
+                        >
+                            <span class="text-stone-600 text-sm hover:text-stone-700">
+                                {{ option }}
+                            </span>
+                        </button>
+                    </div>
                 </div>
-            </div>
-        </TransitionGroup>
+            </TransitionGroup>
+
+            <ViewAwards />
+        </div>
     </div>
 </template>
 <script setup>
 import IconPlus from '@/components/svg/icon-plus.vue';
-import { reactive, watch } from 'vue';
-
-
+import { watch, reactive } from 'vue';
+import ViewAwards from './awards/ViewAwards.vue'
 // Used to show and hide modals.
 const filterOptions = ['date(newest first)', 'date(oldest first)', 'byUser'];
 
@@ -56,16 +59,15 @@ const modals = reactive({
 });
 
 const currentFilterOptions = reactive({})
-
 const emit = defineEmits(['start-club-update-post-flow']);
 
 function closeModal(reactiveKey) {
   modals[reactiveKey] = false;
 }
 
-watch(currentFilterOptions.byUser, () => {
+// watch(currentFilterOptions.byUser, () => {
    
-}, { immediate: true });
+// }, { immediate: true });
 </script>
 <style scoped>
 .sticky-top {

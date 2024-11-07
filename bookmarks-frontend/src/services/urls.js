@@ -140,6 +140,12 @@ export const urls = {
         // INVITE STUFF
         loadClubDataForInvite: (bookclub_id) => (baseUrl + `api/bookclubs/${bookclub_id}/club_for_invite`),
         getInvitesForUser: (user_id) =>  (baseUrl + `api/bookclubs/invites/${user_id}`),
+        // AWARDS
+        // optional endpoint object
+        // post_id:str
+        // current_uses:bool
+        // 
+        getAwards: (bookclub_id) => (baseUrl + `api/bookclubs/${bookclub_id}/awards`),
     }
 }
 
