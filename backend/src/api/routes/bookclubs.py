@@ -781,7 +781,10 @@ async def get_currently_reading(
         user_id=current_user.id,
         book_club_id=book_club_id,
     )  
-    return JSONResponse(status_code=200, content={"currently_reading_book": jsonable_encoder(currently_reading_book)})
+    
+    return JSONResponse(status_code=200, content={
+        "currently_reading_book": jsonable_encoder(currently_reading_book)
+    })
     
 @router.post("/{book_club_id}/currently_reading/start", name="bookclub:start_book")
 async def start_book_for_club(

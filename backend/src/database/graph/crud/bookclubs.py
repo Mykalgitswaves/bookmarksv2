@@ -393,9 +393,10 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
     @staticmethod
     def get_currently_reading_book_or_none_query(tx, user_id, book_club_id):
         query = """
-        MATCH (u:User {id: $user_id})-[:IS_MEMBER_OF]->(bc:BookClub {id: $book_club_id})
-        OPTIONAL MATCH (bc)-[:CURRENTLY_READING]->(currentlyReadingBook:BookClubBook)
-        RETURN currentlyReadingBook
+        MATCH (u:User {id: $user_id})-[:IS_MEMBER_OF|OWNS_BOOK_CLUB]->(bc:BookClub {id: $book_club_id})
+        MATCH (bc)-[:IS_READING]->(crb:BookClubBook)
+        MATCH (crb)-[:IS_EQUIVALENT_TO]->(book:Book)
+        RETURN book.title as title, book.small_img_url as image, book.id as id, book.author_names as author_names, book.author
         """
 
         result = tx.run(
@@ -404,16 +405,18 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
             book_club_id=book_club_id,
         )
 
-        if result.peek():
-            record = result.single()
-            current_book = BookClubSchemas.BookClubCurrentlyReading(
-                book_id=record.get("currentlyReadingBook.id"),
-                title=record.get("currentlyReadingBook.title"),
-                small_img_url=record.get("currentlyReadingBook.small_img_url"),
-            )
-            return current_book
-        else:
-            return None
+        record = result.single()
+        # try: 
+
+        current_book = BookClubSchemas.BookClubCurrentlyReading(
+            book_id=record['id'],
+            title=record['title'],
+            small_img_url=record['image'],
+            author_names=record['author_names'] if record['author_names'] else [],
+        )
+        return current_book
+        # except ValueError as e:
+        #     # implement some form of logging here?
 
     def create_currently_reading_club(
             self,
@@ -740,7 +743,8 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
                 book_id=record.get("currently_reading_book_id"),
                 title=record.get("currently_reading_book_title"),
                 small_img_url=record.get(
-                    "currently_reading_book_small_img_url")
+                    "currently_reading_book_small_img_url"),
+                author_names=[]
             )
         else:
             current_book = {}
@@ -903,6 +907,7 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
                    actual_book.title as currently_reading_book_title,
                    actual_book.small_img_url as currently_reading_book_small_img_url,
                    actual_book.id as currently_reading_book_id,
+                   actual_book.author_names as currently_reading_book_author_names
                    book.chapters as total_chapters
             LIMIT $limit
             """
@@ -928,7 +933,8 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
                     book_id=record.get("currently_reading_book_id"),
                     title=record.get("currently_reading_book_title"),
                     small_img_url=record.get(
-                        "currently_reading_book_small_img_url")
+                        "currently_reading_book_small_img_url"),
+                    author_names=record.get('currently_reading_book_author_names'),
                 )
             else:
                 current_book = None
@@ -1011,6 +1017,7 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
                    actual_book.title as currently_reading_book_title,
                    actual_book.small_img_url as currently_reading_book_small_img_url,
                    actual_book.id as currently_reading_book_id,
+                   actual_book.author_names as currently_reading_book_author_names
                    book.chapters as total_chapters
             LIMIT $limit
             """
@@ -1036,7 +1043,8 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
                     book_id=record.get("currently_reading_book_id"),
                     title=record.get("currently_reading_book_title"),
                     small_img_url=record.get(
-                        "currently_reading_book_small_img_url")
+                        "currently_reading_book_small_img_url"),
+                    author_names=record.get('currently_reading_book_author_names')
                 )
             else:
                 current_book = None

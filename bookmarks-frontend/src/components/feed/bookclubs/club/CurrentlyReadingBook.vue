@@ -9,7 +9,7 @@
                 <h3 class="fancy text-xl text-stone-800">{{ book.title }}</h3>
 
                 <p class="text-sm text-stone-600">
-                    {{ helpersCtrl.commanatoredString(book.authorNames) }}
+                    {{ helpersCtrl.commanatoredString(book.author_names) }}
                 </p>
             </div>
         </div>

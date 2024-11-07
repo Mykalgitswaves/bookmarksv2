@@ -50,3 +50,7 @@ export const memCache = {
 // we called the particular dbFunc in order to check and see if it's 
 // time to refresh(revalidate) the cache.
 // We could use some kind of a backgroundTask to do this.
+
+
+//BIG BRAIN MOMENT
+// EPOCH TIME. DATETIME DISPLAYED..... INTEGER, 

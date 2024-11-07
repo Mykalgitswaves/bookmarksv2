@@ -4,6 +4,8 @@ import JSConfetti from 'js-confetti'
 export const helpersCtrl = {
     // Handles commas
     commanator: (index, arrayLength) => {
+        if (arrayLength === 1) return '';
+
         let curr = index + 1
         if ((curr >= arrayLength)) {
             return '';
@@ -13,7 +15,7 @@ export const helpersCtrl = {
     },
     // Takes a list of strings and concatenates them with commas depending on the index.
     commanatoredString: (list) => {
-        let error = () => { throw new Error("commanatoredString needs a list with values! No empty ones brah");}
+        if (!list.length) throw new Error("commanatoredString needs a list with values! No empty ones brah");
         
         if (!list || !list.length) {
             return null;
@@ -21,8 +23,8 @@ export const helpersCtrl = {
         
         let result = '';
         
-        list.forEach((i, name) => {
-            result += `${name + commanator(i, list)}`
+        list.forEach((name, i) => {
+            result += `${name + helpersCtrl.commanator(i, list.length)}`
         });
 
         return result

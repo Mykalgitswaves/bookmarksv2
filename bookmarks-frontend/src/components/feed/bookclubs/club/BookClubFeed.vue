@@ -2,11 +2,11 @@
         <div class="bookclub-header flex justify-between items-start">
             <div>
                 <h1 class="text-3xl fancy text-stone-700">
-                    {{ club.book_club_name }}
+                    {{ club?.book_club_name }}
                 </h1>
                 
                 <p class="text-stone-500 mt-5">
-                    {{ club.description || 'Add a description for your book club' }}    
+                    {{ club?.description || 'Add a description for your book club' }}    
                 </p>
             </div>
 
@@ -17,9 +17,9 @@
             </button>
         </div>
 
-        <div class="club-main-padding">
+        <section class="club-main-padding" v-if="loaded">
             <CurrentlyReadingBook 
-                :book="club.currently_reading_book" 
+                :book="currentlyReadingBook" 
                 @currently-reading-settings=""
             />
 
@@ -32,20 +32,22 @@
                 </template>
                 <template #overlay-main>
                     <CreateUpdateForm 
-                        :book="club.currently_reading_book" 
+                        :book="currentlyReadingBook" 
                         @update-complete="(update) => postUpdateForBookClub(update)"
                     />
                 </template>
             </Overlay>
 
-            <div v-if="loaded">
-                <!-- index for now until we can grab the id from the updates -->
-                <ClubPost
-                    v-for="(post, index) in posts" 
-                    :key="index" 
-                    :post="post"
-                />
-            </div>
+            <!-- index for now until we can grab the id from the updates -->
+            <ClubPost
+                v-for="(post, index) in posts" 
+                :key="index" 
+                :post="post"
+            />
+        </section>
+
+        <div v-else class="gradient box loading fancy">
+            Loading club
         </div>
 </template>
 <script setup>
@@ -57,6 +59,7 @@ import CreateUpdateForm from '@/components/feed/createPosts/update/createUpdateF
 import { ref } from 'vue';
 import { db } from '../../../../services/db';
 import { urls } from '../../../../services/urls';
+import { useRoute } from 'vue-router';
 
 const props = defineProps({
     club: {
@@ -67,8 +70,11 @@ const props = defineProps({
 
 const data = ref({});
 const loaded = ref(false);
-
 const updateOverlay = ref(null);
+const route = useRoute();
+
+let currentlyReadingBook = {};
+
 function showUpdateForm() {
     const { dialogRef } = updateOverlay.value;
     dialogRef?.showModal();
@@ -78,17 +84,33 @@ function showUpdateForm() {
  * @load
  * @description – Reruns every time the club loads
  */
-function loadClubFeed(){
-    db.get(urls.bookclubs.getClubFeed(route.params.bookclub), null, false, (res) => {
-        debugger;
-        data.value = res;
-    },
-    (err) => {
-        console.log(err);
+
+const clubFeedPromise = db.get(urls.bookclubs.getClubFeed(route.params.bookclub), null, false, (res) => {
+    data.value = res;
+},
+(err) => {
+    console.log(err);
+});
+
+const currentlyReadingPromise = db.get(urls.bookclubs.getCurrentlyReadingForClub(route.params.bookclub), null, false, (res) => {
+    currentlyReadingBook = res.currently_reading_book;
+});
+
+Promise.all([clubFeedPromise, currentlyReadingPromise]).then(() => {
+    loaded.value = true;
+});
+
+// So users can scroll up and refresh feed. 
+function refreshFeed() {
+    loaded.value = false;
+    Promise.resolve(clubFeedPromise).then(() => {
+        loaded.value = true;
     });
-};
+}
 
-
+/**
+ * @post
+ */
 
 function postUpdateForBookClub(update) {
     db.post(urls.bookclubs.postUpdateForBookClub(route.params.bookclub), {}, false, 

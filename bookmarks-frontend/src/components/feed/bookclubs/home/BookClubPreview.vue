@@ -8,7 +8,7 @@
             alt="" 
         />
 
-        <div class="metadata">
+        <div class="metadata" v-if="bookclub">
             <div>
                 <h3 class="title">
                     {{ bookclub.book_club_name}}
