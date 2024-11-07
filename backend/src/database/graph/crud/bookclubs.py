@@ -866,7 +866,7 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
                    actual_book.title as currently_reading_book_title,
                    actual_book.small_img_url as currently_reading_book_small_img_url,
                    actual_book.id as currently_reading_book_id,
-                   actual_book.author_names as currently_reading_book_author_names
+                   actual_book.author_names as currently_reading_book_author_names,
                    book.chapters as total_chapters
             LIMIT $limit
             """
@@ -977,7 +977,7 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
                    actual_book.title as currently_reading_book_title,
                    actual_book.small_img_url as currently_reading_book_small_img_url,
                    actual_book.id as currently_reading_book_id,
-                   actual_book.author_names as currently_reading_book_author_names
+                   actual_book.author_names as currently_reading_book_author_names,
                    book.chapters as total_chapters
             LIMIT $limit
             """
@@ -1699,7 +1699,8 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
         RETURN actualBook.id as book_id, 
                bc.id as book_club_id,
                actualBook.title as title,
-               actualBook.small_img_url as small_img_url
+               actualBook.small_img_url as small_img_url,
+               actualBook.author_names as author_names
         """
 
         result = tx.run(
@@ -1715,6 +1716,7 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
                     book_id=record.get("book_id"),
                     title=record.get("title"),
                     small_img_url=record.get("small_img_url", ""),
+                    author_names=record.get("author_names", [])
                 )
                 return current_book
             else: 
