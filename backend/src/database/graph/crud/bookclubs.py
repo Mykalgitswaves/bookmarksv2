@@ -376,47 +376,6 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
             return response["book_club_id"]
         else:
             return False
-    
-    def get_currently_reading_book_or_none(
-        self,
-        user_id: str,
-        book_club_id: str,
-    ):
-        with self.driver.session() as session:
-            result = session.read_transaction(
-                self.get_currently_reading_book_or_none_query,
-                user_id=user_id,
-                book_club_id=book_club_id,
-            )
-        return result
-    
-    @staticmethod
-    def get_currently_reading_book_or_none_query(tx, user_id, book_club_id):
-        query = """
-        MATCH (u:User {id: $user_id})-[:IS_MEMBER_OF|OWNS_BOOK_CLUB]->(bc:BookClub {id: $book_club_id})
-        MATCH (bc)-[:IS_READING]->(crb:BookClubBook)
-        MATCH (crb)-[:IS_EQUIVALENT_TO]->(book:Book)
-        RETURN book.title as title, book.small_img_url as image, book.id as id, book.author_names as author_names, book.author
-        """
-
-        result = tx.run(
-            query,
-            user_id=user_id,
-            book_club_id=book_club_id,
-        )
-
-        record = result.single()
-        # try: 
-
-        current_book = BookClubSchemas.BookClubCurrentlyReading(
-            book_id=record['id'],
-            title=record['title'],
-            small_img_url=record['image'],
-            author_names=record['author_names'] if record['author_names'] else [],
-        )
-        return current_book
-        # except ValueError as e:
-        #     # implement some form of logging here?
 
     def create_currently_reading_club(
             self,
@@ -1716,6 +1675,51 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
                 "book_club_name": response.get("book_club_name"),
                 "current_book": None
             }
+        
+    def get_currently_reading_book_or_none(
+        self,
+        user_id: str,
+        book_club_id: str,
+    ):
+        with self.driver.session() as session:
+            result = session.read_transaction(
+                self.get_currently_reading_book_or_none_query,
+                user_id=user_id,
+                book_club_id=book_club_id,
+            )
+        return result
+    
+    @staticmethod
+    def get_currently_reading_book_or_none_query(tx, user_id, book_club_id):
+        query = """
+        MATCH (u:User {id: $user_id})-[:IS_MEMBER_OF|OWNS_BOOK_CLUB]->(bc:BookClub {id: $book_club_id})
+        OPTIONAL MATCH (bc)-[:IS_READING]->(currentlyReadingBook:BookClubBook)
+        OPTIONAL MATCH (currentlyReadingBook)-[:IS_EQUIVALENT_TO]-(actualBook:Book)
+        RETURN actualBook.id as book_id, 
+               bc.id as book_club_id,
+               actualBook.title as title,
+               actualBook.small_img_url as small_img_url
+        """
+
+        result = tx.run(
+            query,
+            user_id=user_id,
+            book_club_id=book_club_id,
+        )
+
+        if result:
+            record = result.single()
+            if record.get("book_id"):
+                current_book = BookClubSchemas.BookClubCurrentlyReading(
+                    book_id=record.get("book_id"),
+                    title=record.get("title"),
+                    small_img_url=record.get("small_img_url", ""),
+                )
+                return current_book
+            else: 
+                return None
+        else:
+            return "No book club found"
 
     def search_users_not_in_club(
             self, 

@@ -382,12 +382,32 @@ class TestBookClubs:
         response = requests.post(endpoint, json=data, headers=headers)
         assert response.status_code == 200, "Starting a currently reading book"
 
+        # Test the currently reading book endpoint
+        endpoint = (
+            f"{self.endpoint}/api/bookclubs/{self.book_club_id}/"
+            "currently_reading")
+
+        response = requests.get(endpoint, headers=headers)
+        assert response.status_code == 200, "Error getting currently reading book"
+        book = response.json()['currently_reading_book']
+        assert book is not None, "Book not set or returned"
+
         endpoint = (
             f"{self.endpoint}/api/bookclubs/{self.book_club_id}/"
             "currently_reading/stop")
 
         response = requests.post(endpoint, headers=headers)
         assert response.status_code == 200, "Stopping a currently reading book"
+
+        # Test the currently reading book endpoint
+        endpoint = (
+            f"{self.endpoint}/api/bookclubs/{self.book_club_id}/"
+            "currently_reading")
+
+        response = requests.get(endpoint, headers=headers)
+        assert response.status_code == 200, "Error getting currently reading book"
+        book = response.json()['currently_reading_book']
+        assert book is None, "Book still set"
 
         endpoint = (
             f"{self.endpoint}/api/bookclubs/{self.book_club_id}/"

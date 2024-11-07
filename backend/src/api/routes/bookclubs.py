@@ -774,17 +774,26 @@ async def get_currently_reading(
     ),
 ):
     """
-    basic endpoint to grab a book clubs currently reading shelf if it exists.
+    Grabs the currently reading book for a book club
+    Args: 
+        book_club_id: The id of the book club
+        
+    Returns:
+        currently_reading_book: The currently reading book for the book club
+
+    Raises:
+        400 if user is not the club member
     """
 
     currently_reading_book = book_club_repo.get_currently_reading_book_or_none(
         user_id=current_user.id,
         book_club_id=book_club_id,
-    )  
+    )
+
+    if currently_reading_book == "No book club found":
+        raise HTTPException(status_code=400, detail="User is not a member of the club")
     
-    return JSONResponse(status_code=200, content={
-        "currently_reading_book": jsonable_encoder(currently_reading_book)
-    })
+    return JSONResponse(status_code=200, content={"currently_reading_book": jsonable_encoder(currently_reading_book)})
     
 @router.post("/{book_club_id}/currently_reading/start", name="bookclub:start_book")
 async def start_book_for_club(
