@@ -16,3 +16,4 @@ config.feature.json
 config.prod.json
 test_health.py
 health
+my_app.log.jsonl
