@@ -28,4 +28,4 @@
 {"level": "WARNING", "message": "warning message", "timestamp": "2024-11-05T02:38:18.348496+00:00", "logger": "my_app", "module": "logger", "function": "main", "line": 23, "thread_name": "MainThread"}
 {"level": "ERROR", "message": "error message", "timestamp": "2024-11-05T02:38:18.348496+00:00", "logger": "my_app", "module": "logger", "function": "main", "line": 24, "thread_name": "MainThread"}
 {"level": "CRITICAL", "message": "critical message", "timestamp": "2024-11-05T02:38:18.349497+00:00", "logger": "my_app", "module": "logger", "function": "main", "line": 25, "thread_name": "MainThread"}
-{"level": "INFO", "message": "Backend application initialized", "timestamp": "2024-11-05T02:38:18.410691+00:00", "logger": "my_app", "module": "main", "function": "<module>", "line": 30, "thread_name": "MainThread"}
+{"level": "INFO", "message": "Backend applicaton initialized", "timestamp": "2024-11-05T02:38:18.410691+00:00", "logger": "my_app", "module": "main", "function": "<module>", "line": 30, "thread_name": "MainThread"}
