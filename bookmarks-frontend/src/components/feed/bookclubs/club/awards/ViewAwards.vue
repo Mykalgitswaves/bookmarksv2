@@ -7,7 +7,7 @@
     Awards
 </button>
 
-<dialog ref="awardsModal" class="awards-meny">
+<dialog ref="awardsModal" class="awards-menu">
     <div class="pt-5 pb-5 flex items-center">
             <h4 class="text-stone-500 text-lg italic">Awards</h4>
 
@@ -19,8 +19,13 @@
 </dialog>
 </template>
 <script setup>
-
+import { urls } from '../../../../../services/urls';
+import { db } from '../../../../../services/db';
 import { ref, watch } from 'vue';
+import CloseButton from '../../../partials/CloseButton.vue';
+
+const data = ref(null);
+
 
 const awardsButton = ref(null);
 const awardsModal = ref(null);
@@ -71,7 +76,7 @@ watch(
 }
 
 .transition {
-    transition: all 250ms ease-in-out;
+    transition: all 150ms ease-in-out;
 }
 
 @starting-style {
@@ -91,15 +96,18 @@ watch(
     transition-behavior: allow-discrete;
     transition: 300ms ease;
     width: var(--mobile-sidebar-width);
+    height: 80vh;
+    scroll-behavior: smooth;
+    overflow-y: scroll;
     min-width: 300px; /** For mobile */
     border: 1px solid var(--stone-200);
     border-radius: var(--radius-md);
-    margin: var(--margin-md);
     margin-left: auto;
+    margin-right: auto;
     margin-top: 60px;
     padding: 24px;
     padding-top: 0;
-    background-color: var(--stone-50);
+    background-color: var(--surface-primary);
 }
 
 .awards-menu::backdrop {
