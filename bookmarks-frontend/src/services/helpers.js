@@ -1,5 +1,6 @@
 import { toRaw } from 'vue'
 import JSConfetti from 'js-confetti'
+
 // Helper functions used throughout our app!
 export const helpersCtrl = {
     // Handles commas
@@ -83,6 +84,8 @@ export const helpersCtrl = {
         data.response = update.response;
         data.is_spoiler = update.is_spoiler;
         data.quote = update.quote;
+        data.chapter = update.chapter;
+        
         return data;
     },
     /**

@@ -44,7 +44,7 @@ export const BookClub = {
 
 
 export const ClubUpdatePost = {
-        cls:  'club_update_post'
+    cls: 'club_update'
 }
 
 export const ClubReviewPost = {

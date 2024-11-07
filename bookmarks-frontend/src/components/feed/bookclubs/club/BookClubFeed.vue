@@ -33,14 +33,14 @@
                 <template #overlay-main>
                     <CreateUpdateForm 
                         :book="currentlyReadingBook" 
-                        @update-complete="(update) => postUpdateForBookClub(update)"
+                        @post-update="(update) => postUpdateForBookClub(update)"
                     />
                 </template>
             </Overlay>
 
             <!-- index for now until we can grab the id from the updates -->
             <ClubPost
-                v-for="(post, index) in posts" 
+                v-for="(post, index) in data.posts" 
                 :key="index" 
                 :post="post"
             />
@@ -56,10 +56,12 @@ import BookClubFeedActions from './BookClubFeedActions.vue';
 import ClubPost from './posts/ClubPost.vue';
 import Overlay from '@/components/feed/partials/overlay/Overlay.vue';
 import CreateUpdateForm from '@/components/feed/createPosts/update/createUpdateForm.vue';
-import { ref } from 'vue';
+import { onMounted, ref } from 'vue';
 import { db } from '../../../../services/db';
 import { urls } from '../../../../services/urls';
+import { formatUpdateForBookClub } from '../bookClubService';
 import { useRoute } from 'vue-router';
+
 
 const props = defineProps({
     club: {
@@ -68,7 +70,9 @@ const props = defineProps({
     }
 });
 
-const data = ref({});
+const data = ref({
+    posts: [],
+});
 const loaded = ref(false);
 const updateOverlay = ref(null);
 const route = useRoute();
@@ -86,7 +90,7 @@ function showUpdateForm() {
  */
 
 const clubFeedPromise = db.get(urls.bookclubs.getClubFeed(route.params.bookclub), null, false, (res) => {
-    data.value = res;
+    data.value.posts = res.posts;
 },
 (err) => {
     console.log(err);
@@ -113,11 +117,15 @@ function refreshFeed() {
  */
 
 function postUpdateForBookClub(update) {
-    db.post(urls.bookclubs.postUpdateForBookClub(route.params.bookclub), {}, false, 
+    update = formatUpdateForBookClub(update, route.params.user)
+
+    db.post(urls.bookclubs.createClubUpdate(route.params.bookclub), update, false, 
         (res) => {
             console.log(res);
             // Refresh;
             loadClubFeed();
+            const { dialogRef } = updateOverlay.value;
+            dialogRef?.close();
         },
         (err) => {
             console.warn(err);
