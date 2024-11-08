@@ -1808,7 +1808,14 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
         query = (
             """
             MATCH (u:User {id: $user_id})-[:RECEIVED_INVITE]->(i:BookClubInvite {id: $invite_id})-[:INVITE_FOR]->(b:BookClub)
+            OPTIONAL MATCH (b)-[:IS_READING]->(book:BookClubBook)
             MERGE (u)-[:IS_MEMBER_OF]->(b)
+            FOREACH (_ IN CASE WHEN book IS NOT NULL THEN [1] ELSE [] END |
+                MERGE (u)-[reading:IS_READING_FOR_CLUB]->(book)
+                ON CREATE SET 
+                    reading.last_updated = datetime(),
+                    reading.current_chapter = 0
+            )
             DETACH DELETE i
             RETURN count(i) as deleted
             """
