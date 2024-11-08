@@ -13,15 +13,16 @@
     </div>
 
     <div class="toolbar">
-        <button class="btn btn-toolbar">
-            View all awards
+        <button class="btn btn-toolbar text-sm active">
+            club awards
         </button>
-        <button class="btn btn-toolbar">
-            View awards you've granted
+
+        <button class="btn btn-toolbar text-sm">
+            awards you've granted
         </button>
     </div>
 
-    <div v-if="loaded">
+    <div v-if="loaded" class="award-grid">
         <div
             class="award" 
             v-for="award in awards" 
@@ -110,7 +111,7 @@ watch(
 }
 
 .awards-menu[open] {
-    --mobile-sidebar-width: 70vw;
+    --mobile-sidebar-width: 90vw;
     @media screen and (min-width: 768px) {
         --mobile-sidebar-width: 700px;
     }
@@ -134,5 +135,30 @@ watch(
 
 .awards-menu::backdrop {
   display:none
+}
+
+.award-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    justify-content: space-between;
+    align-items: start;
+    text-align: center;
+    margin-top: 20px;
+}
+
+.award {
+    border: 1px solid var(--stone-200);
+    padding: 4px;
+    border-radius: 4px;
+
+    .award-title {
+        font-family: var(--fancy-script);
+        font-size: var(--font-lg);
+        color: var(--indigo-600);
+    }
+
+    .award-description {
+        font-size: var(--font-sm);
+    }
 }
 </style>
