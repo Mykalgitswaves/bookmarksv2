@@ -23,4 +23,4 @@ backend/src/utils/logging/logs/*
 backend/src/utils/logging/logs/*.log.jsonl
 
 # Do not ignore other files in logs/
-!backend/src/utils/logging/logs/
+!backend/src/utils/logging/logs/.gitkeep
