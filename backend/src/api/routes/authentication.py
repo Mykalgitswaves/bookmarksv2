@@ -118,6 +118,7 @@ async def login(
         Token: The authenticated user with access token.
     """
     if form_data.email:
+        logger.debug("User is logging in with email", extra={"email": form_data.email})
         try:
             user = UserLogin(email=form_data.email, password=form_data.password)
             user.email = user.email.lower()
@@ -127,6 +128,7 @@ async def login(
         # Check if the user exists in the database
         user_in_db = user_repo.get_user_by_email(email=user.email)
     elif form_data.username:
+        logger.debug("User is logging in with username", extra={"username": form_data.username})
         try:
             user = UserToken(username=form_data.username, password=form_data.password)
             user.username = user.username.lower()
@@ -135,6 +137,7 @@ async def login(
 
         user_in_db = user_repo.get_user_by_username(username=user.username)
     else:
+        logger.warning("Invalid form data")
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid form data"
         )
