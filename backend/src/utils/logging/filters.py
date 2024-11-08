@@ -4,7 +4,7 @@ class WarningOnlyFilter(logging.Filter):
     def filter(self, record):
         return record.levelno == logging.WARNING
     
-# Info or Debug Filter
-class InfoDebugFilter(logging.Filter):
+# Info Filter
+class InfoOnlyFilter(logging.Filter):
     def filter(self, record):
-        return record.levelno in (logging.INFO, logging.DEBUG)
+        return record.levelno == logging.INFO

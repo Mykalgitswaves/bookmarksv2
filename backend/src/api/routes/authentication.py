@@ -74,12 +74,12 @@ async def signup(
     email_taken = user_repo.is_email_taken(user_create.email)
 
     if username_taken:
-        logger.debug("Username is already taken", extra={"username": user_create.username})
+        logger.info("Username is already taken", extra={"username": user_create.username})
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT, detail="Username is already taken"
         )
     elif email_taken:
-        logger.debug("Email is already taken", extra={"email": user_create.email})
+        logger.info("Email is already taken", extra={"email": user_create.email})
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT, detail="Email is already taken"
         )
@@ -118,7 +118,7 @@ async def login(
         Token: The authenticated user with access token.
     """
     if form_data.email:
-        logger.debug("User is logging in with email", extra={"email": form_data.email})
+        logger.info("User is logging in with email", extra={"email": form_data.email})
         try:
             user = UserLogin(email=form_data.email, password=form_data.password)
             user.email = user.email.lower()
@@ -128,7 +128,7 @@ async def login(
         # Check if the user exists in the database
         user_in_db = user_repo.get_user_by_email(email=user.email)
     elif form_data.username:
-        logger.debug("User is logging in with username", extra={"username": form_data.username})
+        logger.info("User is logging in with username", extra={"username": form_data.username})
         try:
             user = UserToken(username=form_data.username, password=form_data.password)
             user.username = user.username.lower()

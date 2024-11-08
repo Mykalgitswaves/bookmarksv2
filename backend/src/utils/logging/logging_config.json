@@ -24,8 +24,8 @@
       "warning_only": {
           "()": "src.utils.logging.filters.WarningOnlyFilter"
         },
-      "info_debug": {
-          "()": "src.utils.logging.filters.InfoDebugFilter"
+      "info_only": {
+          "()": "src.utils.logging.filters.InfoOnlyFilter"
         }
     },
     "handlers": {
@@ -54,9 +54,9 @@
       },
       "file_json": {
         "class": "logging.handlers.RotatingFileHandler",
-        "level": "DEBUG",
+        "level": "INFO",
         "formatter": "json",
-        "filters": ["info_debug"],
+        "filters": ["info_only"],
         "filename": "src/utils/logging/logs/info.log.jsonl",
         "maxBytes": 10000000,
         "backupCount": 3
