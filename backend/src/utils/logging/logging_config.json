@@ -3,7 +3,7 @@
     "disable_existing_loggers": false,
     "formatters": {
       "simple": {
-        "format": "[%(levelname)s|%(module)s|L%(lineno)d] %(asctime)s: %(message)s",
+        "format": "[%(levelname)s|%(pathname)s|L%(lineno)d] %(asctime)s: %(message)s",
         "datefmt": "%Y-%m-%dT%H:%M:%S%z"
       },
       "json": {
@@ -39,15 +39,17 @@
         "class": "logging.handlers.RotatingFileHandler",
         "level": "WARNING",
         "filters": ["warning_only"],
-        "filename": "src/utils/logging/logs/warning.log.jsonl",
-        "maxBytes": 10000,
+        "filename": "src/utils/logging/logs/warning.log",
+        "formatter": "simple",
+        "maxBytes": 10000000,
         "backupCount": 3
       },
       "error_logs": {
         "class": "logging.handlers.RotatingFileHandler",
         "level": "ERROR",
-        "filename": "src/utils/logging/logs/error.log.jsonl",
-        "maxBytes": 10000,
+        "filename": "src/utils/logging/logs/error.log",
+        "formatter": "simple",
+        "maxBytes": 10000000,
         "backupCount": 3
       },
       "file_json": {
@@ -56,7 +58,7 @@
         "formatter": "json",
         "filters": ["info_debug"],
         "filename": "src/utils/logging/logs/info.log.jsonl",
-        "maxBytes": 10000,
+        "maxBytes": 10000000,
         "backupCount": 3
       }
     },
@@ -65,7 +67,9 @@
         "level": "DEBUG",
         "handlers": [
           "stderr",
-          "file_json"
+          "file_json",
+          "warning_logs",
+          "error_logs"
         ]
       }
     }

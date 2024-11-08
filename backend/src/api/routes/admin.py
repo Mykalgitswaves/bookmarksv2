@@ -10,6 +10,7 @@ from src.database.graph.crud.posts import PostCRUDRepositoryGraph
 from src.database.graph.crud.bookclubs import BookClubCRUDRepositoryGraph
 from src.api.utils.database import get_repository, get_sql_repository
 from src.config.config import settings
+from src.utils.logging.logger import logger
 
 router = fastapi.APIRouter(prefix="/admin", tags=["admin"])
 
@@ -21,6 +22,8 @@ async def delete_user_by_username(
         get_repository(repo_type=UserCRUDRepositoryGraph)
     ),
 ):
+    logger.warning("Admin is deleting a user by username")
+    
     data = await request.json()
 
     username = data.get("username")

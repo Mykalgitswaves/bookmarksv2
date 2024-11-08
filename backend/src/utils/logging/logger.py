@@ -18,10 +18,10 @@ def setup_logging():
 def main():
     setup_logging()
     logging.basicConfig(level="INFO")
-    logger.debug("debug message", extra={"x": "hello"})
-    logger.info("info message")
-    logger.warning("warning message")
-    logger.error("error message")
-    logger.critical("critical message")
+    # logger.debug("debug message", extra={"x": "hello"})
+    # logger.info("info message")
+    # logger.warning("warning message")
+    # logger.error("error message")
+    # logger.critical("critical message")
     
 main()
