@@ -2,6 +2,7 @@
     <div class="club-pace" v-if="loaded">
 
     </div>
+    
     <div v-else class="gradient fancy text-center text-xl loading-box">
         Loading
     </div>
@@ -22,22 +23,23 @@ const loaded = ref(false);
 let clubPace = null;
 const route = useRoute();
 
+const getPacePromise = db.get(
+    urls.bookclubs.getPaceForReadersInClub(route.params.bookclub), 
+    null,
+    false, 
+    (res) => {
+        console.log(res)        
+        clubPace.value = res.club_pace;
+        loaded.value = true;
+    }, 
+    (err) => {
+        console.log(err)
+        loaded.value = true;
+    }
+);
 function getPaceForReadersInClub() {
     loaded.value = false;
-    db.get(
-        urls.bookclubs.getPaceForReadersInClub(route.params.bookclub), 
-        null,
-        false, 
-        (res) => {
-            console.log(res)        
-            clubPace.value = res.club_pace;
-            loaded.value = true;
-        }, 
-        (err) => {
-            console.log(err)
-            loaded.value = true;
-        }
-    );
+    Promise.resolve(getPacePromise);
 };
 
 getPaceForReadersInClub();

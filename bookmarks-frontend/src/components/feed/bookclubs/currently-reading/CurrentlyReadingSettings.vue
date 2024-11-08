@@ -14,8 +14,8 @@
     <section>
         <TransitionGroup name="content" tag="div">
             <div v-if=loaded>
-                <div v-if="data.currentlyReadingBook?.id">
-                    <SelectedBook :book="data.currentlyReadingBook"/>
+                <div v-if="!!data.currentlyReadingBook">
+                    <SelectedBook :book="data.currentlyReadingBook" :set-book="true"/>
 
                     <ReadersPace :pace="{}"/>
                 </div>
@@ -65,7 +65,7 @@ function loadData(){
             console.log(err);
         }
     );
-
+     
     // const pacePromise = db.get()
     Promise.all([currentlyReadingPromise]).then(() => {
         loaded.value = true;

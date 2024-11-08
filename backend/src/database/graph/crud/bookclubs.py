@@ -1285,14 +1285,13 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
             book_club_id=book_club_id,
             user_id=user_id
         )
-
         member_paces = []
         for response in result:
             member_pace = {
-                "id":response.get("members.id"),
-                "username":response.get("members.username"),
-                "pace":response.get("members_reading.current_chapter"),
-                "is_current_user": response.get("members.id") == user_id
+                "id": response.get("members", {}).get('id'),
+                "username":response.get("members", {}).get("username"),
+                "pace":response.get("members_reading", {}).get("current_chapter"),
+                "is_current_user": response.get("members", {}).get("id") == user_id
             }
 
             member_paces.append(member_pace)

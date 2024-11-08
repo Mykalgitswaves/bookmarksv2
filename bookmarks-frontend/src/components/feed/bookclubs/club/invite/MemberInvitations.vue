@@ -287,7 +287,7 @@ async function loadInvites(){
 
 async function previewEmailInvite() {
     db.get(urls.bookclubs.previewEmailInvitesForClub(route.params.bookclub, 'invite'), 
-    null, false, 
+    {'is_preview': true}, false, 
     (res) => {
         previewEmailHTML.value = res.email;
         const { dialogRef } = previewOverlay.value;

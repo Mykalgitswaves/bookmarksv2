@@ -26,7 +26,7 @@
                                {{ member.email }}
                             </p>
                         </div>
-
+                        
                         <button 
                             class="btn btn-ghost btn-tiny text-sm" 
                             type="button" 
@@ -55,7 +55,7 @@ import { ref } from 'vue';
 import { useRoute } from 'vue-router';
 import { Invitation, BaseInvitation } from '../../models/models';
 import { db } from  '../../../../../services/db';
-import { urls } from  '../../../../../services/urls';
+import { navRoutes, urls } from  '../../../../../services/urls';
 import TextAlert from '@/components/feed/partials/textAlert/TextAlert.vue';
 import { Member } from '../../models/models';
 
@@ -83,17 +83,19 @@ function loadMembers() {
 function removeMemberFromClub(user_id, vForIndex) {
     // vForIndexes are not 0 based, their starting index is 1.
     let index = vForIndex - 1;
-    db.delete(
-        urls.bookclubs.removeMemberFromBookClub(
-            route.params.bookclub,
-        ), {user_id: user_id}, false, 
-        () => {
-            members.value.splice(index, 1);
-        }, 
-        (err) => {
-            console.log(err);
-        }
-    );
+    if (window.confirm('Are you sure you want to remove this member')) {
+        db.delete(
+            urls.bookclubs.removeMemberFromBookClub(
+                route.params.bookclub,
+            ), {user_id: user_id}, false, 
+            () => {
+                members.value.splice(index, 1);
+            }, 
+            (err) => {
+                console.log(err);
+            }
+        );
+    }
 }
 
 /**

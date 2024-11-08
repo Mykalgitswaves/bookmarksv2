@@ -8,13 +8,28 @@
 </button>
 
 <dialog ref="awardsModal" class="awards-menu">
-    <div class="pt-5 pb-5 flex items-center">
-            <h4 class="text-stone-500 text-lg italic">Awards</h4>
-
+    <div class="pt-5 pb-5">
             <CloseButton class="ml-auto" @close="awardsModal.close()"/>
     </div>
-    <div>
-        hullo
+
+    <div class="toolbar">
+        <button class="btn btn-toolbar">
+            View all awards
+        </button>
+        <button class="btn btn-toolbar">
+            View awards you've granted
+        </button>
+    </div>
+
+    <div v-if="loaded">
+        <div
+            class="award" 
+            v-for="award in awards" 
+            :key="award?.id"
+        >
+            <h4 class="award-title">{{ award.name }}</h4>
+            <p class="award-description">{{  award.description }}</p>
+        </div>
     </div>
 </dialog>
 </template>
@@ -22,10 +37,17 @@
 import { urls } from '../../../../../services/urls';
 import { db } from '../../../../../services/db';
 import { ref, watch } from 'vue';
+import { useRoute } from 'vue-router';
 import CloseButton from '../../../partials/CloseButton.vue';
 
-const data = ref(null);
+let awards = {};
+const loaded = ref(false);
+const route = useRoute();
 
+db.get(urls.bookclubs.getAwards(route.params.bookclub), null, false, (res) => {
+    awards = res.awards;
+    loaded.value = true;
+});
 
 const awardsButton = ref(null);
 const awardsModal = ref(null);

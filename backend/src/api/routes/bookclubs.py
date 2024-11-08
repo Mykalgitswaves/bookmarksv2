@@ -1156,25 +1156,22 @@ async def test_emails(
     ),
     email_type: str = 'invite',
 ):  
+    to_email = 'test@hardcoverlit.com'
+    invite_id = '🍕'
+
     # ONlY MICHAEL CAN VIEW FOR NOW? 
     if current_user.id != 'a0f86d40-4915-4773-8aa1-844d1bfd0b41':
         return HTTPException(status_code=400, detail='YOU CANT DO THAT BECAUSE YOU ARENT MICHAEL OR KYLE')
+    
     # Maybe think about other places we want to test this shit?
     if email_type == 'invite':
-        invites = book_club_repo.get_invites_for_book_club(
-            book_club_id=book_club_id, user_id=current_user.id
-        )
-
-        preview_invite = invites[0] 
-        if preview_invite is None:
-            raise HTTPException(status_code=300, detail='No invites for this club have been created')
-        email = email_client.send_invite_email(
-                to_email=preview_invite.invited_user['email'],
-                invite_id=preview_invite.invite_id,
+        preview_email = email_client.send_invite_email(
+                to_email=to_email,
+                invite_id=invite_id,
                 book_club_id=book_club_id,
                 invite_user_username=current_user.username,
                 subject="Someone Invited You to Join a Book Club!",
                 book_club_repo=book_club_repo,
                 is_debug=True
         )
-        return JSONResponse(status_code=200, content={'email': jsonable_encoder(email)})
+        return JSONResponse(status_code=200, content={'email': jsonable_encoder(preview_email)})

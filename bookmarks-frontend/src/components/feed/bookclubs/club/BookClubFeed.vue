@@ -23,6 +23,8 @@
                 @currently-reading-settings=""
             />
 
+            <CurrentPacesForClubBook />
+
             <!-- Sticky toolbar containing buttons for creating and filtering posts -->
             <BookClubFeedActions @start-club-update-post-flow="showUpdateForm()" />
 
@@ -56,6 +58,7 @@ import BookClubFeedActions from './BookClubFeedActions.vue';
 import ClubPost from './posts/ClubPost.vue';
 import Overlay from '@/components/feed/partials/overlay/Overlay.vue';
 import CreateUpdateForm from '@/components/feed/createPosts/update/createUpdateForm.vue';
+import CurrentPacesForClubBook from './CurrentPacesForClubBook.vue';
 import { onMounted, ref } from 'vue';
 import { db } from '../../../../services/db';
 import { urls } from '../../../../services/urls';
