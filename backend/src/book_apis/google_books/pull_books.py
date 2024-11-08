@@ -16,6 +16,7 @@ class GoogleBooksPull(GoogleBooks):
         """
         Pulls a book from the google books api by id
         """
+        logger.info(f"Pulling book with google id {google_id}")
         db_response = book_repo.get_book_by_google_id(google_id)
         if not db_response:
             path = f"https://www.googleapis.com/books/v1/volumes/{google_id[1:]}?key={self.api_key}"

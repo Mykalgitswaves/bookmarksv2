@@ -12,6 +12,7 @@ from src.securities.authorizations.verify import get_current_active_user
 from src.book_apis.google_books.pull_books import google_books_pull
 from src.book_apis.google_books.search import google_books_search
 from src.api.background_tasks.google_books import google_books_background_tasks
+from src.utils.logging.logger import logger
 
 router = fastapi.APIRouter(prefix="/books", tags=["books"])
 
@@ -32,6 +33,7 @@ def get_books_by_title(
     result = book_repo.get_books_by_title(
         book_search_input.text, book_search_input.skip, book_search_input.limit
     )
+    logger.info(f"User searched for books by title", extra={"search_input": book_search_input, "action": "book_search"})
     return JSONResponse(content={"data": jsonable_encoder(result)})
 
 
