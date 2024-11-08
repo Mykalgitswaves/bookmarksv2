@@ -4,8 +4,11 @@
             <template #resolved>
                 <div v-if="memberPaces.length">
                     <div class="flex text-sm">
-                        <h4 class="text-stone-700"><span class="text-indigo-500">{{ memberPaces[0].username }}</span>
-                            <br> Is leading the club pace</h4>
+                        <h4 class="text-stone-700">
+                            <span class="text-indigo-500">{{memberPaces[0].username }}</span>
+                            <br> is leading the club pace
+                        </h4>
+
                         <button 
                             class="ml-auto text-sm text-indigo-500 underline fancy nowrap" 
                             @click="isViewingAllPaces = !isViewingAllPaces"
@@ -14,7 +17,7 @@
                         </button>
                     </div>
 
-                    <div v-if="isViewingAllPaces" class="member-paces mt-5">
+                    <div v-if="isViewingAllPaces" class="member-paces mt-2">
                         <div 
                             v-for="(member, index) in memberPaces" 
                             :key="member.id"
@@ -25,7 +28,7 @@
                             <div>
                                 <h4 class="text-stone-700">{{ member.username }}</h4>
                                 
-                                <p class="text-sm text-stone-500">{{ member.pace ? `on chapter: ${member.pace}` : 'hasn\'t started yet' }}</p>
+                                <p class="text-sm text-stone-500">{{ member.pace ? `is reading chapter ${member.pace}` : 'hasn\'t started yet' }}</p>
                             </div>
 
                             <!-- <canvas class="progress-bar" /> -->
@@ -48,7 +51,6 @@ import { urls } from '../../../../services/urls';
 import IconRabbit from '@/components/svg/icon-rabbit.vue';
 import IconTurtle from '@/components/svg/icon-turtle.vue';
 import AsyncComponent from '../../partials/AsyncComponent.vue';
-import Accordian from '../../partials/accordian.vue';
 
 const props = defineProps({
     totalChapters: {
@@ -92,8 +94,6 @@ function generateSvgPaceMap(memberPaces) {
 
     return svgMap
 }
-
-
 </script>
 <style scoped>
     .member-paces {
