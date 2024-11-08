@@ -16,4 +16,11 @@ config.feature.json
 config.prod.json
 test_health.py
 health
-my_app.log.jsonl
+# Ignore all .log files in the logs/ directory
+backend/src/utils/logging/logs/*
+
+# Ignore all .jsonl log files in the logs/ directory
+backend/src/utils/logging/logs/*.log.jsonl
+
+# Do not ignore other files in logs/
+!backend/src/utils/logging/logs/
