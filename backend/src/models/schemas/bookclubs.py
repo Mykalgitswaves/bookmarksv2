@@ -92,6 +92,7 @@ class BookClubCurrentlyReading(BaseModel):
     title: str
     small_img_url: str
     author_names: list
+    chapters: int | None = None
 
 class BookClubInvitePreview(BaseModel):
     invite_id: str

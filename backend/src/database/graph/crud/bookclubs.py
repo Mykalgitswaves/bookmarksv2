@@ -1295,7 +1295,8 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
             }
 
             member_paces.append(member_pace)
-
+        
+        member_paces = sorted(member_paces, key=lambda member: member['pace'], reverse=True)
         # Checks if the user is even a member of the club before returning
         if response.get("user_id"):
             return member_paces
@@ -1699,7 +1700,8 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
                bc.id as book_club_id,
                actualBook.title as title,
                actualBook.small_img_url as small_img_url,
-               actualBook.author_names as author_names
+               actualBook.author_names as author_names,
+               currentlyReadingBook.chapters as chapters
         """
 
         result = tx.run(
@@ -1715,7 +1717,8 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
                     book_id=record.get("book_id"),
                     title=record.get("title"),
                     small_img_url=record.get("small_img_url", ""),
-                    author_names=record.get("author_names", [])
+                    author_names=record.get("author_names", []),
+                    chapters=record.get("chapters", 0)
                 )
                 return current_book
             else: 
