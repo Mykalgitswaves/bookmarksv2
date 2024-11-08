@@ -7,7 +7,7 @@
         "datefmt": "%Y-%m-%dT%H:%M:%S%z"
       },
       "json": {
-        "()": "src.utils.logging.formatters.MyJSONFormatter",
+        "()": "src.utils.logging.formatters.JSONFormatter",
         "fmt_keys": {
           "level": "levelname",
           "message": "message",
@@ -20,6 +20,14 @@
         }
       }
     },
+    "filters": {
+      "warning_only": {
+          "()": "src.utils.logging.filters.WarningOnlyFilter"
+        },
+      "info_debug": {
+          "()": "src.utils.logging.filters.InfoDebugFilter"
+        }
+    },
     "handlers": {
       "stderr": {
         "class": "logging.StreamHandler",
@@ -27,11 +35,27 @@
         "formatter": "simple",
         "stream": "ext://sys.stderr"
       },
+      "warning_logs": {
+        "class": "logging.handlers.RotatingFileHandler",
+        "level": "WARNING",
+        "filters": ["warning_only"],
+        "filename": "src/utils/logging/logs/warning.log.jsonl",
+        "maxBytes": 10000,
+        "backupCount": 3
+      },
+      "error_logs": {
+        "class": "logging.handlers.RotatingFileHandler",
+        "level": "ERROR",
+        "filename": "src/utils/logging/logs/error.log.jsonl",
+        "maxBytes": 10000,
+        "backupCount": 3
+      },
       "file_json": {
         "class": "logging.handlers.RotatingFileHandler",
         "level": "DEBUG",
         "formatter": "json",
-        "filename": "src/utils/logging/logs/my_app.log.jsonl",
+        "filters": ["info_debug"],
+        "filename": "src/utils/logging/logs/info.log.jsonl",
         "maxBytes": 10000,
         "backupCount": 3
       }

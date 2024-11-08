@@ -28,7 +28,7 @@ LOG_RECORD_BUILTIN_ATTRS = {
     "taskName",
 }
 
-class MyJSONFormatter(logging.Formatter):
+class JSONFormatter(logging.Formatter):
     def __init__(
         self,
         *,
