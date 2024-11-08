@@ -56,7 +56,9 @@
                 <!-- Rethink these as club specific controls. -->
                 <div class="flex gap-2">
                 </div>
-
+                <button @click="emit('add-award-to-post', post.id)">
+                    grant award
+                </button>
                
             </div>
         </div>
@@ -85,6 +87,8 @@ const props = defineProps({
         required: true,
     }
 });
+
+const emit = defineEmits(['add-award-to-post']);
 </script>
 <style scoped>
 .quote {

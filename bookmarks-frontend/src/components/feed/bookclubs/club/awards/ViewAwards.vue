@@ -92,6 +92,13 @@ watch(
         }
     },
 );
+
+function viewAwardsModal(event) {
+    awardsModal.value.showModal();
+    console.log(event)
+}
+
+window.addEventListener('open-award-post-modal', (event) => viewAwardsModal(event))
 </script>
 <style scoped>
 .h-40 {

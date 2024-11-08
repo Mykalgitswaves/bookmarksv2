@@ -26,7 +26,7 @@
             <CurrentPacesForClubBook :total-chapters="currentlyReadingBook.chapters"/>
 
             <!-- Sticky toolbar containing buttons for creating and filtering posts -->
-            <BookClubFeedActions @start-club-update-post-flow="showUpdateForm()" />
+            <BookClubFeedActions @start-club-update-post-flow="showUpdateForm()" ref="bookFeedActionsRef"/>
 
             <Overlay ref="updateOverlay">
                 <template #overlay-header>
@@ -45,6 +45,7 @@
                 v-for="(post, index) in data.posts" 
                 :key="index" 
                 :post="post"
+                @add-award-to-post="(postId) => dispatchAwardEvent(postId)"
             />
         </section>
 
@@ -134,5 +135,14 @@ function postUpdateForBookClub(update) {
             console.warn(err);
         },
     );
+};
+
+function dispatchAwardEvent(postId) {
+    const event = new CustomEvent('open-award-post-modal', {
+        detail:  {
+            post_id: postId
+        }
+    });
+    window.dispatchEvent(event);
 };
 </script>

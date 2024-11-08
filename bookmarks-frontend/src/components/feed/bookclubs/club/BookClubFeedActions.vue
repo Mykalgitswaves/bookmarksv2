@@ -42,13 +42,13 @@
                 </div>
             </TransitionGroup>
 
-            <ViewAwards />
+            <ViewAwards ref="viewAwardsRef"/>
         </div>
     </div>
 </template>
 <script setup>
 import IconPlus from '@/components/svg/icon-plus.vue';
-import { watch, reactive } from 'vue';
+import { watch, reactive, ref } from 'vue';
 import ViewAwards from './awards/ViewAwards.vue'
 // Used to show and hide modals.
 const filterOptions = ['date(newest first)', 'date(oldest first)', 'byUser'];
@@ -58,6 +58,7 @@ const modals = reactive({
   filterPopout: false,
 });
 
+const viewAwardsRef = ref(null);
 const currentFilterOptions = reactive({})
 const emit = defineEmits(['start-club-update-post-flow']);
 
