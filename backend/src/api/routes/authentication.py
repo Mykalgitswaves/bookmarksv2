@@ -22,6 +22,7 @@ from src.models.schemas.forms import SignUpForm, LoginForm
 from src.models.schemas.token import Token
 from src.securities.authorizations.verify import get_current_active_user
 from src.config.config import settings
+from src.utils.logging.logger import logger
 
 
 router = fastapi.APIRouter(prefix="/auth", tags=["authentication"])
@@ -73,10 +74,12 @@ async def signup(
     email_taken = user_repo.is_email_taken(user_create.email)
 
     if username_taken:
+        logger.debug("Username is already taken", extra={"username": user_create.username})
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT, detail="Username is already taken"
         )
     elif email_taken:
+        logger.debug("Email is already taken", extra={"email": user_create.email})
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT, detail="Email is already taken"
         )
@@ -87,6 +90,8 @@ async def signup(
     new_user = user_repo.create_user(user_create=user_create)
     # Generate an access token
     access_token = jwt_generator.generate_access_token(username=new_user.username)
+
+    logger.info("User created", extra={"username": new_user.username, "email": new_user.email, "action": "signup"})
 
     return Token(access_token=access_token, token_type="bearer", user_id=new_user.id)
 
@@ -136,6 +141,7 @@ async def login(
 
     # Check if the user exists in the database
     if not user_in_db:
+        logger.warning("User not found")
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Username or password incorrect",
@@ -143,6 +149,7 @@ async def login(
 
     # Check if the password is valid
     if not pwd_generator.is_password_authenticated(user.password, user_in_db.password):
+        logger.warning(f"Password incorrect for user: {user_in_db.username}")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Username or password incorrect",
@@ -152,6 +159,7 @@ async def login(
     access_token = jwt_generator.generate_access_token(username=user_in_db.username)
 
     # Return the authenticated user with access token
+    logger.info("User logged in", extra={"username": user_in_db.username, "email": user_in_db.email, "action": "login"})
     return Token(access_token=access_token, token_type="bearer", user_id=user_in_db.id)
 
 
