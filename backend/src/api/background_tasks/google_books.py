@@ -44,6 +44,7 @@ class GoogleBooksBackgroundTasks(GoogleBooks):
                                     "Creating versioned book relationship", 
                                     extra={
                                         "google_id": google_book.google_id,
+                                        "book_id": google_book.id,
                                         "version_id": version_book.id,
                                         "action": "background_task:create_version_relationship"})
                                 book_repo.create_canon_book_relationship(google_book.id, version_book.id)

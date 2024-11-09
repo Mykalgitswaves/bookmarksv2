@@ -8,6 +8,7 @@ from src.book_apis.google_books.base import GoogleBooks
 from src.config.config import settings
 from src.models.schemas.books import Book
 from src.api.utils.helpers.books import find_book_by_isbn
+from src.utils.logging.logger import logger
 
 class GoogleBooksPull(GoogleBooks):
     def pull_google_book(self, 
@@ -16,7 +17,12 @@ class GoogleBooksPull(GoogleBooks):
         """
         Pulls a book from the google books api by id
         """
-        logger.info(f"Pulling book with google id {google_id}")
+        logger.info(
+            "Pulling book with google id",
+            extra={
+                "google_id": google_id,
+                "action": "pull_google_book"}
+            )
         db_response = book_repo.get_book_by_google_id(google_id)
         if not db_response:
             path = f"https://www.googleapis.com/books/v1/volumes/{google_id[1:]}?key={self.api_key}"
@@ -90,8 +96,21 @@ class GoogleBooksPull(GoogleBooks):
                             lang = language,
                             google_id= "g"+response['id'])
                 
+                logger.info(
+                    "Book pulled from google",
+                    extra={
+                        "book": book,
+                        "action": "pull_google_book_result"}
+                    )
+                
                 return(book)
             else:
+                logger.error(
+                    "Book not found in google",
+                    extra={
+                        "google_id": google_id,
+                        "action": "pull_google_book_error"}
+                )
                 raise Exception(f"ID {google_id} Not Found")
         else:
             return(db_response)

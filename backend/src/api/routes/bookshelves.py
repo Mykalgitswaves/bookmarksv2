@@ -52,7 +52,7 @@ from src.models.schemas.bookshelves import (
 )
 from src.api.websockets.bookshelves import bookshelf_ws_manager
 from src.api.background_tasks.google_books import google_books_background_tasks
-
+from src.utils.logging.logger import logger
 
 router = fastapi.APIRouter(prefix="/bookshelves", tags=["bookshelves"])
 
@@ -82,8 +82,15 @@ async def create_bookshelf(
         raise HTTPException(status_code=400, detail=str(e))
 
     bookshelf_id = bookshelf_repo.create_bookshelf(bookshelf)
+    logger.info(
+        "Bookshelf created",
+        extra={
+            "user_id": current_user.id, 
+            "bookshelf_id": bookshelf_id,
+            "bookshelf_name": bookshelf.title,
+            "action": "create_bookshelf"},
+    )
     return {"bookshelf_id": bookshelf_id}
-
 
 @router.get("/{bookshelf_id}", name="bookshelf:get")
 async def get_bookshelf(
@@ -112,6 +119,9 @@ async def get_bookshelf(
             created_by=_bookshelf.created_by,
             created_by_username=_bookshelf.created_by_username,
         )
+        logger.info(
+            "Bookshelf retrieved from cache"
+        )
     else:
         if bookshelf_id.startswith("want_to_read"):
             _bookshelf = bookshelf_repo.get_user_want_to_read_by_shelf_id(
@@ -135,6 +145,13 @@ async def get_bookshelf(
             # Check if the user has access to the bookshelf
             if _bookshelf.visibility == "private":
                 if current_user.id not in _bookshelf.members:
+                    logger.warning(
+                        "User is not authorized to view private bookshelf",
+                        extra={
+                            "user_id": current_user.id,
+                            "bookshelf_id": bookshelf_id
+                        }
+                    )
                     raise HTTPException(
                         status_code=403,
                         detail="User is not authorized to view private bookshelf",
@@ -143,6 +160,13 @@ async def get_bookshelf(
             elif _bookshelf.visibility == "friends":
                 friends = user_repo.get_simple_friend_list(_bookshelf.created_by)
                 if current_user.id not in friends:
+                    logger.warning(
+                        "User is not authorized to view friends only bookshelf",
+                        extra={
+                            "user_id": current_user.id,
+                            "bookshelf_id": bookshelf_id
+                        }
+                    )
                     raise HTTPException(
                         status_code=403,
                         detail="User is not authorized to view friends only bookshelf",
@@ -163,6 +187,12 @@ async def get_bookshelf(
                 )
                 for book in _bookshelf.books:
                     _bookshelf_dll.add_book_to_shelf(book, current_user.id)
+                logger.info(
+                    "Bookshelf added to cache",
+                    extra={
+                        "bookshelf_id": bookshelf_id
+                    }
+                )
                 bookshelf_ws_manager.cache[bookshelf_id] = _bookshelf_dll
 
         # Set this in the cache for websocket.
@@ -180,6 +210,14 @@ async def get_bookshelf(
             created_by_username=_bookshelf.created_by_username,
         )
 
+    logger.info(
+        "Bookshelf retrieved",
+        extra={
+            "user_id": current_user.id,
+            "bookshelf_id": bookshelf_id,
+            "action": "get_bookshelf"
+        }
+    )
     return JSONResponse(content={"bookshelf": jsonable_encoder(bookshelf_response)})
 
 
@@ -205,10 +243,24 @@ async def get_explore_bookshelves(
         explore_bookshelves = bookshelf_repo.get_explore_bookshelves_for_user(
             user_id=user_id_obj.id, skip=skip, limit=limit
         )
+        logger.info(
+            "Explore bookshelves retrieved",
+            extra={
+                "user_id": current_user.id,
+                "num_bookshelves_returned": len(explore_bookshelves),
+                "action": "get_explore_bookshelves"
+            }
+        )
         return JSONResponse(
             content={"bookshelves": jsonable_encoder(explore_bookshelves)}
         )
     else:
+        logger.warning(
+            "User is not authorized to view explore bookshelves",
+            extra={
+                "acting_user_id": current_user.id,
+                "user_id": user_id
+            })
         raise HTTPException(
             status_code=403,
             detail="User is not authorized to view a different user's explore bookshelves",
@@ -225,6 +277,14 @@ async def get_created_bookshelves(
 ):
     if current_user.id == user_id:
         bookshelves = bookshelf_repo.get_bookshelves_created_by_user(user_id=user_id)
+        logger.info(
+            "Created bookshelves retrieved",
+            extra={
+                "user_id": current_user.id,
+                "num_bookshelves_returned": len(bookshelves),
+                "action": "get_created_bookshelves"
+            }
+        )
         return JSONResponse(content={"bookshelves": jsonable_encoder(bookshelves)})
     else:
         raise HTTPException(
