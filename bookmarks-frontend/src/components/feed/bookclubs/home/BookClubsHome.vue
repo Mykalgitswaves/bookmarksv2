@@ -54,7 +54,6 @@ import { navRoutes } from '../../../../services/urls';
 import { ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import BookClubPreview from './BookClubPreview.vue';
-import LoadingCard from '@/components/shared/LoadingCard.vue';
 
 /**
  * ----------------------------------------------------------------------------
@@ -85,7 +84,6 @@ let errors;
  * ----------------------------------------------------------------------------
  */
 
-
 async function loadClubsCreatedByUser() {
     db.get(urls.bookclubs.getClubsOwnedByUser(user), null, false, 
         (res) => {
@@ -97,8 +95,7 @@ async function loadClubsCreatedByUser() {
             loaded.value = true;
         }
     );
-}
-
+};
 
 /**
  * ----------------------------------------------------------------------------
@@ -145,9 +142,8 @@ loadClubsCreatedByUser();
     }
 
     .bookclubs-list {
-        display: flex;
-        justify-content: space-around;
-        flex-wrap: wrap;
+        display: grid;
+        grid-template-columns: 1fr;
         column-gap: 20px;
         row-gap: 20px;
         & * {

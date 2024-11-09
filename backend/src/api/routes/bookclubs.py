@@ -1013,7 +1013,6 @@ async def get_awards(
                             username: the username of the user that granted the
                                 award
     """
-
     if post_id:
         awards = book_club_repo.get_awards_with_grants(
             book_club_id,
@@ -1032,6 +1031,35 @@ async def get_awards(
         status_code=200, content={"awards": jsonable_encoder(awards)}
     )
 
+@router.get("/{book_club_id}/awards/for_post/{post_id}", name="bookclub:get_awards_for_post")
+async def get_granted_awards_for_post(
+    book_club_id: str,
+    post_id: str,
+    current_user: Annotated[User, Depends(get_current_active_user)],
+    book_club_repo: BookClubCRUDRepositoryGraph = Depends(
+        get_repository(repo_type=BookClubCRUDRepositoryGraph)
+    ),
+):
+    """
+        ------------------------------------------------
+        ------------------------------------------------
+        Slightly different implementation of `get_awards`
+        that grabs awards that have already been granted 
+        to a particular post and returns them in a 
+        seperate list from remaining awards. 
+        ------------------------------------------------
+        ------------------------------------------------
+        returns
+            granted_awards: List[Dict]
+            remaining_awards: List[Dict]
+        ------------------------------------------------
+        ------------------------------------------------
+    """
+    granted_awards, remaining_awards = book_club_repo.get_granted_awards_for_post(
+        book_club_id,
+        current_user.id,
+        post_id
+    )
 
 @router.put(
     "/{book_club_id}/post/{post_id}/award/{award_id}", name="bookclub:put_award"

@@ -1606,6 +1606,51 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
 
         return awards
     
+    def get_granted_awards_for_post(
+        self,
+        book_club_id: str,
+        user_id: str,
+        post_id: str
+    ) -> dict[List]:
+        with self.driver.session() as session:
+            result = session.read_transaction(
+                self.get_granted_awards_for_post_query, 
+                book_club_id,
+                user_id,
+                post_id
+            )
+        return result
+
+    @staticmethod
+    def get_granted_awards_for_post_query(
+        tx,
+        book_club_id: str,
+        user_id: str,
+        post_id: str
+    ):
+        query = """
+            MATCH (u:User {id:$user_id})-[:IS_MEMBER_OF|OWNS_BOOK_CLUB]->(club:BookClub {id:$book_club_id})
+                MATCH (club)-[:IS_READING]->(book:BookClubBook)
+                MATCH (award:ClubAward)-[award_rel:AWARD_FOR_BOOK]->(book)
+                OPTIONAL MATCH (award)<-[:IS_CHILD_OF]-(user_grants:ClubAwardForPost)<-[:GRANTED]-(u)
+                OPTIONAL MATCH (post:ClubUpdate|ClubUpdateNoText {id:$post_id})
+                OPTIONAL MATCH (post_award)-[:IS_CHILD_OF]->(award)
+                OPTIONAL MATCH (post)<-[:AWARD_FOR_POST]-(post_award)
+                OPTIONAL MATCH (post_award)<-[:GRANTED]-(grant_user:User)
+                WITH award, award_rel, user_grants, grant_user, post_award
+                RETURN award,
+                    award_rel.grants_per_member as allowed_uses,
+                    count(user_grants) as current_uses,
+                    collect({post_award: post_award, grant_user: grant_user}) AS post_awards
+        """
+        result = tx.run(query, user_id=user_id, book_club_id=book_club_id, post_id=post_id)
+
+        remaining_awards = []
+        granted_awards = []
+        for response in result:
+            pass
+
+
     def get_book_club_name_and_current_book(
             self,
             book_club_id: str    

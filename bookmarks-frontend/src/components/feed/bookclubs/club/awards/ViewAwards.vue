@@ -9,28 +9,41 @@
 
 <dialog ref="awardsModal" class="awards-menu">
     <div class="pt-5 pb-5">
-            <CloseButton class="ml-auto" @close="awardsModal.close()"/>
+        <CloseButton 
+            class="ml-auto" 
+            @close="() => {
+                awardsModal.close();
+                postModalData = null
+            }"
+        />
     </div>
 
-    <div class="toolbar">
-        <button class="btn btn-toolbar text-sm active">
-            club awards
-        </button>
+    <!-- Default is viewing all the awards not relative to a specific post -->
+    <div v-if="!postModalData">
+        <div class="toolbar">
+            <button class="btn btn-toolbar text-sm active">
+                club awards
+            </button>
 
-        <button class="btn btn-toolbar text-sm">
-            awards you've granted
-        </button>
-    </div>
-
-    <div v-if="loaded" class="award-grid">
-        <div
-            class="award" 
-            v-for="award in awards" 
-            :key="award?.id"
-        >
-            <h4 class="award-title">{{ award.name }}</h4>
-            <p class="award-description">{{  award.description }}</p>
+            <button class="btn btn-toolbar text-sm">
+                awards you've granted
+            </button>
         </div>
+
+        <div v-if="loaded" class="award-grid">
+            <div
+                class="award" 
+                v-for="award in awards" 
+                :key="award?.id"
+            >
+                <h4 class="award-title">{{ award.name }}</h4>
+                <p class="award-description">{{  award.description }}</p>
+            </div>
+        </div>
+    </div>
+    <!-- Otherwise you're looking at a specific post. -->
+    <div v-else>
+
     </div>
 </dialog>
 </template>
@@ -41,7 +54,10 @@ import { ref, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import CloseButton from '../../../partials/CloseButton.vue';
 
+let postId;
 let awards = {};
+let awardsGrantedForPost = {};
+
 const loaded = ref(false);
 const route = useRoute();
 
@@ -49,6 +65,20 @@ db.get(urls.bookclubs.getAwards(route.params.bookclub), null, false, (res) => {
     awards = res.awards;
     loaded.value = true;
 });
+
+function getAwardsForPost(postId) {
+    loaded.value = false;
+    db.get(urls.bookclubs.getAwards(route.params.bookclub), 
+        { 
+            post_id: postId,
+            current_uses: true,
+        },
+        false, 
+        (res) => {
+            debugger;
+            loaded.value = true;
+        })
+}
 
 const awardsButton = ref(null);
 const awardsModal = ref(null);
@@ -65,6 +95,7 @@ function showOrHideAwardsDialog() {
         } else {
             awardsModal.value.close();
             isOpen.value = false;
+            postId = null;
         } 
     }
 }
@@ -74,11 +105,15 @@ function handleClickOutside(event){
     if (
         awardsModal.value 
         && awardsModal.value.open 
-        && !(awardsModal.value.contains(event.target) || 
-        awardsButton.value.contains(event.target))
+        && !(
+            awardsModal.value.contains(event.target) || 
+            awardsButton.value.contains(event.target) || 
+            postId
+        )
     ) {
         awardsModal.value.close();
         isOpen.value = false;
+        postId = null;
     }
 }
 
@@ -86,6 +121,8 @@ function handleClickOutside(event){
 watch(
     isOpen, 
     (newValue) => {
+        // If there isnt any postmodal data it means you arent clicking on the grant award button
+        // otherwise, this callback will automatically close the modal even if you don't want that to happen. 
         if (newValue) {
             document.addEventListener('click', (event) => handleClickOutside(event));
             watch();
@@ -93,12 +130,12 @@ watch(
     },
 );
 
-function viewAwardsModal(event) {
-    awardsModal.value.showModal();
-    console.log(event)
-}
-
-window.addEventListener('open-award-post-modal', (event) => viewAwardsModal(event))
+window.addEventListener('open-award-post-modal', (event) => {
+    postId = event.detail.post_id;
+    getAwardsForPost(postId)
+    awardsModal.value?.showModal(); 
+    isOpen.value = true; 
+});
 </script>
 <style scoped>
 .h-40 {

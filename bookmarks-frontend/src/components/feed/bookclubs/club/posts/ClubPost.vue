@@ -56,7 +56,7 @@
                 <!-- Rethink these as club specific controls. -->
                 <div class="flex gap-2">
                 </div>
-                <button @click="emit('add-award-to-post', post.id)">
+                <button @click="dispatchAwardEvent(post.id)">
                     grant award
                 </button>
                
@@ -88,7 +88,14 @@ const props = defineProps({
     }
 });
 
-const emit = defineEmits(['add-award-to-post']);
+function dispatchAwardEvent(postId) {
+    const event = new CustomEvent('open-award-post-modal', {
+        detail:  {
+            post_id: postId
+        }
+    });
+    window.dispatchEvent(event);
+};
 </script>
 <style scoped>
 .quote {

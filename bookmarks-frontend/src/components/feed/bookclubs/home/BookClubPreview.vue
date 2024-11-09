@@ -51,15 +51,16 @@ const props = defineProps({
 <style scoped>
 
 .bookclub-preview {
-    padding: 14px;
+    width: 100%;
     border-radius: var(--radius-sm);
     border: 1px solid var(--stone-300);
+    padding-left: 14px;
+    padding-bottom: 8px;
+    padding-top: 8px;
     display: flex;
     justify-content: start;
-    flex-direction: row-reverse;
     align-items: center;
     column-gap: 20px;
-    width: fit-content;
     /* max-width: 1fr; */
 
     & .title {
@@ -74,7 +75,7 @@ const props = defineProps({
     }
 
     & .currently-reading-img {
-        height: 80%;
+        height: 100px;
         border-radius: var(--radius-sm);
     }
 
