@@ -19,7 +19,7 @@
     </div>
 
     <!-- Default is viewing all the awards not relative to a specific post -->
-    <div v-if="!postModalData">
+    <div>
         <div class="toolbar">
             <button class="btn btn-toolbar text-sm active">
                 club awards
@@ -32,18 +32,22 @@
 
         <div v-if="loaded" class="award-grid">
             <div
-                class="award" 
-                v-for="award in awards" 
-                :key="award?.id"
+                v-for="(category, key) in awards" 
+                :key="index"
             >
-                <h4 class="award-title">{{ award.name }}</h4>
-                <p class="award-description">{{  award.description }}</p>
+                <h3 class="text-xl text-stone-700 fancy text-start mb-5 mt-5">
+                    <!-- v-for loops have a starting index of 1. -->
+                    {{ key }}
+                </h3>
+                
+                <div class="award-type" >
+                    <div v-for="award in category" :key="award.id" class="award">
+                        <p class="award-title">{{ award.name }}</p>
+                        <p class="award-description">{{  award.description }}</p>
+                    </div>
+                </div>
             </div>
         </div>
-    </div>
-    <!-- Otherwise you're looking at a specific post. -->
-    <div v-else>
-
     </div>
 </dialog>
 </template>
@@ -56,6 +60,7 @@ import CloseButton from '../../../partials/CloseButton.vue';
 
 let postId;
 let awards = {};
+let awardNames = [];
 let awardsGrantedForPost = {};
 
 const loaded = ref(false);
@@ -75,9 +80,30 @@ function getAwardsForPost(postId) {
         },
         false, 
         (res) => {
-            debugger;
+            let response = res.awards;
+            let awardsByType = {};
+            
+            let awardLimit = response.length;
+            let index = 0;
+
+            // this is faster than a normal for loop.
+            while (index < awardLimit) {
+                if (!awardsByType[response[index].type]) {
+                    awardsByType[response[index].type] = []
+                    awardNames.push(response[index].type);
+                }
+                index += 1
+            };
+            // Set the awards by type.
+            Object.keys(awardsByType).forEach((key) => {
+                awardsByType[key] = response.filter((award) => award.type === key);
+                // make sure they are in descending order.
+                awardsByType[key].sort((a, b) => a.current_uses - b.current_uses);
+            });
+
+            awards = awardsByType;
             loaded.value = true;
-        })
+        });
 }
 
 const awardsButton = ref(null);
@@ -182,8 +208,6 @@ window.addEventListener('open-award-post-modal', (event) => {
 }
 
 .award-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
     justify-content: space-between;
     align-items: start;
     text-align: center;
@@ -204,5 +228,12 @@ window.addEventListener('open-award-post-modal', (event) => {
     .award-description {
         font-size: var(--font-sm);
     }
+}
+
+.award-type {
+    display: flex;
+    width: 100%;
+    overflow-x: scroll;
+    scroll-behavior: smooth; 
 }
 </style>
