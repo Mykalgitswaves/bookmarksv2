@@ -1031,6 +1031,7 @@ async def get_awards(
         status_code=200, content={"awards": jsonable_encoder(awards)}
     )
 
+
 @router.get("/{book_club_id}/awards/for_post/{post_id}", name="bookclub:get_awards_for_post")
 async def get_granted_awards_for_post(
     book_club_id: str,
