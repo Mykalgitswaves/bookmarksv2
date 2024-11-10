@@ -199,9 +199,7 @@ const ratingMapping = {
     3: 'loved',
 };
 
-const ratingSummary = () => {
-    return `You ${ratingMapping[rating.value]} ${ book.value.title || book.value.name }`;
-};
+const ratingSummary = computed(() => `You ${ratingMapping[rating.value]} ${ book.value.title || book.value.name }`);
 
 const progressTotal = computed(() => Math.floor((step.value * 100) / 3));
 const remainderTotal = computed(() => 100 - progressTotal.value);

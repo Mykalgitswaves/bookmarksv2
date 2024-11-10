@@ -2,11 +2,11 @@
         <div class="bookclub-header flex justify-between items-start">
             <div>
                 <h1 class="text-3xl fancy text-stone-700">
-                    {{ club.book_club_name }}
+                    {{ club?.book_club_name }}
                 </h1>
                 
                 <p class="text-stone-500 mt-5">
-                    {{ club.description || 'Add a description for your book club' }}    
+                    {{ club?.description || 'Add a description for your book club' }}    
                 </p>
             </div>
 
@@ -17,28 +17,56 @@
             </button>
         </div>
 
-        <div class="club-main-padding">
+        <section class="club-main-padding" v-if="loaded">
             <CurrentlyReadingBook 
-                :book="club.currently_reading_book" 
+                :book="currentlyReadingBook" 
                 @currently-reading-settings=""
             />
 
-            <div v-if="loaded">
-                <!-- index for now until we can grab the id from the updates -->
-                <ClubPost
-                    v-for="(post, index) in posts" 
-                    :key="index" 
-                    :post="post"
-                />
-            </div>
+            <CurrentPacesForClubBook :total-chapters="currentlyReadingBook.chapters"/>
+
+            <!-- Sticky toolbar containing buttons for creating and filtering posts -->
+            <BookClubFeedActions 
+                @start-club-update-post-flow="showUpdateForm()"
+            />
+
+            <Overlay ref="updateOverlay">
+                <template #overlay-header>
+
+                </template>
+                <template #overlay-main>
+                    <CreateUpdateForm 
+                        :book="currentlyReadingBook" 
+                        @post-update="(update) => postUpdateForBookClub(update)"
+                    />
+                </template>
+            </Overlay>
+
+            <!-- index for now until we can grab the id from the updates -->
+            <ClubPost
+                v-for="(post, index) in data.posts" 
+                :key="index" 
+                :post="post"
+            />
+        </section>
+
+        <div v-else class="gradient box loading fancy">
+            Loading club
         </div>
 </template>
 <script setup>
 import CurrentlyReadingBook from './CurrentlyReadingBook.vue';
+import BookClubFeedActions from './BookClubFeedActions.vue';
 import ClubPost from './posts/ClubPost.vue';
+import Overlay from '@/components/feed/partials/overlay/Overlay.vue';
+import CreateUpdateForm from '@/components/feed/createPosts/update/createUpdateForm.vue';
+import CurrentPacesForClubBook from './CurrentPacesForClubBook.vue';
 import { ref } from 'vue';
 import { db } from '../../../../services/db';
 import { urls } from '../../../../services/urls';
+import { formatUpdateForBookClub } from '../bookClubService';
+import { useRoute } from 'vue-router';
+
 
 const props = defineProps({
     club: {
@@ -47,22 +75,66 @@ const props = defineProps({
     }
 });
 
-let bookClubPosts = [];
+const data = ref({
+    posts: [],
+});
 const loaded = ref(false);
+const updateOverlay = ref(null);
+const route = useRoute();
+
+let currentlyReadingBook = {};
+
+function showUpdateForm() {
+    const { dialogRef } = updateOverlay.value;
+    dialogRef?.showModal();
+};
 
 /**
- * @load_data
+ * @load
  * @description – Reruns every time the club loads
  */
-// db.get(urls.bookclubs.getClubFeed(props.club.book_club_id), 
-//     null,
-//     false,
-//     (res) => {
-//         bookClubPosts = res.updates
-//         loaded.value = true;
-//     }, (err) => {
-//         errors = err;
-//         loaded.value = true;
-//     }
-// );
+
+const clubFeedPromise = db.get(urls.bookclubs.getClubFeed(route.params.bookclub), null, false, (res) => {
+    data.value.posts = res.posts;
+},
+(err) => {
+    console.log(err);
+});
+
+const currentlyReadingPromise = db.get(urls.bookclubs.getCurrentlyReadingForClub(route.params.bookclub), null, false, (res) => {
+    currentlyReadingBook = res.currently_reading_book;
+});
+
+Promise.all([clubFeedPromise, currentlyReadingPromise]).then(() => {
+    loaded.value = true;
+});
+
+// So users can scroll up and refresh feed. 
+function refreshFeed() {
+    loaded.value = false;
+    Promise.resolve(clubFeedPromise).then(() => {
+        loaded.value = true;
+    });
+}
+
+/**
+ * @post
+ */
+
+function postUpdateForBookClub(update) {
+    update = formatUpdateForBookClub(update, route.params.user)
+
+    db.post(urls.bookclubs.createClubUpdate(route.params.bookclub), update, false, 
+        (res) => {
+            console.log(res);
+            // Refresh;
+            loadClubFeed();
+            const { dialogRef } = updateOverlay.value;
+            dialogRef?.close();
+        },
+        (err) => {
+            console.warn(err);
+        },
+    );
+};
 </script>

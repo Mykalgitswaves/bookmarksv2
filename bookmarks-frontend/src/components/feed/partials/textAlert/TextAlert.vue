@@ -76,11 +76,11 @@ const alertVariantCss = () => (`text-alert ${props.variant}`);
     }
 
     &.warning {
-        background-color: var(--orange-100);
-        border-color: var(--orange-500);
+        background-color: var(--red-100);
+        border-color: var(--red-500);
 
         svg {
-            color: var(--orange-400);
+            color: var(--red-400);
         }
 
         .alert-heading {

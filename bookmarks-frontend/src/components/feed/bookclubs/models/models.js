@@ -44,7 +44,7 @@ export const BookClub = {
 
 
 export const ClubUpdatePost = {
-        cls:  'club_update_post'
+    cls: 'club_update'
 }
 
 export const ClubReviewPost = {
@@ -71,49 +71,65 @@ export const Invitation = {
 
 // Default for new invitations
 export class BaseInvitation {
-    static invitations = [];
+    static invitations = []
 
-    constructor() {
-        this.id = BaseInvitation.invitations.length + 1;
-        this.email = '';
-        this.user_id = '';
-        this.selected = false;
-        this.type = Invitation.types.email;
-        this.status = Invitation.statuses.uninvited;
-
+    constructor(invite) {
+        if (!invite) {
+            this.id = crypto.randomUUID();
+            this.email = '';
+            this.user_id = '';
+            this.type = Invitation.types.email;
+            this.status = Invitation.statuses.uninvited;
+        // Sent invitations don't need a type.
+        } else {
+            let user = invite.invited_user
+            this.id = invite.invite_id
+            this.email = user.email
+            this.user_id = user.id;
+            this.status = Invitation.statuses.invited;
+            this.invited_on = formattedDateTime(invite.datetime_invited);
+        }
+    
         BaseInvitation.invitations.push(this);
+
+        function formattedDateTime(dateTime){
+            // If its not a valid datetime then return false
+            if (isNaN(new Date(dateTime))) return false;
+
+            const date = new Date(dateTime)
+            const utcDate = new Date(date.toUTCString()); // Convert to UTC
+            // Formatting the date in the desired format: "Weekday, HH:mm:ss YYYY"
+            const options = { weekday: 'short', hour: '2-digit', minute: '2-digit', second: '2-digit', year: 'numeric', timeZone: 'UTC' };
+            return utcDate.toLocaleDateString('en-GB', options).replace(',', ''); // Formatting
+       }
     }
     
     /**
      * @param { int } id 
      * @returns Void
      */
-    static delete(id) {
-        let inviteToDelete = this.invitations.find(invitation => invitation.id === id);
-        let index = this.invitations.indexOf(inviteToDelete)
-        this.invitations.splice(index, 1);
-        // TODO: think about adding some unit test coverage for this class
-    }   
+    delete() {
+        delete this;
+    };
 };
 
-export class SentInvitation {
-    constructor(invite){
-        this.id = invite.invite_id;
-        this.invitedUser = {
-            email: invite.invited_user.email,
-            username: invite.invited_user.username,
-            id: invite.invited_user.id
-        },
-        this.status = Invitation.statuses.invited;
-        this.invited_on = formattedDateTime(invite.datetime_invited)
-        
-        function formattedDateTime(dateTime){
-             const date = new Date(dateTime)
-             const utcDate = new Date(date.toUTCString()); // Convert to UTC
+const ROLES = {
+    
+};
 
-            // Formatting the date in the desired format: "Weekday, HH:mm:ss YYYY"
-            const options = { weekday: 'short', hour: '2-digit', minute: '2-digit', second: '2-digit', year: 'numeric', timeZone: 'UTC' };
-            return utcDate.toLocaleDateString('en-GB', options).replace(',', ''); // Formatting
+export class Member {
+
+    constructor(member) {
+        if (member) {
+            this.user_id = member.user.user_id;
+            this.username = member.user.username;
+            this.email = member.user.email;
+            this.role = member.role;
+        } else {
+            this.id = crypto.randomUUID();
+            this.email = '';
+            this.user_id = '';
+            this.role = '';
         }
     }
 

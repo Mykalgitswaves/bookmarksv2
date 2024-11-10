@@ -12,6 +12,10 @@
     @media screen and (max-width: 767px) {
         --card-width: 90vw;
     }
+
+    &.club {
+        width: 100%;
+    }
 }
 
 .card-header {

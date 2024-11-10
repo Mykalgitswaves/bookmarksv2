@@ -1,9 +1,10 @@
-from datetime import datetime
+from datetime import datetime, timezone
 import fastapi
 from fastapi import HTTPException, Depends, BackgroundTasks, Query, Request
 from fastapi.encoders import jsonable_encoder
 from fastapi.responses import JSONResponse
 from typing import Annotated, Optional, List, Any, Mapping
+from neo4j.time import DateTime
 
 from src.api.background_tasks.google_books import google_books_background_tasks
 from src.api.utils.database import get_repository
@@ -13,7 +14,7 @@ from src.database.graph.crud.books import BookCRUDRepositoryGraph
 from src.database.graph.crud.bookclubs import BookClubCRUDRepositoryGraph
 from src.database.graph.crud.users import UserCRUDRepositoryGraph
 from src.models.schemas import bookclubs as BookClubSchemas
-from src.models.schemas.users import User
+from src.models.schemas.users import User, UserId
 from src.securities.authorizations.verify import get_current_active_user
 from src.utils.helpers.email.email_client import email_client
 
@@ -110,8 +111,9 @@ async def search_users_not_in_club(
 
     return JSONResponse(content={"users": jsonable_encoder(users)})
 
-
-@router.post("/invite", name="bookclub:invite")
+# TODO: delete this shit
+@router.post("/invite_legacy",
+            name="bookclub:invite")
 async def invite_users_to_club(
     request: Request,
     current_user: Annotated[User, Depends(get_current_active_user)],
@@ -151,20 +153,22 @@ async def invite_users_to_club(
     response = book_club_repo.create_bookclub_invites_dep(invite)
 
     for email in invite.emails:
-        email_client.send_invite_email(
-            email, "Someone Invited You to Join a Book Club!"
-        )
+        # email_client.send_invite_email(
+        #     email, "Someone Invited You to Join a Book Club!"
+        # )
+        pass
 
     if not response:
         raise HTTPException(status_code=400, detail="Unable to invite users to club")
     else:
         return JSONResponse(status_code=200, content={"message": "Invites sent"})
-
-
-@router.post("/invite_new", name="bookclub:invite_new")
+    
+@router.post("/invite",
+            name="bookclub:invite_new")
 async def invite_users_to_club_new(
     request: Request,
     current_user: Annotated[User, Depends(get_current_active_user)],
+    background_tasks: BackgroundTasks,
     book_club_repo: BookClubCRUDRepositoryGraph = Depends(
         get_repository(repo_type=BookClubCRUDRepositoryGraph)
     ),
@@ -220,8 +224,8 @@ async def invite_users_to_club_new(
     """
 
     data = await request.json()
-    invites = data.get("invites")
 
+    invites = data.get("invites")
     user_ids = [
         invites[item].get("user_id")
         for item in invites
@@ -234,7 +238,7 @@ async def invite_users_to_club_new(
     emails = [
         invites[item].get("email")
         for item in invites
-        if invites[item].get("email") and not invites[item].get("user_id")
+        if invites[item].get("email") and not invites[item].get("user_ids")
     ]
 
     if not user_ids and not emails:
@@ -255,9 +259,16 @@ async def invite_users_to_club_new(
     if invite_obj.emails:
         for email in invite_obj.emails:
             if email in response:
-                if response[email] != "already_member":
-                    email_client.send_invite_email(
-                        email, "Someone Invited You to Join a Book Club!"
+                if response[email]['status'] != "already_member":
+                    print(response[email])
+                    background_tasks.add_task(
+                        email_client.send_invite_email,
+                        email,
+                        response[email]['id'],
+                        invite_obj.book_club_id,
+                        current_user.username,
+                        "Someone Invited You to Join a Book Club!",
+                        book_club_repo
                     )
 
     for item in invites:
@@ -479,6 +490,32 @@ async def decline_bookclub_invite(
 
 
 @router.get(
+    "/{book_club_id}/members/{user_id}", name="bookclub:get_members_for_book_club"
+)
+async def get_members_for_book_club(
+    book_club_id: str,
+    user_id: str,
+    current_user: Annotated[User, Depends(get_current_active_user)],
+    book_club_repo: BookClubCRUDRepositoryGraph = Depends(
+        get_repository(repo_type=BookClubCRUDRepositoryGraph)
+    ),
+) -> list:
+    """
+    Returns a list of members for a book_club
+    """
+    # We should maybe think about doing this implicitly with some decorator, since we repeat it so many places.
+    if current_user.id != user_id:
+        raise HTTPException(status_code=400, detail="Unauthorized")
+    # try:
+    book_club_members = book_club_repo.get_members_for_book_club(
+        book_club_id=book_club_id, user_id=user_id
+    )
+    # except:
+    #     raise HTTPException(status_code=420, detail="Something weirds a-foot 🫥")
+
+    return JSONResponse(content={"members": jsonable_encoder(book_club_members)})
+
+@router.get(
     "/{book_club_id}/minimal_preview/{user_id}/user", name="bookclub:minimal_preview"
 )
 async def get_book_club_minimal_preview(
@@ -680,9 +717,84 @@ async def get_club_feed(
     return JSONResponse(status_code=200, content={"posts": jsonable_encoder(posts)})
 
 
+@router.delete("/{book_club_id}/remove_member", name="bookclub:remove_member_from_book_club")
+async def remove_member_from_book_club(
+    book_club_id: str,
+    request: Request,
+    current_user: Annotated[User, Depends(get_current_active_user)],
+    book_club_repo: BookClubCRUDRepositoryGraph = Depends(
+        get_repository(repo_type=BookClubCRUDRepositoryGraph)
+    ),
+) -> None:
+    """
+    For owners of a book_club, allow them to remove members of their book_club.
+    Args: 
+        request: A request object that contains the following fields:
+            user_id (str): the id of a user who is going to be removed from club.
+        
+    Returns:
+        200 response
+
+    Raises:
+        400 if user is not the club admin
+    """
+
+    data = await request.json()
+    try:
+        member_id_to_remove = UserId(id=data.get('user_id'))
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    
+   
+    # try:
+    deleted_relationship_count = book_club_repo.delete_member_from_book_club(
+        current_user_id=current_user.id, 
+        member_id_to_remove=member_id_to_remove.id,
+        book_club_id=book_club_id,        
+    )
+    if deleted_relationship_count:
+        return JSONResponse(
+            status_code=200, content={"content": "member removed"}
+        )
+    else:
+        raise HTTPException(status_code=401, detail='Unauthorized')
+        
+    # except:
+    #     raise HTTPException(status_code=400, detail='Something STRANGE just happened, we are looking into it on our end.')
+
+
 ### Currently Reading Settings Page ########################################################################################
 
+@router.get("/{book_club_id}/currently_reading", name="bookclub:get_currently_reading")
+async def get_currently_reading(
+    book_club_id: str,
+    current_user: Annotated[User, Depends(get_current_active_user)],
+    book_club_repo: BookClubCRUDRepositoryGraph = Depends(
+        get_repository(repo_type=BookClubCRUDRepositoryGraph)
+    ),
+):
+    """
+    Grabs the currently reading book for a book club
+    Args: 
+        book_club_id: The id of the book club
+        
+    Returns:
+        currently_reading_book: The currently reading book for the book club
 
+    Raises:
+        400 if user is not the club member
+    """
+
+    currently_reading_book = book_club_repo.get_currently_reading_book_or_none(
+        user_id=current_user.id,
+        book_club_id=book_club_id,
+    )
+
+    if currently_reading_book == "No book club found":
+        raise HTTPException(status_code=400, detail="User is not a member of the club")
+    
+    return JSONResponse(status_code=200, content={"currently_reading_book": jsonable_encoder(currently_reading_book)})
+    
 @router.post("/{book_club_id}/currently_reading/start", name="bookclub:start_book")
 async def start_book_for_club(
     book_club_id: str,
@@ -718,10 +830,12 @@ async def start_book_for_club(
     data = await request.json()
 
     try:
+        expected_finish_datetime = datetime.fromisoformat(data.get("expected_finish_date"))
+        if expected_finish_datetime.tzinfo is None:
+            expected_finish_datetime = expected_finish_datetime.replace(tzinfo=timezone.utc)
+
         start_currently_reading = BookClubSchemas.StartCurrentlyReading(
-            expected_finish_date=datetime.fromisoformat(
-                data.get("expected_finish_date")
-            ),
+            expected_finish_date=expected_finish_datetime,
             book=data.get("book"),
             user_id=current_user.id,
             id=book_club_id,
@@ -742,10 +856,8 @@ async def start_book_for_club(
         )
         if canonical_book:
             book_exists = True
-            start_currently_reading.book["id"].book = {
-                "id": canonical_book.id,
-                "chapters": start_currently_reading.book["chapters"],
-            }
+            start_currently_reading.book['id'] = canonical_book.id
+            start_currently_reading.book['chapters'] = start_currently_reading.book["chapters"]
 
     if book_exists:
         result = book_club_repo.create_currently_reading_club(start_currently_reading)
@@ -846,17 +958,15 @@ async def invites_for_bookclub(
     """
     gets all outstanding invites for an admins view of bookclub members setting
     """
+
     invites = book_club_repo.get_invites_for_book_club(
         book_club_id=book_club_id, user_id=current_user.id
     )
-
-    if invites:
-        return JSONResponse(
-            status_code=200, content={"invites": jsonable_encoder(invites)}
-        )
-    else:
-        print(BookClubSchemas.BaseBookClub.errors)
-        raise HTTPException(**BookClubSchemas.BaseBookClub.errors["unauthorized"])
+    
+    return JSONResponse(
+        status_code=200, content={"invites": jsonable_encoder(invites)}
+    )
+    
 
 
 ### AWARDS ENDPOINTS #######################
@@ -864,7 +974,6 @@ async def invites_for_bookclub(
 async def get_awards(
     book_club_id: str,
     current_user: Annotated[User, Depends(get_current_active_user)],
-    allowed_uses: Optional[bool] = False,
     current_uses: Optional[bool] = False,
     post_id: Optional[str] = None,
     book_club_repo: BookClubCRUDRepositoryGraph = Depends(
@@ -880,8 +989,6 @@ async def get_awards(
 
     Args:
         book_club_id: (str) the book club id
-        allowed_uses: (optional,bool) whether to include
-                the number of allowed uses for the award this book
         current_uses: (optional, bool) whether to include
                 the number of times the user has used the award this book
         post_id: (optional,str) The post id. returns the data related to
@@ -894,7 +1001,7 @@ async def get_awards(
                 name: (str) the name of the award
                 type: (str) the type of award
                 description: (str) description for the award
-                remaining_uses: (int) if included as flag, the number of
+                allowed_uses: (int) the number of
                     times this award can be granted per book
                 current_uses: (int) if included as flag, the number of
                     times this award has been used for the current book
@@ -906,7 +1013,23 @@ async def get_awards(
                             username: the username of the user that granted the
                                 award
     """
+    if post_id:
+        awards = book_club_repo.get_awards_with_grants(
+            book_club_id,
+            current_user.id,
+            current_uses,
+            post_id
+        )
+    else:
+        awards = book_club_repo.get_awards(
+            book_club_id,
+            current_user.id,
+            current_uses
+        )
 
+    return JSONResponse(
+        status_code=200, content={"awards": jsonable_encoder(awards)}
+    )
 
 @router.put(
     "/{book_club_id}/post/{post_id}/award/{award_id}", name="bookclub:put_award"
@@ -936,6 +1059,31 @@ async def put_award(
         403 if the user has no awards left to grant
     """
 
+    try:
+        create_award = BookClubSchemas.CreateAward(
+            post_id=post_id,
+            award_id=award_id,
+            user_id=current_user.id,
+            book_club_id=book_club_id
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    
+    response = book_club_repo.create_award_for_post(
+        create_award
+    )
+
+    if response == "award created":
+        return JSONResponse(
+        status_code=200, content={"message": "award added"}
+        )
+    elif response == "unauthorized":
+        raise HTTPException(status_code=401, detail="unauthorized")
+    else:
+        raise HTTPException(
+            status_code=403, 
+            detail="maximum number of grants reached")
+
 
 @router.delete(
     "/{book_club_id}/post/{post_id}/award/{award_id}", name="bookclub:delete_award"
@@ -955,12 +1103,73 @@ async def delete_award(
     Args:
         book_club_id: (str) the book club id
         post_id: (str) the id of the post
-        award_id: (str) the id of the award
+        award_id: (str) the id of the award. This can be a granted award or
+            the general award.
 
     Returns:
         200 status code if award is removed
 
     Raises:
-        401 if not proper permissions
-        404 if the award is not found on the post
+        404 if award not found
     """
+
+    try:
+        delete_award = BookClubSchemas.DeleteAward(
+            post_id=post_id,
+            award_id=award_id,
+            user_id=current_user.id,
+            book_club_id=book_club_id
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    
+
+    if award_id.startswith("post_award_"):
+        response = book_club_repo.delete_award_for_post_by_id(
+            delete_award
+        )
+    else:
+        response = book_club_repo.delete_award_for_post(
+            delete_award
+        )
+
+    if response:
+        return JSONResponse(
+        status_code=200, content={"message": "award deleted"}
+        )
+    else:
+        raise HTTPException(
+            status_code=404, 
+            detail="award not found")
+
+# TODO: Don't allow anyone else to use these but michael and kyle
+# TEST ENDPOINTS FOR EMAIL STUFF
+
+@router.get("/{book_club_id}/preview_emails/{email_type}", name='bookclubs:test_emails')
+async def test_emails(
+    book_club_id: str,
+    current_user: Annotated[User, Depends(get_current_active_user)],
+    book_club_repo: BookClubCRUDRepositoryGraph = Depends(
+        get_repository(repo_type=BookClubCRUDRepositoryGraph)
+    ),
+    email_type: str = 'invite',
+):  
+    to_email = 'test@hardcoverlit.com'
+    invite_id = '🍕'
+
+    # ONlY MICHAEL CAN VIEW FOR NOW? 
+    if current_user.id != 'a0f86d40-4915-4773-8aa1-844d1bfd0b41':
+        return HTTPException(status_code=400, detail='YOU CANT DO THAT BECAUSE YOU ARENT MICHAEL OR KYLE')
+    
+    # Maybe think about other places we want to test this shit?
+    if email_type == 'invite':
+        preview_email = email_client.send_invite_email(
+                to_email=to_email,
+                invite_id=invite_id,
+                book_club_id=book_club_id,
+                invite_user_username=current_user.username,
+                subject="Someone Invited You to Join a Book Club!",
+                book_club_repo=book_club_repo,
+                is_debug=True
+        )
+        return JSONResponse(status_code=200, content={'email': jsonable_encoder(preview_email)})

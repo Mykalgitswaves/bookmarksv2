@@ -12,9 +12,9 @@ RUNNING A LOCAL PROTOTYPE OF APP:
         
          $ conda activate bookmarks
   2) For backend, you need to activate fastapi
-    from project root dir 
+    from project backend dir 
         
-         $ uvicorn main:app --reload
+         $ uvicorn src.main:backend_app —reload
   3) For front end, you need to run a dev server for vue/vite
     cd into bookmarks-frontend/ and run this command 
         

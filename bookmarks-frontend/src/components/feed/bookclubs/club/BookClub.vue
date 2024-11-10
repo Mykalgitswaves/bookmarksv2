@@ -138,7 +138,7 @@ async function loadBookClub() {
 }
 
 .club-main-padding {
-    padding: 20px 40px;
+    padding: 20px;
 }
 
 /* .book-club-nav {

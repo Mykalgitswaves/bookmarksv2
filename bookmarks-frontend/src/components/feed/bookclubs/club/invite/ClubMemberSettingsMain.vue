@@ -18,6 +18,7 @@
                 type="button"
                 class="btn btn-toolbar"
                 :class="{'active': currentView === views.invitations}"
+                @click="currentView = views.invitations;"
             >
                 Invitations:
                 
@@ -27,14 +28,17 @@
                 type="button"
                 class="btn btn-toolbar"
                 :class="{'active': currentView === views.manageMembers}"
+                @click="currentView = views.manageMembers; $emit('view-changed', views.manageMembers)"
             >
                 Manage members: <i>{{ memberCount || '0' }}</i>
             </button>
         </div>
     </div>
 
-    <MemberInvitations />
+    <MemberInvitations v-if="currentView === views.invitations" />
 
+    <ManageMembers v-if="currentView === views.manageMembers" />
+    
     <div class="mobile-menu-spacer sm:hidden"></div>
 </template>
 <script setup>
@@ -43,6 +47,7 @@ import { useRouter, useRoute } from 'vue-router';
 import { navRoutes } from '../../../../../services/urls';
 import BackBtn from '../../../partials/back-btn.vue';
 import MemberInvitations from './MemberInvitations.vue';
+import ManageMembers from './ManageMembers.vue';
 
 const props = defineProps({
     club: {

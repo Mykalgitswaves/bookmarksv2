@@ -1,6 +1,6 @@
 import './assets/main.css'
 import { createApp } from 'vue';
-import { createPinia } from 'pinia';
+import { createPinia } from 'pinia';    1
 
 import { directives } from './directives.js';
 import App from './App.vue'

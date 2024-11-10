@@ -33,3 +33,7 @@
 .j-self-end {
     justify-self: end;
 }
+
+.self-center {
+    align-self: center;
+  }

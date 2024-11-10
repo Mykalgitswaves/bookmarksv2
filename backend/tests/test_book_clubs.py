@@ -3,6 +3,7 @@ import requests
 import json
 import time
 from datetime import datetime, timezone
+from bs4 import BeautifulSoup
 
 @pytest.fixture(scope="class")
 def setup_class(request):
@@ -130,6 +131,8 @@ class TestBookClubs:
         cls.book_club_id = None  # Initialize book_club_id
         cls.invite_id = None  # Initialize invite_id
         cls.invite_id_2 = None
+        cls.post_id = None
+        cls.award_id = None
 
     def test_create_bookclub(self):
         """
@@ -180,7 +183,7 @@ class TestBookClubs:
             "book_club_id": self.book_club_id
         }
 
-        response = requests.post(f"{self.endpoint}/api/bookclubs/invite", headers=headers, json=data)
+        response = requests.post(f"{self.endpoint}/api/bookclubs/invite_legacy", headers=headers, json=data)
 
         print(response.json())
         assert response.status_code == 200, "Inviting Users to Club"
@@ -191,7 +194,7 @@ class TestBookClubs:
             "book_club_id": self.book_club_id
         }
 
-        response = requests.post(f"{self.endpoint}/api/bookclubs/invite", headers=headers, json=data)
+        response = requests.post(f"{self.endpoint}/api/bookclubs/invite_legacy", headers=headers, json=data)
 
         print(response.json())
         assert response.status_code == 200, "Inviting Users to Club"
@@ -202,7 +205,7 @@ class TestBookClubs:
             "book_club_id": self.book_club_id
         }
 
-        response = requests.post(f"{self.endpoint}/api/bookclubs/invite", headers=headers, json=data)
+        response = requests.post(f"{self.endpoint}/api/bookclubs/invite_legacy", headers=headers, json=data)
 
         print(response.json())
         assert response.status_code == 200, "Inviting Users to Club"
@@ -257,7 +260,7 @@ class TestBookClubs:
             "book_club_id": self.book_club_id
         }
 
-        response = requests.post(f"{self.endpoint}/api/bookclubs/invite", headers=headers, json=data)
+        response = requests.post(f"{self.endpoint}/api/bookclubs/invite_legacy", headers=headers, json=data)
 
         print(response.json())
         assert response.status_code == 200, "Inviting Users to Club"
@@ -312,7 +315,7 @@ class TestBookClubs:
         }
 
         response = requests.post(
-            f"{self.endpoint}/api/bookclubs/invite_new", 
+            f"{self.endpoint}/api/bookclubs/invite", 
             headers=headers, 
             json=data)
 
@@ -379,12 +382,32 @@ class TestBookClubs:
         response = requests.post(endpoint, json=data, headers=headers)
         assert response.status_code == 200, "Starting a currently reading book"
 
+        # Test the currently reading book endpoint
+        endpoint = (
+            f"{self.endpoint}/api/bookclubs/{self.book_club_id}/"
+            "currently_reading")
+
+        response = requests.get(endpoint, headers=headers)
+        assert response.status_code == 200, "Error getting currently reading book"
+        book = response.json()['currently_reading_book']
+        assert book is not None, "Book not set or returned"
+
         endpoint = (
             f"{self.endpoint}/api/bookclubs/{self.book_club_id}/"
             "currently_reading/stop")
 
         response = requests.post(endpoint, headers=headers)
         assert response.status_code == 200, "Stopping a currently reading book"
+
+        # Test the currently reading book endpoint
+        endpoint = (
+            f"{self.endpoint}/api/bookclubs/{self.book_club_id}/"
+            "currently_reading")
+
+        response = requests.get(endpoint, headers=headers)
+        assert response.status_code == 200, "Error getting currently reading book"
+        book = response.json()['currently_reading_book']
+        assert book is None, "Book still set"
 
         endpoint = (
             f"{self.endpoint}/api/bookclubs/{self.book_club_id}/"
@@ -513,6 +536,8 @@ class TestBookClubs:
         assert response.status_code == 200, "Getting feed"
         print(response.json())
         
+        self.__class__.post_id = response.json()['posts'][0]['id']
+
         headers = {"Authorization": f"{self.token_type_2} {self.access_token_2}"}
         
         endpoint = (
@@ -535,3 +560,116 @@ class TestBookClubs:
         
         assert response.status_code == 200, "Getting feed"
         print(response.json())
+
+    def test_get_awards(self):
+        headers = {"Authorization": f"{self.token_type} {self.access_token}"}
+        
+        endpoint = (
+            f"{self.endpoint}/api/bookclubs/{self.book_club_id}/"
+            "awards")
+        
+        response = requests.get(endpoint, headers=headers)
+        
+        assert response.status_code == 200, "Getting awards"
+        print(response.json())
+        self.__class__.award_id = response.json()['awards'][0]['id']
+
+        headers = {"Authorization": f"{self.token_type} {self.access_token}"}
+        
+        endpoint = (
+            f"{self.endpoint}/api/bookclubs/{self.book_club_id}/"
+            "awards")
+        
+        query_params = {"current_uses":True}
+
+        response = requests.get(endpoint, headers=headers, params=query_params)
+        
+        assert response.status_code == 200, "Getting awards"
+        print(response.json())
+
+    def test_put_awards(self):
+        headers = {"Authorization": f"{self.token_type} {self.access_token}"}
+
+        endpoint = (
+            f"{self.endpoint}/api/bookclubs/{self.book_club_id}/"
+            f"post/{self.post_id}/award/{self.award_id}")
+        
+        response = requests.put(endpoint, headers=headers)
+        print(response.json())
+        assert response.status_code == 200, "Putting Award"
+
+        headers = {"Authorization": f"{self.token_type} {self.access_token}"}
+
+        endpoint = (
+            f"{self.endpoint}/api/bookclubs/{self.book_club_id}/"
+            f"post/{self.post_id}/award/{self.award_id}")
+        
+        response = requests.put(endpoint, headers=headers)
+        print(response.json())
+        assert response.status_code == 401, "Putting Award"
+        
+        headers = {"Authorization": f"{self.token_type} {self.access_token}"}
+
+        endpoint = (
+            f"{self.endpoint}/api/bookclubs/{self.book_club_id}/"
+            f"post/{self.post_id}/award/{self.award_id}")
+        
+        response = requests.delete(endpoint, headers=headers)
+        print(response.json())
+        assert response.status_code == 200, "deleting award"
+
+        headers = {"Authorization": f"{self.token_type} {self.access_token}"}
+
+        endpoint = (
+            f"{self.endpoint}/api/bookclubs/{self.book_club_id}/"
+            f"post/{self.post_id}/award/{self.award_id}")
+        
+        response = requests.put(endpoint, headers=headers)
+        print(response.json())
+        assert response.status_code == 200, "Putting Award"
+
+    def test_getting_awards_with_post(self):
+        headers = {"Authorization": f"{self.token_type} {self.access_token}"}
+        
+        endpoint = (
+            f"{self.endpoint}/api/bookclubs/{self.book_club_id}/"
+            "awards")
+        
+        query_params = {
+            "post_id": self.post_id
+        }
+        
+        response = requests.get(endpoint, headers=headers, params=query_params)
+        print(response.json())
+        assert response.status_code == 200, "Getting awards"
+
+        headers = {"Authorization": f"{self.token_type} {self.access_token}"}
+        
+        endpoint = (
+            f"{self.endpoint}/api/bookclubs/{self.book_club_id}/"
+            "awards")
+        
+        query_params = {
+            "post_id": self.post_id,
+            "current_uses": True
+        }
+        
+        response = requests.get(endpoint, headers=headers, params=query_params)
+        print(response.json())
+        assert response.status_code == 200, "Getting awards"
+
+    def test_deleting_member(self):
+        headers = {"Authorization": f"{self.token_type} {self.access_token}"}
+
+        endpoint = (
+            f"{self.endpoint}/api/bookclubs/{self.book_club_id}/"
+            "remove_member")
+        
+        data = {
+            "user_id": self.user_id_2
+        }
+
+        response = requests.delete(endpoint, headers=headers, json=data)
+        assert response.status_code == 200, "Deleting Member"
+        time.sleep(10)
+

@@ -22,6 +22,7 @@ import BookClubsIndex from '@/components/feed/bookclubs/BookClubsIndex.vue';
 import CreateBookClubs from '@/components/feed/bookclubs/create/CreateBookClubs.vue';
 import BookClubsHome from '@/components/feed/bookclubs/home/BookClubsHome.vue';
 import BookClub from '@/components/feed/bookclubs/club/BookClub.vue';
+import CreateUserFromBookClubInvite from '@/views/CreateUserFromBookClubInvite.vue';
 
 export const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -40,6 +41,11 @@ export const router = createRouter({
       path: '/create-user-writer',
       name: 'CreateWriter',
       component: CreateUserWriterView,
+    },
+    {
+      path: '/invite/:inviteId',
+      name: 'BookClubInvitedFlow',
+      component: CreateUserFromBookClubInvite,
     },
     {
       // We need router here.
