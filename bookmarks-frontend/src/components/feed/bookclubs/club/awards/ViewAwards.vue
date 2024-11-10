@@ -29,7 +29,7 @@
                 awards you've granted
             </button>
         </div>
-
+        <!-- maybe we want to use async component here, idk though. -->
         <div v-if="loaded" class="award-grid">
             <div
                 v-for="(category, key) in awards" 
@@ -39,7 +39,7 @@
                     <!-- v-for loops have a starting index of 1. -->
                     {{ key }}
                 </h3>
-                
+
                 <div class="award-type" >
                     <div v-for="award in category" :key="award.id" class="award">
                         <p class="award-title">{{ award.name }}</p>

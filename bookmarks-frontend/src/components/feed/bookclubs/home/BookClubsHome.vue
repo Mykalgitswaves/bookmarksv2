@@ -23,27 +23,35 @@
 
         <div class="bookclubs">
             <h2 class="fancy text-2xl text-stone-600 mb-5">Clubs you own</h2>  
-            
-            <div v-if="loaded" class="mb-5 mt-5 bookclubs-list">
-                <BookClubPreview 
-                    v-for="bookclub in bookClubsOwnedByCurrentUser"
-                    :bookclub="bookclub"
-                    :user="user"
-                />
-            </div>
 
-            <!-- loading -->
-            <p v-else>
-                You haven't created any clubs yet.    
-            </p>
+            <AsyncComponent :promises="[clubsPromise]">
+                <template #resolved>
+                    <div v-if="bookClubsOwnedByCurrentUser?.length" class="mb-5 mt-5 bookclubs-list">
+                        <BookClubPreview 
+                            v-for="bookclub in bookClubsOwnedByCurrentUser"
+                            :bookclub="bookclub"
+                            :user="user"
+                        />
+                    </div>
 
-            <div class="toolbar">
-                <button class="btn btn-submit small" 
-                    @click="router.push(toCreateClubPage(user))"
-                >
-                    Create club
-                </button>
-            </div>
+                    <!-- loading -->
+                    <p v-else>
+                        You haven't created any clubs yet.    
+                    </p>
+
+                    <div class="toolbar">
+                        <button class="btn btn-submit small" 
+                            @click="router.push(toCreateClubPage(user))"
+                        >
+                            Create club
+                        </button>
+                    </div>
+                </template>
+
+                <template #loading>
+                    <LoadingCard />
+                </template>
+            </AsyncComponent>
         </div>
     </div>
 </template>
@@ -54,7 +62,8 @@ import { navRoutes } from '../../../../services/urls';
 import { ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import BookClubPreview from './BookClubPreview.vue';
-
+import AsyncComponent from '../../partials/AsyncComponent.vue';
+import LoadingCard from '../../../shared/LoadingCard.vue';
 /**
  * ----------------------------------------------------------------------------
  * @constants
@@ -79,23 +88,21 @@ let errors;
 
 /**
  * ----------------------------------------------------------------------------
- * @functions
+ * @promises
  * @loadClubsCreatedByUser
  * ----------------------------------------------------------------------------
  */
 
-async function loadClubsCreatedByUser() {
-    db.get(urls.bookclubs.getClubsOwnedByUser(user), null, false, 
-        (res) => {
-            bookClubsOwnedByCurrentUser = res.bookclubs;
-            loaded.value = true;
-        },
-        (err) => {
-            errors = err;
-            loaded.value = true;
-        }
-    );
-};
+const clubsPromise = db.get(urls.bookclubs.getClubsOwnedByUser(user), null, false, 
+    (res) => {
+        bookClubsOwnedByCurrentUser = res.bookclubs;
+        loaded.value = true;
+    },
+    (err) => {
+        errors = err;
+        loaded.value = true;
+    }
+);
 
 /**
  * ----------------------------------------------------------------------------
@@ -103,24 +110,9 @@ async function loadClubsCreatedByUser() {
  * ----------------------------------------------------------------------------
  */
 
-
-/**
- * ----------------------------------------------------------------------------
- * @setup_load
- * ----------------------------------------------------------------------------
- */
-
-
-loadClubsCreatedByUser();
-
-
-/**
- * ----------------------------------------------------------------------------
- * @setup_load
- * ----------------------------------------------------------------------------
- */
 </script>
 <style scoped>
+
 .bookclubs {
     padding: 14px; 
     border-radius: var(--radius-md);
@@ -141,11 +133,18 @@ loadClubsCreatedByUser();
         column-gap: 14px;
     }
 
+    @starting-style {
+        .bookclubs-list {
+            opacity: 0;
+        }
+    }
+
     .bookclubs-list {
         display: grid;
         grid-template-columns: 1fr;
         column-gap: 20px;
         row-gap: 20px;
+        transition: 250ms all ease; 
         & * {
             flex-basis: 40%;
         }
@@ -161,4 +160,6 @@ loadClubsCreatedByUser();
     grid-template-columns: 1fr 1fr;
     column-gap: 40px;
 }
+
+
 </style>
