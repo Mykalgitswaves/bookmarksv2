@@ -1297,9 +1297,8 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
             member_paces.append(member_pace)
         
         member_paces = sorted(member_paces, key=lambda member: member['pace'], reverse=True)
-        # Checks if the user is even a member of the club before returning
-        if response.get("user_id"):
-            return member_paces
+        
+        return member_paces
         
     def get_book_club_feed(
             self,
