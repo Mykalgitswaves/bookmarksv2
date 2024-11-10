@@ -8,6 +8,9 @@
     quote (str): The quote to include with the post
 */
 
+import { db } from "../../../services/db";
+import { urls } from "../../../services/urls";
+
 export function formatUpdateForBookClub(updateBlob, user_id) {
     let payload = Object.create(null);
 
@@ -18,4 +21,30 @@ export function formatUpdateForBookClub(updateBlob, user_id) {
     payload.quote = updateBlob.quote;
 
     return payload;
+}
+
+export function acceptInviteToBookClub(inviteId, callbackFunction) {
+    db.put(urls.bookclubs.acceptInviteToBookClub(inviteId), null, false, 
+        (res) => {
+            if(callbackFunction) {
+                callbackFunction(res)
+            }
+        }, 
+        (err) => {
+            console.error(err);
+        }
+    );
+}
+
+export function declineInviteToBookClub(inviteId, callbackFunction) {
+    db.put(urls.bookclubs.declineInviteToBookClub(inviteId), null, false, 
+        (res) => {
+            if(callbackFunction) {
+                callbackFunction(res)
+            }
+        }, 
+        (err) => {
+            console.error(err);
+        }
+    );
 }

@@ -4,7 +4,7 @@
 >
     <div class="card-header">
         <p class="text-slate-600 text-center"
-            @click="router.push(navRoutes.toUserPageFromPost(route.params.user, props.user_id))"
+            @click="router.push(navRoutes.toUserPage(route.params.user, props.user_id))"
         >
             <span class="text-indigo-600 cursor-pointer">{{ username }}'s</span>
             made a review: 

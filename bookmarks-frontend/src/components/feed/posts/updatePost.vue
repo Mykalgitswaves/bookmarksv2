@@ -3,7 +3,7 @@
         <!-- Header dude no shit -->
         <div class="card-header">
             <p class="text-slate-600 text-center"
-                @click="router.push(navRoutes.toUserPageFromPost(route.params.user, user_id))"
+                @click="router.push(navRoutes.toUserPage(route.params.user, user_id))"
             >
                 <span class="text-indigo-600 cursor-pointer">{{ props.username }}'s</span>
                 made an update: 
