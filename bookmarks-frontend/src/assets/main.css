@@ -40,7 +40,8 @@
 
 .content-enter-active,
 .content-leave-active {
-  transition: opacity 0.5s ease;
+  opacity: 0;
+  transition: opacity 1s ease;
 }
 
 .content-enter-from,

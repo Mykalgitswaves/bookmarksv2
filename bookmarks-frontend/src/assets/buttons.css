@@ -40,6 +40,13 @@
 .btn-small {
     padding: .5rem 1rem;
     border-radius: .25rem;
+   
+}
+
+.btn-tiny {
+    /* depends on text being smaller */
+    padding: .5rem 8px;
+    border-radius: .25rem;
 }
 
 .btn.btn-submit {
@@ -61,6 +68,26 @@
     background-color: var(--red-200);
     color: var(--red-500);
     transition: var(--transition-short);
+}
+
+.btn.btn-toolbar {
+    background-color: var(--surface-primary);
+    border-width: 0;
+    border-bottom: 2px solid var(--stone-200);
+    border-bottom-right-radius: 0;
+    border-bottom-left-radius: 0;
+    color: var(--stone-500);
+    
+    &.active {
+        border-color: var(--indigo-500);
+        background-color: var(--indigo-50);
+        color: var(--indigo-600);
+    }
+}
+
+.btn-green {
+    background-color: var(--green-100);
+    color: var(--stone-700);
 }
 
 .btn.disabled {

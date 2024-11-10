@@ -58,7 +58,8 @@ onMounted(async() => {
 });
 
 const currentlyReadingBooks = computed(() => {
-    if (!data.value) return [];
+    if (!data.value?.length) return [];
+
     let books = []; 
     for(let i = 0; i < data.value.books_count; i++) {
         let book = {

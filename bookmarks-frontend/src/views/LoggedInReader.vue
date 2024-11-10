@@ -1,16 +1,15 @@
 <template>
-  <TopNav :profilePicture="profilePicture"/>
+  <TopNav/>
   <div class="sidebar">
     <div class="main-layout">  
       <RouterView></RouterView>
     </div>
     <FooterNav/>
-</div>
+  </div>
 </template>
 <script setup>
 import TopNav from '@/components/feed/topnav.vue';
 import FooterNav from '@/components/feed/footernav.vue'
-import profilePicture from '@/assets/profileimage.jpg'
 
 import { onMounted } from "vue";
 import { useRoute } from 'vue-router';

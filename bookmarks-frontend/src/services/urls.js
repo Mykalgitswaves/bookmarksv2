@@ -38,6 +38,7 @@ export const urls = {
         getUsersFriendRequests: (user_id) => (baseUrl + `api/user/${user_id}/friend_requests`),
         searchUsersFriends: (param) => (baseUrl + `api/search/friends/${param}`),
         getFriends: (user_id) => (baseUrl + `api/user/${user_id}/friends`),
+        getNotificationCount: (user_id) => (baseUrl + `api/user/${user_id}/notifications_count`),
     },
     create: {
         searchBook: (text) => (`${baseUrl}api/search/book/${text}`)
@@ -108,7 +109,43 @@ export const urls = {
         updateBookNoteForShelf: (bookshelf_id) => (baseUrl + `api/bookshelves/${bookshelf_id}/update_book_note`),
     },
     bookclubs: {
-        create: () => (baseUrl + 'api/bookclubs/create'),
+        // Create / POST
+        create: () => (baseUrl + 'api/bookclubs/create/'),
+        createClubUpdate: (bookclub_id) => (baseUrl + `api/bookclubs/${bookclub_id}/update/create`),
+        startCurrentlyReadingBookForClub: 
+            (bookclub_id) => (baseUrl + `api/bookclubs/${bookclub_id}/currently_reading/start`),
+        finishCurrentlyReadingBookForClub: 
+            (bookclub_id) => (baseUrl + `api/bookclubs/${bookclub_id}/currently_reading/finish`),
+        stopCurrentlyReadingBookForClub: 
+            (bookclub_id) => (baseUrl + `api/bookclubs/${bookclub_id}/currently_reading/stop`),
+        // Read / GETS
+        getClubsOwnedByUser: (user_id) =>  (baseUrl + `api/bookclubs/owned/${user_id}/`),
+        getClubFeed: (bookclub_id) => (baseUrl + `api/bookclubs/${bookclub_id}/feed`),
+        getClubPace: (bookclub_id) => (baseUrl + `api/bookclubs/${bookclub_id}/club_members_pace`),
+        getPaceForUserInClub: (bookclub_id) => (baseUrl + `api/bookclubs/${bookclub_id}/user_pace`),
+        getMinimalClub: (bookclub_id, user_id) => (baseUrl + `api/bookclubs/${bookclub_id}/minimal_preview/${user_id}/user`),
+        getInvitesForClub: (bookclub_id) => (baseUrl + `api/bookclubs/${bookclub_id}/club_invites`),
+        // Sending and loading invitation / member stuff.
+        sendInvites: () => (baseUrl + `api/bookclubs/invite`),
+        searchUsersNotInClub: (bookClubId, searchParam) => 
+            (baseUrl + `api/bookclubs/${bookClubId}/search/users/${searchParam}`),
+        getMembersForBookClub: (bookclub_id, user_id) => 
+            (baseUrl + `api/bookclubs/${bookclub_id}/members/${user_id}`),
+        getCurrentlyReadingForClub: (bookclub_id) => (baseUrl + `api/bookclubs/${bookclub_id}/currently_reading`),
+        setCurrentlyReadingBook: (bookclub_id) => (baseUrl + `api/bookclubs/${bookclub_id}/currently_reading/start`),
+        getPaceForReadersInClub: (bookclub_id) => (baseUrl + `api/bookclubs/${bookclub_id}/user_pace`),
+        previewEmailInvitesForClub: (bookclub_id, type) => (baseUrl + `api/bookclubs/${bookclub_id}/preview_emails/${type}`),
+        // DANGER DUDE
+        removeMemberFromBookClub: (bookclub_id) => (baseUrl + `api/bookclubs/${bookclub_id}/remove_member`),
+        // INVITE STUFF
+        loadClubDataForInvite: (bookclub_id) => (baseUrl + `api/bookclubs/${bookclub_id}/club_for_invite`),
+        getInvitesForUser: (user_id) =>  (baseUrl + `api/bookclubs/invites/${user_id}`),
+        // AWARDS
+        // optional endpoint object
+        // post_id:str
+        // current_uses:bool
+        // 
+        getAwards: (bookclub_id) => (baseUrl + `api/bookclubs/${bookclub_id}/awards`),
     }
 }
 
@@ -121,5 +158,12 @@ export const navRoutes = {
     toBookshelfSectionPage: (current_user, shelfType) => (`/feed/${current_user}/bookshelves/by/${shelfType}`),
     toBookClubsPage: (current_user) => (`/feed/${current_user}/bookclubs/`),
     toCreateClubPage: (current_user) => (`/feed/${current_user}/bookclubs/create/`),
-    toBookClub: (current_user, bookclub_id) => (`feed/${current_user}/bookclubs/${bookclub_id}`)
+    toBookClubFeed: (current_user, bookclub_id) => (`/feed/${current_user}/bookclubs/${bookclub_id}/`),
+    // Used for component routing inside of bookclubs app.
+    toSetCurrentlyReadingPage: (current_user, bookclub_id) => 
+        (`/feed/${current_user}/bookclubs/${bookclub_id}/settings/currently-reading/set`),
+    bookClubSettingsCurrentlyReading: (current_user, bookclub_id) => 
+        (`/feed/${current_user}/bookclubs/${bookclub_id}/settings/currently-reading`),
+    bookClubSettingsManageMembersIndex: (current_user, bookclub_id) => 
+        (`/feed/${current_user}/bookclubs/${bookclub_id}/settings/manage-members`),
 }

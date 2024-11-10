@@ -2,6 +2,15 @@
     --checked-color: #6366f1;
 }
 
+.input-styles {
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--indigo-300); 
+  margin-top: 10px;
+  font-family: var(--fancy-script);
+  color: var(--indigo-400);
+}
+
 .input-number .input-title {
     display: block;
     font-size: 16px;
@@ -32,6 +41,13 @@
 
 .input-number input[type="number"].short {
     width: 100px;
+}
+
+.input--invitation {
+  border-radius: 4px;
+  border-color: var(--indigo-300);
+  border-width: 1px;
+  padding-left: 8px;
 }
 
 .summary-update textarea {

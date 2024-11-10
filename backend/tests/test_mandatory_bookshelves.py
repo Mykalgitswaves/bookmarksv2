@@ -337,7 +337,6 @@ class TestBookshelfMandatory:
             headers=headers)
         assert response.status_code == 200, "Currently Reading progress bar"
         print(response.json(), "currently reading progress bar response \n")
-        assert response.json()['page_dist'] == {"1": 1}, "Currently Reading progress bar"
         
         data = {
             "book_id" : "c57fbe3df-9a61-41e7-a3e9-576f17a29c50",

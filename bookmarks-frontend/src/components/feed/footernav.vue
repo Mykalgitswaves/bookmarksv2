@@ -1,7 +1,5 @@
 <template>
-    <footer :class="{ 'minimized': minimizeFooter }"  
-        class="lg:border-solid border-indigo-100 border-[1px]"
-    >
+    <footer>
         <!-- <div class="nav-button-group hover:bg-gray-200" 
             @click="goToSearchPage(user)"
             aria-roledescription="navigation button"
@@ -16,88 +14,127 @@
             <p>Search</p>
         </div> -->
 
-        <div class="nav-button-group hover:bg-gray-200" 
-            @click="goToFeedPage(user)"
-            aria-roledescription="navigation button"
+        <nav v-if="footerView === FooterViews.default" 
+            :class="{ 'minimized': minimizeFooter }"  
+            class="lg:border-solid border-indigo-100 border-[1px]"
+            role="navigation"
         >
-            <button 
-                class="footer-nav-button" 
-                type="button"
-                alt="feed"
+            <div class="nav-button-group hover:bg-gray-200" 
                 @click="goToFeedPage(user)"
+                aria-roledescription="navigation button"
             >
-                <IconFeed/>
-            </button>
+                <button 
+                    class="footer-nav-button" 
+                    type="button"
+                    alt="feed"
+                    @click="goToFeedPage(user)"
+                >
+                    <IconFeed/>
+                </button>
 
-            <p class="fancy text-stone-600">Feed</p>
-        </div>
-        
-        <div class="nav-button-group hover:bg-gray-200"
-            v-show="!isSearchBarActive"
-            @click="goToBookshelvesPage(user)"
-            aria-roledescription="navigation button"
-        >
-            <button 
-                class="footer-nav-button"
-                alt="feed"
-                typ="button"
+                <p class="fancy text-stone-600">Feed</p>
+            </div>
+            
+            <div class="nav-button-group hover:bg-gray-200"
+                v-show="!isSearchBarActive"
                 @click="goToBookshelvesPage(user)"
+                aria-roledescription="navigation button"
             >
-                <IconBookshelves/>
-            </button>
+                <button 
+                    class="footer-nav-button"
+                    alt="feed"
+                    typ="button"
+                    @click="goToBookshelvesPage(user)"
+                >
+                    <IconBookshelves/>
+                </button>
 
-            <p class="fancy text-stone-600">Bookshelves</p>
-        </div>
+                <p class="fancy text-stone-600">Bookshelves</p>
+            </div>
 
-        <div class="nav-button-group hover:bg-gray-200" 
-            @click="goToFeedPage(user)"
-            aria-roledescription="navigation button"
-        >
-            <button 
-                class="footer-nav-button" 
-                type="button"
-                alt="feed"
-                @click="goToFeedPage(user)"
+            <div class="nav-button-group hover:bg-gray-200"
+                v-show="!isSearchBarActive"
+                @click="
+                    goToBookClubsPage(user); 
+                    footerView = FooterViews.bookclub
+                "
+                aria-roledescription="navigation button"
             >
-                <IconFeed/>
-            </button>
+                <button 
+                    class="footer-nav-button"
+                    alt="feed"
+                    typ="button"
+                    @click="
+                        goToBookClubsPage(user); 
+                        footerView = FooterViews.bookclub
+                    "
+                >
+                clubs
+                </button>
 
-            <p class="fancy text-stone-600">Notes</p>
-        </div>
+                <p class="fancy text-stone-600">Book clubs</p>
+            </div>
 
-        <div class="nav-button-group hover:bg-gray-200"
-            v-show="!isSearchBarActive"
-            @click="goToUserPage(user)"
-            aria-roledescription="navigation button"
-        >
-            <button 
-                class="footer-nav-button"
-                alt="feed"
-                typ="button"
+            <div class="nav-button-group hover:bg-gray-200"
+                v-show="!isSearchBarActive"
                 @click="goToUserPage(user)"
+                aria-roledescription="navigation button"
             >
-                <IconProfile/>
-            </button>
+                <button 
+                    class="footer-nav-button"
+                    alt="feed"
+                    typ="button"
+                    @click="goToUserPage(user)"
+                >
+                    <IconProfile/>
+                </button>
 
-            <p class="fancy text-stone-600">Connections</p>
-        </div>
+                <p class="fancy text-stone-600">Activity</p>
+            </div>
+        </nav>
 
-        <div class="nav-button-group hover:bg-gray-200"
-            v-show="!isSearchBarActive"
-            @click="goToBookClubsPage(user)"
-            aria-roledescription="navigation button"
-        >
-            <button 
-                class="footer-nav-button"
-                alt="feed"
-                typ="button"
-                @click="goToBookClubsPage(user)"
-            >
-            clubs
-            </button>
+        <!-- Bookclub specific stuff -->
+        <nav v-if="footerView === FooterViews.bookclub && route.params['bookclub']"
+            :class="{ 'minimized': minimizeFooter }"  
+            class="lg:border-solid border-indigo-100 border-[1px]"
+            role="navigation" 
+        >   
+            <div class="nav-button-group hover:bg-gray-200">
+                <a :href="navRoutes.toBookClubsPage(user)"
+                    class="footer-nav-button"
+                >
+                    <IconBack />
 
-            <p class="fancy text-stone-600">Book clubs</p>
-        </div>
+                    <span class="text-sm sm:hidden">
+                        Back
+                    </span>
+                </a>
+            </div>
+
+            <div class="nav-button-group hover:bg-gray-200">
+                <a :href="navRoutes.toBookClubFeed(route.params.user, route.params.bookclub)"
+                    class="footer-nav-button text-sm"
+                >
+                    Club Feed
+                </a>
+            </div>
+            
+            <div class="nav-button-group hover:bg-gray-200">
+                <a :href="navRoutes.bookClubSettingsManageMembersIndex(route.params.user, route.params.bookclub)"
+                    class="footer-nav-button text-sm"
+                >
+                    Club settings
+                </a>
+            </div>
+
+            <div class="nav-button-group hover:bg-gray-200">
+                <a :href="navRoutes.bookClubSettingsCurrentlyReading(route.params.user, route.params.bookclub)"
+                    class="footer-nav-button text-sm"
+                >
+                    Currently reading
+                </a>
+            </div>
+        </nav>
     </footer>
 
     <Transition name="content" tag="div">
@@ -120,15 +157,18 @@ import IconFeed from '@/components/svg/icon-feed.vue';
 // import searchBar from './navigation/searchBar.vue'
 import IconSearch from '@/components/svg/icon-search.vue';
 import IconProfile from '../svg/icon-profile-nav.vue';
-import { useRoute }  from 'vue-router'
 import IconBookshelves from '../svg/icon-bookshelves.vue'
-import { ref } from 'vue'
+import IconBack from '@/components/svg/icon-back.vue';
+import { useRoute }  from 'vue-router'
+import { ref, computed } from 'vue'
+import { navRoutes } from '../../services/urls';
 import { goToSearchPage, 
     goToFeedPage,
     goToSocialPage,
     goToUserPage,
     goToBookshelvesPage,
-    goToBookClubsPage
+    goToBookClubsPage,
+    FooterViews
 } from './footernavService';
 import { debounce, throttle } from 'lodash';
 
@@ -137,6 +177,17 @@ const minimizeFooter = ref(false);
 
 const route = useRoute();
 const { user } = route.params
+
+// instantiate a footer nav service for when you want to swap out which buttons are shown.
+const footerView = computed(() => {
+    // Check to see if we want to load the bookclub nav instead 
+    let bookclub = route.params.bookclub;
+    if (bookclub) {
+        return FooterViews.bookclub;
+    }
+
+    return FooterViews.default
+});
 
 window.addEventListener('toggleSearchBar', () => {
     isSearchBarActive.value = !isSearchBarActive.value
@@ -163,7 +214,7 @@ if(window.visualViewport.width <= 768){
     display: none !important;
 }
 
-footer {
+nav {
     position: fixed;   
     bottom: 0;
     left: 0;
@@ -178,7 +229,7 @@ footer {
     transition-timing-function: ease-in-out;
 }
 
-footer.minimized {
+nav.minimized {
     display: none !important;
     position: absolute;
     bottom: -100px !important;
@@ -186,7 +237,7 @@ footer.minimized {
     transition: 250ms;
 }
 
-footer .nav-button-group {
+nav .nav-button-group {
     padding: 0;
 }
 
@@ -249,12 +300,13 @@ footer .nav-button-group {
 }
 
 @media only screen and (min-width: 768px) {
-    footer {
-        position: sticky;
-        top: 15vh;
+    nav {
+        position: fixed;
+        top: 5vh;
         width: min-content;
         max-width: 200px;
         height: calc(100% - 100px);
+        height: fit-content;
         display: flex;
         flex-direction: column;
         justify-content: start;
@@ -267,7 +319,7 @@ footer .nav-button-group {
         margin-top: 10rem;
     }
 
-    footer.minimized {
+    nav.minimized {
         max-width: 3ch;
         transition-duration: 250ms;
         transition-timing-function: ease-in-out;

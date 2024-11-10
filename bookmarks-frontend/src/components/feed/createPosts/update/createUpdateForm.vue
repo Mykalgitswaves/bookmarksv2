@@ -42,15 +42,26 @@
     <div class="spacing-wrap">
         <div class="container">
             <div class="mb-5 ml-auto mr-auto w-90" v-if="step === 1">
-                <label class="input-number block mb-5 mt-10" for="page-number">
-                    <p class="text-2xl mb-2 mt-5 text-stone-600 fancy">Im on page <span class="italic text-indigo-600">{{ page }}</span></p>
-                    <input
-                        class="rounded-md"
-                        id="page-number"
-                        type="number" 
-                        v-model="update.page"
-                    >
-                </label>
+                <div class="flex space-between">
+                    <label class="block mb-5 mt-10" for="page-number">
+                        <p class="text-2xl mb-2 mt-5 text-stone-600 fancy">Im on page <span class="italic text-indigo-600">{{ page }}</span></p>
+                        <input
+                            class="input-number rounded-md"
+                            id="page-number"
+                            type="number" 
+                            v-model="update.page"
+                        >
+                    </label>
+                    <label class="block mb-5 mt-10" for="page-number">
+                        <p class="text-2xl mb-2 mt-5 text-stone-600 fancy">on chapter <span class="italic text-indigo-600">{{ chapter }}</span></p>
+                        <input
+                            class="input-number rounded-md"
+                            id="page-number"
+                            type="number" 
+                            v-model="update.chapter"
+                        >
+                    </label>
+                </div>
 
                 <div class="text-center">
                     <slot name="set-current-page">
@@ -149,9 +160,10 @@ const props = defineProps({
     },
 });
 
-const emit = defineEmits();
+const emit = defineEmits(['post-update', 'update-complete']);
 const headline = ref('');
 const page = ref(0);
+const chapter = ref(0)
 const step = ref(1);
 const progressTotal = computed(() => Math.floor((step.value * 100) / 3));
 const remainderTotal = computed(() => 100 - progressTotal.value);
@@ -163,6 +175,7 @@ const update = reactive({
     book_title: props.book.title,
     small_img_url: props.book.small_img_url,
     page: page.value,
+    chapter: chapter.value,
     is_spoiler: false,
     response: '',
     quote: '',

@@ -59,12 +59,12 @@
 <script setup>
 import { ref, computed } from 'vue';
 import { useRoute, useRouter } from 'vue-router'
-import { urls } from '../../../../services/urls';
+import { urls, navRoutes } from '../../../../services/urls';
 import { db } from '../../../../services/db';
 import { XSMALL_TEXT_LENGTH, MEDIUM_TEXT_LENGTH } from '../../../../services/forms';    
 import { BookClub } from './../models/models.js';
 import SetBookClubPacing from './SetBookClubPacing.vue';
-import CreateCustomPacingForm from './CreateCustomPacingForm.vue';
+import CreateCustomPacingForm from './CreateCustomPacingForm.vue'; 
 
 
 /**

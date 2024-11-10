@@ -12,47 +12,65 @@ from src.securities.authorizations.verify import get_current_active_user
 from src.book_apis.google_books.pull_books import google_books_pull
 from src.book_apis.google_books.search import google_books_search
 from src.api.background_tasks.google_books import google_books_background_tasks
+from src.utils.logging.logger import logger
 
 router = fastapi.APIRouter(prefix="/books", tags=["books"])
 
-@router.get("/search/{text}",
-            name="book:search2")
-def get_books_by_title(text: str,
-                       skip: int = 0,
-                       limit: int = 3,
-                       book_repo: BookCRUDRepositoryGraph = Depends(get_repository(repo_type=BookCRUDRepositoryGraph))):
+
+@router.get("/search/{text}", name="book:search2")
+def get_books_by_title(
+    text: str,
+    skip: int = 0,
+    limit: int = 3,
+    book_repo: BookCRUDRepositoryGraph = Depends(
+        get_repository(repo_type=BookCRUDRepositoryGraph)
+    ),
+):
     """
     Get books by title.
     """
     book_search_input = BookSearchInput(text=text, skip=skip, limit=limit)
-    result = book_repo.get_books_by_title(book_search_input.text, book_search_input.skip, book_search_input.limit)
-    return(JSONResponse(content={"data": jsonable_encoder(result)}))
+    result = book_repo.get_books_by_title(
+        book_search_input.text, book_search_input.skip, book_search_input.limit
+    )
+    logger.info("User searched for books by title", extra={"search_input": book_search_input, "action": "book_search"})
+    return JSONResponse(content={"data": jsonable_encoder(result)})
 
-@router.get("/{book_id}",
-            name="book:get_book")
-def get_book_by_id(book_id: str,
-                   background_tasks:BackgroundTasks,
-                   book_repo: BookCRUDRepositoryGraph = Depends(get_repository(repo_type=BookCRUDRepositoryGraph))):
+
+@router.get("/{book_id}", name="book:get_book")
+def get_book_by_id(
+    book_id: str,
+    background_tasks: BackgroundTasks,
+    book_repo: BookCRUDRepositoryGraph = Depends(
+        get_repository(repo_type=BookCRUDRepositoryGraph)
+    ),
+):
     """
     Endpoint for book page. If a google id is used, the canonical version of the book is returned
     """
     book_id = BookId(id=book_id)
-    if book_id.id[0] == 'g':
+    if book_id.id[0] == "g":
         # Checks if the book is already in our database
         book = book_repo.get_book_by_google_id_flexible(book_id.id)
         if not book:
             # Pulls the book down otherwise
             book = google_books_pull.pull_google_book(book_id.id, book_repo)
-            background_tasks.add_task(google_books_background_tasks.pull_book_and_versions,book,book_repo)
+            background_tasks.add_task(
+                google_books_background_tasks.pull_book_and_versions, book, book_repo
+            )
     else:
         book = book_repo.get_book_by_id(book_id=book_id.id)
-        
+
     return JSONResponse(content={"data": jsonable_encoder(book)})
 
-@router.get("/{book_id}/versions",
-            name="book:get_book_versions")
-def get_book_versions_from_db(book_id: str,
-                              book_repo: BookCRUDRepositoryGraph = Depends(get_repository(repo_type=BookCRUDRepositoryGraph))):
+
+@router.get("/{book_id}/versions", name="book:get_book_versions")
+def get_book_versions_from_db(
+    book_id: str,
+    book_repo: BookCRUDRepositoryGraph = Depends(
+        get_repository(repo_type=BookCRUDRepositoryGraph)
+    ),
+):
     """
     Endpoint for getting versions of a book from the DB
     """
@@ -60,13 +78,21 @@ def get_book_versions_from_db(book_id: str,
         versions = book_repo.get_book_versions_by_google_id(book_id=book_id)
     else:
         versions = book_repo.get_book_versions(book_id=book_id)
-    
+
+    logger.info(
+        "User requested book versions", 
+        extra={
+            "book_id": book_id, 
+            "number_of_versions": len(versions),
+            "action": "book_versions"}
+    )
     return JSONResponse(content={"data": jsonable_encoder(versions)})
 
-@router.get("/{book_id}/versions/metadata",
-            name="book:get_book_versions_from_metadata_search")
-async def get_book_versions_from_metadata_search(book_id: str, 
-                                                 request: Request):
+
+@router.get(
+    "/{book_id}/versions/metadata", name="book:get_book_versions_from_metadata_search"
+)
+async def get_book_versions_from_metadata_search(book_id: str, request: Request):
     """
     Endpoint for getting versions of a book from a metadata search
     """
@@ -75,18 +101,38 @@ async def get_book_versions_from_metadata_search(book_id: str,
         book_search = BookMetadataSearch(**response)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
-    
-    versions = google_books_search.search_versions_by_metadata(book_title=book_search.book_title,
-                                                               book_authors=book_search.book_authors)
+
+    versions = google_books_search.search_versions_by_metadata(
+        book_title=book_search.book_title, book_authors=book_search.book_authors
+    )
+
+    logger.info(
+        "User requested book versions from metadata search", 
+        extra={
+            "book_id": book_id, 
+            "number_of_versions": len(versions),
+            "action": "book_versions_metadata_search"}
+    )
     
     return JSONResponse(content={"data": jsonable_encoder(versions)})
 
-@router.get("/{book_id}/similar",
-            name="book:get_similar_books")
-def get_similar_books(book_id: str,
-                      book_repo: BookCRUDRepositoryGraph = Depends(get_repository(repo_type=BookCRUDRepositoryGraph))):
+
+@router.get("/{book_id}/similar", name="book:get_similar_books")
+def get_similar_books(
+    book_id: str,
+    book_repo: BookCRUDRepositoryGraph = Depends(
+        get_repository(repo_type=BookCRUDRepositoryGraph)
+    ),
+):
     """
     Endpoint for similar books
     """
     books = book_repo.get_similar_books(book_id=book_id)
+    logger.info(
+        "User requested similar books", 
+        extra={
+            "book_id": book_id, 
+            "number_of_similar_books": len(books),
+            "action": "book_similar"}
+    )
     return JSONResponse(content={"data": jsonable_encoder(books)})

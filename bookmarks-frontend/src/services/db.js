@@ -1,6 +1,8 @@
 import { toRaw } from 'vue'
 import { useRouter } from 'vue-router'
 import { helpersCtrl } from './helpers';
+// import { memCache } from './cache/memCache';
+
 /**
 // @param successRouterFunction: This is an optional param to control the routes after a successfull request,
  must be passed in as a regular function
@@ -54,7 +56,7 @@ export const db = {
                 }
                 if(response.ok || response.status === 200) {
                     if(successRouterFunction) {
-                        return data && successRouterFunction
+                        successRouterFunction(data)
                     }
                     console.log('returning', data)
                     return data

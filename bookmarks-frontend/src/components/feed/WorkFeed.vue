@@ -22,7 +22,8 @@
       <TransitionGroup name="content" tag="div">
         <div v-if="feedData?.length" class="cards-outer-wrapper">
           <div
-            v-for="post in feedData" :key="post.id" 
+            v-for="post in feedData"
+            :key="post.id" 
             class="center-cards"
           >
             <transition name="content" tag="div">

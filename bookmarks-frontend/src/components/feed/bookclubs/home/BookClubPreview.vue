@@ -1,26 +1,49 @@
 <template>
     <div class="bookclub-preview">
-        <img src="" alt="">
-        <div class="metadata">
-            <h3 class="title">
-                {{ bookclub.title ? bookclub.title : 'loading'}}
-            </h3>
 
-            <p v-if="bookclub.currentlyReading">
-                {{ currentlyReading }}
-            </p>
+        <!-- Hold off on this until I get an href working... -->
+        <img v-if="bookclub?.currently_reading_book?.small_img_url"
+            class="currently-reading-img" 
+            :src="bookclub.currently_reading_book.small_img_url" 
+            alt="" 
+        />
 
-            <a :href="navRoutes.toBookclub(bookclub.id)">Go to club</a>
+        <div class="metadata" v-if="bookclub">
+            <div>
+                <h3 class="title">
+                    {{ bookclub.book_club_name}}
+                </h3>
+
+                <p v-if="bookclub.currently_reading_book" class="currently-reading">
+                    Currently Reading: <i>{{ bookclub.currently_reading_book.title }}</i>
+                </p>
+
+                <p v-else class="currently-reading">Not currently reading anything</p>
+            </div>
+
+            <button 
+                class="link" 
+                @click="router.push(
+                    navRoutes.toBookClubFeed(user, bookclub.book_club_id))"
+            >
+            Go to club
+            </button>
         </div>
     </div>
 </template>
 <script setup>
 import { navRoutes } from '../../../../services/urls';
+import { useRouter } from 'vue-router'
 
+const router = useRouter();
 const props = defineProps({
     bookclub: {
         type: Object,
         required: true,
+    },
+    user: {
+        type: String,
+        required: false,
     }
 });
 
@@ -28,12 +51,46 @@ const props = defineProps({
 <style scoped>
 
 .bookclub-preview {
-    padding: 8px;
+    width: 100%;
     border-radius: var(--radius-sm);
     border: 1px solid var(--stone-300);
+    padding-left: 14px;
+    padding-bottom: 8px;
+    padding-top: 8px;
     display: flex;
-    justify-content: space-around;
-    max-width: 450px;
+    justify-content: start;
+    align-items: center;
+    column-gap: 20px;
+    /* max-width: 1fr; */
+
+    & .title {
+        font-size: var(--font-2xl);
+        font-family: var(--fancy-script);
+        color: var(--stone-700);
+    }
+
+    & .currently-reading {
+        color: var(--stone-500);
+        font-size: var(--font-sm);
+    }
+
+    & .currently-reading-img {
+        height: 100px;
+        border-radius: var(--radius-sm);
+    }
+
+    & .link {
+        padding-top: 30px;
+        color: var(--blue-400);
+        font-size: var(--font-sm);
+        text-decoration: underline;
+    }
+}
+
+.placeholder {
+    background-color: var(--stone-200);
+    width: 70px;
+    height: 100px;
 }
 
 </style>
