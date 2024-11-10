@@ -509,20 +509,21 @@ class BookCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
                     authors.append(result.id)
 
         with self.driver.session() as session:
-            book = session.execute_write(self.create_book_query,
-                                            title, 
-                                            img_url, 
-                                            pages, 
-                                            publication_year, 
-                                            lang, 
-                                            description, 
-                                            genres, 
-                                            authors, 
-                                            isbn13,
-                                            isbn10, 
-                                            small_img_url, 
-                                            author_names,
-                                            google_id)
+            book = session.execute_write(
+                self.create_book_query,
+                title, 
+                img_url, 
+                pages, 
+                publication_year, 
+                lang, 
+                description, 
+                genres, 
+                authors, 
+                isbn13,
+                isbn10, 
+                small_img_url, 
+                author_names,
+                google_id)
         return(book)
 
     @staticmethod
@@ -599,7 +600,8 @@ class BookCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
                     description=description, 
                     isbn13=isbn13,
                     genres=genres,
-                    authors=authors)
+                    authors=authors,
+                    google_id=google_id)
 
         return(book)
     

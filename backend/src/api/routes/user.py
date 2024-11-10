@@ -29,7 +29,7 @@ from src.securities.hashing.password import pwd_generator
 from src.securities.authorizations.jwt import jwt_generator
 from src.models.schemas.token import Token
 from src.config.config import settings
-
+from src.utils.logging.logger import logger
 
 router = fastapi.APIRouter(prefix="/user", tags=["user"])
 
@@ -52,6 +52,13 @@ def get_user_properties(
     - The properties of the current user.
     """
     user = user_repo.get_user_properties(current_user.username)
+    logger.info(
+        "User properties retrieved",
+        extra={
+            "user_id": current_user.id,
+            "action": "get_user_properties",
+        },
+    )
     return user
 
 
@@ -75,6 +82,13 @@ def get_user_liked_genres(
     - A dictionary containing the liked genres of the current user.
     """
     genres = user_repo.get_user_liked_genres(current_user.username)
+    logger.info(
+        "User liked genres retrieved",
+        extra={
+            "user_id": current_user.id,
+            "action": "get_user_liked_genres",
+        },
+    )
     return {"liked_genres": genres}
 
 
@@ -83,7 +97,7 @@ def get_user_liked_genres(
     name="user:me:liked_authors",
     response_model=dict[str, list[str]],
 )
-def get_user_liked_genres(
+def get_user_liked_authors(
     current_user: Annotated[User, Depends(get_current_active_user)],
     user_repo: UserCRUDRepositoryGraph = Depends(
         get_repository(repo_type=UserCRUDRepositoryGraph)
@@ -100,6 +114,13 @@ def get_user_liked_genres(
     - A dictionary containing the liked authors of the current user.
     """
     authors = user_repo.get_user_liked_authors(current_user.username)
+    logger.info(
+        "User liked authors retrieved",
+        extra={
+            "user_id": current_user.id,
+            "action": "get_user_liked_authors",
+        },
+    )
     return {"liked_authors": authors}
 
 
@@ -121,6 +142,14 @@ async def get_complete_user(
 
         user = user_repo.get_user_for_settings(
             user_id=user_id, relationship_to_current_user=relationship_to_current_user
+        )
+        logger.info(
+            "User retrieved",
+            extra={
+                "user_id": user_id,
+                "current_user_id": current_user.id,
+                "action": "get_complete_user",
+            },
         )
         return JSONResponse(content={"data": jsonable_encoder(user)})
 
@@ -163,13 +192,36 @@ async def update_username(
             access_token = jwt_generator.generate_access_token(
                 username=new_username.username
             )
-
+            logger.info(
+                "Username updated",
+                extra={
+                    "user_id": user_id,
+                    "new_username": new_username.username,
+                    "action": "update_username",
+                },
+            )
             return Token(
                 access_token=access_token, token_type="bearer", user_id=user_id
             )
         else:
+            logger.warning(
+                "Error updating username",
+                extra={
+                    "user_id": user_id,
+                    "new_username": new_username.username,
+                    "action": "update_username",
+                },
+            )
             return result
     else:
+        logger.warning(
+            "Unauthorized user attempting to update username",
+            extra={
+                "user_id": user_id,
+                "current_user_id": current_user.id,
+                "action": "update_username",
+            },
+        )
         raise HTTPException(400, detail="Unauthorized")
 
 
@@ -197,10 +249,34 @@ async def update_bio(
 
         response = user_repo.update_bio(user_id=user_id, new_bio=new_bio.bio)
         if response:
+            logger.info(
+                "User bio updated",
+                extra={
+                    "user_id": user_id,
+                    "new_bio": new_bio.bio,
+                    "action": "update_bio",
+                },
+            )
             return HTTPException(200, detail="Success")
         else:
+            logger.warning(
+                "Error updating user bio",
+                extra={
+                    "user_id": user_id,
+                    "new_bio": new_bio.bio,
+                    "action": "update_bio",
+                },
+            )
             raise HTTPException(401, detail="Unauthorized")
     else:
+        logger.warning(
+            "Unauthorized user attempting to update bio",
+            extra={
+                "user_id": user_id,
+                "current_user_id": current_user.id,
+                "action": "update_bio",
+            },
+        )
         raise HTTPException(400, detail="Unauthorized")
 
 
@@ -233,10 +309,34 @@ async def update_email(
 
         response = user_repo.update_email(user_id=user_id, new_email=new_email.email)
         if response:
+            logger.info(
+                "User email updated",
+                extra={
+                    "user_id": user_id,
+                    "new_email": new_email.email,
+                    "action": "update_email",
+                },
+            )
             return HTTPException(200, detail="Success")
         else:
+            logger.warning(
+                "Error updating user email",
+                extra={
+                    "user_id": user_id,
+                    "new_email": new_email.email,
+                    "action": "update_email",
+                },
+            )
             raise HTTPException(401, detail="Unauthorized")
     else:
+        logger.warning(
+            "Unauthorized user attempting to update email",
+            extra={
+                "user_id": user_id,
+                "current_user_id": current_user.id,
+                "action": "update_email",
+            },
+        )
         raise HTTPException(400, detail="Unauthorized")
 
 
@@ -253,25 +353,50 @@ async def update_profile_img(
     Updates a users profile image
     """
     profile_img_url = await request.json()
-    if not profile_img_url and user_id:
+    if not profile_img_url:
         raise HTTPException(400, "Bad request brah, missing params")
-    elif current_user.id != user_id:
-        raise HTTPException(400, "Unauthorized")
-    else:
-        try:
-            profile_img_url = UserProfileImg(profile_img_url=profile_img_url["cdn_url"])
-        except ValueError as e:
-            raise HTTPException(status_code=400, detail=str(e))
-
-        response = user_repo.update_user_profile_image(
-            user_id=user_id, profile_img_url=profile_img_url.profile_img_url
+    
+    if current_user.id != user_id:
+        logger.warning(
+            "Unauthorized user attempting to update profile image",
+            extra={
+                "user_id": user_id,
+                "current_user_id": current_user.id,
+                "action": "update_profile_img",
+            },
         )
-        if response:
-            return JSONResponse(
-                content={"data": jsonable_encoder(profile_img_url.profile_img_url)}
-            )
-        else:
-            raise HTTPException(401, detail="Unauthorized")
+        raise HTTPException(400, "Unauthorized")
+    
+    try:
+        profile_img_url = UserProfileImg(profile_img_url=profile_img_url["cdn_url"])
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+    response = user_repo.update_user_profile_image(
+        user_id=user_id, profile_img_url=profile_img_url.profile_img_url
+    )
+    if response:
+        logger.info(
+            "User profile image updated",
+            extra={
+                "user_id": user_id,
+                "profile_img_url": profile_img_url.profile_img_url,
+                "action": "update_profile_img",
+            },
+        )
+        return JSONResponse(
+            content={"data": jsonable_encoder(profile_img_url.profile_img_url)}
+        )
+    else:
+        logger.warning(
+            "Error updating user profile image",
+            extra={
+                "user_id": user_id,
+                "profile_img_url": profile_img_url.profile_img_url,
+                "action": "update_profile_img",
+            },
+        )
+        raise HTTPException(401, detail="Unauthorized")
 
 
 @router.put("/{user_id}/update_password", name="user:update_password")
@@ -284,7 +409,7 @@ async def update_password(
     ),
 ):
     """
-    Changes the users password. TODO: Add password length and complexity requirements.
+    Changes the users password.
     """
     if not current_user:
         raise HTTPException(400, "Unauthorized")
@@ -297,6 +422,13 @@ async def update_password(
             raise HTTPException(status_code=400, detail=jsonable_encoder(e.json()))
 
         if not is_strong_password(new_password.password):
+            logger.warning(
+                "Password is not strong enough",
+                extra={
+                    "user_id": user_id,
+                    "action": "update_password",
+                },
+            )
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail=[{"msg": "Password is not strong enough"}],
@@ -307,11 +439,33 @@ async def update_password(
             user_id=user_id,
         )
         if response:
+            logger.info(
+                "User password updated",
+                extra={
+                    "user_id": user_id,
+                    "action": "update_password",
+                },
+            )
             return HTTPException(200, detail="Success")
         else:
+            logger.warning(
+                "Error updating user password",
+                extra={
+                    "user_id": user_id,
+                    "action": "update_password",
+                },
+            )
             raise HTTPException(401, detail="Unauthorized")
 
     else:
+        logger.warning(
+            "Unauthorized user attempting to update password",
+            extra={
+                "user_id": user_id,
+                "current_user_id": current_user.id,
+                "action": "update_password",
+            },
+        )
         raise HTTPException(400, detail="Unauthorized")
 
 
@@ -338,8 +492,24 @@ async def send_friend_request(
 
     result = user_repo.create_friend_request(friend_request=friend_request)
     if result:
+        logger.info(
+            "Friend request sent",
+            extra={
+                "from_user_id": current_user.id,
+                "to_user_id": friend_id,
+                "action": "send_friend_request",
+            },
+        )
         return HTTPException(200, detail="Success")
     else:
+        logger.warning(
+            "Error sending friend request",
+            extra={
+                "from_user_id": current_user.id,
+                "to_user_id": friend_id,
+                "action": "send_friend_request",
+            },
+        )
         raise HTTPException(401, detail="Unauthorized")
 
 
@@ -365,8 +535,24 @@ async def unsend_friend_request(
 
     result = user_repo.delete_friend_request(friend_request=friend_request)
     if result:
+        logger.info(
+            "Friend request unsent",
+            extra={
+                "from_user_id": current_user.id,
+                "to_user_id": friend_id,
+                "action": "unsend_friend_request",
+            },
+        )
         return HTTPException(200, detail="Success")
     else:
+        logger.warning(
+            "Error unsending friend request",
+            extra={
+                "from_user_id": current_user.id,
+                "to_user_id": friend_id,
+                "action": "unsend_friend_request",
+            },
+        )
         raise HTTPException(401, detail="Unauthorized")
 
 
@@ -393,8 +579,24 @@ async def accept_friend_request(
 
     result = user_repo.update_friend_request_to_accepted(friend_request)
     if result:
+        logger.info(
+            "Friend request accepted",
+            extra={
+                "from_user_id": friend_id,
+                "to_user_id": current_user.id,
+                "action": "accept_friend_request",
+            },
+        )
         return HTTPException(200, detail="Success")
     else:
+        logger.warning(
+            "Error accepting friend request",
+            extra={
+                "from_user_id": friend_id,
+                "to_user_id": current_user.id,
+                "action": "accept_friend_request",
+            },
+        )
         raise HTTPException(401, detail="Unauthorized")
 
 
@@ -420,8 +622,24 @@ async def decline_friend_request(
 
     result = user_repo.update_friend_request_to_declined(friend_request)
     if result:
+        logger.info(
+            "Friend request declined",
+            extra={
+                "from_user_id": friend_id,
+                "to_user_id": current_user.id,
+                "action": "decline_friend_request",
+            },
+        )
         return HTTPException(200, detail="Success")
     else:
+        logger.warning(
+            "Error declining friend request",
+            extra={
+                "from_user_id": friend_id,
+                "to_user_id": current_user.id,
+                "action": "decline_friend_request",
+            },
+        )
         raise HTTPException(401, detail="Unauthorized")
 
 
@@ -445,8 +663,24 @@ async def remove_friend(
 
     result = user_repo.delete_friend_relationship(friend_delete)
     if result:
+        logger.info(
+            "Friend removed",
+            extra={
+                "from_user_id": current_user.id,
+                "to_user_id": friend_id,
+                "action": "remove_friend",
+            },
+        )
         return HTTPException(200, detail="Success")
     else:
+        logger.warning(
+            "Error removing friend",
+            extra={
+                "from_user_id": current_user.id,
+                "to_user_id": friend_id,
+                "action": "remove_friend",
+            },
+        )
         raise HTTPException(401, detail="Unauthorized")
 
 
@@ -471,8 +705,24 @@ async def follow_user(
         raise HTTPException(400, detail=str(e))
     result = user_repo.create_follow_relationship(follow_user)
     if result:
+        logger.info(
+            "User followed",
+            extra={
+                "from_user_id": current_user.id,
+                "to_user_id": followed_user_id,
+                "action": "follow_user",
+            },
+        )
         return HTTPException(200, detail="Success")
     else:
+        logger.warning(
+            "Error following user",
+            extra={
+                "from_user_id": current_user.id,
+                "to_user_id": followed_user_id,
+                "action": "follow_user",
+            },
+        )
         raise HTTPException(401, detail="Unauthorized")
 
 
@@ -485,7 +735,7 @@ async def unfollow_user(
     ),
 ):
     """
-    Follows a user
+    Unfollows a user
     """
     if not current_user:
         raise HTTPException(400, "Unauthorized")
@@ -497,8 +747,24 @@ async def unfollow_user(
         raise HTTPException(400, detail=str(e))
     result = user_repo.delete_follow_relationship(unfollow_user)
     if result:
+        logger.info(
+            "User unfollowed",
+            extra={
+                "from_user_id": current_user.id,
+                "to_user_id": unfollowed_user_id,
+                "action": "unfollow_user",
+            },
+        )
         return HTTPException(200, detail="Success")
     else:
+        logger.warning(
+            "Error unfollowing user",
+            extra={
+                "from_user_id": current_user.id,
+                "to_user_id": unfollowed_user_id,
+                "action": "unfollow_user",
+            },
+        )
         raise HTTPException(401, detail="Unauthorized")
 
 
@@ -524,8 +790,24 @@ async def block_user(
 
     result = user_repo.create_blocked_relationship(block_user)
     if result:
+        logger.info(
+            "User blocked",
+            extra={
+                "from_user_id": current_user.id,
+                "to_user_id": blocked_user_id,
+                "action": "block_user",
+            },
+        )
         return HTTPException(200, detail="Success")
     else:
+        logger.warning(
+            "Error blocking user",
+            extra={
+                "from_user_id": current_user.id,
+                "to_user_id": blocked_user_id,
+                "action": "block_user",
+            },
+        )
         raise HTTPException(401, detail="Unauthorized")
 
 
@@ -538,7 +820,7 @@ async def unblock_user(
     ),
 ):
     """
-    Blocks a user
+    Unblocks a user
     """
     if not current_user:
         raise HTTPException(400, "Unauthorized")
@@ -550,8 +832,24 @@ async def unblock_user(
         raise HTTPException(400, detail=str(e))
     result = user_repo.delete_blocked_relationship(unblock_user)
     if result:
+        logger.info(
+            "User unblocked",
+            extra={
+                "from_user_id": current_user.id,
+                "to_user_id": unblocked_user_id,
+                "action": "unblock_user",
+            },
+        )
         return HTTPException(200, detail="Success")
     else:
+        logger.warning(
+            "Error unblocking user",
+            extra={
+                "from_user_id": current_user.id,
+                "to_user_id": unblocked_user_id,
+                "action": "unblock_user",
+            },
+        )
         raise HTTPException(401, detail="Unauthorized")
 
 
@@ -575,6 +873,14 @@ async def get_user_about(
         raise HTTPException(400, "Unauthorized")
     if current_user and user_id:
         user = user_repo.get_user_about_me(user_id=user_id.id)
+        logger.info(
+            "User about data retrieved",
+            extra={
+                "user_id": user_id.id,
+                "current_user_id": current_user.id,
+                "action": "get_user_about",
+            },
+        )
         return JSONResponse(content={"data": jsonable_encoder(user)})
 
 
@@ -609,30 +915,66 @@ async def get_friend_list(
             user_id=user_id, current_user_id=current_user.id, bookshelf_id=bookshelf_id
         )
         if includes_pending:
-            print("pending dude")
             if current_user.id == user_id:
                 pending_count = user_repo.get_pending_friend_count(user_id=user_id)
+                logger.info(
+                    "Friend list with pending count retrieved",
+                    extra={
+                        "user_id": user_id,
+                        "current_user_id": current_user.id,
+                        "bookshelf_id": bookshelf_id,
+                        "num_friends": len(friend_list),
+                        "action": "get_friend_list_no_bookshelf_access",
+                    },
+                )
                 return JSONResponse(
                     content={
                         "friends": jsonable_encoder(friend_list),
                         "pending_count": jsonable_encoder(pending_count),
                     }
                 )
+        logger.info(
+            "Friend list retrieved",
+            extra={
+                "user_id": user_id,
+                "current_user_id": current_user.id,
+                "bookshelf_id": bookshelf_id,
+                "num_friends": len(friend_list),
+                "action": "get_friend_list_no_bookshelf_access",
+            },
+        )
         return JSONResponse(content={"data": jsonable_encoder(friend_list)})
     else:
         friend_list = user_repo.get_friend_list(
             user_id=user_id, current_user_id=current_user.id
         )
         if includes_pending:
-            print("pending dude")
             if current_user.id == user_id:
                 pending_count = user_repo.get_pending_friend_count(user_id=user_id)
+                logger.info(
+                    "Friend list with pending count retrieved",
+                    extra={
+                        "user_id": user_id,
+                        "current_user_id": current_user.id,
+                        "num_friends": len(friend_list),
+                        "action": "get_friend_list",
+                    },
+                )
                 return JSONResponse(
                     content={
                         "friends": jsonable_encoder(friend_list),
                         "pending_count": jsonable_encoder(pending_count),
                     }
                 )
+        logger.info(
+            "Friend list retrieved",
+            extra={
+                "user_id": user_id,
+                "current_user_id": current_user.id,
+                "num_friends": len(friend_list),
+                "action": "get_friend_list",
+            },
+        )
         return JSONResponse(content={"data": jsonable_encoder(friend_list)})
 
 
@@ -651,8 +993,24 @@ async def get_friend_request_list(
         raise HTTPException(400, "Unauthorized")
     if user_id == current_user.id:
         friend_request_list = user_repo.get_friend_request_list(user_id)
+        logger.info(
+            "Friend requests retrieved",
+            extra={
+                "user_id": user_id,
+                "num_requests": len(friend_request_list),
+                "action": "get_friend_requests",
+            },
+        )
         return JSONResponse(content={"data": jsonable_encoder(friend_request_list)})
     else:
+        logger.warning(
+            "Unauthorized user attempting to get friend requests",
+            extra={
+                "user_id": user_id,
+                "current_user_id": current_user.id,
+                "action": "get_friend_requests",
+            },
+        )
         raise HTTPException(400, "Unauthorized")
 
 
@@ -671,8 +1029,24 @@ async def get_blocked_users_list(
         raise HTTPException(400, "Unauthorized")
     if user_id == current_user.id:
         friend_request_list = user_repo.get_blocked_users_list(user_id)
+        logger.info(
+            "Blocked users retrieved",
+            extra={
+                "user_id": user_id,
+                "num_blocked_users": len(friend_request_list),
+                "action": "get_blocked_users",
+            },
+        )
         return JSONResponse(content={"data": jsonable_encoder(friend_request_list)})
     else:
+        logger.warning(
+            "Unauthorized user attempting to get blocked users",
+            extra={
+                "user_id": user_id,
+                "current_user_id": current_user.id,
+                "action": "get_blocked_users",
+            },
+        )
         raise HTTPException(400, "Unauthorized")
 
 
@@ -695,8 +1069,24 @@ async def get_activity_list(
         activity_list = user_repo.get_activity_list(
             current_user.username, user_id, skip, limit
         )
+        logger.info(
+            "Activity list retrieved",
+            extra={
+                "user_id": user_id,
+                "num_activities": len(activity_list),
+                "action": "get_activity_list",
+            },
+        )
         return JSONResponse(content={"data": jsonable_encoder(activity_list)})
     else:
+        logger.warning(
+            "Unauthorized user attempting to get activity list",
+            extra={
+                "user_id": user_id,
+                "current_user_id": current_user.id,
+                "action": "get_activity_list",
+            },
+        )
         raise HTTPException(400, "Unauthorized")
 
 
@@ -717,6 +1107,22 @@ async def get_suggested_friends(
     if user_id == current_user.user_id:
         user_id = UserId(id=user_id)
         suggested_friends = user_repo.get_suggested_friends(user_id=user_id.id, n=n)
+        logger.info(
+            "Suggested friends retrieved",
+            extra={
+                "user_id": user_id.id,
+                "num_suggested_friends": len(suggested_friends),
+                "action": "get_suggested_friends",
+            },
+        )
         return JSONResponse(content={"data": jsonable_encoder(suggested_friends)})
     else:
+        logger.warning(
+            "Unauthorized user attempting to get suggested friends",
+            extra={
+                "user_id": user_id,
+                "current_user_id": current_user.id,
+                "action": "get_suggested_friends",
+            },
+        )
         raise HTTPException(400, "Unauthorized")

@@ -52,7 +52,7 @@ from src.models.schemas.bookshelves import (
 )
 from src.api.websockets.bookshelves import bookshelf_ws_manager
 from src.api.background_tasks.google_books import google_books_background_tasks
-
+from src.utils.logging.logger import logger
 
 router = fastapi.APIRouter(prefix="/bookshelves", tags=["bookshelves"])
 
@@ -82,8 +82,15 @@ async def create_bookshelf(
         raise HTTPException(status_code=400, detail=str(e))
 
     bookshelf_id = bookshelf_repo.create_bookshelf(bookshelf)
+    logger.info(
+        "Bookshelf created",
+        extra={
+            "user_id": current_user.id, 
+            "bookshelf_id": bookshelf_id,
+            "bookshelf_name": bookshelf.title,
+            "action": "create_bookshelf"},
+    )
     return {"bookshelf_id": bookshelf_id}
-
 
 @router.get("/{bookshelf_id}", name="bookshelf:get")
 async def get_bookshelf(
@@ -112,6 +119,9 @@ async def get_bookshelf(
             created_by=_bookshelf.created_by,
             created_by_username=_bookshelf.created_by_username,
         )
+        logger.info(
+            "Bookshelf retrieved from cache"
+        )
     else:
         if bookshelf_id.startswith("want_to_read"):
             _bookshelf = bookshelf_repo.get_user_want_to_read_by_shelf_id(
@@ -135,6 +145,13 @@ async def get_bookshelf(
             # Check if the user has access to the bookshelf
             if _bookshelf.visibility == "private":
                 if current_user.id not in _bookshelf.members:
+                    logger.warning(
+                        "User is not authorized to view private bookshelf",
+                        extra={
+                            "user_id": current_user.id,
+                            "bookshelf_id": bookshelf_id
+                        }
+                    )
                     raise HTTPException(
                         status_code=403,
                         detail="User is not authorized to view private bookshelf",
@@ -143,6 +160,13 @@ async def get_bookshelf(
             elif _bookshelf.visibility == "friends":
                 friends = user_repo.get_simple_friend_list(_bookshelf.created_by)
                 if current_user.id not in friends:
+                    logger.warning(
+                        "User is not authorized to view friends only bookshelf",
+                        extra={
+                            "user_id": current_user.id,
+                            "bookshelf_id": bookshelf_id
+                        }
+                    )
                     raise HTTPException(
                         status_code=403,
                         detail="User is not authorized to view friends only bookshelf",
@@ -163,6 +187,12 @@ async def get_bookshelf(
                 )
                 for book in _bookshelf.books:
                     _bookshelf_dll.add_book_to_shelf(book, current_user.id)
+                logger.info(
+                    "Bookshelf added to cache",
+                    extra={
+                        "bookshelf_id": bookshelf_id
+                    }
+                )
                 bookshelf_ws_manager.cache[bookshelf_id] = _bookshelf_dll
 
         # Set this in the cache for websocket.
@@ -180,6 +210,14 @@ async def get_bookshelf(
             created_by_username=_bookshelf.created_by_username,
         )
 
+    logger.info(
+        "Bookshelf retrieved",
+        extra={
+            "user_id": current_user.id,
+            "bookshelf_id": bookshelf_id,
+            "action": "get_bookshelf"
+        }
+    )
     return JSONResponse(content={"bookshelf": jsonable_encoder(bookshelf_response)})
 
 
@@ -205,10 +243,24 @@ async def get_explore_bookshelves(
         explore_bookshelves = bookshelf_repo.get_explore_bookshelves_for_user(
             user_id=user_id_obj.id, skip=skip, limit=limit
         )
+        logger.info(
+            "Explore bookshelves retrieved",
+            extra={
+                "user_id": current_user.id,
+                "num_bookshelves_returned": len(explore_bookshelves),
+                "action": "get_explore_bookshelves"
+            }
+        )
         return JSONResponse(
             content={"bookshelves": jsonable_encoder(explore_bookshelves)}
         )
     else:
+        logger.warning(
+            "User is not authorized to view explore bookshelves",
+            extra={
+                "acting_user_id": current_user.id,
+                "user_id": user_id
+            })
         raise HTTPException(
             status_code=403,
             detail="User is not authorized to view a different user's explore bookshelves",
@@ -225,8 +277,22 @@ async def get_created_bookshelves(
 ):
     if current_user.id == user_id:
         bookshelves = bookshelf_repo.get_bookshelves_created_by_user(user_id=user_id)
+        logger.info(
+            "Created bookshelves retrieved",
+            extra={
+                "user_id": current_user.id,
+                "num_bookshelves_returned": len(bookshelves),
+                "action": "get_created_bookshelves"
+            }
+        )
         return JSONResponse(content={"bookshelves": jsonable_encoder(bookshelves)})
     else:
+        logger.warning(
+            "User tried to access bookshelves created by another user",
+            extra={
+                "acting_user_id": current_user.id,
+                "user_id": user_id}
+        )
         raise HTTPException(
             status_code=403,
             detail="User is not authorized to view bookshelves created by another user",
@@ -247,8 +313,21 @@ async def get_contributed_bookshelves(
         bookshelves = bookshelf_repo.get_bookshelves_contributed_to_by_user(
             user_id=user_id
         )
+        logger.info(
+            "Contributed bookshelves retrieved",
+            extra={
+                "user_id": current_user.id,
+                "num_bookshelves_returned": len(bookshelves),
+                "action": "get_contributed_bookshelves"}
+        )
         return JSONResponse(content={"bookshelves": jsonable_encoder(bookshelves)})
     else:
+        logger.warning(
+            "User tried to access bookshelves contributed to by another user",
+            extra={
+                "acting_user_id": current_user.id,
+                "user_id": user_id}
+        )
         raise HTTPException(
             status_code=403,
             detail="User is not authorized to view bookshelves contributed to by another user",
@@ -265,8 +344,22 @@ async def get_member_bookshelves(
 ):
     if current_user.id == user_id:
         bookshelves = bookshelf_repo.get_bookshelves_member_of_by_user(user_id=user_id)
+        logger.info(
+            "Member bookshelves retrieved",
+            extra={
+                "user_id": current_user.id,
+                "num_bookshelves_returned": len(bookshelves),
+                "action": "get_member_bookshelves"
+            }
+        )
         return JSONResponse(content={"bookshelves": jsonable_encoder(bookshelves)})
     else:
+        logger.warning(
+            "User tried to access bookshelves they are a member of for another user",
+            extra={
+                "acting_user_id": current_user.id,
+                "user_id": user_id}
+        )
         raise HTTPException(
             status_code=403,
             detail="User is not authorized to view bookshelves they are a member of",
@@ -290,9 +383,30 @@ async def delete_bookshelf(
     response = bookshelf_repo.delete_bookshelf(bookshelf_id.id, current_user.id)
     if response:
         if bookshelf_id.id in bookshelf_ws_manager.cache:
+            logger.info(
+                "Bookshelf deleted from cache",
+                extra={
+                    "bookshelf_id": bookshelf_id.id
+                }
+            )
             del bookshelf_ws_manager.cache[bookshelf_id.id]
+        logger.info(
+            "Bookshelf deleted",
+            extra={
+                "user_id": current_user.id,
+                "bookshelf_id": bookshelf_id.id,
+                "action": "delete_bookshelf"
+            }
+        )
         return JSONResponse(content={"message": "Bookshelf deleted"})
     else:
+        logger.warning(
+            "Failed to delete bookshelf",
+            extra={
+                "user_id": current_user.id,
+                "bookshelf_id": bookshelf_id.id
+            }
+        )
         raise HTTPException(status_code=400, detail="Failed to delete bookshelf")
 
 
@@ -318,8 +432,24 @@ async def update_bookshelf_title(
     if response:
         if bookshelf_id in bookshelf_ws_manager.cache:
             bookshelf_ws_manager.cache[bookshelf_id].title = bookshelf.title
+        logger.info(
+            "Bookshelf title updated",
+            extra={
+                "user_id": current_user.id,
+                "bookshelf_id": bookshelf_id,
+                "new_title": bookshelf.title,
+                "action": "update_bookshelf_title"
+            }
+        )
         return JSONResponse(content={"message": "Bookshelf title updated"})
     else:
+        logger.warning(
+            "Failed to update bookshelf title",
+            extra={
+                "user_id": current_user.id,
+                "bookshelf_id": bookshelf_id
+            }
+        )
         raise HTTPException(status_code=400, detail="Failed to update bookshelf title")
 
 
@@ -347,8 +477,24 @@ async def update_bookshelf_description(
     if response:
         if bookshelf_id in bookshelf_ws_manager.cache:
             bookshelf_ws_manager.cache[bookshelf_id].description = bookshelf.description
+        logger.info(
+            "Bookshelf description updated",
+            extra={
+                "user_id": current_user.id,
+                "bookshelf_id": bookshelf_id,
+                "new_description": bookshelf.description,
+                "action": "update_bookshelf_description"
+            }
+        )
         return JSONResponse(content={"message": "Bookshelf description updated"})
     else:
+        logger.warning(
+            "Failed to update bookshelf description",
+            extra={
+                "user_id": current_user.id,
+                "bookshelf_id": bookshelf_id
+            }
+        )
         raise HTTPException(
             status_code=400, detail="Failed to update bookshelf description"
         )
@@ -376,8 +522,24 @@ async def update_bookshelf_visibility(
     if response:
         if bookshelf_id in bookshelf_ws_manager.cache:
             bookshelf_ws_manager.cache[bookshelf_id].visibility = bookshelf.visibility
+        logger.info(
+            "Bookshelf visibility updated",
+            extra={
+                "user_id": current_user.id,
+                "bookshelf_id": bookshelf_id,
+                "new_visibility": bookshelf.visibility,
+                "action": "update_bookshelf_visibility"
+            }
+        )
         return JSONResponse(content={"message": "Bookshelf visibility updated"})
     else:
+        logger.warning(
+            "Failed to update bookshelf visibility",
+            extra={
+                "user_id": current_user.id,
+                "bookshelf_id": bookshelf_id
+            }
+        )
         raise HTTPException(
             status_code=400, detail="Failed to update bookshelf visibility"
         )
@@ -411,6 +573,15 @@ async def add_contributor_to_bookshelf(
     if response:
         if bookshelf_id in bookshelf_ws_manager.cache:
             bookshelf_ws_manager.cache[bookshelf_id].add_contributor(bookshelf.user_id)
+        logger.info(
+            "Contributor added to bookshelf",
+            extra={
+                "user_id": current_user.id,
+                "bookshelf_id": bookshelf_id,
+                "contributor_id": bookshelf.user_id,
+                "action": "add_contributor_to_bookshelf"
+            }
+        )
         return JSONResponse(
             content={"message": "Contributor added to bookshelf", "role": "contributor"}
         )
@@ -450,8 +621,25 @@ async def remove_contributor_to_bookshelf(
             bookshelf_ws_manager.cache[bookshelf_id].remove_contributor(
                 bookshelf.user_id
             )
+        logger.info(
+            "Contributor removed from bookshelf",
+            extra={
+                "user_id": current_user.id,
+                "bookshelf_id": bookshelf_id,
+                "contributor_id": bookshelf.user_id,
+                "action": "remove_contributor_from_bookshelf"
+            }
+        )
         return JSONResponse(content={"message": "Contributor removed from bookshelf"})
     else:
+        logger.warning(
+            "Failed to remove contributor from bookshelf",
+            extra={
+                "user_id": current_user.id,
+                "bookshelf_id": bookshelf_id,
+                "contributor_id": bookshelf.user_id
+            }
+        )
         raise HTTPException(
             status_code=400, detail="Failed to remove contributor from bookshelf"
         )
@@ -474,6 +662,14 @@ async def add_member_to_bookshelf(
         raise HTTPException(status_code=400, detail=str(e))
 
     if bookshelf.user_id == current_user.id:
+        logger.warning(
+            "User tried to add themselves as a member to the bookshelf",
+            extra={
+                "user_id": current_user.id,
+                "member_id": bookshelf.user_id,
+                "bookshelf_id": bookshelf_id
+            }
+        )
         raise HTTPException(
             status_code=400,
             detail="User cannot add themselves as a member to the bookshelf",
@@ -485,8 +681,25 @@ async def add_member_to_bookshelf(
     if response:
         if bookshelf_id in bookshelf_ws_manager.cache:
             bookshelf_ws_manager.cache[bookshelf_id].add_member(bookshelf.user_id)
+        logger.info(
+            "Member added to bookshelf",
+            extra={
+                "user_id": current_user.id,
+                "bookshelf_id": bookshelf_id,
+                "member_id": bookshelf.user_id,
+                "action": "add_member_to_bookshelf"
+            }
+        )
         return JSONResponse(content={"message": "member added to bookshelf"})
     else:
+        logger.warning(
+            "Failed to add member to bookshelf",
+            extra={
+                "user_id": current_user.id,
+                "bookshelf_id": bookshelf_id,
+                "member_id": bookshelf.user_id
+            }
+        )
         raise HTTPException(status_code=400, detail="Failed to add member to bookshelf")
 
 
@@ -507,6 +720,14 @@ async def remove_member_to_bookshelf(
         raise HTTPException(status_code=400, detail=str(e))
 
     if bookshelf.user_id == current_user.id:
+        logger.warning(
+            "User tried to remove themselves as a member to the bookshelf",
+            extra={
+                "user_id": current_user.id,
+                "member_id": bookshelf.user_id,
+                "bookshelf_id": bookshelf_id
+            }
+        )
         raise HTTPException(
             status_code=400,
             detail="User cannot remove themselves as a member to the bookshelf",
@@ -519,8 +740,25 @@ async def remove_member_to_bookshelf(
     if response:
         if bookshelf_id in bookshelf_ws_manager.cache:
             bookshelf_ws_manager.cache[bookshelf_id].remove_member(bookshelf.user_id)
+        logger.info(
+            "Member removed from bookshelf",
+            extra={
+                "user_id": current_user.id,
+                "bookshelf_id": bookshelf_id,
+                "member_id": bookshelf.user_id,
+                "action": "remove_member_from_bookshelf"
+            }
+        )
         return JSONResponse(content={"message": "member removed from bookshelf"})
     else:
+        logger.warning(
+            "Failed to remove member from bookshelf",
+            extra={
+                "user_id": current_user.id,
+                "bookshelf_id": bookshelf_id,
+                "member_id": bookshelf.user_id
+            }
+        )
         raise HTTPException(
             status_code=400, detail="Failed to remove member from bookshelf"
         )
@@ -557,11 +795,27 @@ async def get_contributors(
     )
 
     if current_user.id not in contributor_ids:
+        logger.warning(
+            "User is not authorized to view contributors to the bookshelf",
+            extra={
+                "user_id": current_user.id,
+                "bookshelf_id": bookshelf_id
+            }
+        )
         raise HTTPException(
             status_code=403,
             detail="User is not authorized to view contributors to this bookshelf",
         )
     else:
+        logger.info(
+            "Bookshelf contributors retrieved",
+            extra={
+                "user_id": current_user.id,
+                "bookshelf_id": bookshelf_id,
+                "num_contributors": len(contributors),
+                "action": "get_bookshelf_contributors"
+            }
+        )
         return JSONResponse(content={"contributors": jsonable_encoder(contributors)})
 
 
@@ -588,11 +842,27 @@ async def get_members(
         ]
         and current_user.id not in member_ids
     ):
+        logger.warning(
+            "User is not authorized to view members of the bookshelf",
+            extra={
+                "user_id": current_user.id,
+                "bookshelf_id": bookshelf_id
+            }
+        )
         raise HTTPException(
             status_code=403,
             detail="User is not authorized to view members of this bookshelf",
         )
     else:
+        logger.info(
+            "Bookshelf members retrieved",
+            extra={
+                "user_id": current_user.id,
+                "bookshelf_id": bookshelf_id,
+                "num_members": len(members),
+                "action": "get_bookshelf_members"
+            }
+        )
         return JSONResponse(content={"members": jsonable_encoder(members)})
 
 
@@ -607,6 +877,15 @@ async def get_followers(
 ):
 
     followers = bookshelf_repo.get_bookshelf_followers(bookshelf_id, current_user.id)
+    logger.info(
+        "Bookshelf followers retrieved",
+        extra={
+            "user_id": current_user.id,
+            "bookshelf_id": bookshelf_id,
+            "num_followers": len(followers),
+            "action": "get_bookshelf_followers"
+        }
+    )
     return JSONResponse(content={"followers": jsonable_encoder(followers)})
 
 
@@ -620,7 +899,7 @@ async def update_book_note(
     ),
 ):
     data = await request.json()
-    print(data)
+    
     # Build the request data
     try:
         bookshelf = BookshelfBookNote(
@@ -633,6 +912,12 @@ async def update_book_note(
 
     # Check if the bookshelf is cached
     if bookshelf_id in bookshelf_ws_manager.cache:
+        logger.info(
+            "Bookshelf found in cache when updating book note",
+            extra={
+                "bookshelf_id": bookshelf_id
+            }
+        )
         # Check user permissions
         if current_user.id not in bookshelf_ws_manager.cache[bookshelf_id].contributors:
             raise HTTPException(
@@ -676,14 +961,40 @@ async def update_book_note(
                     bookshelf_id=bookshelf_id, data={"state": "unlocked", "data": books}
                 )
 
+                logger.info(
+                    "Book note updated for bookshelf",
+                    extra={
+                        "bookshelf_id": bookshelf_id,
+                        "book_id": bookshelf.book_id,
+                        "note_for_shelf": bookshelf.note_for_shelf,
+                        "action": "update_book_note_ws"
+                    }
+                )
                 # Return a success message
                 return JSONResponse(content={"message": "Book note updated"})
             else:
+                logger.warning(
+                    "Book updated in cache but failed to update in db",
+                    extra={
+                        "bookshelf_id": bookshelf_id,
+                        "book_id": bookshelf.book_id,
+                        "note_for_shelf": bookshelf.note_for_shelf,
+                        "action": "update_book_note_db"
+                    }
+                )
                 raise HTTPException(
                     status_code=400,
                     detail="Book updated in cache but failed to update in db",
                 )
         else:
+            logger.warning(
+                "Book not found in bookshelf",
+                extra={
+                    "bookshelf_id": bookshelf_id,
+                    "book_id": bookshelf.book_id,
+                    "action": "update_book_note"
+                }
+            )
             raise HTTPException(status_code=404, detail="Book not found in bookshelf")
     else:
         # Update the book note in the database
@@ -692,8 +1003,26 @@ async def update_book_note(
         )
         if repo_status:
             # Return a success message
+            logger.info(
+                "Book note updated for bookshelf",
+                extra={
+                    "bookshelf_id": bookshelf_id,
+                    "book_id": bookshelf.book_id,
+                    "note_for_shelf": bookshelf.note_for_shelf,
+                    "action": "update_book_note"
+                }
+            )
             return JSONResponse(content={"message": "Book note updated"})
         else:
+            logger.warning(
+                "Failed to update book note",
+                extra={
+                    "bookshelf_id": bookshelf_id,
+                    "book_id": bookshelf.book_id,
+                    "note_for_shelf": bookshelf.note_for_shelf,
+                    "action": "update_book_note"
+                }
+            )
             raise HTTPException(status_code=400, detail="Failed to update book note")
 
 
@@ -709,8 +1038,23 @@ async def follow_bookshelf(
 
     response = bookshelf_repo.create_follow_bookshelf_rel(bookshelf_id, current_user.id)
     if response:
+        logger.info(
+            "Bookshelf followed",
+            extra={
+                "user_id": current_user.id,
+                "bookshelf_id": bookshelf_id,
+                "action": "follow_bookshelf"
+            }
+        )
         return JSONResponse(content={"message": "Bookshelf followed"})
     else:
+        logger.warning(
+            "Failed to follow bookshelf",
+            extra={
+                "user_id": current_user.id,
+                "bookshelf_id": bookshelf_id
+            }
+        )
         raise HTTPException(
             status_code=400, detail="Bookshelf could not be found or is not public"
         )
@@ -728,8 +1072,23 @@ async def unfollow_bookshelf(
 
     response = bookshelf_repo.delete_follow_bookshelf_rel(bookshelf_id, current_user.id)
     if response:
+        logger.info(
+            "Bookshelf unfollowed",
+            extra={
+                "user_id": current_user.id,
+                "bookshelf_id": bookshelf_id,
+                "action": "unfollow_bookshelf"
+            }
+        )
         return JSONResponse(content={"message": "Bookshelf unfollowed"})
     else:
+        logger.warning(
+            "Failed to unfollow bookshelf",
+            extra={
+                "user_id": current_user.id,
+                "bookshelf_id": bookshelf_id
+            }
+        )
         raise HTTPException(
             status_code=400, detail="Bookshelf could not be found or is not public"
         )
@@ -754,6 +1113,12 @@ async def get_user_want_to_read(
     bookshelf = bookshelf_repo.get_user_want_to_read(user_id=user_id_obj.id)
 
     if not bookshelf:
+        logger.warning(
+            "Want to read bookshelf not found",
+            extra={
+                "user_id": user_id
+            }
+        )
         raise HTTPException(status_code=404, detail="Want to read bookshelf not found")
 
     if bookshelf.id not in bookshelf_ws_manager.cache:
@@ -789,8 +1154,23 @@ async def get_user_want_to_read(
             current_user_is_admin=current_user.id == bookshelf.created_by,
         )
 
+        logger.info(
+            "Want to read bookshelf retrieved",
+            extra={
+                "user_id": current_user.id,
+                "bookshelf_id": bookshelf.id,
+                "action": "get_user_want_to_read"
+            }
+        )
         return JSONResponse(content={"bookshelf": jsonable_encoder(bookshelf_response)})
     else:
+        logger.warning(
+            "User is not authorized to view want to read bookshelf of another user",
+            extra={
+                "user_id": current_user.id,
+                "bookshelf_id": bookshelf.id
+            }
+        )
         raise HTTPException(
             status_code=403,
             detail="User is not authorized to view want to read bookshelf of another user",
@@ -816,6 +1196,12 @@ async def get_user_currently_reading(
     bookshelf = bookshelf_repo.get_user_currently_reading(user_id=user_id_obj.id)
 
     if not bookshelf:
+        logger.warning(
+            "Currently reading bookshelf not found",
+            extra={
+                "user_id": user_id
+            }
+        )
         raise HTTPException(
             status_code=404, detail="Currently reading bookshelf not found"
         )
@@ -836,6 +1222,12 @@ async def get_user_currently_reading(
         for book in bookshelf.books:
             bookshelf_dll.add_book_to_shelf(book, current_user.id)
         bookshelf_ws_manager.cache[bookshelf.id] = bookshelf_dll
+        logger.info(
+            "Currently reading bookshelf added to cache",
+            extra={
+                "bookshelf_id": bookshelf.id
+            }
+        )
 
     if bookshelf.visibility == "public" or current_user.id == user_id:
         bookshelf_response = BookshelfResponse(
@@ -850,8 +1242,23 @@ async def get_user_currently_reading(
             created_by=bookshelf.created_by,
             created_by_username=bookshelf.created_by_username,
         )
+        logger.info(
+            "Currently reading bookshelf retrieved",
+            extra={
+                "user_id": current_user.id,
+                "bookshelf_id": bookshelf.id,
+                "action": "get_user_currently_reading"
+            }
+        )
         return JSONResponse(content={"bookshelf": jsonable_encoder(bookshelf_response)})
     else:
+        logger.warning(
+            "User is not authorized to view currently reading bookshelf of another user",
+            extra={
+                "user_id": current_user.id,
+                "bookshelf_id": bookshelf.id
+            }
+        )
         raise HTTPException(
             status_code=403,
             detail="User is not authorized to view want to read bookshelf of another user",
@@ -877,6 +1284,14 @@ async def updates_for_currently_reading_book_by_page_range(
     Returns currently reading updates based on a page passed in as a query param.
     """
     if current_user.id != user_id:
+        logger.warning(
+            "User is not authorized to view updates for currently reading book",
+            extra={
+                "user_id": current_user.id,
+                "bookshelf_owner_id": user_id,
+                "book_id": book_id
+            }
+        )
         raise HTTPException(status_code=403, detail="Unauthorized")
 
     try:
@@ -895,8 +1310,23 @@ async def updates_for_currently_reading_book_by_page_range(
     )
 
     if not updates:
+        logger.warning(
+            "Updates for currently reading book not found",
+            extra={
+                "user_id": user_id,
+                "book_id": book_id
+            }
+        )
         return HTTPException(status_code=404, detail="Update not found")
     else:
+        logger.info(
+            "Updates for currently reading book retrieved",
+            extra={
+                "user_id": user_id,
+                "book_id": book_id,
+                "action": "updates_for_currently_reading_page"
+            }
+        )
         return JSONResponse(content=jsonable_encoder(updates))
 
 
@@ -920,8 +1350,23 @@ async def get_book_updates_progress_bar(
     progress_bar = bookshelf_repo.get_updates_progress_bar(user_id, book_id)
 
     if not progress_bar:
+        logger.warning(
+            "Progress bar not found",
+            extra={
+                "user_id": user_id,
+                "book_id": book_id
+            }
+        )
         return HTTPException(status_code=404, detail="Progress bar not found")
     else:
+        logger.info(
+            "Progress bar retrieved",
+            extra={
+                "user_id": user_id,
+                "book_id": book_id,
+                "action": "get_book_updates_progress_bar"
+            }
+        )
         return JSONResponse(content=jsonable_encoder(progress_bar))
 
 
@@ -943,6 +1388,12 @@ async def get_user_finished_reading(
     bookshelf = bookshelf_repo.get_user_finished_reading(user_id=user_id_obj.id)
 
     if not bookshelf:
+        logger.warning(
+            "Finished reading bookshelf not found",
+            extra={
+                "user_id": user_id
+            }
+        )
         raise HTTPException(
             status_code=404, detail="Finished reading bookshelf not found"
         )
@@ -963,6 +1414,12 @@ async def get_user_finished_reading(
         for book in bookshelf.books:
             bookshelf_dll.add_book_to_shelf(book, current_user.id)
         bookshelf_ws_manager.cache[bookshelf.id] = bookshelf_dll
+        logger.info(
+            "Finished reading bookshelf added to cache",
+            extra={
+                "bookshelf_id": bookshelf.id
+            }
+        )
 
     if bookshelf.visibility == "public" or current_user.id == user_id:
         bookshelf_response = BookshelfResponse(
@@ -977,8 +1434,23 @@ async def get_user_finished_reading(
             created_by=bookshelf.created_by,
             created_by_username=bookshelf.created_by_username,
         )
+        logger.info(
+            "Finished reading bookshelf retrieved",
+            extra={
+                "user_id": current_user.id,
+                "bookshelf_id": bookshelf.id,
+                "action": "get_user_finished_reading"
+            }
+        )
         return JSONResponse(content={"bookshelf": jsonable_encoder(bookshelf_response)})
     else:
+        logger.warning(
+            "User is not authorized to view finished reading bookshelf of another user",
+            extra={
+                "user_id": current_user.id,
+                "bookshelf_id": bookshelf.id
+            }
+        )
         raise HTTPException(
             status_code=403,
             detail="User is not authorized to view want to read bookshelf of another user",
@@ -1001,6 +1473,13 @@ async def get_user_want_to_read_preview(
         raise HTTPException(status_code=400, detail=str(e))
 
     if current_user.id != user_id_obj.id:
+        logger.warning(
+            "User is not authorized to preview want to read bookshelf of another user",
+            extra={
+                "user_id": current_user.id,
+                "bookshelf_owner_id": user_id
+            }
+        )
         raise HTTPException(
             status_code=403,
             detail="User is not authorized to preview want to read bookshelf of another user",
@@ -1009,8 +1488,22 @@ async def get_user_want_to_read_preview(
     bookshelf = bookshelf_repo.get_user_want_to_read_preview(user_id=user_id_obj.id)
 
     if bookshelf:
+        logger.info(
+            "Want to read bookshelf preview retrieved",
+            extra={
+                "user_id": current_user.id,
+                "bookshelf_id": bookshelf.id,
+                "action": "get_user_want_to_read_preview"
+            }
+        )
         return JSONResponse(content={"bookshelf": jsonable_encoder(bookshelf)})
     else:
+        logger.warning(
+            "Want to read bookshelf not found",
+            extra={
+                "user_id": user_id
+            }
+        )
         raise HTTPException(status_code=404, detail="Want to read bookshelf not found")
 
 
@@ -1031,11 +1524,26 @@ async def get_users_minimal_shelves(
                 user_id=user_id_obj.id
             )
             if bookshelves:
+                logger.info(
+                    "Minimal shelves for user retrieved",
+                    extra={
+                        "user_id": current_user.id,
+                        "num_shelves": len(bookshelves),
+                        "action": "get_users_minimal_shelves"
+                    }
+                )
                 return JSONResponse(
                     content={"bookshelves": jsonable_encoder(bookshelves)}
                 )
 
     except ValueError as e:
+        logger.warning(
+            "User is not authorized to view minimal shelves for another user",
+            extra={
+                "user_id": current_user.id,
+                "bookshelf_id": user_id
+            }
+        )
         raise HTTPException(status_code=400, detail=str(e))
 
 
@@ -1057,6 +1565,13 @@ async def get_user_currently_reading_preview(
         raise HTTPException(status_code=400, detail=str(e))
 
     if current_user.id != user_id_obj.id:
+        logger.warning(
+            "User is not authorized to preview currently reading bookshelf of another user",
+            extra={
+                "user_id": current_user.id,
+                "bookshelf_owner_id": user_id
+            }
+        )
         raise HTTPException(
             status_code=403,
             detail="User is not authorized to preview currently reading bookshelf of another user",
@@ -1067,8 +1582,22 @@ async def get_user_currently_reading_preview(
     )
 
     if bookshelf:
+        logger.info(
+            "Currently reading bookshelf preview retrieved",
+            extra={
+                "user_id": current_user.id,
+                "bookshelf_id": bookshelf.id,
+                "action": "get_user_currently_reading_preview"
+            }
+        )
         return JSONResponse(content={"bookshelf": jsonable_encoder(bookshelf)})
     else:
+        logger.warning(
+            "Currently reading bookshelf not found",
+            extra={
+                "user_id": user_id
+            }
+        )
         raise HTTPException(
             status_code=404, detail="Currently reading bookshelf not found"
         )
@@ -1093,6 +1622,13 @@ async def get_user_currently_reading_front_page(
         raise HTTPException(status_code=400, detail=str(e))
 
     if current_user.id != user_id_obj.id:
+        logger.warning(
+            "User is not authorized to preview currently reading bookshelf of another user",
+            extra={
+                "user_id": current_user.id,
+                "bookshelf_owner_id": user_id
+            }
+        )
         raise HTTPException(
             status_code=403,
             detail="User is not authorized to preview currently reading bookshelf of another user",
@@ -1103,8 +1639,22 @@ async def get_user_currently_reading_front_page(
     )
 
     if bookshelf:
+        logger.info(
+            "Currently reading bookshelf front page retrieved",
+            extra={
+                "user_id": current_user.id,
+                "bookshelf_id": bookshelf.id,
+                "action": "get_user_currently_reading_front_page"
+            }
+        )
         return JSONResponse(content={"bookshelf": jsonable_encoder(bookshelf)})
     else:
+        logger.warning(
+            "Currently reading bookshelf not found",
+            extra={
+                "user_id": user_id
+            }
+        )
         raise HTTPException(
             status_code=404, detail="Currently reading bookshelf not found"
         )
@@ -1136,6 +1686,13 @@ async def update_book_current_page(
         raise HTTPException(status_code=400, detail=str(e))
 
     if current_user.id != currently_reading_page_update.user_id:
+        logger.warning(
+            "User is not authorized to update current page for book in currently reading bookshelf",
+            extra={
+                "user_id": current_user.id,
+                "bookshelf_owner_id": user_id
+            }
+        )
         raise HTTPException(
             status_code=403, detail="User is not authorized to perform this action"
         )
@@ -1147,9 +1704,25 @@ async def update_book_current_page(
     )
 
     if result:
-        # Return 200
+        logger.info(
+            "Currently reading book current page updated",
+            extra={
+                "user_id": current_user.id,
+                "book_id": currently_reading_page_update.book_id,
+                "new_current_page": currently_reading_page_update.new_current_page,
+                "action": "update_book_current_page"
+            }
+        )
         return JSONResponse(content={"message": "Current page updated"})
     else:
+        logger.warning(
+            "Error running query to update current page for book in currently reading bookshelf",
+            extra={
+                "user_id": current_user.id,
+                "book_id": currently_reading_page_update.book_id,
+                "new_current_page": currently_reading_page_update.new_current_page
+            }
+        )
         raise HTTPException(
             status_code=404,
             detail="Error running query to update current page for book in currently reading bookshelf",
@@ -1174,6 +1747,13 @@ async def get_user_finished_reading_preview(
         raise HTTPException(status_code=400, detail=str(e))
 
     if current_user.id != user_id_obj.id:
+        logger.warning(
+            "User is not authorized to preview finished reading bookshelf of another user",
+            extra={
+                "user_id": current_user.id,
+                "bookshelf_owner_id": user_id
+            }
+        )
         raise HTTPException(
             status_code=403,
             detail="User is not authorized to preview finished reading bookshelf of another user",
@@ -1259,6 +1839,14 @@ async def quick_add_book_to_bookshelf(
 
     # Delete the book from the previous shelf if it exists
     if book_data.move_from:
+        logger.info(
+            "Moving book from previous shelf",
+            extra={
+                "book_id": book_data.book.id,
+                "move_from": book_data.move_from,
+                "action": "quick_add_book_to_bookshelf"
+            }
+        )
         # Check if the book exists in the database
         if not book_exists:
             raise HTTPException(
@@ -1275,6 +1863,14 @@ async def quick_add_book_to_bookshelf(
 
             # Check if the query executed successfully
             if not want_to_read_bookshelf_id:
+                logger.warning(
+                    "Failed to remove book from previous shelf",
+                    extra={
+                        "book_id": book_data.book.id,
+                        "move_from": book_data.move_from,
+                        "action": "quick_add_book_to_bookshelf"
+                    }
+                )
                 raise HTTPException(
                     status_code=400, detail="Failed to remove book from previous shelf"
                 )
@@ -1294,6 +1890,14 @@ async def quick_add_book_to_bookshelf(
 
             # Check if the query executed successfully
             if not currently_reading_bookshelf_id:
+                logger.warning(
+                    "Failed to remove book from previous shelf",
+                    extra={
+                        "book_id": book_data.book.id,
+                        "move_from": book_data.move_from,
+                        "action": "quick_add_book_to_bookshelf"
+                    }
+                )
                 raise HTTPException(
                     status_code=400, detail="Failed to remove book from previous shelf"
                 )
@@ -1316,6 +1920,14 @@ async def quick_add_book_to_bookshelf(
 
             # Check if the query executed successfully
             if not finished_reading_bookshelf_id:
+                logger.warning(
+                    "Failed to remove book from previous shelf",
+                    extra={
+                        "book_id": book_data.book.id,
+                        "move_from": book_data.move_from,
+                        "action": "quick_add_book_to_bookshelf"
+                    }
+                )
                 raise HTTPException(
                     status_code=400, detail="Failed to remove book from previous shelf"
                 )
@@ -1341,6 +1953,14 @@ async def quick_add_book_to_bookshelf(
                     )
                 )
                 if not response:
+                    logger.warning(
+                        "Failed to remove book from previous shelf",
+                        extra={
+                            "book_id": book_data.book.id,
+                            "move_from": book_data.move_from,
+                            "action": "quick_add_book_to_bookshelf"
+                        }
+                    )   
                     raise HTTPException(
                         status_code=400,
                         detail="Failed to remove book from previous shelf",
@@ -1358,6 +1978,14 @@ async def quick_add_book_to_bookshelf(
                         book_data.book.id, bookshelf_id.id, current_user.id
                     )
                 if not response:
+                    logger.warning(
+                        "Failed to remove book from previous shelf",
+                        extra={
+                            "book_id": book_data.book.id,
+                            "move_from": book_data.move_from,
+                            "action": "quick_add_book_to_bookshelf"
+                        }
+                    )
                     raise HTTPException(
                         status_code=400,
                         detail="Failed to remove book from previous shelf",
@@ -1385,6 +2013,14 @@ async def quick_add_book_to_bookshelf(
                     book_repo,
                 )
         if response:
+            logger.info(
+                "Book added to reading flow bookshelf",
+                extra={
+                    "book_id": book_data.book.id,
+                    "bookshelf_id": bookshelf_id,
+                    "action": "quick_add_book_to_bookshelf"
+                }
+            )
             if bookshelf_id == "want_to_read":
                 background_tasks.add_task(
                     post_repo.create_want_to_read_post,
@@ -1412,6 +2048,14 @@ async def quick_add_book_to_bookshelf(
                 }
             )
         else:
+            logger.warning(
+                "Failed to add book to reading flow bookshelf",
+                extra={
+                    "book_id": book_data.book.id,
+                    "bookshelf_id": bookshelf_id,
+                    "action": "quick_add_book_to_bookshelf"
+                }
+            )
             raise HTTPException(
                 status_code=400,
                 detail="Failed to add book to bookshelf, it may already exist in the desitnation shelf",
@@ -1439,6 +2083,14 @@ async def quick_add_book_to_bookshelf(
                     book_repo,
                 )
 
+            logger.info(
+                "Book added to bookshelf",
+                extra={
+                    "book_id": book_data.book.id,
+                    "bookshelf_id": bookshelf_id,
+                    "action": "quick_add_book_to_bookshelf"
+                }
+            )
             return JSONResponse(content={"message": "Book added successfully"})
         else:
             # If the bookshelf is not in the cache, we need to run the query and validate the user permissions
@@ -1468,6 +2120,14 @@ async def quick_add_book_to_bookshelf(
                     )
 
             if response:
+                logger.info(
+                    "Book added to bookshelf",
+                    extra={
+                        "book_id": book_data.book.id,
+                        "bookshelf_id": bookshelf_id,
+                        "action": "quick_add_book_to_bookshelf"
+                    }
+                )
                 if not book_exists:
                     background_tasks.add_task(
                         google_books_background_tasks.update_book_google_id,
@@ -1497,6 +2157,14 @@ async def quick_add_book_to_bookshelf(
 
                 return JSONResponse(content={"message": "Book added successfully"})
             else:
+                logger.warning(
+                    "Failed to add book to bookshelf",
+                    extra={
+                        "book_id": book_data.book.id,
+                        "bookshelf_id": bookshelf_id,
+                        "action": "quick_add_book_to_bookshelf"
+                    }
+                )
                 raise HTTPException(
                     status_code=400, detail="Failed to add book to bookshelf"
                 )
@@ -1530,9 +2198,23 @@ async def get_bookshelf_websocket_token(
             _bookshelf = bookshelf_repo.get_bookshelf(bookshelf_id)
 
         if not _bookshelf:
+            logger.warning(
+                "Bookshelf not found",
+                extra={
+                    "bookshelf_id": bookshelf_id
+                }
+            )
             raise HTTPException(status_code=404, detail="Bookshelf not found")
         else:
             if current_user.id not in _bookshelf.contributors:
+                logger.warning(
+                    "User not authorized to edit this shelf",
+                    extra={
+                        "user_id": current_user.id,
+                        "bookshelf_id": bookshelf_id,
+                        "action": "get_bookshelf_websocket_token"
+                    }
+                )
                 raise HTTPException(
                     status_code=403,
                     detail="User is not authorized to edit this bookshelf",
@@ -1555,9 +2237,22 @@ async def get_bookshelf_websocket_token(
                     for book in _bookshelf.books:
                         _bookshelf_dll.add_book_to_shelf(book, current_user.id)
                     bookshelf_ws_manager.cache[bookshelf_id] = _bookshelf_dll
+                    logger.info(
+                        "Bookshelf added to cache",
+                        extra={
+                            "bookshelf_id": bookshelf_id
+                        }
+                    )
 
     if current_user.id not in bookshelf_ws_manager.cache[bookshelf_id].contributors:
-        print("user not in contributors")
+        logger.warning(
+            "User is not authorized to connect to this bookshelf",
+            extra={
+                "user_id": current_user.id,
+                "bookshelf_id": bookshelf_id,
+                "action": "get_bookshelf_websocket_token"
+            }
+        )
         raise HTTPException(
             status_code=403,
             detail="User is not authorized to connect to this bookshelf",
@@ -1569,6 +2264,14 @@ async def get_bookshelf_websocket_token(
     )
 
     # Return token test
+    logger.info(
+        "Token generated for editing bookshelves",
+        extra={
+            "user_id": current_user.id,
+            "bookshelf_id": bookshelf_id,
+            "action": "get_bookshelf_websocket_token"
+        }
+    )
     return JSONResponse(content={"token": token})
 
 
@@ -1592,22 +2295,45 @@ async def bookshelf_connection(
     try:
         current_user = await get_bookshelf_websocket_user(token=token)
     except:
+        logger.warning(
+            "Failed to authenticate user for bookshelf websocket",
+            extra={
+                "bookshelf_id": bookshelf_id
+            }
+        )
         await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
         return
 
     if current_user.bookshelf_id != bookshelf_id:
-        print("bookshelf_id mismatch")
+        logger.warning(
+            "Bookshelf id does not match id from token",
+            extra={
+                "bookshelf_id": bookshelf_id,
+                "token_bookshelf_id": current_user.bookshelf_id
+            }
+        )
         await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
         return
 
     if bookshelf_id not in bookshelf_ws_manager.cache:
-        print("bookshelf missing")
+        logger.warning(
+            "Bookshelf not  in cache",
+            extra={
+                "bookshelf_id": bookshelf_id
+            }
+        )
         # THIS NEEDS TO REDIRECT TO THE /api/bookshelves/{bookshelf_id} endpoint
         await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
         return
 
     if current_user.id not in bookshelf_ws_manager.cache[bookshelf_id].contributors:
-        print("user not in contributors")
+        logger.warning(
+            "User is not authorized to connect to this bookshelf",
+            extra={
+                "user_id": current_user.id,
+                "bookshelf_id": bookshelf_id
+            }
+        )
         await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
         return
 
@@ -1630,6 +2356,12 @@ async def bookshelf_connection(
             try:
                 current_user = await get_bookshelf_websocket_user(token=task.token)
             except:
+                logger.warning(
+                    "Failed to authenticate user for bookshelf websocket",
+                    extra={
+                        "bookshelf_id": bookshelf_id
+                    }
+                )
                 await bookshelf_ws_manager.disconnect(bookshelf_id, websocket)
                 return
             # We will distinguish between the types of data that can be sent.
@@ -1659,6 +2391,14 @@ async def bookshelf_connection(
                         data=data,
                         bookshelf_repo=bookshelf_repo,
                     )
+                    logger.info(
+                        "Reordering books in bookshelf",
+                        extra={
+                            "user_id": current_user.id,
+                            "bookshelf_id": bookshelf_id,
+                            "action": "bookshelf_connection_reorder"
+                        }
+                    )
 
             elif data["type"] == "delete":
                 try:
@@ -1682,6 +2422,14 @@ async def bookshelf_connection(
                         bookshelf_id=bookshelf_id,
                         data=data,
                         bookshelf_repo=bookshelf_repo,
+                    )
+                    logger.info(
+                        "Removing book from bookshelf",
+                        extra={
+                            "user_id": current_user.id,
+                            "bookshelf_id": bookshelf_id,
+                            "action": "bookshelf_connection_remove"
+                        }
                     )
 
             elif data["type"] == "add":
@@ -1729,6 +2477,15 @@ async def bookshelf_connection(
                             book_repo=book_repo,
                             book_exists=book_exists,
                         )
+                    )
+                    
+                    logger.info(
+                        "Adding book to bookshelf",
+                        extra={
+                            "user_id": current_user.id,
+                            "bookshelf_id": bookshelf_id,
+                            "action": "bookshelf_connection_add"
+                        }
                     )
                     if google_id_to_add:
                         print("Triggering background task to update book google id")

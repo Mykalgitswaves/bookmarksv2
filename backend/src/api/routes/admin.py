@@ -10,6 +10,7 @@ from src.database.graph.crud.posts import PostCRUDRepositoryGraph
 from src.database.graph.crud.bookclubs import BookClubCRUDRepositoryGraph
 from src.api.utils.database import get_repository, get_sql_repository
 from src.config.config import settings
+from src.utils.logging.logger import logger
 
 router = fastapi.APIRouter(prefix="/admin", tags=["admin"])
 
@@ -21,16 +22,18 @@ async def delete_user_by_username(
         get_repository(repo_type=UserCRUDRepositoryGraph)
     ),
 ):
+    logger.warning("Admin is deleting a user by username")
     data = await request.json()
 
     username = data.get("username")
     admin_credentials = data.get("admin_credentials")
 
     if admin_credentials != settings.ADMIN_CREDENTIALS:
-        raise fastapi.HTTPException(status_code=403, detail="Forbidden")
+        raise HTTPException(status_code=403, detail="Forbidden")
     else:
         response = user_repo.delete_user_by_username(username)
         if response:
+            logger.warning("Admin has deleted a user by username")
             return HTTPException(status_code=200, detail="User deleted")
         else:
             return HTTPException(status_code=404, detail="User not found")
@@ -46,16 +49,18 @@ async def delete_book_and_versions_by_google_id(
         get_repository(repo_type=BookCRUDRepositoryGraph)
     ),
 ):
+    logger.warning("Admin is deleting a book and its versions by google id")
     data = await request.json()
 
     google_id = data.get("google_id")
     admin_credentials = data.get("admin_credentials")
 
     if admin_credentials != settings.ADMIN_CREDENTIALS:
-        raise fastapi.HTTPException(status_code=403, detail="Forbidden")
+        raise HTTPException(status_code=403, detail="Forbidden")
     else:
         response = book_repo.delete_book_and_versions_by_google_id(google_id)
         if response:
+            logger.warning("Admin has deleted a book and its versions by google id")
             return HTTPException(status_code=200, detail="Book deleted")
         else:
             return HTTPException(status_code=404, detail="Book not found")
@@ -68,16 +73,18 @@ async def delete_post_and_comments(
         get_repository(repo_type=PostCRUDRepositoryGraph)
     ),
 ):
+    logger.warning("Admin is deleting a post and its comments")
     data = await request.json()
 
     post_id = data.get("post_id")
     admin_credentials = data.get("admin_credentials")
 
     if admin_credentials != settings.ADMIN_CREDENTIALS:
-        raise fastapi.HTTPException(status_code=403, detail="Forbidden")
+        raise HTTPException(status_code=403, detail="Forbidden")
     else:
         response = post_repo.delete_post(post_id)
         if response:
+            logger.warning("Admin has deleted a post and its comments")
             return HTTPException(status_code=200, detail="Post deleted")
         else:
             return HTTPException(status_code=404, detail="Post not found")
@@ -93,7 +100,7 @@ async def create_user_sql(
     admin_credentials = data.get("admin_credentials")
 
     if admin_credentials != settings.ADMIN_CREDENTIALS:
-        raise fastapi.HTTPException(status_code=403, detail="Forbidden")
+        raise HTTPException(status_code=403, detail="Forbidden")
 
     user = UserTest(
         username=data.get("username"),
@@ -151,17 +158,18 @@ async def delete_user_book_club_data(
             admin_credentials: the admin credentials for the user
             user_id: the user
     """
-
+    logger.warning("Admin is deleting a user's book club data")
     data = await request.json()
 
     user_id = data.get("user_id")
     admin_credentials = data.get("admin_credentials")
 
     if admin_credentials != settings.ADMIN_CREDENTIALS:
-        raise fastapi.HTTPException(status_code=403, detail="Forbidden")
+        raise HTTPException(status_code=403, detail="Forbidden")
     else:
         response = book_club_repo.delete_book_club_data(user_id)
         if response:
+            logger.warning("Admin has deleted a user's book club data")
             return HTTPException(status_code=200, detail="Post deleted")
         else:
             return HTTPException(status_code=404, detail="Post not found")

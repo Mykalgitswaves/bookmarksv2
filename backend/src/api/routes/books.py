@@ -12,6 +12,7 @@ from src.securities.authorizations.verify import get_current_active_user
 from src.book_apis.google_books.pull_books import google_books_pull
 from src.book_apis.google_books.search import google_books_search
 from src.api.background_tasks.google_books import google_books_background_tasks
+from src.utils.logging.logger import logger
 
 router = fastapi.APIRouter(prefix="/books", tags=["books"])
 
@@ -32,6 +33,7 @@ def get_books_by_title(
     result = book_repo.get_books_by_title(
         book_search_input.text, book_search_input.skip, book_search_input.limit
     )
+    logger.info("User searched for books by title", extra={"search_input": book_search_input, "action": "book_search"})
     return JSONResponse(content={"data": jsonable_encoder(result)})
 
 
@@ -77,6 +79,13 @@ def get_book_versions_from_db(
     else:
         versions = book_repo.get_book_versions(book_id=book_id)
 
+    logger.info(
+        "User requested book versions", 
+        extra={
+            "book_id": book_id, 
+            "number_of_versions": len(versions),
+            "action": "book_versions"}
+    )
     return JSONResponse(content={"data": jsonable_encoder(versions)})
 
 
@@ -97,6 +106,14 @@ async def get_book_versions_from_metadata_search(book_id: str, request: Request)
         book_title=book_search.book_title, book_authors=book_search.book_authors
     )
 
+    logger.info(
+        "User requested book versions from metadata search", 
+        extra={
+            "book_id": book_id, 
+            "number_of_versions": len(versions),
+            "action": "book_versions_metadata_search"}
+    )
+    
     return JSONResponse(content={"data": jsonable_encoder(versions)})
 
 
@@ -111,4 +128,11 @@ def get_similar_books(
     Endpoint for similar books
     """
     books = book_repo.get_similar_books(book_id=book_id)
+    logger.info(
+        "User requested similar books", 
+        extra={
+            "book_id": book_id, 
+            "number_of_similar_books": len(books),
+            "action": "book_similar"}
+    )
     return JSONResponse(content={"data": jsonable_encoder(books)})

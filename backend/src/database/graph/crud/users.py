@@ -963,7 +963,7 @@ class UserCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
         except:
             return HTTPException(
                     status_code=401,
-                    detail="Username is already taken"
+                    detail="Error finding user"
                 )
     
     def update_bio(self, new_bio, user_id):
