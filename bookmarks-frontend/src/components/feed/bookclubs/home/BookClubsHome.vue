@@ -35,7 +35,7 @@
                     </div>
 
                     <!-- loading -->
-                    <p v-else>
+                    <p v-else class="text-lg font-medium text-stone-500">
                         You haven't created any clubs yet.    
                     </p>
 

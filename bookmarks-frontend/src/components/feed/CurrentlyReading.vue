@@ -4,57 +4,67 @@
 
     </h1>
         <!-- If loaded -->
-        <div class="currently-reading" v-if="currentlyReadingBooks?.length">
-            <div class="currently-reading-book" 
-                v-for="book in currentlyReadingBooks" 
-                :key="book.id"   
-                role="button" 
-                @click="showCurrentlyReadingBookOverlay(book)"
-            >
-                <img class="book-img" :src="book.small_img_url"/>
+    <AsyncComponent :promises="[currentlyReadingBookClub]">
+        <template #resolved>
+            <div class="currently-reading" v-if="currentlyReadingBooks?.length">
+                <div class="currently-reading-book" 
+                    v-for="book in currentlyReadingBooks" 
+                    :key="book.id"   
+                    role="button" 
+                    @click="showCurrentlyReadingBookOverlay(book)"
+                >
+                    <img class="book-img" :src="book.small_img_url"/>
 
-                <h4 class="book-title text-stone-500">{{ truncateText(book.title, 64) }}</h4>
-                
-                <div class="book-metadata">
-                    <p class="progress">70 / 140</p>
+                    <h4 class="book-title text-stone-500">{{ truncateText(book.title, 64) }}</h4>
+                    
+                    <div class="book-metadata">
+                        <p class="progress">70 / 140</p>
+                    </div>
                 </div>
             </div>
-        </div>
+        </template>
 
-        <!-- IF loading -->
-        <div class="currently-reading" v-else>
-            <div class="currently-reading-book loading">
-                <div class="book-img loading gradient"></div>
-            </div>
+        <template #loading>
+            <!-- IF loading -->
+            <div class="currently-reading">
+                <div class="currently-reading-book loading">
+                    <div class="book-img loading gradient"></div>
+                </div>
 
-            <div class="currently-reading-book loading">
-                <div class="book-img loading gradient"></div>
-            </div>
+                <div class="currently-reading-book loading">
+                    <div class="book-img loading gradient"></div>
+                </div>
 
-            <div class="currently-reading-book loading">
-                <div class="book-img loading gradient"></div>
-            </div>
+                <div class="currently-reading-book loading">
+                    <div class="book-img loading gradient"></div>
+                </div>
 
-            <div class="currently-reading-book loading">
-                <div class="book-img loading gradient"></div>
+                <div class="currently-reading-book loading">
+                    <div class="book-img loading gradient"></div>
+                </div>
             </div>
-        </div>
+        </template>
+    </AsyncComponent>
 </template>
 <script setup>
 import { db } from '../../services/db';
 import { urls } from '../../services/urls';
-import { ref, onMounted, computed } from 'vue';
+import { ref, computed } from 'vue';
 import { useRoute } from 'vue-router';
 import { truncateText } from '../../services/helpers';
+import AsyncComponent from './partials/AsyncComponent.vue';
 
 const route = useRoute();
 const { user } = route.params;
 const data = ref(null);
 
-onMounted(async() => {
-    db.get(urls.rtc.getCurrentlyReadingPreview(user)).then((res) => {
+
+const currentlyReadingBookClub = db.get(urls.rtc.getCurrentlyReadingPreview(user), null, false, 
+    (res) => {
         data.value = res.bookshelf;
-    });
+    }, 
+    (err) => {
+        console.error(err);
 });
 
 const currentlyReadingBooks = computed(() => {

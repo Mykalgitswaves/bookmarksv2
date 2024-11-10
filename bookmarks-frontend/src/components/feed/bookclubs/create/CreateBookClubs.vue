@@ -126,9 +126,11 @@ async function createAndNavigateToBookClub() {
         submitting.value = false;
 
         let id = res.book_club_id;
+
+        console.assert(id, user)
         
         if (user && id) {
-            router.push(navRoutes.toBookclub(user, res.book_club_id))
+            router.push(navRoutes.toBookClubFeed(user, res.book_club_id))
         }
     }, (error) => {
         errorMessage.value = error.detail; 
