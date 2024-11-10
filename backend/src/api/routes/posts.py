@@ -26,7 +26,7 @@ from src.database.graph.crud.posts import PostCRUDRepositoryGraph
 from src.database.graph.crud.books import BookCRUDRepositoryGraph
 from src.database.graph.crud.comments import CommentCRUDRepositoryGraph
 from src.api.background_tasks.google_books import google_books_background_tasks
-
+from src.utils.logging.logger import logger
 
 router = fastapi.APIRouter(prefix="/posts", tags=["post"])
 
@@ -46,6 +46,13 @@ async def get_all_posts(
     # skip: int | None = Query(default=None), limit: int | None = Query(default=None)
     if current_user:
         feed = post_repo.get_feed(current_user, skip, limit)
+        logger.info(
+            "Retrieved feed for User",
+            extra={
+                "user_id": current_user.id,
+                "action": "get_feed"
+            }
+        )
         return JSONResponse(content={"data": jsonable_encoder(feed)})
 
 
@@ -125,6 +132,14 @@ async def create_review(
             book_repo,
         )
 
+    logger.info(
+        "Created Review",
+        extra={
+            "user_id": current_user.id,
+            "book_id": review.book.id,
+            "action": "create_review"
+        }
+    )
     return JSONResponse(content={"data": jsonable_encoder(review)})
 
 
@@ -203,6 +218,14 @@ async def create_update(
             book_repo,
         )
 
+    logger.info(
+        "Created Update",
+        extra={
+            "user_id": current_user.id,
+            "book_id": update.book.id,
+            "action": "create_update"
+        }
+    )
     return JSONResponse(content={"data": jsonable_encoder(update)})
 
 
@@ -239,6 +262,14 @@ async def create_comparison(
         response = response["_value"]
 
     if response["book_ids"][0] == response["book_ids"][1]:
+        logger.warning(
+            "Attempted to create comparison between the same book",
+            extra={
+                "user_id": current_user.id,
+                "book_1_id": response["book_ids"][0],
+                "book_2_id": response["book_ids"][1]
+            }
+        )
         raise HTTPException(
             400,
             "Comparisons require two unique books, please select another book for your post.",
@@ -298,6 +329,15 @@ async def create_comparison(
                 book_repo,
             )
 
+    logger.info(
+        "Created Comparison",
+        extra={
+            "user_id": current_user.id,
+            "book_1_id": response["book_ids"][0],
+            "book_2_id": response["book_ids"][1],
+            "action": "create_comparison"
+        }
+    )
     return JSONResponse(content={"data": jsonable_encoder(comparison)})
 
 
@@ -369,6 +409,15 @@ async def create_recommendation_friend(
             book_repo,
         )
 
+    logger.info(
+        "Created Recommendation",
+        extra={
+            "user_id": current_user.id,
+            "to_user_username": response["to_user_username"],
+            "book_id": recommendation.book.id,
+            "action": "create_recommendation"
+        }
+    )
     return JSONResponse(content={"data": jsonable_encoder(recommendation)})
 
 
@@ -402,6 +451,14 @@ async def create_milestone(
 
     milestone = post_repo.create_milestone(milestone)
 
+    logger.info(
+        "Created Milestone",
+        extra={
+            "user_id": current_user.id,
+            "num_books": response["num_books"],
+            "action": "create_milestone"
+        }
+    )
     return JSONResponse(content={"data": jsonable_encoder(milestone)})
 
 
@@ -423,8 +480,24 @@ async def update_post_to_deleted(
         response = post_repo.update_post_to_deleted(post_id, current_user.username)
 
         if response:
+            logger.info(
+                "Deleted Post",
+                extra={
+                    "user_id": current_user.id,
+                    "post_id": post_id,
+                    "action": "delete_post"
+                }
+            )
             return HTTPException(200, "Post deleted")
         else:
+            logger.warning(
+                "Failed to delete a post",
+                extra={
+                    "user_id": current_user.id,
+                    "post_id": post_id,
+                    "action": "delete_post"
+                }
+            )
             raise HTTPException(401, "Unauthorized")
 
 
@@ -490,6 +563,13 @@ async def get_current_user_posts(
     ),
 ):
     if current_user:
+        logger.info(
+            "Retrieved posts for current user",
+            extra={
+                "user_id": current_user.id,
+                "action": "get_posts_for_current_user"
+            }
+        )
         return JSONResponse(
             content={
                 "data": jsonable_encoder(
@@ -508,6 +588,13 @@ async def get_user_posts(
     ),
 ):
     if current_user:
+        logger.info(
+            "Retrieved posts for specific user",
+            extra={
+                "user_id": current_user.id,
+                "action": "get_posts_for_specific_user"
+            }
+        )
         return JSONResponse(
             content={
                 "data": jsonable_encoder(post_repo.get_all_reviews_by_user_id(user_id))
@@ -532,6 +619,14 @@ async def get_post(
             post = data["post"]
             user_id = data["user_id"]
             post_type = type(post).__name__
+            logger.info(
+                "Retrieved post by id",
+                extra={
+                    "user_id": current_user.id,
+                    "post_id": post_id,
+                    "action": "get_post_by_id"
+                }
+            )
             return JSONResponse(
                 content={
                     "data": jsonable_encoder(
@@ -540,6 +635,14 @@ async def get_post(
                 }
             )
         else:
+            logger.warning(
+                "Failed to retrieve post by id",
+                extra={
+                    "user_id": current_user.id,
+                    "post_id": post_id,
+                    "action": "get_post_by_id"
+                }
+            )
             raise HTTPException("404", "Post not found")
 
 
@@ -574,11 +677,30 @@ async def create_comment(
     comment = comment_repo.create_comment(comment)
 
     if not comment:
+        logger.warning(
+            "Failed to create comment",
+            extra={
+                "user_id": current_user.id,
+                "post_id": response["post_id"],
+                "comment_text": response["text"],
+                "action": "create_comment"
+            }
+        )
         raise HTTPException(
             410, " Gone - This chapter closes, yet its essence endures beyond the veil"
         )
 
     comment.posted_by_current_user = True
+
+    logger.info(
+        "Created Comment",
+        extra={
+            "user_id": current_user.id,
+            "post_id": response["post_id"],
+            "comment_text": response["text"],
+            "action": "create_comment"
+        }
+    )
 
     return JSONResponse(content={"data": jsonable_encoder(comment)})
 
@@ -603,8 +725,24 @@ async def set_comment_as_deleted(
         )
 
         if response:
-            return HTTPException(200, "Post deleted")
+            logger.info(
+                "Deleted Comment",
+                extra={
+                    "user_id": current_user.id,
+                    "comment_id": comment_id,
+                    "action": "delete_comment"
+                }
+            )
+            return HTTPException(200, "Comment deleted")
         else:
+            logger.warning(
+                "Failed to delete comment",
+                extra={
+                    "user_id": current_user.id,
+                    "comment_id": comment_id,
+                    "action": "delete_comment"
+                }
+            )
             raise HTTPException(401, "Unauthorized")
 
 
@@ -688,7 +826,15 @@ async def get_pinned_comments_for_post(
         comments = comment_repo.get_all_pinned_comments_for_post(
             post_id=post_id, username=current_user.username, skip=skip, limit=limit
         )
-
+        logger.info(
+            "Retrieved pinned comments for post",
+            extra={
+                "user_id": current_user.id,
+                "post_id": post_id,
+                "num_pinned_comments": len(comments),
+                "action": "get_pinned_comments_for_post"
+            }
+        )
         return JSONResponse(content={"data": jsonable_encoder(comments)})
 
 
@@ -722,8 +868,26 @@ async def pin_comment(
         response = comment_repo.create_comment_pin(pinned_comment)
 
         if response:
+            logger.info(
+                "Pinned Comment",
+                extra={
+                    "user_id": current_user.id,
+                    "comment_id": comment_id,
+                    "post_id": post_id,
+                    "action": "pin_comment"
+                }
+            )
             return HTTPException(200, "Comment pinned")
         else:
+            logger.warning(
+                "Failed to pin comment",
+                extra={
+                    "user_id": current_user.id,
+                    "comment_id": comment_id,
+                    "post_id": post_id,
+                    "action": "pin_comment"
+                }
+            )
             raise HTTPException(401, "Unauthorized")
 
 
@@ -758,8 +922,26 @@ async def remove_pin_comment(
         response = comment_repo.delete_comment_pin(pinned_comment)
 
         if response:
+            logger.info(
+                "Removed Comment Pin",
+                extra={
+                    "user_id": current_user.id,
+                    "comment_id": comment_id,
+                    "post_id": post_id,
+                    "action": "remove_comment_pin"
+                }
+            )
             return HTTPException(200, "Comment pin removed")
         else:
+            logger.warning(
+                "Failed to remove comment pin",
+                extra={
+                    "user_id": current_user.id,
+                    "comment_id": comment_id,
+                    "post_id": post_id,
+                    "action": "remove_comment_pin"
+                }
+            )
             raise HTTPException(401, "Unauthorized")
 
 
@@ -814,5 +996,14 @@ async def get_all_replies_for_comment(
     if comment_id:
         replies = comment_repo.get_all_replies_for_comment(
             comment_id=comment_id, username=current_user.username
+        )
+        logger.info(
+            "Retrieved replies for comment",
+            extra={
+                "user_id": current_user.id,
+                "comment_id": comment_id,
+                "num_replies": len(replies),
+                "action": "get_replies_for_comment"
+            }
         )
         return JSONResponse(content={"data": jsonable_encoder(replies)})
