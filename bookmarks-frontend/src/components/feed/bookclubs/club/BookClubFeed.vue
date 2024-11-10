@@ -23,7 +23,7 @@
                 @currently-reading-settings=""
             />
 
-            <CurrentPacesForClubBook :total-chapters="currentlyReadingBook.chapters"/>
+            <CurrentPacesForClubBook :total-chapters="currentlyReadingBook?.chapters"/>
 
             <!-- Sticky toolbar containing buttons for creating and filtering posts -->
             <BookClubFeedActions 
