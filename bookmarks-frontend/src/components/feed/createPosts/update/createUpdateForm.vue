@@ -169,17 +169,22 @@ const progressTotal = computed(() => Math.floor((step.value * 100) / 3));
 const remainderTotal = computed(() => 100 - progressTotal.value);
 
 
-const update = reactive({
-    headline: '',
-    book_id: props.book.id,
-    book_title: props.book.title,
-    small_img_url: props.book.small_img_url,
-    page: page.value,
-    chapter: chapter.value,
-    is_spoiler: false,
-    response: '',
-    quote: '',
-})
+const update = reactive({})
+
+if (props.book?.id) {
+    Object.assign(update, {
+            headline: '',
+            book_id: props.book.id,
+            book_title: props.book.title,
+            small_img_url: props.book.small_img_url,
+            page: page.value,
+            chapter: chapter.value,
+            is_spoiler: false,
+            response: '',
+            quote: '',
+        }
+    );
+}
 
 function headlineHandler(e) {
     console.log(e, 'headline')

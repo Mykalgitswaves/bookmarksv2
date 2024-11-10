@@ -36,6 +36,7 @@
                 </template>
                 <template #overlay-main>
                     <CreateUpdateForm 
+                        style="width: 768px; margin-left: auto; margin-right: auto;"
                         :book="currentlyReadingBook" 
                         @post-update="(update) => postUpdateForBookClub(update)"
                     />
