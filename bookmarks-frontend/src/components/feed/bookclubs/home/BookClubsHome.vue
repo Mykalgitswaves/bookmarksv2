@@ -4,21 +4,37 @@
         <div class="bookclubs">
             <h2 class="text-2xl fancy text-stone-600">Clubs you've joined</h2>
 
-            <div v-if="loaded">
-                
-                <!-- TODO turn into component like bookshelves -->
-                <p class="text-lg font-medium text-stone-500 mt-5 mb-5">
-                    You haven't joined any clubs yet.
-                </p>
+            <AsyncComponent 
+                :promise-factory="getClubsJoinedByCurrentUserPromiseFactory" 
+                :subscribed-to="CLUBS_JOINED_BY_CURRENT_USER_SUBSCRIPTION_ID"
+            >
+                <template #resolved>
+                    <div v-if="bookClubsJoinedByCurrentUser?.length" 
+                        class="mb-5 mt-5 bookclubs-list"
+                    >
+                        <BookClubPreview 
+                            v-for="bookclub in bookClubsJoinedByCurrentUser"
+                            :bookclub="bookclub"
+                            :user="user"
+                        />
+                    </div>
 
-                <div class="toolbar" v-if="bookClubsJoinedByCurrentUser?.length">
-                    <!-- todo: add modal for viewing all clubs. -->
-                    <button 
-                        type="button" 
-                        class="btn btn-ghost small"
-                    >View all bookclubs</button>
-                </div>
-            </div>
+                    <p v-else class="text-lg font-medium text-stone-500 mt-5 mb-5">
+                        You haven't joined any clubs yet.
+                    </p>
+
+                    <div class="toolbar" v-if="bookClubsJoinedByCurrentUser?.length > 1">
+                        <!-- todo: add modal for viewing all clubs. -->
+                        <button type="button" 
+                            class="btn btn-ghost small"
+                        >View all bookclubs</button>
+                    </div>
+                </template>
+
+                <template #loading>
+                    <LoadingCard />
+                </template>
+            </AsyncComponent>
         </div>
 
         <div class="bookclubs">
@@ -26,7 +42,9 @@
 
             <AsyncComponent :promises="[clubsPromise]">
                 <template #resolved>
-                    <div v-if="bookClubsOwnedByCurrentUser?.length" class="mb-5 mt-5 bookclubs-list">
+                    <div v-if="bookClubsOwnedByCurrentUser?.length" 
+                        class="mb-5 mt-5 bookclubs-list"
+                    >
                         <BookClubPreview 
                             v-for="bookclub in bookClubsOwnedByCurrentUser"
                             :bookclub="bookclub"
@@ -59,7 +77,7 @@
 import { db } from '../../../../services/db';
 import { urls } from '../../../../services/urls';
 import { navRoutes } from '../../../../services/urls';
-import { ref } from 'vue';
+import { CLUBS_JOINED_BY_CURRENT_USER_SUBSCRIPTION_ID } from '../bookClubService';
 import { useRoute, useRouter } from 'vue-router';
 import BookClubPreview from './BookClubPreview.vue';
 import AsyncComponent from '../../partials/AsyncComponent.vue';
@@ -73,12 +91,11 @@ import LoadingCard from '../../../shared/LoadingCard.vue';
 
 const { toCreateClubPage } = navRoutes;
 const route = useRoute();
-const { user } = route.params
-const router = useRouter();
+const { user } = route.params;
 
-const loaded = ref(false);
-let bookClubsOwnedByCurrentUser;
-let errors;
+const router = useRouter();
+let bookClubsOwnedByCurrentUser = [];
+let bookClubsJoinedByCurrentUser = [];
 
 /**
  * ----------------------------------------------------------------------------
@@ -96,11 +113,18 @@ let errors;
 const clubsPromise = db.get(urls.bookclubs.getClubsOwnedByUser(user), null, false, 
     (res) => {
         bookClubsOwnedByCurrentUser = res.bookclubs;
-        loaded.value = true;
     },
     (err) => {
-        errors = err;
-        loaded.value = true;
+        console.error(err, 'clubs you own promise');
+    }
+);
+
+const getClubsJoinedByCurrentUserPromiseFactory = () => db.get(urls.bookclubs.getClubsJoinedByCurrentUser(user), null, false, 
+    (res) => {
+        bookClubsJoinedByCurrentUser = res.bookclubs;
+    }, 
+    (err) => {
+        console.error(err, 'clubs you\'ve joined promise');
     }
 );
 

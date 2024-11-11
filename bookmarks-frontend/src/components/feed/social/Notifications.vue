@@ -92,7 +92,7 @@
                     v-for="request in friendRequests"
                     :key="request.id" 
                 >
-                    <div v-if="friendRequestStatus[request.id] === Requests.STATUSES.anonymous_user_friend_requested" 
+                    <div v-if="friendRequestStatus[request.from_user.id] === Requests.STATUSES.anonymous_user_friend_requested" 
                         class="notification"
                         pending
                     >
@@ -111,7 +111,8 @@
                                 type="button" 
                                 class="btn btn-tiny btn-submit text-sm"
                                 @click="acceptFriendRequest(request.from_user.id, () => { 
-                                        friendRequestStatus[request.id] = Requests.STATUSES.friends;
+                                        friendRequestStatus[request.from_user.id] = Requests.STATUSES.friends;
+                                        console.log('yall are friends now')
                                     }
                                 )"
                             >
@@ -122,8 +123,8 @@
                                 type="button" 
                                 class="btn btn-tiny btn-red text-sm"
                                 @click="declineFriendRequest(request.from_user.id, () => {
-
-                                    friendRequestStatus[request.id] = Requests.STATUSES.declined
+                                    friendRequestStatus[request.from_user.id] = Requests.STATUSES.declined;
+                                    console.log('Why yall hate each other bro')
                                 })"
                             >   
                                 Decline
@@ -132,7 +133,7 @@
                     </div>
 
                     <!-- If you accepted a friend request. IE. friends -->
-                    <div v-else-if="friendRequestStatus[request.id] === Requests.STATUSES.friends"
+                    <div v-else-if="friendRequestStatus[request.from_user.id] === Requests.STATUSES.friends"
                         class="notification" 
                         accepted
                     >
@@ -144,7 +145,7 @@
                     </div>
 
                     <!-- If you declined a friend request. IE. not friends -->
-                    <div v-else-if="friendRequestStatus[request.id] === Requests.STATUSES.declined"
+                    <div v-else-if="friendRequestStatus[request.from_user.id] === Requests.STATUSES.declined"
                         class="notification" 
                         declined
                     >
@@ -186,15 +187,16 @@ import AsyncComponent from '../partials/AsyncComponent.vue';
  * @constants
  */
 
+const { timeAgoFromNow } = dates;
 const route = useRoute();
+const { user } = route.params;
 const notificationSidebar = ref(null);
 const notificationsButton = ref(null);
 const isOpen = ref(false);
+
 const dismissedNotifications = ref({});
 // Needed to know whether to say you accepted or declined a request.
 const friendRequestStatus = ref({});
-const { timeAgoFromNow } = dates;
-const { user } = route.params;
 
 // Look in AsyncComponent.vue for why im doing.
 const inviteRequestSubscriptionId = 'notifications-get-invites';
@@ -267,7 +269,7 @@ const friendRequestsPromiseFactory = () => db.get(urls.user.getUsersFriendReques
         friendRequests = res.data;
 
         res.data.forEach((request) => {
-            friendRequestStatus.value[request.id] = Requests.STATUSES.anonymous_user_friend_requested;
+            friendRequestStatus.value[request.from_user.id] = Requests.STATUSES.anonymous_user_friend_requested;
         });
     }, 
     (err) => {

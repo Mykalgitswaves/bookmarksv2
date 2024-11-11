@@ -10,6 +10,9 @@
 
 import { db } from "../../../services/db";
 import { urls } from "../../../services/urls";
+import { PubSub } from "../../../services/pubsub";
+
+export const CLUBS_JOINED_BY_CURRENT_USER_SUBSCRIPTION_ID = 'book-club-home-get-clubs-joined-by-current-user';
 
 export function formatUpdateForBookClub(updateBlob, user_id) {
     let payload = Object.create(null);
@@ -27,8 +30,10 @@ export function acceptInviteToBookClub(inviteId, callbackFunction) {
     db.put(urls.bookclubs.acceptInviteToBookClub(inviteId), null, false, 
         (res) => {
             if(callbackFunction) {
-                callbackFunction(res)
-            }
+                callbackFunction(res);
+            };
+            // You probably want to reload any subscribers to this one now. 
+            PubSub.publish(CLUBS_JOINED_BY_CURRENT_USER_SUBSCRIPTION_ID)
         }, 
         (err) => {
             console.error(err);

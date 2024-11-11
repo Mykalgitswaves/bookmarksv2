@@ -122,6 +122,7 @@ export const urls = {
             (bookclub_id) => (baseUrl + `${BOOK_CLUBS_PREFIX}${bookclub_id}/currently_reading/stop`),
         // Read / GETS
         getClubsOwnedByUser: (user_id) =>  (baseUrl + `${BOOK_CLUBS_PREFIX}owned/${user_id}/`),
+        getClubsJoinedByCurrentUser: (user_id) =>  (baseUrl + `${BOOK_CLUBS_PREFIX}member/${user_id}/`),
         getClubFeed: (bookclub_id) => (baseUrl + `${BOOK_CLUBS_PREFIX}${bookclub_id}/feed`),
         getClubPace: (bookclub_id) => (baseUrl + `${BOOK_CLUBS_PREFIX}${bookclub_id}/club_members_pace`),
         getPaceForUserInClub: (bookclub_id) => (baseUrl + `${BOOK_CLUBS_PREFIX}${bookclub_id}/user_pace`),
