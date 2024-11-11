@@ -253,3 +253,13 @@
         background-position: 468px 0
     }
 }
+
+@starting-style {
+  .transition {
+    opacity: 0;
+  }
+}
+
+.transition {
+  transform: all 250ms ease;
+}

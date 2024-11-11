@@ -40,7 +40,7 @@
                     {{ key }}
                 </h3>
 
-                <div class="award-type" >
+                <div class="award-type">
                     <div v-for="award in category" :key="award.id" class="award">
                         <p class="award-title">{{ award.name }}</p>
                         <p class="award-description">{{  award.description }}</p>

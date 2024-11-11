@@ -11,9 +11,7 @@
     </button>
     
     <dialog ref="notificationSidebar" class="sidebar-menu">
-        <div class="pt-5 pb-5">
-            <CloseButton class="ml-auto" @close="notificationSidebar.close()"/>
-        </div>
+        <CloseButton class="absolute r-20" @close="notificationSidebar.close()"/>
 
         <!-- BookClubInvites -->
         <AsyncComponent :promise-factory="invitesPromiseFactory" :subscribed-to="inviteRequestSubscriptionId">
@@ -314,7 +312,6 @@ onBeforeUnmount(() => {
     margin-left: auto;
     margin-top: 60px;
     padding: 24px;
-    padding-top: 0;
     background-color: var(--surface-primary);
 }
 
@@ -342,5 +339,9 @@ onBeforeUnmount(() => {
 
 .notification[accepted] {
     background-color: var(--green-50);
+}
+
+.r-20 {
+    right: 20px;
 }
 </style>

@@ -1,41 +1,42 @@
 <template>
-    <div class="paces-container">
+    <div  v-if="totalChapters" class="paces-container">
         <AsyncComponent :promises="[clubPacePromise]">
             <template #resolved>
-                <div v-if="memberPaces.length">
-                    <div class="flex text-sm">
-                        <h4 class="text-stone-700">
-                            <span class="text-indigo-500">{{memberPaces[0].username }}</span>
-                            <br> is leading the club pace
-                        </h4>
+                    <div v-if="memberPaces.length">
+                        <div class="flex text-sm">
+                            <h4 class="text-stone-700">
+                                <span class="text-indigo-500">{{memberPaces[0].username }}</span>
+                                <br> is leading the club pace
+                            </h4>
 
-                        <button 
-                            class="ml-auto text-sm text-indigo-500 underline fancy nowrap" 
-                            @click="isViewingAllPaces = !isViewingAllPaces"
-                        >
-                            {{ isViewingAllPaces ? 'hide paces' : 'view all paces' }}
-                        </button>
-                    </div>
+                            <button 
+                                class="ml-auto text-sm text-indigo-500 underline fancy nowrap" 
+                                @click="isViewingAllPaces = !isViewingAllPaces"
+                            >
+                                {{ isViewingAllPaces ? 'hide paces' : 'view all paces' }}
+                            </button>
+                        </div>
 
-                    <div v-if="isViewingAllPaces" class="member-paces mt-2">
-                        <div 
-                            v-for="(member, index) in memberPaces" 
-                            :key="member.id"
-                            class="member-pace" 
-                        >
-                            <component :is="svgPaceMap[index]?.svg()" class="pace-icon"/> 
+                        <div v-if="isViewingAllPaces" class="member-paces mt-2">
+                            <div 
+                                v-for="(member, index) in memberPaces" 
+                                :key="member.id"
+                                class="member-pace" 
+                            >
+                                <component :is="svgPaceMap[index]?.svg()" class="pace-icon"/> 
 
-                            <div>
-                                <h4 class="text-stone-700">{{ member.username }}</h4>
-                                
-                                <p class="text-sm text-stone-500">{{ member.pace ? `is reading chapter ${member.pace}` : 'hasn\'t started yet' }}</p>
+                                <div>
+                                    <h4 class="text-stone-700">{{ member.username }}</h4>
+                                    
+                                    <p class="text-sm text-stone-500">{{ member.pace ? `is reading chapter ${member.pace}` : 'hasn\'t started yet' }}</p>
+                                </div>
+
+                                <!-- <canvas class="progress-bar" /> -->
                             </div>
-
-                            <!-- <canvas class="progress-bar" /> -->
                         </div>
                     </div>
-                </div>
-                <div v-else class="fancy text-stone-500 text-xl">No ones started reading! (or made an update)</div>
+
+                    <div v-else-if="!memberPaces.length" class="fancy text-stone-500 text-base">No ones started reading! (or made an update)</div>
             </template>
             <template #loading>
                 <h4 class="text-center fancy text-stone-600">loading paces</h4>
