@@ -67,3 +67,18 @@ class JSONFormatter(logging.Formatter):
                 message[key] = val
 
         return message
+    
+class DynamicExtraFieldsFormatter(logging.Formatter):
+    def format(self, record):
+        # Format the original log message
+        log_msg = super().format(record)
+        
+        # Dynamically include all fields from the extra dictionary
+        extra_fields = {k: v for k, v in vars(record).items() if k not in LOG_RECORD_BUILTIN_ATTRS}
+        
+        # Append extra fields to the log message
+        if extra_fields:
+            extra_str = " | " + " | ".join(f"{key}={value}" for key, value in extra_fields.items())
+            log_msg += extra_str
+        
+        return log_msg
