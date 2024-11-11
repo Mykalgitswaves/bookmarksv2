@@ -263,3 +263,7 @@
 .transition {
   transform: all 250ms ease;
 }
+
+.icon-sm svg {
+  transform: scale(.8);
+}

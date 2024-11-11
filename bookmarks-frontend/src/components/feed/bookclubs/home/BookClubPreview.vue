@@ -53,7 +53,6 @@ const props = defineProps({
 .bookclub-preview {
     width: 100%;
     border-radius: var(--radius-sm);
-    border: 1px solid var(--stone-300);
     padding-left: 14px;
     padding-bottom: 8px;
     padding-top: 8px;
@@ -61,6 +60,7 @@ const props = defineProps({
     justify-content: start;
     align-items: center;
     column-gap: 20px;
+    background-color: var(--stone-50);
     /* max-width: 1fr; */
 
     & .title {

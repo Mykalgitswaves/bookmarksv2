@@ -144,8 +144,10 @@ const getClubsJoinedByCurrentUserPromiseFactory = () => db.get(urls.bookclubs.ge
     max-width: 768px;
     margin-top: 14px;
     margin-bottom: 14px;
-    margin-left: 40px;
-    margin-right: 40px;
+    @media screen and (min-width: 768px) {   
+        margin-left: 40px;
+        margin-right: 40px;
+    }
     min-height: 100px;
 
     & .toolbar {
