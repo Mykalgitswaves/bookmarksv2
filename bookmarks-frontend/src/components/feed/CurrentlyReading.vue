@@ -6,9 +6,9 @@
         <!-- If loaded -->
     <AsyncComponent :promises="[currentlyReadingBookClub]">
         <template #resolved>
-            <div class="currently-reading" v-if="currentlyReadingBooks?.length">
+            <div class="currently-reading" v-if="books.length">
                 <div class="currently-reading-book" 
-                    v-for="book in currentlyReadingBooks" 
+                    v-for="book in books" 
                     :key="book.id"   
                     role="button" 
                     @click="showCurrentlyReadingBookOverlay(book)"
@@ -18,7 +18,7 @@
                     <h4 class="book-title text-stone-500">{{ truncateText(book.title, 64) }}</h4>
                     
                     <div class="book-metadata">
-                        <p class="progress">70 / 140</p>
+                        <p class="progress">...</p>
                     </div>
                 </div>
             </div>
@@ -56,36 +56,18 @@ import AsyncComponent from './partials/AsyncComponent.vue';
 
 const route = useRoute();
 const { user } = route.params;
-const data = ref(null);
+let books = [];
+let bookshelf; 
 
 
 const currentlyReadingBookClub = db.get(urls.rtc.getCurrentlyReadingForFeed(user), null, false, 
     (res) => {
-        data.value = res.bookshelf;
+        bookshelf = res.bookshelf;
+        books = res.bookshelf.books;
     }, 
     (err) => {
         console.error(err);
 });
-
-const currentlyReadingBooks = computed(() => {
-    if (!data.value?.length) return [];
-
-    let books = []; 
-    for(let i = 0; i < data.value.books_count; i++) {
-        let book = {
-            small_img_url: data.value.book_img_urls[i],
-            book_id: data.value.book_ids[i],
-            title: data.value.book_titles[i],
-        }
-        books.push(book);
-    }
-    return books;
-})
-
-// function showCurrentlyReadingBookOverlay(book){
-//     currentlyReadingControls.value
-// }
-
 </script>
 <style scoped lang="scss">
     .currently-reading {

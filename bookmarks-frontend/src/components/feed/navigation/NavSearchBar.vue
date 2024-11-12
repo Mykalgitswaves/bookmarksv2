@@ -3,8 +3,8 @@
         <label for="searchbar-input">
             <input 
                 id="searchbar-input"
-                class="searchbar-input" 
                 :class="{'has-value': !!search_params.length}"
+                class="searchbar-input" 
                 type="text" 
                 v-model="search_params"
                 @keyup="debouncedSearchRequest($event)"
@@ -61,22 +61,18 @@ const debouncedSearchRequest = debounce(searchRequest, 500, false)
     background-color: var(--surface-primary);
 
     & .searchbar-input {
-        ---input-width: 200px;
         border: none;
         width: 20px;
         transition: all 250ms ease;
         background-color: var(--surface-primary) !important;
-        
-        @media screen and (max-width: 768px) {
-            --input-width: 100px;
-        }
+    
 
         &.has-value {
-            width: var(--input-width);
+            width: 100px;
         }
 
         &:focus-visible {
-            width: var(--input-width);
+            width: 200px;
             border: none;
             outline: none;
         }
