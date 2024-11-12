@@ -686,6 +686,7 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
             OPTIONAL MATCH (book)-[:IS_EQUIVALENT_TO]-(actual_book:Book)
             return b.id as book_club_id,
                    b.name as book_club_name,
+                   b.description as book_club_description,
                    reading.started_date as started_date,
                    reading.selected_finish_date as expected_finish_date,
                    user_progress.current_chapter as current_chapter,
@@ -713,6 +714,7 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
         minimal_bookclub = BookClubSchemas.MinimalBookClub(
             book_club_id=record["book_club_id"],
             book_club_name=record["book_club_name"],
+            book_club_description=record["book_club_description"],
             pace=pace_offset,
             currently_reading_book=current_book
         )   
