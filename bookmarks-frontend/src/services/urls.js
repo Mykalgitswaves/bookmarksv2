@@ -20,6 +20,7 @@ export const urls = {
     booksByN: baseUrl + 'books/n/',
     login: baseUrl + 'api/auth/login',
     author: baseUrl + 'api/author/',
+    search: (searchParam) =>  `${baseUrl}api/search/${searchParam}`,
     user: {
         // Specific for the current users info
         getUser: (user_id) => (baseUrl + `api/user/${user_id}/get_user`),
@@ -85,6 +86,7 @@ export const urls = {
         getWantToRead: (user_id) => (baseUrl +  `${BOOK_SHELVES_PREFIX}want_to_read/${user_id}`),
         getCurrentlyReading: (user_id) => (baseUrl + `${BOOK_SHELVES_PREFIX}currently_reading/${user_id}`),
         getCurrentlyReadingPreview: (user_id) => (baseUrl + `${BOOK_SHELVES_PREFIX}currently_reading/${user_id}/preview`),
+        getCurrentlyReadingForFeed: (user_id) => (baseUrl + `${BOOK_SHELVES_PREFIX}currently_reading/${user_id}/front_page`),
         getUpdatesForCurrentlyReadingPageRange: (user_id, book_id) => (baseUrl + `${BOOK_SHELVES_PREFIX}currently_reading/${user_id}/currently_reading_book/${book_id}/updates_for_current_page`),
         getProgressBarForBookUpdates: (user_id, book_id) => (baseUrl + `${BOOK_SHELVES_PREFIX}progress_bar/${user_id}/book/${book_id}/updates`),
         setCurrentPageOnCurrentlyReading: (user_id) => (baseUrl + `${BOOK_SHELVES_PREFIX}currently_reading/${user_id}/update_current_page`),

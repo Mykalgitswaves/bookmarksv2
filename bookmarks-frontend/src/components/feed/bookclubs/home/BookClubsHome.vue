@@ -141,7 +141,6 @@ const getClubsJoinedByCurrentUserPromiseFactory = () => db.get(urls.bookclubs.ge
     padding: 14px; 
     border-radius: var(--radius-md);
     border: 1px solid var(--stone-300);
-    max-width: 768px;
     margin-top: 14px;
     margin-bottom: 14px;
     @media screen and (min-width: 768px) {   
@@ -167,7 +166,7 @@ const getClubsJoinedByCurrentUserPromiseFactory = () => db.get(urls.bookclubs.ge
 
     .bookclubs-list {
         display: grid;
-        grid-template-columns: 1fr;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
         column-gap: 20px;
         row-gap: 20px;
         transition: 250ms all ease; 

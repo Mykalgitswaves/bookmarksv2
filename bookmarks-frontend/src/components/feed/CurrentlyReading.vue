@@ -59,7 +59,7 @@ const { user } = route.params;
 const data = ref(null);
 
 
-const currentlyReadingBookClub = db.get(urls.rtc.getCurrentlyReadingPreview(user), null, false, 
+const currentlyReadingBookClub = db.get(urls.rtc.getCurrentlyReadingForFeed(user), null, false, 
     (res) => {
         data.value = res.bookshelf;
     }, 

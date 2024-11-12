@@ -1,3 +1,4 @@
+<!-- TODO: DElete this shit -->
 <template>
     <div class="searchbar-wrapper">
         <div class="searchbar">
@@ -127,7 +128,7 @@ const debouncedSearchRequest = debounce(searchRequest, 500, false)
 
 .searchbar input {
     max-width: 300px;
-    min-width: 280px;
+    min-width: 100px;
     width: 100%;
 }
 
