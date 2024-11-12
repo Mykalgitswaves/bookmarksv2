@@ -15,12 +15,6 @@
             <IconSearch />
         </div>
     </div>
-
-    <Overlay>
-        <template #overlay-main>
-
-        </template>
-    </Overlay>
 </template>
 <script setup>
 import { ref } from 'vue';
@@ -29,19 +23,19 @@ import { db } from '../../../services/db';
 import { helpersCtrl } from '../../../services/helpers';
 import { PubSub } from '../../../services/pubsub';
 import IconSearch from '@/components/svg/icon-search.vue';
-import Overlay from '../partials/overlay/Overlay.vue';
 
 const { debounce } = helpersCtrl;
 const search_params = ref('');
-const responseBlob = ref({});
+const responseBlob = ref(null);
 
 function searchRequest() {
     if (search_params.value.length > 1) {
         return db.get(urls.search(search_params.value), null, false, (res) => {
             responseBlob.value = res.data;
+            PubSub.publish('nav-search-get-data', res.data)
         }, (err) => {
             console.error(err)
-        })
+        });
     }
 }
 
@@ -89,5 +83,11 @@ const debouncedSearchRequest = debounce(searchRequest, 500, false)
     &:has(input:focus-visible) .searchbar-icon {
         color: var(--indigo-500);
     }
+}
+
+.search-results {
+    width: 80vw;
+    max-width: 1000px;
+    min-height: 60vh;
 }
 </style>
