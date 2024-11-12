@@ -1049,7 +1049,7 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
     ):
         query = """
             MATCH (u:User {id: $user_id})-[:OWNS_BOOK_CLUB]->(bc:BookClub {id: $book_club_id})
-            MATCH (invited_user:User)-[]->(i:BookClubInvite)-[:INVITE_FOR]->(bc)
+            MATCH (invited_user:User)-[:RECEIVED_INVITE]->(i:BookClubInvite)-[:INVITE_FOR]->(bc)
             RETURN invited_user.id as invited_user_id,
                 invited_user.username as invited_user_username,
                 invited_user.email as invited_user_email,
