@@ -93,26 +93,34 @@
     </form>
 
     <!-- Sent invitations go below -->
-    <Transition name="content" tag="div">
-        <div v-if="loaded">
-            <h3 class="text-2xl text-stone-600 fancy">Invited readers</h3>
+    <AsyncComponent :promises="[getInvitesForClubPromise]">
+        <template #resolved>
+            <div class="transition">
+                <h3 class="text-2xl text-stone-600 fancy">Invited readers</h3>
 
-            <div class="invitations sent">
-                <div v-for="invite in sentInvitations" :key="invite.id" class="sent-invite">
-                    <div>
-                        <p class="fancy text-stone-600">
-                            {{ invite.username || invite.email }}
-                        </p>
-                        <p class="text-sm text-stone-400">
-                            Invited on: {{ invite.invited_on }}
-                        </p>
+                <div class="invitations sent" v-if="sentInvitations.length">
+                    <div v-for="invite in sentInvitations" :key="invite.id" class="sent-invite">
+                        <div>
+                            <p class="fancy text-stone-600">
+                                {{ invite.username || invite.email }}
+                            </p>
+                            <p class="text-sm text-stone-400">
+                                Invited on: {{ invite.invited_on }}
+                            </p>
+                        </div>
                     </div>
                 </div>
-            </div>
-        </div>
 
-        <div v-else class="gradient fancy text-center text-xl loading-box">loading invitations</div>
-    </Transition>
+                <h4 v-else class="text-stone-500 fancy">
+                    No invitations sent
+                </h4>
+            </div>
+        </template>
+
+        <template #loading>
+            <div class="gradient fancy text-center text-xl loading-box">loading invitations</div>
+        </template>
+    </AsyncComponent>
 
     <Overlay ref="previewOverlay" v-if="!!previewEmailHTML">
         <template #overlay-main>
@@ -132,6 +140,7 @@ import SearchUserOverlay from './SearchUserOverlay.vue'
 import IconSend from '@/components/svg/icon-send.vue';
 import IconTrash from '@/components/svg/icon-trash.vue';
 import Overlay from '@/components/feed/partials/overlay/Overlay.vue';
+import AsyncComponent from '../../../partials/AsyncComponent.vue';
 
 const props = defineProps({
     memberData: {
@@ -155,7 +164,6 @@ const invitation = new BaseInvitation();
 const invitations = ref([
     invitation
 ]);
-const loaded = ref(false);
 const sentInvitations = ref([]);
 
 /**
@@ -271,19 +279,17 @@ async function sendInvites(inviteMatrix, invitations) {
     })
 }
 
-async function loadInvites(){
-    db.get(urls.bookclubs.getInvitesForClub(route.params.bookclub), 
-        null,
-        false,
-        (res) => {
-            populateInvitesForClub(res.invites);
-            loaded.value = true;
-        }, 
-        (error) => {
-            console.log(error);
-        }
-    );
-}
+
+const getInvitesForClubPromise = db.get(urls.bookclubs.getInvitesForClub(route.params.bookclub), 
+    null,
+    false,
+    (res) => {
+        populateInvitesForClub(res.invites);
+    }, 
+    (error) => {
+        console.log(error);
+    }
+);
 
 async function previewEmailInvite() {
     db.get(urls.bookclubs.previewEmailInvitesForClub(route.params.bookclub, 'invite'), 
@@ -297,19 +303,6 @@ async function previewEmailInvite() {
 /**
  * @end
  */
-
-
-/**
- * @load_data_in_setup_hook
- */
-
- loadInvites();
-
- /**
-  * @end_load_data
-  */
-
-
 </script>
 <style scoped>
 .invitations {

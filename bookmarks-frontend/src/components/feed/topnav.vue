@@ -4,6 +4,8 @@
       <h4 class="text-stone-600 fancy pl-2">HardcoverLit</h4>
 
       <div class="flex gap-2 items-bottom">
+          <NavSearchBar/>
+
           <Notifications />
           
           <MobileMenu />
@@ -14,6 +16,8 @@
 <script setup>
   import Notifications from './social/Notifications.vue';
   import MobileMenu from './partials/mobile-menu.vue';
+  import NavSearchBar from './navigation/NavSearchBar.vue';
+
 </script>
 <style scoped>
 .nav-menu {

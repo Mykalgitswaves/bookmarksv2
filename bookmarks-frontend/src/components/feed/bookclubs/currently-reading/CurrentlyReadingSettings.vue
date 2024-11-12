@@ -11,9 +11,9 @@
         </div>
     </div>
 
-    <section>
-        <TransitionGroup name="content" tag="div">
-            <div v-if=loaded>
+    <AsyncComponent :promises="[currentlyReadingPromise]">
+        <template #resolved>
+            <section class="transition">
                 <div v-if="!!data.currentlyReadingBook">
                     <SelectedBook :book="data.currentlyReadingBook" :set-book="true"/>
 
@@ -29,14 +29,14 @@
                         }"
                     />
                 </div>
-            </div>
-
-            <div v-else class="mt-10 gradient fancy text-center text-xl loading-box">
+            </section>
+        </template>
+        <template #loading>
+            <div class="mt-10 gradient fancy text-center text-xl loading-box">
                 Loading settings
             </div>
-        </TransitionGroup>
-    </section>
-
+        </template>
+    </AsyncComponent>
     <div class="mobile-menu-spacer sm:hidden"></div>
 </template>
 <script setup>
@@ -47,30 +47,32 @@ import { useRoute, useRouter } from 'vue-router';
 import SetCurrentlyReadingForm from './SetCurrentlyReadingForm.vue';
 import SelectedBook from './SelectedBook.vue';
 import ReadersPace from './ReadersPace.vue';
+import AsyncComponent from '../../partials/AsyncComponent.vue';
 
 const route = useRoute();
-const loaded = ref(false);
 const data = ref({
     currentlyReadingBook: null,
     isShowingSetCurrentBookForm: true,
 });
 
-function loadData(){
-    const currentlyReadingPromise = db.get(urls.bookclubs.getCurrentlyReadingForClub(route.params.bookclub), 
-        null, true, 
-        (res) => {
-            data.value.currentlyReadingBook = res.currently_reading_book;   
-        }, 
-        (err) => {
-            console.log(err);
-        }
-    );
-     
-    // const pacePromise = db.get()
-    Promise.all([currentlyReadingPromise]).then(() => {
-        loaded.value = true;
-    });
-}
-
-loadData();
+const currentlyReadingPromise = db.get(urls.bookclubs.getCurrentlyReadingForClub(route.params.bookclub), 
+    null, true, 
+    (res) => {
+        data.value.currentlyReadingBook = res.currently_reading_book;   
+    }, 
+    (err) => {
+        console.log(err);
+    }
+);
 </script>
+<style scoped>
+    @starting-style {
+        .transition {
+            opacity: 0;
+        }
+    }
+
+    .transition {
+        transition: all 250ms ease; 
+    }
+</style>

@@ -100,39 +100,42 @@
             role="navigation" 
         >   
             <div class="nav-button-group hover:bg-gray-200">
-                <a :href="navRoutes.toBookClubsPage(user)"
-                    class="footer-nav-button"
+                <RouterLink :to="navRoutes.toBookClubsPage(user)"
+                    class="footer-nav-button text-xs icon-sm"
                 >
-                    <IconBack />
+                    <IconBack/>
 
-                    <span class="text-sm sm:hidden">
+                    <span class="sm:hidden">
                         Back
                     </span>
-                </a>
+                </RouterLink>
             </div>
 
             <div class="nav-button-group hover:bg-gray-200">
-                <a :href="navRoutes.toBookClubFeed(route.params.user, route.params.bookclub)"
-                    class="footer-nav-button text-sm"
+                <RouterLink :to="navRoutes.toBookClubFeed(route.params.user, route.params.bookclub)"
+                    class="footer-nav-button text-xs"
                 >
-                    Club Feed
-                </a>
+                    <IconClubFeed />
+                    feed
+                </RouterLink>
             </div>
             
             <div class="nav-button-group hover:bg-gray-200">
-                <a :href="navRoutes.bookClubSettingsManageMembersIndex(route.params.user, route.params.bookclub)"
-                    class="footer-nav-button text-sm"
+                <RouterLink :to="navRoutes.bookClubSettingsManageMembersIndex(route.params.user, route.params.bookclub)"
+                    class="footer-nav-button text-xs"
                 >
-                    Club settings
-                </a>
+                    <IconClubSettings />
+                    settings
+                </RouterLink>
             </div>
 
             <div class="nav-button-group hover:bg-gray-200">
-                <a :href="navRoutes.bookClubSettingsCurrentlyReading(route.params.user, route.params.bookclub)"
-                    class="footer-nav-button text-sm"
+                <RouterLink :to="navRoutes.bookClubSettingsCurrentlyReading(route.params.user, route.params.bookclub)"
+                    class="footer-nav-button text-xs"
                 >
+                    <IconBook />
                     Currently reading
-                </a>
+                </RouterLink>
             </div>
         </nav>
     </footer>
@@ -159,7 +162,10 @@ import IconSearch from '@/components/svg/icon-search.vue';
 import IconProfile from '../svg/icon-profile-nav.vue';
 import IconBookshelves from '../svg/icon-bookshelves.vue'
 import IconBack from '@/components/svg/icon-back.vue';
-import { useRoute }  from 'vue-router'
+import IconClubFeed from  '@/components/svg/icon-feed-club.vue';
+import IconClubSettings  from '@/components/svg/icon-club-settings.vue';
+
+import { useRoute, useRouter }  from 'vue-router'
 import { ref, computed } from 'vue'
 import { navRoutes } from '../../services/urls';
 import { goToSearchPage, 
@@ -177,6 +183,7 @@ const minimizeFooter = ref(false);
 
 const route = useRoute();
 const { user } = route.params
+const router = useRouter()
 
 // instantiate a footer nav service for when you want to swap out which buttons are shown.
 const footerView = computed(() => {
@@ -370,11 +377,18 @@ nav .nav-button-group {
     color: #667EEA;
     align-content: center;
     justify-content: center;
-    transition-duration: 250ms;
+    transition-duration: all 250ms ease;
+    text-align: center;
+
+    & svg {
+        width: 34px;
+        height: 34px;
+        margin-left: auto;
+        margin-right: auto;
+    }   
 }
 .footer-nav-button:hover {
     color: #343fa9;
-    transform: scale(1.02);
 }
 
 .desktop-footer {
