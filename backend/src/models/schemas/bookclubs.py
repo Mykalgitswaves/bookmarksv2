@@ -84,6 +84,7 @@ class BookClubPreview(BaseBookClub):
 
 
 class MinimalBookClub(BaseBookClub):
+    book_club_description: str
     # Making this extend bookclub preview for when we have more data to gather
     pass
 

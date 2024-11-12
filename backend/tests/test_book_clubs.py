@@ -658,6 +658,17 @@ class TestBookClubs:
         print(response.json())
         assert response.status_code == 200, "Getting awards"
 
+    def test_minimal_preview(self):
+        headers = {"Authorization": f"{self.token_type} {self.access_token}"}
+        
+        endpoint = (
+            f"{self.endpoint}/api/bookclubs/{self.book_club_id}/"
+            f"minimal_preview/{self.user_id}/user")
+        
+        response = requests.get(endpoint, headers=headers)
+        print(response.json())
+        assert response.status_code == 200, "Getting minimal preview"
+
     def test_deleting_member(self):
         headers = {"Authorization": f"{self.token_type} {self.access_token}"}
 
