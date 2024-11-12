@@ -27,6 +27,7 @@
 
             <!-- Sticky toolbar containing buttons for creating and filtering posts -->
             <BookClubFeedActions 
+                v-if="currentlyReadingBook"
                 @start-club-update-post-flow="showUpdateForm()"
             />
 
@@ -51,9 +52,7 @@
             />
         </section>
 
-        <div v-else class="gradient box loading fancy">
-            Loading club
-        </div>
+        <LoadingCard v-else />
 </template>
 <script setup>
 import CurrentlyReadingBook from './CurrentlyReadingBook.vue';
@@ -67,6 +66,7 @@ import { db } from '../../../../services/db';
 import { urls } from '../../../../services/urls';
 import { formatUpdateForBookClub } from '../bookClubService';
 import { useRoute } from 'vue-router';
+import LoadingCard from '../../../shared/LoadingCard.vue';
 
 
 const props = defineProps({

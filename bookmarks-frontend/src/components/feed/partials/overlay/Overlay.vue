@@ -22,7 +22,7 @@
     </dialog>
 </template>
 <script setup>
-import { ref, onMounted, defineExpose } from 'vue';
+import { ref, defineExpose } from 'vue';
 import IconExit from '@/components/svg/icon-exit.vue'
 
 const dialogRef = ref(null);
@@ -34,8 +34,6 @@ defineExpose({
 <style scoped>
 .overlay {
     height: fit-content;
-    max-width: 768px;
-    min-width: 60vw;
     padding: 8px 14px;
     border-radius: 14px; 
     background-color: var(--surface-primary);

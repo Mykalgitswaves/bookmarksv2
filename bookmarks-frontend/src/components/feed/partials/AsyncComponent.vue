@@ -58,13 +58,11 @@ load();
 // You need both dependencies for this to work because when you pass in a raw promise
 // you can't call it again once its been resolved
 if (props.subscribedTo && props.promiseFactory) {
-    const { subscribedTo } = props;
-
     const refreshEvent = () => {
         loaded.value = false;    
         load()
     }
 
-    PubSub.subscribe(subscribedTo, refreshEvent);
+    PubSub.subscribe(props.subscribedTo, refreshEvent);
 }
 </script>
