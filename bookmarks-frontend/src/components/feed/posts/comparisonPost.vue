@@ -3,7 +3,7 @@
         <!-- Username of OP -->
         <div class="card-header">
             <p  class="text-slate-600"
-                @click="router.push(navRoutes.toUserPageFromPost(route.params.user, props.user_id))"
+                @click="router.push(navRoutes.toUserPage(route.params.user, props.user_id))"
             >
                 <span class="text-indigo-600 underline italic cursor-pointer">
                     @{{ props.username }}</span> made a comparison

@@ -33,7 +33,7 @@ async def delete_user_by_username(
     else:
         response = user_repo.delete_user_by_username(username)
         if response:
-            logger.warning("Admin has deleted a user by username")
+            logger.warning("Admin has deleted a user by username", extra={"username": username})
             return HTTPException(status_code=200, detail="User deleted")
         else:
             return HTTPException(status_code=404, detail="User not found")
