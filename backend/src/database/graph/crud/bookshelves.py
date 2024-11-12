@@ -1091,13 +1091,21 @@ class BookshelfCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
                 note_for_shelf=book_rel.get('note_for_shelf', None),
                 current_page=book_rel.get('current_page', 0), 
                 total_pages=total_pages,
-                last_updated=book_rel.get('last_updated', datetime.datetime.min)  # Default to datetime.min if last_updated is None
+                last_updated=book_rel.get(
+                    'last_updated', 
+                    book_rel.get(
+                        'create_date',
+                        datetime.datetime.min.replace(
+                            tzinfo=datetime.timezone.utc
+                            )
+                        )  # Default to datetime.min if last_updated is None
+                    )
                 )
             )
-
+            
         sorted_book_list = sorted(book_list, key=lambda x: x.last_updated, reverse=True)
         first_four_books = sorted_book_list[:4]
-                    
+        
         bookshelf = CurrentlyReadingBookshelfPreview(
             id=record["id"],
             title=record["title"],
@@ -1861,7 +1869,7 @@ class BookshelfCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
             """
             MATCH (b {id: $bookshelf_id})<-[r:HAS_READING_FLOW_SHELF]-(u:User {id: $user_id})
             MATCH (b)-[rr:CONTAINS_BOOK]->(book:Book {id: $book_id})
-            SET rr.note_for_shelf = $note_for_shelf, b.last_edited_date = datetime()
+            SET rr.note_for_shelf = $note_for_shelf, b.last_edited_date = datetime(), rr.last_updated = datetime()
             RETURN b.id as id
             """
         )
@@ -1894,7 +1902,7 @@ class BookshelfCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
             MATCH (u:User {id: $user_id})-[:HAS_READING_FLOW_SHELF]->(b:CurrentlyReadingShelf)
             MATCH (b)-[r:CONTAINS_BOOK]->(book:Book {id: $book_id})
             set r.current_page = $new_current_page
-            set r.last_update = datetime()
+            set r.last_updated = datetime()
             return book
             """
         )
