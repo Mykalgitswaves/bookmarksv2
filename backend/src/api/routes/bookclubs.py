@@ -17,6 +17,7 @@ from src.models.schemas import bookclubs as BookClubSchemas
 from src.models.schemas.users import User, UserId
 from src.securities.authorizations.verify import get_current_active_user
 from src.utils.helpers.email.email_client import email_client
+from src.utils.logging.logger import logger
 
 router = fastapi.APIRouter(prefix="/bookclubs", tags=["bookclubs"])
 
@@ -58,6 +59,14 @@ async def create_bookclub(
     data = await request.json()
 
     if current_user.id != data.get("user_id"):
+        logger.warning(
+            "User id does not match current user id",
+            extra={
+                "user_id": data.get("user_id"),
+                "current_user_id": current_user.id,
+                "action": "create_bookclub",
+            }
+        )
         raise HTTPException(status_code=400, detail="Invalid user_id")
 
     try:
@@ -68,8 +77,25 @@ async def create_bookclub(
     response = book_club_repo.create_bookclub(book_club)
 
     if not response:
+        logger.warning(
+            "Unable to create bookclub",
+            extra={
+                "user_id": current_user.id,
+                "book_club_name": book_club.name,
+                "action": "create_bookclub",
+            }
+        )
         raise HTTPException(status_code=400, detail="Unable to create bookclub")
     else:
+        logger.info(
+            "Bookclub created",
+            extra={
+                "user_id": current_user.id,
+                "book_club_id": response,
+                "book_club_name": book_club.name,
+                "action": "create_bookclub",
+            }
+        )
         return JSONResponse(status_code=200, content={"book_club_id": response})
 
 
@@ -109,6 +135,14 @@ async def search_users_not_in_club(
 
     users = book_club_repo.search_users_not_in_club(search_param)
 
+    logger.info(
+        "Searched for users not in club",
+        extra={
+            "user_id": current_user.id,
+            "book_club_id": book_club_id,
+            "action": "search_users_not_in_club",
+        }
+    )
     return JSONResponse(content={"users": jsonable_encoder(users)})
 
 # TODO: delete this shit
@@ -242,6 +276,13 @@ async def invite_users_to_club_new(
     ]
 
     if not user_ids and not emails:
+        logger.warning(
+            "No data sent",
+            extra={
+                "user_id": current_user.id, 
+                "action": "invite_users_to_club"
+            },
+        )
         raise HTTPException(status_code=400, detail="No data sent")
 
     try:
@@ -260,7 +301,7 @@ async def invite_users_to_club_new(
         for email in invite_obj.emails:
             if email in response:
                 if response[email]['status'] != "already_member":
-                    print(response[email])
+                    # print(response[email])
                     background_tasks.add_task(
                         email_client.send_invite_email,
                         email,
@@ -289,6 +330,15 @@ async def invite_users_to_club_new(
                 if response.get(invite.get("email")).get("id"):
                     invite.update({"id": response[invite.get("email")].get("id")})
 
+    logger.info(
+        "Invited users to club",
+        extra={
+            "user_id": current_user.id,
+            "book_club_id": invite_obj.book_club_id,
+            "num_invites": len(invites),
+            "action": "invite_users_to_club",
+        },
+    )
     return invites
 
 
@@ -330,6 +380,15 @@ async def get_owned_bookclubs(
         raise HTTPException(status_code=400, detail=str(e))
 
     book_clubs = book_club_repo.get_owned_book_clubs(book_club_params)
+    
+    logger.info(
+        "Fetched owned book clubs",
+        extra={
+            "user_id": current_user.id,
+            "num_book_clubs": len(book_clubs),
+            "action": "get_owned_bookclubs",
+        },
+    )
 
     return JSONResponse(content={"bookclubs": jsonable_encoder(book_clubs)})
 
@@ -368,6 +427,15 @@ async def get_member_bookclubs(
         raise HTTPException(status_code=400, detail=str(e))
 
     book_clubs = book_club_repo.get_member_book_clubs(book_club_params)
+    
+    logger.info(
+        "Fetched member book clubs",
+        extra={
+            "user_id": current_user.id,
+            "num_book_clubs": len(book_clubs),
+            "action": "get_member_bookclubs",
+        },
+    )
 
     return JSONResponse(content={"bookclubs": jsonable_encoder(book_clubs)})
 
@@ -405,6 +473,14 @@ def get_bookclub_invites(
     """
 
     if current_user.id != user_id:
+        logger.warning(
+            "User id does not match current user id",
+            extra={
+                "user_id": user_id,
+                "current_user_id": current_user.id,
+                "action": "get_bookclub_invites",
+            },
+        )
         raise HTTPException(status_code=400, detail="Invalid user_id")
 
     try:
@@ -413,7 +489,14 @@ def get_bookclub_invites(
         raise HTTPException(status_code=400, detail=str(e))
 
     invites = book_club_repo.get_book_club_invites(invite_params)
-
+    logger.info(
+        "Fetched book club invites",
+        extra={
+            "user_id": current_user.id,
+            "num_invites": len(invites),
+            "action": "get_bookclub_invites",
+        },
+    )
     return JSONResponse(content={"invites": jsonable_encoder(invites)})
 
 
@@ -448,8 +531,24 @@ async def accept_bookclub_invite(
     response = book_club_repo.update_accept_book_club_invite(invite_params)
 
     if not response:
+        logger.warning(
+            "Unable to accept bookclub invite",
+            extra={
+                "user_id": current_user.id,
+                "invite_id": invite_id,
+                "action": "accept_bookclub_invite",
+            },
+        )
         raise HTTPException(status_code=404, detail="Invite not found")
     else:
+        logger.info(
+            "Accepted book club invite",
+            extra={
+                "user_id": current_user.id,
+                "invite_id": invite_id,
+                "action": "accept_bookclub_invite",
+            },
+        )
         return JSONResponse(status_code=200, content={"message": "Invite accepted"})
 
 
@@ -484,8 +583,24 @@ async def decline_bookclub_invite(
     response = book_club_repo.update_decline_book_club_invite(invite_params)
 
     if not response:
+        logger.warning(
+            "Unable to decline bookclub invite",
+            extra={
+                "user_id": current_user.id,
+                "invite_id": invite_id,
+                "action": "decline_bookclub_invite",
+            },
+        )
         raise HTTPException(status_code=404, detail="Invite not found")
     else:
+        logger.info(
+            "Declined book club invite",
+            extra={
+                "user_id": current_user.id,
+                "invite_id": invite_id,
+                "action": "decline_bookclub_invite",
+            },
+        )
         return JSONResponse(status_code=200, content={"message": "Invite declined"})
 
 
@@ -505,14 +620,29 @@ async def get_members_for_book_club(
     """
     # We should maybe think about doing this implicitly with some decorator, since we repeat it so many places.
     if current_user.id != user_id:
+        logger.warning(
+            "User id does not match current user id",
+            extra={
+                "user_id": user_id,
+                "current_user_id": current_user.id,
+                "action": "get_members_for_book_club",
+            },
+        )
         raise HTTPException(status_code=400, detail="Unauthorized")
-    # try:
+    
     book_club_members = book_club_repo.get_members_for_book_club(
         book_club_id=book_club_id, user_id=user_id
     )
-    # except:
-    #     raise HTTPException(status_code=420, detail="Something weirds a-foot 🫥")
 
+    logger.info(
+        "Fetched members for book club",
+        extra={
+            "user_id": current_user.id,
+            "book_club_id": book_club_id,
+            "num_members": len(book_club_members),
+            "action": "get_members_for_book_club",
+        },
+    )
     return JSONResponse(content={"members": jsonable_encoder(book_club_members)})
 
 @router.get(
@@ -530,6 +660,14 @@ async def get_book_club_minimal_preview(
     gets an minimal preview for a bookclub via clubs uuid.
     """
     if current_user.id != user_id:
+        logger.warning(
+            "User id does not match current user id",
+            extra={
+                "user_id": user_id,
+                "current_user_id": current_user.id,
+                "action": "get_book_club_minimal_preview",
+            },
+        )
         raise HTTPException(status_code=400, detail="Unauthorized")
 
     try:
@@ -539,11 +677,18 @@ async def get_book_club_minimal_preview(
     except:
         raise HTTPException(status_code=404, detail="Bookclub not found")
 
+    logger.info(
+        "Fetched minimal preview for book club",
+        extra={
+            "user_id": current_user.id,
+            "book_club_id": book_club_id,
+            "action": "get_book_club_minimal_preview",
+        },
+    )
     return JSONResponse(content={"book_club": jsonable_encoder(book_club)})
 
 
 ### Club feed page ################################################################################################
-
 
 @router.get("/{book_club_id}/user_pace", name="bookclub:user_pace")
 async def get_user_pace(
@@ -574,8 +719,24 @@ async def get_user_pace(
     paces = book_club_repo.get_user_pace(book_club_id, current_user.id)
 
     if paces:
+        logger.info(
+            "Fetched user pace",
+            extra={
+                "user_id": current_user.id,
+                "book_club_id": book_club_id,
+                "action": "get_user_pace",
+            },
+        )
         return JSONResponse(status_code=200, content={"paces": jsonable_encoder(paces)})
     else:
+        logger.warning(
+            "Unable to fetch user pace",
+            extra={
+                "user_id": current_user.id,
+                "book_club_id": book_club_id,
+                "action": "get_user_pace",
+            },
+        )
         raise HTTPException(status_code=404, detail="Invite not found")
 
 
@@ -606,10 +767,27 @@ async def get_club_members_pace(
     member_paces = book_club_repo.get_member_paces(book_club_id, current_user.id)
 
     if member_paces is not None:
+        logger.info(
+            "Fetched club member paces",
+            extra={
+                "user_id": current_user.id,
+                "book_club_id": book_club_id,
+                "num_paces": len(member_paces),
+                "action": "get_club_members_pace",
+            },
+        )
         return JSONResponse(
             status_code=200, content={"member_paces": jsonable_encoder(member_paces)}
         )
     else:
+        logger.warning(
+            "Unable to fetch club member paces",
+            extra={
+                "user_id": current_user.id,
+                "book_club_id": book_club_id,
+                "action": "get_club_members_pace",
+            },
+        )
         raise HTTPException(status_code=404, detail="Invite not found")
 
 
@@ -640,9 +818,24 @@ async def create_update_post_club(
     data = await request.json()
 
     if not data.get("user"):
+        logger.warning(
+            "User is a required field",
+            extra={
+                "user_id": current_user.id,
+                "action": "create_update_post_club",
+            },
+        )
         raise HTTPException(status_code=400, detail="User is a required field")
 
     if data.get("user").get("id") != current_user.id:
+        logger.warning(
+            "User id does not match current user id",
+            extra={
+                "user_id": data.get("user").get("id"),
+                "current_user_id": current_user.id,
+                "action": "create_update_post_club",
+            },
+        )
         raise HTTPException(status_code=400, detail="Unauthorized")
 
     try:
@@ -662,8 +855,26 @@ async def create_update_post_club(
         response = book_club_repo.create_update_post_no_text(update_data)
 
     if response:
+        logger.info(
+            "Created update post for club",
+            extra={
+                "user_id": current_user.id,
+                "book_club_id": book_club_id,
+                "chapter": update_data.chapter,
+                "action": "create_update_post_club",
+            },
+        )
         return JSONResponse(status_code=200, content={"message": "Post created"})
     else:
+        logger.warning(
+            "Unable to create update post for club",
+            extra={
+                "user_id": current_user.id,
+                "book_club_id": book_club_id,
+                "chapter": update_data.chapter,
+                "action": "create_update_post_club",
+            },
+        )
         raise HTTPException(status_code=404, detail="Error creating post")
 
 
@@ -713,7 +924,15 @@ async def get_club_feed(
         limit=limit,
         filter=filter,
     )
-
+    logger.info(
+        "Fetched club feed",
+        extra={
+            "user_id": current_user.id,
+            "book_club_id": book_club_id,
+            "num_posts": len(posts),
+            "action": "get_club_feed",
+        },
+    )
     return JSONResponse(status_code=200, content={"posts": jsonable_encoder(posts)})
 
 
@@ -753,10 +972,28 @@ async def remove_member_from_book_club(
         book_club_id=book_club_id,        
     )
     if deleted_relationship_count:
+        logger.info(
+            "Removed member from book club",
+            extra={
+                "user_id": current_user.id,
+                "book_club_id": book_club_id,
+                "member_id": member_id_to_remove.id,
+                "action": "remove_member_from_book_club",
+            },
+        )
         return JSONResponse(
             status_code=200, content={"content": "member removed"}
         )
     else:
+        logger.warning(
+            "Unable to remove member from book club",
+            extra={
+                "user_id": current_user.id,
+                "book_club_id": book_club_id,
+                "member_id": member_id_to_remove.id,
+                "action": "remove_member_from_book_club",
+            },
+        )
         raise HTTPException(status_code=401, detail='Unauthorized')
         
     # except:
@@ -791,6 +1028,14 @@ async def get_currently_reading(
     )
 
     if currently_reading_book == "No book club found":
+        logger.warning(
+            "Book club not found or user is not a member of the club",
+            extra={
+                "user_id": current_user.id,
+                "book_club_id": book_club_id,
+                "action": "get_currently_reading",
+            },
+        )
         raise HTTPException(status_code=400, detail="User is not a member of the club")
     
     return JSONResponse(status_code=200, content={"currently_reading_book": jsonable_encoder(currently_reading_book)})
@@ -846,6 +1091,14 @@ async def start_book_for_club(
     if not start_currently_reading.book.get(
         "id"
     ) or not start_currently_reading.book.get("chapters"):
+        logger.warning(
+            "Missing required value",
+            extra={
+                "user_id": current_user.id,
+                "book_club_id": book_club_id,
+                "action": "start_book_for_club",
+            },
+        )
         raise HTTPException(status_code=400, detail="Missing required value")
 
     book_exists = True
@@ -880,10 +1133,28 @@ async def start_book_for_club(
             )
 
     if result:
+        logger.info(
+            "Started book for club",
+            extra={
+                "user_id": current_user.id,
+                "book_club_id": book_club_id,
+                "book_id": start_currently_reading.book["id"],
+                "action": "start_book_for_club",
+            },
+        )
         return JSONResponse(
             status_code=200, content={"message": "Book set as currently reading"}
         )
     else:
+        logger.warning(
+            "Unable to start book for club",
+            extra={
+                "user_id": current_user.id,
+                "book_club_id": book_club_id,
+                "book_id": start_currently_reading.book["id"],
+                "action": "start_book_for_club",
+            },
+        )
         raise HTTPException(status_code=404, detail="Error starting book")
 
 
@@ -910,10 +1181,26 @@ async def finish_book_for_club(
     result = book_club_repo.update_finished_reading(book_club_id, current_user.id)
 
     if result:
+        logger.info(
+            "Finished book for club",
+            extra={
+                "user_id": current_user.id,
+                "book_club_id": book_club_id,
+                "action": "finish_book_for_club",
+            },
+        )
         return JSONResponse(
             status_code=200, content={"message": "Book set as finished reading"}
         )
     else:
+        logger.warning(
+            "Unable to finish book for club",
+            extra={
+                "user_id": current_user.id,
+                "book_club_id": book_club_id,
+                "action": "finish_book_for_club",
+            },
+        )
         raise HTTPException(status_code=404, detail="Error finishing book")
 
 
@@ -940,10 +1227,26 @@ async def stop_book_for_club(
     result = book_club_repo.update_stopped_reading(book_club_id, current_user.id)
 
     if result:
+        logger.info(
+            "Stopped book for club",
+            extra={
+                "user_id": current_user.id,
+                "book_club_id": book_club_id,
+                "action": "stop_book_for_club",
+            },
+        )
         return JSONResponse(
             status_code=200, content={"message": "Book set as stopped reading"}
         )
     else:
+        logger.warning(
+            "Unable to stop book for club",
+            extra={
+                "user_id": current_user.id,
+                "book_club_id": book_club_id,
+                "action": "stop_book_for_club",
+            },
+        )
         raise HTTPException(status_code=404, detail="Error finishing book")
 
 
@@ -963,6 +1266,16 @@ async def invites_for_bookclub(
         book_club_id=book_club_id, user_id=current_user.id
     )
     
+    logger.info(
+        "Fetched invites for book club",
+        extra={
+            "user_id": current_user.id,
+            "book_club_id": book_club_id,
+            "num_invites": len(invites),
+            "action": "invites_for_bookclub",
+        },
+    )
+
     return JSONResponse(
         status_code=200, content={"invites": jsonable_encoder(invites)}
     )
@@ -1027,6 +1340,16 @@ async def get_awards(
             current_uses
         )
 
+    logger.info(
+        "Fetched awards for book club",
+        extra={
+            "user_id": current_user.id,
+            "book_club_id": book_club_id,
+            "num_awards": len(awards),
+            "action": "get_awards",
+        },
+    )
+
     return JSONResponse(
         status_code=200, content={"awards": jsonable_encoder(awards)}
     )
@@ -1074,12 +1397,42 @@ async def put_award(
     )
 
     if response == "award created":
+        logger.info(
+            "Award added to post",
+            extra={
+                "user_id": current_user.id,
+                "book_club_id": book_club_id,
+                "post_id": post_id,
+                "award_id": award_id,
+                "action": "put_award",
+            },
+        )
         return JSONResponse(
         status_code=200, content={"message": "award added"}
         )
     elif response == "unauthorized":
+        logger.warning(
+            "Unauthorized to add award to post",
+            extra={
+                "user_id": current_user.id,
+                "book_club_id": book_club_id,
+                "post_id": post_id,
+                "award_id": award_id,
+                "action": "put_award",
+            },
+        )
         raise HTTPException(status_code=401, detail="unauthorized")
     else:
+        logger.warning(
+            "Maximum number of grants reached",
+            extra={
+                "user_id": current_user.id,
+                "book_club_id": book_club_id,
+                "post_id": post_id,
+                "award_id": award_id,
+                "action": "put_award",
+            },
+        )
         raise HTTPException(
             status_code=403, 
             detail="maximum number of grants reached")
@@ -1134,16 +1487,33 @@ async def delete_award(
         )
 
     if response:
+        logger.info(
+            "Award deleted from post",
+            extra={
+                "user_id": current_user.id,
+                "book_club_id": book_club_id,
+                "post_id": post_id,
+                "award_id": award_id,
+                "action": "delete_award",
+            },
+        )
         return JSONResponse(
         status_code=200, content={"message": "award deleted"}
         )
     else:
+        logger.warning(
+            "Award not found",
+            extra={
+                "user_id": current_user.id,
+                "book_club_id": book_club_id,
+                "post_id": post_id,
+                "award_id": award_id,
+                "action": "delete_award",
+            },
+        )
         raise HTTPException(
             status_code=404, 
             detail="award not found")
-
-# TODO: Don't allow anyone else to use these but michael and kyle
-# TEST ENDPOINTS FOR EMAIL STUFF
 
 @router.get("/{book_club_id}/preview_emails/{email_type}", name='bookclubs:test_emails')
 async def test_emails(

@@ -5,6 +5,7 @@ import smtplib
 from src.config.config import settings
 from src.database.graph.crud.bookclubs import BookClubCRUDRepositoryGraph
 from src.utils.helpers.email.templates.style_variables import styles
+from src.utils.logging.logger import logger
 
 class EmailClient:
     def __init__(self):
@@ -59,7 +60,7 @@ class EmailClient:
 
             email_content = jinja_template.render(email_context)
 
-        print(email_content)
+        # print(email_content)
         
         msg = MIMEText(email_content, 'html')
         msg['Subject'] = subject
@@ -70,7 +71,16 @@ class EmailClient:
             with smtplib.SMTP_SSL(self.mail_server, self.mail_port) as smtp_server:
                 smtp_server.login(self.mail_from, self.mail_password)
                 smtp_server.sendmail(self.mail_from, to_email, msg.as_string())
-                print("Message sent!")
+                logger.info(
+                    "Invite Email Sent",
+                    extra={
+                        "to_email": to_email,
+                        "invite_id": invite_id,
+                        "book_club_id": book_club_id,
+                        "invite_user_username": invite_user_username,
+                        "action": "send_invite_email"
+                    }
+                )
         else: 
             return email_content
 
