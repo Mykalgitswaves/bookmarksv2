@@ -267,3 +267,7 @@
 .icon-sm svg {
   transform: scale(.8);
 }
+
+.shadow-lg {
+  box-shadow: var(--shadow-lg);
+}

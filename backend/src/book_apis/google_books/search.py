@@ -116,7 +116,7 @@ class GoogleBooksSearch(GoogleBooks):
                     if 'authors' in result['volumeInfo']: 
                         author_names=result['volumeInfo']['authors']
                     else:
-                        author_names=None
+                        author_names=[]
                         
                     if set(author_names) != set(book_authors):
                         continue
