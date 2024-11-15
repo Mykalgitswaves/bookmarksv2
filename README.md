@@ -21,24 +21,34 @@ RUNNING A LOCAL PROTOTYPE OF APP:
          $ npm run dev
   4) now you should be able to use app / develop and test locally.
 
-FOR TESTING API:
-  make sure you have the dependencies
-    inside your conda env run:
-      
-      pip install 'fastapi[all]'
-      
-      pip install neo4j==5.8.1
+TESTING ROUTES:
 
-  1) Load the thang up with
-    from project root dir:
-     
-     $ uvicorn main:app --reload
-  2) Then go to:
+To test new routes with pytest:
 
+1) Open a terminal, activate the conda environment
 
-    'http://127.0.0.1:8000/docs#/'
+        $ conda activate bookmarks
 
-  You can now test all your saucey endpoints to see how things work.
+2) Start the backend
 
-TESTING QUERIES:
-  Kyle can you help fill this out for documentation?
+        $ uvicorn src.main:backend_app —reload
+
+3) Open a new terminal, activate the conda environment
+
+        $ conda activate bookmarks
+
+4) Navigate to the test directory
+        
+        $ cd backend/tests
+
+5) To run all tests, simply type pytest
+
+        $ pytest
+
+6) To run a single test, choose the name of your test
+        
+        $ pytest test_book_clubs.py
+
+7) If you want to see print statement even when tests pass, add the -s flag
+
+        $ pytest test_book_clubs.py -s
