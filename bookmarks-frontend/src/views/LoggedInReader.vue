@@ -1,5 +1,6 @@
 <template>
-  <TopNav/>
+  <TopNav />
+
   <div class="sidebar">
     <div class="main-layout">  
       <div class="search-results" v-if="hasSearchResults">
@@ -7,22 +8,27 @@
         <!-- THis one works -->
         
         <!-- This stuff doesnt -->
-        <div  class="transition mt-5">
+        <div class="transition mt-5">
           <div class="search-results-category" v-if="users.length">
             <div v-for="user in users" :key="user.id" class="search-result">
               {{ user.username }}
             </div>
           </div>
 
+          <h3 class="fancy text-xl text-stone-700 mb-5">Books: {{ books.length }}</h3>
+
           <div class="search-results-category" v-if="books.length">
-            <div v-for="book in books" :key="index" class="search-result book">
-              <img class="book-img" :src="book.small_img_url" alt="">
+            <!-- book loop -->
+            <div v-for="book in books" :key="book.id" 
+              class="search-result book relative"
+              @click="() => {
+                router.push(navRoutes.toBookPageFromPost(route.params.user, book.id)); 
+                hasSearchResults = false;
+              }"
+            >
+              <img class="book-img" :src="book.img_url" alt="" />
 
-              <h4 class="text-center fancy bold pb-5">{{ book.title }}</h4>
-
-              <button class="btn-tiny btn-wide">
-                Go to book
-              </button>
+              <h4 class="text-center fancy bold pb-5 text-sm">{{ book.title }}</h4>
             </div>
           </div>
 
@@ -33,9 +39,10 @@
           </div>
         </div>
       </div>
-
+      
       <RouterView v-else></RouterView>
     </div>
+
     <FooterNav/>
   </div>
 </template>
@@ -43,17 +50,16 @@
 import TopNav from '@/components/feed/topnav.vue';
 import FooterNav from '@/components/feed/footernav.vue'
 import CloseButton from '../components/feed/partials/CloseButton.vue';
-import LoadingCard from '@/components/shared/LoadingCard.vue';
 import { ref } from "vue";
-import { useRoute } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 import { db } from '../services/db'
-import { urls } from '../services/urls'
+import { urls, navRoutes } from '../services/urls'
 import { PubSub } from '../services/pubsub';
 
 const route = useRoute();
+const router = useRouter();
 
 const hasSearchResults = ref(false);
-
 let books = [];
 let authors = [];
 let users = [];
@@ -115,6 +121,7 @@ PubSub.subscribe('nav-search-get-data', (data) => {
     padding: 12px;
     border-radius: 8px;
     background-color: var(--surface-primary);
+    min-height: 400px;
   }
 
   .search-results-category {
@@ -123,16 +130,30 @@ PubSub.subscribe('nav-search-get-data', (data) => {
     min-height: fit-content;
     align-items: end;
     justify-content: space-around;
+    column-gap: 10px;
+    row-gap: 10px;
   }
 
   .search-result {
     border: 1px solid var(--stone-200);
     background-color: var(--stone-50);
+    padding: 14px;
+    transition: all 250ms ease;
+
+    &:hover {
+      background-color: var(--stone-300);
+    }
 
     &.book {
+      height: -webkit-fill-available;
+
       .book-img {
-        height: 80px;
+        height: 100px;
+        width: 80px;
         border-radius: 2px;
+        padding-bottom: 5px;
+        margin-left: auto;
+        margin-right: auto;
       }
     }
   }

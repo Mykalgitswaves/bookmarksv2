@@ -1,35 +1,34 @@
 <template>
     <section class="section-wrapper">
-        <BackBtn/>
-
         <div class="book-page-header">
             <div class="book-info-card">
                 
                     <img v-if="book_img" :src="book_img" alt="" class="book-info-card-img">
-                
-                    <placeholderSvg class="book-info-card-img" v-else />
+
+                    <div v-else class="transition book-info-card-img">
+                        <LoadingCard />
+                    </div>
 
                 <div class="book-info-card-info">
                     <div>
-                        <h2 class="text-2xl font-semibold ml-2">{{ book?.title || 'Loading' }}</h2>
-                        <p class="ml-2 italic text-slate-600">ISBN: {{ book?.isbn13 || '...' }}</p>
+                        <h2 class="text-2xl font-semibold ml-2 fancy text-stone-600">{{ book?.title || 'Loading' }}</h2>
+                        <p class="ml-2 italic text-stone-500">ISBN: {{ book?.isbn13 || 'Not found' }}</p>
                     </div>
-                    <p 
-                        class="b-i-c-i-authors" 
+
+                    <p class="b-i-c-i-authors" 
                         v-if="book?.author_names && book?.author_names?.length"
                     >
                         <span 
                             v-for="(author, index) in book?.author_names"
                             :key="index"
                         >
-                            written by
+                            Written by
                             {{
                                 author + commanator(index, book?.author_names?.length) 
                             }}
                         </span>
                     </p>
-                    <p 
-                        class="b-i-c-i-authors" 
+                    <p class="b-i-c-i-authors" 
                         v-if="!book?.author_names || !book?.author_names.length"
                     >
                        Author not found
@@ -40,19 +39,37 @@
             <div class="book-page-toolbar">
                 <button 
                     type="button"
-                    class="b-p-t-btn"
+                    class="btn btn-ghost btn-icon"
+                    @click="showOverlay(overlayRef)"
                 >
                     <IconPlus/>
                     Add to bookshelf
                 </button>
+
+                <Overlay ref="overlayRef">
+                    <template #overlay-main>
+                        <AsyncComponent :promises="[loadedPromise]">
+                            <template #resolved>
+                                <div v-for="bookshelf in bookshelves">
+                                    {{ bookshelf.title }}
+                                </div>
+                            </template>
+
+                            <template #loading>
+                                <div></div>
+                            </template>
+                        </AsyncComponent>
+                    </template>
+                </Overlay>
+
                 <div class="btn-relative">
                     <button 
                         type="button"
-                        class="b-p-t-btn add"
+                        class="btn btn-icon btn-ghost"
                         @click="filterPopout = !filterPopout"
                     >
                         <IconAddReview/>
-                        Write a review
+                        Make a post
                     </button>
 
                     <div 
@@ -73,31 +90,36 @@
         </div>
 
         <div v-if="book?.description" class="book-page-description">
-            <p v-html="book?.description"></p>
+            <span class="fancy text-base bold">Description: &nbsp;</span>
+            <span v-html="book?.description"></span>
         </div>
     </section>
 </template>
 
 <script setup>
 // import SimilarBooks from '@/components/feed/SimilarBooks.vue';
-import BackBtn from './partials/back-btn.vue';
 import { ref, computed } from 'vue';
 import { useRoute, useRouter } from 'vue-router'
 import { db } from '../../services/db';
 import { urls } from '../../services/urls';
 import { helpersCtrl } from '../../services/helpers';
-import placeholderSvg from '../svg/placeholderSvg.vue';
 import IconPlus from '../svg/icon-plus.vue';
+import LoadingCard from '../shared/LoadingCard.vue'
 import IconAddReview from '../svg/icon-add-post.vue';
+import Overlay from './partials/overlay/Overlay.vue';
+import { showOverlay } from './partials/overlay/overlay-service.js';
+import AsyncComponent from './partials/AsyncComponent.vue';
 
 const route = useRoute();
 const router = useRouter();
+const { commanator } = helpersCtrl;
 const { user, work } = route.params;
-
-const { commanator } = helpersCtrl
 const book_id = route.params.version ? route.params.version : route.params.work;
+const overlayRef = ref(null);
 const book = ref(null);
 const filterPopout = ref(false);
+
+let bookshelves = [];
 
 async function getWorkPage() {
     await db.get(urls.books.getBookPage(book_id), null, true).then((res) => {
@@ -116,17 +138,34 @@ const mapping = {
   "comparison": `/feed/${user}/create/review/comparison/work/${work}`,
 };
 
+const memberBookshelvesPromise = db.get(urls.rtc.getMemberBookshelves(user), null, false, 
+    (res) => {
+        bookshelves.push(...res.bookshelves);
+    }, (err) => {
+        console.log(err);
+    }
+);
+
+const getBookshelvesCreatedByUserPromise = db.get(urls.rtc.getBookshelvesCreatedByUser(user), null, false, 
+    (res) => {
+        bookshelves.push(...res.bookshelves);
+    }, (err) => {
+        console.log(err);
+    }
+);
+
+const loadedPromise = Promise.all([memberBookshelvesPromise, getBookshelvesCreatedByUserPromise])
+
 </script>
 <style scoped>
     .section-wrapper {
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
+        margin-left: auto;
+        margin-right: auto;
     }
 
     .book-page-header {
         background-color: #fff;
-        border: 1px solid #A0AEC0; 
+        border: 1px solid var(--stone-200); 
         border-radius: 6px;
         padding: 15px;
         margin-top: 20px;
@@ -165,6 +204,7 @@ const mapping = {
 
     .b-i-c-i-authors {
         align-self: end;
+        font-family: var(--fancy-script);
     }
 
     .book-info-card-img {
@@ -192,6 +232,7 @@ const mapping = {
         max-width: 880px;
         padding: 8px;
         margin-top: 20px;
+        color: var(--stone-600);
     }
 
     /* Animations */

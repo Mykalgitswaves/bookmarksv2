@@ -64,7 +64,7 @@ class GoogleBooksPull(GoogleBooks):
                 if 'authors' in response['volumeInfo']: 
                     author_names=response['volumeInfo']['authors']
                 else:
-                    author_names=None
+                    author_names=[]
                 if 'categories' in response["volumeInfo"]:
                     genres = response["volumeInfo"]['categories']
                 else:
@@ -187,7 +187,7 @@ class GoogleBooksPull(GoogleBooks):
                     if 'authors' in response['volumeInfo']: 
                         author_names=response['volumeInfo']['authors']
                     else:
-                        author_names=None
+                        author_names=[]
                     if 'categories' in response["volumeInfo"]:
                         genres = response["volumeInfo"]['categories']
                     else:

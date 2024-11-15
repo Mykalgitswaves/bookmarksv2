@@ -199,7 +199,7 @@ class BookCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
                         description=response["b.description"],
                         isbn13 = response["b.isbn13"],
                         isbn10 = response["b.isbn10"],
-                        author_names=response["b.author_names"],
+                        author_names=response.get("b.author_names") or [],
                         google_id=google_id)
             for response in result:
                 if response['TYPE(r)'] == 'HAS_TAG':
