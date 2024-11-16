@@ -1756,7 +1756,7 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
 
         query = (
         """
-        CALL db.index.fulltext.queryNodes('userFullText', $search_query)
+        CALL db.index.fulltext.queryNodes('userFullText', $search_query + "*")
         YIELD node, score
         WHERE NOT (node)-[:IS_MEMBER_OF|OWNS_BOOK_CLUB]->(:BookClub {id: $book_club_id})
         RETURN node, score
