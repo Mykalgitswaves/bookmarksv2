@@ -60,8 +60,10 @@
                     grant award
                 </button>
                 
-                <div v-for="grantedAward in grantedAwards" :key="awardId">
-
+                <div class="awards-list">
+                    <div title="dunce cap" class="award">
+                        <component :is="ClubAwardsSvgMap['dunce-cap']()"/>
+                    </div>
                 </div>
             </div>
         </div>
@@ -83,6 +85,7 @@
 </template>
 <script setup>
 import { ClubUpdatePost, ClubReviewPost } from '../../models/models';
+import { ClubAwardsSvgMap } from '../awards/awards';
 
 const props = defineProps({
     post: {
@@ -125,5 +128,16 @@ function dispatchAwardEvent(postId) {
     font-family: var(--fancy-script);
     font-optical-sizing: auto;
     font-weight: 500;
+}
+
+.awards-list {
+    display: flex;
+    column-gap: 10px;
+    justify-content: space-around;
+    
+    .award {
+        height: 60px;
+        width: 60px;
+    }
 }
 </style>

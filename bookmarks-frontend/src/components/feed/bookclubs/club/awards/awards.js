@@ -15,3 +15,10 @@ export const Award = {
     // Property used to manipulate the dom.
     status: ''
 }
+
+
+import DunceCap from './icons/DunceCap.vue';
+
+export const ClubAwardsSvgMap = {
+    'dunce-cap': () => DunceCap 
+}
