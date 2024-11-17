@@ -53,6 +53,8 @@
         </section>
 
         <LoadingCard v-else />
+
+        <div class="mobile-menu-spacer sm:hidden"></div>
 </template>
 <script setup>
 import CurrentlyReadingBook from './CurrentlyReadingBook.vue';

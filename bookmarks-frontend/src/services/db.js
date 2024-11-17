@@ -98,9 +98,9 @@ export const db = {
                 }
                 return data
             }
-            debugger;
+        
             if(!response.ok){
-                debugger;
+
                 if(failureFunction){
                     failureFunction({...data, status: response.status})
                 }
