@@ -131,6 +131,8 @@ function dispatchAwardEvent(postId) {
 }
 
 .awards-list {
+    border: 1px solid red; 
+    margin-bottom: -20px;
     display: flex;
     column-gap: 10px;
     justify-content: space-around;
