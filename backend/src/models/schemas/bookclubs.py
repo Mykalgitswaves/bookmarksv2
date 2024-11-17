@@ -156,6 +156,7 @@ class UpdatePost(Post):
     headline: str = ""
     type: str = "club_update"
     quote: str = None
+    awards: list = None
     
 class UpdatePostNoText(Post):
     type: str = "club_update_no_text"

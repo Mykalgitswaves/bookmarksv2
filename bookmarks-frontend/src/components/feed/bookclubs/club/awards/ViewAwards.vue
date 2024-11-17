@@ -69,7 +69,7 @@
                                 <button 
                                     v-if="award.current_uses > 0"
                                     type="button" 
-                                    class="text-xs text-red-500 " 
+                                    class="text-xs text-red-500" 
                                     @click="removeAwardFromPost(postId, award.id)"
                                 >
                                     Ungrant
