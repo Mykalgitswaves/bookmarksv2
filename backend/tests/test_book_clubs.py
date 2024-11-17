@@ -599,6 +599,14 @@ class TestBookClubs:
         assert response.status_code == 200, "Putting Award"
 
         headers = {"Authorization": f"{self.token_type} {self.access_token}"}
+        
+        endpoint = (
+            f"{self.endpoint}/api/bookclubs/{self.book_club_id}/"
+            "feed")
+        
+        response = requests.get(endpoint, headers=headers)
+
+        headers = {"Authorization": f"{self.token_type} {self.access_token}"}
 
         endpoint = (
             f"{self.endpoint}/api/bookclubs/{self.book_club_id}/"

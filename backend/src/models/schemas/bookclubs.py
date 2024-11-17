@@ -156,10 +156,11 @@ class UpdatePost(Post):
     headline: str = ""
     type: str = "club_update"
     quote: str = None
-    awards: list = None
+    awards: dict | None = None
     
 class UpdatePostNoText(Post):
     type: str = "club_update_no_text"
+    awards: dict | None = None
 
 class BaseAward(BaseModel):
     id: str

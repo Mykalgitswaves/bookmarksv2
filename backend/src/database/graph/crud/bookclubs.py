@@ -1308,8 +1308,7 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
             user_id: str,
             skip: int,
             limit: int,
-            filter: bool,
-            with_awards: bool,
+            filter: bool
     ) -> List[BookClubSchemas.UpdatePost]:
         """
         Gets the book club feed for the user
@@ -1321,8 +1320,7 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
                 user_id,
                 skip,
                 limit,
-                filter,
-                with_awards,
+                filter
             )
         return result
     
@@ -1334,7 +1332,6 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
         skip: int,
         limit: int,
         filter: bool,
-        with_awards: bool
     ):
         
         query = (
@@ -1347,10 +1344,13 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
             optional match (cu)-[lr:LIKES]->(post)
             optional match (book)-[br:IS_EQUIVALENT_TO]-(canon_book:Book)
             optional match (comments:Comment {deleted:false})<-[:HAS_COMMENT]-(post)
+            optional match (post)<-[:AWARD_FOR_POST]-(post_award:ClubAwardForPost)
+            optional match (post_award)-[CHILD_OF]->(award:ClubAward)
             RETURN post, labels(post), u.username, canon_book, u.id,
             CASE WHEN lr IS NOT NULL THEN true ELSE false END AS liked_by_current_user,
             CASE WHEN u.id = $user_id THEN true ELSE false END AS posted_by_current_user,
-            count(comments) as num_comments
+            count(comments) as num_comments,
+            collect(post_award) as awards
             order by post.created_date desc
             skip $skip
             limit $limit
@@ -1368,79 +1368,22 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
             optional match (cu)-[lr:LIKES]->(post)
             optional match (book)-[br:IS_EQUIVALENT_TO]-(canon_book:Book)
             optional match (comments:Comment {deleted:false})<-[:HAS_COMMENT]-(post)
+            optional match (post)<-[:AWARD_FOR_POST]-(post_award:ClubAwardForPost)
+            optional match award_long = (post_award)-[CHILD_OF]->(award:ClubAward)
             RETURN post, labels(post), u.username, canon_book, u.id, user_reading.current_chapter,
             CASE WHEN lr IS NOT NULL THEN true ELSE false END AS liked_by_current_user,
             CASE WHEN u.id = $user_id THEN true ELSE false END AS posted_by_current_user,
-            count(comments) as num_comments
+            count(comments) as num_comments,
+            collect(award_long) as awards
             order by post.created_date desc
             skip $skip
             limit $limit
             """
         )
-        
-        query_w_awards = (
-            """
-            MATCH (cu:User {id: $user_id})-[:IS_MEMBER_OF|OWNS_BOOK_CLUB]->(b:BookClub {id: $book_club_id})
-            MATCH (b)-[club_reading:IS_READING]->(book:BookClubBook)
-            MATCH (cu)-[user_reading:IS_READING_FOR_CLUB]->(book:BookClubBook)
-            MATCH (post:ClubUpdate|ClubUpdateNoText {deleted:false})-[:POST_FOR_CLUB_BOOK]->(book)
-            WHERE post.chapter <= user_reading.current_chapter
-            match (post)<-[pr:POSTED]-(u:User)
-            OPTIONAL MATCH (cu)-[lr:LIKES]->(post)
-            OPTIONAL MATCH (book)-[br:IS_EQUIVALENT_TO]-(canon_book:Book)
-            OPTIONAL MATCH (comments:Comment {deleted:false})<-[:HAS_COMMENT]-(post)
-            OPTIONAL MATCH (post)<-[:AWARD_FOR_POST]-(post_award)
-            OPTIONAL MATCH (post_award)-[CHILD_OF]->(award:ClubAward)
-            OPTIONAL MATCH (post_award)-[CHILD_OF]->(club_award:ClubAward)
-            WITH 
-                post, 
-                u, 
-                canon_book, 
-                user_reading.current_chapter AS currentChapter, 
-                count(DISTINCT comments) AS commentCount, 
-                club_award, 
-                post_award
-
-            WITH 
-                post, 
-                u, 
-                canon_book, 
-                currentChapter, 
-                commentCount, 
-                club_award, 
-                count(post_award) AS awardCount
-
-            WITH 
-                post, 
-                u, 
-                canon_book, 
-                currentChapter, 
-                commentCount, 
-                collect(DISTINCT {award: club_award.name, count: awardCount}) AS awards
-
-            RETURN 
-                post, 
-                labels(post), 
-                u.username, 
-                canon_book, 
-                u.id, 
-                currentChapter, 
-                commentCount, 
-                awards
-            """
-        )
-
+    
         if filter:
             result = tx.run(
                 query_w_filter,
-                book_club_id=book_club_id,
-                user_id=user_id,
-                skip=skip,
-                limit=limit
-            )
-        elif with_awards: 
-            result = tx.run(
-                query_w_awards,
                 book_club_id=book_club_id,
                 user_id=user_id,
                 skip=skip,
@@ -1464,6 +1407,23 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
                 small_img_url=response['canon_book'].get("small_img_url"),
                 google_id=response['canon_book'].get("google_id")
             )
+
+            awards = {}
+            if response.get("awards"):
+                for award in response.get("awards"):
+                    parent_award = award.end_node
+                    award_id = parent_award.get("id")
+                    if award_id not in awards:
+                        awards[award_id] = {
+                            "id": award_id,
+                            "name": parent_award.get("name",""),
+                            "type": parent_award.get("type",""),
+                            "description": parent_award.get("description",""),
+                            "num_grants": 1
+                        }
+                    else:
+                        awards[award_id]['num_grants'] += 1
+
             if response.get("labels(post)") == ["ClubUpdate"]:
                 post = BookClubSchemas.UpdatePost(
                     id=response['post'].get("id"),
@@ -1477,7 +1437,8 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
                     liked_by_current_user=response.get("liked_by_current_user"),
                     posted_by_current_user=response.get("posted_by_current_user"),
                     num_comments=response.get("num_comments"),
-                    book=book
+                    book=book,
+                    awards=awards
                 )
 
             elif response.get("labels(post)") == ["ClubUpdateNoText"]:
@@ -1490,7 +1451,8 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
                     liked_by_current_user=response.get("liked_by_current_user"),
                     posted_by_current_user=response.get("posted_by_current_user"),
                     num_comments=response.get("num_comments"),
-                    book=book
+                    book=book,
+                    awards=awards
                 )
 
             posts.append(post)

@@ -883,7 +883,6 @@ async def get_club_feed(
     book_club_id: str,
     current_user: Annotated[User, Depends(get_current_active_user)],
     filter: Optional[bool] = True,
-    with_awards: Optional[bool] = True,
     book_club_repo: BookClubCRUDRepositoryGraph = Depends(
         get_repository(repo_type=BookClubCRUDRepositoryGraph)
     ),
@@ -897,7 +896,6 @@ async def get_club_feed(
         book_club_id: The id for the book club
         filter (bool): Whether or not to filter out updates ahead of the current
             chapter for the current user. Defaults to True
-        with_awards (bool): Whether or not to include awards with the current paginated feed.
 
     Returns:
         posts: A list of posts in chronological order, posts can only be updates.
@@ -917,6 +915,13 @@ async def get_club_feed(
                 current user
             type (str): the type of the post. As of now can be one of update
                 and update_no_text
+            awards (array): an array of awards for the post. Each award object
+                will contain:
+                id (str): the uuid of the award
+                name (str): the name of the award
+                type (str): the type of the award
+                description (str): the description of the award
+                num_grants (int): the number of grants for the award
     """
 
     posts = book_club_repo.get_book_club_feed(
@@ -924,8 +929,7 @@ async def get_club_feed(
         user_id=current_user.id,
         skip=skip,
         limit=limit,
-        filter=filter,
-        with_awards=with_awards
+        filter=filter
     )
     logger.info(
         "Fetched club feed",
