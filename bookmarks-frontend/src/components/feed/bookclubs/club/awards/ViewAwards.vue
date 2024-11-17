@@ -69,7 +69,7 @@
                                 <button 
                                     v-if="award.current_uses > 0"
                                     type="button" 
-                                    class="mt-5 text-xs text-red-500 " 
+                                    class="text-xs text-red-500 " 
                                     @click="removeAwardFromPost(postId, award.id)"
                                 >
                                     Ungrant
@@ -299,18 +299,30 @@ function grantAwardToPost(postId, awardId, useArray) {
 }
 
 .award {
-    background-color: var(--stone-400);
+    background-color: var(--stone-200);
     padding: 4px;
     padding-bottom: 8px;
-    border-radius: 4px;
+    border-radius: 8px;
     transition: all 250ms ease;
     outline-offset: 4px;
-    border-radius: 12px;
+    margin-bottom: 5px;
+
+    &:hover {
+        background-color: var(--stone-300);
+
+        .award-front {
+            box-shadow: rgba(0, 0, 0, 0.06) 0px 2px 4px 0px inset;
+        }
+    }
+
+    &:active {
+        background-color: var(--stone-400);
+    }
 
     .award-front {
         display: block;
         padding: 4px 12px;
-        border-radius: 12px;
+        border-radius: 8px;
         font-size: 1.25rem;
         background: var(--stone-50);
         color: white;
@@ -318,6 +330,8 @@ function grantAwardToPost(postId, awardId, useArray) {
 
         &:active {
             transform: translateY(-2px);
+            background-color: var(--indigo-50);
+            box-shadow: rgba(0, 0, 0, 0.1) 0px 2px 4px 0px inset;
         }
     }
 

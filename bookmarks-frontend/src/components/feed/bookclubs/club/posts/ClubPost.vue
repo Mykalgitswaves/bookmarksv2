@@ -59,7 +59,10 @@
                 <button @click="dispatchAwardEvent(post.id)">
                     grant award
                 </button>
-               
+                
+                <div v-for="grantedAward in grantedAwards" :key="awardId">
+
+                </div>
             </div>
         </div>
     </div>
