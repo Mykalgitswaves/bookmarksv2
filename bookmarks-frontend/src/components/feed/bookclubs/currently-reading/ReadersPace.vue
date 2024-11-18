@@ -29,7 +29,7 @@ const getPacePromise = db.get(
     false, 
     (res) => {
         console.log(res)        
-        clubPace.value = res.club_pace;
+        clubPace = res.club_pace;
         loaded.value = true;
     }, 
     (err) => {
