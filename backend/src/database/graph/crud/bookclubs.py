@@ -6,6 +6,7 @@ from src.database.graph.crud.base import BaseCRUDRepositoryGraph
 from src.models.schemas import bookclubs as BookClubSchemas
 from src.models.schemas.books import BookPreview
 from src.models.schemas.users import Member 
+from src.utils.helpers.help import AWARD_CONSTANTS
 
 class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
     def create_bookclub(
@@ -1412,17 +1413,17 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
             if response.get("awards"):
                 for award in response.get("awards"):
                     parent_award = award.end_node
-                    award_id = parent_award.get("id")
-                    if award_id not in awards:
-                        awards[award_id] = {
-                            "id": award_id,
+                    cls = AWARD_CONSTANTS.get(parent_award.get("name"))
+                    if cls not in awards:
+                        awards[cls] = {
                             "name": parent_award.get("name",""),
                             "type": parent_award.get("type",""),
                             "description": parent_award.get("description",""),
-                            "num_grants": 1
+                            "num_grants": 1,
+                            "cls": AWARD_CONSTANTS.get(parent_award.get("name"))
                         }
                     else:
-                        awards[award_id]['num_grants'] += 1
+                        awards[cls]['num_grants'] += 1
 
             if response.get("labels(post)") == ["ClubUpdate"]:
                 post = BookClubSchemas.UpdatePost(

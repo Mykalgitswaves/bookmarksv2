@@ -18,7 +18,20 @@ export const Award = {
 
 
 import DunceCap from './icons/DunceCap.vue';
+import HotTake from './icons/HotTake.vue';
+import DefinitelyDidntReadIt from './icons/DefinitelyDidntReadIt.vue';
+import StrangeHillToDieOn from './icons/StrangeHillToDieOn.vue';
+import Facts from './icons/Facts.vue';
+import NiceGippity from './icons/NiceGippity.vue';
+import Hundred from './icons/Hundred.vue';
 
 export const ClubAwardsSvgMap = {
-    'dunce-cap': () => DunceCap 
+    dunce_cap: () => DunceCap,
+    hot_take: () => HotTake,
+    nice_gippity: () => NiceGippity,
+    facts: () => Facts,
+    strange_hill_to_die_on: () => StrangeHillToDieOn,
+    definitely_didnt_read_it: () => DefinitelyDidntReadIt,
+    '100': () => Hundred,
+    doubt: () => false,
 }

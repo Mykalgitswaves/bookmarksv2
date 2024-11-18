@@ -33,37 +33,42 @@
 
                     <p class="text-slate mt-5">Something weird happened</p>
                 </div>
-
                 <div v-if="post.headline">
                     <div class="divider"></div>
 
-                    <p class="fancy text-xl">{{ props.headline }}</p>
+                    <p class="fancy text-xl">{{ post.headline }}</p>
                     
                     <div class="divider"></div>
                 </div>
 
-                <div v-if="post.book && (post.response || post.quote)" class="card-responses">
+                <div v-if="post.response.length" class="card-responses">
                     <!-- Removing headline for now to minimize amount of information people are seeing -->
 
-                    <p v-if="quote" class="quote">"{{ post.quote }}"</p>
+                    <p v-if="post.quote" class="quote">"{{ post.quote }}"</p>
 
-                    <p v-if="response" class="response">{{ post.response }}</p>
+                    <p v-if="post.response" class="response">{{ post.response }}</p>
                 </div>
             </div>
 
             <!-- Footer dawg  -->
             <div class="card-footer">
                 <!-- Rethink these as club specific controls. -->
-                <div class="flex gap-2">
-                </div>
-                <button @click="dispatchAwardEvent(post.id)">
-                    grant award
-                </button>
-                
-                <div class="awards-list">
-                    <div title="dunce cap" class="award">
-                        <component :is="ClubAwardsSvgMap['dunce-cap']()"/>
+                <div class="ml-auto text-end">
+                    <div class="awards-list" :class="{'expanded': false}" v-if="awards.length">
+                        <div v-for="award in awards[0]" :key="award.id" class="award" :title="award.name">
+                            <component v-if="ClubAwardsSvgMap[award.cls]" :is="ClubAwardsSvgMap[award.cls]()"/>
+                        </div>
                     </div>
+
+                    <span v-if="awards[1]"></span>
+
+                    <!-- todo add in n more awards stuff here. -->
+                    <button 
+                        class="btn btn-tiny text-indigo-500 underline mr-auto" 
+                        @click="dispatchAwardEvent(post.id)"
+                    >
+                        View all awards
+                    </button>
                 </div>
             </div>
         </div>
@@ -86,6 +91,7 @@
 <script setup>
 import { ClubUpdatePost, ClubReviewPost } from '../../models/models';
 import { ClubAwardsSvgMap } from '../awards/awards';
+import { computed } from 'vue';
 
 const props = defineProps({
     post: {
@@ -93,6 +99,24 @@ const props = defineProps({
         required: true,
     }
 });
+/**
+ * @typedef { awards} – Returns a list containing the first 4 awards sorted
+ *  in descending order first, then either false in the case that there are no remaining awards, 
+ * or a Number indicating how many more award types have been granted on this post.
+ * @param {awards}
+ * @returns {List[list, Number | Bool]}
+ */
+const awards = computed(() => {
+    const _awards = Object.values(props.post.awards)
+    let previewed_awards = _awards.sort((a, b) => b.num_grants - a.num_grants).splice(0, 4);
+    let diffCountAwarded = _awards.length - previewed_awards
+    if(diffCountAwarded < 0) {
+        return [previewed_awards, false]
+    } else {
+        return [previewed_awards, diffCountAwarded]
+    }
+});
+
 
 function dispatchAwardEvent(postId) {
     const event = new CustomEvent('open-award-post-modal', {
@@ -132,14 +156,29 @@ function dispatchAwardEvent(postId) {
 
 .awards-list {
     border: 1px solid red; 
-    margin-bottom: -20px;
+    margin-bottom: -10px;
+    margin-right: -20px;
     display: flex;
     column-gap: 10px;
     justify-content: space-around;
-    
+    flex-wrap: wrap;
+    background-color: var(--surface-primary);
+
     .award {
         height: 60px;
         width: 60px;
+        color: var(--indigo-500);
+        
+        &:hover {
+            background-color: var(--indigo-50);
+        }
+    }
+
+    @media screen and (max-width: 768px) {
+        .award {
+            height: 50px;
+            width: 50px;
+        }
     }
 }
 </style>
