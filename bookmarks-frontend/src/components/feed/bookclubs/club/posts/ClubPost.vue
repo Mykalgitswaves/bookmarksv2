@@ -108,7 +108,7 @@ const props = defineProps({
  */
 const awards = computed(() => {
     const _awards = Object.values(props.post.awards)
-    let previewed_awards = _awards.sort((a, b) => b.num_grants - a.num_grants).splice(0, 4);
+    let previewed_awards = _awards.sort((a, b) => b.num_grants - a.num_grants).slice(0, 4);
     let diffCountAwarded = _awards.length - previewed_awards
     if(diffCountAwarded < 0) {
         return [previewed_awards, false]
