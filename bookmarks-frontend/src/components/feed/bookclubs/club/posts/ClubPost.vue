@@ -104,7 +104,7 @@ const props = defineProps({
  *  in descending order first, then either false in the case that there are no remaining awards, 
  * or a Number indicating how many more award types have been granted on this post.
  * @param {awards}
- * @returns {List[list, Number | Bool]}
+ * @returns {List[list, (Number | Bool)]}
  */
 const awards = computed(() => {
     const _awards = Object.values(props.post.awards)
