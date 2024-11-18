@@ -1420,7 +1420,7 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
                             "type": parent_award.get("type",""),
                             "description": parent_award.get("description",""),
                             "num_grants": 1,
-                            "cls": AWARD_CONSTANTS.get(parent_award.get("name"))
+                            "cls": cls,
                         }
                     else:
                         awards[cls]['num_grants'] += 1
