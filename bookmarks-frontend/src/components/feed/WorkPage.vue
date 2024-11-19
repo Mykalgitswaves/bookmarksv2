@@ -50,8 +50,36 @@
                     <template #overlay-main>
                         <AsyncComponent :promises="[loadedPromise]">
                             <template #resolved>
-                                <div v-for="bookshelf in bookshelves">
-                                    {{ bookshelf.title }}
+                                <div v-if="bookshelves">
+                                    <label class="select-1" for="moveToShelf">
+                                        <span class="text-stone-600 bold">Move to shelf</span>
+                                    
+                                        <select class="block w-100 mt-2" name="" id="moveToShelf" v-model="moveToSelectedShelfData.shelf">
+                                            <option v-for="shelf in bookshelves" :key="shelf.id" :value="shelf.id">
+                                                {{ shelf.title }}
+                                            </option>
+                                        </select>
+                                    </label>
+                                </div>
+                                <div class="mt-5">
+                                    <label class="text-stone-600">
+                                        <b>Optional: </b>
+                                        Add a note for this book
+                                    </label>
+                                    <!-- NOTE: This originally had an @input in it, but I didn't understand it so I removed it. -->
+                                     <!-- Something to do with debounce, maybe we can add it back together -->
+                                    <textarea class="w-100 mt-2 border-2 border-indigo-200 br-input-normal input-base-padding min-height-textarea" 
+                                        :style="{ 'height':  heights[note_for_shelf] + 'px' }"
+                                        v-model="moveToSelectedShelfData.note" 
+                                    />
+                                </div>
+                                <div class="mt-5 place-content-center">
+                                    <button type="button" 
+                                        class="btn btn-submit small" 
+                                        @click="testOnClick()"
+                                    >
+                                        Move to shelf
+                                    </button>
                                 </div>
                             </template>
 
@@ -148,6 +176,19 @@ const mapping = {
   "comparison": `/feed/${user}/create/review/comparison/work/${work}`,
 };
 
+const moveToSelectedShelfData = ref({
+    note: '', 
+    shelf: Bookshelves.WANT_TO_READ.prefix,
+    isRemovingFromCurrentShelf: false,
+});
+
+const { debounce } = helpersCtrl;
+const heights = ref({});
+
+// Defaults for heights
+heights.value.note_for_shelf = 82;
+
+const throttledScrollHeightForTextArea = (200, 150, true);
 
 const getBookshelvesMinimalPreviewPromise = db.get(urls.rtc.minimalBookshelvesForLoggedInUser(user), null, false, 
     (res) => {
@@ -158,6 +199,13 @@ const getBookshelvesMinimalPreviewPromise = db.get(urls.rtc.minimalBookshelvesFo
 );
 
 const loadedPromise = Promise.all([getBookshelvesMinimalPreviewPromise]);
+
+
+function testOnClick() {
+    console.log(moveToSelectedShelfData.value.note)
+};
+
+testOnClick()
 
 console.log(bookshelves)
 
