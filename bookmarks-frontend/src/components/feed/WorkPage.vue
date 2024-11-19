@@ -109,6 +109,7 @@ import IconAddReview from '../svg/icon-add-post.vue';
 import Overlay from './partials/overlay/Overlay.vue';
 import { showOverlay } from './partials/overlay/overlay-service.js';
 import AsyncComponent from './partials/AsyncComponent.vue';
+import { Bookshelves } from '../../models/bookshelves';
 
 const route = useRoute();
 const router = useRouter();
@@ -118,8 +119,17 @@ const book_id = route.params.version ? route.params.version : route.params.work;
 const overlayRef = ref(null);
 const book = ref(null);
 const filterPopout = ref(false);
+const FLOWSHELVES = [Bookshelves.WANT_TO_READ, Bookshelves.CURRENTLY_READING, Bookshelves.FINISHED_READING];
 
 let bookshelves = [];
+
+FLOWSHELVES.forEach(
+        (shelf) => {
+        // We need to get the users visbiility for each shelf.
+        let _shelf = Bookshelves.formatFlowShelf(shelf, 'private');
+        bookshelves.push(_shelf);
+    }
+);
 
 async function getWorkPage() {
     await db.get(urls.books.getBookPage(book_id), null, true).then((res) => {
@@ -138,7 +148,8 @@ const mapping = {
   "comparison": `/feed/${user}/create/review/comparison/work/${work}`,
 };
 
-const memberBookshelvesPromise = db.get(urls.rtc.getMemberBookshelves(user), null, false, 
+
+const getBookshelvesMinimalPreviewPromise = db.get(urls.rtc.minimalBookshelvesForLoggedInUser(user), null, false, 
     (res) => {
         bookshelves.push(...res.bookshelves);
     }, (err) => {
@@ -146,15 +157,9 @@ const memberBookshelvesPromise = db.get(urls.rtc.getMemberBookshelves(user), nul
     }
 );
 
-const getBookshelvesCreatedByUserPromise = db.get(urls.rtc.getBookshelvesCreatedByUser(user), null, false, 
-    (res) => {
-        bookshelves.push(...res.bookshelves);
-    }, (err) => {
-        console.log(err);
-    }
-);
+const loadedPromise = Promise.all([getBookshelvesMinimalPreviewPromise]);
 
-const loadedPromise = Promise.all([memberBookshelvesPromise, getBookshelvesCreatedByUserPromise])
+console.log(bookshelves)
 
 </script>
 <style scoped>
