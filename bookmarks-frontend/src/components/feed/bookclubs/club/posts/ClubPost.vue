@@ -19,8 +19,6 @@
                         {{ post.book.title }}
                     </p>
 
-                    <img class="review-image" :src="post.book.small_img_url" alt="">
-
                     <h4 class="text-xl italic text-slate-700">
                         chapter <span class="text-indigo-600">{{ post.chapter }}</span>
                         <!-- on page #<span class="text-indigo-600">{{ post.page }}</span> -->
@@ -184,6 +182,7 @@ function ungrantAward() {
 
         &.granted-by-user {
             background-color: var(--green-100);
+            fill: var(--);
         }
     }
 

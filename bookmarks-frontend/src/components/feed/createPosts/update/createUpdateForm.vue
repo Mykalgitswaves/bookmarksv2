@@ -42,26 +42,15 @@
     <div class="spacing-wrap">
         <div class="container">
             <div class="mb-5 ml-auto mr-auto w-90" v-if="step === 1">
-                <div class="flex space-between">
-                    <label class="block mb-5 mt-10" for="page-number">
-                        <p class="text-2xl mb-2 mt-5 text-stone-600 fancy">Im on page <span class="italic text-indigo-600">{{ page }}</span></p>
-                        <input
-                            class="input-number rounded-md"
-                            id="page-number"
-                            type="number" 
-                            v-model="update.page"
-                        >
-                    </label>
-                    <label class="block mb-5 mt-10" for="page-number">
-                        <p class="text-2xl mb-2 mt-5 text-stone-600 fancy">on chapter <span class="italic text-indigo-600">{{ chapter }}</span></p>
-                        <input
-                            class="input-number rounded-md"
-                            id="page-number"
-                            type="number" 
-                            v-model="update.chapter"
-                        >
-                    </label>
-                </div>
+                <label class="block mb-5 mt-10" for="page-number">
+                    <p class="text-center text-2xl mb-2 mt-5 text-stone-600 fancy">on chapter <span class="italic text-indigo-600">{{ chapter }}</span></p>
+                    <input
+                        class="mx-auto input-number rounded-md"
+                        id="page-number"
+                        type="number" 
+                        v-model="update.chapter"
+                    >
+                </label>
 
                 <div class="text-center">
                     <slot name="set-current-page">
