@@ -1370,7 +1370,7 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
             optional match (book)-[br:IS_EQUIVALENT_TO]-(canon_book:Book)
             optional match (comments:Comment {deleted:false})<-[:HAS_COMMENT]-(post)
             optional match (post)<-[:AWARD_FOR_POST]-(post_award:ClubAwardForPost)
-            optional match award_long = (post_award)-[CHILD_OF]->(award:ClubAward)
+            optional match award_long = (award_user:User)-[:GRANTED]->(post_award)-[CHILD_OF]->(award:ClubAward)
             RETURN post, labels(post), u.username, canon_book, u.id, user_reading.current_chapter,
             CASE WHEN lr IS NOT NULL THEN true ELSE false END AS liked_by_current_user,
             CASE WHEN u.id = $user_id THEN true ELSE false END AS posted_by_current_user,
@@ -1412,6 +1412,7 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
             awards = {}
             if response.get("awards"):
                 for award in response.get("awards"):
+                    _user_id = award.start_node['id']
                     parent_award = award.end_node
                     cls = AWARD_CONSTANTS.get(parent_award.get("name"))
                     if cls not in awards:
@@ -1421,9 +1422,13 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
                             "description": parent_award.get("description",""),
                             "num_grants": 1,
                             "cls": cls,
+                            "granted_by_current_user": False,
                         }
                     else:
                         awards[cls]['num_grants'] += 1
+
+                    if user_id == _user_id:
+                        awards[cls]['granted_by_current_user'] = True
 
             if response.get("labels(post)") == ["ClubUpdate"]:
                 post = BookClubSchemas.UpdatePost(

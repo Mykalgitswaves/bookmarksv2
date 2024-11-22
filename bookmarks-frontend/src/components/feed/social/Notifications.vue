@@ -254,7 +254,7 @@ const invitesPromiseFactory = () => db.get(urls.bookclubs.getInvitesForUser(user
         invites = res.invites;
 
         res.invites.forEach((invite) => {
-            acceptedInvites.value[invite.id] = false;
+            dismissedNotifications.value[invite.id] = false;
         });
     }, 
     (err) => {

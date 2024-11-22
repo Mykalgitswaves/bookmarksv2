@@ -109,7 +109,7 @@
 
             <div v-if="step === 3" class="ml-auto mr-auto">
                 <CreatePostHeadline 
-                    v-if="update.response.length"
+                    v-if="update.response?.length"
                     :review-type="'update'"
                     :text-centered="true"
                     @headline-changed="headlineHandler" 
@@ -121,7 +121,7 @@
                     <CreateUpdateFormResponses :update="update" @go-to-edit-section="step = 2"/>
                 </div>
 
-                <div v-if="update.response.length" class="flex gap-5 space-between items-end my-5" >
+                <div v-if="update.response?.length" class="flex gap-5 space-between items-end my-5" >
                     <div>
                         <label :for="update.id" class="flex items-center">
                             <input :id="update.id" 
@@ -195,7 +195,7 @@ watch(update, () => {
     return emit('update-complete', helpersCtrl.formatUpdateData(update));
 });
 
-const isPostableUpdate = computed(() => (update.response.length || update.page));
+const isPostableUpdate = computed(() => (update.response?.length || update.page));
 </script>
 <style scoped>
  .spacing-wrap {

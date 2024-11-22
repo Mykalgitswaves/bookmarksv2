@@ -55,11 +55,17 @@
                 <!-- Rethink these as club specific controls. -->
                 <div class="ml-auto text-end">
                     <div class="awards-list" :class="{'expanded': false}" v-if="awards.length">
-                        <div v-for="award in awards[0]" :key="award.id" class="award" :title="award.name">
+                        <div v-for="award in awards" 
+                            :key="award.id" 
+                            class="award"
+                            :class="{'granted-by-user': award.granted_by_current_user}"
+                            :title="award.name"
+                            @click="ungrantAward(award.id, award.granted_by_current_user)"
+                        >
                             <component v-if="ClubAwardsSvgMap[award.cls]" :is="ClubAwardsSvgMap[award.cls]()"/>
                         </div>
                     </div>
-
+                    
                     <span v-if="awards[1]"></span>
 
                     <!-- todo add in n more awards stuff here. -->
@@ -99,6 +105,7 @@ const props = defineProps({
         required: true,
     }
 });
+
 /**
  * @typedef { awards} – Returns a list containing the first 4 awards sorted
  *  in descending order first, then either false in the case that there are no remaining awards, 
@@ -107,16 +114,9 @@ const props = defineProps({
  * @returns {List[list, (Number | Bool)]}
  */
 const awards = computed(() => {
-    const _awards = Object.values(props.post.awards)
-    let previewed_awards = _awards.sort((a, b) => b.num_grants - a.num_grants).slice(0, 4);
-    let diffCountAwarded = _awards.length - previewed_awards
-    if(diffCountAwarded < 0) {
-        return [previewed_awards, false]
-    } else {
-        return [previewed_awards, diffCountAwarded]
-    }
+    const _awards = Object.values(props.post.awards);
+    return _awards.sort((a, b) => b.num_grants - a.num_grants);
 });
-
 
 function dispatchAwardEvent(postId) {
     const event = new CustomEvent('open-award-post-modal', {
@@ -125,6 +125,10 @@ function dispatchAwardEvent(postId) {
         }
     });
     window.dispatchEvent(event);
+};
+
+function ungrantAward() {
+
 };
 </script>
 <style scoped>
@@ -159,18 +163,27 @@ function dispatchAwardEvent(postId) {
     margin-bottom: -10px;
     margin-right: -20px;
     display: flex;
-    column-gap: 10px;
-    justify-content: space-around;
+    column-gap: 4px;
+    row-gap: 4px;
+    justify-content: start;
     flex-wrap: wrap;
     background-color: var(--surface-primary);
 
     .award {
-        height: 60px;
-        width: 60px;
+        height: 40px;
+        width: 40px;
         color: var(--indigo-500);
-        
+        border: 1px solid var(--stone-100);
+        border-radius: 4px;
+        fill: var(--indigo-500);
+
         &:hover {
             background-color: var(--indigo-50);
+            border: 1px solid var(--indigo-400);
+        }
+
+        &.granted-by-user {
+            background-color: var(--green-100);
         }
     }
 
