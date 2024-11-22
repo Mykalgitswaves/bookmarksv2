@@ -131,7 +131,7 @@ function postUpdateForBookClub(update) {
         (res) => {
             console.log(res);
             // Refresh;
-            loadClubFeed();
+            refreshFeed();
             const { dialogRef } = updateOverlay.value;
             dialogRef?.close();
         },
