@@ -73,21 +73,23 @@
                 Invite another person
             </button>
 
+            <div class="flex gap-2">
                 <button v-if="invitations.length > 1" 
                     type="submit"
                     :disabled="submitting"
                     class="btn btn-tiny btn-submit text-sm"
                     :class="{submitting: 'btn-ghost'}"
                 >
-                Send all invites
-            </button>   
+                    Send all invites
+                </button>   
 
-            <button 
-                class="btn btn-tiny btn-green text-sm"
-                type="button"
-                @click="previewEmailInvite">
-                Preview an invite email
-            </button>
+                <button 
+                    class="btn btn-tiny btn-green text-sm"
+                    type="button"
+                    @click="previewEmailInvite">
+                    Preview an invite email
+                </button>
+            </div>
         </div>
     </TransitionGroup>
     </form>
