@@ -48,7 +48,7 @@
 
                 <Overlay ref="overlayRef">
                     <template #overlay-main>
-                        <AsyncComponent :promises="[loadedPromise]">
+                        <AsyncComponent :promises="[getBookshelvesMinimalPreviewPromise]">
                             <template #resolved>
                                 <div v-if="bookshelves">
                                     <label class="select-1" for="moveToShelf">
@@ -188,7 +188,7 @@ const heights = ref({});
 // Defaults for heights
 heights.value.note_for_shelf = 82;
 
-const throttledScrollHeightForTextArea = (200, 150, true);
+const debouncedScrollHeightForTextArea = (200, 150, true);
 
 const getBookshelvesMinimalPreviewPromise = db.get(urls.rtc.minimalBookshelvesForLoggedInUser(user), null, false, 
     (res) => {
@@ -198,16 +198,9 @@ const getBookshelvesMinimalPreviewPromise = db.get(urls.rtc.minimalBookshelvesFo
     }
 );
 
-const loadedPromise = Promise.all([getBookshelvesMinimalPreviewPromise]);
-
-
 function testOnClick() {
     console.log(moveToSelectedShelfData.value.note)
 };
-
-testOnClick()
-
-console.log(bookshelves)
 
 </script>
 <style scoped>

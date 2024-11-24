@@ -1001,12 +1001,14 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
         for record in result:
             # Get the currently reading book if it exists
             if record.get("currently_reading_book_id"):
+                # Author names will get but might return None
+                author_names = record.get('currently_reading_book_author_names')
                 current_book = BookClubSchemas.BookClubCurrentlyReading(
                     book_id=record.get("currently_reading_book_id"),
                     title=record.get("currently_reading_book_title"),
                     small_img_url=record.get(
                         "currently_reading_book_small_img_url"),
-                    author_names=record.get('currently_reading_book_author_names')
+                    author_names=author_names if author_names else [],
                 )
             else:
                 current_book = None

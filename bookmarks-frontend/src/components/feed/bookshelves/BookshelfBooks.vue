@@ -116,7 +116,7 @@
                     name="note_for_shelf"
                     :style="{ 'height':  heights.note_for_shelf + 'px' }"
                     v-model="currentBookForOverlay.note_for_shelf"
-                    @input="throttledScrollHeightForTextArea(textAreas.wantToReadNoteTextArea)"
+                    @input="generatedHeightForTextArea(textAreas.wantToReadNoteTextArea)"
                 ></textarea>
                 <!-- Saving the note you just made -->
                 <div class="flex justify-between mt-5">
@@ -143,7 +143,7 @@
                         :name="Bookshelves.CURRENTLY_READING.prefix"
                         id="currentlyReading"
                         v-model="moveToSelectedShelfData.note" 
-                        @input="throttledScrollHeightForTextArea(textAreas.currentlyReadingTextArea)"
+                        @input="generatedHeightForTextArea(textAreas.currentlyReadingTextArea)"
                     />
                 </div>
 
@@ -387,8 +387,6 @@ function generatedHeightForTextArea(refEl) {
     }
 }
 
-
-const throttledScrollHeightForTextArea = debounce(generatedHeightForTextArea, 150, true);
 // End height functions
 // ------------------------------
 
