@@ -360,32 +360,37 @@ heights.value[Bookshelves.WANT_TO_READ.prefix] = 82;
 
 
 function generatedHeightForTextArea(refEl) {
-    // Heights should only increase, not decrease if the new height is less than the current height - don't set it.
-    if (refEl.name === Bookshelves.CURRENTLY_READING.prefix) {
-        if (heights.value[Bookshelves.CURRENTLY_READING.prefix] < refEl.scrollHeight) {
+    // Temporarily set height to 'auto' to reset and measure content height
+    refEl.style.height = 'auto';
+
+    // Calculate the new height based on scrollHeight
+    const newHeight = `${Math.max(refEl.scrollHeight, 82)}px`; // Enforce minimum height of 82px
+
+    // Update the height only if it's different from the current height
+    if (refEl.style.height !== newHeight) {
+        refEl.style.height = newHeight; // Apply the new height
+
+        // Update the stored height if applicable (optional for tracking)
+        if (refEl.name === Bookshelves.CURRENTLY_READING.prefix) {
             heights.value[Bookshelves.CURRENTLY_READING.prefix] = refEl.scrollHeight;
         }
-    } 
 
-    if (refEl.name === Bookshelves.FINISHED_READING.prefix) {
-        if (heights.value[Bookshelves.FINISHED_READING.prefix] < refEl.scrollHeight) {
+        if (refEl.name === Bookshelves.FINISHED_READING.prefix) {
             heights.value[Bookshelves.FINISHED_READING.prefix] = refEl.scrollHeight;
         }
-    }
 
-    if (refEl.name === Bookshelves.WANT_TO_READ.prefix) {
-        if (heights.value[Bookshelves.WANT_TO_READ.prefix] < refEl.scrollHeight) {
+        if (refEl.name === Bookshelves.WANT_TO_READ.prefix) {
             heights.value[Bookshelves.WANT_TO_READ.prefix] = refEl.scrollHeight;
         }
-    }
 
-    if(refEl.name === 'note_for_shelf') {
-        console.log(refEl.scrollHeight)
-        if (heights.value[Bookshelves.WANT_TO_READ.note_for_shelf] > refEl.scrollHeight) {
+        if (refEl.name === 'note_for_shelf') {
             heights.value[Bookshelves.WANT_TO_READ.note_for_shelf] = refEl.scrollHeight;
         }
     }
 }
+
+// This sucked so I dont use it. Typing experience has janky
+const debouncedScrollHeightForTextArea = debounce(generatedHeightForTextArea, 150, true)
 
 // End height functions
 // ------------------------------

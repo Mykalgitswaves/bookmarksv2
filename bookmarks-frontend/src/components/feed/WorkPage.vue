@@ -70,7 +70,10 @@
                                      <!-- Something to do with debounce, maybe we can add it back together -->
                                     <textarea class="w-100 mt-2 border-2 border-indigo-200 br-input-normal input-base-padding min-height-textarea" 
                                         :style="{ 'height':  heights[note_for_shelf] + 'px' }"
+                                        :ref="(el) => (textAreas.noteTextArea = el)"
+                                        name="note_for_shelf"
                                         v-model="moveToSelectedShelfData.note" 
+                                        @input="generatedHeightForTextArea(textAreas.noteTextArea)"
                                     />
                                 </div>
                                 <div class="mt-5 place-content-center">
@@ -182,13 +185,33 @@ const moveToSelectedShelfData = ref({
     isRemovingFromCurrentShelf: false,
 });
 
+// Default refs for the textareas we are adjusting.
+const textAreas = ref({
+    noteTextArea: null
+});
+
 const { debounce } = helpersCtrl;
 const heights = ref({});
 
 // Defaults for heights
 heights.value.note_for_shelf = 82;
 
-const debouncedScrollHeightForTextArea = (200, 150, true);
+function generatedHeightForTextArea(refEl) {
+    // Temporarily set height to 'auto' to reset and measure content height
+    refEl.style.height = 'auto';
+
+    // Calculate the new height based on scrollHeight
+    const newHeight = `${Math.max(refEl.scrollHeight, 82)}px`; // Enforce minimum height of 82px
+
+    // Update the height only if it's different from the current height
+    if (refEl.style.height !== newHeight) {
+        refEl.style.height = newHeight; // Apply the new height
+
+        if (refEl.name === 'note_for_shelf') {
+            heights.value[Bookshelves.WANT_TO_READ.note_for_shelf] = refEl.scrollHeight;
+        }
+    }
+}
 
 const getBookshelvesMinimalPreviewPromise = db.get(urls.rtc.minimalBookshelvesForLoggedInUser(user), null, false, 
     (res) => {
