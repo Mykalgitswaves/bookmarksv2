@@ -11,8 +11,7 @@
 
     <form @submit.prevent="sendInvites(null, invitations)" v-if="invitations.length">
         <TransitionGroup name="content" tag="div" class="invitations">
-            <div 
-                v-for="(invite, index) in invitations"
+            <div v-for="(invite, index) in invitations"
                 :key="invite.id"
                 class="invite" 
                 :class="{
