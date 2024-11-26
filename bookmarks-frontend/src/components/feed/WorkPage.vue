@@ -174,9 +174,9 @@ const book_img = computed(() => (book.value?.small_img_url || book.value?.img_ur
 const postOptions = ["review", "update", "comparison"];
 
 const mapping = {
-  "review": `/feed/${user}/create/review/review/work/${work}`,
-  "update": `/feed/${user}/create/review/update/work/${work}`,
-  "comparison": `/feed/${user}/create/review/comparison/work/${work}`,
+  "review": `/feed/${user}/create/review/${work}`,
+  "update": `/feed/${user}/create/update/${work}`,
+  "comparison": `/feed/${user}/create/comparison/${work}`,
 };
 
 const moveToSelectedShelfData = ref({
