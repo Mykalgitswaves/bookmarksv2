@@ -1,7 +1,7 @@
 <template>
     <section :class="quickReview ? 'p-20' : ''">
         <BackBtn/>
-        <div v-if="!book">
+        <div v-if="!book && !book_id">
             <p class="text-2xl mb-2 mt-5 font-semibold text-center">The content monster is hungry for your thoughts 🍪. <br/>
                 <span class="text-indigo-500">Start by picking a book </span>
             </p>
@@ -125,7 +125,7 @@
     </section>
 </template>
 <script setup>
-import { ref, defineEmits, watch, computed, reactive } from 'vue'
+import { ref, defineEmits, watch, computed, reactive, onMounted } from 'vue'
 import { postData } from '../../../../postsData.js';
 import { createQuestionStore } from '../../../stores/createPostStore';
 import { helpersCtrl } from '../../../services/helpers';
@@ -135,6 +135,8 @@ import CreateReviewQuestions from './createReviewQuestions.vue';
 import YourReviewQuestions from './yourReviewQuestions.vue';
 import ReviewRating from './ReviewRating.vue';
 import { Bookshelves } from '../../../models/bookshelves';
+import { db } from '../../../services/db';
+import { urls } from '../../../services/urls';
 
 const props = defineProps({
     headlineError: {
@@ -156,8 +158,13 @@ const props = defineProps({
     unique: {
         type: String,
         required: false,
+    },
+    book_id: { 
+        type: String, 
+        default: null 
     }
 });
+
 
 // get qs from data and add in entries.
 const questionCats = Array.from(Object.keys(postData.posts.review))
@@ -299,6 +306,28 @@ let quickReview = false;
 if (props.unique === Bookshelves.CURRENTLY_READING.prefix) {
     quickReview = true;
 }
+
+async function getWorkPage(book_id) {
+    await db.get(urls.books.getBookPage(book_id), null, true).then((res) => {
+        book.value = res.data;
+    })
+}
+
+watch(
+    () => props.book_id,
+    (newBookId) => {
+        if (newBookId) {
+            getWorkPage(newBookId);
+        }
+    },
+    { immediate: true } // Trigger immediately if book_id is provided at mount
+);
+
+onMounted(() => {
+    if (props.book_id) {
+        getWorkPage(props.book_id);
+    }
+});
 </script>
 
 <style scoped>

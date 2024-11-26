@@ -36,14 +36,24 @@
     </div>
 </template>
 <script setup>
-import { ref, reactive, watch, computed } from 'vue';
+import { ref, reactive, watch, computed, onMounted } from 'vue';
 import SearchBooks from '../searchBooks.vue';
 import IconEdit from '../../../svg/icon-edit.vue';
+import { db } from '../../../../services/db';
+import { urls } from '../../../../services/urls';
 
 const emit = defineEmits();
 const books = ref([]);
 const currentStep = ref(0);
 const isDoneReviewing = ref(false);
+const props = defineProps({
+    book_id: { 
+        type: String, 
+        default: null 
+    }
+});
+
+console.log('book_id', props.book_id)
 
 function bookOneHandler(e) {
     books.value = [e];
@@ -92,15 +102,34 @@ const bookMapping = reactive({
     },
 });
 
+async function getWorkPage(book_id) {
+    await db.get(urls.books.getBookPage(book_id), null, true).then((res) => {
+        books.value.push(res.data);
+    })
+}
+
+watch(
+    () => props.book_id,
+    (newBookId) => {
+        if (newBookId) {
+            getWorkPage(newBookId);
+        }
+    },
+    { immediate: true } // Trigger immediately if book_id is provided at mount
+);
+console.log('books', books.value)
+
+// default component state is 0
+if (props.book_id) {
+    currentStep.value = 1;
+}
+
 // make reactive object in case we ever want more than two books for a comparison
 const currentComponent = reactive({
     component: SearchBooks,
     props: bookMapping[currentStep.value].props,
     events: bookMapping[currentStep.value].events
 })
-
-// default component state is 0
-currentComponent.value = bookMapping[0]
 
 watch(currentStep, (newValue) => {
         currentComponent.props = bookMapping[newValue].props
