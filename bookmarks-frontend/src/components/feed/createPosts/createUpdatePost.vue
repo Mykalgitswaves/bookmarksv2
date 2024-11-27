@@ -21,14 +21,20 @@
 </template>
 
 <script setup>
-import { ref, toRaw } from 'vue';
+import { ref, toRaw, watch, onMounted } from 'vue';
 import SearchBooks from './searchBooks.vue';
 import CreateUpdateFormVue from './update/createUpdateForm.vue';
+import { db } from '../../../services/db';
+import { urls } from '../../../services/urls';
 
-defineProps({
+const props = defineProps({
     isPostableData: {
         type: Boolean,
         required: true,
+    },
+    book_id: {
+        type: String,
+        default: null,
     }
 });
 
@@ -44,4 +50,26 @@ function updateEmitHandler(e){
     update = toRaw(e);
     emit('is-postable-data', update);
 }
+
+async function getWorkPage(book_id) {
+    await db.get(urls.books.getBookPage(book_id), null, true).then((res) => {
+        book.value = res.data;
+    })
+}
+
+watch(
+    () => props.book_id,
+    (newBookId) => {
+        if (newBookId) {
+            getWorkPage(newBookId);
+        }
+    },
+    { immediate: true } // Trigger immediately if book_id is provided at mount
+);
+
+onMounted(() => {
+    if (props.book_id) {
+        getWorkPage(props.book_id);
+    }
+});
 </script>
