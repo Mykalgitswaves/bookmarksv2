@@ -65,10 +65,7 @@
                         class="award"
                         :class="{'granted-by-user': award.granted_by_current_user}"
                         :title="award.name"
-                        @click="award.granted_by_current_user 
-                            ? ungrantAward(award.id, index - 1) 
-                            : grantAward(award.id)
-                        "
+                        @click="grantAward(award.id)"
                     >
                         <span>
                             <span class="num-grants">{{ award.num_grants }}</span>
