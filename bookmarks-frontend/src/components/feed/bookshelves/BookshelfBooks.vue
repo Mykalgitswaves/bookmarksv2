@@ -566,6 +566,11 @@ async function moveToShelf(bookshelf) {
     } catch (error) {
         console.error(error);
     }
+    console.log("Moving to shelf", bookshelf);
+    if (!isUpdatingCurrentlyReadingBook || !(bookshelf === Bookshelves.FINISHED_READING.prefix)) {
+        console.log('closing overlay');
+        showBookControlsOverlay.value = false;
+    }
 }
 // End of book controls overlay function
 // ------------------------------

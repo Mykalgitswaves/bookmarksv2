@@ -5,6 +5,5 @@ export function showOverlay (templateRef) {
 
 export function hideOverlay(templateRef) {
     const { dialogRef } = templateRef;
-    dialogRef.close();
-    
+    dialogRef?.close();   
 }
