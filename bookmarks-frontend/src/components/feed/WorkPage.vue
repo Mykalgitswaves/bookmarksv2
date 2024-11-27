@@ -79,7 +79,7 @@
                                 <div class="mt-5 place-content-center">
                                     <button type="button" 
                                         class="btn btn-submit small" 
-                                        @click="testOnClick()"
+                                        @click="moveToShelf(moveToSelectedShelfData.shelf, overlayRef)"
                                     >
                                         Move to shelf
                                     </button>
@@ -129,7 +129,7 @@
 
 <script setup>
 // import SimilarBooks from '@/components/feed/SimilarBooks.vue';
-import { ref, computed } from 'vue';
+import { ref, computed, toRaw } from 'vue';
 import { useRoute, useRouter } from 'vue-router'
 import { db } from '../../services/db';
 import { urls } from '../../services/urls';
@@ -138,7 +138,7 @@ import IconPlus from '../svg/icon-plus.vue';
 import LoadingCard from '../shared/LoadingCard.vue'
 import IconAddReview from '../svg/icon-add-post.vue';
 import Overlay from './partials/overlay/Overlay.vue';
-import { showOverlay } from './partials/overlay/overlay-service.js';
+import { hideOverlay, showOverlay } from './partials/overlay/overlay-service.js';
 import AsyncComponent from './partials/AsyncComponent.vue';
 import { Bookshelves } from '../../models/bookshelves';
 
@@ -224,6 +224,27 @@ const getBookshelvesMinimalPreviewPromise = db.get(urls.rtc.minimalBookshelvesFo
 function testOnClick() {
     console.log(moveToSelectedShelfData.value.note)
 };
+
+async function moveToShelf(bookshelf, overlayRef) {
+    const authors = toRaw(book.value.author_names) || toRaw(book.value.authors)
+    const book_to_add = {
+        title: book.value.title,
+        author_names: authors,
+        small_img_url: book.value.small_img_url,
+        id: book.value.id || book.value.google_id,
+        noteForShelf: moveToSelectedShelfData.value.note,
+    }
+    let currentShelf = '';
+   
+    try {
+        console.log(book_to_add)
+        const response = await Bookshelves.moveBookToShelf(bookshelf, book_to_add, currentShelf);
+        hideOverlay(overlayRef);
+        console.log(response);
+    } catch (error) {
+        console.error(error);
+    }
+}
 
 </script>
 <style scoped>
