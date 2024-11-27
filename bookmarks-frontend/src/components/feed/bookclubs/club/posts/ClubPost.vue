@@ -51,28 +51,30 @@
             <!-- Footer dawg  -->
             <div class="card-footer">
                 <!-- Rethink these as club specific controls. -->
-                <div class="ml-auto text-end">
-                    <div class="awards-list" :class="{'expanded': false}" v-if="awards.length">
-                        <div v-for="award in awards" 
-                            :key="award.id" 
-                            class="award"
-                            :class="{'granted-by-user': award.granted_by_current_user}"
-                            :title="award.name"
-                            @click="ungrantAward(award.id, award.granted_by_current_user)"
-                        >
-                            <component v-if="ClubAwardsSvgMap[award.cls]" :is="ClubAwardsSvgMap[award.cls]()"/>
-                        </div>
-                    </div>
-                    
-                    <span v-if="awards[1]"></span>
-
                     <!-- todo add in n more awards stuff here. -->
-                    <button 
-                        class="btn btn-tiny text-indigo-500 underline mr-auto" 
-                        @click="dispatchAwardEvent(post.id)"
+                <button 
+                    class="btn btn-tiny btn-icon mr-auto btn-specter b-0" 
+                    @click="dispatchAwardEvent(post.id)"
+                >
+                    <IconAwards />
+                </button>
+                
+                <div class="awards-list" :class="{'expanded': false}" v-if="awards.length">
+                    <div v-for="(award, index) in awards" 
+                        :key="award.id" 
+                        class="award"
+                        :class="{'granted-by-user': award.granted_by_current_user}"
+                        :title="award.name"
+                        @click="award.granted_by_current_user 
+                            ? ungrantAward(award.id, index - 1) 
+                            : grantAward(award.id)
+                        "
                     >
-                        View all awards
-                    </button>
+                        <span>
+                            <span class="num-grants">{{ award.num_grants }}</span>
+                            <component v-if="ClubAwardsSvgMap[award.cls]" :is="ClubAwardsSvgMap[award.cls]()"/>
+                        </span>
+                    </div>
                 </div>
             </div>
         </div>
@@ -93,9 +95,13 @@
     </div>
 </template>
 <script setup>
+import { urls } from '../../../../../services/urls';
+import { db } from '../../../../../services/db';
 import { ClubUpdatePost, ClubReviewPost } from '../../models/models';
 import { ClubAwardsSvgMap } from '../awards/awards';
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
+import {useRoute} from 'vue-router';
+import IconAwards from '../awards/icons/Awards.vue';
 
 const props = defineProps({
     post: {
@@ -103,6 +109,9 @@ const props = defineProps({
         required: true,
     }
 });
+
+const awardsRef = ref(Object.values(props.post.awards));
+const route = useRoute();
 
 /**
  * @typedef { awards} – Returns a list containing the first 4 awards sorted
@@ -112,8 +121,7 @@ const props = defineProps({
  * @returns {List[list, (Number | Bool)]}
  */
 const awards = computed(() => {
-    const _awards = Object.values(props.post.awards);
-    return _awards.sort((a, b) => b.num_grants - a.num_grants);
+    return awardsRef.value.sort((a, b) => b.num_grants - a.num_grants);
 });
 
 function dispatchAwardEvent(postId) {
@@ -125,9 +133,24 @@ function dispatchAwardEvent(postId) {
     window.dispatchEvent(event);
 };
 
-function ungrantAward() {
 
+function ungrantAward(awardCls, vForIndex) {
+    db.delete(urls.bookclubs.ungrantAwardToPost(route.params.bookclub, props.post.id), 
+        {cls: awardCls}, 
+        false, 
+        () => {
+            awardsRef.splice(1, vForIndex, index + 1);
+        }, (err) => {
+            console.log(err);
+        }
+    );
 };
+
+
+// Duplicate of ViewAwards fn but the other one has bunk loading logic so no point trying to share.
+function grantAwardToPost(postId, awardId, useArray) {
+
+}
 </script>
 <style scoped>
 .quote {
@@ -157,7 +180,6 @@ function ungrantAward() {
 }
 
 .awards-list {
-    border: 1px solid red; 
     margin-bottom: -10px;
     margin-right: -20px;
     display: flex;
@@ -168,21 +190,25 @@ function ungrantAward() {
     background-color: var(--surface-primary);
 
     .award {
+        position: relative;
         height: 40px;
         width: 40px;
         color: var(--indigo-500);
-        border: 1px solid var(--stone-100);
+        border: 1px solid var(--indigo-600);
         border-radius: 4px;
         fill: var(--indigo-500);
 
         &:hover {
-            background-color: var(--indigo-50);
+            /* Make a new hover state if you are going to remove an award vs grant one.
+                Can be red for removing, green for granting
+            */
+            background-color: var(--indigo-50) !important;
             border: 1px solid var(--indigo-400);
         }
 
         &.granted-by-user {
-            background-color: var(--green-100);
-            fill: var(--);
+            background-color: var(--indigo-100);
+            fill: var(--indigo-600);
         }
     }
 
@@ -192,5 +218,19 @@ function ungrantAward() {
             width: 50px;
         }
     }
+}
+
+.num-grants {
+    position: absolute;
+    top: -12px;
+    left: -4px;
+    padding: 4px 8px;
+    border-radius: 4px;
+    background-color: var(--stone-700);
+    color: var(--stone-50);
+    text-align: center;
+    z-index: 2;
+    line-height: 1;
+    font-size: var(--font-xs);
 }
 </style>

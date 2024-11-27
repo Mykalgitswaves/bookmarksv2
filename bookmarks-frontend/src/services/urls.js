@@ -154,6 +154,7 @@ export const urls = {
         // 
         getAwards: (bookclub_id) => (baseUrl + `${BOOK_CLUBS_PREFIX}${bookclub_id}/awards`),
         grantAwardToPost: (bookclub_id, post_id, award_id) => (`${baseUrl}${BOOK_CLUBS_PREFIX}${bookclub_id}/post/${post_id}/award/${award_id}`),
+        ungrantAwardToPost: (bookclub_id, post_id, award_id) => (`${baseUrl}${BOOK_CLUBS_PREFIX}${bookclub_id}/post/${post_id}/award/${award_id}`),
     }
 }
 
