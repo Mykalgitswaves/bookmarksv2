@@ -247,6 +247,12 @@
         </div>    
     </teleport>
     <!-- End regular shelves -->
+    <Transition name="content">
+        <ErrorToast v-if="error.isShowing" :message="error.message" :refresh="true"/>
+    </Transition>
+    <Transition name="content">
+        <SuccessToast v-if="toast" :message="toast.message" /> 
+    </Transition>
 </template>
 <script setup>
 import { ref, computed, watch, onMounted, toRaw, defineExpose } from 'vue';
@@ -259,6 +265,8 @@ import { Bookshelves } from '../../../models/bookshelves';
 import { helpersCtrl, createConfetti } from '../../../services/helpers';
 import CreateUpdateForm from '../createPosts/update/createUpdateForm.vue';
 import CreateReviewPost from '../createPosts/createReviewPost.vue'
+import ErrorToast from '../../shared/ErrorToast.vue';
+import SuccessToast from '../../shared/SuccessToast.vue';
 
 const props = defineProps({
     books: {
@@ -295,6 +303,11 @@ const emit = defineEmits(['send-bookdata-socket', 'cancelled-reorder']);
 const userShelves = ref([]);
 const loaded = ref(false);
 const FLOWSHELVES = [Bookshelves.WANT_TO_READ, Bookshelves.CURRENTLY_READING, Bookshelves.FINISHED_READING];
+const error = ref({
+    isShowing: false,
+    message: '',
+});
+const toast = ref(null);
 
 FLOWSHELVES.filter((shelf) => (shelf.prefix !== props.unique)).forEach(
         (shelf) => {
@@ -564,12 +577,22 @@ async function moveToShelf(bookshelf) {
         const response = await Bookshelves.moveBookToShelf(bookshelf, book, currentShelf);
         console.log(response);
     } catch (error) {
+        error.value.message = `Error moving book, it may already be in this shelf.`
+        error.value.isShowing = true;
+        setTimeout(() => {
+            error.value.isShowing = false;
+        }, 5000);
         console.error(error);
-    }
-    console.log("Moving to shelf", bookshelf);
+    };
     if (!isUpdatingCurrentlyReadingBook || !(bookshelf === Bookshelves.FINISHED_READING.prefix)) {
         console.log('closing overlay');
         showBookControlsOverlay.value = false;
+        toast.value = {
+            message: `Book moved to shelf`,
+        };
+        setTimeout(() => {
+            toast.value = null;
+        }, 5000);
     }
 }
 // End of book controls overlay function

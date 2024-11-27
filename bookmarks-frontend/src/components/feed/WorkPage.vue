@@ -125,6 +125,12 @@
             <span v-html="book?.description"></span>
         </div>
     </section>
+    <Transition name="content">
+        <ErrorToast v-if="error.isShowing" :message="error.message" :refresh="true"/>
+    </Transition>
+    <Transition name="content">
+        <SuccessToast v-if="toast" :message="toast.message" /> 
+    </Transition>
 </template>
 
 <script setup>
@@ -141,6 +147,8 @@ import Overlay from './partials/overlay/Overlay.vue';
 import { hideOverlay, showOverlay } from './partials/overlay/overlay-service.js';
 import AsyncComponent from './partials/AsyncComponent.vue';
 import { Bookshelves } from '../../models/bookshelves';
+import ErrorToast from '../shared/ErrorToast.vue';
+import SuccessToast from '../shared/SuccessToast.vue';
 
 const route = useRoute();
 const router = useRouter();
@@ -151,6 +159,11 @@ const overlayRef = ref(null);
 const book = ref(null);
 const filterPopout = ref(false);
 const FLOWSHELVES = [Bookshelves.WANT_TO_READ, Bookshelves.CURRENTLY_READING, Bookshelves.FINISHED_READING];
+const error = ref({
+    isShowing: false,
+    message: '',
+});
+const toast = ref(null);
 
 let bookshelves = [];
 
@@ -240,8 +253,18 @@ async function moveToShelf(bookshelf, overlayRef) {
         console.log(book_to_add)
         const response = await Bookshelves.moveBookToShelf(bookshelf, book_to_add, currentShelf);
         hideOverlay(overlayRef);
+        toast.value = { message: "Book moved to shelf" };
+        setTimeout(() => {
+            toast.value = null;
+        }, 5000);
         console.log(response);
     } catch (error) {
+        hideOverlay(overlayRef);
+        error.value.message = 'Error moving book, it may already be in this shelf.'
+        error.value.isShowing = true;
+        setTimeout(() => {
+            error.isShowing = false;
+        }, 5000);
         console.error(error);
     }
 }
