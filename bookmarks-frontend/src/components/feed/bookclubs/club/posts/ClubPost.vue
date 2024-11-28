@@ -65,7 +65,7 @@
                         class="award"
                         :class="{'granted-by-user': award.granted_by_current_user}"
                         :title="award.name"
-                        @click="grantAward(award.id)"
+                        @click="grantOrUngrantAward(award, index - 1)"
                     >
                         <span>
                             <span class="num-grants">{{ award.num_grants }}</span>
@@ -108,6 +108,11 @@ const props = defineProps({
 });
 
 const awardsRef = ref(Object.values(props.post.awards));
+const awardsCount = 
+awardsRef.value.forEach((award) => {
+    award.count = award.granted_by_current_user ? 1 : 0;
+});
+
 const route = useRoute();
 
 /**
@@ -131,23 +136,39 @@ function dispatchAwardEvent(postId) {
 };
 
 
-function ungrantAward(awardCls, vForIndex) {
-    db.delete(urls.bookclubs.ungrantAwardToPost(route.params.bookclub, props.post.id), 
-        {cls: awardCls}, 
-        false, 
-        () => {
-            awardsRef.splice(1, vForIndex, index + 1);
-        }, (err) => {
-            console.log(err);
-        }
-    );
+function grantOrUngrantAward(award, vForIndex) {
+    // did we grant? if not grant.
+    if (!award.granted_by_current_user) {
+        db.put(urls.bookclubs.grantAwardToPost(route.params.bookclub, props.post.id, award.id), 
+            null, 
+            false, 
+            () => {
+                award.num_grants += 1;
+                award.granted_by_current_user = true;
+            },
+            (err) => {
+                console.log(err);
+            }
+        );
+    } else {
+        db.delete(urls.bookclubs.ungrantAwardToPost(route.params.bookclub, props.post.id), 
+            {cls: award.cls}, 
+            false, 
+            () => {
+                if (award.num_grants > 1) {
+                    award.num_grants -= 1;
+                    award.granted_by_current_user = false;
+                } else {
+                    award.num_grants -= 1;
+                    award.granted_by_current_user = false;
+                    awardsRef.splice(1, vForIndex, index + 1);
+                };
+            }, (err) => {
+                console.log(err);
+            }
+        );
+    }
 };
-
-
-// Duplicate of ViewAwards fn but the other one has bunk loading logic so no point trying to share.
-function grantAwardToPost(postId, awardId, useArray) {
-
-}
 </script>
 <style scoped>
 .quote {
