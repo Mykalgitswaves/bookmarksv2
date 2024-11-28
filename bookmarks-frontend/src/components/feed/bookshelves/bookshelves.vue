@@ -14,7 +14,7 @@
                 :key="shelf?.id"
                 @click="goToBookshelfPage(user, shelf?.id)"
             >
-                <img class="bookshelf" :src="shelf?.book_img_urls && shelf?.book_img_urls[0] || noBookYetUrl" alt=""/>
+                <img class="bookshelf" :src=getImgUrl(shelf) alt=""/>
 
                 <div>
                     <h4 class="bookshelf-title">{{ shelf?.title }}</h4>
@@ -113,6 +113,17 @@
         return bookshelves;
     }
 
+    function getImgUrl(bookshelf){
+        // If book_img_urls is not an array, check for books[0].small_img_url
+        // If that is not available, return a placeholder image
+        if (bookshelf?.book_img_urls && bookshelf?.book_img_urls[0]) {
+            return bookshelf?.book_img_urls[0];
+        } else if (bookshelf?.books && bookshelf?.books[0]?.small_img_url) {
+            return bookshelf?.books[0]?.small_img_url;
+        } else {
+            return noBookYetUrl;
+        }
+    }
 </script>
 <style scoped lang="scss">
 
