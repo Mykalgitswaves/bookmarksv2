@@ -133,7 +133,6 @@ function dispatchAwardEvent(postId) {
 
 function grantOrUngrantAward(award, vForIndex) {
     // did we grant? if not grant.
-    debugger;
     if (!award.granted_by_current_user) {
         db.put(urls.bookclubs.editAwardOnPostByCls(route.params.bookclub, props.post.id), 
             {cls: award.cls}, 

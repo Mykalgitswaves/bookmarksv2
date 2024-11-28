@@ -1550,9 +1550,13 @@ async def test_emails(
                 is_debug=True
         )
         return JSONResponse(status_code=200, content={'email': jsonable_encoder(preview_email)})
-    
+
+
+# AWARDS BY CLS
+# -------------------------------------------------------------------------
+
 @router.delete(
-    "/{book_club_id}/post/{post_id}/award", name="bookclub:delete_award"
+    "/{book_club_id}/post/{post_id}/award", name="bookclub:delete_award_by_cls"
 )
 async def remove_award_by_cls(
     book_club_id: str,
@@ -1621,3 +1625,37 @@ async def remove_award_by_cls(
         raise HTTPException(
             status_code=404, 
             detail="award not found")
+    
+@router.put(
+    "/{book_club_id}/post/{post_id}/award", name="bookclub:grant_award_by_cls"
+)
+async def grant_award_by_cls(
+    book_club_id: str,
+    post_id: str,
+    request: Request,
+    current_user: Annotated[User, Depends(get_current_active_user)],
+    book_club_repo: BookClubCRUDRepositoryGraph = Depends(
+        get_repository(repo_type=BookClubCRUDRepositoryGraph)
+    )
+):
+    """
+    Doing some mo nerd shih
+    """
+    is_award_granted = False
+    award_cls = None
+
+    try:
+        data = request.json()
+        award_cls = data.get('cls')
+
+        is_award_granted = book_club_repo.grant_award_for_post_by_cls(
+            post_id=post_id,
+            award_cls=award_cls,
+            user_id=current_user.id,
+            book_club_id=book_club_id
+        )
+    except:
+        raise HTTPException(
+            status_code=404,
+            detail="award not granted"
+        )

@@ -2150,8 +2150,8 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
         query = """
             MATCH (u:User {id:$user_id})-[:IS_MEMBER_OF|OWNS_BOOK_CLUB]->(club:BookClub {id:$book_club_id})
             MATCH (update:ClubUpdate {id: $post_id})
-            OPTIONAL MATCH (post_awards:ClubAward)-[:AWARD_FOR_POST]->(update)
-            OPTIONAL MATCH (u)-[:GRANTED]->(club_award:ClubAwardForPost)-[:IS_CHILD_OF]->(parent_award:ClubAward {name:$award_name})
+            MATCH (post_awards:ClubAward)-[:AWARD_FOR_POST]->(update)
+            MATCH (u)-[:GRANTED]->(club_award:ClubAwardForPost)-[:IS_CHILD_OF]->(post_awards {name:$award_name})
                 DETACH DELETE club_award
                 RETURN club.id as club_id
         """
@@ -2171,3 +2171,15 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
             return True
         else:
             return False
+        
+    def grant_award_for_post_by_cls(self, post_id: str, award_cls: str, user_id: str, book_club_id: str):
+        """
+        Used for adding an award by class.
+        """
+        with self.driver.session() as session:
+            result = session.write_transaction(
+                self.grant_award_for_post_by_cls_query, 
+                post_id=post_id, award_cls=award_cls, user_id=user_id, book_club_id=book_club_id
+            )
+        return result
+    
