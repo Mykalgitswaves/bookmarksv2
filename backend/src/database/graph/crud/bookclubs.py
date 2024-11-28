@@ -2125,3 +2125,49 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
             return True
         else:
             return False
+        
+    def delete_award_for_post_by_cls(self, post_id: str, award_cls: str, user_id: str, book_club_id: str):
+        """
+        Used for deleting an award by class. On the front end, 
+        we are not returning id's for every single post_award, we are sending a dictionary of awards, 
+        their classes, num of grants and whether or not the current user has granted one. 
+        Because of this we need to search up the award by cls to find it and delete it in our db.
+        """
+        with self.driver.session() as session:
+            result = session.write_transaction(
+                self.delete_award_for_post_by_cls_query, 
+                post_id=post_id, award_cls=award_cls, user_id=user_id, book_club_id=book_club_id
+            )
+        return result
+    
+    @staticmethod
+    def delete_award_for_post_by_cls_query(tx, post_id: str, award_cls: str, user_id: str, book_club_id: str):
+        # Find the name using constants
+        award_name, *_ = [key for key, value in AWARD_CONSTANTS.items() if value == award_cls]
+        if not award_name: 
+            return False
+
+        query = """
+            MATCH (u:User {id:$user_id})-[:IS_MEMBER_OF|OWNS_BOOK_CLUB]->(club:BookClub {id:$book_club_id})
+            MATCH (update:ClubUpdate {id: $post_id})
+            OPTIONAL MATCH (post_awards:ClubAward)-[:AWARD_FOR_POST]->(update)
+            OPTIONAL MATCH (u)-[:GRANTED]->(club_award:ClubAwardForPost)-[:IS_CHILD_OF]->(parent_award:ClubAward {name:$award_name})
+                DETACH DELETE club_award
+                RETURN club.id as club_id
+        """
+        
+        debug_query = """
+            MATCH (u:User {id:$user_id})-[:IS_MEMBER_OF|OWNS_BOOK_CLUB]->(club:BookClub {id:$book_club_id})
+            MATCH (update:ClubUpdate {id: $post_id})
+            OPTIONAL MATCH (post_awards:ClubAward)-[:AWARD_FOR_POST]->(update)
+            OPTIONAL MATCH (u)-[:GRANTED]->(club_award:ClubAwardForPost)-[:IS_CHILD_OF]->(parent_award:ClubAward {name:$award_name})
+            RETURN club_award, parent_award
+        """
+
+        result = tx.run(query, user_id=user_id, book_club_id=book_club_id, post_id=post_id, award_name=award_name)
+        response = result.single()
+
+        if response.get("club_id"):
+            return True
+        else:
+            return False

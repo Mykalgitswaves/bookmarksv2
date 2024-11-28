@@ -108,11 +108,6 @@ const props = defineProps({
 });
 
 const awardsRef = ref(Object.values(props.post.awards));
-const awardsCount = 
-awardsRef.value.forEach((award) => {
-    award.count = award.granted_by_current_user ? 1 : 0;
-});
-
 const route = useRoute();
 
 /**
@@ -138,11 +133,12 @@ function dispatchAwardEvent(postId) {
 
 function grantOrUngrantAward(award, vForIndex) {
     // did we grant? if not grant.
+    debugger;
     if (!award.granted_by_current_user) {
-        db.put(urls.bookclubs.grantAwardToPost(route.params.bookclub, props.post.id), 
+        db.put(urls.bookclubs.editAwardOnPostByCls(route.params.bookclub, props.post.id), 
             {cls: award.cls}, 
             false, 
-            () => {
+            (_) => {
                 award.num_grants += 1;
                 award.granted_by_current_user = true;
             },
@@ -151,10 +147,10 @@ function grantOrUngrantAward(award, vForIndex) {
             }
         );
     } else {
-        db.delete(urls.bookclubs.ungrantAwardToPost(route.params.bookclub, props.post.id), 
+        db.delete(urls.bookclubs.editAwardOnPostByCls(route.params.bookclub, props.post.id), 
             {cls: award.cls}, 
             false, 
-            () => {
+            (_) => {
                 if (award.num_grants > 1) {
                     award.num_grants -= 1;
                     award.granted_by_current_user = false;
@@ -199,7 +195,7 @@ function grantOrUngrantAward(award, vForIndex) {
 
 .awards-list {
     margin-bottom: -10px;
-    margin-right: -20px;
+    margin-right: -10px;
     display: flex;
     column-gap: 4px;
     row-gap: 4px;
