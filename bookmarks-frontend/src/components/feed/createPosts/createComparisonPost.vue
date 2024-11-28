@@ -1,6 +1,6 @@
 <template>
     <CreateComparisonSelection 
-        :book_id="bookId"
+        :book-id="bookId"
         @books-selected="booksHandlerFn"
     />
 
@@ -80,7 +80,7 @@ const currentView = ref('add');
 const questionCount = ref(0);
 const headlines = ref([]);
 const step = ref(1);
-const bookId = route.params.bookID || null; // Default to null if not provided
+const { bookId } = route.params
 const emit = defineEmits(['is-postable-data', 'set-headlines', 'post-data']);
 
 function headlineHandler(headlineObj) {

@@ -159,7 +159,7 @@ const props = defineProps({
         type: String,
         required: false,
     },
-    book_id: { 
+    bookId: { 
         type: String, 
         default: null 
     }
@@ -307,14 +307,17 @@ if (props.unique === Bookshelves.CURRENTLY_READING.prefix) {
     quickReview = true;
 }
 
-async function getWorkPage(book_id) {
-    await db.get(urls.books.getBookPage(book_id), null, true).then((res) => {
-        book.value = res.data;
-    })
+function getWorkPage(book_id) {
+    db.get(urls.books.getBookPage(book_id), null, true, 
+      (res) => { 
+          book.value = res.data 
+       }, 
+       (err) => console.log(err)  
+  ); 
 }
 
 watch(
-    () => props.book_id,
+    () => props.bookId,
     (newBookId) => {
         if (newBookId) {
             getWorkPage(newBookId);
@@ -322,12 +325,6 @@ watch(
     },
     { immediate: true } // Trigger immediately if book_id is provided at mount
 );
-
-onMounted(() => {
-    if (props.book_id) {
-        getWorkPage(props.book_id);
-    }
-});
 </script>
 
 <style scoped>

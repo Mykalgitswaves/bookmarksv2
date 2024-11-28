@@ -159,6 +159,7 @@ const overlayRef = ref(null);
 const book = ref(null);
 const filterPopout = ref(false);
 const FLOWSHELVES = [Bookshelves.WANT_TO_READ, Bookshelves.CURRENTLY_READING, Bookshelves.FINISHED_READING];
+const _flowshelves = [...FLOWSHELVES];
 const error = ref({
     isShowing: false,
     message: '',
@@ -167,7 +168,7 @@ const toast = ref(null);
 
 let bookshelves = [];
 
-FLOWSHELVES.forEach(
+_flowshelves.forEach(
         (shelf) => {
         // We need to get the users visbiility for each shelf.
         let _shelf = Bookshelves.formatFlowShelf(shelf, 'private');
