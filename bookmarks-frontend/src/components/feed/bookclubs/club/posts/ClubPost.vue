@@ -139,8 +139,8 @@ function dispatchAwardEvent(postId) {
 function grantOrUngrantAward(award, vForIndex) {
     // did we grant? if not grant.
     if (!award.granted_by_current_user) {
-        db.put(urls.bookclubs.grantAwardToPost(route.params.bookclub, props.post.id, award.id), 
-            null, 
+        db.put(urls.bookclubs.grantAwardToPost(route.params.bookclub, props.post.id), 
+            {cls: award.cls}, 
             false, 
             () => {
                 award.num_grants += 1;
