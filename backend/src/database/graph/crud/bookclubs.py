@@ -629,9 +629,9 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
             MATCH (club)-[:IS_READING]->(book:BookClubBook)
             MATCH (book)<-[award_rel:AWARD_FOR_BOOK]-(award:ClubAward {id:$award_id})
             MATCH (post:ClubUpdate|ClubUpdateNoText {id:$post_id})-[:POST_FOR_CLUB_BOOK]->(book)
-            OPTIONAL MATCH (u)-[:GRANTED]->(club_award:ClubAwardForPost)-[:IS_CHILD_OF]->(award)
+            OPTIONAL MATCH (u)-[:GRANTED]->(club_award:ClubAwardForPost)-[:AWARD_FOR_POST]->(post)
             WITH u, award, COUNT(club_award) AS existing_award_count, award_rel, post
-                WHERE existing_award_count < award_rel.grants_per_member
+                WHERE existing_award_count < 1
                 CREATE (created_award:ClubAwardForPost {
                     id: "post_award_" + randomUUID(),
                     created_date: datetime()
