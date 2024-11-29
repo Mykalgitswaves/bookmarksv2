@@ -118,7 +118,18 @@ const props = defineProps({
     }
 });
 
-const awardsRef = ref(Object.values(props.post.awards));
+function appendIdsToAwards() {
+    const awards = [];
+
+    Object.entries(props.post.awards).forEach(([key, award]) => {
+        award.id = key;
+        awards.push(award);
+    });
+
+    return awards;
+}
+
+const awardsRef = ref(appendIdsToAwards());
 const route = useRoute();
 const toast = ref(null);
 
