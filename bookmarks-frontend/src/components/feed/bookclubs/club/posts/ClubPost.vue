@@ -159,7 +159,7 @@ function grantOrUngrantAward(award, vForIndex) {
     if (!award.granted_by_current_user) {
         db.put(urls.bookclubs.grantAwardToPost(route.params.bookclub, props.post.id, award.id), null,
             false, 
-            (_) => {
+            () => {
                 award.num_grants += 1;
                 award.granted_by_current_user = true;
             },
@@ -170,7 +170,7 @@ function grantOrUngrantAward(award, vForIndex) {
     } else {
         db.delete(urls.bookclubs.ungrantAwardToPost(route.params.bookclub, props.post.id, award.id), null,
             false, 
-            (_) => {
+            () => {
                 toast.value = { 
                     message: `Ungranted award: ${award.cls}`,
                 };
