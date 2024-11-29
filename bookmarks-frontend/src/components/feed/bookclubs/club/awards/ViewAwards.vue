@@ -1,12 +1,4 @@
 <template>
-<button 
-    ref="awardsButton"
-    class="btn btn-ghost btn-tiny text-sm btn-icon"
-    @click="showOrHideAwardsDialog()"    
->
-    Awards
-</button>
-
 <dialog ref="awardsModal" class="awards-menu">
     <div class="pt-5 pb-5">
         <CloseButton 
