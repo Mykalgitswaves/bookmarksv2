@@ -417,7 +417,7 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
             }]->(bc_book)
             WITH b, bc_book
             MATCH (awards:ClubAward)
-            MERGE (awards)-[:AWARD_FOR_BOOK {grants_per_member:1}]->(bc_book)
+            MERGE (awards)-[:AWARD_FOR_BOOK {grants_per_member:1000}]->(bc_book)
             RETURN bc_book.id as book_club_book_id
             """
         )
@@ -490,7 +490,7 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
             }]->(bc_book)
             WITH b, bc_book
             MATCH (awards:ClubAward)
-            MERGE (awards)-[:AWARD_FOR_BOOK {grants_per_member:1}]->(bc_book)
+            MERGE (awards)-[:AWARD_FOR_BOOK {grants_per_member:1000}]->(bc_book)
             RETURN bc_book.id as book_club_book_id
             """
         )
