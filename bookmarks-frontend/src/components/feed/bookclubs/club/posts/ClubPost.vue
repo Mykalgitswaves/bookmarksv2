@@ -91,9 +91,14 @@
         </h3>
     </div>
 
-    <Transition name="content">
-        <SuccessToast v-if="toast" :toast="toast" :toast-type="Toast.TYPES.MESSAGE_TYPE"/> 
-    </Transition>
+    <Teleport to="body">
+        <Transition name="content">
+            <SuccessToast v-if="toast" 
+                :toast="toast" 
+                :toast-type="Toast.TYPES.MESSAGE_TYPE" 
+                @dismiss="toast = null"/> 
+        </Transition>
+    </Teleport>
 </template>
 <script setup>
 import { urls } from '../../../../../services/urls';
@@ -141,8 +146,7 @@ function dispatchAwardEvent(postId) {
 function grantOrUngrantAward(award, vForIndex) {
     // did we grant? if not grant.
     if (!award.granted_by_current_user) {
-        db.put(urls.bookclubs.editAwardOnPostByCls(route.params.bookclub, props.post.id), 
-            {cls: award.cls}, 
+        db.put(urls.bookclubs.grantAwardToPost(route.params.bookclub, props.post.id, award.id), 
             false, 
             (_) => {
                 award.num_grants += 1;
@@ -153,8 +157,7 @@ function grantOrUngrantAward(award, vForIndex) {
             }
         );
     } else {
-        db.delete(urls.bookclubs.editAwardOnPostByCls(route.params.bookclub, props.post.id), 
-            {cls: award.cls}, 
+        db.delete(urls.bookclubs.ungrantAwardToPost(route.params.bookclub, props.post.id, award.id), 
             false, 
             (_) => {
                 toast.value = { 

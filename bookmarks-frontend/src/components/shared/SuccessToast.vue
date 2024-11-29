@@ -63,11 +63,6 @@ const emits = defineEmits('dismiss')
     border-radius: var(--radius-sm);
 }
 
-
-.toast-link {
-    
-}
-
 .toast-message {
     font-size: var(--font-sm);
 }
