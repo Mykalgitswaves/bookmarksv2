@@ -1415,8 +1415,9 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
                     _user_id = award.start_node['id']
                     parent_award = award.end_node
                     cls = AWARD_CONSTANTS.get(parent_award.get("name"))
-                    if cls not in awards:
-                        awards[cls] = {
+                    parent_award_id = parent_award.get("id")
+                    if parent_award_id not in awards:
+                        awards[parent_award_id] = {
                             "name": parent_award.get("name",""),
                             "type": parent_award.get("type",""),
                             "description": parent_award.get("description",""),
@@ -1425,10 +1426,10 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
                             "granted_by_current_user": False,
                         }
                     else:
-                        awards[cls]['num_grants'] += 1
+                        awards[parent_award_id]['num_grants'] += 1
 
                     if user_id == _user_id:
-                        awards[cls]['granted_by_current_user'] = True
+                        awards[parent_award_id]['granted_by_current_user'] = True
 
             if response.get("labels(post)") == ["ClubUpdate"]:
                 post = BookClubSchemas.UpdatePost(
