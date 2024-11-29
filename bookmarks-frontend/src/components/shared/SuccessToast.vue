@@ -1,5 +1,5 @@
 <template>
-    <div class="toast">
+    <div class="toast" v-if="toastType === Toast.defaultType ">
         <button type="button" class="btn btn-small" @click="emit('dismiss')">
             <IconExit />
         </button>
@@ -11,11 +11,26 @@
             
         <a class="toast-link" :href="toast.url">View post here</a>
     </div>
+
+    <!-- Toast for other kind of updates -->
+    <div class="toast" v-else-if="toastType === Toast.TYPES.MESSAGE_TYPE">
+        <button type="button" class="btn btn-small" @click="emit('dismiss')">
+            <IconExit />
+        </button>
+
+        <p v-if="toast.message" v-html="toast.Message" class="toast-message" />
+    </div>
 </template>
 <script setup>
 import IconExit from '../svg/icon-exit.vue'
+import { Toast } from './models';
 
 const props = defineProps({
+    toastType: {
+        type: Boolean,
+        required: false,
+        default: () => Toast.defaultType,
+    },
     toast: {
         type: Object,
         required: true,
@@ -51,5 +66,9 @@ const emits = defineEmits('dismiss')
 
 .toast-link {
     
+}
+
+.toast-message {
+    font-size: var(--font-sm);
 }
 </style>

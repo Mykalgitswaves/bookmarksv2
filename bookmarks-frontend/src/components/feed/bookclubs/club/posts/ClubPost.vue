@@ -90,6 +90,10 @@
             Something went wrong
         </h3>
     </div>
+
+    <Transition name="content">
+        <SuccessToast v-if="toast" :toast="toast" :toast-type="Toast.TYPES.MESSAGE_TYPE"/> 
+    </Transition>
 </template>
 <script setup>
 import { urls } from '../../../../../services/urls';
@@ -99,6 +103,8 @@ import { ClubAwardsSvgMap } from '../awards/awards';
 import { computed, ref } from 'vue';
 import {useRoute} from 'vue-router';
 import IconAwards from '../awards/icons/Awards.vue';
+import SuccessToast from '../../../../shared/SuccessToast.vue';
+import { Toast } from '../../../../shared/models';
 
 const props = defineProps({
     post: {
@@ -109,6 +115,7 @@ const props = defineProps({
 
 const awardsRef = ref(Object.values(props.post.awards));
 const route = useRoute();
+const toast = ref(null);
 
 /**
  * @typedef { awards} – Returns a list containing the first 4 awards sorted
@@ -150,6 +157,10 @@ function grantOrUngrantAward(award, vForIndex) {
             {cls: award.cls}, 
             false, 
             (_) => {
+                toast.value = { 
+                    message: `Ungranted award: ${award.cls}`,
+                };
+
                 if (award.num_grants > 1) {
                     award.num_grants -= 1;
                     award.granted_by_current_user = false;
@@ -158,6 +169,10 @@ function grantOrUngrantAward(award, vForIndex) {
                     award.granted_by_current_user = false;
                     awardsRef.splice(1, vForIndex, index + 1);
                 };
+                
+                setTimeout(() => {
+                    toast.value = null;
+                }, 1500);
             }, (err) => {
                 console.log(err);
             }
