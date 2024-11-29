@@ -1672,7 +1672,7 @@ async def grant_award_by_cls(
             },
         )
         return JSONResponse(
-        status_code=200, content={"message": "award granted"}
+            status_code=200, content={"message": "award granted"}
         )
     else:
         logger.warning(
@@ -1685,7 +1685,5 @@ async def grant_award_by_cls(
                 "action": "delete_award",
             },
         )
-        raise HTTPException(
-            status_code=404, 
-            detail="award not found")
+        raise HTTPException(status_code=404, detail="award not found")
     

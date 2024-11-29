@@ -2144,27 +2144,25 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
     def delete_award_for_post_by_cls_query(tx, post_id: str, award_cls: str, user_id: str, book_club_id: str):
         # Find the name using constants
         award_name, *_ = [key for key, value in AWARD_CONSTANTS.items() if value == award_cls]
+        print(award_name)
         if not award_name: 
             return False
 
-        query = """
+        query2 = """
             MATCH (u:User {id:$user_id})-[:IS_MEMBER_OF|OWNS_BOOK_CLUB]->(club:BookClub {id:$book_club_id})
-            MATCH (update:ClubUpdate {id: $post_id})
-            MATCH (post_awards:ClubAward)-[:AWARD_FOR_POST]->(update)
-            MATCH (u)-[:GRANTED]->(club_award:ClubAwardForPost)-[:IS_CHILD_OF]->(post_awards {name:$award_name})
-                DETACH DELETE club_award
-                RETURN club.id as club_id
-        """
-        
-        debug_query = """
-            MATCH (u:User {id:$user_id})-[:IS_MEMBER_OF|OWNS_BOOK_CLUB]->(club:BookClub {id:$book_club_id})
-            MATCH (update:ClubUpdate {id: $post_id})
-            OPTIONAL MATCH (post_awards:ClubAward)-[:AWARD_FOR_POST]->(update)
-            OPTIONAL MATCH (u)-[:GRANTED]->(club_award:ClubAwardForPost)-[:IS_CHILD_OF]->(parent_award:ClubAward {name:$award_name})
-            RETURN club_award, parent_award
+            MATCH (update:ClubUpdate {id:$post_id})
+            MATCH (clubAwards:ClubAwardForPost)-[:AWARD_FOR_POST]->(update)
+            WITH clubAwards, u, club
+            MATCH (u)-[:GRANTED]->(clubAwards)
+            WITH clubAwards AS clubAwardsGrantedByUser, club
+            MATCH (clubAwardsGrantedByUser)-[:IS_CHILD_OF]->(parentAward:ClubAward {name:$award_name})
+            WITH COUNT(clubAwardsGrantedByUser) AS awardsToBeDeletedCount, COLLECT(clubAwardsGrantedByUser) AS awardsListToBeDeleted, club 
+            WHERE awardsToBeDeletedCount = 1
+            FOREACH (award IN awardsListToBeDeleted | DETACH DELETE award)
+            RETURN club.id as club_id
         """
 
-        result = tx.run(query, user_id=user_id, book_club_id=book_club_id, post_id=post_id, award_name=award_name)
+        result = tx.run(query2, user_id=user_id, book_club_id=book_club_id, post_id=post_id, award_name=award_name)
         response = result.single()
 
         if response.get("club_id"):
