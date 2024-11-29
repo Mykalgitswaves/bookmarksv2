@@ -146,7 +146,7 @@ function dispatchAwardEvent(postId) {
 function grantOrUngrantAward(award, vForIndex) {
     // did we grant? if not grant.
     if (!award.granted_by_current_user) {
-        db.put(urls.bookclubs.grantAwardToPost(route.params.bookclub, props.post.id, award.id), 
+        db.put(urls.bookclubs.grantAwardToPost(route.params.bookclub, props.post.id, award.id), null,
             false, 
             (_) => {
                 award.num_grants += 1;
@@ -157,7 +157,7 @@ function grantOrUngrantAward(award, vForIndex) {
             }
         );
     } else {
-        db.delete(urls.bookclubs.ungrantAwardToPost(route.params.bookclub, props.post.id, award.id), 
+        db.delete(urls.bookclubs.ungrantAwardToPost(route.params.bookclub, props.post.id, award.id), null,
             false, 
             (_) => {
                 toast.value = { 
