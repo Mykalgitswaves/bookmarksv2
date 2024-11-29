@@ -115,6 +115,7 @@ import {useRoute} from 'vue-router';
 import IconAwards from '../awards/icons/Awards.vue';
 import SuccessToast from '../../../../shared/SuccessToast.vue';
 import { Toast } from '../../../../shared/models';
+import { PubSub } from '../../../../../services/pubsub';
 
 const props = defineProps({
     post: {
@@ -208,6 +209,13 @@ function grantOrUngrantAward(award, vForIndex) {
         );
     }
 };
+
+// Make each post subscribe to an awards channel.
+PubSub.subscribe(`award-granted-to-${props.post.id}`, (award) => {
+    debugger;
+    award.num_grants = 1;
+    awardsRef.value.push(award);
+});
 </script>
 <style scoped>
 .quote {

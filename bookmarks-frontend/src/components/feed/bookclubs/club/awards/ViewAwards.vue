@@ -40,17 +40,19 @@
                         <div class="award-type" v-if="category">
                             <div v-for="award in category" 
                                 :key="award.id" 
-                            >
-                                <div 
-                                    class="award"
+                            >      
+                                <div class="award"
                                     :class="{
                                         'granted': awardStatuses[award.id].status === Award.statuses.grantable,
                                         'expired': awardStatuses[award.id].status === Award.statuses.expired,
                                         'loading': awardStatuses[award.id].status === Award.statuses.loading,
                                     }"
-                                    @click="grantAwardToPost(postId, award.id, [award.current_uses, award.allowed_uses])"
+                                    @click="grantAwardToPost(postId, award, [award.current_uses, award.allowed_uses])"
                                 >
-                                    <span class="award-front">    
+                                
+                                <span class="award-front">    
+                                        <component class="award-icon" v-if="ClubAwardsSvgMap[award.cls]" :is="ClubAwardsSvgMap[award.cls]()" />
+
                                         <p class="award-title">{{ award.name }}</p>
                                         <p class="award-description">{{  award.description }}</p>
                                     </span>
@@ -88,6 +90,8 @@ import { Award } from './awards.js';
 import CloseButton from '../../../partials/CloseButton.vue';
 import LoadingCard from '@/components/shared/LoadingCard.vue';
 import AsyncComponent from '../../../partials/AsyncComponent.vue';
+import { ClubAwardsSvgMap } from '../awards/awards';
+import { PubSub } from '../../../../../services/pubsub.js';
 
 const awardStatuses = ref({});
 let postId;
@@ -148,7 +152,6 @@ const getAwardsPromise = db.get(urls.bookclubs.getAwards(bookclub),
         loaded.value = true;
 });
 
-const awardsButton = ref(null);
 const awardsModal = ref(null);
 const isOpen = ref(false);
 
@@ -175,7 +178,6 @@ function handleClickOutside(event){
         && awardsModal.value.open 
         && !(
             awardsModal.value.contains(event.target) || 
-            awardsButton.value.contains(event.target) || 
             postId
         )
     ) {
@@ -204,8 +206,9 @@ window.addEventListener('open-award-post-modal', (event) => {
     isOpen.value = true; 
 });
 
-function grantAwardToPost(postId, awardId, useArray) {
+function grantAwardToPost(postId, award, useArray) {
     // For ui.
+    let awardId = award.id;
     awardStatuses.value[awardId].status === Award.statuses.loading
     if (!postId) return;
     if (!useArray) return;
@@ -221,6 +224,7 @@ function grantAwardToPost(postId, awardId, useArray) {
             // TODO: Update this so that it works.
             // awardStatuses.value[awardId].status === Award.statuses.loading
             loading.value = false;
+            PubSub.publish(`award-granted-to-${postId}`, award);
         },
         (err) => {
             console.log(err)
@@ -291,7 +295,6 @@ function grantAwardToPost(postId, awardId, useArray) {
 }
 
 .award {
-    background-color: var(--stone-200);
     padding: 4px;
     padding-bottom: 8px;
     border-radius: 8px;
@@ -327,6 +330,14 @@ function grantAwardToPost(postId, awardId, useArray) {
         }
     }
 
+    .award-icon {
+        margin-left: auto;
+        margin-right: auto;
+        height: 80px;
+        width: 80px;
+        color: var(--text-indigo-500);
+        fill: var(--text-indigo-500);
+    }
 
     .award-title {
         font-family: var(--fancy-script);

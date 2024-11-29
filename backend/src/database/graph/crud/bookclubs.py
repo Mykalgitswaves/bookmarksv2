@@ -1614,6 +1614,7 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
         awards = []
         for response in result:
             award_response = response['award']
+            cls = AWARD_CONSTANTS.get(award_response['name'])
             award = BookClubSchemas.AwardWithGrants(
                     id=award_response['id'],
                     name=award_response['name'],
@@ -1621,7 +1622,8 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
                     description=award_response.get('description'),
                     allowed_uses=response.get('allowed_uses'),
                     current_uses=response.get('current_uses'),
-                    grants=[]
+                    grants=[],
+                    cls=cls
                 )
             for grant in response.get("post_awards",[]):
                 if grant.get("post_award"):

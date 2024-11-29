@@ -175,6 +175,7 @@ class Award(BaseAward):
 class AwardWithGrants(BaseAward):
     current_uses: int | None = None
     grants: List
+    cls: str | None = None
 
 class CreateAward(BaseModel):
     post_id: str
