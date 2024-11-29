@@ -1659,3 +1659,33 @@ async def grant_award_by_cls(
             status_code=404,
             detail="award not granted"
         )
+    
+    if is_award_granted:
+        logger.info(
+            "Award granted to post",
+            extra={
+                "user_id": current_user.id,
+                "book_club_id": book_club_id,
+                "post_id": post_id,
+                "award_cls": award_cls,
+                "action": "delete_award",
+            },
+        )
+        return JSONResponse(
+        status_code=200, content={"message": "award granted"}
+        )
+    else:
+        logger.warning(
+            "Award not found",
+            extra={
+                "user_id": current_user.id,
+                "book_club_id": book_club_id,
+                "post_id": post_id,
+                "award_cls": award_cls,
+                "action": "delete_award",
+            },
+        )
+        raise HTTPException(
+            status_code=404, 
+            detail="award not found")
+    
