@@ -93,10 +93,12 @@
 
     <Teleport to="body">
         <Transition name="content">
-            <SuccessToast v-if="toast" 
+            <SuccessToast
+                v-if="toast" 
                 :toast="toast" 
                 :toast-type="Toast.TYPES.MESSAGE_TYPE" 
-                @dismiss="toast = null"/> 
+                @dismiss="() => toast = null"
+            /> 
         </Transition>
     </Teleport>
 </template>
@@ -153,6 +155,7 @@ function dispatchAwardEvent(postId) {
 function successDeleteFunction(award, vForIndex) {
     toast.value = { 
         message: `Ungranted award: ${award.cls}`,
+        isDeletion: true,
     };
 
     if (award.num_grants > 1) {
@@ -166,13 +169,21 @@ function successDeleteFunction(award, vForIndex) {
     
     setTimeout(() => {
         toast.value = null;
-    }, 1500);
+    }, 5000);
 }
 
 
 function successGrantFunction(award, vForIndex) {
+    toast.value = {
+        message: `Granted award: ${award.name}`
+    };
+
     award.num_grants += 1;
     award.granted_by_current_user = true;
+
+    setTimeout(() => {
+        toast.value = null;
+    }, 5000);
 }
 
 
