@@ -41,8 +41,6 @@
                     </div>
                 </div>
             </TransitionGroup>
-
-            <ViewAwards/>
         </div>
     </div>
 </template>

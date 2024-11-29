@@ -62,15 +62,18 @@
                 <div class="awards-list" :class="{'expanded': false}" v-if="awards.length">
                     <div v-for="(award, index) in awards" 
                         :key="award.id" 
-                        class="award"
-                        :class="{'granted-by-user': award.granted_by_current_user}"
-                        :title="award.name"
-                        @click="grantOrUngrantAward(award, index - 1)"
                     >
-                        <span>
-                            <span class="num-grants">{{ award.num_grants }}</span>
-                            <component v-if="ClubAwardsSvgMap[award.cls]" :is="ClubAwardsSvgMap[award.cls]()"/>
-                        </span>
+                        <div v-if="award.num_grants > 0" 
+                            class="award"
+                            :class="{'granted-by-user': award.granted_by_current_user}"
+                            :title="award.name"
+                            @click="grantOrUngrantAward(award, index - 1)"
+                        >
+                            <span>
+                                <span class="num-grants">{{ award.num_grants }}</span>
+                                <component v-if="ClubAwardsSvgMap[award.cls]" :is="ClubAwardsSvgMap[award.cls]()"/>
+                            </span>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -153,6 +156,8 @@ function dispatchAwardEvent(postId) {
 
 
 function successDeleteFunction(award, vForIndex) {
+    // Either way wipe out existing toast
+    toast.value = null;
     toast.value = { 
         message: `Ungranted award: ${award.name}`,
         isDeletion: true,
@@ -164,26 +169,19 @@ function successDeleteFunction(award, vForIndex) {
     } else {
         award.num_grants -= 1;
         award.granted_by_current_user = false;
-        awardsRef.splice(1, vForIndex, index + 1);
     };
-    
-    setTimeout(() => {
-        toast.value = null;
-    }, 5000);
 }
 
 
 function successGrantFunction(award, vForIndex) {
+    // Either way wipe out existing toast
+    toast.value = null;
     toast.value = {
         message: `Granted award: ${award.name}`
     };
 
     award.num_grants += 1;
     award.granted_by_current_user = true;
-
-    setTimeout(() => {
-        toast.value = null;
-    }, 5000);
 }
 
 
