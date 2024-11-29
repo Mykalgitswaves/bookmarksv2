@@ -118,18 +118,13 @@ const props = defineProps({
     }
 });
 
-function appendIdsToAwards() {
-    const awards = [];
-
-    Object.entries(props.post.awards).forEach(([key, award]) => {
+const awardsRef = ref(
+    Object.entries(props.post.awards).map(([key, award]) => {
         award.id = key;
-        awards.push(award);
-    });
+        return award;
+    })
+);
 
-    return awards;
-}
-
-const awardsRef = ref(appendIdsToAwards());
 const route = useRoute();
 const toast = ref(null);
 
@@ -144,6 +139,7 @@ const awards = computed(() => {
     return awardsRef.value.sort((a, b) => b.num_grants - a.num_grants);
 });
 
+
 function dispatchAwardEvent(postId) {
     const event = new CustomEvent('open-award-post-modal', {
         detail:  {
@@ -154,42 +150,52 @@ function dispatchAwardEvent(postId) {
 };
 
 
+function successDeleteFunction(award, vForIndex) {
+    toast.value = { 
+        message: `Ungranted award: ${award.cls}`,
+    };
+
+    if (award.num_grants > 1) {
+        award.num_grants -= 1;
+        award.granted_by_current_user = false;
+    } else {
+        award.num_grants -= 1;
+        award.granted_by_current_user = false;
+        awardsRef.splice(1, vForIndex, index + 1);
+    };
+    
+    setTimeout(() => {
+        toast.value = null;
+    }, 1500);
+}
+
+
+function successGrantFunction(award, vForIndex) {
+    award.num_grants += 1;
+    award.granted_by_current_user = true;
+}
+
+
+/**
+ * @description function for granting or deleting awards from posts.
+ * @param award 
+ * @param vForIndex 
+ */
 function grantOrUngrantAward(award, vForIndex) {
     // did we grant? if not grant.
     if (!award.granted_by_current_user) {
-        db.put(urls.bookclubs.grantAwardToPost(route.params.bookclub, props.post.id, award.id), null,
+        db.put(urls.bookclubs.grantAwardToPost(route.params.bookclub, props.post.id, award.id), 
+            null,
             false, 
-            () => {
-                award.num_grants += 1;
-                award.granted_by_current_user = true;
-            },
-            (err) => {
-                console.log(err);
-            }
+            successGrantFunction(award, vForIndex),
+            (err) => console.log(err),
         );
     } else {
-        db.delete(urls.bookclubs.ungrantAwardToPost(route.params.bookclub, props.post.id, award.id), null,
+        db.delete(urls.bookclubs.ungrantAwardToPost(route.params.bookclub, props.post.id, award.id), 
+            null,
             false, 
-            () => {
-                toast.value = { 
-                    message: `Ungranted award: ${award.cls}`,
-                };
-
-                if (award.num_grants > 1) {
-                    award.num_grants -= 1;
-                    award.granted_by_current_user = false;
-                } else {
-                    award.num_grants -= 1;
-                    award.granted_by_current_user = false;
-                    awardsRef.splice(1, vForIndex, index + 1);
-                };
-                
-                setTimeout(() => {
-                    toast.value = null;
-                }, 1500);
-            }, (err) => {
-                console.log(err);
-            }
+            successDeleteFunction(award, vForIndex), 
+            (err) => console.log(err),
         );
     }
 };

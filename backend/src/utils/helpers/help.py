@@ -6,7 +6,7 @@ AWARD_CONSTANTS = {
     "Hot take": 'hot_take',
     "Facts": 'facts',
     "Strange hill to die on": 'strange_hill_to_die_on',
-    "Dunce cap": 'strange_hill_to_die_on',
+    "Dunce cap": 'dunce_cap',
     "Doubt": 'doubt',
     "Definitely didn't read it": 'definitely_didnt_read_it',
     "100": '100',
