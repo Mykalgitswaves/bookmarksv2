@@ -13,7 +13,7 @@
     </div>
 
     <!-- Toast for other kind of updates -->
-    <div class="toast message" :class="{'deletion': toast.isDeleting}" v-else-if="toastType === Toast.TYPES.MESSAGE_TYPE">
+    <div class="toast message" :class="{'deletion': toast.isDeletion }" v-else-if="toastType === Toast.TYPES.MESSAGE_TYPE">
         <button type="button" class="btn btn-small" @click="$emit('dismiss')">
             <IconExit />
         </button>

@@ -154,7 +154,7 @@ function dispatchAwardEvent(postId) {
 
 function successDeleteFunction(award, vForIndex) {
     toast.value = { 
-        message: `Ungranted award: ${award.cls}`,
+        message: `Ungranted award: ${award.name}`,
         isDeletion: true,
     };
 
