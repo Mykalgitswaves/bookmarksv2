@@ -16,7 +16,7 @@ router = fastapi.APIRouter(prefix="/search", tags=["search"])
 
 
 @router.get("/{param}", name="search:full")
-def search_for_param(
+async def search_for_param(
     param: str,
     skip: int = 0,
     limit: int = 5,
@@ -43,7 +43,7 @@ def search_for_param(
 
 
 @router.get("/book/{param}", name="search:books")
-def search_for_param_book(param: str, skip: int = 0, limit: int = 5):
+async def search_for_param_book(param: str, skip: int = 0, limit: int = 5):
     """
     Endpoint used for searching for users, todo add in credentials for searching
     """
@@ -61,7 +61,7 @@ def search_for_param_book(param: str, skip: int = 0, limit: int = 5):
 
 
 @router.get("/users/{param}", name="search:users")
-def search_for_param_user(
+async def search_for_param_user(
     param: str,
     current_user: Annotated[User, Depends(get_current_active_user)],
     skip: int = 0,
@@ -91,7 +91,7 @@ def search_for_param_user(
 
 
 @router.get("/friends/{param}", name="search:friends")
-def search_for_param_friend(
+async def search_for_param_friend(
     param: str,
     current_user: Annotated[User, Depends(get_current_active_user)],
     skip: int = 0,
@@ -136,5 +136,44 @@ def search_for_param_friend(
                 "action": "search_for_param_friend",
             }
         )
+
+    return JSONResponse(content={"data": jsonable_encoder(search_result)})
+
+@router.get("/bookclubs/{param}", name="search:bookclubs")
+async def search_for_param_bookclub(
+    param: str,
+    current_user: Annotated[User, Depends(get_current_active_user)],
+    skip: int = 0,
+    limit: int = 5,
+    search_repo: SearchCRUDRepositoryGraph = Depends(
+        get_repository(repo_type=SearchCRUDRepositoryGraph)
+    ),
+):
+    """
+    Searches book clubs by name and description.
+
+    Args:
+        param (str): The search query.
+        current_user (User): The current user.
+        skip (int): The number of records to skip.
+        limit (int): The number of records to return.
+        search_repo (SearchCRUDRepositoryGraph): The search repository.
+    
+    Returns:
+        JSONResponse: The search results.
+    """
+
+    search_result = search_repo.get_bookclubs_full_text_search(
+        search_query=param, skip=skip, limit=limit
+    )
+
+    logger.info(
+        "Searched for bookclubs by param",
+        extra={
+            "param": param,
+            "user_id": current_user.id,
+            "action": "search_for_param_bookclub",
+        }
+    )
 
     return JSONResponse(content={"data": jsonable_encoder(search_result)})

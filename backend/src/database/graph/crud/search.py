@@ -1,5 +1,5 @@
 from src.database.graph.crud.base import BaseCRUDRepositoryGraph
-from src.models.schemas.search import SearchResultUser
+from src.models.schemas.search import SearchResultUser, SearchResultBookClub
 
 class SearchCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
     def search_for_param(self, param: str, skip: int, limit: int):
@@ -295,3 +295,74 @@ class SearchCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
             user_list.append(user)
 
         return user_list
+    
+    def get_bookclubs_full_text_search(
+            self, 
+            search_query:str, 
+            skip:int, 
+            limit:int):
+        
+        """
+        Searches all user by the full text index (username and full name)
+        """
+        with self.driver.session() as session:
+            result = session.execute_read(
+                self.get_bookclubs_full_text_search_query, 
+                search_query=search_query, 
+                skip=skip, 
+                limit=limit
+                )
+        return(result)
+    
+    @staticmethod
+    def get_bookclubs_full_text_search_query(
+        tx, 
+        search_query:str, 
+        skip:int, 
+        limit:int):
+
+        query = (
+            """
+        CALL db.index.fulltext.queryNodes('bookclubsFullText', "*" + $search_query + "*")
+        YIELD node, score
+        MATCH (node)-[:IS_MEMBER_OF|OWNS_BOOK_CLUB]-(members:User)
+        OPTIONAL MATCH (node)-[:IS_READING]->(bc_book:BookClubBook)-[:IS_EQUIVALENT_TO]->(book:Book)
+        RETURN node, 
+        score,
+        count(members) as number_of_members,
+        book.title as current_book_title, 
+        book.id as current_book_id, 
+        book.small_img_url as current_book_small_img_url
+        ORDER BY score DESC
+        SKIP $skip
+        LIMIT $limit
+        """
+        )
+
+        result = tx.run(
+            query, 
+            search_query=search_query, 
+            skip=skip, 
+            limit=limit
+            )
+        
+        bookclub_list = []
+
+        for response in result:
+            if response['current_book_title'] != None:
+                current_book = {
+                    'title': response.get('current_book_title'),
+                    'id': response['current_book_id'],
+                    'small_img_url': response.get('current_book_small_img_url')
+                }
+            else:
+                current_book = None
+
+            bookclub = SearchResultBookClub(
+                current_book=current_book,
+                name=response['node'].get("name"),
+                number_of_members=response.get("number_of_members", 0)
+            )
+            bookclub_list.append(bookclub)
+
+        return bookclub_list

@@ -53,6 +53,9 @@ def setup_class(request):
 
     yield
 
+    response = requests.post(f"{request.cls.endpoint}/api/admin/delete_user_book_club_data",
+                                json={"user_id": request.cls.user_id, "admin_credentials": config["ADMIN_CREDENTIALS"]})
+
     response = requests.post(f"{request.cls.endpoint}/api/admin/delete_user_by_username", 
                              json={"username": request.cls.username, "admin_credentials": config["ADMIN_CREDENTIALS"]})
 
@@ -135,5 +138,54 @@ class TestSearch:
         assert response.status_code == 200, "Search friends failed"
         assert len(response.json()['data']) == 0, "Search friends failed"
 
+    def test_search_book_clubs(self):
+        """
+        Test case to verify search works across book clubs in the DB
+        """
+
+        headers = {
+            "Authorization": f"{self.token_type} {self.access_token}"
+        }
+
+        # Create a bookclub
+        response = requests.post(
+            f"{self.endpoint}/api/bookclubs/create", 
+            headers=headers, 
+            json={
+                "name": "test book club",
+                "description": "test description",
+                "user_id": self.user_id
+                })
+
+        assert response.status_code == 200, "Creating Book Club"
+
+        search_term = "test"
+
+        response = requests.get(
+            f"{self.endpoint}/api/search/bookclubs/{search_term}?skip=0&limit=3",
+            headers=headers
+        )
+
+        print(response.json())
+        assert response.status_code == 200, "Search book clubs failed"
+        assert len(response.json()['data']) > 0, "Search book clubs failed"
+        assert len(response.json()['data']) <= 3, "Search book clubs failed"
         
+        headers = {
+            "Authorization": f"{self.token_type} {self.access_token}"
+        }
+
+        search_term = "test"
+
+        response = requests.get(
+            f"{self.endpoint}/api/search/bookclubs/{search_term}",
+            headers=headers
+        )
+
+        print(response.json())
+        assert response.status_code == 200, "Search book clubs failed"
+        assert len(response.json()['data']) > 0, "Search book clubs failed"
+        assert len(response.json()['data']) <= 5, "Search book clubs failed"
+
+
         
