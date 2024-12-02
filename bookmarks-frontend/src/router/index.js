@@ -89,7 +89,7 @@ export const router = createRouter({
         },
         {
           name: 'create-post',
-          path: 'create/:reviewType',
+          path: 'create/:reviewType/:bookID?',
           component: CreatePostPage,
         },
         {

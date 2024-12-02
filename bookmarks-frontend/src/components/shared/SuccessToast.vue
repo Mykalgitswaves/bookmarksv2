@@ -4,12 +4,15 @@
             <IconExit />
         </button>
 
-        <div class="toast-preview">
-            <img :src="toast.previewImg" alt="">
-            You posted an update for {{ toast.bookTitle }}
+        <div v-if="message" class="toast-message">
+            {{ message }}
         </div>
-            
-        <a class="toast-link" :href="toast.url">View post here</a>
+
+        <div v-else class="toast-preview">
+            <img :src="toast.previewImg" alt="Toast preview image">
+            You posted an update for {{ toast.bookTitle }}
+            <a class="toast-link" :href="toast.url">View post here</a>
+        </div>
     </div>
 </template>
 <script setup>
@@ -18,7 +21,11 @@ import IconExit from '../svg/icon-exit.vue'
 const props = defineProps({
     toast: {
         type: Object,
-        required: true,
+        default: () => null
+    },
+    message: {
+        type: String,
+        default: ''
     }
 });
 const emits = defineEmits('dismiss')
