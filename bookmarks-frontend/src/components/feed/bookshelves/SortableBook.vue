@@ -65,9 +65,9 @@
         </KeepAlive>
     </div>
 
-    <div v-if="noteForShelf" class="text-stone-500 weight-300 mr-auto">
-        <span class="ml-5">{{ truncateText(noteForShelf, 150) }}</span>
-    </div>
+    <p v-if="noteForShelf" class="text-stone-500 weight-300 mr-auto max-w-[768px]">
+        {{ truncateText(noteForShelf, 150) }}
+    </p>
 
     <button
       v-if="shouldShowSwap()"
@@ -264,6 +264,7 @@ const showProgressBar = ref(false);
         align-items: center;
         column-gap: 8px;
         transition: all 250ms ease;
+        
         cursor: grab;
 
         &:hover {

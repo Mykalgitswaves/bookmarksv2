@@ -137,7 +137,7 @@
                         Why are you starting this book?
                     </label>
                     
-                    <textarea class="w-100 mt-2 border-2 border-indigo-200 br-input-normal input-base-padding min-height-textarea" 
+                    <textarea class="w-100 mt-2 border-2 border-indigo-200 br-input-normal input-base-padding min-height-textarea " 
                         :ref="(el) => (textAreas.currentlyReadingTextArea = el)"
                         :style="{ 'height':  heights[Bookshelves.CURRENTLY_READING.prefix] + 'px' }"
                         :name="Bookshelves.CURRENTLY_READING.prefix"
@@ -766,5 +766,9 @@ defineExpose({ currentBook });
         margin-bottom: 10px;
         align-items: center;
         width: 100%;
+    }
+
+    textarea::-webkit-scrollbar {
+        display: none;
     }
 </style>

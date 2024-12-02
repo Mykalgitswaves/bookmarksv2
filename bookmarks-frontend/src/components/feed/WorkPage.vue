@@ -68,7 +68,7 @@
                                     </label>
                                     <!-- NOTE: This originally had an @input in it, but I didn't understand it so I removed it. -->
                                      <!-- Something to do with debounce, maybe we can add it back together -->
-                                    <textarea class="w-100 mt-2 border-2 border-indigo-200 br-input-normal input-base-padding min-height-textarea" 
+                                    <textarea class="w-100 mt-2 border-2 border-indigo-200 br-input-normal input-base-padding min-height-textarea transition-textarea" 
                                         :style="{ 'height':  heights[note_for_shelf] + 'px' }"
                                         :ref="(el) => (textAreas.noteTextArea = el)"
                                         name="note_for_shelf"
@@ -368,5 +368,9 @@ async function moveToShelf(bookshelf, overlayRef) {
 
     .bookloaded-enter-from, .bookloaded-leave-to {
         opacity: 1;
+    }
+
+    .transition-textarea::-webkit-scrollbar {
+        display: none;
     }
 </style>
