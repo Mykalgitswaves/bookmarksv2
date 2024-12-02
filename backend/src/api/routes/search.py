@@ -177,3 +177,42 @@ async def search_for_param_bookclub(
     )
 
     return JSONResponse(content={"data": jsonable_encoder(search_result)})
+
+@router.get("/bookshelves/{param}", name="search:bookshelves")
+async def search_for_param_bookshelf(
+    param: str,
+    current_user: Annotated[User, Depends(get_current_active_user)],
+    skip: int = 0,
+    limit: int = 5,
+    search_repo: SearchCRUDRepositoryGraph = Depends(
+        get_repository(repo_type=SearchCRUDRepositoryGraph)
+    ),
+):
+    """
+    Searches book shelves by name and description.
+
+    Args:
+        param (str): The search query.
+        current_user (User): The current user.
+        skip (int): The number of records to skip.
+        limit (int): The number of records to return.
+        search_repo (SearchCRUDRepositoryGraph): The search repository.
+    
+    Returns:
+        JSONResponse: The search results.
+    """
+
+    search_result = search_repo.get_bookshelves_full_text_search(
+        search_query=param, skip=skip, limit=limit
+    )
+
+    logger.info(
+        "Searched for bookshelfs by param",
+        extra={
+            "param": param,
+            "user_id": current_user.id,
+            "action": "search_for_param_bookshelf",
+        }
+    )
+
+    return JSONResponse(content={"data": jsonable_encoder(search_result)})
