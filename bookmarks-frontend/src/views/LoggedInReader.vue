@@ -15,7 +15,7 @@
             </div>
           </div>
 
-          <h3 class="fancy text-xl text-stone-700 mb-5">Books: {{ books.length }}</h3>
+          <h3 class="fancy text-xl text-stone-700 my-5">Books: {{ books.length }}</h3>
 
           <div class="search-results-category" v-if="books.length">
             <!-- book loop -->
@@ -32,7 +32,7 @@
             </div>
           </div>
 
-          <h3 class="fancy text-xl text-stone-700 mb-5" v-if="book_clubs.length">Book Clubs: {{ book_clubs.length }}</h3>
+          <h3 class="fancy text-xl text-stone-700 my-5" v-if="book_clubs.length">Book Clubs: {{ book_clubs.length }}</h3>
 
           <div class="search-results-category" v-if="book_clubs.length">
             <!-- book loop -->
@@ -47,7 +47,7 @@
 
               <h4 class="text-center fancy bold pb-5 text-sm">{{ book_club.name }}</h4>
               <h4 class="text-center fancy pb-5 text-sm" v-if="book_club.current_book">
-                Currently Reading:\s
+                Currently Reading:&nbsp;
                 <span class="italic">{{ book_club.current_book.title }}</span>
               </h4>
               <h4 class="text-center fancy pb-5 text-sm" v-else>
@@ -56,10 +56,10 @@
             </div>
           </div>
 
-          <h3 class="fancy text-xl text-stone-700 mb-5" v-if="authors.length">Authors: {{ authors.length }}</h3>
+          <h3 class="fancy text-xl text-stone-700 my-5" v-if="authors.length">Authors: {{ authors.length }}</h3>
 
           <div class="search-results-category" v-if="authors.length">
-            <div v-for="author in authors" :key="author.id" class="search-result">
+            <div v-for="author in authors" :key="author.id" class="search-result authors">
               {{ author.name }}
             </div>
           </div>
@@ -106,7 +106,7 @@ PubSub.subscribe('nav-search-get-data', (data) => {
   users = data.users;
   booksByAuthor = data.books_by_author;
   booksByGenre = data.books_by_genre;
-  book_clubs = data.book_clubs;
+  book_clubs = data.book_clubs; // Make this camel
 
   hasSearchResults.value = true;
 });
@@ -156,7 +156,7 @@ PubSub.subscribe('nav-search-get-data', (data) => {
 
   .search-results-category {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
     min-height: fit-content;
     align-items: end;
     justify-content: start;
@@ -171,6 +171,13 @@ PubSub.subscribe('nav-search-get-data', (data) => {
     transition: all 250ms ease;
     max-width: 300px; /* Set a maximum width */
     margin: 0; /* Ensure it aligns to the left without centering */
+    height: 100%;
+
+    &.authors {
+      display: grid;
+      place-content: center;
+      text-align: center;
+    }
 
     &:hover {
       background-color: var(--stone-300);
