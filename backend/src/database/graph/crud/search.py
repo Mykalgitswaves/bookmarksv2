@@ -361,7 +361,8 @@ class SearchCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
             bookclub = SearchResultBookClub(
                 current_book=current_book,
                 name=response['node'].get("name"),
-                number_of_members=response.get("number_of_members", 0)
+                number_of_members=response.get("number_of_members", 0),
+                id=response['node'].get("id")
             )
             bookclub_list.append(bookclub)
 

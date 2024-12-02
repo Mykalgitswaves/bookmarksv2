@@ -12,3 +12,4 @@ class SearchResultBookClub(BaseModel):
     current_book: dict | None
     name: str
     number_of_members: int
+    id: str
