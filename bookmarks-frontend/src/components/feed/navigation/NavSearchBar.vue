@@ -30,11 +30,44 @@ const responseBlob = ref(null);
 
 function searchRequest() {
     if (search_params.value.length > 1) {
-        return db.get(urls.search(search_params.value), null, false, (res) => {
-            responseBlob.value = res.data;
-            PubSub.publish('nav-search-get-data', res.data)
-        }, (err) => {
-            console.error(err)
+        // Define your URLs and feature keys
+        const searchFeatures = {
+            general_search: urls.search(search_params.value), // This feature outputs an object
+            book_clubs: urls.searchMore.bookClub(search_params.value), // Outputs an array
+            // Add more features as needed
+        };
+
+        // Map the feature keys to db.get calls
+        const requests = Object.entries(searchFeatures).map(([key, url]) =>
+            db.get(url, null, false)
+                .then((res) => {
+                    if (key === 'general_search') {
+                        // Handle the feature that outputs an object
+                        return res.data; // Directly return the object keys at the top level
+                    } else {
+                        // Wrap arrays in a feature-specific key
+                        return { [key]: res.data };
+                    }
+                })
+                .catch((err) => {
+                    return key === 'general_search' ? {} : { [key]: null }; // Return empty object or null
+                })
+        );
+
+        // Use Promise.all to execute all requests concurrently
+        Promise.all(requests).then((responses) => {
+            // Merge all responses into a single object
+            responseBlob.value = responses.reduce((acc, response) => {
+                if (typeof response === 'object' && !Array.isArray(response)) {
+                    // Merge top-level object keys
+                    return { ...acc, ...response };
+                }
+                // Merge other feature-specific keys
+                return { ...acc, ...response };
+            }, {});
+            console.log(responseBlob.value);
+            // Publish combined data to PubSub or process further
+            PubSub.publish('nav-search-get-data', responseBlob.value);
         });
     }
 }

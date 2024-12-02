@@ -32,6 +32,32 @@
             </div>
           </div>
 
+          <h3 class="fancy text-xl text-stone-700 mb-5" v-if="book_clubs.length">Book Clubs: {{ book_clubs.length }}</h3>
+
+          <div class="search-results-category" v-if="book_clubs.length">
+            <!-- book loop -->
+            <div v-for="book_club in book_clubs" :key="book_club.id" 
+              class="search-result book relative"
+              @click="() => {
+                router.push(navRoutes.toBookClubFeed(route.params.user, book_club.id)); 
+                hasSearchResults = false;
+              }"
+            >
+              <img class="book-img" :src="book_club?.current_book?.small_img_url || noBookYetUrl" alt="" />
+
+              <h4 class="text-center fancy bold pb-5 text-sm">{{ book_club.name }}</h4>
+              <h4 class="text-center fancy pb-5 text-sm" v-if="book_club.current_book">
+                Currently Reading:\s
+                <span class="italic">{{ book_club.current_book.title }}</span>
+              </h4>
+              <h4 class="text-center fancy pb-5 text-sm" v-else>
+                  Not reading anything right now...
+              </h4>
+            </div>
+          </div>
+
+          <h3 class="fancy text-xl text-stone-700 mb-5" v-if="authors.length">Authors: {{ authors.length }}</h3>
+
           <div class="search-results-category" v-if="authors.length">
             <div v-for="author in authors" :key="author.id" class="search-result">
               {{ author.name }}
@@ -60,7 +86,9 @@ const route = useRoute();
 const router = useRouter();
 
 const hasSearchResults = ref(false);
+const noBookYetUrl = 'https://placehold.co/45X45';
 let books = [];
+let book_clubs = [];
 let authors = [];
 let users = [];
 let booksByAuthor = [];
@@ -72,11 +100,13 @@ PubSub.subscribe('nav-search-get-data', (data) => {
   // manually make ui rerender after these lists get dynamically filled up.
   hasSearchResults.value = false;
   // manually fill up these lists;
+  console.log("search results ", data);
   books = data.books;
   authors = data.authors;
   users = data.users;
   booksByAuthor = data.books_by_author;
   booksByGenre = data.books_by_genre;
+  book_clubs = data.book_clubs;
 
   hasSearchResults.value = true;
 });
@@ -129,7 +159,7 @@ PubSub.subscribe('nav-search-get-data', (data) => {
     grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
     min-height: fit-content;
     align-items: end;
-    justify-content: space-around;
+    justify-content: start;
     column-gap: 10px;
     row-gap: 10px;
   }
@@ -139,6 +169,8 @@ PubSub.subscribe('nav-search-get-data', (data) => {
     background-color: var(--stone-50);
     padding: 14px;
     transition: all 250ms ease;
+    max-width: 300px; /* Set a maximum width */
+    margin: 0; /* Ensure it aligns to the left without centering */
 
     &:hover {
       background-color: var(--stone-300);

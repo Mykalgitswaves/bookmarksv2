@@ -21,6 +21,9 @@ export const urls = {
     login: baseUrl + 'api/auth/login',
     author: baseUrl + 'api/author/',
     search: (searchParam) =>  `${baseUrl}api/search/${searchParam}`,
+    searchMore: {
+        bookClub: (searchParam) => (baseUrl + `api/search/bookclubs/${searchParam}`),
+    },
     user: {
         // Specific for the current users info
         getUser: (user_id) => (baseUrl + `api/user/${user_id}/get_user`),
