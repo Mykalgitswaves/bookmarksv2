@@ -8,6 +8,7 @@ from src.database.graph.crud.users import UserCRUDRepositoryGraph
 from src.database.graph.crud.books import BookCRUDRepositoryGraph
 from src.database.graph.crud.posts import PostCRUDRepositoryGraph
 from src.database.graph.crud.bookclubs import BookClubCRUDRepositoryGraph
+from src.database.graph.crud.bookshelves import BookshelfCRUDRepositoryGraph
 from src.api.utils.database import get_repository, get_sql_repository
 from src.config.config import settings
 from src.utils.logging.logger import logger
@@ -170,6 +171,38 @@ async def delete_user_book_club_data(
         response = book_club_repo.delete_book_club_data(user_id)
         if response:
             logger.warning("Admin has deleted a user's book club data")
+            return HTTPException(status_code=200, detail="Post deleted")
+        else:
+            return HTTPException(status_code=404, detail="Post not found")
+
+@router.post("/delete_user_bookshelf_data", name="admin:delete_shelf")
+async def delete_user_book_shelf_data(
+    request: Request,
+    bookshelf_repo: BookshelfCRUDRepositoryGraph = Depends(
+        get_repository(repo_type=BookshelfCRUDRepositoryGraph)
+    ),
+):
+    """
+    Deletes a users book shelf data, including all book shelf books, book shelfs,
+    and paces.
+
+    Args:
+        request: a request object that contains:
+            admin_credentials: the admin credentials for the user
+            user_id: the user
+    """
+    logger.warning("Admin is deleting a user's book shelf data")
+    data = await request.json()
+
+    user_id = data.get("user_id")
+    admin_credentials = data.get("admin_credentials")
+
+    if admin_credentials != settings.ADMIN_CREDENTIALS:
+        raise HTTPException(status_code=403, detail="Forbidden")
+    else:
+        response = bookshelf_repo.delete_book_shelf_data_for_user(user_id)
+        if response:
+            logger.warning("Admin has deleted a user's book shelf data")
             return HTTPException(status_code=200, detail="Post deleted")
         else:
             return HTTPException(status_code=404, detail="Post not found")

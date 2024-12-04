@@ -59,6 +59,12 @@ def setup_class(request):
 
     yield
 
+    response = requests.post(f"{request.cls.endpoint}/api/admin/delete_user_bookshelf_data",
+                            json={"user_id": request.cls.user_id, "admin_credentials": config["ADMIN_CREDENTIALS"]})
+    
+    response = requests.post(f"{request.cls.endpoint}/api/admin/delete_user_bookshelf_data",
+                            json={"user_id": request.cls.user_id_2, "admin_credentials": config["ADMIN_CREDENTIALS"]})
+
     response = requests.post(f"{request.cls.endpoint}/api/admin/delete_user_by_username", 
                              json={"username": request.cls.username, "admin_credentials": config["ADMIN_CREDENTIALS"]})
 

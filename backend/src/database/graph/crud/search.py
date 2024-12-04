@@ -367,3 +367,65 @@ class SearchCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
             bookclub_list.append(bookclub)
 
         return bookclub_list
+    
+    def get_bookshelves_full_text_search(
+            self, 
+            search_query:str, 
+            skip:int, 
+            limit:int):
+        
+        """
+        Searches all user by the full text index (username and full name)
+        """
+        with self.driver.session() as session:
+            result = session.execute_read(
+                self.get_bookshelves_full_text_search_query, 
+                search_query=search_query, 
+                skip=skip, 
+                limit=limit
+                )
+        return(result)
+    
+    @staticmethod
+    def get_bookshelves_full_text_search_query(
+        tx, 
+        search_query:str, 
+        skip:int, 
+        limit:int):
+
+        query = (
+            """
+        CALL db.index.fulltext.queryNodes('bookshelvesFullText', "*" + $search_query + "*")
+        YIELD node, score
+        MATCH (node)-[:HAS_BOOKSHELF_ACCESS {type:"owner"}]-(owner:User)
+        OPTIONAL MATCH (node)-[:CONTAINS]->(book:Book)
+        RETURN node, 
+        score,
+        count(book) as number_of_books,
+        owner.username as owner_username
+        ORDER BY score DESC
+        SKIP $skip
+        LIMIT $limit
+        """
+        )
+
+        result = tx.run(
+            query, 
+            search_query=search_query, 
+            skip=skip, 
+            limit=limit
+            )
+        
+        bookshelf_list = []
+
+        for response in result:
+            bookshelf = {
+                'name': response['node'].get("title"),
+                'description': response['node'].get("description"),
+                'number_of_books': response.get("number_of_books", 0),
+                'owner_username': response.get("owner_username", None),
+                'id': response['node'].get("id")
+            }
+            bookshelf_list.append(bookshelf)
+
+        return bookshelf_list

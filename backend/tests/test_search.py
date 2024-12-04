@@ -187,5 +187,53 @@ class TestSearch:
         assert len(response.json()['data']) > 0, "Search book clubs failed"
         assert len(response.json()['data']) <= 5, "Search book clubs failed"
 
+    def test_search_book_shelves(self):
+        """
+        Test case to verify search works across book clubs in the DB
+        """
+
+        headers = {
+            "Authorization": f"{self.token_type} {self.access_token}"
+        }
+
+        data = {
+            "bookshelf_name": "Test Bookshelf",
+            "bookshelf_description": "Test Bookshelf Description",
+            "visibility": "public"
+        }
+
+        # Send a POST request to create a bookshelf
+        response = requests.post(f"{self.endpoint}/api/bookshelves/create", headers=headers, json=data)
+        assert response.status_code == 200, "Creating Bookshelf"
+        bookshelf_id = response.json()["bookshelf_id"]
+
+        search_term = "test"
+
+        response = requests.get(
+            f"{self.endpoint}/api/search/bookshelves/{search_term}?skip=0&limit=3",
+            headers=headers
+        )
+
+        print(response.json())
+        assert response.status_code == 200, "Search bookshelf failed"
+        assert len(response.json()['data']) > 0, "Search bookshelf failed"
+        assert len(response.json()['data']) <= 3, "Search bookshelf failed"
+        
+        headers = {
+            "Authorization": f"{self.token_type} {self.access_token}"
+        }
+
+        search_term = "test"
+
+        response = requests.get(
+            f"{self.endpoint}/api/search/bookshelves/{search_term}",
+            headers=headers
+        )
+
+        print(response.json())
+        assert response.status_code == 200, "Search book clubs failed"
+        assert len(response.json()['data']) > 0, "Search book clubs failed"
+        assert len(response.json()['data']) <= 5, "Search book clubs failed"
+
 
         
