@@ -32,8 +32,9 @@ function searchRequest() {
     if (search_params.value.length > 1) {
         // Define your URLs and feature keys
         const searchFeatures = {
-            general_search: urls.search(search_params.value), // This feature outputs an object
-            book_clubs: urls.searchMore.bookClub(search_params.value), // Outputs an array
+            general_search: urls.search.general(search_params.value), // This feature outputs an object
+            bookClubs: urls.search.bookClub(search_params.value), // Outputs an array
+            bookshelves: urls.search.bookshelf(search_params.value), // Outputs an array
             // Add more features as needed
         };
 

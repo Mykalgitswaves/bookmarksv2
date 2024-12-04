@@ -20,9 +20,10 @@ export const urls = {
     booksByN: baseUrl + 'books/n/',
     login: baseUrl + 'api/auth/login',
     author: baseUrl + 'api/author/',
-    search: (searchParam) =>  `${baseUrl}api/search/${searchParam}`,
-    searchMore: {
+    search: {
+        general: (searchParam) =>  `${baseUrl}api/search/${searchParam}`,
         bookClub: (searchParam) => (baseUrl + `api/search/bookclubs/${searchParam}`),
+        bookshelf: (searchParam) => (baseUrl + `api/search/bookshelves/${searchParam}`)
     },
     user: {
         // Specific for the current users info
@@ -167,6 +168,7 @@ export const navRoutes = {
     toBookPageFromPost: (current_user, book_id) => (`/feed/${current_user}/works/${book_id}`),
     toPostPageFromFeed: (current_user, post_id) => (`/feed/${current_user}/post/${post_id}`),
     toBookshelfSectionPage: (current_user, shelfType) => (`/feed/${current_user}/bookshelves/by/${shelfType}`),
+    toBookshelfPage: (current_user, bookshelf_id) => (`/feed/${current_user}/bookshelves/${bookshelf_id}`),
     toBookClubsPage: (current_user) => (`/feed/${current_user}/bookclubs/`),
     toCreateClubPage: (current_user) => (`/feed/${current_user}/bookclubs/create/`),
     toBookClubFeed: (current_user, bookclub_id) => (`/feed/${current_user}/bookclubs/${bookclub_id}/`),

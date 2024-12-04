@@ -32,26 +32,47 @@
             </div>
           </div>
 
-          <h3 class="fancy text-xl text-stone-700 my-5" v-if="book_clubs.length">Book Clubs: {{ book_clubs.length }}</h3>
+          <h3 class="fancy text-xl text-stone-700 my-5" v-if="bookClubs.length">Book Clubs: {{ bookClubs.length }}</h3>
 
-          <div class="search-results-category" v-if="book_clubs.length">
+          <div class="search-results-category" v-if="bookClubs.length">
             <!-- book loop -->
-            <div v-for="book_club in book_clubs" :key="book_club.id" 
+            <div v-for="bookClub in bookClubs" :key="bookClub.id" 
               class="search-result book relative"
               @click="() => {
-                router.push(navRoutes.toBookClubFeed(route.params.user, book_club.id)); 
+                router.push(navRoutes.toBookClubFeed(route.params.user, bookClub.id)); 
                 hasSearchResults = false;
               }"
             >
-              <img class="book-img" :src="book_club?.current_book?.small_img_url || noBookYetUrl" alt="" />
+              <img class="book-img" :src="bookClub?.current_book?.small_img_url || noBookYetUrl" alt="" />
 
-              <h4 class="text-center fancy bold pb-5 text-sm">{{ book_club.name }}</h4>
-              <h4 class="text-center fancy pb-5 text-sm" v-if="book_club.current_book">
+              <h4 class="text-center fancy bold pb-5 text-sm">{{ bookClub.name }}</h4>
+              <h4 class="text-center fancy pb-5 text-sm" v-if="bookClub.current_book">
                 Currently Reading:&nbsp;
-                <span class="italic">{{ book_club.current_book.title }}</span>
+                <span class="italic">{{ bookClub.current_book.title }}</span>
               </h4>
               <h4 class="text-center fancy pb-5 text-sm" v-else>
                   Not reading anything right now...
+              </h4>
+            </div>
+          </div>
+
+          <h3 class="fancy text-xl text-stone-700 my-5" v-if="bookshelves.length">Bookshelves: {{ bookshelves.length }}</h3>
+
+          <div class="search-results-category" v-if="bookshelves.length">
+            <!-- book loop -->
+            <div v-for="bookshelf in bookshelves" :key="bookshelf.id" 
+              class="search-result book relative"
+              @click="() => {
+                router.push(navRoutes.toBookshelfPage(route.params.user, bookshelf.id)); 
+                hasSearchResults = false;
+              }"
+            >
+              <img class="book-img" :src="bookshelf?.first_book?.small_img_url || noBookYetUrl" alt="" />
+
+              <h4 class="text-center fancy bold pb-5 text-sm">{{ bookshelf.name }}</h4>
+  
+              <h4 class="text-center fancy pb-5 text-sm">
+                {{ bookshelf.description }}
               </h4>
             </div>
           </div>
@@ -88,11 +109,12 @@ const router = useRouter();
 const hasSearchResults = ref(false);
 const noBookYetUrl = 'https://placehold.co/45X45';
 let books = [];
-let book_clubs = [];
 let authors = [];
 let users = [];
 let booksByAuthor = [];
 let booksByGenre = [];
+let bookClubs = [];
+let bookshelves = [];
 
 db.authenticate(urls.authUrl, route.params.user);
 
@@ -106,7 +128,8 @@ PubSub.subscribe('nav-search-get-data', (data) => {
   users = data.users;
   booksByAuthor = data.books_by_author;
   booksByGenre = data.books_by_genre;
-  book_clubs = data.book_clubs; // Make this camel
+  bookClubs = data.bookClubs;
+  bookshelves = data.bookshelves;
 
   hasSearchResults.value = true;
 });
