@@ -221,6 +221,22 @@ class TestSearch:
         assert response.status_code == 200, "Search bookshelf failed"
         assert len(response.json()['data']) > 0, "Search bookshelf failed"
         assert len(response.json()['data']) <= 3, "Search bookshelf failed"
+
+        book_data_1 = {
+            	"book" : {
+                    "id" : "c707fd781-dd1a-4ba7-91f1-f1a2e7ecb872",
+                    "author_names": ["Isaac Asimov"],
+                    "title": "Foundation",
+                    "small_img_url": "http://books.google.com/books/content?id=_uawAAAAIAAJ&printsec=frontcover&img=1&zoom=5&imgtk=AFLRE732DLT-Q5P4M6ll9fpW5DH-Lz-FrGxwAQptgERj0vxnZYrLz57WvWzJ5k8Rr-OVQdQBOAImZNKuZQkgOgOO1HH2l5tUMj62Zngs0JbkXfsQIy3PcS_v8oHhB3XB7M0irmn4gM9g&source=gbs_api"
+                }
+        }
+
+
+        headers = {"Authorization": f"{self.token_type} {self.access_token}"}
+        response = requests.put(f"{self.endpoint}/api/bookshelves/quick_add/{bookshelf_id}", 
+                                 json=book_data_1, headers=headers)
+        assert response.status_code == 200, "Quick Add to Shelf"
+        print(response.json(), "quick add want to read")
         
         headers = {
             "Authorization": f"{self.token_type} {self.access_token}"

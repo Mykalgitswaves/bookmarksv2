@@ -398,9 +398,10 @@ class SearchCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
         CALL db.index.fulltext.queryNodes('bookshelvesFullText', "*" + $search_query + "*")
         YIELD node, score
         MATCH (node)-[:HAS_BOOKSHELF_ACCESS {type:"owner"}]-(owner:User)
-        OPTIONAL MATCH (node)-[:CONTAINS]->(book:Book)
+        OPTIONAL MATCH (node)-[:CONTAINS_BOOK]->(book:Book)
         RETURN node, 
         score,
+        collect(book) as books,
         count(book) as number_of_books,
         owner.username as owner_username
         ORDER BY score DESC
@@ -419,10 +420,26 @@ class SearchCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
         bookshelf_list = []
 
         for response in result:
+            print(response['node'].get("books"))
+            print(response.get("books"))
+            first_book = None
+            if response['node'].get("books") and response.get("books"):
+                first_book_id = response['node'].get("books")[0]
+                for book in response.get("books"):
+                    if book.get("id") == first_book_id:
+                        first_book = {
+                            'title': book.get("title"),
+                            'id': book.get("id"),
+                            'small_img_url': book.get("small_img_url")
+                        }
+                        break
+            
+
             bookshelf = {
                 'name': response['node'].get("title"),
                 'description': response['node'].get("description"),
                 'number_of_books': response.get("number_of_books", 0),
+                'first_book': first_book,
                 'owner_username': response.get("owner_username", None),
                 'id': response['node'].get("id")
             }
