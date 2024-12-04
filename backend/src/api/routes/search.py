@@ -199,7 +199,15 @@ async def search_for_param_bookshelf(
         search_repo (SearchCRUDRepositoryGraph): The search repository.
     
     Returns:
-        JSONResponse: The search results.
+        id (str): The ID of the bookshelf.
+        name (str): The name of the bookshelf.
+        description (str): The description of the bookshelf.
+        number_of_books (int): The number of books in the bookshelf.
+        owner_username (str): The username of the owner of the bookshelf.
+        first_book (dict): The first book in the bookshelf. This contains:
+            id (str): The ID of the book.
+            title (str): The title of the book.
+            small_img_url (str): The small image URL of the book.
     """
 
     search_result = search_repo.get_bookshelves_full_text_search(
