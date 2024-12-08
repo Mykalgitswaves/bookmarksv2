@@ -155,7 +155,22 @@ export const urls = {
         getAwards: (bookclub_id) => (baseUrl + `${BOOK_CLUBS_PREFIX}${bookclub_id}/awards`),
         grantAwardToPost: (bookclub_id, post_id, award_id) => (`${baseUrl}${BOOK_CLUBS_PREFIX}${bookclub_id}/post/${post_id}/award/${award_id}`),
         ungrantAwardToPost: (bookclub_id, post_id, award_id) => (`${baseUrl}${BOOK_CLUBS_PREFIX}${bookclub_id}/post/${post_id}/award/${award_id}`),
-    }
+    },
+    concatQueryParams: (url, newQueryParams) => {
+        if (!url) {
+            console.warn('dude youu need a url for queryParams');
+            return;
+        }
+
+        if (newQueryParams) {
+            // Make sure we aren't fucking up this part of the request.
+            if (!url.endsWith('/')) {
+                url = url + '/';
+            }
+            
+            url = url + '?' + new URLSearchParams(newQueryParams);
+        }
+    },
 }
 
 // Methods for navigating to and from places.

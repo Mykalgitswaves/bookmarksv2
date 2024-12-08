@@ -14,8 +14,8 @@
                 <p class="create-post-heading-text">
                 {{ 
                     quickReview 
-                    ? 'You\'ve finished reading ' 
-                    : 'You\'re reviewing' 
+                        ? 'You\'ve finished reading ' 
+                        : 'You\'re reviewing' 
                 }}
                     <span class=" create-post-heading-book-title">
                         {{ book.title }}
@@ -296,7 +296,7 @@ watch(currentTopic, () => {
 
 let quickReview = false;
 // start of unique logic.
-if (props.unique === Bookshelves.CURRENTLY_READING.prefix) {
+if (props.unique === Bookshelves.CURRENTLY_READING.prefix || props.unique === 'bookclub') {
     quickReview = true;
 }
 </script>

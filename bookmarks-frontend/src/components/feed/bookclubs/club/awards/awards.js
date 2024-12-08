@@ -24,6 +24,7 @@ import StrangeHillToDieOn from './icons/StrangeHillToDieOn.vue';
 import Facts from './icons/Facts.vue';
 import NiceGippity from './icons/NiceGippity.vue';
 import Hundred from './icons/Hundred.vue';
+import Doubt from './icons/Doubt.vue';
 
 export const ClubAwardsSvgMap = {
     dunce_cap: () => DunceCap,
@@ -33,5 +34,5 @@ export const ClubAwardsSvgMap = {
     strange_hill_to_die_on: () => StrangeHillToDieOn,
     definitely_didnt_read_it: () => DefinitelyDidntReadIt,
     '100': () => Hundred,
-    doubt: () => false,
-}
+    doubt: () => Doubt,
+} 

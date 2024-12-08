@@ -1343,6 +1343,7 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
             WHERE post:ClubUpdate OR post:ClubUpdateNoText
             match (post)<-[pr:POSTED]-(u:User)
             optional match (cu)-[lr:LIKES]->(post)
+            optional match (any)-[nl:LIKES]->(post)
             optional match (book)-[br:IS_EQUIVALENT_TO]-(canon_book:Book)
             optional match (comments:Comment {deleted:false})<-[:HAS_COMMENT]-(post)
             optional match (post)<-[:AWARD_FOR_POST]-(post_award:ClubAwardForPost)
@@ -1351,6 +1352,7 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
             CASE WHEN lr IS NOT NULL THEN true ELSE false END AS liked_by_current_user,
             CASE WHEN u.id = $user_id THEN true ELSE false END AS posted_by_current_user,
             count(comments) as num_comments,
+            count(nl) as num_likes
             collect(post_award) as awards
             order by post.created_date desc
             skip $skip
@@ -1367,6 +1369,7 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
             WHERE post.chapter <= user_reading.current_chapter
             match (post)<-[pr:POSTED]-(u:User)
             optional match (cu)-[lr:LIKES]->(post)
+            optional match (User)-[nl:LIKES]->(post)
             optional match (book)-[br:IS_EQUIVALENT_TO]-(canon_book:Book)
             optional match (comments:Comment {deleted:false})<-[:HAS_COMMENT]-(post)
             optional match (post)<-[:AWARD_FOR_POST]-(post_award:ClubAwardForPost)
@@ -1374,6 +1377,7 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
             RETURN post, labels(post), u.username, canon_book, u.id, user_reading.current_chapter,
             CASE WHEN lr IS NOT NULL THEN true ELSE false END AS liked_by_current_user,
             CASE WHEN u.id = $user_id THEN true ELSE false END AS posted_by_current_user,
+            count(nl) as num_likes,
             count(comments) as num_comments,
             collect(award_long) as awards
             order by post.created_date desc
@@ -1442,6 +1446,7 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
                     user_id=response.get("u.id"),
                     user_username=response.get("u.username"),
                     liked_by_current_user=response.get("liked_by_current_user"),
+                    likes=response.get("num_likes"),
                     posted_by_current_user=response.get("posted_by_current_user"),
                     num_comments=response.get("num_comments"),
                     book=book,

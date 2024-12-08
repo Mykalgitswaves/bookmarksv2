@@ -543,7 +543,7 @@ async function saveBookNoteForCurrentBook() {
  * @description: Wrapper around the Bookshelves.moveBookToShelf function.
  * @param {*} bookshelf - bookshelf id of the shelf you want to move things to.
  */
-async function moveToShelf(bookshelf) {
+function moveToShelf(bookshelf) {
     const authors = toRaw(currentBookForOverlay.value.author_names) || toRaw(currentBookForOverlay.value.authors)
     const book = {
         title: currentBookForOverlay.value.title,
@@ -552,17 +552,10 @@ async function moveToShelf(bookshelf) {
         id: currentBookForOverlay.value.id,
         noteForShelf: currentBookForOverlay.value.note_for_shelf,
     }
-    let currentShelf = '';
-    if (moveToSelectedShelfData.value.isRemovingFromCurrentShelf) {
-        currentShelf = route.params.shelf;
-    }
 
-    try {
-        const response = await Bookshelves.moveBookToShelf(bookshelf, book, currentShelf);
-        console.log(response);
-    } catch (error) {
-        console.error(error);
-    }
+    let currentShelf = moveToSelectedShelfData.value.isRemovingFromCurrentShelf ? route.params.shelf : '';
+ 
+    Bookshelves.moveBookToShelf(bookshelf, book, currentShelf);
 }
 // End of book controls overlay function
 // ------------------------------

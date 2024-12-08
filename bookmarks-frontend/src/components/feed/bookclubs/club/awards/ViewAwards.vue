@@ -1,6 +1,6 @@
 <template>
 <dialog ref="awardsModal" class="awards-menu">
-    <div class="pt-5 pb-5">
+    <div class="pt-5">
         <CloseButton 
             class="ml-auto" 
             @close="() => {
@@ -15,32 +15,16 @@
         <!-- maybe we want to use async component here, idk though. -->
         <AsyncComponent :promises="[getAwardsPromise]"> 
             <template #resolved>
-                <div class="toolbar">
-                    <button 
-                        v-if="postId" 
-                        class="btn btn-toolbar text-sm active"
-                    >
-                        post awards
-                    </button>
-                    
-                    <button class="btn btn-toolbar text-sm"
-                    >
-                        club awards
-                    </button>
-                </div>
-
                 <div class="award-grid">
                     <div v-for="(category, key) in awards" 
                         :key="index"
                     >
-                        <h3 class="text-xl text-stone-700 fancy text-start mb-5 mt-5">
+                        <h3 class="text-xl text-stone-700 fancy text-start mb-5">
                             {{ key }}
                         </h3>
 
                         <div class="award-type" v-if="category">
-                            <div v-for="award in category" 
-                                :key="award.id" 
-                            >      
+                            <div v-for="award in category" :key="award.id">
                                 <div class="award"
                                     :class="{
                                         'granted': awardStatuses[award.id].status === Award.statuses.grantable,
@@ -49,22 +33,24 @@
                                     }"
                                     @click="grantAwardToPost(postId, award, [award.current_uses, award.allowed_uses])"
                                 >
-                                
-                                <span class="award-front">    
+                                    <span class="award-front">
                                         <component class="award-icon" v-if="ClubAwardsSvgMap[award.cls]" :is="ClubAwardsSvgMap[award.cls]()" />
 
                                         <p class="award-title">{{ award.name }}</p>
+
                                         <p class="award-description">{{  award.description }}</p>
                                     </span>
                                 </div>
                                 
-                                <p class="text-xs bold text-stone-500 text-center">{{ `${award.current_uses} granted on this post, ${award.allowed_uses - award.current_uses} remaining` }}</p>
+                                <p class="text-xs bold text-stone-500 text-center">
+                                    {{ `${award.current_uses} granted on this post, ${award.allowed_uses - award.current_uses} remaining` }}
+                                </p>
 
                                 <button 
                                     v-if="award.current_uses > 0"
                                     type="button" 
                                     class="text-xs text-red-500" 
-                                    @click="removeAwardFromPost(postId, award.id)"
+                                    @click="ungrantAwardFromPost(postId, award)"
                                 >
                                     Ungrant
                                 </button>
@@ -121,7 +107,7 @@ const getAwardsPromise = db.get(urls.bookclubs.getAwards(bookclub),
         let awardLimit = _awards.length;
         let index = 0;
 
-        // this is marginally faster than a normal for loop.
+        // This is marginally faster than a normal for loop.
         while (index < awardLimit) {
             awardStatuses.value[_awards[index].id] = {};
             if (!awardsByType[_awards[index].type]) {
@@ -138,8 +124,9 @@ const getAwardsPromise = db.get(urls.bookclubs.getAwards(bookclub),
                 awardStatuses.value[_awards[index].id].status = Award.statuses.grantable;
             };
 
-            index += 1
+            index += 1;
         };
+
         // Set the awards by type.
         Object.keys(awardsByType).forEach((key) => {
             awardsByType[key] = (_awards
@@ -158,19 +145,6 @@ const isOpen = ref(false);
 /**
  * @UI_functions
  */
-function showOrHideAwardsDialog() {
-    if (awardsModal.value) {
-        if (!awardsModal.value.open) { 
-            awardsModal.value.showModal(); 
-            isOpen.value = true; 
-        } else {
-            awardsModal.value.close();
-            isOpen.value = false;
-            postId = null;
-        } 
-    }
-}
-
 
 function handleClickOutside(event){
     if (
@@ -224,15 +198,30 @@ function grantAwardToPost(postId, award, useArray) {
             // TODO: Update this so that it works.
             // awardStatuses.value[awardId].status === Award.statuses.loading
             loading.value = false;
-            PubSub.publish(`award-granted-to-${postId}`, award);
+            award.current_uses += 1;
+            let channel = `award-granted-to-${postId}`;
+            console.log(channel, award, 'before pubsub')
+            PubSub.publish(channel, { award });
         },
         (err) => {
             console.log(err)
             loading.value = false;
         }
     );
-}
+};
 
+
+function ungrantAwardFromPost(post, award) {
+    db.delete(urls.bookclubs.ungrantAwardToPost(route.params.bookclub, post.id, award.id), 
+    null, 
+    false, 
+    (res) => {
+        award.current_uses -= 1;
+    }, 
+    (err) => {
+        console.log(err);
+    });
+}
 </script>
 <style scoped>
 .h-40 {

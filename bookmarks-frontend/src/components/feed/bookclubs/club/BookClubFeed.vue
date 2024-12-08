@@ -29,9 +29,10 @@
             <BookClubFeedActions 
                 v-if="currentlyReadingBook"
                 @start-club-update-post-flow="showUpdateForm()"
+                @finished-reading="showFinishedReadingForm()"
             />
 
-            <Overlay ref="updateOverlay">
+            <Overlay :ref="(el) => overlays.updateOverlay = el">
                 <template #overlay-header>
 
                 </template>
@@ -41,6 +42,20 @@
                         :book="currentlyReadingBook" 
                         @post-update="(update) => postUpdateForBookClub(update)"
                     />
+                </template>
+            </Overlay>
+
+            <Overlay :ref="(el) => overlays.finishedReadingOverlay = el">
+                <template #overlay-header>
+
+                </template>
+                <template #overlay-main>
+                        <CreateReviewPost 
+                            :book="currentlyReadingBook"
+                            unique="bookclub"
+                            @is-postable-data="setPostData" 
+                            @post-data="postToEndpoint()"
+                        />
                 </template>
             </Overlay>
 
@@ -62,6 +77,7 @@ import BookClubFeedActions from './BookClubFeedActions.vue';
 import ClubPost from './posts/ClubPost.vue';
 import Overlay from '@/components/feed/partials/overlay/Overlay.vue';
 import CreateUpdateForm from '@/components/feed/createPosts/update/createUpdateForm.vue';
+import CreateReviewPost  from '@/components/feed/createPosts/createReviewPost.vue';
 import CurrentPacesForClubBook from './CurrentPacesForClubBook.vue';
 import { ref } from 'vue';
 import { db } from '../../../../services/db';
@@ -82,15 +98,25 @@ const data = ref({
     posts: [],
 });
 const loaded = ref(false);
-const updateOverlay = ref(null);
+
+const overlays = ref({
+    updateOverlay: null,
+    finishedReadingOverlay: null,
+});
+
 const route = useRoute();
 
 let currentlyReadingBook = {};
 
 function showUpdateForm() {
-    const { dialogRef } = updateOverlay.value;
+    const { dialogRef } = overlays.value.updateOverlay;
     dialogRef?.showModal();
 };
+
+function showFinishedReadingForm() {
+    const { dialogRef } = overlays.value.finishedReadingOverlay;
+    dialogRef?.showModal(); 
+}
 
 /**
  * @load
@@ -132,7 +158,7 @@ function postUpdateForBookClub(update) {
             console.log(res);
             // Refresh;
             refreshFeed();
-            const { dialogRef } = updateOverlay.value;
+            const { dialogRef } = overlays.value.updateOverlay;
             dialogRef?.close();
         },
         (err) => {

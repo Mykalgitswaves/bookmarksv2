@@ -1,6 +1,6 @@
 <template>
     <div v-if="post.type === ClubUpdatePost.cls">
-        <div class="card club">
+        <div class="card club" :class="{'post-liked-by-user': isLikedByCurrentUser}">
             <!-- Header dude no shit -->
             <div class="card-header">
                 <p class="text-slate-600 text-center"
@@ -52,12 +52,32 @@
             <div class="card-footer">
                 <!-- Rethink these as club specific controls. -->
                     <!-- todo add in n more awards stuff here. -->
-                <button 
-                    class="btn btn-tiny btn-icon mr-auto btn-specter b-0" 
-                    @click="dispatchAwardEvent(post.id)"
-                >
-                    <IconAwards />
-                </button>
+                <div class="flex items-center">
+                    <button 
+                        title="like post"
+                        class="btn btn-tiny btn-icon mr-auto btn-specter relative b-0 m-r-5" 
+                        :class="{'liked': isLikedByCurrentUser}"
+                        style="height: 48px; width: 48px;"
+                        @click="likeOrUnlikeClubPost"
+                    >
+                        <IconClubLike />
+
+                        <span v-if="likes > 0" 
+                            class="like-count"
+                        >
+                            {{ likes }}
+                        </span>
+                    </button>
+
+
+                    <button 
+                        title="view awards"
+                        class="btn btn-tiny btn-icon mr-auto btn-specter b-0" 
+                        @click="dispatchAwardEvent(post)"
+                    >
+                        <IconAwards />
+                    </button>
+                </div>
                 
                 <div class="awards-list" :class="{'expanded': false}" v-if="awards.length">
                     <div v-for="(award, index) in awards" 
@@ -111,8 +131,9 @@ import { db } from '../../../../../services/db';
 import { ClubUpdatePost, ClubReviewPost } from '../../models/models';
 import { ClubAwardsSvgMap } from '../awards/awards';
 import { computed, ref } from 'vue';
-import {useRoute} from 'vue-router';
+import { useRoute } from 'vue-router';
 import IconAwards from '../awards/icons/Awards.vue';
+import IconClubLike from '../awards/icons/ClubLike.vue';
 import SuccessToast from '../../../../shared/SuccessToast.vue';
 import { Toast } from '../../../../shared/models';
 import { PubSub } from '../../../../../services/pubsub';
@@ -132,7 +153,7 @@ const awardsRef = ref(
 );
 
 const route = useRoute();
-const toast = ref(null);
+const toast = ref(null); 
 
 /**
  * @typedef { awards} – Returns a list containing the first 4 awards sorted
@@ -154,7 +175,6 @@ function dispatchAwardEvent(postId) {
     });
     window.dispatchEvent(event);
 };
-
 
 function successDeleteFunction(award, vForIndex) {
     // Either way wipe out existing toast
@@ -212,10 +232,36 @@ function grantOrUngrantAward(award, vForIndex) {
 
 // Make each post subscribe to an awards channel.
 PubSub.subscribe(`award-granted-to-${props.post.id}`, (award) => {
-    debugger;
     award.num_grants = 1;
     awardsRef.value.push(award);
 });
+
+// ---------------------------------------------------------------
+// ---------------------------------------------------------------
+// Likes
+// ---------------------------------------------------------------
+// ---------------------------------------------------------------
+
+const likes = ref(props.post.likes);
+const isLikedByCurrentUser = ref(props.post.liked_by_current_user);
+
+function likeOrUnlikeClubPost() {
+    let url = !isLikedByCurrentUser.value ? 
+        urls.reviews.likePost(props.post.id) :
+        urls.reviews.unlikePost(props.post.id);
+
+    db.put(url, null, false, () => {
+        if (!isLikedByCurrentUser.value) {
+            likes.value += 1;
+            isLikedByCurrentUser.value = true;
+        } else {
+            likes.value -= 1;
+            isLikedByCurrentUser.value = false;
+        }   
+    }, (err) => {
+        console.error(err);
+    });
+};
 </script>
 <style scoped>
 .quote {
@@ -297,5 +343,24 @@ PubSub.subscribe(`award-granted-to-${props.post.id}`, (award) => {
     z-index: 2;
     line-height: 1;
     font-size: var(--font-xs);
+}
+
+.liked {
+    color: var(--red-500) !important;
+    fill: var(--red-500) !important;
+}
+
+.like-count {
+    position: absolute;
+    z-index: 10px;
+    top: -5px;
+    right: 0;
+    font-family: var(--fancy-script);
+    font-size: var(--font-xs);
+    font-weight: bold;
+    padding: 2px 4px;
+    background-color: var(--red-100);
+    color: var(--red-500);
+    border-radius: 2px;
 }
 </style>
