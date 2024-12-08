@@ -180,11 +180,11 @@ window.addEventListener('open-award-post-modal', (event) => {
     isOpen.value = true; 
 });
 
-function grantAwardToPost(postId, award, useArray) {
+function grantAwardToPost(post, award, useArray) {
     // For ui.
     let awardId = award.id;
     awardStatuses.value[awardId].status === Award.statuses.loading
-    if (!postId) return;
+    if (!post) return;
     if (!useArray) return;
 
     // This assumes the count is always 0.
@@ -192,7 +192,7 @@ function grantAwardToPost(postId, award, useArray) {
     // early out if you are already at the limit of the awards allotted uses.
     if (awardStatuses.value[awardId].grantable && useArray[0] >= useArray[1]) return;
 
-    db.put(urls.bookclubs.grantAwardToPost(bookclub, postId, awardId), null, false, 
+    db.put(urls.bookclubs.grantAwardToPost(bookclub, post.id, awardId), null, false, 
         (res) => {
             // this is where you should see whether the award can still be granted or not by incrementing the count of grants a particular award has been given.
             // TODO: Update this so that it works.

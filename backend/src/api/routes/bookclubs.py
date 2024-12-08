@@ -1551,3 +1551,34 @@ async def test_emails(
         )
         return JSONResponse(status_code=200, content={'email': jsonable_encoder(preview_email)})
     
+@router.get("{book_club_id}/create-notification/{member_id}", name='bookclubs:peer_pressure')
+async def bug_member(
+    book_club_id: str,
+    current_user: Annotated[User, Depends(get_current_active_user)],
+    request: Request,
+    book_club_repo: BookClubCRUDRepositoryGraph = Depends(
+        get_repository(repo_type=BookClubCRUDRepositoryGraph)
+    ),
+):
+    """
+    Allow club members to peer pressure each other into reading more if the club / user allows it.
+    """
+    try:
+        data = request.json()
+        member_id, notification_type = data
+        
+        if member_id and notification:
+            notification = book_club_repo.create_club_notification(
+                type=notification_type,
+                sent_by_user_id=current_user.id,
+                member_id=member_id,
+                book_club_id=book_club_id
+            )
+
+            return JSONResponse(status_code=200, content={'notification': jsonable_encoder(notification)})
+        else:
+            return HTTPException(status_code=400, detail='Missing member_id and notification_type from request payload.')
+        
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    

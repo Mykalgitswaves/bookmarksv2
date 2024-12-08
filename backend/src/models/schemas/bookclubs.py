@@ -185,3 +185,14 @@ class CreateAward(BaseModel):
 
 class DeleteAward(CreateAward):
     pass
+
+# Notifications!
+# Use these to bug the shit out of your friends (with consent)!
+class ClubNotification(BaseModel):
+    id: str
+    type: str
+    created_at: datetime
+    member_id: str
+    sent_by_user_id: str
+    book_club_id: str
+    dismissed: bool = False

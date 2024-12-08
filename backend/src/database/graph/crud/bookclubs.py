@@ -2133,5 +2133,89 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
             return True
         else:
             return False
-    
-    
+
+
+    @staticmethod
+    def create_club_notification_query(tx, sent_by_user_id:str, member_id:str, book_club_id:str, type:str):
+        # We only want to allow for notifications of a certain type for a 
+        # certain user to be created within a given interval so users don't feel flooded!
+        # These should also be an opt in feature for a specific pace of bookclub. 
+        # Some readers (casuals) don't want to feel stressed or like they are holding up the club. 
+        # In that case this feature could actually work against them.
+
+        query = """
+            MATCH (bc:BookClub {id: $book_club_id})<-[:IS_MEMBER_OF]-(sendingUser:User {id: $sent_by_user_id})
+            MATCH (bc)<-[:IS_MEMBER_OF]-(recievingUser:User {id: $member_id})
+
+            OPTIONAL MATCH (bc)-[existing_notification:NOTIFICATION_FOR_CLUB]->(n:ClubNotification {type: $type})
+
+            WHERE existingNotification.created_at < $minimum_time 
+                AND existingNotification.member_id = $member_id
+            
+            WITH recievingUser, sendingUser, bc, COUNT(existingNotification) AS existingCount
+            WHERE existingCount = 0
+
+            CREATE (clubNotification:ClubNotification {
+                id: "club_notification_" + randomUUID(),
+                type: $type,
+                created_at: datetime(),
+                sent_by_user_id: $sent_by_user_id,
+                member_id: $member_id,
+                dismissed: false,
+                book_club_id: $book_club_id,
+            })
+
+            CREATE (sendingUser)-[created_notification:CREATED_NOTIFICATION {
+                type: $type,
+                created_at: datetime(),
+                for_user: $member_id,
+                book_club_id: $book_club_id,
+            }]->(clubNotification)
+
+            CREATE (recievingUser)-[notification_for_user:NOTIFICATION_FOR_USER {
+                type: $type,
+                created_at: datetime(),
+                created_by_id: $sent_by_user_id,
+                book_club_id: $book_club_id,
+            }]->(clubNotification)
+            
+            CREATE (bc)-[notification_for_club:NOTIFICATION_FOR_CLUB {
+                type: $type,
+                created_at: datetime(),
+                created_by: $sent_by_user_id,
+                for_user: $member_id,
+            }]->(clubNotification)
+
+            RETURN clubNotification
+        """
+        # this could be a club specific setting. What allows people to 
+        minimum_time = datetime.now() + datetime.relativedelta(weeks=1)
+
+        result = tx.run(
+            query, 
+            book_club_id=book_club_id, 
+            sent_by_user_id=sent_by_user_id, 
+            member_id=member_id,
+            type=type,
+            minimum_time=minimum_time
+        )
+
+        response = result.single()
+        breakpoint()
+        pass
+
+    def create_club_notification(self, type:str, sent_by_user_id:str, member_id:str, book_club_id:str):
+        """
+        create a notification to bug users to read a currently reading book inside of a club! NOT EMAILS, 
+        these are just for the mobile menu.
+        """
+
+        with self.driver.session() as session:
+            result = session.write_transaction(
+                self.create_club_notification_query,
+                type=type,
+                sent_by_user_id=sent_by_user_id, 
+                member_id=member_id, 
+                book_club_id=book_club_id,
+            )
+        return result
