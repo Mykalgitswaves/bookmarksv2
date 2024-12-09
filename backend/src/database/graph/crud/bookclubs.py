@@ -2145,7 +2145,7 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
         # In that case this feature could actually work against them.
         # The receiving user can't already have a notification created within the past 7 days. 
         # Meaning one notification exists that is greater than the past 7 days.
-        
+
         query = """
             MATCH (bc:BookClub {id: $book_club_id})<-[:IS_MEMBER_OF|OWNS_BOOK_CLUB]-(sendingUser:User {id: $sent_by_user_id})
             MATCH (bc)<-[:IS_MEMBER_OF|OWNS_BOOK_CLUB]-(receivingUser:User {id: $member_id})
@@ -2181,9 +2181,8 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
                 created_by: $sent_by_user_id,
                 for_user: $member_id
             }]->(createdClubNotification)
-            CASE WHEN createdClubNotification IS NOT NULL THEN true ELSE false END AS createdPost, 
             RETURN createdClubNotification, 
-                createdPost,
+                CASE WHEN createdClubNotification IS NOT NULL THEN true ELSE false END AS createdPost,
                 created_notification, 
                 notification_for_user, 
                 notification_for_club

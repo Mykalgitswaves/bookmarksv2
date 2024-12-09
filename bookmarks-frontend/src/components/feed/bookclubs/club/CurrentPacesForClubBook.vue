@@ -40,7 +40,7 @@
                                     pressure
                                 </button>
 
-                                <p v-else-if="member.id !== route.params.user && hasMemberBeenPeerPressured[member.id]">
+                                <p class="ml-auto" v-else-if="member.id !== route.params.user && hasMemberBeenPeerPressured[member.id]">
                                     Peer pressured!
                                 </p>
 
@@ -56,6 +56,8 @@
             </template>
         </AsyncComponent>
     </div>
+    <!-- Nerd stuff for you impatient readers. -->
+    <SuccessToast v-if="toast" :toast="toast" :toast-type="Toast.TYPES.MESSAGE_TYPE" @dismiss="() => toast = null"/>
 </template>
 <script setup>
 import { ref } from 'vue';
@@ -66,6 +68,7 @@ import IconRabbit from '@/components/svg/icon-rabbit.vue';
 import IconTurtle from '@/components/svg/icon-turtle.vue';
 import AsyncComponent from '../../partials/AsyncComponent.vue';
 import { ClubNotification } from './notifications/models';
+import SuccessToast from '../../../shared/SuccessToast.vue';
 
 const props = defineProps({
     totalChapters: {
@@ -78,6 +81,7 @@ let svgPaceMap = {};
 const route = useRoute();
 const isViewingAllPaces = ref(false);
 const hasMemberBeenPeerPressured = ref({})
+const toast = ref(null);
 
 const clubPacePromise = db.get(urls.bookclubs.getClubPace(route.params.bookclub), null, false, (res) => {
     memberPaces = res.member_paces
@@ -125,10 +129,14 @@ function pressureReader(member) {
         member_id: member.id,
         notification_type: ClubNotification.types.peerPressure
     }, false, (res) => {
-        debugger;
         console.log(res)
+        const { notification } = res;
         // Create a toast for the user. 
-        hasMemberBeenPeerPressured.value[member.id] = true;
+        if (notification) {
+            hasMemberBeenPeerPressured.value[member.id] = true;
+            toast.value = ClubNotification.generateToastFromNotification(notification);
+        }
+
     }, 
     (err) => {
         console.error(err);
