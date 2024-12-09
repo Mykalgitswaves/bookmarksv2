@@ -1551,8 +1551,8 @@ async def test_emails(
         )
         return JSONResponse(status_code=200, content={'email': jsonable_encoder(preview_email)})
     
-@router.get("{book_club_id}/create-notification/{member_id}", name='bookclubs:peer_pressure')
-async def bug_member(
+@router.post("/{book_club_id}/create-notification/{member_id}", name='bookclubs:peer_pressure')
+async def peer_pressure_member(
     book_club_id: str,
     current_user: Annotated[User, Depends(get_current_active_user)],
     request: Request,
@@ -1564,12 +1564,15 @@ async def bug_member(
     Allow club members to peer pressure each other into reading more if the club / user allows it.
     """
     try:
-        data = request.json()
-        member_id, notification_type = data
-        
-        if member_id and notification:
+        data = await request.json()
+
+        member_id = data.get('member_id')
+        notification_type = data.get('notification_type')
+
+        if member_id and notification_type:
+            print(notification_type, current_user.id, member_id, book_club_id)
             notification = book_club_repo.create_club_notification(
-                type=notification_type,
+                notification_type=notification_type,
                 sent_by_user_id=current_user.id,
                 member_id=member_id,
                 book_club_id=book_club_id

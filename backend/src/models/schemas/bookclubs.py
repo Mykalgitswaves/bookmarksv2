@@ -190,7 +190,7 @@ class DeleteAward(CreateAward):
 # Use these to bug the shit out of your friends (with consent)!
 class ClubNotification(BaseModel):
     id: str
-    type: str
+    notification_type: str
     created_at: datetime
     member_id: str
     sent_by_user_id: str

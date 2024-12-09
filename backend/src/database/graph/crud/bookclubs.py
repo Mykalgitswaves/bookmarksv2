@@ -1,6 +1,7 @@
 from datetime import datetime
 from neo4j.time import DateTime as Neo4jDateTime
 from typing import List
+from datetime import datetime, timedelta
 
 from src.database.graph.crud.base import BaseCRUDRepositoryGraph
 from src.models.schemas import bookclubs as BookClubSchemas
@@ -2136,7 +2137,7 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
 
 
     @staticmethod
-    def create_club_notification_query(tx, sent_by_user_id:str, member_id:str, book_club_id:str, type:str):
+    def create_club_notification_query(tx, sent_by_user_id:str, member_id:str, book_club_id:str, notification_type:str):
         # We only want to allow for notifications of a certain type for a 
         # certain user to be created within a given interval so users don't feel flooded!
         # These should also be an opt in feature for a specific pace of bookclub. 
@@ -2144,67 +2145,80 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
         # In that case this feature could actually work against them.
 
         query = """
-            MATCH (bc:BookClub {id: $book_club_id})<-[:IS_MEMBER_OF]-(sendingUser:User {id: $sent_by_user_id})
-            MATCH (bc)<-[:IS_MEMBER_OF]-(recievingUser:User {id: $member_id})
-
-            OPTIONAL MATCH (bc)-[existing_notification:NOTIFICATION_FOR_CLUB]->(n:ClubNotification {type: $type})
-
-            WHERE existingNotification.created_at < $minimum_time 
-                AND existingNotification.member_id = $member_id
-            
-            WITH recievingUser, sendingUser, bc, COUNT(existingNotification) AS existingCount
+            MATCH (bc:BookClub {id: $book_club_id})<-[:IS_MEMBER_OF|OWNS_BOOK_CLUB]-(sendingUser:User {id: $sent_by_user_id})
+            MATCH (bc)<-[:IS_MEMBER_OF|OWNS_BOOK_CLUB]-(receivingUser:User {id: $member_id})
+            OPTIONAL MATCH (bc)-[:NOTIFICATION_FOR_CLUB]->(existingClubNotification:ClubNotification {notification_type: $notification_type})
+            WHERE existingClubNotification.created_at < $minimum_time 
+                AND existingClubNotification.member_id = $member_id
+            WITH receivingUser, sendingUser, bc, COUNT(existingClubNotification) AS existingCount
             WHERE existingCount = 0
-
-            CREATE (clubNotification:ClubNotification {
+            CREATE (createdClubNotification:ClubNotification {
                 id: "club_notification_" + randomUUID(),
-                type: $type,
+                notification_type: $notification_type,
                 created_at: datetime(),
                 sent_by_user_id: $sent_by_user_id,
                 member_id: $member_id,
                 dismissed: false,
-                book_club_id: $book_club_id,
+                book_club_id: $book_club_id
             })
-
-            CREATE (sendingUser)-[created_notification:CREATED_NOTIFICATION {
-                type: $type,
+            MERGE (sendingUser)-[created_notification:CREATED_NOTIFICATION {
+                notification_type: $notification_type,
                 created_at: datetime(),
                 for_user: $member_id,
-                book_club_id: $book_club_id,
-            }]->(clubNotification)
-
-            CREATE (recievingUser)-[notification_for_user:NOTIFICATION_FOR_USER {
-                type: $type,
+                book_club_id: $book_club_id
+            }]->(createdClubNotification)
+            MERGE (createdClubNotification)-[notification_for_user:NOTIFICATION_FOR_USER {
+                notification_type: $notification_type,
                 created_at: datetime(),
                 created_by_id: $sent_by_user_id,
-                book_club_id: $book_club_id,
-            }]->(clubNotification)
-            
-            CREATE (bc)-[notification_for_club:NOTIFICATION_FOR_CLUB {
-                type: $type,
+                book_club_id: $book_club_id
+            }]->(receivingUser)
+            MERGE (bc)-[notification_for_club:NOTIFICATION_FOR_CLUB {
+                notification_type: $notification_type,
                 created_at: datetime(),
                 created_by: $sent_by_user_id,
-                for_user: $member_id,
-            }]->(clubNotification)
-
-            RETURN clubNotification
+                for_user: $member_id
+            }]->(createdClubNotification)
+            CASE WHEN createdClubNotification IS NOT NULL THEN true ELSE false END AS createdPost, 
+            RETURN createdClubNotification, 
+                createdPost,
+                created_notification, 
+                notification_for_user, 
+                notification_for_club
         """
-        # this could be a club specific setting. What allows people to 
-        minimum_time = datetime.now() + datetime.relativedelta(weeks=1)
+
+        # This could be a club specific setting. What allows people to 
+        minimum_time = datetime.now() + timedelta(minutes=2)
 
         result = tx.run(
             query, 
             book_club_id=book_club_id, 
             sent_by_user_id=sent_by_user_id, 
             member_id=member_id,
-            type=type,
+            notification_type=notification_type,
             minimum_time=minimum_time
         )
 
         response = result.single()
-        breakpoint()
-        pass
 
-    def create_club_notification(self, type:str, sent_by_user_id:str, member_id:str, book_club_id:str):
+        if not response.get('createdPost'):
+            return False
+
+        created_notification = response.get('createdClubNotification')
+        
+        notification = BookClubSchemas.ClubNotification(
+            id=created_notification.get('id'),
+            sent_by_user_id=created_notification.get('sent_by_user_id'),
+            notification_type=created_notification.get('notification_type'),
+            member_id=created_notification.get('member_id'),
+            dismissed=created_notification.get('dismissed', False),
+            created_at=created_notification.get('created_at').to_native(),
+            book_club_id=created_notification.get('book_club_id'),
+        )
+
+        return notification
+
+    def create_club_notification(self, notification_type:str, sent_by_user_id:str, member_id:str, book_club_id:str):
         """
         create a notification to bug users to read a currently reading book inside of a club! NOT EMAILS, 
         these are just for the mobile menu.
@@ -2213,7 +2227,7 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
         with self.driver.session() as session:
             result = session.write_transaction(
                 self.create_club_notification_query,
-                type=type,
+                notification_type=notification_type,
                 sent_by_user_id=sent_by_user_id, 
                 member_id=member_id, 
                 book_club_id=book_club_id,
