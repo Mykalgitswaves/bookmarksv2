@@ -2143,12 +2143,14 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
         # These should also be an opt in feature for a specific pace of bookclub. 
         # Some readers (casuals) don't want to feel stressed or like they are holding up the club. 
         # In that case this feature could actually work against them.
-
+        # The receiving user can't already have a notification created within the past 7 days. 
+        # Meaning one notification exists that is greater than the past 7 days.
+        
         query = """
             MATCH (bc:BookClub {id: $book_club_id})<-[:IS_MEMBER_OF|OWNS_BOOK_CLUB]-(sendingUser:User {id: $sent_by_user_id})
             MATCH (bc)<-[:IS_MEMBER_OF|OWNS_BOOK_CLUB]-(receivingUser:User {id: $member_id})
-            OPTIONAL MATCH (bc)-[:NOTIFICATION_FOR_CLUB]->(existingClubNotification:ClubNotification {notification_type: $notification_type})
-            WHERE existingClubNotification.created_at < $minimum_time 
+            OPTIONAL MATCH (bc)-[:NOTIFICATION_FOR_CLUB]->(existingClubNotification:ClubNotification {member_id: $member_id})
+            WHERE existingClubNotification.created_at > $minimum_time 
                 AND existingClubNotification.member_id = $member_id
             WITH receivingUser, sendingUser, bc, COUNT(existingClubNotification) AS existingCount
             WHERE existingCount = 0
@@ -2188,7 +2190,7 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
         """
 
         # This could be a club specific setting. What allows people to 
-        minimum_time = datetime.now() + timedelta(minutes=2)
+        two_minutes_ago = datetime.now() - timedelta(minutes=2)
 
         result = tx.run(
             query, 
@@ -2196,7 +2198,7 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
             sent_by_user_id=sent_by_user_id, 
             member_id=member_id,
             notification_type=notification_type,
-            minimum_time=minimum_time
+            minimum_time=two_minutes_ago
         )
 
         response = result.single()
