@@ -20,7 +20,12 @@
         <section class="club-main-padding" v-if="loaded">
             <CurrentlyReadingBook 
                 :book="currentlyReadingBook" 
-                @currently-reading-settings="router.push(navRoutes.bookClubSettingsCurrentlyReading(route.params.user, route.params.bookclub))"
+                @currently-reading-settings="router.push(
+                    navRoutes.bookClubSettingsCurrentlyReading(
+                        route.params.user, 
+                        route.params.bookclub
+                    )
+                )"
             />
 
             <CurrentPacesForClubBook :total-chapters="currentlyReadingBook?.chapters"/>
