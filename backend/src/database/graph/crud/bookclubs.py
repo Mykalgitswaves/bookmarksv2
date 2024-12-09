@@ -2250,15 +2250,28 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
     def get_notifications_for_user_by_club_query(tx, user_id:str):
         query = """
         MATCH (u:User {id: $user_id})-[:IS_MEMBER_OF|IS_OWNER_OF]-(bc:BookClub)
-        OPTIONAL MATCH (clubNotification:ClubNotification)-[:NOTIFICATION_FOR_USER]->(u)
-        RETURN ClubNotification
+        OPTIONAL MATCH (clubNotification:ClubNotification {dismissed: false})-[:NOTIFICATION_FOR_USER]->(u)
+        RETURN clubNotification
         """
 
         notifications = []
         result = tx.run(query, user_id=user_id)
-
+        
+        if not result.single():
+            return False
+        
         for record in result:
             print(record)
-            BookClubSchemas.ClubNotification(
-                
+            notification = BookClubSchemas.ClubNotification(
+                id=record.get('id'),
+                notification_type=record.get('notification_type'),
+                created_at=record.get('created_at'),
+                member_id=record.get('member_id'),
+                sent_by_user_id=record.get('sent_by_user_id'),
+                book_club_id=record.get('book_club_id'),
+                dismissed=record.get('dismissed'),
             )
+
+            notifications.append(notification)
+
+        return notifications

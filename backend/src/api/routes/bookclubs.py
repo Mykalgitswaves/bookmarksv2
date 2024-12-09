@@ -1588,7 +1588,7 @@ async def peer_pressure_member(
         raise HTTPException(status_code=400, detail=str(e))
     
 
-@router.get("/notifications-for-clubs/{user_id}", name="bookclubs:get-notifications")
+@router.get("/{user_id}/notifications-for-clubs", name="bookclubs:get-notifications")
 async def get_notifications_for_member_clubs(
     user_id: str, 
     current_user: Annotated[User, Depends(get_current_active_user)], 
@@ -1605,3 +1605,5 @@ async def get_notifications_for_member_clubs(
     notifications = book_club_repo.get_notifications_for_user_by_club(
         user_id=user_id,
     )
+
+    return JSONResponse(status_code=200, content={'notifications': jsonable_encoder(notifications)})
