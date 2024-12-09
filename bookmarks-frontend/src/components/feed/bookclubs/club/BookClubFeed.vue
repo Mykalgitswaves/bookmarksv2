@@ -20,7 +20,7 @@
         <section class="club-main-padding" v-if="loaded">
             <CurrentlyReadingBook 
                 :book="currentlyReadingBook" 
-                @currently-reading-settings=""
+                @currently-reading-settings="router.push(navRoutes.bookClubSettingsCurrentlyReading(route.params.user, route.params.bookclub))"
             />
 
             <CurrentPacesForClubBook :total-chapters="currentlyReadingBook?.chapters"/>
@@ -81,9 +81,9 @@ import CreateReviewPost  from '@/components/feed/createPosts/createReviewPost.vu
 import CurrentPacesForClubBook from './CurrentPacesForClubBook.vue';
 import { ref } from 'vue';
 import { db } from '../../../../services/db';
-import { urls } from '../../../../services/urls';
+import { navRoutes, urls } from '../../../../services/urls';
 import { formatUpdateForBookClub } from '../bookClubService';
-import { useRoute } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 import LoadingCard from '../../../shared/LoadingCard.vue';
 
 
@@ -105,6 +105,7 @@ const overlays = ref({
 });
 
 const route = useRoute();
+const router = useRouter();
 
 let currentlyReadingBook = {};
 

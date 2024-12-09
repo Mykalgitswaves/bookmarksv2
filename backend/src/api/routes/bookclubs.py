@@ -1551,6 +1551,8 @@ async def test_emails(
         )
         return JSONResponse(status_code=200, content={'email': jsonable_encoder(preview_email)})
     
+# CLUB NOTIFICATIONS
+# Annoy your friends to finish reading their books.
 @router.post("/{book_club_id}/create-notification/{member_id}", name='bookclubs:peer_pressure')
 async def peer_pressure_member(
     book_club_id: str,
@@ -1585,3 +1587,21 @@ async def peer_pressure_member(
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     
+
+@router.get("/notifications-for-clubs/{user_id}", name="bookclubs:get-notifications")
+async def get_notifications_for_member_clubs(
+    user_id: str, 
+    current_user: Annotated[User, Depends(get_current_active_user)], 
+    book_club_repo: BookClubCRUDRepositoryGraph = Depends(
+        get_repository(repo_type=BookClubCRUDRepositoryGraph)
+    )
+):
+    """
+    Get paginated notifications for a user that have not been dismissed and are still relevant to the current book. 
+    """
+    if current_user.id != user_id:
+        raise HTTPException(status_code=400, detail='Unauthorized dude')
+    
+    notifications = book_club_repo.get_notifications_for_user_by_club(
+        user_id=user_id,
+    )

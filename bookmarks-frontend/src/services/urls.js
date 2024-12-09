@@ -157,6 +157,7 @@ export const urls = {
         ungrantAwardToPost: (bookclub_id, post_id, award_id) => (`${baseUrl}${BOOK_CLUBS_PREFIX}${bookclub_id}/post/${post_id}/award/${award_id}`),
         // Bug notifications
         peerPressureMember: (bookclub_id, member_id) => (`${baseUrl}${BOOK_CLUBS_PREFIX}${bookclub_id}/create-notification/${member_id}`),
+        getClubNotificationsForUser: (user_id) => (`${baseUrl}${BOOK_CLUBS_PREFIX}/notifications-for-clubs/${user_id}`)
     },
     concatQueryParams: (url, newQueryParams) => {
         if (!url) {

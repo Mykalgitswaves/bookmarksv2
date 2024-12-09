@@ -164,6 +164,23 @@
             </template>
         </AsyncComponent>
         <!-- TODO: Add other notifications once bookclubs are done -->
+        
+        <AsyncComponent :promise-factory="clubNotificationsFactory" :subscribed-to="clubNotificationsRequestSubscriptionId">
+            <template #resolved>
+                <h3 class="fancy text-stone-600 text-xl mt-5">Club Notifications</h3>
+
+                <div class="" v-for="(club, index) in clubNotifications" :key="index">
+                    <div class="notification" v-for="notification in club" :key="notification.id">
+                        
+                    </div>
+                </div>
+            </template>
+            <template #loading>
+                <div class="gradient fancy text-center text-lg loading-box mt-5">
+                    <h3>Loading requests</h3>
+                </div>
+            </template>
+        </AsyncComponent>
     </dialog> 
 </template>
 <script setup>
@@ -199,9 +216,11 @@ const friendRequestStatus = ref({});
 // Look in AsyncComponent.vue for why im doing.
 const inviteRequestSubscriptionId = 'notifications-get-invites';
 const friendRequestSubscriptionId = 'notifications-get-friends';
+const clubNotificationsRequestSubscriptionId = 'notifications-get-club-notifications';
 
 let invites = [];
 let friendRequests = [];
+let clubNotifications = {};
 
 /**
  * @UI_functions
@@ -274,6 +293,14 @@ const friendRequestsPromiseFactory = () => db.get(urls.user.getUsersFriendReques
         console.error(err)
     }
 );
+
+const clubNotificationsFactory = () => db.get(urls.bookclubs.getClubNotificationsForUser(user), null, false, 
+    (res) => {
+
+    }, (err) => {
+        console.log(err);
+    }
+)
 
 onBeforeUnmount(() => {
     document.removeEventListener('click', handleClickOutside)

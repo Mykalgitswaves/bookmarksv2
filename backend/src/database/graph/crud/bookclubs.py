@@ -2234,3 +2234,31 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
                 book_club_id=book_club_id,
             )
         return result
+    
+    def get_notifications_for_user_by_club(self, user_id:str):
+        """
+        get some notifications dude
+        """
+        with self.driver.session() as session:
+            result = session.read_transaction(
+                self.get_notifications_for_user_by_club_query,
+                user_id=user_id,
+            )
+        return result
+    
+    @staticmethod
+    def get_notifications_for_user_by_club_query(tx, user_id:str):
+        query = """
+        MATCH (u:User {id: $user_id})-[:IS_MEMBER_OF|IS_OWNER_OF]-(bc:BookClub)
+        OPTIONAL MATCH (clubNotification:ClubNotification)-[:NOTIFICATION_FOR_USER]->(u)
+        RETURN ClubNotification
+        """
+
+        notifications = []
+        result = tx.run(query, user_id=user_id)
+
+        for record in result:
+            print(record)
+            BookClubSchemas.ClubNotification(
+                
+            )
