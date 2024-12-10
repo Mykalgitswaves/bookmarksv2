@@ -1553,7 +1553,7 @@ async def test_emails(
     
 # CLUB NOTIFICATIONS
 # Annoy your friends to finish reading their books.
-@router.post("/{book_club_id}/create-notification/{member_id}", name='bookclubs:peer_pressure')
+@router.post("/{book_club_id}/create_notification/{member_id}", name='bookclubs:peer_pressure')
 async def peer_pressure_member(
     book_club_id: str,
     current_user: Annotated[User, Depends(get_current_active_user)],
@@ -1588,7 +1588,7 @@ async def peer_pressure_member(
         raise HTTPException(status_code=400, detail=str(e))
     
 
-@router.get("/{user_id}/notifications-for-clubs", name="bookclubs:get-notifications")
+@router.get("/{user_id}/notifications_for_clubs", name="bookclubs:get_notifications")
 async def get_notifications_for_member_clubs(
     user_id: str, 
     current_user: Annotated[User, Depends(get_current_active_user)], 

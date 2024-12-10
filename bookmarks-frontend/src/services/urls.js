@@ -156,8 +156,8 @@ export const urls = {
         grantAwardToPost: (bookclub_id, post_id, award_id) => (`${baseUrl}${BOOK_CLUBS_PREFIX}${bookclub_id}/post/${post_id}/award/${award_id}`),
         ungrantAwardToPost: (bookclub_id, post_id, award_id) => (`${baseUrl}${BOOK_CLUBS_PREFIX}${bookclub_id}/post/${post_id}/award/${award_id}`),
         // Bug notifications
-        peerPressureMember: (bookclub_id, member_id) => (`${baseUrl}${BOOK_CLUBS_PREFIX}${bookclub_id}/create-notification/${member_id}`),
-        getClubNotificationsForUser: (user_id) => (`${baseUrl}${BOOK_CLUBS_PREFIX}${user_id}/notifications-for-clubs`)
+        peerPressureMember: (bookclub_id, member_id) => (`${baseUrl}${BOOK_CLUBS_PREFIX}${bookclub_id}/create_notification/${member_id}`),
+        getClubNotificationsForUser: (user_id) => (`${baseUrl}${BOOK_CLUBS_PREFIX}${user_id}/notifications_for_clubs`)
     },
     concatQueryParams: (url, newQueryParams) => {
         if (!url) {
