@@ -1553,8 +1553,8 @@ async def test_emails(
     
 # CLUB NOTIFICATIONS
 # Annoy your friends to finish reading their books.
-@router.post("/{book_club_id}/create_notification/{member_id}", name='bookclubs:peer_pressure')
-async def peer_pressure_member(
+@router.post("/{book_club_id}/create_notification", name='bookclubs:create_notification')
+async def create_club_notification(
     book_club_id: str,
     current_user: Annotated[User, Depends(get_current_active_user)],
     request: Request,
@@ -1565,30 +1565,32 @@ async def peer_pressure_member(
     """
     Allow club members to peer pressure each other into reading more if the club / user allows it.
     """
+    data = await request.json()
+
     try:
-        data = await request.json()
-
-        member_id = data.get('member_id')
-        notification_type = data.get('notification_type')
-
-        if member_id and notification_type:
-            print(notification_type, current_user.id, member_id, book_club_id)
-            notification = book_club_repo.create_club_notification(
-                notification_type=notification_type,
-                sent_by_user_id=current_user.id,
-                member_id=member_id,
-                book_club_id=book_club_id
-            )
-
-            return JSONResponse(status_code=200, content={'notification': jsonable_encoder(notification)})
-        else:
-            return HTTPException(status_code=400, detail='Missing member_id and notification_type from request payload.')
-        
+        notif = BookClubSchemas.ClubNotificationCreate(
+            member_id=data.get('member_id'),
+            notification_type=data.get('notification_type'),
+            sent_by_user_id=current_user.id,
+            book_club_id=book_club_id
+        )
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     
+    eligible = book_club_repo.get_notification_eligibility(notif)
+    if not eligible:
+        raise HTTPException(status_code=400, detail='User is not eligible to send that notification.')
+    
+    notification = book_club_repo.create_club_notification(
+        notif
+    )
 
-@router.get("/{user_id}/notifications_for_clubs", name="bookclubs:get_notifications")
+    if notification:
+        return JSONResponse(status_code=200, content={'notification': jsonable_encoder(notification)})
+    else:
+        raise HTTPException(status_code=400, detail='Missing member_id and notification_type from request payload.')
+
+@router.get("/notifications_for_clubs/{user_id}", name="bookclubs:get_notifications")
 async def get_notifications_for_member_clubs(
     user_id: str, 
     current_user: Annotated[User, Depends(get_current_active_user)], 

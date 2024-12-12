@@ -5,7 +5,7 @@ from pydantic import (
     EmailStr, 
     validator, 
 )
-from typing import Mapping, List, Any
+from typing import Mapping, List, Any, Literal
 
 from src.models.schemas.posts import Post
 
@@ -188,11 +188,25 @@ class DeleteAward(CreateAward):
 
 # Notifications!
 # Use these to bug the shit out of your friends (with consent)!
+class ClubNotificationCreate(BaseModel):
+    member_id: str
+    # notification_type is a string, can only be "peer-pressure"
+    notification_type: Literal['peer-pressure']
+    sent_by_user_id: str
+    book_club_id: str
+
 class ClubNotification(BaseModel):
     id: str
     notification_type: str
-    created_at: datetime
+    created_date: datetime
     member_id: str
     sent_by_user_id: str
     book_club_id: str
     dismissed: bool = False
+
+    @validator('created_date', pre=True, allow_reuse=True)
+    def parse_neo4j_datetime(cls, v):
+        if isinstance(v, Neo4jDateTime):
+            # Convert Neo4jDateTime to Python datetime
+            return v.to_native()
+        return v
