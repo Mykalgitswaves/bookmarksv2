@@ -1815,7 +1815,7 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
         MATCH (u:User {id: $user_id})
         OPTIONAL MATCH (clubNotification:ClubNotification {dismissed: false})-[:NOTIFICATION_FOR_USER]->(u)
         OPTIONAL MATCH (clubNotification)-[:NOTIFICATION_FOR_CLUB]->(b:BookClub)
-        OPTIONAL MATCH (clubNotification)<-[:CREATED_NOTIFICATION]-(sentBy:User)
+        OPTIONAL MATCH (sentBy:User)-[:CREATED_NOTIFICATION]->(clubNotification)
         RETURN clubNotification.id as notification_id,
                 clubNotification.notification_type as notification_type,
                 clubNotification.created_date as created_date,
