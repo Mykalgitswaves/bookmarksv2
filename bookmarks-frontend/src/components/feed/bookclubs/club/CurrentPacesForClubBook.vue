@@ -125,7 +125,7 @@ function generateSvgPaceMap(memberPaces) {
 
 
 function pressureReader(member) {
-    db.post(urls.bookclubs.peerPressureMember(route.params.bookclub, member.id), {
+    db.post(urls.bookclubs.peerPressureMember(route.params.bookclub), {
         member_id: member.id,
         notification_type: ClubNotification.types.peerPressure
     }, false, (res) => {
