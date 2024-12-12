@@ -1382,13 +1382,13 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
             optional match (book)-[br:IS_EQUIVALENT_TO]-(canon_book:Book)
             optional match (comments:Comment {deleted:false})<-[:HAS_COMMENT]-(post)
             optional match (post)<-[:AWARD_FOR_POST]-(post_award:ClubAwardForPost)
-            optional match (post_award)-[CHILD_OF]->(award:ClubAward)
+            optional match award_long = (award_user:User)-[:GRANTED]->(post_award)-[CHILD_OF]->(award:ClubAward)
             RETURN post, labels(post), u.username, canon_book, u.id,
             CASE WHEN lr IS NOT NULL THEN true ELSE false END AS liked_by_current_user,
             CASE WHEN u.id = $user_id THEN true ELSE false END AS posted_by_current_user,
             count(comments) as num_comments,
-            count(nl) as num_likes
-            collect(post_award) as awards
+            count(nl) as num_likes,
+            collect(award_long) as awards
             order by post.created_date desc
             skip $skip
             limit $limit
