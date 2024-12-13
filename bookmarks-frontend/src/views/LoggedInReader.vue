@@ -9,13 +9,7 @@
         
         <!-- This stuff doesnt -->
         <div class="transition mt-5">
-          <div class="search-results-category" v-if="users.length">
-            <div v-for="user in users" :key="user.id" class="search-result">
-              {{ user.username }}
-            </div>
-          </div>
-
-          <h3 class="fancy text-xl text-stone-700 my-5">Books: {{ books.length }}</h3>
+          <h3 class="fancy text-xl text-stone-700 my-5" v-if="books.length">Books: {{ books.length }}</h3>
 
           <div class="search-results-category" v-if="books.length">
             <!-- book loop -->
@@ -29,6 +23,30 @@
               <img class="book-img" :src="book.img_url" alt="" />
 
               <h4 class="text-center fancy bold pb-5 text-sm">{{ book.title }}</h4>
+            </div>
+          </div>
+
+          <h3 class="fancy text-xl text-stone-700 my-5" v-if="users.length">Users: {{ users.length }}</h3>
+
+          <div class="search-results-category" v-if="users.length">
+            <div v-for="user in users" :key="user.id"
+              class="search-result book relative"
+              @click="() => {
+                router.push(navRoutes.toUserPage(route.params.user, user.id)); 
+                hasSearchResults = false;
+              }"
+            >
+              <!-- <img class="book-img" :src="book.img_url" alt="" /> -->
+
+              <h4 class="text-center fancy bold pb-5 text-sm">{{ user }}</h4>
+
+              <!-- Add a button here to send friend request -->
+              <button 
+                v-if="relationshipConfig[user.relationship_to_current_user]?.label"
+                :class="relationshipConfig[user.relationship_to_current_user].class"
+                @click.stop="relationshipConfig[user.relationship_to_current_user].action(user.id)">
+                {{ relationshipConfig[user.relationship_to_current_user].label }}
+              </button>
             </div>
           </div>
 
@@ -133,6 +151,55 @@ PubSub.subscribe('nav-search-get-data', (data) => {
 
   hasSearchResults.value = true;
 });
+
+const relationshipConfig = {
+      stranger: {
+        label: "Add Friend",
+        class: "btn friend-btn bg-blue-500 text-white",
+        action: sendFriendRequest,
+        show: true,
+      },
+      current_user_blocked_by_anonymous_user: {
+        label: "Add Friend",
+        class: "btn friend-btn bg-blue-500 text-white",
+        action: sendFriendRequest,
+        show: true,
+      },
+      friend: {
+        label: "Friend",
+        class: "btn friend-btn bg-green-500 text-white",
+        action: () => {},
+        show: true,
+      },
+      is_current_user: {
+        label: "It's you!",
+        class: "btn friend-btn bg-gray-500 text-white",
+        action: () => {},
+        show: true,
+      },
+      anonymous_user_blocked_by_current_user: {
+        label: "Blocked by you",
+        class: "btn friend-btn bg-red-500 text-white",
+        action: () => {},
+        show: true,
+      },
+      anonymous_user_friend_requested: {
+        label: "Accept Friend Request",
+        class: "btn friend-btn bg-yellow-500 text-white",
+        action: sendFriendRequest,
+        show: true,
+      },
+      current_user_friend_requested: {
+        label: "Pending Friend Request",
+        class: "btn friend-btn bg-gray-500 text-white",
+        action: () => {},
+        show: true,
+      }
+    };
+
+function sendFriendRequest(userId) {
+  console.log("Sending friend request to ", userId);
+}
 </script>
 <style scoped>
   .main-layout {
@@ -219,5 +286,20 @@ PubSub.subscribe('nav-search-get-data', (data) => {
       }
     }
   }
+
+  .friend-btn {
+    font-weight: bold;
+    color: var(--indigo-500);
+    padding: 1px 8px;
+    border: hidden;
+    border-radius: 4px;
+    background: none; /* No full background */
+    cursor: pointer;
+  }
+
+  .friend-btn:hover {
+    color: var(--indigo-800);
+  }
+
 </style>
 

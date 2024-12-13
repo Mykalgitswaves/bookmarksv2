@@ -15,15 +15,6 @@ class SearchCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
     def search_for_param_query(tx, param, skip, limit):
         param = "(?i)" + "".join([f".*{word.lower()}.*" for word in param.split(" ")])
         query = """
-                OPTIONAL MATCH (u:User)
-                WHERE toLower(u.username) =~ $param
-                WITH u.username AS user, null AS author, null AS book, null AS book_genre, null AS book_author
-                WHERE u IS NOT NULL
-                RETURN book_genre, user, author, book, book_author
-                LIMIT $limit
-
-                UNION
-
                 OPTIONAL MATCH (a:Author)
                 WHERE toLower(a.name) =~ $param
                 WITH null AS user, a AS author, null AS book, null AS book_genre, null AS book_author
@@ -101,6 +92,7 @@ class SearchCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
                                          skip:int, 
                                          limit:int, 
                                          current_user_id:str):
+        search_query = "(?i)" + "*" + search_query + "*"
         query = """
         MATCH (currentUser:User {id: $current_user_id})
         CALL db.index.fulltext.queryNodes('userFullText', $search_query)

@@ -23,7 +23,8 @@ export const urls = {
     search: {
         general: (searchParam) =>  `${baseUrl}api/search/${searchParam}`,
         bookClub: (searchParam) => (baseUrl + `api/search/bookclubs/${searchParam}`),
-        bookshelf: (searchParam) => (baseUrl + `api/search/bookshelves/${searchParam}`)
+        bookshelf: (searchParam) => (baseUrl + `api/search/bookshelves/${searchParam}`),
+        user: (searchParam) => (baseUrl + `api/search/users/${searchParam}`)
     },
     user: {
         // Specific for the current users info

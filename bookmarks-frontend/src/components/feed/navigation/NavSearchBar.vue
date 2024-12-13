@@ -35,6 +35,7 @@ function searchRequest() {
             general_search: urls.search.general(search_params.value), // This feature outputs an object
             bookClubs: urls.search.bookClub(search_params.value), // Outputs an array
             bookshelves: urls.search.bookshelf(search_params.value), // Outputs an array
+            users: urls.search.user(search_params.value), // Outputs an array
             // Add more features as needed
         };
 
