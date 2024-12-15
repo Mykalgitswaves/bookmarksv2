@@ -642,8 +642,10 @@ class PostCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
                     rr.likes = coalesce(rr.likes, 0) + 1
                 return rr.likes as likes
                 """
+        
         result = tx.run(query, username=liked_post.username, post_id=liked_post.post_id)
         response = result.single()
+        print(response)
         return response is not None
     
     def get_feed(self, current_user, skip:int, limit:int): 
