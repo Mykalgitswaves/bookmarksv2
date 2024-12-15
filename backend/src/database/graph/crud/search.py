@@ -136,8 +136,10 @@ class SearchCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
             elif response['outgoingFriendStatus'] == 'pending':
                 relationship_to_current_user = 'current_user_friend_requested'
             elif response['incomingBlockStatus']:
+                continue
                 relationship_to_current_user = 'current_user_blocked_by_anonymous_user'
             elif response['outgoingBlockStatus']:
+                continue
                 relationship_to_current_user = 'anonymous_user_blocked_by_current_user'
             elif response['node']['id'] == current_user_id:
                 relationship_to_current_user = 'is_current_user'

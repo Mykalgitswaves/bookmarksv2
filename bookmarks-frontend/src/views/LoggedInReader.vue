@@ -38,13 +38,13 @@
             >
               <!-- <img class="book-img" :src="book.img_url" alt="" /> -->
 
-              <h4 class="text-center fancy bold pb-5 text-sm">{{ user }}</h4>
+              <h4 class="text-center fancy bold pb-5 text-sm">{{ user.username }}</h4>
 
               <!-- Add a button here to send friend request -->
               <button 
                 v-if="relationshipConfig[user.relationship_to_current_user]?.label"
                 :class="relationshipConfig[user.relationship_to_current_user].class"
-                @click.stop="relationshipConfig[user.relationship_to_current_user].action(user.id)">
+                @click.stop="relationshipConfig[user.relationship_to_current_user].action(user)">
                 {{ relationshipConfig[user.relationship_to_current_user].label }}
               </button>
             </div>
@@ -186,7 +186,7 @@ const relationshipConfig = {
       anonymous_user_friend_requested: {
         label: "Accept Friend Request",
         class: "btn friend-btn bg-yellow-500 text-white",
-        action: sendFriendRequest,
+        action: acceptFriendRequest,
         show: true,
       },
       current_user_friend_requested: {
@@ -197,9 +197,30 @@ const relationshipConfig = {
       }
     };
 
-function sendFriendRequest(userId) {
-  console.log("Sending friend request to ", userId);
+function sendFriendRequest(friend) {
+  response = db.put(
+    urls.user.sendAnonFriendRequest(route.params.user, friend.id), 
+    null, 
+    false
+  ).then((res) => {
+    friend.relationship_to_current_user = "current_user_friend_requested";
+  }).catch((err) => {
+    console.log("Friend request failed", err);
+  });
 }
+
+function acceptFriendRequest(friend) {
+  response = db.put(
+    urls.user.acceptAnonFriendRequest(friend.id), 
+    null, 
+    false
+  ).then((res) => {
+    friend.relationship_to_current_user = "friend";
+  }).catch((err) => {
+    console.log("Friend accept failed", err);
+  });
+}
+
 </script>
 <style scoped>
   .main-layout {
