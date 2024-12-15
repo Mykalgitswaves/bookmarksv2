@@ -1405,7 +1405,6 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
             WHERE post.chapter <= user_reading.current_chapter
             match (post)<-[pr:POSTED]-(u:User)
             optional match (cu)-[lr:LIKES]->(post)
-            optional match (User)-[nl:LIKES]->(post)
             optional match (book)-[br:IS_EQUIVALENT_TO]-(canon_book:Book)
             optional match (comments:Comment {deleted:false})<-[:HAS_COMMENT]-(post)
             optional match (post)<-[:AWARD_FOR_POST]-(post_award:ClubAwardForPost)
@@ -1413,7 +1412,7 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
             RETURN post, labels(post), u.username, canon_book, u.id, user_reading.current_chapter,
             CASE WHEN lr IS NOT NULL THEN true ELSE false END AS liked_by_current_user,
             CASE WHEN u.id = $user_id THEN true ELSE false END AS posted_by_current_user,
-            count(nl) as num_likes,
+            post.likes as num_likes,
             count(comments) as num_comments,
             collect(award_long) as awards
             order by post.created_date desc
