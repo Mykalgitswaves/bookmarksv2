@@ -68,6 +68,7 @@ import IconRabbit from '@/components/svg/icon-rabbit.vue';
 import IconTurtle from '@/components/svg/icon-turtle.vue';
 import AsyncComponent from '../../partials/AsyncComponent.vue';
 import { ClubNotification } from './notifications/models';
+import { Toast } from '../../../shared/models';
 import SuccessToast from '../../../shared/SuccessToast.vue';
 
 const props = defineProps({
