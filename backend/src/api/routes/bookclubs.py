@@ -915,6 +915,13 @@ async def get_club_feed(
                 current user
             type (str): the type of the post. As of now can be one of update
                 and update_no_text
+            awards (array): an array of awards for the post. Each award object
+                will contain:
+                id (str): the uuid of the award
+                name (str): the name of the award
+                type (str): the type of the award
+                description (str): the description of the award
+                num_grants (int): the number of grants for the award
     """
 
     posts = book_club_repo.get_book_club_feed(
@@ -922,7 +929,7 @@ async def get_club_feed(
         user_id=current_user.id,
         skip=skip,
         limit=limit,
-        filter=filter,
+        filter=filter
     )
     logger.info(
         "Fetched club feed",
@@ -1543,3 +1550,296 @@ async def test_emails(
                 is_debug=True
         )
         return JSONResponse(status_code=200, content={'email': jsonable_encoder(preview_email)})
+    
+# CLUB NOTIFICATIONS
+# Annoy your friends to finish reading their books.
+@router.post("/{book_club_id}/create_notification", name='bookclubs:create_notification')
+async def create_club_notification(
+    book_club_id: str,
+    current_user: Annotated[User, Depends(get_current_active_user)],
+    request: Request,
+    book_club_repo: BookClubCRUDRepositoryGraph = Depends(
+        get_repository(repo_type=BookClubCRUDRepositoryGraph)
+    ),
+):
+    """
+    Allow club members to peer pressure each other into reading more if the club / user allows it.
+    """
+    data = await request.json()
+
+    try:
+        notif = BookClubSchemas.ClubNotificationCreate(
+            member_id=data.get('member_id'),
+            notification_type=data.get('notification_type'),
+            sent_by_user_id=current_user.id,
+            book_club_id=book_club_id
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    
+    eligible = book_club_repo.get_notification_eligibility(notif)
+    if not eligible:
+        raise HTTPException(status_code=400, detail='User is not eligible to send that notification.')
+    
+    notification = book_club_repo.create_club_notification(
+        notif
+    )
+
+    if notification:
+        return JSONResponse(status_code=200, content={'notification': jsonable_encoder(notification)})
+    else:
+        raise HTTPException(status_code=400, detail='Missing member_id and notification_type from request payload.')
+
+@router.get("/notifications_for_clubs/{user_id}", name="bookclubs:get_notifications")
+async def get_notifications_for_member_clubs(
+    user_id: str, 
+    current_user: Annotated[User, Depends(get_current_active_user)], 
+    book_club_repo: BookClubCRUDRepositoryGraph = Depends(
+        get_repository(repo_type=BookClubCRUDRepositoryGraph)
+    )
+):
+    """
+    Get paginated notifications for a user that have not been dismissed and are still relevant to the current book. 
+    """
+    if current_user.id != user_id:
+        raise HTTPException(status_code=400, detail='Unauthorized dude')
+    
+    notifications = book_club_repo.get_notifications_for_user_by_club(
+        user_id=user_id,
+    )
+
+    return JSONResponse(status_code=200, content={'notifications': jsonable_encoder(notifications)})
+
+
+@router.put("/dismiss_notification/${notification_id}", name="bookclubs:dismiss_notification")
+async def update_club_notification_to_dismiss(
+    notification_id:str,
+    current_user: Annotated[User, Depends(get_current_active_user)], 
+    book_club_repo: BookClubCRUDRepositoryGraph = Depends(
+        get_repository(repo_type=BookClubCRUDRepositoryGraph)
+    ),
+):
+    """
+    
+    """
+
+    is_dismissed = book_club_repo.update_club_notification_to_dismissed(
+        member_id=current_user.id,
+        notification_id=notification_id,
+    )
+
+
+## Create review for book club
+
+@router.post("/{book_club_id}/review/create", name='bookclubs:create_review')
+async def create_review_for_user():
+    """
+    Creates the final review for the currently reading book and
+    sets the book as finished for the user.
+
+    Also creates a background task to notify other club
+    members that someone has finished the book. 
+
+    Args:
+        no_review (Optional(book)): A boolean that is true if the user
+            does not want to write a review
+        request: A request object that contains the following fields:
+            user (dict): A user object containing the following fields:
+                id (str): The id of the user
+            questions (list | None): The questions the user included in to post
+            ids (list | None): The ids of questions the user included in the post
+            rating: int | None = None: The rating the user gave the book
+            responses (list | None): The responses for the questions
+            headline (str): The headline for the post
+
+    Returns:
+        200 response for a successful post
+    """
+
+@router.get("/{book_club_id}/feed/finished", name='bookclubs:get_finished_feed')
+async def get_finished_feed():
+    """
+    Gets a version of the feed that includes review posts for finished
+    readers. I think its probably better to add this as a flag to the
+    get_club_feed endpoint. We could also just have the normal feed endpoint
+    check if the user if finished and update how it returns
+
+    Args:
+        Args:
+        book_club_id: The id for the book club
+
+    Returns:
+        posts: A list of posts in chronological order, posts can only be updates
+        and reviews.
+        A post object will contain:
+            id: the uuid of the post
+            headline (str | None): the headline for the post
+            created_date (datetime): the created datetime for the post
+            chapter (int): the chapter for the post
+            response (str | None): the response for the post
+            user_id (str): the id of the user who made the post
+            user_username (str): the username of the user who made the post
+            likes (int) the number of likes on a post
+            num_comments (int) the number of comments on a post
+            liked_by_current_user (bool): whether the post was liked by the
+                current user
+            posted_by_current_user (bool): whether the post was posted by the
+                current user
+            type (str): the type of the post. As of now can be one of update
+                and update_no_text
+            awards (array): an array of awards for the post. Each award object
+                will contain:
+                id (str): the uuid of the award
+                name (str): the name of the award
+                type (str): the type of the award
+                description (str): the description of the award
+                num_grants (int): the number of grants for the award
+    """
+
+@router.get("/{book_club_id}/afterword/{user_id}/user_stats", name='bookclubs:get_afterword_user_stats')
+async def get_afterword_user_stats():
+    """
+    Gets the first page of the afterword for a user in a book club.
+    This includes their stats including:
+        - The number of days they took
+        - The number of updates they wrote
+        - The number of awards they granted
+    
+    Maybe we should have some additional incase and of these stats are
+    empty. Some options would be:
+        - The number of comments they wrote
+        - The number of posts they liked
+
+    Args:
+        book_club_id (str): The id for the book club they are getting the afterword for
+        user_id (str): The id of the user
+
+    Returns: 
+        stats (dict): This is a json object that contains:
+            days (int): The number of days they took to read the book
+            updates (int): The number of updates they wrote
+            awards (int): The number of awards they granted
+    """
+
+@router.get("/{book_club_id}/afterword/{user_id}/friend_thoughts", name='bookclubs:get_afterword_friend_thoughts')
+async def get_afterword_friend_thoughts():
+    """
+    Gets the second page of the afterword for a user in a book club.
+    This page includes the headline from each readers review if they posted one,
+    and their rating of the book.
+
+    NOTE: What to do if no one has posted anything?
+        Might not be worth handling yet
+
+    Args:
+        book_club_id (str): The id for the book club they are getting the afterword for
+        user_id (str): The id of the user
+
+    Returns: 
+        thoughts (list): This is an array that contains:
+            user (dict): the user who the thought belongs to. A dict with:
+                id (str): The id for the user
+                username (str): The username for the user
+            review (dict): Review related information. A dict including:
+                headline (str): The headline for the review
+                rating (int): The rating the user gave the book
+
+        NOTE: Haven't yet decided how these are sorted
+    """
+
+@router.get("/{book_club_id}/afterword/{user_id}/consensus", name='bookclubs:get_afterword_consensus')
+async def get_afterword_consensus():
+    """
+    Gets the third page. This is the consensus thoughts from the group. 
+    This includes the ratings of every member, including the current user. 
+    As well as a general consensus.
+
+    Args:
+        book_club_id (str): The id for the book club they are getting the afterword for
+        user_id (str): The id of the user
+
+    Returns: 
+        consensus (dict): This is an object that contains:
+            loved (array): An array of the users that loved the book. This contains:
+                user (dict): The information about the user:
+                    id (str): The user id
+                    username (str): The username
+            liked (array):  An array of the users that liked the book. This contains
+                the same as loved
+            disliked (array):  An array of the users that disliked the book. This contains
+                the same as loved
+            group_consensus (dict): A dictionary with the following:
+                majority (str): The majority choice for the group (loved, liked, or disliked)
+                user_agreed_with_majority (bool): Whether or not the user agreed with the majority
+                num_times_result (int): The number of times the user_agreed_with_majority
+                    result has happened. Ex. "The user has (agreed/disagreed) n times"
+    """
+
+@router.get("/{book_club_id}/afterword/{user_id}/highlights", name='bookclubs:get_afterword_highlights')
+async def get_afterword_highlights():
+    """
+    This is the fourth page.
+    Gets the highlights from this book for the user. This includes:
+        - Most controversial update
+        - Most agreed with update
+        - Most ignored update
+
+    Args:
+        book_club_id (str): The id for the book club they are getting the afterword for
+        user_id (str): The id of the user
+
+    Returns: 
+        highlights (dict): An object containing
+            controversial_post (dict): A post object containing:
+                id: the uuid of the post
+                headline (str | None): the headline for the post
+                created_date (datetime): the created datetime for the post
+                chapter (int): the chapter for the post
+                response (str | None): the response for the post
+                likes (int): the number of likes on a post
+                awards (array): an array of awards for the post. Each award object
+                will contain:
+                    id (str): the uuid of the award
+                    name (str): the name of the award
+                    type (str): the type of the award
+                    description (str): the description of the award
+                    num_grants (int): the number of grants for the award
+            agreed_post (dict): A post object
+            ignored_post (dict): A post object
+
+    NOTE: Need to think about edge cases here for:
+        User made no updates
+        Overlap from one post into multiple highlights
+            Ex. Same post is the most agreed with and most controversial
+    """
+
+@router.get("/{book_club_id}/afterword/{user_id}/club_stats", name='bookclubs:get_afterword_club_stats')
+async def get_afterword_club_stats():
+    """
+    This is the 5th page.
+    Gets stats from the clubs reading. This includes:
+        Data for line graph of reading history
+        Data for table of awards received
+
+    Args:
+        book_club_id (str): The id for the book club they are getting the afterword for
+        user_id (str): The id of the user
+
+    Returns: 
+        NOTE: We will need to discuss the best way to return this data.
+        Probably best to try a few things
+    """
+
+# TODO:
+"""
+- Update minimal preview to include the users status.
+    - {
+    "is_member"
+    "is_user_finished_with_current_book"
+    "is_club_finished_with_current_book"
+    "has_viewed_afterword"
+    }
+- Add notifications to the marked as finished endpoint so users know wrapped is available
+- Should all of the afterword endpoints confirm the book is finished first? Probably
+
+"""

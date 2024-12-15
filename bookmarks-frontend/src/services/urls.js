@@ -115,7 +115,7 @@ export const urls = {
     bookclubs: {
         // Create / POST
         create: () => (baseUrl + `${BOOK_CLUBS_PREFIX}create/`),
-        createClubUpdate: (bookclub_id) => (baseUrl + `${BOOK_CLUBS_PREFIX}${bookclub_id}/update/create`),
+        createClubUpdate: (bookclub_id) => (`${baseUrl}${BOOK_CLUBS_PREFIX}${bookclub_id}/update/create`),
         startCurrentlyReadingBookForClub: 
             (bookclub_id) => (baseUrl + `${BOOK_CLUBS_PREFIX}${bookclub_id}/currently_reading/start`),
         finishCurrentlyReadingBookForClub: 
@@ -154,7 +154,33 @@ export const urls = {
         // 
         getAwards: (bookclub_id) => (baseUrl + `${BOOK_CLUBS_PREFIX}${bookclub_id}/awards`),
         grantAwardToPost: (bookclub_id, post_id, award_id) => (`${baseUrl}${BOOK_CLUBS_PREFIX}${bookclub_id}/post/${post_id}/award/${award_id}`),
-    }
+        ungrantAwardToPost: (bookclub_id, post_id, award_id) => (`${baseUrl}${BOOK_CLUBS_PREFIX}${bookclub_id}/post/${post_id}/award/${award_id}`),
+        // Bug notifications
+        peerPressureMember: (bookclub_id, member_id) => (`${baseUrl}${BOOK_CLUBS_PREFIX}${bookclub_id}/create_notification`),
+        getClubNotificationsForUser: (user_id) => (`${baseUrl}${BOOK_CLUBS_PREFIX}notifications_for_clubs/${user_id}`),
+        dismissClubNotification: (notification_id) => (`${baseUrl}${BOOK_CLUBS_PREFIX}dismiss_notification/${notification_id}`),
+        // Is user finished reading
+        getCurrentUserFinishedReading: (bookclub_id, user_id) => (`${baseUrl}${BOOK_CLUBS_PREFIX}${bookclub_id}/is_user_finished_reading/${user_id}`),
+    },
+    concatQueryParams: (url, newQueryParams, returnUrl) => {
+        if (!url) {
+            console.warn('dude youu need a url for queryParams');
+            return;
+        }
+
+        if (newQueryParams) {
+            // Make sure we aren't fucking up this part of the request.
+            if (!url.endsWith('/')) {
+                url = url + '/';
+            }
+            
+            url = url + '?' + new URLSearchParams(newQueryParams);
+        }
+
+        if (returnUrl) {
+            return url;
+        }
+    },
 }
 
 // Methods for navigating to and from places.

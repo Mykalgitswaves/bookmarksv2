@@ -26,6 +26,7 @@
                         @updated-current-book="(book) => {
                             data.currentlyReadingBook = book;
                             data.isShowingSetCurrentBookForm = false;
+                            router.push(navRoutes.toBookClubFeed(route.params.user, route.params.club))
                         }"
                     />
                 </div>
@@ -50,6 +51,7 @@ import ReadersPace from './ReadersPace.vue';
 import AsyncComponent from '../../partials/AsyncComponent.vue';
 
 const route = useRoute();
+const router = useRouter(); 
 const data = ref({
     currentlyReadingBook: null,
     isShowingSetCurrentBookForm: true,

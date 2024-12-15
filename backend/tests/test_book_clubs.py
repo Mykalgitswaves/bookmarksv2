@@ -599,6 +599,14 @@ class TestBookClubs:
         assert response.status_code == 200, "Putting Award"
 
         headers = {"Authorization": f"{self.token_type} {self.access_token}"}
+        
+        endpoint = (
+            f"{self.endpoint}/api/bookclubs/{self.book_club_id}/"
+            "feed")
+        
+        response = requests.get(endpoint, headers=headers)
+
+        headers = {"Authorization": f"{self.token_type} {self.access_token}"}
 
         endpoint = (
             f"{self.endpoint}/api/bookclubs/{self.book_club_id}/"
@@ -668,6 +676,51 @@ class TestBookClubs:
         response = requests.get(endpoint, headers=headers)
         print(response.json())
         assert response.status_code == 200, "Getting minimal preview"
+
+    def test_pressure_notifications(self):
+        headers = {"Authorization": f"{self.token_type} {self.access_token}"}
+        
+        endpoint = (
+            f"{self.endpoint}/api/bookclubs/{self.book_club_id}/"
+            "create_notification")
+        
+        data = {
+            "notification_type": "peer-pressure",
+            "member_id": self.user_id_2
+        }
+        
+        response = requests.post(endpoint, headers=headers, json=data)
+        print(response.json())
+        assert response.status_code == 200, "Posted pressure notification"
+
+        headers = {"Authorization": f"{self.token_type} {self.access_token}"}
+        
+        endpoint = (
+            f"{self.endpoint}/api/bookclubs/{self.book_club_id}/"
+            "create_notification")
+        
+        data = {
+            "notification_type": "peer-pressure",
+            "member_id": self.user_id_2
+        }
+        
+        response = requests.post(endpoint, headers=headers, json=data)
+        print(response.json())
+        assert response.status_code == 400, "Posted pressure notification too soon"
+
+        headers = {"Authorization": f"{self.token_type_2} {self.access_token_2}"}
+        
+        endpoint = (
+            f"{self.endpoint}/api/bookclubs/notifications_for_clubs/{self.user_id_2}")
+    
+        
+        response = requests.get(endpoint, headers=headers)
+        print(response.json())
+        assert response.status_code == 200, "Got pressure notifications"
+        notifications = response.json()['notifications']
+        assert len(notifications) > 0, "No notifications found"
+
+
 
     def test_deleting_member(self):
         headers = {"Authorization": f"{self.token_type} {self.access_token}"}

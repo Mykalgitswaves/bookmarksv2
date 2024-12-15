@@ -2,6 +2,7 @@ export const PubSub = {
     subscribers: new Map(),
 
     subscribe(event, subscriber) {
+        console.log('subscription callback', event)
         if (!this.subscribers.has(event)) {
             this.subscribers.set(event, []);
         }
@@ -20,6 +21,7 @@ export const PubSub = {
     },
 
     publish(event, payload) {
+        console.log(event, payload, 'publish event')
         if (this.subscribers.has(event)) {
             this.subscribers.get(event).forEach(subscriber => {
                 subscriber(payload)

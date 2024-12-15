@@ -31,6 +31,19 @@
                                     <p class="text-sm text-stone-500">{{ member.pace ? `is reading chapter ${member.pace}` : 'hasn\'t started yet' }}</p>
                                 </div>
 
+                                <button 
+                                    v-if="member.id !== route.params.user && !hasMemberBeenPeerPressured[member.id]"
+                                    type="button" 
+                                    class="ml-auto btn btn-tiny btn-red text-sm" 
+                                    @click="pressureReader(member)"
+                                >
+                                    pressure
+                                </button>
+
+                                <p class="ml-auto" v-else-if="member.id !== route.params.user && hasMemberBeenPeerPressured[member.id]">
+                                    Peer pressured!
+                                </p>
+
                                 <!-- <canvas class="progress-bar" /> -->
                             </div>
                         </div>
@@ -43,6 +56,8 @@
             </template>
         </AsyncComponent>
     </div>
+    <!-- Nerd stuff for you impatient readers. -->
+    <SuccessToast v-if="toast" :toast="toast" :toast-type="Toast.TYPES.MESSAGE_TYPE" @dismiss="() => toast = null"/>
 </template>
 <script setup>
 import { ref } from 'vue';
@@ -52,6 +67,9 @@ import { urls } from '../../../../services/urls';
 import IconRabbit from '@/components/svg/icon-rabbit.vue';
 import IconTurtle from '@/components/svg/icon-turtle.vue';
 import AsyncComponent from '../../partials/AsyncComponent.vue';
+import { ClubNotification } from './notifications/models';
+import { Toast } from '../../../shared/models';
+import SuccessToast from '../../../shared/SuccessToast.vue';
 
 const props = defineProps({
     totalChapters: {
@@ -63,10 +81,19 @@ let memberPaces;
 let svgPaceMap = {};
 const route = useRoute();
 const isViewingAllPaces = ref(false);
+const hasMemberBeenPeerPressured = ref({})
+const toast = ref(null);
 
 const clubPacePromise = db.get(urls.bookclubs.getClubPace(route.params.bookclub), null, false, (res) => {
     memberPaces = res.member_paces
     svgPaceMap = generateSvgPaceMap(memberPaces)
+    
+    // Go through and check to see if people have been peer pressured yet by another user in the club, 
+    // in the allotted time frame. All handled by server.
+    for (const member in memberPaces) {
+        hasMemberBeenPeerPressured.value[member.id] = false;
+    }
+
 }, (err) => {
     console.error(err);
 });
@@ -95,6 +122,28 @@ function generateSvgPaceMap(memberPaces) {
 
     return svgMap
 }
+
+
+
+function pressureReader(member) {
+    db.post(urls.bookclubs.peerPressureMember(route.params.bookclub), {
+        member_id: member.id,
+        notification_type: ClubNotification.types.peerPressure
+    }, false, (res) => {
+        console.log(res)
+        const { notification } = res;
+        // Create a toast for the user. 
+        if (notification) {
+            hasMemberBeenPeerPressured.value[member.id] = true;
+            toast.value = ClubNotification.generateToastFromNotification(notification);
+        }
+
+    }, 
+    (err) => {
+        console.error(err);
+    });
+}
+
 </script>
 <style scoped>
     .member-paces {

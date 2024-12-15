@@ -13,157 +13,272 @@
     <dialog ref="notificationSidebar" class="sidebar-menu">
         <CloseButton class="absolute r-20" @close="notificationSidebar.close()"/>
 
-        <!-- BookClubInvites -->
-        <AsyncComponent :promise-factory="invitesPromiseFactory" :subscribed-to="inviteRequestSubscriptionId">
-            <template #resolved>
-                <h3 class="fancy text-stone-600 text-xl">Bookclub invites</h3>
-                <!-- IF YOU HAVE INVITES -->
+        <div class="grid-two-cols pb-5" style="column-gap: 5px; width: 90%;">
+            <button type="button" 
+                class="btn btn-tiny btn-ghost btn-toolbar fancy text-sm" 
+                :class="{'active': viewingClubNotifications}" 
+                @click="viewingClubNotifications = true"
+            >
+                Club Notifications
+            </button>
+            
+            <button type="button" 
+                class="btn btn-tiny btn-ghost btn-toolbar fancy text-sm" 
+                :class="{'active': !viewingClubNotifications}" 
+                @click="viewingClubNotifications = false"
+            >
+                Friend Notifications
+            </button>
+        </div>
 
-                <div
-                    v-for="invite in invites" 
-                    :key="invite.id" 
-                >
-                    <div v-if="!dismissedNotifications[invite.invite_id]" class="notification">
-                        <p class="text-sm text-stone-500 text-start">{{ timeAgoFromNow(invite.datetime_invited) }}</p>
+        <div v-if="viewingClubNotifications">
+            <AsyncComponent 
+                :promise-factory="clubNotificationsFactory" 
+                :subscribed-to="clubNotificationsRequestSubscriptionId"
+            >
+                <template #resolved>
+                    <div v-for="([key, value], _) in Object.entries(clubNotifications)" :key="key">
+                        <div v-if="value.notifications?.length">
+                            <h4 class="text-stone-700 text-xl fancy">{{ value.book_club_name }}</h4>
 
-                        <p class="text-stone-500 text-sm">
-                            <!-- TODO: maybe add in a link to whoever invited you to the club. -->
-                            <i>{{ invite.book_club_owner_name }}</i> invited you to: <br/>
-                            <span class="text-stone-600 fancy bold">{{ invite.book_club_name }}</span>
-                        </p>
+                            <div class="notifications">
+                                <div v-if="value.notifications?.length  === 1">
+                                    <div class="club-notification" v-if="!value.notifications[0].dismissed">
+                                        <p class="text-xs text-stone-600">{{ dates.timeAgoFromNow(value.notifications[0].created_date) }}</p>
+                                        
+                                        <h5 class="text-stone-600 text-sm">
+                                            <span class="bold italic text-indigo-400">{{ value.notifications[0].sent_by_user_username }}</span> wants to hear your thoughts
+                                            on: <br>
+                                            <span class="bold italic">{{ value.currently_reading_book_title  }}</span>
+                                        </h5>
 
-                        <div class="flex gap-2 ml-auto">
-                            <button 
-                                type="button" 
-                                class="btn btn-tiny btn-submit text-sm"
-                                @click="acceptInviteToBookClub(invite.invite_id, () => { 
-                                        dismissedNotifications[invite.invite_id] = true; 
-                                    }
-                                )"
-                            >
-                                Accept
-                            </button>
+                                        <div class="flex gap-2">
+                                            <button type="button" 
+                                                class="btn btn-submit btn-tiny text-sm fancy"
+                                                @click="dismissNotification(value.notifications[0])"
+                                            >Dismiss</button>
+                                            
+                                            <button type="button" 
+                                                class="btn btn-submit btn-tiny text-sm fancy"
+                                                @click="() => {
+                                                        dismissNotification(value.notifications[0]);
+                                                        router.push(urls.concatQueryParams(
+                                                            navRoutes.toBookClubFeed(route.params.user, value.notifications[0].book_club_id),
+                                                            {'make-update': true}, 
+                                                            true,
+                                                        )
+                                                    )
+                                                }"    
+                                            >Write an update</button>
+                                        </div>
+                                    </div>
 
-                            <button 
-                                type="button" 
-                                class="btn btn-tiny btn-red text-sm"
-                                @click="declineInviteToBookClub(invite.invite_id, () => { 
-                                        dismissedNotifications[invite.invite_id] = true; 
-                                    }
-                                )"
-                            >   
-                                Decline
-                            </button>
+                                    <h4 v-else class="fancy text-sm text-stone-600">🪄 Dismissed! 🪄</h4>
+                                </div>
+
+                                <div v-else-if="value.notifications?.length > 1">
+                                    <div 
+                                        v-for="notification in value.notifications"
+                                        :key="notification.id"
+                                    >
+                                        <div class="club-notification" v-if="!notification.dismissed">
+                                            <p class="text-xs text-stone-600">{{ dates.timeAgoFromNow(value.notifications[0].created_date) }}</p>
+                                            
+                                            <h5 class="text-stone-600 text-sm">
+                                                <span class="bold italic text-indigo-400">{{ notification.sent_by_user_username }}</span> and 
+                                                <span class="bold italic text-indigo-400">{{ value.notifications.length - 1}} </span>
+                                                others want to hear your thoughts on:<br>
+                                                <span class="bold italic">{{ value.currently_reading_book_title  }}</span>
+                                            </h5>
+
+                                            <div class="flex gap-2">
+                                                <button type="button" class="btn btn-submit btn-tiny text-sm fancy">Dismiss</button>
+                                                
+                                                <button type="button" 
+                                                    class="btn btn-submit btn-tiny text-sm fancy" 
+                                                    @click="() => {
+                                                        dismissNotification(notification.id);
+                                                        router.push(
+                                                            urls.concatQueryParams(
+                                                                navRoutes.toBookClubFeed(route.params.user, notification.book_club_id),
+                                                                {'make-update': true}, 
+                                                                true,
+                                                            )
+                                                        );
+                                                    }"
+                                                >
+                                                    Write an update
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </template>
+
+                <template #loading>
+                    <div class="gradient fancy text-center text-lg loading-box mt-5">
+                        <h3>Loading Notifications</h3>
+                    </div>
+                </template>
+            </AsyncComponent>
+        </div>
+
+        <div v-else>
+            <!-- BookClubInvites -->
+            <AsyncComponent :promise-factory="invitesPromiseFactory" :subscribed-to="inviteRequestSubscriptionId">
+                <template #resolved>
+                    <h3 class="fancy text-stone-600 text-xl">Bookclub invites</h3>
+                    <!-- IF YOU HAVE INVITES -->
+
+                    <div
+                        v-for="invite in invites" 
+                        :key="invite.id" 
+                    >
+                        <div v-if="!dismissedNotifications[invite.invite_id]" class="notification">
+                            <p class="text-sm text-stone-500 text-start">{{ timeAgoFromNow(invite.datetime_invited) }}</p>
+
+                            <p class="text-stone-500 text-sm">
+                                <!-- TODO: maybe add in a link to whoever invited you to the club. -->
+                                <i>{{ invite.book_club_owner_name }}</i> invited you to: <br/>
+                                <span class="text-stone-600 fancy bold">{{ invite.book_club_name }}</span>
+                            </p>
+
+                            <div class="flex gap-2 ml-auto">
+                                <button 
+                                    type="button" 
+                                    class="btn btn-tiny btn-submit text-sm"
+                                    @click="acceptInviteToBookClub(invite.invite_id, () => { 
+                                            dismissedNotifications[invite.invite_id] = true; 
+                                        }
+                                    )"
+                                >
+                                    Accept
+                                </button>
+
+                                <button 
+                                    type="button" 
+                                    class="btn btn-tiny btn-red text-sm"
+                                    @click="declineInviteToBookClub(invite.invite_id, () => { 
+                                            dismissedNotifications[invite.invite_id] = true; 
+                                        }
+                                    )"
+                                >   
+                                    Decline
+                                </button>
+                            </div>
+                        </div>
+
+                        <div v-else-if="dismissedNotifications[invite.invite_id]" 
+                            class="notification" accepted
+                        >
+                            <p class="text-stone-700 fancy">Welcome to 
+                                <span class="bold text-indigo-600">{{ invite.book_club_name }}</span>🎉
+                            </p>
                         </div>
                     </div>
 
-                    <div v-else-if="dismissedNotifications[invite.invite_id]" 
-                        class="notification" accepted
-                    >
-                        <p class="text-stone-700 fancy">Welcome to 
-                            <span class="bold text-indigo-600">{{ invite.book_club_name }}</span>🎉
-                        </p>
+                    <!-- NO INVITES CHAT -->
+                    <div v-if="!invites.length" class="fancy text-sm text-stone-500 mt-5">
+                        you don't have any outstanding invites
                     </div>
-                </div>
+                </template>
 
-                <!-- NO INVITES CHAT -->
-                <div v-if="!invites.length" class="fancy text-sm text-stone-500 mt-5">
-                    you don't have any outstanding invites
-                </div>
-            </template>
-
-            <template #loading>
-                <div class="gradient fancy text-center text-lg loading-box">
-                    <h3>Loading invites</h3>
-                </div>
-            </template>
-        </AsyncComponent>
+                <template #loading>
+                    <div class="gradient fancy text-center text-lg loading-box">
+                        <h3>Loading invites</h3>
+                    </div>
+                </template>
+            </AsyncComponent>
 
 
-        <!-- Friend requests -->
-        <AsyncComponent :promise-factory="friendRequestsPromiseFactory" :subscribed-to="friendRequestSubscriptionId">
-            <template #resolved>
-                <h3 class="fancy text-stone-600 text-xl mt-5">Friend requests</h3>
-                <!-- IF YOU HAVE INVITES -->
+            <!-- Friend requests -->
+            <AsyncComponent :promise-factory="friendRequestsPromiseFactory" :subscribed-to="friendRequestSubscriptionId">
+                <template #resolved>
+                    <h3 class="fancy text-stone-600 text-xl mt-5">Friend requests</h3>
+                    <!-- IF YOU HAVE INVITES -->
 
-                <div
-                    v-for="request in friendRequests"
-                    :key="request.id" 
-                >
-                    <div v-if="friendRequestStatus[request.from_user.id] === Requests.STATUSES.anonymous_user_friend_requested" 
-                        class="notification"
-                        pending
+                    <div
+                        v-for="request in friendRequests"
+                        :key="request.id" 
                     >
-                        <p class="text-sm text-stone-500">{{ timeAgoFromNow(request.created_date) }}</p>
+                        <div v-if="friendRequestStatus[request.from_user.id] === Requests.STATUSES.anonymous_user_friend_requested" 
+                            class="notification"
+                            pending
+                        >
+                            <p class="text-sm text-stone-500">{{ timeAgoFromNow(request.created_date) }}</p>
 
-                        <p class="text-stone-500 text-sm">
-                            <i class="text-stone-700">
-                                <RouterLink :to="navRoutes.toUserPage(user, request.from_user.id)">
-                                    {{ request.from_user.username }}
-                                </RouterLink>
-                            </i> wants to be friends
-                        </p>
+                            <p class="text-stone-500 text-sm">
+                                <i class="text-stone-700">
+                                    <RouterLink :to="navRoutes.toUserPage(user, request.from_user.id)">
+                                        {{ request.from_user.username }}
+                                    </RouterLink>
+                                </i> wants to be friends
+                            </p>
 
-                        <div class="flex gap-2 ml-auto">
-                            <button 
-                                type="button" 
-                                class="btn btn-tiny btn-submit text-sm"
-                                @click="acceptFriendRequest(request.from_user.id, () => { 
-                                        friendRequestStatus[request.from_user.id] = Requests.STATUSES.friends;
-                                        console.log('yall are friends now')
-                                    }
-                                )"
-                            >
-                                Accept
-                            </button>
+                            <div class="flex gap-2 ml-auto">
+                                <button 
+                                    type="button" 
+                                    class="btn btn-tiny btn-submit text-sm"
+                                    @click="acceptFriendRequest(request.from_user.id, () => { 
+                                            friendRequestStatus[request.from_user.id] = Requests.STATUSES.friends;
+                                            console.log('yall are friends now')
+                                        }
+                                    )"
+                                >
+                                    Accept
+                                </button>
 
-                            <button 
-                                type="button" 
-                                class="btn btn-tiny btn-red text-sm"
-                                @click="declineFriendRequest(request.from_user.id, () => {
-                                    friendRequestStatus[request.from_user.id] = Requests.STATUSES.declined;
-                                    console.log('Why yall hate each other bro')
-                                })"
-                            >   
-                                Decline
-                            </button>
+                                <button 
+                                    type="button" 
+                                    class="btn btn-tiny btn-red text-sm"
+                                    @click="declineFriendRequest(request.from_user.id, () => {
+                                        friendRequestStatus[request.from_user.id] = Requests.STATUSES.declined;
+                                        console.log('Why yall hate each other bro')
+                                    })"
+                                >   
+                                    Decline
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- If you accepted a friend request. IE. friends -->
+                        <div v-else-if="friendRequestStatus[request.from_user.id] === Requests.STATUSES.friends"
+                            class="notification" 
+                            accepted
+                        >
+                            <p class="text-stone-700 fancy">You and 
+                                <span class="text-indigo-600 bold">{{ request.from_user.username }}</span>
+                                are now friends 🎉
+                            </p>
+                            <!-- DO WE WANT TO GIVE PEOPLE THE OPTION TO UNDO HERE? -->
+                        </div>
+
+                        <!-- If you declined a friend request. IE. not friends -->
+                        <div v-else-if="friendRequestStatus[request.from_user.id] === Requests.STATUSES.declined"
+                            class="notification" 
+                            declined
+                        >
+                            Request declined 🤖
                         </div>
                     </div>
 
-                    <!-- If you accepted a friend request. IE. friends -->
-                    <div v-else-if="friendRequestStatus[request.from_user.id] === Requests.STATUSES.friends"
-                        class="notification" 
-                        accepted
-                    >
-                        <p class="text-stone-700 fancy">You and 
-                            <span class="text-indigo-600 bold">{{ request.from_user.username }}</span>
-                            are now friends 🎉
-                        </p>
-                        <!-- DO WE WANT TO GIVE PEOPLE THE OPTION TO UNDO HERE? -->
+                    <!-- NO INVITES CHAT -->
+                    <div v-if="!friendRequests.length" class="fancy text-sm text-stone-500 mt-5">
+                        you don't have any outstanding requests
                     </div>
+                </template>
 
-                    <!-- If you declined a friend request. IE. not friends -->
-                    <div v-else-if="friendRequestStatus[request.from_user.id] === Requests.STATUSES.declined"
-                        class="notification" 
-                        declined
-                    >
-                        Request declined 🤖
+                <template #loading>
+                    <div class="gradient fancy text-center text-lg loading-box mt-5">
+                        <h3>Loading requests</h3>
                     </div>
-                </div>
-
-                <!-- NO INVITES CHAT -->
-                <div v-if="!friendRequests.length" class="fancy text-sm text-stone-500 mt-5">
-                    you don't have any outstanding requests
-                </div>
-            </template>
-
-            <template #loading>
-                <div class="gradient fancy text-center text-lg loading-box mt-5">
-                    <h3>Loading requests</h3>
-                </div>
-            </template>
-        </AsyncComponent>
-        <!-- TODO: Add other notifications once bookclubs are done -->
+                </template>
+            </AsyncComponent>
+            <!-- TODO: Add other notifications once bookclubs are done -->
+        </div>
     </dialog> 
 </template>
 <script setup>
@@ -173,13 +288,14 @@ import { acceptFriendRequest, declineFriendRequest } from './notificationService
 import { acceptInviteToBookClub, declineInviteToBookClub } from '../bookclubs/bookClubService';
 import { Requests } from '../../../models/friend-requests.js';
 import { PubSub } from '../../../services/pubsub.js';
-import { onBeforeUnmount, ref, watch } from 'vue';
-import { useRoute } from 'vue-router';
+import { onBeforeUnmount, ref, watch, reactive, computed } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
 import { dates } from '../../../services/dates';
 import IconBellNotificationActive from '../../svg/icon-bell-notification-active.vue';
 import IconBellNotificationInert from '../../svg/icon-bell-notification-inert.vue';
 import CloseButton from '../partials/CloseButton.vue'
 import AsyncComponent from '../partials/AsyncComponent.vue';
+import { ClubNotification } from '../bookclubs/club/notifications/models.js';
 
 /**
  * @constants
@@ -188,6 +304,7 @@ import AsyncComponent from '../partials/AsyncComponent.vue';
 const { timeAgoFromNow } = dates;
 const route = useRoute();
 const { user } = route.params;
+const router = useRouter();
 const notificationSidebar = ref(null);
 const notificationsButton = ref(null);
 const isOpen = ref(false);
@@ -195,13 +312,16 @@ const isOpen = ref(false);
 const dismissedNotifications = ref({});
 // Needed to know whether to say you accepted or declined a request.
 const friendRequestStatus = ref({});
-
 // Look in AsyncComponent.vue for why im doing.
 const inviteRequestSubscriptionId = 'notifications-get-invites';
 const friendRequestSubscriptionId = 'notifications-get-friends';
+const clubNotificationsRequestSubscriptionId = 'notifications-get-club-notifications';
 
 let invites = [];
 let friendRequests = [];
+
+const clubNotifications = reactive({});
+const viewingClubNotifications = ref(true);
 
 /**
  * @UI_functions
@@ -231,6 +351,7 @@ function handleClickOutside(event){
 
         PubSub.publish(inviteRequestSubscriptionId);
         PubSub.publish(friendRequestSubscriptionId);
+        PubSub.publish(clubNotificationsRequestSubscriptionId);
     }
 }
 
@@ -254,7 +375,7 @@ const invitesPromiseFactory = () => db.get(urls.bookclubs.getInvitesForUser(user
         invites = res.invites;
 
         res.invites.forEach((invite) => {
-            acceptedInvites.value[invite.id] = false;
+            dismissedNotifications.value[invite.id] = false;
         });
     }, 
     (err) => {
@@ -274,6 +395,20 @@ const friendRequestsPromiseFactory = () => db.get(urls.user.getUsersFriendReques
         console.error(err)
     }
 );
+
+const clubNotificationsFactory = () => db.get(urls.bookclubs.getClubNotificationsForUser(user), null, false, 
+    (res) => {
+        Object.assign(clubNotifications, res.notifications);
+    }, (err) => {
+        console.log(err);
+    }
+);
+
+function dismissNotification(notification) {
+    db.put(urls.bookclubs.dismissClubNotification(notification.id), null, false, () => {
+        notification.dismissed = true;
+    });
+}
 
 onBeforeUnmount(() => {
     document.removeEventListener('click', handleClickOutside)
@@ -343,5 +478,27 @@ onBeforeUnmount(() => {
 
 .r-20 {
     right: 20px;
+}
+
+
+/* Notification types */
+@starting-style {
+    .club-notification {
+        opacity: 0;
+        height: 0;
+    }
+}
+
+.club-notification {
+    border-radius: 4px;
+    margin-top: 4px;
+    margin-bottom: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.dismissed {
+    display: none;
 }
 </style>

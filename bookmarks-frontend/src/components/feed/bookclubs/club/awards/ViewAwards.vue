@@ -1,14 +1,6 @@
 <template>
-<button 
-    ref="awardsButton"
-    class="btn btn-ghost btn-tiny text-sm btn-icon"
-    @click="showOrHideAwardsDialog()"    
->
-    Awards
-</button>
-
 <dialog ref="awardsModal" class="awards-menu">
-    <div class="pt-5 pb-5">
+    <div class="pt-5">
         <CloseButton 
             class="ml-auto" 
             @close="() => {
@@ -23,54 +15,42 @@
         <!-- maybe we want to use async component here, idk though. -->
         <AsyncComponent :promises="[getAwardsPromise]"> 
             <template #resolved>
-                <div class="toolbar">
-                    <button 
-                        v-if="postId" 
-                        class="btn btn-toolbar text-sm active"
-                    >
-                        post awards
-                    </button>
-                    
-                    <button class="btn btn-toolbar text-sm"
-                    >
-                        club awards
-                    </button>
-                </div>
-
                 <div class="award-grid">
                     <div v-for="(category, key) in awards" 
                         :key="index"
                     >
-                        <h3 class="text-xl text-stone-700 fancy text-start mb-5 mt-5">
+                        <h3 class="text-xl text-stone-700 fancy text-start mb-5">
                             {{ key }}
                         </h3>
 
                         <div class="award-type" v-if="category">
-                            <div v-for="award in category" 
-                                :key="award.id" 
-                            >
-                                <div 
-                                    class="award"
+                            <div v-for="award in category" :key="award.id">
+                                <div class="award"
                                     :class="{
                                         'granted': awardStatuses[award.id].status === Award.statuses.grantable,
                                         'expired': awardStatuses[award.id].status === Award.statuses.expired,
                                         'loading': awardStatuses[award.id].status === Award.statuses.loading,
                                     }"
-                                    @click="grantAwardToPost(postId, award.id, [award.current_uses, award.allowed_uses])"
+                                    @click="grantAwardToPost(postId, award, [award.current_uses, award.allowed_uses])"
                                 >
-                                    <span class="award-front">    
+                                    <span class="award-front">
+                                        <component class="award-icon" v-if="ClubAwardsSvgMap[award.cls]" :is="ClubAwardsSvgMap[award.cls]()" />
+
                                         <p class="award-title">{{ award.name }}</p>
+
                                         <p class="award-description">{{  award.description }}</p>
                                     </span>
                                 </div>
                                 
-                                <p class="text-xs bold text-stone-500 text-center">{{ `${award.current_uses} granted on this post, ${award.allowed_uses - award.current_uses} remaining` }}</p>
+                                <p class="text-xs bold text-stone-500 text-center">
+                                    {{ `${award.current_uses} granted on this post, ${award.allowed_uses - award.current_uses} remaining` }}
+                                </p>
 
                                 <button 
                                     v-if="award.current_uses > 0"
                                     type="button" 
-                                    class="mt-5 text-xs text-red-500 " 
-                                    @click="removeAwardFromPost(postId, award.id)"
+                                    class="text-xs text-red-500" 
+                                    @click="ungrantAwardFromPost(postId, award)"
                                 >
                                     Ungrant
                                 </button>
@@ -96,6 +76,8 @@ import { Award } from './awards.js';
 import CloseButton from '../../../partials/CloseButton.vue';
 import LoadingCard from '@/components/shared/LoadingCard.vue';
 import AsyncComponent from '../../../partials/AsyncComponent.vue';
+import { ClubAwardsSvgMap } from '../awards/awards';
+import { PubSub } from '../../../../../services/pubsub.js';
 
 const awardStatuses = ref({});
 let postId;
@@ -125,7 +107,7 @@ const getAwardsPromise = db.get(urls.bookclubs.getAwards(bookclub),
         let awardLimit = _awards.length;
         let index = 0;
 
-        // this is marginally faster than a normal for loop.
+        // This is marginally faster than a normal for loop.
         while (index < awardLimit) {
             awardStatuses.value[_awards[index].id] = {};
             if (!awardsByType[_awards[index].type]) {
@@ -142,8 +124,9 @@ const getAwardsPromise = db.get(urls.bookclubs.getAwards(bookclub),
                 awardStatuses.value[_awards[index].id].status = Award.statuses.grantable;
             };
 
-            index += 1
+            index += 1;
         };
+
         // Set the awards by type.
         Object.keys(awardsByType).forEach((key) => {
             awardsByType[key] = (_awards
@@ -156,26 +139,12 @@ const getAwardsPromise = db.get(urls.bookclubs.getAwards(bookclub),
         loaded.value = true;
 });
 
-const awardsButton = ref(null);
 const awardsModal = ref(null);
 const isOpen = ref(false);
 
 /**
  * @UI_functions
  */
-function showOrHideAwardsDialog() {
-    if (awardsModal.value) {
-        if (!awardsModal.value.open) { 
-            awardsModal.value.showModal(); 
-            isOpen.value = true; 
-        } else {
-            awardsModal.value.close();
-            isOpen.value = false;
-            postId = null;
-        } 
-    }
-}
-
 
 function handleClickOutside(event){
     if (
@@ -183,7 +152,6 @@ function handleClickOutside(event){
         && awardsModal.value.open 
         && !(
             awardsModal.value.contains(event.target) || 
-            awardsButton.value.contains(event.target) || 
             postId
         )
     ) {
@@ -212,10 +180,11 @@ window.addEventListener('open-award-post-modal', (event) => {
     isOpen.value = true; 
 });
 
-function grantAwardToPost(postId, awardId, useArray) {
+function grantAwardToPost(post, award, useArray) {
     // For ui.
+    let awardId = award.id;
     awardStatuses.value[awardId].status === Award.statuses.loading
-    if (!postId) return;
+    if (!post) return;
     if (!useArray) return;
 
     // This assumes the count is always 0.
@@ -223,20 +192,36 @@ function grantAwardToPost(postId, awardId, useArray) {
     // early out if you are already at the limit of the awards allotted uses.
     if (awardStatuses.value[awardId].grantable && useArray[0] >= useArray[1]) return;
 
-    db.put(urls.bookclubs.grantAwardToPost(bookclub, postId, awardId), null, false, 
+    db.put(urls.bookclubs.grantAwardToPost(bookclub, post.id, awardId), null, false, 
         (res) => {
             // this is where you should see whether the award can still be granted or not by incrementing the count of grants a particular award has been given.
             // TODO: Update this so that it works.
             // awardStatuses.value[awardId].status === Award.statuses.loading
             loading.value = false;
+            award.current_uses += 1;
+            let channel = `award-granted-to-${postId}`;
+            console.log(channel, award, 'before pubsub')
+            PubSub.publish(channel, { award });
         },
         (err) => {
             console.log(err)
             loading.value = false;
         }
     );
-}
+};
 
+
+function ungrantAwardFromPost(post, award) {
+    db.delete(urls.bookclubs.ungrantAwardToPost(route.params.bookclub, post.id, award.id), 
+    null, 
+    false, 
+    (res) => {
+        award.current_uses -= 1;
+    }, 
+    (err) => {
+        console.log(err);
+    });
+}
 </script>
 <style scoped>
 .h-40 {
@@ -299,18 +284,29 @@ function grantAwardToPost(postId, awardId, useArray) {
 }
 
 .award {
-    background-color: var(--stone-400);
     padding: 4px;
     padding-bottom: 8px;
-    border-radius: 4px;
+    border-radius: 8px;
     transition: all 250ms ease;
     outline-offset: 4px;
-    border-radius: 12px;
+    margin-bottom: 5px;
+
+    &:hover {
+        background-color: var(--stone-300);
+
+        .award-front {
+            box-shadow: rgba(0, 0, 0, 0.06) 0px 2px 4px 0px inset;
+        }
+    }
+
+    &:active {
+        background-color: var(--stone-400);
+    }
 
     .award-front {
         display: block;
         padding: 4px 12px;
-        border-radius: 12px;
+        border-radius: 8px;
         font-size: 1.25rem;
         background: var(--stone-50);
         color: white;
@@ -318,9 +314,19 @@ function grantAwardToPost(postId, awardId, useArray) {
 
         &:active {
             transform: translateY(-2px);
+            background-color: var(--indigo-50);
+            box-shadow: rgba(0, 0, 0, 0.1) 0px 2px 4px 0px inset;
         }
     }
 
+    .award-icon {
+        margin-left: auto;
+        margin-right: auto;
+        height: 80px;
+        width: 80px;
+        color: var(--text-indigo-500);
+        fill: var(--text-indigo-500);
+    }
 
     .award-title {
         font-family: var(--fancy-script);

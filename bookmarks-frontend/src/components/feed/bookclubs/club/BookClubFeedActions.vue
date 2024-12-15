@@ -1,13 +1,23 @@
 <template>
     <div class="flex justify-between pt-5 pb-5 sticky-top">
-        <button 
-            class="btn btn-ghost btn-icon btn-tiny text-sm fancy"
-            type="button" 
-            @click="emit('start-club-update-post-flow')"
-        >
-            <IconPlus/> 
-            Update
-        </button>
+        <div class="flex">
+            <button 
+                class="btn btn-ghost btn-icon btn-tiny text-sm fancy"
+                type="button" 
+                @click="emit('start-club-update-post-flow')"
+            >
+                <IconPlus/> 
+                Update
+            </button>
+            
+            <button
+                class="ml-5 text-sm fancy underline text-indigo-500 hover: text-indigo-600"
+                type="button" 
+                @click="emit('finished-reading')"
+            >
+                I finished reading this book
+            </button>
+        </div>
 
         <div class="flex gap-2">
             <TransitionGroup name="content" tag="div" class="btn-relative">
