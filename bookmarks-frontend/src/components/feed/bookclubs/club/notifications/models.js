@@ -4,7 +4,7 @@ export const ClubNotification = {
     },
 
     generateToastFromNotification: (toast) => {
-        if (toast.notification_type === types.peerPressure) {
+        if (toast.notification_type === ClubNotification.types.peerPressure) {
             return {
                 message: `Your fellow club member has been encouraged to read`,
             } 

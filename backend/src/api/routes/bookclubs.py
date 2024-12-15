@@ -1612,7 +1612,7 @@ async def get_notifications_for_member_clubs(
 
 
 @router.put("/dismiss_notification/${notification_id}", name="bookclubs:dismiss_notification")
-async def dismiss_club_notification(
+async def update_club_notification_to_dismiss(
     notification_id:str,
     current_user: Annotated[User, Depends(get_current_active_user)], 
     book_club_repo: BookClubCRUDRepositoryGraph = Depends(
@@ -1623,7 +1623,7 @@ async def dismiss_club_notification(
     
     """
 
-    is_dismissed = book_club_repo.dismiss_club_notification(
+    is_dismissed = book_club_repo.update_club_notification_to_dismissed(
         member_id=current_user.id,
         notification_id=notification_id,
     )

@@ -61,6 +61,7 @@
                                             <button type="button" 
                                                 class="btn btn-submit btn-tiny text-sm fancy"
                                                 @click="() => {
+                                                        dismissNotification(value.notifications[0]);
                                                         router.push(urls.concatQueryParams(
                                                             navRoutes.toBookClubFeed(route.params.user, value.notifications[0].book_club_id),
                                                             {'make-update': true}, 
@@ -96,6 +97,7 @@
                                                 <button type="button" 
                                                     class="btn btn-submit btn-tiny text-sm fancy" 
                                                     @click="() => {
+                                                        dismissNotification(notification.id);
                                                         router.push(
                                                             urls.concatQueryParams(
                                                                 navRoutes.toBookClubFeed(route.params.user, notification.book_club_id),

@@ -2332,17 +2332,17 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
         else:
             return False
         
-    def dismiss_club_notification(self, member_id:str, notification_id:str):
+    def update_club_notification_to_dismissed(self, member_id:str, notification_id:str):
         with self.driver.session() as session:
             result = session.write_transaction(
-                self.dismiss_club_notification_query,
+                self.update_club_notification_to_dismissed_query,
                 member_id=member_id,
                 notification_id=notification_id
             )
         return result
     
     @staticmethod
-    def dismiss_club_notification_query(tx, member_id:str, notification_id:str) -> bool:
+    def update_club_notification_to_dismissed_query(tx, member_id:str, notification_id:str) -> bool:
         query = """
             
         """
