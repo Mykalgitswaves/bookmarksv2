@@ -1610,6 +1610,25 @@ async def get_notifications_for_member_clubs(
 
     return JSONResponse(status_code=200, content={'notifications': jsonable_encoder(notifications)})
 
+
+@router.put("/dismiss_notification/${notification_id}", name="bookclubs:dismiss_notification")
+async def dismiss_club_notification(
+    notification_id:str,
+    current_user: Annotated[User, Depends(get_current_active_user)], 
+    book_club_repo: BookClubCRUDRepositoryGraph = Depends(
+        get_repository(repo_type=BookClubCRUDRepositoryGraph)
+    ),
+):
+    """
+    
+    """
+
+    is_dismissed = book_club_repo.dismiss_club_notification(
+        member_id=current_user.id,
+        notification_id=notification_id,
+    )
+
+
 ## Create review for book club
 
 @router.post("/{book_club_id}/review/create", name='bookclubs:create_review')

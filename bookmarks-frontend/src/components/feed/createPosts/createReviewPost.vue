@@ -111,8 +111,17 @@
                         @go-to-edit-section="decrementStep"
                     />
                 </div>
+                
+                <button  v-if="unique === 'bookclub'"
+                    type="button"
+                    class="post-btn fancy"
+                    :disabled="step !== 3"
+                    @click="emit('post-data')"
+                >
+                    Post review and mark as finished
+                </button>
 
-                <button 
+                <button v-else
                     type="button"
                     class="post-btn"
                     :disabled="step !== 3 || !isPostableData"
@@ -120,6 +129,8 @@
                 >
                     {{ quickReview ? 'Move to shelf and post review' : 'Post' }}
                 </button>
+
+                
             </div>
         </div>
     </section>

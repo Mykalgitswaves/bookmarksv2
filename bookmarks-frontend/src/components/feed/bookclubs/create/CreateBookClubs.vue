@@ -55,6 +55,8 @@
             </transition>
         </div>
     </form>
+    
+    <div class="mobile-menu-spacer sm:hidden"></div>
 </template>
 <script setup>
 import { ref, computed } from 'vue';

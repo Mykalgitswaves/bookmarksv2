@@ -200,6 +200,7 @@ class ClubNotification(BaseModel):
     notification_type: str
     created_date: datetime
     member_id: str
+    sent_by_user_username: str
     sent_by_user_id: str
     book_club_id: str
     dismissed: bool = False

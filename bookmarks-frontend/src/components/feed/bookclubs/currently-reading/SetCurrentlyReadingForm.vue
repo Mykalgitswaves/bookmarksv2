@@ -126,17 +126,15 @@ const router = useRouter();
 
 function setCurrentlyReadingBookForClub(formData) {
     loaded.value = false;
-    let form = formData;
-    let dateToFinish = form.dateToFinish.toLocaleString();
+    let dateToFinish = formData.dateToFinish.toLocaleString();
 
-    if (!form.chapters || !form.currentBook || !form.pages) return null;
-    form.currentBook
+    if (!formData.chapters || !formData.currentBook || !formData.pages) return null;
     
     const payload = { 
         expected_finish_date: dateToFinish,
         book: {
-            id: form.currentBook.id,
-            chapters: form.chapters,
+            id: formData.currentBook.id,
+            chapters: formData.chapters,
         },
     };
 
@@ -145,7 +143,7 @@ function setCurrentlyReadingBookForClub(formData) {
         payload,
         false,
         (res) => {
-            emit('updated-current-book', form.currentBook);
+            emit('updated-current-book', formData.currentBook);
             loaded.value = true;
         }, 
         (err) => {

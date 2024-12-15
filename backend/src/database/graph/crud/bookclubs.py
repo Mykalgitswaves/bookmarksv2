@@ -711,7 +711,7 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
             MERGE (sendingUser)-[created_notification:CREATED_NOTIFICATION]->(createdClubNotification)
             MERGE (createdClubNotification)-[notification_for_user:NOTIFICATION_FOR_USER]->(receivingUser)
             MERGE (bc)<-[notification_for_club:NOTIFICATION_FOR_CLUB]-(createdClubNotification)
-            RETURN createdClubNotification, 
+            RETURN createdClubNotification, sendingUser.username as sent_by_user_username, bc.name as book_club_name,
                 CASE WHEN createdClubNotification IS NOT NULL THEN true ELSE false END AS createdPost
         """
 
@@ -729,7 +729,7 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
             return False
 
         created_notification = response.get('createdClubNotification')
-        
+
         notification = BookClubSchemas.ClubNotification(
             id=created_notification.get('id'),
             sent_by_user_id=sent_by_user_id,
@@ -738,6 +738,7 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
             dismissed=created_notification.get('dismissed', False),
             created_date=created_notification.get('created_date'),
             book_club_id=book_club_id,
+            sent_by_user_username=response.get('sent_by_user_username'),
         )
 
         return notification
@@ -1816,29 +1817,47 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
         OPTIONAL MATCH (clubNotification:ClubNotification {dismissed: false})-[:NOTIFICATION_FOR_USER]->(u)
         OPTIONAL MATCH (clubNotification)-[:NOTIFICATION_FOR_CLUB]->(b:BookClub)
         OPTIONAL MATCH (sentBy:User)-[:CREATED_NOTIFICATION]->(clubNotification)
+        OPTIONAL MATCH (b)-[:IS_READING]->(bcb:BookClubBook)-[:IS_EQUIVALENT_TO]->(book:Book)
         RETURN clubNotification.id as notification_id,
+                book.title as currently_reading_book_for_club_title,
                 clubNotification.notification_type as notification_type,
                 clubNotification.created_date as created_date,
                 sentBy.id as sent_by_id,
-                b.id as book_club_id
+                sentBy.username as sent_by_username,
+                b.id as book_club_id,
+                b.name as book_club_name
         """
 
-        notifications = []
         result = tx.run(query, user_id=user_id)
         
+        notifications = {}
+
         for response in result:
+            club_id = response.get('book_club_id')
             notification = BookClubSchemas.ClubNotification(
                 id=response.get('notification_id'),
                 notification_type=response.get('notification_type'),
                 created_date=response.get('created_date'),
                 member_id=user_id,
                 sent_by_user_id=response.get('sent_by_id'),
-                book_club_id=response.get('book_club_id'),
+                sent_by_user_username=response.get('sent_by_username'),
+                book_club_id=club_id,
                 dismissed=False,
             )
 
-            notifications.append(notification)
+            if not club_id in notifications:
+                notifications[club_id] = {}
+                notifications[club_id]['book_club_name'] = response.get('book_club_name')
+                notifications[club_id]['currently_reading_book_title'] = response.get('currently_reading_book_for_club_title')
+                notifications[club_id]['notifications'] = []
 
+            notifications[club_id]['notifications'].append(notification)
+        
+        for key, _ in notifications.items():
+           notifications[key]['notifications'] = sorted(
+               notifications[key]['notifications'], key=lambda n: n.created_date
+           )
+           
         return notifications
     
     def get_notification_eligibility(
@@ -2312,3 +2331,18 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
             return True
         else:
             return False
+        
+    def dismiss_club_notification(self, member_id:str, notification_id:str):
+        with self.driver.session() as session:
+            result = session.write_transaction(
+                self.dismiss_club_notification_query,
+                member_id=member_id,
+                notification_id=notification_id
+            )
+        return result
+    
+    @staticmethod
+    def dismiss_club_notification_query(tx, member_id:str, notification_id:str) -> bool:
+        query = """
+            
+        """
