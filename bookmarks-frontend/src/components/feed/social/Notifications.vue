@@ -62,7 +62,7 @@
                                                 class="btn btn-submit btn-tiny text-sm fancy"
                                                 @click="() => {
                                                         router.push(urls.concatQueryParams(
-                                                            navRoutes.toBookClubFeed(route.params.user, peerPressureNotifications[0].book_club_id),
+                                                            navRoutes.toBookClubFeed(route.params.user, value.notifications[0].book_club_id),
                                                             {'make-update': true}, 
                                                             true,
                                                         )
