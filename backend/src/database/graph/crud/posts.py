@@ -636,10 +636,10 @@ class PostCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
         query = """
                 match (uu:User {username: $username}) 
                 match (rr {id: $post_id}) 
-                with uu, rr
-                where not exists ((uu)-[:LIKES]-(rr))
-                    create (uu)-[ll:LIKES {created_date:datetime()}]->(rr)
-                    set rr.likes = rr.likes + 1
+                merge (uu)-[ll:LIKES]->(rr)
+                on create 
+                set ll.created_date = datetime(),
+                    rr.likes = coalesce(rr.likes, 0) + 1
                 return rr.likes as likes
                 """
         result = tx.run(query, username=liked_post.username, post_id=liked_post.post_id)
