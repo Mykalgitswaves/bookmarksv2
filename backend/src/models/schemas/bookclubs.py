@@ -191,13 +191,13 @@ class DeleteAward(CreateAward):
 class ClubNotificationCreate(BaseModel):
     member_id: str
     # notification_type is a string, can only be "peer-pressure"
-    notification_type: Literal['peer-pressure']
+    notification_type: Literal['peer-pressure', 'finished-reading']
     sent_by_user_id: str
     book_club_id: str
 
 class ClubNotification(BaseModel):
     id: str
-    notification_type: str
+    notification_type: Literal['peer-pressure', 'finished-reading']
     created_date: datetime
     member_id: str
     sent_by_user_username: str

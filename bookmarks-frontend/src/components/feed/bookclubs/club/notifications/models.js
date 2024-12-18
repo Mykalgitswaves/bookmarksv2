@@ -1,6 +1,15 @@
+const PEER_PRESSURE = 'peer-pressure'
+const FINISHED_READING = 'finished-reading'
+
 export const ClubNotification = {
     types: {
-        peerPressure: 'peer-pressure'
+        peerPressure: PEER_PRESSURE,
+        finishedReading: FINISHED_READING,
+    },
+
+    labels: {
+        [PEER_PRESSURE]: 'Peer pressure',
+        [FINISHED_READING]: 'Finished reading',
     },
 
     generateToastFromNotification: (toast) => {

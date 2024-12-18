@@ -1815,11 +1815,12 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
     def get_notifications_for_user_by_club_query(tx, user_id:str):
         query = """
         MATCH (u:User {id: $user_id})
-        OPTIONAL MATCH (clubNotification:ClubNotification {dismissed: false})-[:NOTIFICATION_FOR_USER]->(u)
+        MATCH (clubNotification:ClubNotification {dismissed: false})-[:NOTIFICATION_FOR_USER]->(u)
         OPTIONAL MATCH (clubNotification)-[:NOTIFICATION_FOR_CLUB]->(b:BookClub)
         OPTIONAL MATCH (sentBy:User)-[:CREATED_NOTIFICATION]->(clubNotification)
         OPTIONAL MATCH (b)-[:IS_READING]->(bcb:BookClubBook)-[:IS_EQUIVALENT_TO]->(book:Book)
         RETURN clubNotification.id as notification_id,
+                clubNotification.dismissed as isDismissed,
                 book.title as currently_reading_book_for_club_title,
                 clubNotification.notification_type as notification_type,
                 clubNotification.created_date as created_date,
@@ -2343,7 +2344,20 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
         return result
     
     @staticmethod
-    def update_club_notification_to_dismissed_query(tx, member_id:str, notification_id:str) -> bool:
+    def update_club_notification_to_dismissed_query(
+        tx, 
+        member_id:str, 
+        notification_id:str
+    ) -> bool:
         query = """
-            
+            MATCH (clubNotification:ClubNotification {id: $notification_id, dismissed: false})-[:NOTIFICATION_FOR_USER]->(user:User {id: $member_id})
+            SET clubNotification.dismissed = true
+            WITH clubNotification
+                RETURN CASE WHEN clubNotification.dismissed = true THEN true ELSE false END AS isDismissed
         """
+
+        result = tx.run(query, notification_id=notification_id, member_id=member_id)
+        record = result.single()
+
+        return record.get('isDismissed', False)
+        
