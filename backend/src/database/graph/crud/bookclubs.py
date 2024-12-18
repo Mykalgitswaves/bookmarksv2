@@ -742,7 +742,120 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
         )
 
         return notification
-        
+    
+    def create_review_and_finished_reading(
+            self,
+            review: BookClubSchemas.CreateReviewPost
+    ):
+        """
+        Creates the review in the DB and marks the book as finished reading
+        by user
+        """
+        with self.driver.session() as session:
+            result = session.write_transaction(
+                self.create_review_and_finished_reading_query, 
+                review
+            )
+        return result
+    
+    @staticmethod
+    def create_review_and_finished_reading_query(
+        tx,
+        review
+    ):
+        query = (
+            """
+            MATCH (u:User {id:$user_id})-[:IS_MEMBER_OF|OWNS_BOOK_CLUB]->(b:BookClub {id: $book_club_id})
+            MATCH (b)-[:IS_READING|FINISHED_READING]->(book:BookClubBook)
+            MERGE (r:ClubReview {
+            user_id: $user_id,
+            book_club_book_id: book.id})
+            ON CREATE SET 
+                r.id = "club_review_" + randomUUID(),
+                r.created_date = datetime(),
+                r.headline = $headline,
+                r.questions = $questions,
+                r.question_ids = $question_ids,
+                r.responses = $responses,
+                r.rating = $rating,
+                r.deleted = False,
+                r.likes = 0
+            MERGE (u)-[:POSTED]->(r)
+            MERGE (r)-[:POST_FOR_CLUB_BOOK]->(book)
+            MERGE (u)-[fr:FINISHED_READING_FOR_CLUB]->(book)
+            ON CREATE SET
+                fr.last_updated = datetime()
+            WITH u, book
+            MATCH (u)-[rr:IS_READING_FOR_CLUB]->(book)
+            DELETE rr
+            With u
+            return u.id as user_id
+            """
+        )
+
+        result = tx.run(
+            query,
+            user_id = review.user['id'],
+            book_club_id = review.id,
+            headline = review.headline,
+            questions = review.questions,
+            question_ids = review.question_ids,
+            responses = review.responses,
+            rating = review.rating
+        )
+
+        response = result.single()
+
+        return bool(response)
+    
+    def create_finished_reading(
+            self,
+            user_id: str,
+            book_club_id: str
+    ):
+        """
+        Creates the review in the DB and marks the book as finished reading
+        by user
+        """
+        with self.driver.session() as session:
+            result = session.write_transaction(
+                self.create_finished_reading_query, 
+                user_id,
+                book_club_id
+            )
+        return result
+    
+    @staticmethod
+    def create_finished_reading_query(
+        tx,
+        user_id,
+        book_club_id
+    ):
+        query = (
+            """
+            MATCH (u:User {id:$user_id})-[:IS_MEMBER_OF|OWNS_BOOK_CLUB]->(b:BookClub {id: $book_club_id})
+            MATCH (b)-[:IS_READING|FINISHED_READING]->(book:BookClubBook)
+            MERGE (u)-[fr:FINISHED_READING_FOR_CLUB]->(book)
+            ON CREATE SET
+                fr.last_updated = datetime()
+            WITH u, book
+            MATCH (u)-[rr:IS_READING_FOR_CLUB]->(book)
+            DELETE rr
+            With u
+            return u.id as user_id
+            """
+        )
+
+        result = tx.run(
+            query,
+            user_id = user_id,
+            book_club_id = book_club_id
+        )
+
+        response = result.single()
+
+        return bool(response)
+    
     def get_minimal_book_club(
             self,
             book_club_id: str,
@@ -2191,7 +2304,7 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
             OPTIONAL MATCH (b)-[]-(invites:BookClubInvite)
             OPTIONAL MATCH (invites)-[]-(test_emails:InvitedUser)
             OPTIONAL MATCH (user)-[]-(awards:ClubAwardForPost)
-            OPTIONAL MATCH (b)-[]-(posts:ClubUpdate|ClubUpdateNoText)
+            OPTIONAL MATCH (b)-[]-(posts:ClubUpdate|ClubUpdateNoText|ClubReview)
             DETACH DELETE pace, book, b, invites, test_emails, awards, posts
             return user.id as user_id
             """

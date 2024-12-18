@@ -3,11 +3,14 @@ from neo4j.time import DateTime as Neo4jDateTime
 from pydantic import (
     BaseModel, 
     EmailStr, 
-    validator, 
+    validator,
+    Field,
+    conint
 )
-from typing import Mapping, List, Any, Literal
+from typing import Mapping, List, Any, Literal, Optional
 
 from src.models.schemas.posts import Post
+from src.config.config import settings
 
 class BaseBookClub(BaseModel):
     book_club_id: str
@@ -145,9 +148,9 @@ class StartCurrentlyReading(BaseModel):
 class CreateUpdatePost(BaseModel):
     user: dict
     chapter: int
-    response: str | None
-    headline: str | None
-    quote: str | None
+    response: Optional[str] = Field(None, max_length = settings.LARGE_TEXT_LENGTH) 
+    headline: Optional[str] = Field(None, max_length = settings.SMALL_TEXT_LENGTH) 
+    quote: Optional[str] = Field(None, max_length = settings.SMALL_TEXT_LENGTH) 
     id: str
     
 class UpdatePost(Post):
@@ -157,6 +160,34 @@ class UpdatePost(Post):
     type: str = "club_update"
     quote: str = None
     awards: dict | None = None
+
+class CreateReviewPost(BaseModel):
+    user: dict
+    headline: str = Field("", max_length = settings.SMALL_TEXT_LENGTH) 
+    questions: list[str] = []
+    question_ids: list[int] = []
+    responses: list[str] = []
+    rating: int
+    id: str
+
+    @validator('questions', each_item=True)
+    def check_length_questions(cls, v):
+        if len(v) > settings.MEDIUM_TEXT_LENGTH:
+            raise ValueError(f"Each string in questions must be at most {settings.MEDIUM_TEXT_LENGTH} characters long")
+        return v
+
+    @validator('responses', each_item=True)
+    def check_length_responses(cls, v):
+        if len(v) > settings.LARGE_TEXT_LENGTH:
+            raise ValueError(f"Each string in responses must be at most {settings.LARGE_TEXT_LENGTH} characters long")
+        return v
+    
+    @validator('rating')
+    def check_rating(cls, v):
+        if v not in [0, 1, 2]:
+            raise ValueError("Value must be 0, 1, or 2")
+        
+        return v
     
 class UpdatePostNoText(Post):
     type: str = "club_update_no_text"

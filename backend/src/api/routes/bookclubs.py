@@ -14,6 +14,7 @@ from src.database.graph.crud.books import BookCRUDRepositoryGraph
 from src.database.graph.crud.bookclubs import BookClubCRUDRepositoryGraph
 from src.database.graph.crud.users import UserCRUDRepositoryGraph
 from src.models.schemas import bookclubs as BookClubSchemas
+from src.models.schemas import posts as PostSchemas
 from src.models.schemas.users import User, UserId
 from src.securities.authorizations.verify import get_current_active_user
 from src.utils.helpers.email.email_client import email_client
@@ -1632,7 +1633,16 @@ async def update_club_notification_to_dismiss(
 ## Create review for book club
 
 @router.post("/{book_club_id}/review/create", name='bookclubs:create_review')
-async def create_review_for_user():
+async def create_review_for_user(
+    book_club_id: str,
+    current_user: Annotated[User, Depends(get_current_active_user)],
+    request: Request,
+    background_tasks: BackgroundTasks, 
+    no_review: Optional[bool] = False,
+    book_club_repo: BookClubCRUDRepositoryGraph = Depends(
+        get_repository(repo_type=BookClubCRUDRepositoryGraph)
+    ),
+):
     """
     Creates the final review for the currently reading book and
     sets the book as finished for the user.
@@ -1655,6 +1665,64 @@ async def create_review_for_user():
     Returns:
         200 response for a successful post
     """
+
+    data = await request.json()
+    
+    user_id = data.get("user",{}).get("id")
+    if user_id != current_user.id:
+        raise HTTPException(400, "Unauthorized")
+
+    if not no_review:
+        try:
+            review = BookClubSchemas.CreateReviewPost(
+                user = {
+                    "id": user_id
+                },
+                headline=data.get("headline"),
+                questions=data.get("questions"),
+                question_ids=data.get("ids"),
+                responses=data.get("responses"),
+                rating=data.get("rating"),
+                id=book_club_id
+            )
+        except ValueError as e:
+            raise HTTPException(status_code=400, detail=str(e))
+        
+        response = book_club_repo.create_review_and_finished_reading(
+            review
+        )
+
+        if response:
+            #TODO: Add background task to notify users
+
+            return JSONResponse(
+                status_code=200,
+                content={
+                    "message": "Review Created"
+                }
+            )
+        
+        else:
+            raise HTTPException(400, "Error creating review")
+    
+    else:
+        response = book_club_repo.create_finished_reading(
+            user_id,
+            book_club_id
+        )
+
+        if response:
+            #TODO: Add background task to notify users
+
+            return JSONResponse(
+                status_code=200,
+                content={
+                    "message": "Book finished"
+                }
+            )
+        
+        else:
+            raise HTTPException(400, "Error creating review")
 
 @router.get("/{book_club_id}/feed/finished", name='bookclubs:get_finished_feed')
 async def get_finished_feed():

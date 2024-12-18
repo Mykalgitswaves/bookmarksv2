@@ -720,7 +720,59 @@ class TestBookClubs:
         notifications = response.json()['notifications']
         assert len(notifications) > 0, "No notifications found"
 
+    def test_create_review(self):
+        headers = {"Authorization": f"{self.token_type} {self.access_token}"}
 
+        endpoint = (
+            f"{self.endpoint}/api/bookclubs/{self.book_club_id}/"
+            "review/create")
+        
+        data = {
+            "user":{
+                "id": self.user_id
+            },
+            "questions":[
+                "Custom question"
+            ],
+            "ids":[
+                -1
+            ],
+            "responses":[
+                "test_response"
+            ],
+            "rating":0,
+            "headline": "test_headline"
+        }
+
+        response = requests.post(
+            endpoint,
+            headers=headers,
+            json=data
+        )
+
+        assert response.status_code == 200, "Creating Review"
+
+        headers = {"Authorization": f"{self.token_type_2} {self.access_token_2}"}
+
+        endpoint = (
+            f"{self.endpoint}/api/bookclubs/{self.book_club_id}/"
+            "review/create")
+        
+        data = {
+            "user": {
+                "id": self.user_id_2
+            }
+        }
+
+        params = {"no_review":True}
+
+        response = requests.post(
+            endpoint,
+            headers=headers,
+            json=data,
+            params=params
+        )
+        assert response.status_code == 200, "Finishing book"
 
     def test_deleting_member(self):
         headers = {"Authorization": f"{self.token_type} {self.access_token}"}
