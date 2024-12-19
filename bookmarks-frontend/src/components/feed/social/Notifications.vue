@@ -45,12 +45,12 @@
                         <div class="filters">
                             <label 
                                 class="filter-option" 
-                                :class="{'active': !!filterOptions[ClubNotification.types.peerPressure]}" 
+                                :class="{'active': !!filterOptions.peerPressure}" 
                                 :for="ClubNotification.types.peerPressure" 
                             >
                                 <input
                                     type="checkbox" 
-                                    v-model="filterOptions[ClubNotification.types.peerPressure]"
+                                    v-model="filterOptions.peerPressure"
                                     :id="ClubNotification.types.peerPressure"
                                 >
 
@@ -61,12 +61,12 @@
 
                             <label 
                                 class="filter-option" 
-                                :class="{'active': !!filterOptions[ClubNotification.types.finishedReading]}" 
+                                :class="{'active': !!filterOptions.finishedReading}" 
                                 :for="ClubNotification.types.finishedReading" 
                             >
                                 <input
-                                    type="checkbox" 
-                                    v-model="filterOptions[ClubNotification.types.finishedReading]"
+                                    type="checkbox"
+                                    v-model="filterOptions.finishedReading"
                                     :id="ClubNotification.types.finishedReading"
                                 >
                                 <span class="text-stone-500 text-xs">
@@ -84,53 +84,50 @@
                             <div class="notification-categories-scroll-container">
                                 <!-- FINISHED READING! -->
                                 <div class="notifications-category" 
-                                    v-if="club.finishedReadingNotifications.length === 1"
+                                    v-if="club.finishedReadingNotifications.length === 1 && !filterOptions.finishedReading"
                                 >
-                                    <!-- v-if="filterOptions[club.finishedReadingNotifications[0].notification_type]" -->
-                                    <h5 v-if="filterOptions[ClubNotification.types.finishedReading]" 
-                                        class="text-stone-400 italic text-sm mt-2"
-                                    >
-                                        🪄 Notifications filtered...✨
-                                    </h5>
+                                    <div class="club-notification" v-if="!club.finishedReadingNotifications[0].dismissed">
+                                        <p class="club-notification-date text-xs text-stone-600">
+                                            {{ dates.timeAgoFromNow(club.finishedReadingNotifications[0].created_date) }}
+                                        </p>
+                                        
+                                        <h5 class="text-stone-600 text-sm">
+                                            <span class="bold italic text-indigo-400">
+                                                {{ club.finishedReadingNotifications[0].sent_by_user_username }}</span> just finished reading: <br/>
+                                            <span class="bold italic">{{ club.currentlyReadingBookTitle  }}</span>
+                                        </h5>
 
-                                    <div v-else>
-                                        <div class="club-notification" v-if="!club.finishedReadingNotifications[0].dismissed">
-                                            <p class="club-notification-date text-xs text-stone-600">
-                                                {{ dates.timeAgoFromNow(club.finishedReadingNotifications[0].created_date) }}
-                                            </p>
+                                        <div class="club-notification-button-group">
+                                            <button type="button" 
+                                                class="btn btn-submit btn-tiny text-xs fancy"
+                                                @click="dismissNotification(club.finishedReadingNotifications[0], null)"
+                                            >Dismiss</button>
                                             
-                                            <h5 class="text-stone-600 text-sm">
-                                                <span class="bold italic text-indigo-400">
-                                                    {{ club.finishedReadingNotifications[0].sent_by_user_username }}</span> just finished reading
-                                                <span class="bold italic">{{ club.currentlyReadingBookTitle  }}</span>
-                                            </h5>
-
-                                            <div class="club-notification-button-group">
-                                                <button type="button" 
-                                                    class="btn btn-submit btn-tiny text-xs fancy"
-                                                    @click="dismissNotification(club.finishedReadingNotifications[0], null)"
-                                                >Dismiss</button>
-                                                
-                                                <!-- TODO: Add this in. v-if="club.finishedReadingNotifications[0].posted_review"  -->
-                                                <button
-                                                    type="button" 
-                                                    class="btn btn-submit btn-tiny text-xs fancy"
-                                                    @click="() => {
-                                                            dismissNotification(club.finishedReadingNotifications[0], null);
-                                                            router.push(urls.concatQueryParams(
-                                                                navRoutes.toBookClubFeed(route.params.user, club.id),
-                                                                {'update': club.finishedReadingNotifications[0].id}, 
-                                                                true,
-                                                            ))
-                                                    }"    
-                                                >Read their review</button>
-                                            </div>
+                                            <!-- TODO: Add this in. v-if="club.finishedReadingNotifications[0].posted_review"  -->
+                                            <button
+                                                type="button" 
+                                                class="btn btn-submit btn-tiny text-xs fancy"
+                                                @click="() => {
+                                                        dismissNotification(club.finishedReadingNotifications[0], null);
+                                                        router.push(urls.concatQueryParams(
+                                                            navRoutes.toBookClubFeed(route.params.user, club.id),
+                                                            {'update': club.finishedReadingNotifications[0].id}, 
+                                                            true,
+                                                        ))
+                                                }"    
+                                            >Read their review</button>
                                         </div>
                                     </div>
                                 </div>
 
+                                <div v-if="filterOptions.finishedReading" class="notifications-category filtered">
+                                    <h5 class="text-stone-400 italic text-sm mt-2"> 
+                                        🪄 Finished reading notifications filtered...✨
+                                    </h5>
+                                </div>
 
-                                <div class="notifications-category" v-if="club.peerPressureNotifications?.length && !filterOptions[ClubNotification.types.peerPressure]">
+
+                                <div class="notifications-category" v-if="club.peerPressureNotifications?.length && !filterOptions.peerPressure">
                                     <div v-if="club.peerPressureNotifications?.length  === 1">
                                         <div class="club-notification" 
                                             v-if="!club.peerPressureNotifications[0].dismissed"
@@ -213,8 +210,8 @@
                                     </div>
                                 </div>
 
-                                <div v-else class="notifications-category">
-                                    <h5 class="text-stone-400 italic text-sm mt-2">🪄 Notifications filtered...✨</h5>
+                                <div v-else class="notifications-category filtered">
+                                    <h5 class="text-stone-400 italic text-sm mt-2">🪄 Peer pressure Notifications filtered...✨</h5>
                                 </div>
                             </div>
                         </div>
@@ -437,16 +434,17 @@ const clubNotifications = reactive({});
 const viewingClubNotifications = ref(true);
 
 // Used for filtering out notification types dude
-const filterOptions = ref({
-    [ClubNotification.types.peerPressure]: false,
-    [ClubNotification.types.finishedReading]: false,
+const filterOptions = reactive({
+    peerPressure: false,
+    finishedReading: false,
 });
 
 // Filter out notifications by type that might also be actively being filtered?
 // We want this to be a function so we can have multiple lists of notification types for a single club section.
 // If the filterOptions is true, that means we WANT to filter out a notification from our list - not show it!
 // Computed function, so that it will rerender whenever filterOptions ref changes!
-const computedClubNotifications = computed(() => {  
+const computedClubNotifications = computed(() => {
+    console.log('recomputing club notifications');
     return Object.entries(clubNotifications).map(([key, club]) => (
         {   
             id: key,
@@ -454,14 +452,12 @@ const computedClubNotifications = computed(() => {
             currentlyReadingBookTitle: club.currently_reading_book_title,
             peerPressureNotifications: club.notifications.filter(
                 (notification) => (
-                    notification.notification_type === ClubNotification.types.peerPressure &&
-                    !filterOptions.value[ClubNotification.types.peerPressure]
+                    notification.notification_type === ClubNotification.types.peerPressure
                 )
             ),
             finishedReadingNotifications: club.notifications.filter(
                 (notification) => (
-                    notification.notification_type === ClubNotification.types.finishedReading &&
-                    !filterOptions.value[ClubNotification.types.finishedReading]
+                    notification.notification_type === ClubNotification.types.finishedReading
                 )
             ) 
         }
@@ -557,7 +553,7 @@ async function dismissNotification(notification, notificationArray) {
         });
     } else {
         // Make a ton of different requests.
-        const promises = notificationArray.map(
+        notificationArray.map(
             (notification) => (
                 db.put(urls.bookclubs.dismissClubNotification(notification.id), 
                     null, 
@@ -568,7 +564,6 @@ async function dismissNotification(notification, notificationArray) {
                 )
             )
         );
-        await Promise.all(promises)
     }
 }
 
@@ -664,7 +659,7 @@ onBeforeUnmount(() => {
 
     & .club-notification-date {
         position: absolute;
-        top: -15px; 
+        bottom: -16px; 
         left: 0;
         font-style: italic;
     }
@@ -683,9 +678,13 @@ onBeforeUnmount(() => {
 
 .notifications-category {
     border-bottom: 1px solid var(--stone-200);
-    padding-bottom: 10px;
-    margin-bottom: 10px;
+    padding-bottom: 28px;
+    margin-bottom: 14px;
     transition: all ease 250ms; 
+
+    &.filtered {
+        padding-bottom: 14px;
+    }
 }
 
 .club-notification-button-group {
