@@ -17,13 +17,13 @@
     <dialog ref="notificationSidebar" class="sidebar-menu">
         <CloseButton class="absolute r-20" @close="notificationSidebar.close()"/>
 
-        <div class="grid-two-cols pb-5" style="column-gap: 5px; width: 90%;">
+        <div class="grid-two-cols pb-5" style="column-gap: 5px; width: 80%;">
             <button type="button" 
                 class="btn btn-tiny btn-ghost btn-toolbar fancy text-sm" 
                 :class="{'active': viewingClubNotifications}" 
                 @click="viewingClubNotifications = true"
             >
-                Club Notifications
+                Club
             </button>
             
             <button type="button" 
@@ -31,7 +31,7 @@
                 :class="{'active': !viewingClubNotifications}" 
                 @click="viewingClubNotifications = false"
             >
-                Friend Notifications
+                Invites
             </button>
         </div>
 
@@ -115,16 +115,59 @@
                                                             true,
                                                         ))
                                                 }"    
-                                            >Read their review</button>
+                                            >Go to club</button>
                                         </div>
                                     </div>
                                 </div>
 
+                                <div class="notifications-category" 
+                                    v-if="club.finishedReadingNotifications.length > 1 && !filterOptions.finishedReading"
+                                >
+                                    <div class="club-notification" v-if="!club.finishedReadingNotifications[0].dismissed">
+                                        <p class="club-notification-date text-xs text-stone-600">
+                                            {{ dates.timeAgoFromNow(club.finishedReadingNotifications[0].created_date) }}
+                                        </p>
+                                        
+                                        <h5 class="text-stone-600 text-sm">
+                                            <span class="bold italic text-indigo-400">
+                                                {{ club.finishedReadingNotifications[0].sent_by_user_username }}</span> and
+                                            <span class="bold italic text-indigo-400">
+                                                {{ club.finishedReadingNotifications.length - 1 }}
+                                            </span> others have finished reading: <br/>
+                                            <span class="bold italic">{{ club.currentlyReadingBookTitle  }}</span>
+                                        </h5>
+
+                                        <div class="club-notification-button-group">
+                                            <button type="button" 
+                                                class="btn btn-submit btn-tiny text-xs fancy"
+                                                @click="dismissNotification(null, club.finishedReadingNotifications)"
+                                            >Dismiss</button>
+                                            
+                                            <!-- TODO: Add this in. v-if="club.finishedReadingNotifications[0].posted_review"  -->
+                                            <button
+                                                type="button" 
+                                                class="btn btn-submit btn-tiny text-xs fancy"
+                                                @click="() => {
+                                                        dismissNotification(null, club.finishedReadingNotifications);
+                                                        router.push(urls.concatQueryParams(
+                                                            navRoutes.toBookClubFeed(route.params.user, club.id),
+                                                            {'update': club.finishedReadingNotifications[0].id}, 
+                                                            true,
+                                                        ))
+                                                }"    
+                                            >Go to club</button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- If you have finished reading notifications, but you have filtered them out -->
                                 <div v-if="filterOptions.finishedReading" class="notifications-category filtered">
                                     <h5 class="text-stone-400 italic text-sm mt-2"> 
                                         🪄 Finished reading notifications filtered...✨
                                     </h5>
                                 </div>
+
+
 
 
                                 <div class="notifications-category" v-if="club.peerPressureNotifications?.length && !filterOptions.peerPressure">
