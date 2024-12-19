@@ -1611,7 +1611,7 @@ async def get_notifications_for_member_clubs(
     return JSONResponse(status_code=200, content={'notifications': jsonable_encoder(notifications)})
 
 
-@router.put("/dismiss_notification/${notification_id}", name="bookclubs:dismiss_notification")
+@router.put("/dismiss_notification/{notification_id}", name="bookclubs:dismiss_notification")
 async def update_club_notification_to_dismiss(
     notification_id:str,
     current_user: Annotated[User, Depends(get_current_active_user)], 
@@ -1620,13 +1620,21 @@ async def update_club_notification_to_dismiss(
     ),
 ):
     """
-    
+    Sets a notification as dismissed and returns a string indicating whether or not you did
     """
 
     is_dismissed = book_club_repo.update_club_notification_to_dismissed(
         member_id=current_user.id,
         notification_id=notification_id,
     )
+    
+    if is_dismissed:
+        detail = f'dismissed {notification_id}'
+        return JSONResponse(status_code=200, content={'success': detail})
+    else:
+        detail = f'failed to dismiss {notification_id}'
+        raise HTTPException(status_code=400, detail=detail)
+
 
 
 ## Create review for book club
