@@ -1,5 +1,6 @@
 <template>
     <CreateComparisonSelection 
+        :book-id="bookId"
         @books-selected="booksHandlerFn"
     />
 
@@ -62,6 +63,7 @@
 </template>
 <script setup>
 import { ref, computed } from 'vue';
+import { useRoute } from 'vue-router';
 import CreateComparisonSelection from './comparison/createComparisonSelection.vue';
 import CreateComparisonContentSection from './createComparisonContentSection.vue';
 
@@ -72,11 +74,13 @@ defineProps({
     }
 });
 
+const route = useRoute();
 const books = ref([]);
 const currentView = ref('add');
 const questionCount = ref(0);
 const headlines = ref([]);
 const step = ref(1);
+const { bookId } = route.params
 const emit = defineEmits(['is-postable-data', 'set-headlines', 'post-data']);
 
 function headlineHandler(headlineObj) {

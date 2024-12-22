@@ -28,8 +28,33 @@
                                 <div>
                                     <h4 class="text-stone-700">{{ member.username }}</h4>
                                     
-                                    <p class="text-sm text-stone-500">{{ member.pace ? `is reading chapter ${member.pace}` : 'hasn\'t started yet' }}</p>
+                                    <p class="text-sm text-stone-500">{{ member.pace ? `is reading chapter ${member.pace} of ${props.totalChapters}` : 'hasn\'t started yet' }}</p>
                                 </div>
+
+                                <div class="pace-line" 
+                                    :style="{
+                                        width: generateProgressBarWidthForMember(member),
+                                        height: '4px',
+                                        backgroundColor: 'var(--indigo-300)',
+                                        borderRadius:  '4px',
+                                        position: 'absolute',
+                                        bottom: '-8px',
+                                        left: 0,
+                                    }"
+                                ></div>
+
+                                <button 
+                                    v-if="member.id !== route.params.user && !hasMemberBeenPeerPressured[member.id]"
+                                    type="button" 
+                                    class="ml-auto btn btn-tiny btn-red text-sm" 
+                                    @click="pressureReader(member)"
+                                >
+                                    pressure
+                                </button>
+
+                                <p class="ml-auto fancy text-stone-500" v-else-if="member.id !== route.params.user && hasMemberBeenPeerPressured[member.id]">
+                                    🪄 Peer pressured! ✨
+                                </p>
 
                                 <!-- <canvas class="progress-bar" /> -->
                             </div>
@@ -43,6 +68,8 @@
             </template>
         </AsyncComponent>
     </div>
+    <!-- Nerd stuff for you impatient readers. -->
+    <SuccessToast v-if="toast" :toast="toast" :toast-type="Toast.TYPES.MESSAGE_TYPE" @dismiss="() => toast = null"/>
 </template>
 <script setup>
 import { ref } from 'vue';
@@ -52,6 +79,9 @@ import { urls } from '../../../../services/urls';
 import IconRabbit from '@/components/svg/icon-rabbit.vue';
 import IconTurtle from '@/components/svg/icon-turtle.vue';
 import AsyncComponent from '../../partials/AsyncComponent.vue';
+import { ClubNotification } from './notifications/models';
+import { Toast } from '../../../shared/models';
+import SuccessToast from '../../../shared/SuccessToast.vue';
 
 const props = defineProps({
     totalChapters: {
@@ -63,10 +93,19 @@ let memberPaces;
 let svgPaceMap = {};
 const route = useRoute();
 const isViewingAllPaces = ref(false);
+const hasMemberBeenPeerPressured = ref({})
+const toast = ref(null);
 
 const clubPacePromise = db.get(urls.bookclubs.getClubPace(route.params.bookclub), null, false, (res) => {
     memberPaces = res.member_paces
     svgPaceMap = generateSvgPaceMap(memberPaces)
+    
+    // Go through and check to see if people have been peer pressured yet by another user in the club, 
+    // in the allotted time frame. All handled by server.
+    for (const member in memberPaces) {
+        hasMemberBeenPeerPressured.value[member.id] = false;
+    }
+
 }, (err) => {
     console.error(err);
 });
@@ -95,6 +134,30 @@ function generateSvgPaceMap(memberPaces) {
 
     return svgMap
 }
+
+
+
+function pressureReader(member) {
+    hasMemberBeenPeerPressured.value[member.id] = true;
+    db.post(urls.bookclubs.peerPressureMember(route.params.bookclub), {
+        member_id: member.id,
+        notification_type: ClubNotification.types.peerPressure
+    }, false, (res) => {
+        const { notification } = res;
+        // Create a toast for the user. 
+        if (notification) {
+            toast.value = ClubNotification.generateToastFromNotification(notification);
+        }
+
+    }, 
+    (err) => {
+        console.error(err);
+    });
+}
+
+function generateProgressBarWidthForMember(member) {
+    return `${(member.pace / props.totalChapters) * 100}%`
+}
 </script>
 <style scoped>
     .member-paces {
@@ -111,7 +174,7 @@ function generateSvgPaceMap(memberPaces) {
         padding: 8px 20px;
         border: 1px solid var(--stone-200);
         border-radius: var(--radius-sm);
-        background-color: var(--stone-50);
+        background-color: var(--surface-primary);
         margin-top: 10px;
         min-height: 40px;
     }
@@ -121,6 +184,8 @@ function generateSvgPaceMap(memberPaces) {
         justify-content: start;
         align-items: center;
         column-gap: 10px;
+        position: relative;
+        margin-bottom: 14px;
 
         /* 
         This is pretty gnarly, papdding fix if there isnt an icon.

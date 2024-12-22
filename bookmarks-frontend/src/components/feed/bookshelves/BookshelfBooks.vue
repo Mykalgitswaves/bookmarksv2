@@ -116,7 +116,7 @@
                     name="note_for_shelf"
                     :style="{ 'height':  heights.note_for_shelf + 'px' }"
                     v-model="currentBookForOverlay.note_for_shelf"
-                    @input="throttledScrollHeightForTextArea(textAreas.wantToReadNoteTextArea)"
+                    @input="generatedHeightForTextArea(textAreas.wantToReadNoteTextArea)"
                 ></textarea>
                 <!-- Saving the note you just made -->
                 <div class="flex justify-between mt-5">
@@ -137,13 +137,13 @@
                         Why are you starting this book?
                     </label>
                     
-                    <textarea class="w-100 mt-2 border-2 border-indigo-200 br-input-normal input-base-padding min-height-textarea" 
+                    <textarea class="w-100 mt-2 border-2 border-indigo-200 br-input-normal input-base-padding min-height-textarea " 
                         :ref="(el) => (textAreas.currentlyReadingTextArea = el)"
                         :style="{ 'height':  heights[Bookshelves.CURRENTLY_READING.prefix] + 'px' }"
                         :name="Bookshelves.CURRENTLY_READING.prefix"
                         id="currentlyReading"
                         v-model="moveToSelectedShelfData.note" 
-                        @input="throttledScrollHeightForTextArea(textAreas.currentlyReadingTextArea)"
+                        @input="generatedHeightForTextArea(textAreas.currentlyReadingTextArea)"
                     />
                 </div>
 
@@ -247,6 +247,12 @@
         </div>    
     </teleport>
     <!-- End regular shelves -->
+    <Transition name="content">
+        <ErrorToast v-if="error.isShowing" :message="error.message" :refresh="true"/>
+    </Transition>
+    <Transition name="content">
+        <SuccessToast v-if="toast" :message="toast.message" /> 
+    </Transition>
 </template>
 <script setup>
 import { ref, computed, watch, onMounted, toRaw, defineExpose } from 'vue';
@@ -259,6 +265,8 @@ import { Bookshelves } from '../../../models/bookshelves';
 import { helpersCtrl, createConfetti } from '../../../services/helpers';
 import CreateUpdateForm from '../createPosts/update/createUpdateForm.vue';
 import CreateReviewPost from '../createPosts/createReviewPost.vue'
+import ErrorToast from '../../shared/ErrorToast.vue';
+import SuccessToast from '../../shared/SuccessToast.vue';
 
 const props = defineProps({
     books: {
@@ -295,6 +303,11 @@ const emit = defineEmits(['send-bookdata-socket', 'cancelled-reorder']);
 const userShelves = ref([]);
 const loaded = ref(false);
 const FLOWSHELVES = [Bookshelves.WANT_TO_READ, Bookshelves.CURRENTLY_READING, Bookshelves.FINISHED_READING];
+const error = ref({
+    isShowing: false,
+    message: '',
+});
+const toast = ref(null);
 
 FLOWSHELVES.filter((shelf) => (shelf.prefix !== props.unique)).forEach(
         (shelf) => {
@@ -360,35 +373,38 @@ heights.value[Bookshelves.WANT_TO_READ.prefix] = 82;
 
 
 function generatedHeightForTextArea(refEl) {
-    // Heights should only increase, not decrease if the new height is less than the current height - don't set it.
-    if (refEl.name === Bookshelves.CURRENTLY_READING.prefix) {
-        if (heights.value[Bookshelves.CURRENTLY_READING.prefix] < refEl.scrollHeight) {
+    // Temporarily set height to 'auto' to reset and measure content height
+    refEl.style.height = 'auto';
+
+    // Calculate the new height based on scrollHeight
+    const newHeight = `${Math.max(refEl.scrollHeight, 82)}px`; // Enforce minimum height of 82px
+
+    // Update the height only if it's different from the current height
+    if (refEl.style.height !== newHeight) {
+        refEl.style.height = newHeight; // Apply the new height
+
+        // Update the stored height if applicable (optional for tracking)
+        if (refEl.name === Bookshelves.CURRENTLY_READING.prefix) {
             heights.value[Bookshelves.CURRENTLY_READING.prefix] = refEl.scrollHeight;
         }
-    } 
 
-    if (refEl.name === Bookshelves.FINISHED_READING.prefix) {
-        if (heights.value[Bookshelves.FINISHED_READING.prefix] < refEl.scrollHeight) {
+        if (refEl.name === Bookshelves.FINISHED_READING.prefix) {
             heights.value[Bookshelves.FINISHED_READING.prefix] = refEl.scrollHeight;
         }
-    }
 
-    if (refEl.name === Bookshelves.WANT_TO_READ.prefix) {
-        if (heights.value[Bookshelves.WANT_TO_READ.prefix] < refEl.scrollHeight) {
+        if (refEl.name === Bookshelves.WANT_TO_READ.prefix) {
             heights.value[Bookshelves.WANT_TO_READ.prefix] = refEl.scrollHeight;
         }
-    }
 
-    if(refEl.name === 'note_for_shelf') {
-        console.log(refEl.scrollHeight)
-        if (heights.value[Bookshelves.WANT_TO_READ.note_for_shelf] > refEl.scrollHeight) {
+        if (refEl.name === 'note_for_shelf') {
             heights.value[Bookshelves.WANT_TO_READ.note_for_shelf] = refEl.scrollHeight;
         }
     }
 }
 
+// This sucked so I dont use it. Typing experience has janky
+const debouncedScrollHeightForTextArea = debounce(generatedHeightForTextArea, 150, true)
 
-const throttledScrollHeightForTextArea = debounce(generatedHeightForTextArea, 150, true);
 // End height functions
 // ------------------------------
 
@@ -543,7 +559,7 @@ async function saveBookNoteForCurrentBook() {
  * @description: Wrapper around the Bookshelves.moveBookToShelf function.
  * @param {*} bookshelf - bookshelf id of the shelf you want to move things to.
  */
-async function moveToShelf(bookshelf) {
+function moveToShelf(bookshelf) {
     const authors = toRaw(currentBookForOverlay.value.author_names) || toRaw(currentBookForOverlay.value.authors)
     const book = {
         title: currentBookForOverlay.value.title,
@@ -552,17 +568,29 @@ async function moveToShelf(bookshelf) {
         id: currentBookForOverlay.value.id,
         noteForShelf: currentBookForOverlay.value.note_for_shelf,
     }
-    let currentShelf = '';
-    if (moveToSelectedShelfData.value.isRemovingFromCurrentShelf) {
-        currentShelf = route.params.shelf;
-    }
 
     try {
-        const response = await Bookshelves.moveBookToShelf(bookshelf, book, currentShelf);
-        console.log(response);
+        let currentShelf = moveToSelectedShelfData.value.isRemovingFromCurrentShelf ? route.params.shelf : '';
+        Bookshelves.moveBookToShelf(bookshelf, book, currentShelf);
     } catch (error) {
+        error.value.message = `Error moving book, it may already be in this shelf.`
+        error.value.isShowing = true;
+        setTimeout(() => {
+            error.value.isShowing = false;
+        }, 5000);
         console.error(error);
+    };
+    if (!isUpdatingCurrentlyReadingBook || !(bookshelf === Bookshelves.FINISHED_READING.prefix)) {
+        console.log('closing overlay');
+        showBookControlsOverlay.value = false;
+        toast.value = {
+            message: `Book moved to shelf`,
+        };
+        setTimeout(() => {
+            toast.value = null;
+        }, 5000);
     }
+    
 }
 // End of book controls overlay function
 // ------------------------------
@@ -735,5 +763,9 @@ defineExpose({ currentBook });
         margin-bottom: 10px;
         align-items: center;
         width: 100%;
+    }
+
+    textarea::-webkit-scrollbar {
+        display: none;
     }
 </style>

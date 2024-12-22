@@ -75,20 +75,19 @@ export const Bookshelves = {
      * Otherwise is an optional string we use to remove the current book from the shelf a
      * user is currently moving a book from.
      */
-    async moveBookToShelf(bookshelf_id, book_object, moveFrom) {
+    moveBookToShelf(bookshelf_id, book_object, moveFrom) {
         let payload = new Book(book_object.title, book_object.author_names, book_object.small_img_url, book_object.id);
-        try {
-            const request = moveFrom ? 
-                await db.put(urls.rtc.quickAddBook(bookshelf_id), { book: payload}, null, null, moveFrom) :
-                await db.put(urls.rtc.quickAddBook(bookshelf_id), { book: payload});
-            console.log(request)
-            if (request.status === 200) {
-                const response = await request.json();
-                console.log(response);
-            }
-        } catch (error) {
-            console.error(error);
-        }
+
+        // New concatMethod! Hopefully this doesn't break quick add.
+        let url = moveFrom ? 
+            urls.concatQueryParams(urls.rtc.quickAddBook(bookshelf_id), moveFrom) : 
+            urls.rtc.quickAddBook(bookshelf_id);
+        
+        db.put(url, { book: payload}, false, (res) => {
+            console.log(res)
+        }, (err) => {
+            console.error(err);
+        });
     },
 
     async addBookHandler(book, booksRef, quickAddShelfName) {

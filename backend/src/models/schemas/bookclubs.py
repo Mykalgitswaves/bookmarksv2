@@ -5,7 +5,7 @@ from pydantic import (
     EmailStr, 
     validator, 
 )
-from typing import Mapping, List, Any
+from typing import Mapping, List, Any, Literal
 
 from src.models.schemas.posts import Post
 
@@ -46,7 +46,8 @@ class BaseBookClub(BaseModel):
             elapsed_days = (current_date - started_date).days
 
             # Calculate expected chapters by the current date
-            expected_chapters = (elapsed_days / max(total_days,1)) * max(total_chapters,1)
+            # Cannot be more than the total number of chapters in the book
+            expected_chapters = min((elapsed_days / max(total_days,1)) * max(total_chapters,1),total_chapters)
 
             # Calculate offset from the expected chapter
             pace_offset = current_chapter - round(expected_chapters)
@@ -156,9 +157,11 @@ class UpdatePost(Post):
     headline: str = ""
     type: str = "club_update"
     quote: str = None
+    awards: dict | None = None
     
 class UpdatePostNoText(Post):
     type: str = "club_update_no_text"
+    awards: dict | None = None
 
 class BaseAward(BaseModel):
     id: str
@@ -173,6 +176,7 @@ class Award(BaseAward):
 class AwardWithGrants(BaseAward):
     current_uses: int | None = None
     grants: List
+    cls: str | None = None
 
 class CreateAward(BaseModel):
     post_id: str
@@ -182,3 +186,29 @@ class CreateAward(BaseModel):
 
 class DeleteAward(CreateAward):
     pass
+
+# Notifications!
+# Use these to bug the shit out of your friends (with consent)!
+class ClubNotificationCreate(BaseModel):
+    member_id: str
+    # notification_type is a string, can only be "peer-pressure"
+    notification_type: Literal['peer-pressure', 'finished-reading']
+    sent_by_user_id: str
+    book_club_id: str
+
+class ClubNotification(BaseModel):
+    id: str
+    notification_type: Literal['peer-pressure', 'finished-reading']
+    created_date: datetime
+    member_id: str
+    sent_by_user_username: str
+    sent_by_user_id: str
+    book_club_id: str
+    dismissed: bool = False
+
+    @validator('created_date', pre=True, allow_reuse=True)
+    def parse_neo4j_datetime(cls, v):
+        if isinstance(v, Neo4jDateTime):
+            # Convert Neo4jDateTime to Python datetime
+            return v.to_native()
+        return v

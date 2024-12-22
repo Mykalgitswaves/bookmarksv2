@@ -1,5 +1,5 @@
 <template>
-    <div v-if="update.response.length || update.quote.length" class="container questions">
+    <div v-if="update.response?.length || update.quote.length" class="container questions">
         <div v-if="update.quote" class="quote">
             <div class="my-2">
                 <p class="text-start">
@@ -20,7 +20,7 @@
         </div>
     </div>
 
-    <div v-if="!update.response.length" style="text-align: center;">
+    <div v-if="!update.response?.length" style="text-align: center;">
         <h2 class="heading">You haven't added any responses</h2>
 
         <p class="subheading">Click 

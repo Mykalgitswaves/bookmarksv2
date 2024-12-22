@@ -1,5 +1,5 @@
 <template>
-  <div :class="{'px-4 pt-5': !props.disabled}">
+  <div :class="{'px-4 pt-5': !props.disabled}" class="transition-content">
     <KeepAlive>
       <ul 
         v-for="book in books" 

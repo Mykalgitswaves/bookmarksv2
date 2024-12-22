@@ -17,10 +17,19 @@
             </button>
         </div>
 
-        <section class="club-main-padding" v-if="loaded">
+        <section v-if="loaded" 
+            class="club-main-padding"
+            :class="{'is-user-finished-with-current-book': isUserFinishedReadingBook}"
+        >
             <CurrentlyReadingBook 
+                :is-finished-reading="isUserFinishedReadingBook"
                 :book="currentlyReadingBook" 
-                @currently-reading-settings=""
+                @currently-reading-settings="router.push(
+                    navRoutes.bookClubSettingsCurrentlyReading(
+                        route.params.user, 
+                        route.params.bookclub
+                    )
+                )"
             />
 
             <CurrentPacesForClubBook :total-chapters="currentlyReadingBook?.chapters"/>
@@ -29,9 +38,10 @@
             <BookClubFeedActions 
                 v-if="currentlyReadingBook"
                 @start-club-update-post-flow="showUpdateForm()"
+                @finished-reading="showFinishedReadingForm()"
             />
 
-            <Overlay ref="updateOverlay">
+            <Overlay :ref="(el) => overlays.updateOverlay = el?.dialogRef">
                 <template #overlay-header>
 
                 </template>
@@ -41,6 +51,20 @@
                         :book="currentlyReadingBook" 
                         @post-update="(update) => postUpdateForBookClub(update)"
                     />
+                </template>
+            </Overlay>
+
+            <Overlay :ref="(el) => overlays.finishedReadingOverlay = el?.dialogRef">
+                <template #overlay-header>
+
+                </template>
+                <template #overlay-main>
+                        <CreateReviewPost 
+                            :book="currentlyReadingBook"
+                            unique="bookclub"
+                            @is-postable-data="(post) => reviewPost = post" 
+                            @post-data="postReviewAndFinishReadingCurrentBook(reviewPost)"
+                        />
                 </template>
             </Overlay>
 
@@ -62,12 +86,13 @@ import BookClubFeedActions from './BookClubFeedActions.vue';
 import ClubPost from './posts/ClubPost.vue';
 import Overlay from '@/components/feed/partials/overlay/Overlay.vue';
 import CreateUpdateForm from '@/components/feed/createPosts/update/createUpdateForm.vue';
+import CreateReviewPost  from '@/components/feed/createPosts/createReviewPost.vue';
 import CurrentPacesForClubBook from './CurrentPacesForClubBook.vue';
-import { ref } from 'vue';
+import { ref, watch } from 'vue';
 import { db } from '../../../../services/db';
-import { urls } from '../../../../services/urls';
+import { navRoutes, urls } from '../../../../services/urls';
 import { formatUpdateForBookClub } from '../bookClubService';
-import { useRoute } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 import LoadingCard from '../../../shared/LoadingCard.vue';
 
 
@@ -82,15 +107,28 @@ const data = ref({
     posts: [],
 });
 const loaded = ref(false);
-const updateOverlay = ref(null);
+
+const overlays = ref({
+    updateOverlay: null,
+    finishedReadingOverlay: null,
+});
+
 const route = useRoute();
+const router = useRouter();
+const isUserFinishedReadingBook = ref(false);
+const reviewPost = ref(null);
 
 let currentlyReadingBook = {};
 
 function showUpdateForm() {
-    const { dialogRef } = updateOverlay.value;
+    const dialogRef = overlays.value?.updateOverlay;
     dialogRef?.showModal();
 };
+
+function showFinishedReadingForm() {
+    const dialogRef = overlays.value.finishedReadingOverlay;
+    dialogRef?.showModal(); 
+}
 
 /**
  * @load
@@ -112,6 +150,16 @@ Promise.all([clubFeedPromise, currentlyReadingPromise]).then(() => {
     loaded.value = true;
 });
 
+
+// If you are coming from notifications tab, then load the showUpdateForm, then unwatch watcher.
+watch(() => overlays.value.updateOverlay, () => {
+    if (route.query['make-update']) {
+        showUpdateForm()
+    }  
+    watch()
+}, {immediate: false});
+
+
 // So users can scroll up and refresh feed. 
 function refreshFeed() {
     loaded.value = false;
@@ -131,8 +179,8 @@ function postUpdateForBookClub(update) {
         (res) => {
             console.log(res);
             // Refresh;
-            loadClubFeed();
-            const { dialogRef } = updateOverlay.value;
+            refreshFeed();
+            const { dialogRef } = overlays.value.updateOverlay;
             dialogRef?.close();
         },
         (err) => {
@@ -140,4 +188,10 @@ function postUpdateForBookClub(update) {
         },
     );
 };
+
+function postReviewAndFinishReadingCurrentBook(post) {
+    db.post(urls.bookclubs.postClubReviewAndFinishReading(route.params.bookclub), post, false, (res) => {
+        isUserFinishedReadingBook.value = true;
+    });
+}
 </script>

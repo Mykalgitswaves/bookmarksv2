@@ -100,7 +100,7 @@
             role="navigation" 
         >   
             <div class="nav-button-group hover:bg-gray-200">
-                <RouterLink :to="navRoutes.toBookClubsPage(user)"
+                <button @click="router.push(navRoutes.toBookClubsPage(user))"
                     class="footer-nav-button text-xs icon-sm"
                 >
                     <IconBack/>
@@ -108,7 +108,7 @@
                     <span class="sm:hidden">
                         Back
                     </span>
-                </RouterLink>
+                </button>
             </div>
 
             <div class="nav-button-group hover:bg-gray-200">

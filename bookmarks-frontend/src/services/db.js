@@ -111,22 +111,15 @@ export const db = {
         }
     },
     // Can use raw params not strinfigied,can even pass in proxy
-    put: async (url, requestData, debug, successRouterFunction, queryParams) => {
+    put: async (url, requestData, debug, successRouterFunction, failureFunction) => {
         const token = helpersCtrl.getCookieByParam(['token']);
         console.log(token)
         // Check if you are passing in proxy and if you are convert it to a raw object before posting to database.
         try {
-        requestData = typeof requestData === Proxy ? toRaw(requestData) : requestData
+            // unwap before you send, duh.
+            requestData = typeof requestData === Proxy ? toRaw(requestData) : requestData;
 
-        // Modify url to include query params.
-        if (queryParams) {
-            // Make sure we aren't fucking up this part of the request.
-            if (!url.endsWith('/')) {
-                url = url + '/';
-            }
-            
-            url = url + '?' + new URLSearchParams(queryParams);
-        }
+            // Modify url to include query params.
             const response = await fetch(url, {
                 method: 'put',
                 headers: {
@@ -136,21 +129,28 @@ export const db = {
                 },
                 body: JSON.stringify(requestData)
             });
+
             const data = await response.json();
 
             // Debug state
-            if(debug) {
+            if (debug) {
                 console.log(response, 'response')
                 console.log(data, 'data')
             }
+
             // Success state
-            if(response.ok) {
+            if (response.ok) {
                 if(successRouterFunction) {
-                    return data && successRouterFunction
+                    successRouterFunction(data)
                 }
-                return data
+
+                return data;
+            // and failing!
+            } else {
+                if (failureFunction) {
+                    failureFunction(data);
+                }
             }
-            
         } catch(err) {
             console.error(err)
         }
@@ -186,5 +186,5 @@ export const db = {
         } catch(err) {
             console.error(err)
         }
-    }
+    },
 }

@@ -1,7 +1,7 @@
 <template>
   <nav class="nav-menu">
     <div class="flex space-between w-100 items-bottom">
-      <h4 class="text-stone-600 fancy pl-2">HardcoverLit</h4>
+      <h4 class="text-stone-600 fancy pl-2 pt-2">HardcoverLit</h4>
 
       <div class="flex gap-2 items-bottom">
           <NavSearchBar/>
@@ -29,9 +29,12 @@
     width: 100%;
     display: flex;
     justify-content: end;
+    /* align-items: end; */
     padding: var(--padding-md);
     padding-top: var(--padding-sm);
     z-index: 1000;
-    background: linear-gradient(90deg, var(--surface-primary), transparent)
+    background: linear-gradient(90deg, var(--surface-primary), transparent);
+    padding-bottom: 50px;
+    border-bottom: 1px solid var(--indigo-200);
 }
 </style> 

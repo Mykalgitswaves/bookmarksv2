@@ -31,8 +31,10 @@ const props = defineProps({
     subscribedTo: {
         type: String,
         required: false,
-    }
+    },
 });
+
+const emits = defineEmits(['loaded']);
 
 const loaded = ref(false);
 
@@ -49,6 +51,7 @@ function load() {
         Promise.resolve(props.promiseFactory()).then(() => {
             console.log('inside load promise factory')
             loaded.value = true;
+            emits('loaded', Symbol('🍕'))
         });
     }
 }

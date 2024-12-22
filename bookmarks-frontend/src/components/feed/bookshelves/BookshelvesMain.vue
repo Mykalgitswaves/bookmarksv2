@@ -11,8 +11,8 @@
                 Currently reading 
                     <span v-if="dataLoaded">
                         <br/>
-                        <span class="text-indigo-500 text-sm" v-if="currentlyReadingShelf?.books?.length">
-                            {{ currentlyReadingShelf?.books?.length + 1 }} books
+                        <span class="text-indigo-500 text-sm" v-if="currentlyReadingShelf[0]?.books?.length">
+                            {{ currentlyReadingShelf[0]?.books?.length}} books
                         </span>
 
                         <span v-else class="text-indigo-500 text-sm">
@@ -37,8 +37,8 @@
                 Want to read
                     <span v-if="dataLoaded">
                         <br/>
-                        <span class="text-indigo-500 text-sm" v-if="wantToReadBookshelf?.books?.length">
-                            {{ wantToReadBookshelf?.books?.length + 1 }} books
+                        <span class="text-indigo-500 text-sm" v-if="wantToReadBookshelf[0]?.books?.length">
+                            {{ wantToReadBookshelf[0]?.books?.length}} books
                         </span>
 
                         <span v-else class="text-indigo-500 text-sm">

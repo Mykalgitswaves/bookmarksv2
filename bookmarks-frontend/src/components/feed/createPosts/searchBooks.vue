@@ -24,7 +24,7 @@
       >Tap a book to select it</label>
     </form>
 
-    <TransitionGroup name="content">
+    <div class="transition-content">
       <div v-if="loading" class="mt-5 gradient fancy text-center text-xl loading-box">
         loading books
       </div>
@@ -40,7 +40,7 @@
         :is-comparison="props.isComparison"
         @book-id="toParent"
       />
-    </TransitionGroup>
+    </div>
 </template>
 <script setup>
 import { ref, computed, watch, useAttrs } from 'vue';
@@ -109,3 +109,18 @@ watch(book, () => {
   }
 });
 </script>
+<style>
+
+.transition-content {
+  opacity: 1;
+  transition: all 250ms ease;
+}
+
+@starting-style {
+  .transition-content {
+    opacity: 0;
+    height: 0;
+    width: 0;
+  }
+}
+</style>

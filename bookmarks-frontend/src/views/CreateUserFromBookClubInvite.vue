@@ -1,6 +1,6 @@
 <template>
-    <CreateUserFromInivte />
+    <CreateUserFromInvite />
 </template>
 <script setup>
-import CreateUserFromInivte from '@/components/createFlow/CreateUserFromBookClubInvite.vue';
+import CreateUserFromInvite from '@/components/createFlow/CreateUserFromBookClubInvite.vue';
 </script>

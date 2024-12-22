@@ -1,5 +1,52 @@
 <template>
   <div>
+    <div>
+      <AsyncComponent :promises="[clubsPromise]">
+        <template #resolved>
+            <div style="margin-left: 16px;">
+              <h2 class="text-stone-600 text-2xl fancy">Bookclubs you own</h2>
+
+              <p class="text-stone-500 text-sm italic pl-5">Your most recently active bookclubs</p>
+            </div>
+            <div v-if="bookclubs?.ownedByUser?.length" 
+                class="mb-5 mt-5 bookclubs-gallery"
+            >
+                <BookClubPreview 
+                    v-for="bookclub in bookclubs.ownedByUser"
+                    :bookclub="bookclub"
+                    :user="user"
+                />
+            </div>
+        </template>
+        <template #loading>
+          <div style="margin-left: 16px;">
+              <h2 class="text-stone-600 text-2xl fancy">Bookclubs you own</h2>
+
+              <p class="text-stone-500 text-sm italic pl-5">Your most recently active bookclubs</p>
+            </div>
+
+          <div class="currently-reading">
+              <div class="currently-reading-book loading">
+                  <div class="book-img loading gradient"></div>
+              </div>
+
+              <div class="currently-reading-book loading">
+                  <div class="book-img loading gradient"></div>
+              </div>
+
+              <div class="currently-reading-book loading">
+                  <div class="book-img loading gradient"></div>
+              </div>
+
+              <div class="currently-reading-book loading">
+                  <div class="book-img loading gradient"></div>
+              </div>
+          </div>
+        </template>  
+      </AsyncComponent>
+
+    </div>
+    
     <!-- Your currently reading shown at the top -->
     <div>
       <CurrentlyReading />
@@ -15,7 +62,11 @@
 
     <!-- Your actual posts feed -->
     <div v-if="!toggleCreateReviewType" class="reviews">  
-      <h2 class="work-feed-heading">Posts</h2>
+      <div style="margin-left: 16px;">
+        <h2 class="text-stone-600 text-2xl fancy">Community library</h2>
+
+        <p class="text-stone-500 text-sm italic pl-5">A collection of posts from you and your friends</p>
+      </div>
 
       <WorkFeedControls :user="user" />
 
@@ -70,10 +121,11 @@ import { urls } from '@/services/urls.js';
 import { filterOptions } from './filters.js';
 import { navigate } from './createPostService';
 import { feedComponentMapping } from './feedPostsService';
+import AsyncComponent from '@/components/feed/partials/AsyncComponent.vue';
+import BookClubPreview from '@/components/feed/bookclubs/home/BookClubPreview.vue';
 
 import CurrentlyReading from './CurrentlyReading.vue';
 import WorkFeedControls from './WorkFeedControls.vue';
-
 
 
 const toggleCreateReviewType = ref(false);
@@ -101,6 +153,29 @@ function hideDeletedPost(deletedPostId){
   deletedPosts.value.push(deletedPostId);
 }
 
+/**
+ * @bookclubs_promises
+ */
+const bookclubs = ref({
+  ownedByUser: [],
+  joinedByUser: []
+});
+
+const clubsOwnedByUserFactory = () =>db.get(urls.bookclubs.getClubsOwnedByUser(user), null, false, (res) => {
+  bookclubs.value.ownedByUser = res.bookclubs;
+});
+
+const clubsJoinedByUserFactory = () => db.get(urls.bookclubs.getClubsJoinedByCurrentUser(user), null, false, (res) => {
+  bookclubs.value.joinedByUser = res.bookclubs;
+});
+
+const clubsPromise = Promise.allSettled([clubsOwnedByUserFactory(), clubsJoinedByUserFactory()]);
+
+/**
+ * @end_bookclubs_promises
+ */
+
+ 
 onMounted(() => {
     loadWorks();
 });
@@ -218,4 +293,101 @@ onMounted(() => {
       height: 14px;
       width: 80%;
   }
+
+  .bookclubs-gallery {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    row-gap: 1.5rem;
+    padding: 16px;
+    column-gap: 1.5rem;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--stone-200);
+  }
+
+  @starting-style {
+    .currently-reading {
+      opacity: 0;
+    }
+  }
+  
+  .currently-reading {
+        --x-axis-offset: 24px;
+        --height: fit-content;
+        @media screen and (max-width: 768px) {
+            --x-axis-offset: 14px;
+        }
+        transition: all 250ms ease-in-out;
+        margin-top: var(--margin-sm);
+        margin-bottom: var(--margin-sm);
+        margin-left: auto;
+        margin-right: auto;
+        display: flex;
+        column-gap: var(--margin-md);
+        justify-content: start;
+        height: var(--height);
+        overflow-x: scroll;
+        overflow-y: visible;
+        padding-left: var(--x-axis-offset);
+        transition: var(--transition-short);
+        -ms-overflow-style: none;  /* IE and Edge */
+        scrollbar-width: none;
+        border: 1px solid var(--stone-200);
+        border-radius: var(--radius-md);
+    }
+
+    .currently-reading::-webkit-scrollbar {
+        display: none;
+    }
+
+    .currently-reading-book {
+        --min-width-cr-card: 300px;
+        min-width: var(--min-width-cr-card);
+        font-family: var(--fancy-script);
+        text-align: center;
+        position: relative;
+        border: 1px solid var(--surface-primary);
+        background-color: var(--surface-primary);
+        padding: 10px;
+
+        .book-metadata {
+            display: flex;
+            align-items: start;
+            justify-content: space-between;
+            padding-left: var(--margin-sm);
+            padding-right: var(--margin-sm);
+            
+            .book-title {
+                font-size: var(--font-xl);
+            }
+
+            .progress {
+                color: var(--indigo-700);
+                font-weight: 600;
+                position: absolute;
+                top: 10px;
+                left: 10px;
+            }
+        }
+
+        .book-img {
+            border-radius: var(--radius-md);
+            width: 100%;
+            height: 240px;
+            object-fit: scale-down;
+            margin-bottom: 8px;
+            border: 4px solid var(--hover-container-gradient);
+
+            &.loading{  
+                background-color: var(--stone-200);
+                height: 300px;
+            }
+        }
+    }
+
+    .currently-reading-book:not(:has(.gradient)):hover {
+        background-color: var(--stone-50);
+        border-radius: var(--radius-md);
+        cursor: pointer;
+        transition: background-color 350 ease-in-out;
+    }
 </style>

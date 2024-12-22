@@ -6,6 +6,7 @@
       v-if="reviewType === 'review'"
       :headline-error="headlineError"
       :is-postable-data="isPostableData"
+      :book-id="bookId"
       @is-postable-data="setPostData" 
       @post-data="postToEndpoint()"
     />
@@ -13,6 +14,7 @@
     <createComparisonPost 
       v-if="reviewType === 'comparison'"
       :is-postable-data="isPostableData"
+      :book-id="bookId"
       @is-postable-data="setPostData"
       @set-headlines="setHeadlines"
       @post-data="postToEndpoint()"
@@ -21,6 +23,7 @@
     <createUpdatePost 
       v-if="reviewType === 'update'"
       :is-postable-data="isPostableData"
+      :book-id="bookId"
       @is-postable-data="setPostData"
       @post-data="postToEndpoint()"
     />
@@ -46,6 +49,7 @@ const postTypeMapping = ref('');
 const emittedPostData = ref(null);
 const router = useRouter();
 const route = useRoute();
+const { bookId } = route.params
 const { reviewType } = route.params
 
 function setHeadlines(e){

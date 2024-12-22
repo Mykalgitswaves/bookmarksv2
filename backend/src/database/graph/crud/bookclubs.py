@@ -1,11 +1,13 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from neo4j.time import DateTime as Neo4jDateTime
 from typing import List
+from datetime import datetime, timedelta
 
 from src.database.graph.crud.base import BaseCRUDRepositoryGraph
 from src.models.schemas import bookclubs as BookClubSchemas
 from src.models.schemas.books import BookPreview
 from src.models.schemas.users import Member 
+from src.utils.helpers.help import AWARD_CONSTANTS
 
 class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
     def create_bookclub(
@@ -440,7 +442,7 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
             currently_reading_obj: BookClubSchemas.StartCurrentlyReading,
             title: str,
             small_img_url: str,
-            author_names: List[str]
+            author_names: List[str] | list[None]
     ):
         with self.driver.session() as session:
             result = session.write_transaction(
@@ -659,6 +661,87 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
                 return "limit reached"
         else:
             return "unauthorized"
+    
+    def create_club_notification(
+            self, 
+            notif: BookClubSchemas.ClubNotificationCreate):
+        """
+        create a notification to bug users to read a currently reading book inside of a club! NOT EMAILS, 
+        these are just for the mobile menu.
+        """
+
+        with self.driver.session() as session:
+            result = session.write_transaction(
+                self.create_club_notification_query,
+                sent_by_user_id=notif.sent_by_user_id,
+                member_id=notif.member_id,
+                book_club_id=notif.book_club_id,
+                notification_type=notif.notification_type
+            )
+        return result
+    
+    @staticmethod
+    def create_club_notification_query(
+        tx, 
+        sent_by_user_id:str, 
+        member_id:str, 
+        book_club_id:str, 
+        notification_type:str
+        ):
+        """
+        We only want to allow for notifications of a certain type for a 
+        certain user to be created within a given interval so users don't feel flooded!
+        These should also be an opt in feature for a specific pace of bookclub. 
+        Some readers (casuals) don't want to feel stressed or like they are holding up the club. 
+        In that case this feature could actually work against them.
+        The receiving user can't already have a notification created within the past 7 days. 
+        Meaning one notification exists that is greater than the past 7 days.
+        """
+
+        query = """
+            MATCH (bc:BookClub {id: $book_club_id})<-[:IS_MEMBER_OF|OWNS_BOOK_CLUB]-(sendingUser:User {id: $sent_by_user_id})
+            MATCH (bc)<-[:IS_MEMBER_OF|OWNS_BOOK_CLUB]-(receivingUser:User {id: $member_id})
+            WITH receivingUser, sendingUser, bc
+            CREATE (createdClubNotification:ClubNotification {
+                id: "club_notification_" + randomUUID(),
+                notification_type: $notification_type,
+                created_date: datetime(),
+                dismissed: false
+            })
+            MERGE (sendingUser)-[created_notification:CREATED_NOTIFICATION]->(createdClubNotification)
+            MERGE (createdClubNotification)-[notification_for_user:NOTIFICATION_FOR_USER]->(receivingUser)
+            MERGE (bc)<-[notification_for_club:NOTIFICATION_FOR_CLUB]-(createdClubNotification)
+            RETURN createdClubNotification, sendingUser.username as sent_by_user_username, bc.name as book_club_name,
+                CASE WHEN createdClubNotification IS NOT NULL THEN true ELSE false END AS createdPost
+        """
+
+        result = tx.run(
+            query, 
+            book_club_id=book_club_id, 
+            sent_by_user_id=sent_by_user_id, 
+            member_id=member_id,
+            notification_type=notification_type
+        )
+
+        response = result.single()
+
+        if not response.get('createdPost'):
+            return False
+
+        created_notification = response.get('createdClubNotification')
+
+        notification = BookClubSchemas.ClubNotification(
+            id=created_notification.get('id'),
+            sent_by_user_id=sent_by_user_id,
+            notification_type=notification_type,
+            member_id=member_id,
+            dismissed=created_notification.get('dismissed', False),
+            created_date=created_notification.get('created_date'),
+            book_club_id=book_club_id,
+            sent_by_user_username=response.get('sent_by_user_username'),
+        )
+
+        return notification
         
     def get_minimal_book_club(
             self,
@@ -757,52 +840,6 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
             )
             members.append(member)
         return members
-
-    def delete_member_from_book_club(
-            self, 
-            current_user_id:str, 
-            member_id_to_remove:str, 
-            book_club_id:str):
-        """
-        Removes a member from a book club. Can only be done by the owner of the 
-        book club
-
-        Args:
-            current_user_id (str): The id of the user performing the action
-            member_id_to_remove (str): The id of the user to remove
-            book_club_id (str): The id of the book club to remove the user from
-
-        Returns:
-            bool: True if the user was removed, False otherwise
-        """
-        with self.driver.session() as session:
-            result = session.write_transaction(
-                self.delete_member_from_book_club_query, 
-                current_user_id=current_user_id,
-                member_id_to_remove=member_id_to_remove,
-                book_club_id=book_club_id,
-            )
-        return result
-
-    @staticmethod
-    def delete_member_from_book_club_query(tx, current_user_id, member_id_to_remove, book_club_id) -> int:
-        query = """
-            MATCH (u:User {id: $current_user_id})-[:OWNS_BOOK_CLUB]-(bc:BookClub {id: $book_club_id})
-            MATCH (bc)<-[rr:IS_MEMBER_OF]-(memberToRemove:User {id: $member_id_to_remove})
-            OPTIONAL MATCH (memberToRemove)-[r:IS_READING_FOR_CLUB]->(book:BookClubBook)
-            DELETE rr, r
-            RETURN memberToRemove.id
-        """
-        
-        result = tx.run(query,
-            current_user_id=current_user_id,
-            member_id_to_remove=member_id_to_remove,
-            book_club_id=book_club_id
-        )
-        if result:
-            return True
-        else:
-            return False
 
     def get_owned_book_clubs(
             self,
@@ -1001,12 +1038,14 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
         for record in result:
             # Get the currently reading book if it exists
             if record.get("currently_reading_book_id"):
+                # Author names will get but might return None
+                author_names = record.get('currently_reading_book_author_names')
                 current_book = BookClubSchemas.BookClubCurrentlyReading(
                     book_id=record.get("currently_reading_book_id"),
                     title=record.get("currently_reading_book_title"),
                     small_img_url=record.get(
                         "currently_reading_book_small_img_url"),
-                    author_names=record.get('currently_reading_book_author_names')
+                    author_names=author_names if author_names else [],
                 )
             else:
                 current_book = None
@@ -1331,7 +1370,7 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
         user_id: str,
         skip: int,
         limit: int,
-        filter: bool
+        filter: bool,
     ):
         
         query = (
@@ -1342,12 +1381,17 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
             WHERE post:ClubUpdate OR post:ClubUpdateNoText
             match (post)<-[pr:POSTED]-(u:User)
             optional match (cu)-[lr:LIKES]->(post)
+            optional match (any)-[nl:LIKES]->(post)
             optional match (book)-[br:IS_EQUIVALENT_TO]-(canon_book:Book)
             optional match (comments:Comment {deleted:false})<-[:HAS_COMMENT]-(post)
+            optional match (post)<-[:AWARD_FOR_POST]-(post_award:ClubAwardForPost)
+            optional match award_long = (award_user:User)-[:GRANTED]->(post_award)-[CHILD_OF]->(award:ClubAward)
             RETURN post, labels(post), u.username, canon_book, u.id,
             CASE WHEN lr IS NOT NULL THEN true ELSE false END AS liked_by_current_user,
             CASE WHEN u.id = $user_id THEN true ELSE false END AS posted_by_current_user,
-            count(comments) as num_comments
+            count(comments) as num_comments,
+            count(nl) as num_likes,
+            collect(award_long) as awards
             order by post.created_date desc
             skip $skip
             limit $limit
@@ -1365,16 +1409,20 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
             optional match (cu)-[lr:LIKES]->(post)
             optional match (book)-[br:IS_EQUIVALENT_TO]-(canon_book:Book)
             optional match (comments:Comment {deleted:false})<-[:HAS_COMMENT]-(post)
+            optional match (post)<-[:AWARD_FOR_POST]-(post_award:ClubAwardForPost)
+            optional match award_long = (award_user:User)-[:GRANTED]->(post_award)-[CHILD_OF]->(award:ClubAward)
             RETURN post, labels(post), u.username, canon_book, u.id, user_reading.current_chapter,
             CASE WHEN lr IS NOT NULL THEN true ELSE false END AS liked_by_current_user,
             CASE WHEN u.id = $user_id THEN true ELSE false END AS posted_by_current_user,
-            count(comments) as num_comments
+            post.likes as num_likes,
+            count(comments) as num_comments,
+            collect(award_long) as awards
             order by post.created_date desc
             skip $skip
             limit $limit
             """
         )
-        
+    
         if filter:
             result = tx.run(
                 query_w_filter,
@@ -1392,7 +1440,8 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
                 limit=limit
             )
         
-        posts = []            
+        posts = []           
+
         for response in result:
             book = BookPreview(
                 id=response['canon_book'].get("id"),
@@ -1400,7 +1449,29 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
                 small_img_url=response['canon_book'].get("small_img_url"),
                 google_id=response['canon_book'].get("google_id")
             )
-            
+
+            awards = {}
+            if response.get("awards"):
+                for award in response.get("awards"):
+                    _user_id = award.start_node['id']
+                    parent_award = award.end_node
+                    cls = AWARD_CONSTANTS.get(parent_award.get("name"))
+                    parent_award_id = parent_award.get("id")
+                    if parent_award_id not in awards:
+                        awards[parent_award_id] = {
+                            "name": parent_award.get("name",""),
+                            "type": parent_award.get("type",""),
+                            "description": parent_award.get("description",""),
+                            "num_grants": 1,
+                            "cls": cls,
+                            "granted_by_current_user": False,
+                        }
+                    else:
+                        awards[parent_award_id]['num_grants'] += 1
+
+                    if user_id == _user_id:
+                        awards[parent_award_id]['granted_by_current_user'] = True
+
             if response.get("labels(post)") == ["ClubUpdate"]:
                 post = BookClubSchemas.UpdatePost(
                     id=response['post'].get("id"),
@@ -1412,11 +1483,13 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
                     user_id=response.get("u.id"),
                     user_username=response.get("u.username"),
                     liked_by_current_user=response.get("liked_by_current_user"),
+                    likes=response.get("num_likes"),
                     posted_by_current_user=response.get("posted_by_current_user"),
                     num_comments=response.get("num_comments"),
-                    book=book
+                    book=book,
+                    awards=awards
                 )
-                
+
             elif response.get("labels(post)") == ["ClubUpdateNoText"]:
                 post = BookClubSchemas.UpdatePostNoText(
                     id=response['post'].get("id"),
@@ -1427,9 +1500,10 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
                     liked_by_current_user=response.get("liked_by_current_user"),
                     posted_by_current_user=response.get("posted_by_current_user"),
                     num_comments=response.get("num_comments"),
-                    book=book
+                    book=book,
+                    awards=awards
                 )
-                
+
             posts.append(post)
             
         return posts
@@ -1582,6 +1656,7 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
         awards = []
         for response in result:
             award_response = response['award']
+            cls = AWARD_CONSTANTS.get(award_response['name'])
             award = BookClubSchemas.AwardWithGrants(
                     id=award_response['id'],
                     name=award_response['name'],
@@ -1589,7 +1664,8 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
                     description=award_response.get('description'),
                     allowed_uses=response.get('allowed_uses'),
                     current_uses=response.get('current_uses'),
-                    grants=[]
+                    grants=[],
+                    cls=cls
                 )
             for grant in response.get("post_awards",[]):
                 if grant.get("post_award"):
@@ -1726,6 +1802,123 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
                 return None
         else:
             return "No book club found"
+        
+    def get_notifications_for_user_by_club(self, user_id:str):
+        with self.driver.session() as session:
+            result = session.read_transaction(
+                self.get_notifications_for_user_by_club_query,
+                user_id=user_id,
+            )
+        return result
+    
+    @staticmethod
+    def get_notifications_for_user_by_club_query(tx, user_id:str):
+        query = """
+        MATCH (u:User {id: $user_id})
+        MATCH (clubNotification:ClubNotification {dismissed: false})-[:NOTIFICATION_FOR_USER]->(u)
+        OPTIONAL MATCH (clubNotification)-[:NOTIFICATION_FOR_CLUB]->(b:BookClub)
+        OPTIONAL MATCH (sentBy:User)-[:CREATED_NOTIFICATION]->(clubNotification)
+        OPTIONAL MATCH (b)-[:IS_READING]->(bcb:BookClubBook)-[:IS_EQUIVALENT_TO]->(book:Book)
+        RETURN clubNotification.id as notification_id,
+                clubNotification.dismissed as isDismissed,
+                book.title as currently_reading_book_for_club_title,
+                clubNotification.notification_type as notification_type,
+                clubNotification.created_date as created_date,
+                sentBy.id as sent_by_id,
+                sentBy.username as sent_by_username,
+                b.id as book_club_id,
+                b.name as book_club_name
+        """
+
+        result = tx.run(query, user_id=user_id)
+        
+        notifications = {}
+
+        for response in result:
+            club_id = response.get('book_club_id')
+            notification = BookClubSchemas.ClubNotification(
+                id=response.get('notification_id'),
+                notification_type=response.get('notification_type'),
+                created_date=response.get('created_date'),
+                member_id=user_id,
+                sent_by_user_id=response.get('sent_by_id'),
+                sent_by_user_username=response.get('sent_by_username'),
+                book_club_id=club_id,
+                dismissed=False,
+            )
+
+            if not club_id in notifications:
+                notifications[club_id] = {}
+                notifications[club_id]['book_club_name'] = response.get('book_club_name')
+                notifications[club_id]['currently_reading_book_title'] = response.get('currently_reading_book_for_club_title')
+                notifications[club_id]['notifications'] = []
+
+            notifications[club_id]['notifications'].append(notification)
+        
+        for key, _ in notifications.items():
+           notifications[key]['notifications'] = sorted(
+               notifications[key]['notifications'], key=lambda n: n.created_date
+           )
+           
+        return notifications
+    
+    def get_notification_eligibility(
+            self,
+            notif: BookClubSchemas.ClubNotificationCreate
+    ):
+        """
+        Returns true if the outgoing notification is eligible to be sent.
+        Some criteria are:
+            Too soon after the last notification
+            Club has notifications disabled (future state)
+            User has notifications disabled (future state)
+        """
+        with self.driver.session() as session:
+            result = session.read_transaction(
+                self.get_notification_eligibility_query,
+                notif
+            )
+        return result
+    
+    @staticmethod
+    def get_notification_eligibility_query(
+        tx, 
+        notif: BookClubSchemas.ClubNotificationCreate
+        ):
+        query = (
+            """
+            Match (bc:BookClub {id: $book_club_id})<-[:IS_MEMBER_OF|OWNS_BOOK_CLUB]-(sending_u:User {id: $sent_user_id})
+            Match (bc)<-[:IS_MEMBER_OF|OWNS_BOOK_CLUB]-(receiving_u:User {id: $receiving_user_id})
+            OPTIONAL MATCH (receiving_u)<-[:NOTIFICATION_FOR_USER]-(notif:ClubNotification)-[:NOTIFICATION_FOR_CLUB]->(bc)
+            WHERE notif.created_date > datetime() - duration('P1D')
+            OPTIONAL MATCH (sending_u)-[:CREATED_NOTIFICATION]->(notif)
+            return notif,
+                   receiving_u.id as receiving_user_id
+            """
+        )
+
+        result = tx.run(
+            query,
+            book_club_id=notif.book_club_id,
+            sent_user_id=notif.sent_by_user_id,
+            receiving_user_id=notif.member_id
+        )
+
+        # If this function returns nothing, the notification is ineligible
+        # If a notification is returned, then we check if it was within the last 2 minutes
+        # If it was, then the notification is ineligible
+
+        eligible = False
+        for response in result:
+            if response.get("receiving_user_id"):
+                eligible = True
+
+            if response.get("notif"):
+                if response.get("notif").get("created_date") > (datetime.now(timezone.utc) - timedelta(minutes=2)):
+                    eligible = False
+                    break
+        return eligible
+            
 
     def search_users_not_in_club(
             self, 
@@ -2094,3 +2287,77 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
             return True
         else:
             return False
+        
+    def delete_member_from_book_club(
+            self, 
+            current_user_id:str, 
+            member_id_to_remove:str, 
+            book_club_id:str):
+        """
+        Removes a member from a book club. Can only be done by the owner of the 
+        book club
+
+        Args:
+            current_user_id (str): The id of the user performing the action
+            member_id_to_remove (str): The id of the user to remove
+            book_club_id (str): The id of the book club to remove the user from
+
+        Returns:
+            bool: True if the user was removed, False otherwise
+        """
+        with self.driver.session() as session:
+            result = session.write_transaction(
+                self.delete_member_from_book_club_query, 
+                current_user_id=current_user_id,
+                member_id_to_remove=member_id_to_remove,
+                book_club_id=book_club_id,
+            )
+        return result
+
+    @staticmethod
+    def delete_member_from_book_club_query(tx, current_user_id, member_id_to_remove, book_club_id) -> int:
+        query = """
+            MATCH (u:User {id: $current_user_id})-[:OWNS_BOOK_CLUB]-(bc:BookClub {id: $book_club_id})
+            MATCH (bc)<-[rr:IS_MEMBER_OF]-(memberToRemove:User {id: $member_id_to_remove})
+            OPTIONAL MATCH (memberToRemove)-[r:IS_READING_FOR_CLUB]->(book:BookClubBook)
+            DELETE rr, r
+            RETURN memberToRemove.id
+        """
+        
+        result = tx.run(query,
+            current_user_id=current_user_id,
+            member_id_to_remove=member_id_to_remove,
+            book_club_id=book_club_id
+        )
+        if result:
+            return True
+        else:
+            return False
+        
+    def update_club_notification_to_dismissed(self, member_id:str, notification_id:str):
+        with self.driver.session() as session:
+            result = session.write_transaction(
+                self.update_club_notification_to_dismissed_query,
+                member_id=member_id,
+                notification_id=notification_id
+            )
+        return result
+    
+    @staticmethod
+    def update_club_notification_to_dismissed_query(
+        tx, 
+        member_id:str, 
+        notification_id:str
+    ) -> bool:
+        query = """
+            MATCH (clubNotification:ClubNotification {id: $notification_id, dismissed: false})-[:NOTIFICATION_FOR_USER]->(user:User {id: $member_id})
+            SET clubNotification.dismissed = true
+            WITH clubNotification
+                RETURN CASE WHEN clubNotification.dismissed = true THEN true ELSE false END AS isDismissed
+        """
+
+        result = tx.run(query, notification_id=notification_id, member_id=member_id)
+        record = result.single()
+
+        return record.get('isDismissed', False)
+        
