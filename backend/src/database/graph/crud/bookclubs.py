@@ -1620,6 +1620,157 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
             posts.append(post)
             
         return posts
+    
+    def get_book_club_finished_feed(
+            self,
+            book_club_id: str,
+            user_id: str,
+            skip: int,
+            limit: int
+    ) -> List[BookClubSchemas.UpdatePost]:
+        """
+        Gets the book club feed for the user
+        """
+        with self.driver.session() as session:
+            result = session.read_transaction(
+                self.get_book_club_finished_feed_query, 
+                book_club_id, 
+                user_id,
+                skip,
+                limit
+            )
+        return result
+    
+    @staticmethod
+    def get_book_club_finished_feed_query(
+        tx,
+        book_club_id: str,
+        user_id: str,
+        skip: int,
+        limit: int
+    ):
+        
+        query = (
+            """
+            MATCH (cu:User {id: $user_id})-[:IS_MEMBER_OF|OWNS_BOOK_CLUB]->(b:BookClub {id: $book_club_id})
+            MATCH (b)-[:IS_READING]->(book:BookClubBook)
+            MATCH (cu)-[:FINISHED_READING_FOR_CLUB]->(book)
+            MATCH (post {deleted:false})-[:POST_FOR_CLUB_BOOK]->(book)
+            WHERE post:ClubUpdate OR post:ClubUpdateNoText or post:ClubReview
+            match (post)<-[pr:POSTED]-(u:User)
+            optional match (cu)-[lr:LIKES]->(post)
+            optional match (any)-[nl:LIKES]->(post)
+            optional match (book)-[br:IS_EQUIVALENT_TO]-(canon_book:Book)
+            optional match (comments:Comment {deleted:false})<-[:HAS_COMMENT]-(post)
+            optional match (post)<-[:AWARD_FOR_POST]-(post_award:ClubAwardForPost)
+            optional match award_long = (award_user:User)-[:GRANTED]->(post_award)-[CHILD_OF]->(award:ClubAward)
+            RETURN post, labels(post), u.username, canon_book, u.id,
+            CASE WHEN lr IS NOT NULL THEN true ELSE false END AS liked_by_current_user,
+            CASE WHEN u.id = $user_id THEN true ELSE false END AS posted_by_current_user,
+            count(comments) as num_comments,
+            count(nl) as num_likes,
+            collect(award_long) as awards
+            order by post.created_date desc
+            skip $skip
+            limit $limit
+            """
+        )
+    
+        result = tx.run(
+            query,
+            book_club_id=book_club_id,
+            user_id=user_id,
+            skip=skip,
+            limit=limit
+        )
+        
+        posts = []           
+
+        for response in result:
+            book = BookPreview(
+                id=response['canon_book'].get("id"),
+                title=response['canon_book'].get("title"),
+                small_img_url=response['canon_book'].get("small_img_url"),
+                google_id=response['canon_book'].get("google_id")
+            )
+
+            awards = {}
+            if response.get("awards"):
+                for award in response.get("awards"):
+                    _user_id = award.start_node['id']
+                    parent_award = award.end_node
+                    cls = AWARD_CONSTANTS.get(parent_award.get("name"))
+                    parent_award_id = parent_award.get("id")
+                    if parent_award_id not in awards:
+                        awards[parent_award_id] = {
+                            "name": parent_award.get("name",""),
+                            "type": parent_award.get("type",""),
+                            "description": parent_award.get("description",""),
+                            "num_grants": 1,
+                            "cls": cls,
+                            "granted_by_current_user": False,
+                        }
+                    else:
+                        awards[parent_award_id]['num_grants'] += 1
+
+                    if user_id == _user_id:
+                        awards[parent_award_id]['granted_by_current_user'] = True
+
+            if response.get("labels(post)") == ["ClubUpdate"]:
+                post = BookClubSchemas.UpdatePost(
+                    id=response['post'].get("id"),
+                    headline=response['post'].get("headline", ""),
+                    response=response['post'].get("response"),
+                    quote=response['post'].get("quote"),
+                    chapter=response['post'].get("chapter"),
+                    created_date=response['post'].get("created_date"),
+                    user_id=response.get("u.id"),
+                    user_username=response.get("u.username"),
+                    liked_by_current_user=response.get("liked_by_current_user"),
+                    likes=response.get("num_likes"),
+                    posted_by_current_user=response.get("posted_by_current_user"),
+                    num_comments=response.get("num_comments"),
+                    book=book,
+                    awards=awards
+                )
+
+            elif response.get("labels(post)") == ["ClubUpdateNoText"]:
+                post = BookClubSchemas.UpdatePostNoText(
+                    id=response['post'].get("id"),
+                    chapter=response['post'].get("chapter"),
+                    created_date=response['post'].get("created_date"),
+                    user_id=response.get("u.id"),
+                    user_username=response.get("u.username"),
+                    liked_by_current_user=response.get("liked_by_current_user"),
+                    likes=response.get("num_likes"),
+                    posted_by_current_user=response.get("posted_by_current_user"),
+                    num_comments=response.get("num_comments"),
+                    book=book,
+                    awards=awards
+                )
+                
+            elif response.get("labels(post)") == ["ClubReview"]:
+                post = BookClubSchemas.ReviewPost(
+                    id=response['post'].get("id"),
+                    created_date=response['post'].get("created_date"),
+                    user_id=response.get("u.id"),
+                    user_username=response.get("u.username"),
+                    likes=response.get("num_likes"),
+                    liked_by_current_user=response.get("liked_by_current_user"),
+                    posted_by_current_user=response.get("posted_by_current_user"),
+                    num_comments=response.get("num_comments"),
+                    headline=response['post'].get('headline'),
+                    questions=response['post'].get('questions'),
+                    question_ids=response['post'].get('question_ids'),
+                    responses=response['post'].get('responses'),
+                    rating=response['post'].get('rating'),
+                    book=book,
+                    awards=awards
+                )
+
+            posts.append(post)
+            
+        return posts
 
     def get_awards(
             self,

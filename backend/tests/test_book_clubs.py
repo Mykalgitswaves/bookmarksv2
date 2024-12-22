@@ -560,6 +560,17 @@ class TestBookClubs:
         
         assert response.status_code == 200, "Getting feed"
         print(response.json())
+        
+        headers = {"Authorization": f"{self.token_type} {self.access_token}"}
+        
+        endpoint = (
+            f"{self.endpoint}/api/bookclubs/{self.book_club_id}/"
+            "feed/finished")
+        
+        response = requests.get(endpoint, headers=headers)
+        
+        assert response.status_code == 200, "Shouldn't be able to get finished reading"
+        assert len(response.json()['posts']) == 0, "Shouldn't see any posts in finished reading"
 
     def test_get_awards(self):
         headers = {"Authorization": f"{self.token_type} {self.access_token}"}
@@ -773,6 +784,18 @@ class TestBookClubs:
             params=params
         )
         assert response.status_code == 200, "Finishing book"
+        
+        headers = {"Authorization": f"{self.token_type} {self.access_token}"}
+        
+        endpoint = (
+            f"{self.endpoint}/api/bookclubs/{self.book_club_id}/"
+            "feed/finished")
+        
+        response = requests.get(endpoint, headers=headers)
+        
+        assert response.status_code == 200, "Get finished reading feed"
+        assert any([post['type'] == "club_review" for post in response.json()["posts"]])
+        print(response.json())
 
     def test_deleting_member(self):
         headers = {"Authorization": f"{self.token_type} {self.access_token}"}

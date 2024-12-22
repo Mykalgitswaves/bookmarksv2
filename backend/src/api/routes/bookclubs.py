@@ -1725,7 +1725,15 @@ async def create_review_for_user(
             raise HTTPException(400, "Error creating review")
 
 @router.get("/{book_club_id}/feed/finished", name='bookclubs:get_finished_feed')
-async def get_finished_feed():
+async def get_finished_feed(
+    book_club_id:str,
+    current_user: Annotated[User, Depends(get_current_active_user)],
+    book_club_repo: BookClubCRUDRepositoryGraph = Depends(
+        get_repository(repo_type=BookClubCRUDRepositoryGraph)
+    ),
+    skip: Optional[int] = 0,
+    limit: Optional[int] = 10,
+) -> List[Any]:
     """
     Gets a version of the feed that includes review posts for finished
     readers. I think its probably better to add this as a flag to the
@@ -1733,7 +1741,6 @@ async def get_finished_feed():
     check if the user if finished and update how it returns
 
     Args:
-        Args:
         book_club_id: The id for the book club
 
     Returns:
@@ -1763,6 +1770,23 @@ async def get_finished_feed():
                 description (str): the description of the award
                 num_grants (int): the number of grants for the award
     """
+    posts = book_club_repo.get_book_club_finished_feed(
+        book_club_id=book_club_id,
+        user_id=current_user.id,
+        skip=skip,
+        limit=limit
+    )
+    
+    logger.info(
+        "Fetched club finished feed",
+        extra={
+            "user_id": current_user.id,
+            "book_club_id": book_club_id,
+            "num_posts": len(posts),
+            "action": "get_club_finished_feed",
+        },
+    )
+    return JSONResponse(status_code=200, content={"posts":jsonable_encoder(posts)})
 
 @router.get("/{book_club_id}/afterword/{user_id}/user_stats", name='bookclubs:get_afterword_user_stats')
 async def get_afterword_user_stats():

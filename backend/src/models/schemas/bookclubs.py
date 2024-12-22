@@ -192,6 +192,15 @@ class CreateReviewPost(BaseModel):
 class UpdatePostNoText(Post):
     type: str = "club_update_no_text"
     awards: dict | None = None
+    
+class ReviewPost(Post):
+    headline: str 
+    questions: list[str] = []
+    question_ids: list[int] = []
+    responses: list[str] = []
+    rating: int
+    type: str = "club_review" 
+    awards: dict | None = None
 
 class BaseAward(BaseModel):
     id: str
