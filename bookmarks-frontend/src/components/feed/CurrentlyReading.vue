@@ -1,7 +1,6 @@
 <template>
     <h1 class="work-feed-heading">Currently Reading
-        <br><span class="text-sm">Update books you are reading</span>
-
+        <br><span class="text-sm">Books in your currently reading bookshelf</span>
     </h1>
         <!-- If loaded -->
     <AsyncComponent :promises="[currentlyReadingBookClub]">
@@ -91,6 +90,8 @@ const currentlyReadingBookClub = db.get(urls.rtc.getCurrentlyReadingForFeed(user
         transition: var(--transition-short);
         -ms-overflow-style: none;  /* IE and Edge */
         scrollbar-width: none;
+        border: 1px solid var(--stone-200);
+        border-radius: var(--radius-md);
     }
 
     .currently-reading::-webkit-scrollbar {

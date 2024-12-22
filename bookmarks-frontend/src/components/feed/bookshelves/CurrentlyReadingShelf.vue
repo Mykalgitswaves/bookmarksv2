@@ -65,7 +65,7 @@
                 @send-bookdata-socket="
                     (bookdata) => reorder_books(bookdata)
                 "
-                @removed-book="(removed_book_id) => remove_book(removed_book_id)"
+                @removed-book="(removed_book_id) => removeBookFromShelf(removed_book_id)"
                 @cancelled-edit="Bookshelves.exitEditingMode(isEditingModeEnabled)"
                 @post-update="(updatePayload) => createUpdatePost(updatePayload)"
             >
@@ -209,5 +209,12 @@ async function createUpdatePost(updatePayload) {
        bookshelfBooks.value.currentBook = null;
        toast.value = Bookshelves.createToastForPost(res.data);
   });
+}
+
+function removeBookFromShelf(removed_book_id) {
+    db.delete(urls.bookshelves.removeBookFromShelf(route.params.bookshelf, removed_book_id), true).then((res) => {
+        console.log(res);
+        bookshelfBooks.value.currentBook = null;
+    });
 }
 </script>

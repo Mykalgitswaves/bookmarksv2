@@ -111,6 +111,7 @@ export const urls = {
         quickAddBook: (bookshelf_id) => (baseUrl + `${BOOK_SHELVES_PREFIX}quick_add/${bookshelf_id}`),
         getBookshelfWsToken: (bookshelf_id) => (baseUrl + `${BOOK_SHELVES_PREFIX}${bookshelf_id}/get_token`),
         updateBookNoteForShelf: (bookshelf_id) => (baseUrl + `${BOOK_SHELVES_PREFIX}${bookshelf_id}/update_book_note`),
+        removeBookFromShelf: (bookshelf_id, book_id) => (baseUrl + `${BOOK_SHELVES_PREFIX}${bookshelf_id}/remove_book/${book_id}`),
     },
     bookclubs: {
         // Create / POST

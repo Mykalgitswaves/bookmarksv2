@@ -442,7 +442,7 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
             currently_reading_obj: BookClubSchemas.StartCurrentlyReading,
             title: str,
             small_img_url: str,
-            author_names: List[str]
+            author_names: List[str] | list[None]
     ):
         with self.driver.session() as session:
             result = session.write_transaction(
