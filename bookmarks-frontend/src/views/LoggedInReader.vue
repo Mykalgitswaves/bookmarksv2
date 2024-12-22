@@ -1,197 +1,237 @@
 <template>
-  <TopNav />
+  <AsyncComponent :promises="[authPromise]">
+    <template #resolved>
+      <TopNav />
 
-  <div class="sidebar">
-    <div class="main-layout">  
-      <div class="search-results" v-if="hasSearchResults">
-        <CloseButton @close="hasSearchResults = false"/>
-        <!-- THis one works -->
-        
-        <!-- This stuff doesnt -->
-        <div class="transition mt-5">
-          <h3 class="fancy text-xl text-stone-700 my-5" v-if="books.length">Books: {{ books.length }}</h3>
+      <div class="sidebar">
+        <div class="main-layout"> 
 
-          <div class="search-results-category" v-if="books.length">
-            <!-- book loop -->
-            <div v-for="book in books" :key="book.id" 
-              class="search-result book relative"
-              @click="() => {
-                router.push(navRoutes.toBookPageFromPost(route.params.user, book.id)); 
-                hasSearchResults = false;
-              }"
-            >
-              <img class="book-img" :src="book.img_url" alt="" />
+          <!-- Search RESULTS BABY -->
+          <div class="search-results" 
+            v-if="hasSearchResults"
+          >
+            <CloseButton class="ml-auto" 
+              @close="hasSearchResults = false"
+            />
+          
+            <div class="transition mt-5">
+              <h3 class="fancy text-xl text-stone-700 my-5" 
+                v-if="searchData.books.length"
+              >
+                Books: {{ searchData.books.length }}
+              </h3>
 
-              <h4 class="text-center fancy bold pb-5 text-sm">{{ book.title }}</h4>
-            </div>
-          </div>
+              <div class="search-results-category" 
+                v-if="searchData.books.length"
+              >
+                <!-- book loop -->
+                <div v-for="book in searchData.books" :key="book.id" 
+                  class="search-result book relative"
+                  @click="() => {
+                    router.push(navRoutes.toBookPageFromPost(route.params.user, book.id)); 
+                    hasSearchResults = false;
+                  }"
+                >
+                  <img class="book-img" :src="book.img_url" alt="" />
 
-          <h3 class="fancy text-xl text-stone-700 my-5" v-if="users.length">Users: {{ users.length }}</h3>
+                  <h4 class="text-center fancy bold pb-5 text-sm">{{ book.title }}</h4>
+                </div>
+              </div>
 
-          <div class="search-results-category" v-if="users.length">
-            <div v-for="user in users" :key="user.id"
-              class="search-result book relative"
-              @click="() => {
-                router.push(navRoutes.toUserPage(route.params.user, user.id)); 
-                hasSearchResults = false;
-              }"
-            >
-              <!-- <img class="book-img" :src="book.img_url" alt="" /> -->
+              <h3 class="fancy text-xl text-stone-700 my-5" 
+                v-if="searchData.users.length"
+              >
+                Users: {{ searchData.users.length }}
+              </h3>
 
-              <h4 class="text-center fancy bold pb-5 text-sm">{{ user.username }}</h4>
+              <div class="search-results-category" v-if="searchData.users.length">
+                <div v-for="user in searchData.users" :key="user.id"
+                  class="search-result user"
+                  @click="() => {
+                    router.push(navRoutes.toUserPage(route.params.user, user.id)); 
+                    hasSearchResults = false;
+                  }"
+                >
+                  <h4 class="text-center fancy bold pb-5 text-sm">{{ user.username }}</h4>
 
-              <!-- Add a button here to send friend request -->
-              <button 
-                v-if="relationshipConfig[user.relationship_to_current_user]?.label"
-                :class="relationshipConfig[user.relationship_to_current_user].class"
-                @click.stop="relationshipConfig[user.relationship_to_current_user].action(user)">
-                {{ relationshipConfig[user.relationship_to_current_user].label }}
-              </button>
-            </div>
-          </div>
+                  <button 
+                    v-if="relationshipConfig[user.relationship_to_current_user]?.label"
+                    :class="relationshipConfig[user.relationship_to_current_user].class"
+                    @click="relationshipConfig[user.relationship_to_current_user].action(user)"
+                  >
+                    {{ relationshipConfig[user.relationship_to_current_user].label }}
+                  </button>
+                </div>
+              </div>
 
-          <h3 class="fancy text-xl text-stone-700 my-5" v-if="bookClubs.length">Book Clubs: {{ bookClubs.length }}</h3>
+              <h3 class="fancy text-xl text-stone-700 my-5" 
+                v-if="searchData.bookClubs.length"
+              >
+                Book Clubs: {{ searchData.bookClubs.length }}
+              </h3>
 
-          <div class="search-results-category" v-if="bookClubs.length">
-            <!-- book loop -->
-            <div v-for="bookClub in bookClubs" :key="bookClub.id" 
-              class="search-result book relative"
-              @click="() => {
-                router.push(navRoutes.toBookClubFeed(route.params.user, bookClub.id)); 
-                hasSearchResults = false;
-              }"
-            >
-              <img class="book-img" :src="bookClub?.current_book?.small_img_url || noBookYetUrl" alt="" />
+              <div class="search-results-category" v-if="searchData.bookClubs.length">
+                <!-- book loop -->
+                <div v-for="bookClub in searchData.bookClubs" :key="bookClub.id" 
+                  class="search-result book relative"
+                  @click="() => {
+                    router.push(navRoutes.toBookClubFeed(route.params.user, bookClub.id)); 
+                    hasSearchResults = false;
+                  }"
+                >
+                  <img class="book-img" :src="bookClub?.current_book?.small_img_url || noBookYetUrl" alt="" />
 
-              <h4 class="text-center fancy bold pb-5 text-sm">{{ bookClub.name }}</h4>
-              <h4 class="text-center fancy pb-5 text-sm" v-if="bookClub.current_book">
-                Currently Reading:&nbsp;
-                <span class="italic">{{ bookClub.current_book.title }}</span>
-              </h4>
-              <h4 class="text-center fancy pb-5 text-sm" v-else>
-                  Not reading anything right now...
-              </h4>
-            </div>
-          </div>
+                  <h4 class="text-center fancy bold pb-5 text-sm">{{ bookClub.name }}</h4>
+                  <h4 class="text-center fancy pb-5 text-sm" v-if="bookClub.current_book">
+                    Currently Reading:&nbsp;
+                    <span class="italic">{{ bookClub.current_book.title }}</span>
+                  </h4>
+                  <h4 class="text-center fancy pb-5 text-sm" v-else>
+                      Not reading anything right now...
+                  </h4>
+                </div>
+              </div>
 
-          <h3 class="fancy text-xl text-stone-700 my-5" v-if="bookshelves.length">Bookshelves: {{ bookshelves.length }}</h3>
+              <h3 class="fancy text-xl text-stone-700 my-5" 
+                v-if="searchData.bookshelves.length"
+              >
+                Bookshelves: {{ searchData.bookshelves.length }}
+              </h3>
 
-          <div class="search-results-category" v-if="bookshelves.length">
-            <!-- book loop -->
-            <div v-for="bookshelf in bookshelves" :key="bookshelf.id" 
-              class="search-result book relative"
-              @click="() => {
-                router.push(navRoutes.toBookshelfPage(route.params.user, bookshelf.id)); 
-                hasSearchResults = false;
-              }"
-            >
-              <img class="book-img" :src="bookshelf?.first_book?.small_img_url || noBookYetUrl" alt="" />
+              <div class="search-results-category" v-if="searchData.bookshelves.length">
+                <!-- book loop -->
+                <div v-for="bookshelf in searchData.bookshelves" :key="bookshelf.id" 
+                  class="search-result book relative"
+                  @click="() => {
+                    router.push(navRoutes.toBookshelfPage(route.params.user, bookshelf.id)); 
+                    hasSearchResults = false;
+                  }"
+                >
+                  <img class="book-img" :src="bookshelf?.first_book?.small_img_url || noBookYetUrl" alt="" />
 
-              <h4 class="text-center fancy bold pb-5 text-sm">{{ bookshelf.name }}</h4>
-  
-              <h4 class="text-center fancy pb-5 text-sm">
-                {{ bookshelf.description }}
-              </h4>
-            </div>
-          </div>
-
-          <h3 class="fancy text-xl text-stone-700 my-5" v-if="authors.length">Authors: {{ authors.length }}</h3>
-
-          <div class="search-results-category" v-if="authors.length">
-            <div v-for="author in authors" :key="author.id" class="search-result authors">
-              {{ author.name }}
-            </div>
-          </div>
-        </div>
-      </div>
+                  <h4 class="text-center fancy bold pb-5 text-sm">{{ bookshelf.name }}</h4>
       
-      <RouterView v-else></RouterView>
-    </div>
+                  <h4 class="text-center fancy pb-5 text-sm">
+                    {{ bookshelf.description }}
+                  </h4>
+                </div>
+              </div>
 
-    <FooterNav/>
-  </div>
+              <h3 class="fancy text-xl text-stone-700 my-5" 
+                v-if="searchData.authors.length"
+              >
+                Authors: {{ searchData.authors.length }}
+              </h3>
+
+              <div class="search-results-category" v-if="searchData.authors.length">
+                <div v-for="author in searchData.authors" :key="author.id" class="search-result authors">
+                  {{ author.name }}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- IF YOU DONT HAVE SEARCH RESULTS THEN SHOW THE EXPECTED ROUTE -->
+          <RouterView v-else></RouterView>
+        </div>
+
+        <FooterNav/>
+      </div>
+    </template>
+
+    <template #loading>
+      <div>
+        Authenticating....
+      </div>
+    </template>
+  </AsyncComponent>
 </template>
 <script setup>
 import TopNav from '@/components/feed/topnav.vue';
 import FooterNav from '@/components/feed/footernav.vue'
 import CloseButton from '../components/feed/partials/CloseButton.vue';
-import { ref } from "vue";
+import { ref, computed } from "vue";
 import { useRoute, useRouter } from 'vue-router';
 import { db } from '../services/db'
 import { urls, navRoutes } from '../services/urls'
 import { PubSub } from '../services/pubsub';
+import AsyncComponent from '@/components/feed/partials/AsyncComponent.vue';
 
 const route = useRoute();
 const router = useRouter();
 
-const hasSearchResults = ref(false);
-const noBookYetUrl = 'https://placehold.co/45X45';
-let books = [];
-let authors = [];
-let users = [];
-let booksByAuthor = [];
-let booksByGenre = [];
-let bookClubs = [];
-let bookshelves = [];
 
-db.authenticate(urls.authUrl, route.params.user);
+const noBookYetUrl = 'https://placehold.co/45X45';
+
+const searchData = ref({
+  books: [],
+  authors: [],
+  users: [],
+  books_by_author: [],
+  books_by_genre: [],
+  bookClubs: [],
+  bookshelves: []
+});
+
+// This will make ui rerender whenever any dependency changes in length.
+const hasSearchResults = computed(() => Object.values(searchData.value).some((val) => val.length));
+
+const authPromise = db.authenticate(urls.authUrl, route.params.user);
 
 PubSub.subscribe('nav-search-get-data', (data) => {
-  // manually make ui rerender after these lists get dynamically filled up.
-  hasSearchResults.value = false;
-  // manually fill up these lists;
-  console.log("search results ", data);
-  books = data.books;
-  authors = data.authors;
-  users = data.users;
-  booksByAuthor = data.books_by_author;
-  booksByGenre = data.books_by_genre;
-  bookClubs = data.bookClubs;
-  bookshelves = data.bookshelves;
-
-  hasSearchResults.value = true;
+  Object.entries(data).forEach(([key, value]) => {
+    // destructure the general search object to get the keys and values from the key and value (IK this sucks)
+    // ON^2
+      if (key === 'general_search') {
+        Object.entries(value).forEach(([key, value]) => {
+          searchData.value[key] = value;
+        });
+      }
+      // this is for the other search types
+      searchData.value[key] = value;
+    });
 });
 
 const relationshipConfig = {
       stranger: {
         label: "Add Friend",
-        class: "btn friend-btn bg-blue-500 text-white",
+        class: "btn btn-tiny text-sm bg-indigo-500 text-white mx-auto",
         action: sendFriendRequest,
         show: true,
       },
       current_user_blocked_by_anonymous_user: {
         label: "Add Friend",
-        class: "btn friend-btn bg-blue-500 text-white",
+        class: "btn btn-tiny text-sm bg-indigo-500 text-white mx-auto",
         action: sendFriendRequest,
         show: true,
       },
       friend: {
         label: "Friend",
-        class: "btn friend-btn bg-green-500 text-white",
+        class: "btn btn-tiny text-sm btn-add-friend text-white mx-auto",
         action: () => {},
         show: true,
       },
       is_current_user: {
         label: "It's you!",
-        class: "btn friend-btn bg-gray-500 text-white",
+        class: "btn btn-tiny text-sm bg-gray-500 text-white mx-auto",
         action: () => {},
         show: true,
       },
       anonymous_user_blocked_by_current_user: {
         label: "Blocked by you",
-        class: "btn friend-btn bg-red-500 text-white",
+        class: "btn btn-tiny text-sm bg-red-500 text-white mx-auto",
         action: () => {},
         show: true,
       },
       anonymous_user_friend_requested: {
         label: "Accept Friend Request",
-        class: "btn friend-btn bg-yellow-500 text-white",
+        class: "btn btn-tiny text-sm bg-yellow-500 text-white mx-auto",
         action: acceptFriendRequest,
         show: true,
       },
       current_user_friend_requested: {
         label: "Pending Friend Request",
-        class: "btn friend-btn bg-gray-500 text-white",
+        class: "btn btn-tiny text-sm bg-grey-500 text-white mx-auto",
         action: () => {},
         show: true,
       }
@@ -292,6 +332,13 @@ function acceptFriendRequest(friend) {
 
     &:hover {
       background-color: var(--stone-300);
+    }
+
+    &.user {
+      display: grid;
+      place-content: center;
+      text-align: center;
+      word-break: break-word;
     }
 
     &.book {
