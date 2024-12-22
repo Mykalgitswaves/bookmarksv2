@@ -46,7 +46,8 @@ class BaseBookClub(BaseModel):
             elapsed_days = (current_date - started_date).days
 
             # Calculate expected chapters by the current date
-            expected_chapters = (elapsed_days / max(total_days,1)) * max(total_chapters,1)
+            # Cannot be more than the total number of chapters in the book
+            expected_chapters = min((elapsed_days / max(total_days,1)) * max(total_chapters,1),total_chapters)
 
             # Calculate offset from the expected chapter
             pace_offset = current_chapter - round(expected_chapters)

@@ -656,8 +656,26 @@ async def get_book_club_minimal_preview(
         get_repository(repo_type=BookClubCRUDRepositoryGraph)
     ),
 ):
-    """
-    gets an minimal preview for a bookclub via clubs uuid.
+    """Initial get request for grabbing the book club data.
+    
+    Args:
+        book_club_id: The id of the book club
+        user_id: The current users id
+        
+    Returns:
+        book_club: An object containing the following:
+            book_club_id (str): The id of the book club
+            book_club_name (str): The name of the book club
+            book_club_description (str): The description of the book club
+            currently_reading (dict | None): An object describing the book the club
+                is currently reading. If present, this contains:
+                    book_id (str): The id of the book
+                    title (str): The title of the book
+                    small_img_url (str): The img url for the book
+            pace (int | None): The pace offset between the expected chapter of the reader 
+                based on the clubs expected finish date. If negative, the reader is n chapters
+                behind the clubs expected pace. If positive, the reader is n chapters ahead
+                of the clubs expected pace.
     """
     if current_user.id != user_id:
         logger.warning(
