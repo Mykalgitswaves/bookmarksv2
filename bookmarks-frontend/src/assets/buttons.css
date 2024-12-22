@@ -166,6 +166,6 @@
 }
 
 .btn-add-friend {
-    background-color: var(--green-500);
-    color: var(--surface-primary);
+    background-color: var(--indigo-200);
+    color: var(--indigo-600);
 }

@@ -11,7 +11,7 @@
             v-if="hasSearchResults"
           >
             <CloseButton class="ml-auto" 
-              @close="hasSearchResults = false"
+              @close="searchData = { ...SEARCH_DATA_KEYS }"
             />
           
             <div class="transition mt-5">
@@ -163,7 +163,8 @@ const router = useRouter();
 
 const noBookYetUrl = 'https://placehold.co/45X45';
 
-const searchData = ref({
+
+const SEARCH_DATA_KEYS = {
   books: [],
   authors: [],
   users: [],
@@ -171,6 +172,10 @@ const searchData = ref({
   books_by_genre: [],
   bookClubs: [],
   bookshelves: []
+}
+
+const searchData = ref({
+  ...SEARCH_DATA_KEYS,
 });
 
 // This will make ui rerender whenever any dependency changes in length.
@@ -195,43 +200,43 @@ PubSub.subscribe('nav-search-get-data', (data) => {
 const relationshipConfig = {
       stranger: {
         label: "Add Friend",
-        class: "btn btn-tiny text-sm bg-indigo-500 text-white mx-auto",
+        class: "btn btn-tiny text-xs bg-indigo-500 text-white mx-auto",
         action: sendFriendRequest,
         show: true,
       },
       current_user_blocked_by_anonymous_user: {
         label: "Add Friend",
-        class: "btn btn-tiny text-sm bg-indigo-500 text-white mx-auto",
+        class: "btn btn-tiny text-xs bg-indigo-500 text-white mx-auto",
         action: sendFriendRequest,
         show: true,
       },
       friend: {
-        label: "Friend",
-        class: "btn btn-tiny text-sm btn-add-friend text-white mx-auto",
+        label: "Friends",
+        class: "btn btn-tiny text-xs btn-add-friend text-white mx-auto",
         action: () => {},
         show: true,
       },
       is_current_user: {
         label: "It's you!",
-        class: "btn btn-tiny text-sm bg-gray-500 text-white mx-auto",
+        class: "btn btn-tiny text-xs bg-gray-500 text-white mx-auto",
         action: () => {},
         show: true,
       },
       anonymous_user_blocked_by_current_user: {
         label: "Blocked by you",
-        class: "btn btn-tiny text-sm bg-red-500 text-white mx-auto",
+        class: "btn btn-tiny text-xs bg-red-500 text-white mx-auto",
         action: () => {},
         show: true,
       },
       anonymous_user_friend_requested: {
         label: "Accept Friend Request",
-        class: "btn btn-tiny text-sm bg-yellow-500 text-white mx-auto",
+        class: "btn btn-tiny text-xs bg-yellow-500 text-white mx-auto",
         action: acceptFriendRequest,
         show: true,
       },
       current_user_friend_requested: {
         label: "Pending Friend Request",
-        class: "btn btn-tiny text-sm bg-grey-500 text-white mx-auto",
+        class: "btn btn-tiny text-xs bg-grey-500 text-white mx-auto",
         action: () => {},
         show: true,
       }
@@ -335,10 +340,12 @@ function acceptFriendRequest(friend) {
     }
 
     &.user {
+      border-radius: 8px;
       display: grid;
       place-content: center;
       text-align: center;
       word-break: break-word;
+      min-height: -webkit-fill-available;
     }
 
     &.book {
