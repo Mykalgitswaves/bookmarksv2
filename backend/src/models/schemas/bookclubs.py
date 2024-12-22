@@ -189,6 +189,15 @@ class CreateReviewPost(BaseModel):
         
         return v
     
+class CreateReviewPostNoText(BaseModel):
+    rating: Optional[int]
+    @validator('rating')
+    def check_rating(cls, v):
+        if v not in [0, 1, 2, None]:
+            raise ValueError("Value must be 0, 1, or 2, None")
+        
+        return v
+    
 class UpdatePostNoText(Post):
     type: str = "club_update_no_text"
     awards: dict | None = None

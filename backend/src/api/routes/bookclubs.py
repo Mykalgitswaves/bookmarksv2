@@ -1706,9 +1706,17 @@ async def create_review_for_user(
             raise HTTPException(400, "Error creating review")
     
     else:
+        try:
+            review = BookClubSchemas.CreateReviewPostNoText(
+                rating=data.get("rating")
+            )
+        except ValueError as e:
+            raise HTTPException(status_code=400, detail=str(e))
+        
         response = book_club_repo.create_finished_reading(
             user_id,
-            book_club_id
+            book_club_id,
+            review.rating
         )
 
         if response:

@@ -1,6 +1,6 @@
 from datetime import datetime, timezone
 from neo4j.time import DateTime as Neo4jDateTime
-from typing import List
+from typing import List, Optional
 from datetime import datetime, timedelta
 
 from src.database.graph.crud.base import BaseCRUDRepositoryGraph
@@ -811,7 +811,8 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
     def create_finished_reading(
             self,
             user_id: str,
-            book_club_id: str
+            book_club_id: str,
+            rating: Optional[int]
     ):
         """
         Creates the review in the DB and marks the book as finished reading
@@ -821,7 +822,8 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
             result = session.write_transaction(
                 self.create_finished_reading_query, 
                 user_id,
-                book_club_id
+                book_club_id,
+                rating
             )
         return result
     
@@ -829,7 +831,8 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
     def create_finished_reading_query(
         tx,
         user_id,
-        book_club_id
+        book_club_id,
+        rating
     ):
         query = (
             """
@@ -838,6 +841,15 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
             MERGE (u)-[fr:FINISHED_READING_FOR_CLUB]->(book)
             ON CREATE SET
                 fr.last_updated = datetime()
+                CREATE (r:ClubReviewNoText {
+                    id: "club_review_no_text" + randomUUID(),
+                    user_id: $user_id,
+                    book_club_book_id: book.id,
+                    created_date: datetime(),
+                    delete: False,
+                    likes: 0,
+                    rating: $rating
+                })
             WITH u, book
             MATCH (u)-[rr:IS_READING_FOR_CLUB]->(book)
             DELETE rr
@@ -849,7 +861,8 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
         result = tx.run(
             query,
             user_id = user_id,
-            book_club_id = book_club_id
+            book_club_id = book_club_id,
+            rating = rating
         )
 
         response = result.single()

@@ -772,7 +772,8 @@ class TestBookClubs:
         data = {
             "user": {
                 "id": self.user_id_2
-            }
+            },
+            "rating": 0
         }
 
         params = {"no_review":True}
