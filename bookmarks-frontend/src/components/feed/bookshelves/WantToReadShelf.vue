@@ -167,7 +167,7 @@ document.addEventListener('ws-connection-error', (e) => {
         error.value.isShowing = false;
     }, 5000);
 
-    if(ws.socket.readyState === 3) {
+    if(ws.socket?.readyState === 3) {
         console.log('socket is closed, reconnecting');
         ws.createNewSocketConnection(route.params.bookshelf);
     }

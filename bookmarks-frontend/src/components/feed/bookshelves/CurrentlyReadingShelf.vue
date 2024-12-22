@@ -188,7 +188,7 @@ onMounted(async () => {
             error.value.isShowing = false;
         }, 5000);
 
-        if(ws.socket.readyState === 3) {
+        if(ws.socket?.readyState === 3) {
             console.warn('socket is closed, reconnecting');
             ws.createNewSocketConnection(route.params.bookshelf);
         }
@@ -212,9 +212,13 @@ async function createUpdatePost(updatePayload) {
 }
 
 function removeBookFromShelf(removed_book_id) {
-    db.delete(urls.bookshelves.removeBookFromShelf(route.params.bookshelf, removed_book_id), true).then((res) => {
-        console.log(res);
-        bookshelfBooks.value.currentBook = null;
-    });
+    try {
+        ws.sendData({
+            type: 'delete',
+            target_id: removed_book_id,
+        });
+    } catch (error) {
+        console.error(error);
+    }
 }
 </script>

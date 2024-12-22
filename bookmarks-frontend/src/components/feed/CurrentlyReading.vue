@@ -17,10 +17,22 @@
                     <h4 class="book-title text-stone-500">{{ truncateText(book.title, 64) }}</h4>
                     
                     <div class="book-metadata">
-                        <p class="progress">...</p>
+                        <p class="progress">{{ `${book.current_page} / ${book.total_pages}` }}</p>
                     </div>
                 </div>
             </div>
+
+            <Overlay :ref="(ref) => currentlyReadingDialogRef = ref?.dialogRef">
+                <template #overlay-header>
+                    <h3 class="text-stone-500 text-lg fancy">
+                        Update progress for 
+                        <span class="text-indigo-500 italic">{{ selectedCurrentlyReadingBook.title }}</span>
+                    </h3>
+                </template>
+                <template #overlay-main>
+                    <CurrentlyReadingForm />
+                </template>
+            </Overlay>
         </template>
 
         <template #loading>
@@ -48,25 +60,35 @@
 <script setup>
 import { db } from '../../services/db';
 import { urls } from '../../services/urls';
-import { ref, computed } from 'vue';
+import { ref } from 'vue';
 import { useRoute } from 'vue-router';
 import { truncateText } from '../../services/helpers';
 import AsyncComponent from './partials/AsyncComponent.vue';
+import Overlay from './partials/overlay/Overlay.vue';
 
 const route = useRoute();
 const { user } = route.params;
 let books = [];
 let bookshelf; 
+let selectedCurrentlyReadingBook = {}
 
 
 const currentlyReadingBookClub = db.get(urls.rtc.getCurrentlyReadingForFeed(user), null, false, 
     (res) => {
         bookshelf = res.bookshelf;
         books = res.bookshelf.books;
+        console.log(res)
     }, 
     (err) => {
         console.error(err);
 });
+
+const currentlyReadingDialogRef = ref(null);
+
+function showCurrentlyReadingBookOverlay(book) {
+    Object.assign(selectedCurrentlyReadingBook, book);
+    currentlyReadingDialogRef.value?.showModal();
+}
 </script>
 <style scoped lang="scss">
     .currently-reading {
