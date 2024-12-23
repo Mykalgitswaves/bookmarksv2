@@ -26,7 +26,6 @@ import IconSearch from '@/components/svg/icon-search.vue';
 
 const { debounce } = helpersCtrl;
 const search_params = ref('');
-const responseBlob = ref(null);
 
 function searchRequest() {
     if (search_params.value.length > 1) {

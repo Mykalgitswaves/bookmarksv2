@@ -47,20 +47,44 @@
               <div class="search-results-category" v-if="searchData.users.length">
                 <div v-for="user in searchData.users" :key="user.id"
                   class="search-result user"
+                  :class="{
+                    'friends': user.relationship_to_current_user === 'friend',
+                    'loading': relationshipConfig[user.relationship_to_current_user].loading,
+                    'declined': user.relationship_to_current_user === 'declined',
+                  }"
                   @click="() => {
                     router.push(navRoutes.toUserPage(route.params.user, user.id)); 
                     hasSearchResults = false;
                   }"
                 >
                   <h4 class="text-center fancy bold pb-5 text-sm">{{ user.username }}</h4>
+                  <div v-if="user.relationship_to_current_user !== 'anonymous_user_friend_requested'">
+                    <button 
+                      v-if="relationshipConfig[user.relationship_to_current_user]?.label"
+                      :class="relationshipConfig[user.relationship_to_current_user].class"
+                      @click="relationshipConfig[user.relationship_to_current_user].action(user)"
+                    >
+                      <span v-if="!relationshipConfig[user.relationship_to_current_user].loading">
+                        {{ relationshipConfig[user.relationship_to_current_user].label }}
+                      </span>
+                      <!-- IF you are waiting for a response from the server then show loading... -->
+                      <span v-else>
+                        loading...
+                      </span>
+                    </button>
+                  </div>
 
-                  <button 
-                    v-if="relationshipConfig[user.relationship_to_current_user]?.label"
-                    :class="relationshipConfig[user.relationship_to_current_user].class"
-                    @click="relationshipConfig[user.relationship_to_current_user].action(user)"
-                  >
-                    {{ relationshipConfig[user.relationship_to_current_user].label }}
-                  </button>
+                  <div v-else class="flex gap-2">
+                    <button 
+                      type="button" 
+                      v-for="(button, index) in relationshipConfig[user.relationship_to_current_user]" 
+                      :key="index"
+                      :class="button.class"
+                      @click="button.action(user)"
+                    >
+                      {{ button.label }}
+                    </button>
+                  </div>
                 </div>
               </div>
 
@@ -150,7 +174,7 @@
 import TopNav from '@/components/feed/topnav.vue';
 import FooterNav from '@/components/feed/footernav.vue'
 import CloseButton from '../components/feed/partials/CloseButton.vue';
-import { ref, computed } from "vue";
+import { ref, computed, watch } from "vue";
 import { useRoute, useRouter } from 'vue-router';
 import { db } from '../services/db'
 import { urls, navRoutes } from '../services/urls'
@@ -162,7 +186,6 @@ const router = useRouter();
 
 
 const noBookYetUrl = 'https://placehold.co/45X45';
-
 
 const SEARCH_DATA_KEYS = {
   books: [],
@@ -182,7 +205,13 @@ const searchData = ref({
 const hasSearchResults = computed(() => Object.values(searchData.value).some((val) => val.length));
 
 const authPromise = db.authenticate(urls.authUrl, route.params.user);
+const loadingSearchResults = ref(false);
 
+/**
+ * @subscriptions
+ * @sub {nav-search-get-data} - When search results are returned from the data, we use this to update the ref.
+ * @sub {nav-search-get-data-loaded} - tells us that all search promises have been fulfilled.
+ */
 PubSub.subscribe('nav-search-get-data', (data) => {
   Object.entries(data).forEach(([key, value]) => {
     // destructure the general search object to get the keys and values from the key and value (IK this sucks)
@@ -197,75 +226,126 @@ PubSub.subscribe('nav-search-get-data', (data) => {
     });
 });
 
-const relationshipConfig = {
+PubSub.subscribe('nav-search-get-data-loaded', (sybmol) => {
+  loadingSearchResults.value = true;
+});
+
+/**
+ * @END_SUBSCRIPTIONS
+ */
+
+const relationshipConfig = ref({
       stranger: {
         label: "Add Friend",
         class: "btn btn-tiny text-xs bg-indigo-500 text-white mx-auto",
         action: sendFriendRequest,
         show: true,
+        loading: false,
       },
       current_user_blocked_by_anonymous_user: {
         label: "Add Friend",
         class: "btn btn-tiny text-xs bg-indigo-500 text-white mx-auto",
         action: sendFriendRequest,
         show: true,
+        loading: false,
       },
       friend: {
         label: "Friends",
-        class: "btn btn-tiny text-xs btn-add-friend text-white mx-auto",
+        class: "btn btn-tiny text-xs btn-already-friends mx-auto",
         action: () => {},
         show: true,
+        loading: false,
       },
       is_current_user: {
         label: "It's you!",
-        class: "btn btn-tiny text-xs bg-gray-500 text-white mx-auto",
+        class: "btn btn-tiny btn-specter text-xs text-stone-600 fancymx-auto",
         action: () => {},
         show: true,
+        loading: false,
       },
-      anonymous_user_blocked_by_current_user: {
-        label: "Blocked by you",
-        class: "btn btn-tiny text-xs bg-red-500 text-white mx-auto",
-        action: () => {},
-        show: true,
-      },
-      anonymous_user_friend_requested: {
-        label: "Accept Friend Request",
-        class: "btn btn-tiny text-xs bg-yellow-500 text-white mx-auto",
-        action: acceptFriendRequest,
-        show: true,
-      },
+      anonymous_user_friend_requested: [
+        {
+          label: "Accept 😊",
+          class: "btn btn-tiny btn-accept-friend-request text-xs text-white mx-auto",
+          action: acceptFriendRequest,
+          show: true,
+          loading: false,
+        },
+        {
+          label: "Decline 🫥",
+          class: "btn btn-tiny btn-decline-friend-request text-xs text-white mx-auto",
+          action: declineFriendRequest,
+          show: true,
+          loading: false,
+        }
+      ],
       current_user_friend_requested: {
-        label: "Pending Friend Request",
-        class: "btn btn-tiny text-xs bg-grey-500 text-white mx-auto",
+        label: "Request pending",
+        class: "btn btn-tiny text-xs mx-auto btn-friend-requested",
         action: () => {},
         show: true,
+        loading: false,
+      },
+      declined: {
+        label: "Declined ❌",
+        class: "btn btn-tiny text-xs mx-auto btn-specter",
+        action: () => null,
+        show: true,
+        loading: false,
       }
-    };
+    });
 
 function sendFriendRequest(friend) {
-  response = db.put(
+  // this is to show loading when the request is sent
+  let oldRelationship = friend.relationship_to_current_user;
+  relationshipConfig.value[oldRelationship].loading = true
+
+  db.put(
     urls.user.sendAnonFriendRequest(route.params.user, friend.id), 
     null, 
-    false
-  ).then((res) => {
-    friend.relationship_to_current_user = "current_user_friend_requested";
-  }).catch((err) => {
-    console.log("Friend request failed", err);
-  });
+    false,
+    () => {
+      relationshipConfig.value[oldRelationship].loading = false
+      friend.relationship_to_current_user = "current_user_friend_requested";
+    },
+    (err) => {
+      console.log("Friend request failed", err);
+    }
+  );
 }
 
 function acceptFriendRequest(friend) {
-  response = db.put(
+  db.put(
     urls.user.acceptAnonFriendRequest(friend.id), 
     null, 
-    false
-  ).then((res) => {
-    friend.relationship_to_current_user = "friend";
-  }).catch((err) => {
-    console.log("Friend accept failed", err);
-  });
+    false,
+    () => {
+      friend.relationship_to_current_user = "friend";
+    },
+    (err) => {
+      console.log("Friend accept failed", err);
+    }
+  );
 }
 
+function declineFriendRequest(user) {
+  db.delete(
+    urls.user.declineAnonFriendRequest(user.id), 
+    null, 
+    false,
+    () => {
+      user.relationship_to_current_user = "declined";
+    }, 
+    (err) => {
+      console.log("Friend decline failed", err);
+    });
+}
+
+// Filter out blocked users from the search results
+watch(searchData, (newValue) => {
+  loadingSearchResults.value = true;
+  searchData.value.users = newValue.users.filter((user) => user.relationship_to_current_user !== 'current_user_blocked_by_anonymous_user')
+});
 </script>
 <style scoped>
   .main-layout {
@@ -308,17 +388,27 @@ function acceptFriendRequest(friend) {
     border-radius: 8px;
     background-color: var(--surface-primary);
     min-height: 400px;
+    max-width: 1000px;
+    margin-left: auto;
+    margin-right: auto;
   }
 
   .search-results-category {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
     min-height: fit-content;
     align-items: end;
-    justify-content: start;
+    justify-content: center;
     column-gap: 10px;
     row-gap: 10px;
   }
+
+  @starting-style {
+    .search-result {
+      opacity: 0;
+    }
+  }
+
 
   .search-result {
     border: 1px solid var(--stone-200);
@@ -335,8 +425,24 @@ function acceptFriendRequest(friend) {
       text-align: center;
     }
 
+    &.loading {
+      filter: blur(2px);
+      background-color: var(--stone-100);
+    }
+
     &:hover {
       background-color: var(--stone-300);
+    }
+
+    &.friends {
+      border: 1px solid var(--green-500);
+      background-color: var(--green-50);
+    }
+
+
+    &.declined {
+      border: 1px solid var(--red-500);
+      background-color: var(--red-50);
     }
 
     &.user {
@@ -346,6 +452,7 @@ function acceptFriendRequest(friend) {
       text-align: center;
       word-break: break-word;
       min-height: -webkit-fill-available;
+      align-content: space-between;
     }
 
     &.book {
@@ -376,5 +483,24 @@ function acceptFriendRequest(friend) {
     color: var(--indigo-800);
   }
 
+  .btn-already-friends {
+    background-color: var(--green-200);
+    color: var(--stone-700);
+  }
+
+  .btn-friend-requested {
+    background-color: var(--stone-500);
+    color: var(--stone-50);
+  }
+
+  .btn-accept-friend-request {
+    background-color: var(--green-500);
+    color: var(--surface-primary);
+  }
+  
+  .btn-decline-friend-request {
+    background-color: var(--red-500);
+    color: var(--surface-primary);
+  }
 </style>
 
