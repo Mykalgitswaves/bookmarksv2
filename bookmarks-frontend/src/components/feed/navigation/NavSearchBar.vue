@@ -37,7 +37,7 @@ function searchRequest() {
             users: urls.search.user(search_params.value), // Outputs an array
             // Add more features as needed
         };
-
+        
         // Map the feature keys to db.get calls
         const requests = Object.entries(searchFeatures).map(([key, url]) =>
             db.get(url, null, false, (res) => {
@@ -46,7 +46,7 @@ function searchRequest() {
                 console.log(err)
             })
         );
-
+        
         // Use Promise.allSettled to tell us when all requests are fulfilled
         Promise.allSettled(requests).then(() => {
             PubSub.publish('nav-search-get-data-loaded', Symbol('loaded'));

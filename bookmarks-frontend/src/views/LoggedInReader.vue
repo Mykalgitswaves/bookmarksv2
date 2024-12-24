@@ -11,147 +11,174 @@
             v-if="hasSearchResults"
           >
             <CloseButton class="ml-auto" 
-              @close="searchData = { ...SEARCH_DATA_KEYS }"
+              @close="() => Object.assign(searchData, SEARCH_DATA_KEYS)"
             />
-          
+
+            <!-- BOOKS -->
             <div class="transition mt-5">
-              <h3 class="fancy text-xl text-stone-700 my-5" 
-                v-if="searchData.books.length"
-              >
-                Books: {{ searchData.books.length }}
-              </h3>
+              <div v-if="loadedSearchResults">
+                <!-- Are we loading books with an ID? -->
+                <div v-if="searchData.books.some((book) => book.id)">
+                  <h3 class="fancy text-xl text-stone-700 my-5">
+                    Books: {{ searchData.books.length }}
+                  </h3>
 
-              <div class="search-results-category" 
-                v-if="searchData.books.length"
-              >
-                <!-- book loop -->
-                <div v-for="book in searchData.books" :key="book.id" 
-                  class="search-result book relative"
-                  @click="() => {
-                    router.push(navRoutes.toBookPageFromPost(route.params.user, book.id)); 
-                    hasSearchResults = false;
-                  }"
-                >
-                  <img class="book-img" :src="book.img_url" alt="" />
-
-                  <h4 class="text-center fancy bold pb-5 text-sm">{{ book.title }}</h4>
-                </div>
-              </div>
-
-              <h3 class="fancy text-xl text-stone-700 my-5" 
-                v-if="searchData.users.length"
-              >
-                Users: {{ searchData.users.length }}
-              </h3>
-
-              <div class="search-results-category" v-if="searchData.users.length">
-                <div v-for="user in searchData.users" :key="user.id"
-                  class="search-result user"
-                  :class="{
-                    'friends': user.relationship_to_current_user === 'friend',
-                    'loading': relationshipConfig[user?.relationship_to_current_user]?.loading,
-                    'declined': user.relationship_to_current_user === 'declined',
-                  }"
-                  @click="() => {
-                    router.push(navRoutes.toUserPage(route.params.user, user.id)); 
-                    hasSearchResults = false;
-                  }"
-                >
-                  <h4 class="text-center fancy bold pb-5 text-sm">{{ user.username }}</h4>
-                  <div v-if="user.relationship_to_current_user !== 'anonymous_user_friend_requested'">
-                    <button 
-                      v-if="relationshipConfig[user.relationship_to_current_user]?.label"
-                      :class="relationshipConfig[user.relationship_to_current_user].class"
-                      @click="relationshipConfig[user.relationship_to_current_user].action(user)"
+                  <div class="search-results-category">
+                    <!-- book loop -->
+                    <div v-for="book in searchData.books" :key="book.id" 
+                      class="search-result book relative"
+                      @click="() => {
+                        router.push(navRoutes.toBookPageFromPost(route.params.user, book.id)); 
+                        hasSearchResults = false;
+                      }"
                     >
-                      <span v-if="!relationshipConfig[user.relationship_to_current_user].loading">
-                        {{ relationshipConfig[user.relationship_to_current_user].label }}
-                      </span>
-                      <!-- IF you are waiting for a response from the server then show loading... -->
-                      <span v-else>
-                        loading...
-                      </span>
-                    </button>
-                  </div>
+                      <img class="book-img" :src="book.img_url" alt="" />
 
-                  <div v-else class="flex gap-2">
-                    <button 
-                      type="button" 
-                      v-for="(button, index) in relationshipConfig[user.relationship_to_current_user]" 
-                      :key="index"
-                      :class="button.class"
-                      @click="button.action(user)"
-                    >
-                      {{ button.label }}
-                    </button>
+                      <h4 class="text-center fancy bold pb-5 text-sm">{{ book.title }}</h4>
+                    </div>
                   </div>
                 </div>
               </div>
 
-              <h3 class="fancy text-xl text-stone-700 my-5" 
-                v-if="searchData.bookClubs.length"
-              >
-                Book Clubs: {{ searchData.bookClubs.length }}
-              </h3>
+              <div v-else class="search-result loading gradient"></div>
 
-              <div class="search-results-category" v-if="searchData.bookClubs.length">
-                <!-- book loop -->
-                <div v-for="bookClub in searchData.bookClubs" :key="bookClub.id" 
-                  class="search-result book relative"
-                  @click="() => {
-                    router.push(navRoutes.toBookClubFeed(route.params.user, bookClub.id)); 
-                    hasSearchResults = false;
-                  }"
-                >
-                  <img class="book-img" :src="bookClub?.current_book?.small_img_url || noBookYetUrl" alt="" />
+              <!-- USERS, make sure you have an ID and they are at least kind of truthy 
+              before rendering an empty form on the front end. -->
+              <div v-if="loadedSearchResults">
+                <div v-if="searchData.users.some((user) => user.id)">
+                  <h3 class="fancy text-xl text-stone-700 my-5">
+                    Users: {{ searchData.users.length }}
+                  </h3>
 
-                  <h4 class="text-center fancy bold pb-5 text-sm">{{ bookClub.name }}</h4>
-                  <h4 class="text-center fancy pb-5 text-sm" v-if="bookClub.current_book">
-                    Currently Reading:&nbsp;
-                    <span class="italic">{{ bookClub.current_book.title }}</span>
-                  </h4>
-                  <h4 class="text-center fancy pb-5 text-sm" v-else>
-                      Not reading anything right now...
-                  </h4>
+                  <div class="search-results-category">
+                    <div v-for="user in searchData.users" :key="user.id"
+                      class="search-result user"
+                      :class="{
+                        'friends': user.relationship_to_current_user === 'friend',
+                        'loading': relationshipConfig[user?.relationship_to_current_user]?.loading,
+                        'declined': user.relationship_to_current_user === 'declined',
+                      }"
+                      @click="() => {
+                        router.push(navRoutes.toUserPage(route.params.user, user.id)); 
+                        hasSearchResults = false;
+                      }"
+                    >
+                      <h4 class="text-center fancy bold pb-5 text-sm">{{ user.username }}</h4>
+                      <div v-if="user.relationship_to_current_user !== 'anonymous_user_friend_requested'">
+                        <button 
+                          v-if="relationshipConfig[user.relationship_to_current_user]?.label"
+                          :class="relationshipConfig[user.relationship_to_current_user].class"
+                          @click="relationshipConfig[user.relationship_to_current_user].action(user)"
+                        >
+                          <span v-if="!relationshipConfig[user.relationship_to_current_user].loading">
+                            {{ relationshipConfig[user.relationship_to_current_user].label }}
+                          </span>
+                          <!-- IF you are waiting for a response from the server then show loading... -->
+                          <span v-else>
+                            loading...
+                          </span>
+                        </button>
+                      </div>
+
+                      <div v-else class="flex gap-2">
+                        <button 
+                          type="button" 
+                          v-for="(button, index) in relationshipConfig[user.relationship_to_current_user]" 
+                          :key="index"
+                          :class="button.class"
+                          @click="button.action(user)"
+                        >
+                          {{ button.label }}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
 
-              <h3 class="fancy text-xl text-stone-700 my-5" 
-                v-if="searchData.bookshelves.length"
-              >
-                Bookshelves: {{ searchData.bookshelves.length }}
-              </h3>
+              <div v-else class="search-result loading gradient"></div>
 
-              <div class="search-results-category" v-if="searchData.bookshelves.length">
-                <!-- book loop -->
-                <div v-for="bookshelf in searchData.bookshelves" :key="bookshelf.id" 
-                  class="search-result book relative"
-                  @click="() => {
-                    router.push(navRoutes.toBookshelfPage(route.params.user, bookshelf.id)); 
-                    hasSearchResults = false;
-                  }"
-                >
-                  <img class="book-img" :src="bookshelf?.first_book?.small_img_url || noBookYetUrl" alt="" />
+              <!-- BOOK CLUBS -->
+              <div v-if="loadedSearchResults">
+                <!-- Check for an id before rendering so we know the object is at least kinda correct. -->
+                <div v-if="searchData.bookClubs.some((bookClub) => bookClub.id)">
+                  <h3 class="fancy text-xl text-stone-700 my-5">
+                    Book Clubs: {{ searchData.bookClubs.length }}
+                  </h3>
 
-                  <h4 class="text-center fancy bold pb-5 text-sm">{{ bookshelf.name }}</h4>
-      
-                  <h4 class="text-center fancy pb-5 text-sm">
-                    {{ bookshelf.description }}
-                  </h4>
+                  <div class="search-results-category">
+                    <!-- book loop -->
+                    <div v-for="bookClub in searchData.bookClubs" :key="bookClub.id" 
+                      class="search-result book relative"
+                      @click="() => {
+                        router.push(navRoutes.toBookClubFeed(route.params.user, bookClub.id)); 
+                        hasSearchResults = false;
+                      }"
+                    >
+                      <img class="book-img" :src="bookClub?.current_book?.small_img_url || noBookYetUrl" alt="" />
+
+                      <h4 class="text-center fancy bold pb-5 text-sm">{{ bookClub.name }}</h4>
+                      <h4 class="text-center fancy pb-5 text-sm" v-if="bookClub.current_book">
+                        Currently Reading:&nbsp;
+                        <span class="italic">{{ bookClub.current_book.title }}</span>
+                      </h4>
+                      <h4 class="text-center fancy pb-5 text-sm" v-else>
+                          Not reading anything right now...
+                      </h4>
+                    </div>
+                  </div>
                 </div>
               </div>
 
-              <h3 class="fancy text-xl text-stone-700 my-5" 
-                v-if="searchData.authors.length"
-              >
-                Authors: {{ searchData.authors.length }}
-              </h3>
+              <div v-else class="search-result loading gradient"></div>
 
-              <div class="search-results-category" v-if="searchData.authors.length">
-                <div v-for="author in searchData.authors" :key="author.id" class="search-result authors">
-                  {{ author.name }}
+              <!-- BOOK SHELVES -->
+              <div v-if="loadedSearchResults">
+                <div v-if="searchData.bookshelves.some((bookshelf) => bookshelf.id)">
+                  <h3 class="fancy text-xl text-stone-700 my-5">
+                    Bookshelves: {{ searchData.bookshelves.length }}
+                  </h3>
+
+                  <div class="search-results-category">
+                    <!-- book loop -->
+                    <div v-for="bookshelf in searchData.bookshelves" :key="bookshelf.id" 
+                      class="search-result book relative"
+                      @click="() => {
+                        router.push(navRoutes.toBookshelfPage(route.params.user, bookshelf.id)); 
+                        hasSearchResults = false;
+                      }"
+                    >
+                      <img class="book-img" :src="bookshelf?.first_book?.small_img_url || noBookYetUrl" alt="" />
+
+                      <h4 class="text-center fancy bold pb-5 text-sm">{{ bookshelf.name }}</h4>
+          
+                      <h4 class="text-center fancy pb-5 text-sm">
+                        {{ bookshelf.description }}
+                      </h4>
+                    </div>
+                  </div>
                 </div>
               </div>
+
+              <div v-else class="search-result loading gradient"></div>
+
+
+              <!-- AUTHORS -->
+              <div v-if="loadedSearchResults">
+                <div v-if="searchData.authors.some((author) => author.id)">
+                  <h3 class="fancy text-xl text-stone-700 my-5">
+                    Authors: {{ searchData.authors.length }}
+                  </h3>
+
+                  <div class="search-results-category" v-if="searchData.authors.length">
+                    <div v-for="author in searchData.authors" :key="author.id" class="search-result authors">
+                      {{ author.name }}
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <div v-else class="search-result loading gradient"></div>
             </div>
           </div>
 
@@ -174,7 +201,7 @@
 import TopNav from '@/components/feed/topnav.vue';
 import FooterNav from '@/components/feed/footernav.vue'
 import CloseButton from '../components/feed/partials/CloseButton.vue';
-import { ref, computed, watch } from "vue";
+import { ref, computed, watch, nextTick } from "vue";
 import { useRoute, useRouter } from 'vue-router';
 import { db } from '../services/db'
 import { urls, navRoutes } from '../services/urls'
@@ -205,7 +232,7 @@ const searchData = ref({
 const hasSearchResults = computed(() => Object.values(searchData.value).some((val) => val.length));
 
 const authPromise = db.authenticate(urls.authUrl, route.params.user);
-const loadingSearchResults = ref(false);
+const loadedSearchResults = ref(false);
 
 /**
  * @subscriptions
@@ -213,6 +240,7 @@ const loadingSearchResults = ref(false);
  * @sub {nav-search-get-data-loaded} - tells us that all search promises have been fulfilled.
  */
 PubSub.subscribe('nav-search-get-data', (data) => {
+  loadedSearchResults.value = false;
   Object.entries(data).forEach(([key, value]) => {
     // destructure the general search object to get the keys and values from the key and value (IK this sucks)
     // ON^2
@@ -226,8 +254,10 @@ PubSub.subscribe('nav-search-get-data', (data) => {
     });
 });
 
-PubSub.subscribe('nav-search-get-data-loaded', (sybmol) => {
-  loadingSearchResults.value = true;
+PubSub.subscribe('nav-search-get-data-loaded', (symbol) => {
+  nextTick(() => {
+    loadedSearchResults.value = true;
+  });
 });
 
 /**
@@ -426,8 +456,16 @@ watch(searchData, (newValue) => {
     }
 
     &.loading {
-      filter: blur(2px);
+      /* filter: blur(1px); */
+      border: none;
+      border-radius: 8px;
       background-color: var(--stone-100);
+      height: 100%;
+      max-width: unset;
+      width: 100%;
+      margin-top: 20px;
+      margin-bottom: 20px;
+      min-height: 100px;
     }
 
     &:hover {

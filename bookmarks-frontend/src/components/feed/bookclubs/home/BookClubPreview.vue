@@ -56,8 +56,30 @@ const props = defineProps({
     }
 });
 
+const paceOfCurrentUserForClub = computed(() => {
+    let pace = props.bookclub.pace
+    if (pace < 0) {
+        return `You are ${Math.abs(pace)} chapters behind the club pace`
+    } else if (pace === 0) {
+        return 'You are on track for the club pace'
+    } else {
+        return `You are ${pace} chapters ahead of the club pace`
+    }
+});
+
 </script>
 <style scoped>
+
+@media and screen(max-width: 768px) {
+    .bookclub-preview {
+        display: flex;
+        flex-direction: column;
+        flex-wrap: wrap;
+        justify-content: center;
+
+
+    }
+}
 
 .bookclub-preview {
     width: 100%;
@@ -65,10 +87,10 @@ const props = defineProps({
     padding-left: 14px;
     padding-bottom: 8px;
     padding-top: 8px;
-    display: flex;
-    justify-content: start;
-    align-items: center;
+    display: grid;
+    align-content: space-between;
     column-gap: 20px;
+    row-gap: 20px;
     background-color: var(--stone-50);
     /* max-width: 1fr; */
 
@@ -77,6 +99,7 @@ const props = defineProps({
         font-family: var(--fancy-script);
         color: var(--stone-700);
     }
+
 
     & .currently-reading {
         color: var(--stone-500);
