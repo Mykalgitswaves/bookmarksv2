@@ -30,7 +30,7 @@
                 </div>
             </div>
         </template>
-        
+
         <template #loading>
           <div style="margin-left: 16px;">
               <h2 class="text-stone-600 text-2xl fancy">Bookclubs you own</h2>
@@ -61,9 +61,8 @@
     </div>
     
     <!-- Your currently reading shown at the top -->
-    <div>
-      <CurrentlyReading />
-    </div>
+    <CurrentlyReading />
+
 
     <!-- Create posts for feed! -->
     <component 

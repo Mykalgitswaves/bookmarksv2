@@ -1,5 +1,5 @@
 <template>
-    <h1 class="create-post-heading-text text-center">Creating an update for <span class="create-post-heading-book-title">
+    <h1 class="create-post-heading-text text-center">Creating an update for chapter {{chapter}} of <span class="create-post-heading-book-title">
             {{ book?.title }}</span>
         </h1>
     <!-- Controls for navigating to diff steps. -->
@@ -48,7 +48,7 @@
                         class="mx-auto input-number rounded-md"
                         id="page-number"
                         type="number" 
-                        v-model="update.chapter"
+                        v-model="chapter"
                     >
                 </label>
 
@@ -91,10 +91,6 @@
                     />
                 </div>
             </div>
-            
-
-            
-
 
             <div v-if="step === 3" class="ml-auto mr-auto">
                 <CreatePostHeadline 
@@ -150,33 +146,42 @@ const props = defineProps({
 });
 
 const emit = defineEmits(['post-update', 'update-complete']);
-const headline = ref('');
 const page = ref(0);
 const chapter = ref(0)
 const step = ref(1);
 const progressTotal = computed(() => Math.floor((step.value * 100) / 3));
 const remainderTotal = computed(() => 100 - progressTotal.value);
 
+const update = reactive({
+    headline: '',
+    book_id: '',
+    book_title: '',
+    small_img_url: '',
+    page: 0,
+    chapter: 0,
+    is_spoiler: false,
+    response: '',
+    quote: '',
+});
 
-const update = reactive({})
-
-if (props.book?.id) {
-    Object.assign(update, {
-            headline: '',
-            book_id: props.book.id,
-            book_title: props.book.title,
-            small_img_url: props.book.small_img_url,
-            page: page.value,
-            chapter: chapter.value,
-            is_spoiler: false,
-            response: '',
-            quote: '',
-        }
-    );
-}
+watch(props.book, (newValue) => {
+    if (newValue) {
+        Object.assign(update, {
+                headline: '',
+                book_id: newValue.id,
+                book_title: newValue.title,
+                small_img_url: newValue.small_img_url,
+                page: page.value,
+                chapter: chapter.value,
+                is_spoiler: false,
+                response: '',
+                quote: '',
+            }
+        );
+    }
+});
 
 function headlineHandler(e) {
-    console.log(e, 'headline')
     update.headline = e;
 }
 
