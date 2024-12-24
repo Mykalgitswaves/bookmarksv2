@@ -1,7 +1,12 @@
 <template>
-    <div class="bookclub-preview">
-
-        <!-- Hold off on this until I get an href working... -->
+    <div class="bookclub-preview" 
+        :class="{
+            'behind': bookclub.pace < 0,
+            'on-target': bookclub.pace === 0,
+            'ahead': bookclub.pace > 0
+        }"
+        @click="router.push(navRoutes.toBookClubFeed(user, bookclub.book_club_id))"
+    >
         <img v-if="bookclub?.currently_reading_book?.small_img_url"
             class="currently-reading-img" 
             :src="bookclub.currently_reading_book.small_img_url" 
@@ -13,9 +18,12 @@
                 <h3 class="title">
                     {{ bookclub.book_club_name}}
                 </h3>
-
                 <p v-if="bookclub.currently_reading_book" class="currently-reading">
-                    Currently Reading: <i>{{ bookclub.currently_reading_book.title }}</i>
+                    Currently Reading: <i class="text-indigo-500">{{ bookclub.currently_reading_book.title }}</i>
+                    <br/>
+                    <span v-if="bookclub.currently_reading_book" 
+                        class="text-xs text-stone-500 block italic mt-2"
+                    >{{ paceOfCurrentUserForClub }}</span>
                 </p>
 
                 <p v-else class="currently-reading">Not currently reading anything</p>
@@ -32,6 +40,7 @@
     </div>
 </template>
 <script setup>
+import { computed } from 'vue';
 import { navRoutes } from '../../../../services/urls';
 import { useRouter } from 'vue-router'
 
@@ -84,6 +93,14 @@ const props = defineProps({
         color: var(--blue-400);
         font-size: var(--font-sm);
         text-decoration: underline;
+    }
+
+    &.ahead {
+        border: 1px dotted var(--green-300)
+    }
+
+    &.behind {
+        border: 1px dotted var(--red-300)
     }
 }
 

@@ -49,7 +49,7 @@
                   class="search-result user"
                   :class="{
                     'friends': user.relationship_to_current_user === 'friend',
-                    'loading': relationshipConfig[user.relationship_to_current_user].loading,
+                    'loading': relationshipConfig[user?.relationship_to_current_user]?.loading,
                     'declined': user.relationship_to_current_user === 'declined',
                   }"
                   @click="() => {
