@@ -795,7 +795,8 @@ class TestBookClubs:
         response = requests.get(endpoint, headers=headers)
         
         assert response.status_code == 200, "Get finished reading feed"
-        assert any([post['type'] == "club_review" for post in response.json()["posts"]])
+        assert any([post['type'] == "club_review" for post in response.json()["posts"]]), "Review post exists"
+        assert any([post['type'] == "club_review_no_text" for post in response.json()["posts"]]), "Review post no text exists"
         print(response.json())
 
     def test_deleting_member(self):

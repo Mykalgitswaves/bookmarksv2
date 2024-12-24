@@ -413,6 +413,13 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
             }]->(bc_book)
             WITH b, bc_book
             MATCH (member:User)-[:IS_MEMBER_OF|OWNS_BOOK_CLUB]->(b)
+            OPTIONAL MATCH (member)-[oldRel:IS_READING_FOR_CLUB]->(old_book:BookClubBook)
+            WITH b, bc_book, member, oldRel, old_book
+            // If an existing IS_READING_FOR_CLUB relationship is found, delete it and create FINISHED_READING_FOR_CLUB
+            FOREACH (_ IN CASE WHEN oldRel IS NOT NULL THEN [1] ELSE [] END |
+                DELETE oldRel
+                MERGE (member)-[:FINISHED_READING_FOR_CLUB {last_updated: datetime(), finished_by_user: false}]->(old_book)
+            )
             MERGE (member)-[:IS_READING_FOR_CLUB {
                 last_updated: datetime(),
                 current_chapter: 0
@@ -423,7 +430,6 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
             RETURN bc_book.id as book_club_book_id
             """
         )
-        
         expected_finish_date = Neo4jDateTime.from_native(currently_reading_obj.expected_finish_date)
         result = tx.run(
             query,
@@ -435,6 +441,7 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
         )
 
         response = result.single()
+        print(response.data())
         return response is not None
     
     def create_currently_reading_club_and_book(
@@ -484,6 +491,13 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
                 started_date: datetime(),
                 selected_finish_date: $finish_date
             }]->(bc_book)
+            OPTIONAL MATCH (old_member)-[oldRel:IS_READING_FOR_CLUB]->(old_book:BookClubBook)<-[:IS_READING|STOPPED_READING|FINISHED_READING]-(b)
+            WITH b, bc_book, old_member, oldRel, old_book
+            // If an existing IS_READING_FOR_CLUB relationship is found, delete it and create FINISHED_READING_FOR_CLUB
+            FOREACH (_ IN CASE WHEN oldRel IS NOT NULL THEN [1] ELSE [] END |
+                DELETE oldRel
+                MERGE (old_member)-[:FINISHED_READING_FOR_CLUB {last_updated: datetime(), finished_by_user: false}]->(old_book)
+            )
             WITH b, bc_book
             MATCH (member:User)-[:IS_MEMBER_OF|OWNS_BOOK_CLUB]->(b)
             MERGE (member)-[:IS_READING_FOR_CLUB {
@@ -510,6 +524,7 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
         )
 
         response = result.single()
+        print(response.data())
         return response is not None
     
     def create_update_post(
@@ -784,7 +799,8 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
             MERGE (r)-[:POST_FOR_CLUB_BOOK]->(book)
             MERGE (u)-[fr:FINISHED_READING_FOR_CLUB]->(book)
             ON CREATE SET
-                fr.last_updated = datetime()
+                fr.last_updated = datetime(),
+                fr.finished_by_user = True
             WITH u, book
             MATCH (u)-[rr:IS_READING_FOR_CLUB]->(book)
             DELETE rr
@@ -840,7 +856,8 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
             MATCH (b)-[:IS_READING|FINISHED_READING]->(book:BookClubBook)
             MERGE (u)-[fr:FINISHED_READING_FOR_CLUB]->(book)
             ON CREATE SET
-                fr.last_updated = datetime()
+                fr.last_updated = datetime(),
+                fr.finished_by_user = True
                 CREATE (r:ClubReviewNoText {
                     id: "club_review_no_text" + randomUUID(),
                     user_id: $user_id,
@@ -850,6 +867,8 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
                     likes: 0,
                     rating: $rating
                 })
+                MERGE (u)-[:POSTED]->(r)
+                MERGE (r)-[:POST_FOR_CLUB_BOOK]->(book)
             WITH u, book
             MATCH (u)-[rr:IS_READING_FOR_CLUB]->(book)
             DELETE rr
@@ -1669,7 +1688,7 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
             MATCH (b)-[:IS_READING]->(book:BookClubBook)
             MATCH (cu)-[:FINISHED_READING_FOR_CLUB]->(book)
             MATCH (post {deleted:false})-[:POST_FOR_CLUB_BOOK]->(book)
-            WHERE post:ClubUpdate OR post:ClubUpdateNoText or post:ClubReview
+            WHERE post:ClubUpdate OR post:ClubUpdateNoText or post:ClubReview or post:ClubReviewNoText
             match (post)<-[pr:POSTED]-(u:User)
             optional match (cu)-[lr:LIKES]->(post)
             optional match (any)-[nl:LIKES]->(post)
@@ -1776,6 +1795,21 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
                     questions=response['post'].get('questions'),
                     question_ids=response['post'].get('question_ids'),
                     responses=response['post'].get('responses'),
+                    rating=response['post'].get('rating'),
+                    book=book,
+                    awards=awards
+                )
+                
+            elif response.get("labels(post)") == ["ClubReviewNoText"]:
+                post = BookClubSchemas.ReviewPostNoText(
+                    id=response['post'].get("id"),
+                    created_date=response['post'].get("created_date"),
+                    user_id=response.get("u.id"),
+                    user_username=response.get("u.username"),
+                    likes=response.get("num_likes"),
+                    liked_by_current_user=response.get("liked_by_current_user"),
+                    posted_by_current_user=response.get("posted_by_current_user"),
+                    num_comments=response.get("num_comments"),
                     rating=response['post'].get('rating'),
                     book=book,
                     awards=awards
@@ -2378,13 +2412,7 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
                 selected_finish_date: reading.selected_finish_date,
                 actual_finish_date: datetime()
             }]->(bc_book)
-            WITH bc_book, reading
-            MATCH (member:User)-[member_reading:IS_READING_FOR_CLUB]->(bc_book)
-            CREATE (member)-[member_finished:FINISHED_READING_FOR_CLUB {
-                last_updated: member_reading.last_updated,
-                current_chapter: member_reading.current_chapter
-            }]->(bc_book)
-            DELETE reading, member_reading
+            DELETE reading
             RETURN bc_book.id as book_id
             """
         )

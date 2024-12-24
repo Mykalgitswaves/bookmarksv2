@@ -1163,7 +1163,7 @@ async def start_book_for_club(
                 "action": "start_book_for_club",
             },
         )
-        raise HTTPException(status_code=404, detail="Error starting book")
+        raise HTTPException(status_code=400, detail="Error starting book")
 
 
 @router.post("/{book_club_id}/currently_reading/finish", name="bookclub:finish_book")
@@ -1652,7 +1652,8 @@ async def create_review_for_user(
 
     Args:
         no_review (Optional(book)): A boolean that is true if the user
-            does not want to write a review
+            does not want to write a review. A rating can still
+            be provided.
         request: A request object that contains the following fields:
             user (dict): A user object containing the following fields:
                 id (str): The id of the user

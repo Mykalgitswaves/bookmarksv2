@@ -210,6 +210,11 @@ class ReviewPost(Post):
     rating: int
     type: str = "club_review" 
     awards: dict | None = None
+    
+class ReviewPostNoText(Post):
+    type: str = "club_review_no_text"
+    awards: dict | None = None
+    rating: int | None
 
 class BaseAward(BaseModel):
     id: str
