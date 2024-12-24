@@ -172,3 +172,8 @@
     font-family: var(--fancy-script);
     font-size: var(--font-xl)
 }
+
+.btn-add-friend {
+    background-color: var(--indigo-200);
+    color: var(--indigo-600);
+}

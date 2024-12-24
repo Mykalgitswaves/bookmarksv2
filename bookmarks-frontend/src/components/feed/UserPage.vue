@@ -3,7 +3,7 @@
     
     <section class="section-wrapper">
         <div class="user-profile-header">
-            <div class="edit-profile-picture">
+            <!-- <div class="edit-profile-picture">
                 <img v-if="userData?.cdnUrl" :src="userData?.cdnUrl" class="image" alt="">
 
                 <svgPlaceholder v-else class="image" />
@@ -15,9 +15,9 @@
                 >
                     <IconEdit />
                 </button>
-            </div>
+            </div> -->
             <div class="u-p-h-text-info">
-                <h2 class="font-medium text-slate-600 text-xl">
+                <h2 class="font-medium text-stone-600 text-xl fancy">
                     {{ userData?.username }}
                 </h2>
                 <p class="text-center fancy text-lg text-indigo-600">{{ userData?.bio }}</p>
@@ -113,7 +113,7 @@ const componentMapping = reactive({
 });
 
 async function getUserData() {
-    await db.get(urls.user.getUser(user_profile), null, true).then((res) => {
+    await db.get(urls.user.getUser(user_profile), null, true, (res) => {
         userData.loaded = true
         userData.username = res.data.username
         userData.full_name = res.data.full_name
@@ -132,10 +132,10 @@ function getUserBio() {
         userData?.bio
 }
 
-onMounted(() => {
-    getUserData(); 
+onMounted(async () => {
+    await getUserData(); 
     userData.bio = getUserBio()
-})
+});
          
 </script>
 

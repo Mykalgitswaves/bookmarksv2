@@ -74,13 +74,13 @@ class TestSocial:
         # Set the headers with authorization token
         headers = {"Authorization": f"{self.token_type} {self.access_token}"}
         
-        response = requests.put(f"{self.endpoint}/api/user/{self.user_id_friend}/send_friend_request", headers=headers)
+        response = requests.put(f"{self.endpoint}/api/user/{self.user_id}/send_friend_request/{self.user_id_friend}", headers=headers)
         assert response.status_code == 200, "Testing Send Friend Request"
 
-        response = requests.put(f"{self.endpoint}/api/user/{self.user_id_friend}/unsend_friend_request", headers=headers)
+        response = requests.put(f"{self.endpoint}/api/user/{self.user_id}/unsend_friend_request/{self.user_id_friend}", headers=headers)
         assert response.status_code == 200, "Testing Unsend Friend Request"
 
-        response = requests.put(f"{self.endpoint}/api/user/{self.user_id_friend}/send_friend_request", headers=headers)
+        response = requests.put(f"{self.endpoint}/api/user/{self.user_id}/send_friend_request/{self.user_id_friend}", headers=headers)
         assert response.status_code == 200, "Testing Send Friend Request"
 
         friend_headers = {"Authorization": f"{self.token_type_friend} {self.access_token_friend}"}
@@ -115,7 +115,7 @@ class TestSocial:
         # Set the headers with authorization token
         headers = {"Authorization": f"{self.token_type} {self.access_token}"}
         
-        response = requests.put(f"{self.endpoint}/api/user/{self.user_id_friend}/send_friend_request", headers=headers)
+        response = requests.put(f"{self.endpoint}/api/user/{self.user_id}/send_friend_request/{self.user_id_friend}", headers=headers)
         assert response.status_code == 200, "Testing Send Friend Request"
 
         friend_headers = {"Authorization": f"{self.token_type_friend} {self.access_token_friend}"}

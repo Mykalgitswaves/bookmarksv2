@@ -10,14 +10,27 @@
             </div>
             <div v-if="bookclubs?.ownedByUser?.length" 
                 class="mb-5 mt-5 bookclubs-gallery"
-            >
+            > 
+              <!-- Only show three -->
                 <BookClubPreview 
-                    v-for="bookclub in bookclubs.ownedByUser"
+                    v-for="bookclub in bookclubs.ownedByUser.slice(0,3)"
                     :bookclub="bookclub"
                     :user="user"
                 />
+
+                <!-- In case there are more than three load a button in the toolbar to view all! -->
+                <div v-if="bookclubs.ownedByUser.length > 2">
+                  <button 
+                    type="button"
+                    class="btn btn-tiny btn-submit text-sm fancy"
+                    @click="router.push(navRoutes.toBookClubsPage(user))"
+                  >
+                    View all
+                  </button>
+                </div>
             </div>
         </template>
+
         <template #loading>
           <div style="margin-left: 16px;">
               <h2 class="text-stone-600 text-2xl fancy">Bookclubs you own</h2>
@@ -48,9 +61,8 @@
     </div>
     
     <!-- Your currently reading shown at the top -->
-    <div>
-      <CurrentlyReading />
-    </div>
+    <CurrentlyReading />
+
 
     <!-- Create posts for feed! -->
     <component 
@@ -115,9 +127,9 @@
 </template>
 <script setup>
 import { ref, onMounted, reactive } from 'vue';
-import { useRoute } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 import { db } from '@/services/db.js';
-import { urls } from '@/services/urls.js';
+import { urls, navRoutes } from '@/services/urls.js';
 import { filterOptions } from './filters.js';
 import { navigate } from './createPostService';
 import { feedComponentMapping } from './feedPostsService';
@@ -134,6 +146,7 @@ const feedData = ref([]);
 const privateFeed = ref([]);
 const postOptions = ['review', 'update', 'comparison'];
 const route = useRoute();
+const router = useRouter();
 const { user } = route.params; 
 
 function closeModal(reactiveKey) {

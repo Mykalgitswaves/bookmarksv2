@@ -26,15 +26,30 @@ import IconSearch from '@/components/svg/icon-search.vue';
 
 const { debounce } = helpersCtrl;
 const search_params = ref('');
-const responseBlob = ref(null);
 
 function searchRequest() {
     if (search_params.value.length > 1) {
-        return db.get(urls.search(search_params.value), null, false, (res) => {
-            responseBlob.value = res.data;
-            PubSub.publish('nav-search-get-data', res.data)
-        }, (err) => {
-            console.error(err)
+        // Define your URLs and feature keys
+        const searchFeatures = {
+            general_search: urls.search.general(search_params.value), // This feature outputs an object
+            bookClubs: urls.search.bookClub(search_params.value), // Outputs an array
+            bookshelves: urls.search.bookshelf(search_params.value), // Outputs an array
+            users: urls.search.user(search_params.value), // Outputs an array
+            // Add more features as needed
+        };
+        
+        // Map the feature keys to db.get calls
+        const requests = Object.entries(searchFeatures).map(([key, url]) =>
+            db.get(url, null, false, (res) => {
+                PubSub.publish('nav-search-get-data', { [key]: res.data });
+            }, (err) => {
+                console.log(err)
+            })
+        );
+        
+        // Use Promise.allSettled to tell us when all requests are fulfilled
+        Promise.allSettled(requests).then(() => {
+            PubSub.publish('nav-search-get-data-loaded', Symbol('loaded'));
         });
     }
 }

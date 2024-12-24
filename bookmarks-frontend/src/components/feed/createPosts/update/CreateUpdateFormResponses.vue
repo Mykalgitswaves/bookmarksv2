@@ -1,5 +1,5 @@
 <template>
-    <div v-if="update.response?.length || update.quote.length" class="container questions">
+    <div v-if="update.response?.length || update.quote?.length" class="container questions">
         <div v-if="update.quote" class="quote">
             <div class="my-2">
                 <p class="text-start">

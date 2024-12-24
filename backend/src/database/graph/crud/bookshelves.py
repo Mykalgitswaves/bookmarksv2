@@ -2141,3 +2141,18 @@ class BookshelfCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
         response = result.single()
         return response is not None
     
+    def delete_book_shelf_data_for_user(self, user_id:str):
+        with self.driver.session() as session:
+            result = session.write_transaction(self.delete_book_shelf_data_for_user_query, user_id)
+        return result
+    
+    @staticmethod
+    def delete_book_shelf_data_for_user_query(tx, user_id:str):
+        query = (
+            """
+            MATCH (u:User {id: $user_id})-[:HAS_BOOKSHELF_ACCESS {type:"owner"}]->(shelf:Bookshelf)
+            DETACH DELETE shelf
+            """
+        )
+        result = tx.run(query, user_id=user_id)
+        return True

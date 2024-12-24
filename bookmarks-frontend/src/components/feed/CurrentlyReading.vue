@@ -23,14 +23,10 @@
             </div>
 
             <Overlay :ref="(ref) => currentlyReadingDialogRef = ref?.dialogRef">
-                <template #overlay-header>
-                    <h3 class="text-stone-500 text-lg fancy">
-                        Update progress for 
-                        <span class="text-indigo-500 italic">{{ selectedCurrentlyReadingBook.title }}</span>
-                    </h3>
-                </template>
                 <template #overlay-main>
-                    <CurrentlyReadingForm />
+                    <CreateUpdateForm :book="selectedCurrentlyReadingBook" 
+                        @post-update="(update) => postUpdateForCurrentlyReading(update)"  
+                    />
                 </template>
             </Overlay>
         </template>
@@ -63,15 +59,18 @@ import { urls } from '../../services/urls';
 import { ref } from 'vue';
 import { useRoute } from 'vue-router';
 import { truncateText } from '../../services/helpers';
+import { formatUpdateForBookClub } from './bookclubs/bookClubService';
+import { helpersCtrl } from '../../services/helpers';
 import AsyncComponent from './partials/AsyncComponent.vue';
 import Overlay from './partials/overlay/Overlay.vue';
+import CreateUpdateForm from './createPosts/update/createUpdateForm.vue'; 
 
 const route = useRoute();
 const { user } = route.params;
 let books = [];
 let bookshelf; 
-let selectedCurrentlyReadingBook = {}
-
+const selectedCurrentlyReadingBook = ref({});
+const updateRef = ref({});
 
 const currentlyReadingBookClub = db.get(urls.rtc.getCurrentlyReadingForFeed(user), null, false, 
     (res) => {
@@ -86,9 +85,25 @@ const currentlyReadingBookClub = db.get(urls.rtc.getCurrentlyReadingForFeed(user
 const currentlyReadingDialogRef = ref(null);
 
 function showCurrentlyReadingBookOverlay(book) {
-    Object.assign(selectedCurrentlyReadingBook, book);
+    Object.assign(selectedCurrentlyReadingBook.value, book);
     currentlyReadingDialogRef.value?.showModal();
 }
+
+function postUpdateForCurrentlyReading(update) {
+    console.log(update);
+    let payload = helpersCtrl.formatUpdateData(update)
+    console.log(update);
+    db.post(urls.reviews.update, payload, false, 
+        (res) => {
+            // Refresh;
+            console.log(res)
+            currentlyReadingDialogRef?.close();
+        },
+        (err) => {
+            console.warn(err);
+        },
+    );
+};
 </script>
 <style scoped lang="scss">
     .currently-reading {

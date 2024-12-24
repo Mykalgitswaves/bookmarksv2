@@ -469,8 +469,9 @@ async def update_password(
         raise HTTPException(400, detail="Unauthorized")
 
 
-@router.put("/{friend_id}/send_friend_request", name="user:send_friend_request")
+@router.put("/{user_id}/send_friend_request/{friend_id}", name="user:send_friend_request")
 async def send_friend_request(
+    user_id: str,
     friend_id: str,
     current_user: Annotated[User, Depends(get_current_active_user)],
     user_repo: UserCRUDRepositoryGraph = Depends(
@@ -480,7 +481,7 @@ async def send_friend_request(
     """
     This send a friend request from user_id -> friend_id
     """
-    if not current_user:
+    if current_user.id != user_id:
         raise HTTPException(400, "Unauthorized")
 
     try:
@@ -513,8 +514,9 @@ async def send_friend_request(
         raise HTTPException(401, detail="Unauthorized")
 
 
-@router.put("/{friend_id}/unsend_friend_request", name="user:unsend_friend_request")
+@router.put("/{user_id}/unsend_friend_request/{friend_id}", name="user:unsend_friend_request")
 async def unsend_friend_request(
+    user_id: str,
     friend_id: str,
     current_user: Annotated[User, Depends(get_current_active_user)],
     user_repo: UserCRUDRepositoryGraph = Depends(
@@ -524,7 +526,7 @@ async def unsend_friend_request(
     """
     Unsends a friend request from user_id to friend_id
     """
-    if not current_user:
+    if current_user.id != user_id:
         raise HTTPException(400, "Unauthorized")
     try:
         friend_request = FriendRequestCreate(

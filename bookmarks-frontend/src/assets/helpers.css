@@ -275,3 +275,15 @@
 .text-end {
   text-align: end;
 }
+
+.bottom-0 {
+  bottom: 0;
+}
+
+.bottom-2 {
+  bottom: 2%;
+}
+
+.bottom-4 {
+  bottom: 4%;
+}
