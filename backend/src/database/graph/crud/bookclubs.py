@@ -859,11 +859,11 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
                 fr.last_updated = datetime(),
                 fr.finished_by_user = True
                 CREATE (r:ClubReviewNoText {
-                    id: "club_review_no_text" + randomUUID(),
+                    id: "club_review_no_text_" + randomUUID(),
                     user_id: $user_id,
                     book_club_book_id: book.id,
                     created_date: datetime(),
-                    delete: False,
+                    deleted: False,
                     likes: 0,
                     rating: $rating
                 })
@@ -2496,7 +2496,7 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
             OPTIONAL MATCH (b)-[]-(invites:BookClubInvite)
             OPTIONAL MATCH (invites)-[]-(test_emails:InvitedUser)
             OPTIONAL MATCH (user)-[]-(awards:ClubAwardForPost)
-            OPTIONAL MATCH (b)-[]-(posts:ClubUpdate|ClubUpdateNoText|ClubReview)
+            OPTIONAL MATCH (b)-[]-(posts:ClubUpdate|ClubUpdateNoText|ClubReview|ClubReviewNoText)
             DETACH DELETE pace, book, b, invites, test_emails, awards, posts
             return user.id as user_id
             """

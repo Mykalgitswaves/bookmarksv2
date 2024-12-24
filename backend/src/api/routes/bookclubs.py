@@ -1209,7 +1209,7 @@ async def finish_book_for_club(
                 "action": "finish_book_for_club",
             },
         )
-        raise HTTPException(status_code=404, detail="Error finishing book")
+        raise HTTPException(status_code=400, detail="Error finishing book")
 
 
 @router.post("/{book_club_id}/currently_reading/stop", name="bookclub:stop_book")
