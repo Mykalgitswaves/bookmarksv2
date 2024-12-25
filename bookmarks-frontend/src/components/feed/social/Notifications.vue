@@ -674,6 +674,14 @@ onBeforeUnmount(() => {
 
 .notification[accepted] {
     background-color: var(--green-50);
+    display: inline-block;
+    padding: 8px 16px;
+}
+
+.notification[declined] {
+    background-color: var(--red-50);
+    display: inline-block;
+    padding: 8px 16px;
 }
 
 .r-20 {
