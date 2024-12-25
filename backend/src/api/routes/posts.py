@@ -199,6 +199,7 @@ async def create_update(
             user_username=current_user.username,
             headline=response.get("headline"),
             page=response.get("page"),
+            chapter=response.get('chapter'),
             response=response.get("response"),
             spoiler=response.get("is_spoiler"),
             quote=response.get("quote"),
