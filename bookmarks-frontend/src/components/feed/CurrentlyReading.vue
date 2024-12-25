@@ -3,7 +3,10 @@
         <br><span class="text-sm">Books in your currently reading bookshelf</span>
     </h1>
         <!-- If loaded -->
-    <AsyncComponent :promises="[currentlyReadingBookClub]">
+    <AsyncComponent 
+        :promise-factory="currentlyReadingBookShelfFactory" 
+        :subscribed-to="CURRENTLY_READING_SUB_KEY"
+    >
         <template #resolved>
             <div class="currently-reading" v-if="books.length">
                 <div class="currently-reading-book" 
@@ -72,7 +75,8 @@ let bookshelf;
 const selectedCurrentlyReadingBook = ref({});
 const updateRef = ref({});
 
-const currentlyReadingBookClub = db.get(urls.rtc.getCurrentlyReadingForFeed(user), null, false, 
+const CURRENTLY_READING_SUB_KEY = 'currently-reading-get-currently-reading-bookshelf';
+const currentlyReadingBookShelfFactory = () => db.get(urls.rtc.getCurrentlyReadingForFeed(user), null, false, 
     (res) => {
         bookshelf = res.bookshelf;
         books = res.bookshelf.books;
@@ -91,11 +95,13 @@ function showCurrentlyReadingBookOverlay(book) {
 
 function postUpdateForCurrentlyReading(update) {
     let payload = helpersCtrl.formatUpdateData(update)
+    console.assert(payload.title)
     db.post(urls.reviews.update, payload, false, 
         (res) => {
             // Refresh;
             console.log(res)
-            currentlyReadingDialogRef.close();
+            PubSub.publish(CURRENTLY_READING_SUB_KEY, Symbol('load'));
+            currentlyReadingDialogRef.value.close();
         },
         (err) => {
             console.warn(err);

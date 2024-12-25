@@ -1,5 +1,5 @@
 <template>
-    <h1 class="create-post-heading-text text-center">Creating an update for chapter {{chapter}} of <span class="create-post-heading-book-title">
+    <h1 class="create-post-heading-text text-center">Creating an update for chapter {{update.chapter}} of <span class="create-post-heading-book-title">
             {{ book?.title }}</span>
         </h1>
     <!-- Controls for navigating to diff steps. -->
@@ -44,12 +44,12 @@
             <div class="mb-5 ml-auto mr-auto w-90" v-if="step === 1">
                 <div class="flex gap-2 justify-center pb-5">
                     <label class="block mb-5 mt-10" for="page-chapter">
-                        <p class="text-center text-2xl mb-2 mt-5 text-stone-600 fancy">on chapter <span class="italic text-indigo-600">{{ chapter }}</span></p>
+                        <p class="text-center text-2xl mb-2 mt-5 text-stone-600 fancy">on chapter <span class="italic text-indigo-600">{{ update.chapter }}</span></p>
                         <input
                             class="mx-auto input-number rounded-md"
                             id="page-chapter"
                             type="number" 
-                            v-model="chapter"
+                            v-model="update.chapter"
                         >
                     </label>
 
