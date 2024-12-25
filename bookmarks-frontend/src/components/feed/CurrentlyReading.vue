@@ -90,14 +90,12 @@ function showCurrentlyReadingBookOverlay(book) {
 }
 
 function postUpdateForCurrentlyReading(update) {
-    console.log(update);
     let payload = helpersCtrl.formatUpdateData(update)
-    console.log(update);
     db.post(urls.reviews.update, payload, false, 
         (res) => {
             // Refresh;
             console.log(res)
-            currentlyReadingDialogRef?.close();
+            currentlyReadingDialogRef.close();
         },
         (err) => {
             console.warn(err);

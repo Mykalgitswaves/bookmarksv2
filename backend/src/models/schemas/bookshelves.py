@@ -99,6 +99,7 @@ class BookshelfBook(BaseModel):
     note_for_shelf: str | None = None
     google_id: str | None = None
     current_page: int | None = None
+    current_chapter: int | None = None
     total_pages: int | None = None
     
 class CurrentlyReadingBookPreview(BaseModel):

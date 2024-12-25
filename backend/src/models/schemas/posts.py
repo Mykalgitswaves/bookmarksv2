@@ -90,6 +90,7 @@ class UpdateCreate(PostCreate):
 
 class UpdatePost(Post):
     page: int
+    chapter: int | None = None
     response: str
     spoiler: bool
     headline: str = ""
