@@ -1798,7 +1798,14 @@ async def get_finished_feed(
     return JSONResponse(status_code=200, content={"posts":jsonable_encoder(posts)})
 
 @router.get("/{book_club_id}/afterword/{user_id}/user_stats", name='bookclubs:get_afterword_user_stats')
-async def get_afterword_user_stats():
+async def get_afterword_user_stats(
+    book_club_id: str,
+    user_id:str,
+    current_user: Annotated[User, Depends(get_current_active_user)],
+    book_club_repo: BookClubCRUDRepositoryGraph = Depends(
+        get_repository(repo_type=BookClubCRUDRepositoryGraph)
+    )
+):
     """
     Gets the first page of the afterword for a user in a book club.
     This includes their stats including:
@@ -1821,9 +1828,63 @@ async def get_afterword_user_stats():
             updates (int): The number of updates they wrote
             awards (int): The number of awards they granted
     """
+    if current_user.id != user_id:
+        logger.warning(
+            "Unauthorized User",
+            extra={
+                "current_user_id": current_user.id,
+                "user_id": user_id,
+                "book_club_id": book_club_id,
+                "action": "get_afterword_user_stats",
+            },
+        )
+        raise HTTPException(401, "Unauthorized")
+    
+    stats = book_club_repo.get_afterward_user_stats(
+        book_club_id,
+        user_id
+    )
+    
+    if stats:
+        logger.info(
+            "Retrieved afterword user stats",
+            extra={
+                "user_id": user_id,
+                "book_club_id": book_club_id,
+                "action": "get_afterword_user_stats"
+            }
+        )
+        return JSONResponse(
+            200,
+            content={
+                "stats": stats
+            }
+        )
+    else:
+        logger.warning(
+            "Error grabbing user stats",
+            extra={
+                "user_id": user_id,
+                "book_club_id": book_club_id,
+                "action": "get_afterword_user_stats"
+            }
+        )
+        return HTTPException(
+            400,
+            "Unable to grab user stats"
+        )
+        
+    
 
 @router.get("/{book_club_id}/afterword/{user_id}/friend_thoughts", name='bookclubs:get_afterword_friend_thoughts')
-async def get_afterword_friend_thoughts():
+async def get_afterword_friend_thoughts(
+    book_club_id: str,
+    user_id: str,
+    current_user: Annotated[User, Depends(get_current_active_user)],
+    book_club_repo: BookClubCRUDRepositoryGraph = Depends(
+        get_repository(repo_type=BookClubCRUDRepositoryGraph)
+    )
+):
     """
     Gets the second page of the afterword for a user in a book club.
     This page includes the headline from each readers review if they posted one,
@@ -1847,9 +1908,61 @@ async def get_afterword_friend_thoughts():
 
         NOTE: Haven't yet decided how these are sorted
     """
+    if current_user.id != user_id:
+        logger.warning(
+            "Unauthorized User",
+            extra={
+                "current_user_id": current_user.id,
+                "user_id": user_id,
+                "book_club_id": book_club_id,
+                "action": "get_afterword_friend_thoughts",
+            },
+        )
+        raise HTTPException(401, "Unauthorized")
+    
+    friend_thoughts = book_club_repo.get_afterward_friend_thoughts(
+        book_club_id,
+        user_id
+    )
+    
+    if friend_thoughts:
+        logger.info(
+            "Retrieved afterword friend thoughts",
+            extra={
+                "user_id": user_id,
+                "book_club_id": book_club_id,
+                "action": "get_afterword_friend_thoughts"
+            }
+        )
+        return JSONResponse(
+            200,
+            content={
+                "friend_thoughts": friend_thoughts
+            }
+        )
+    else:
+        logger.warning(
+            "Error grabbing friend thoughts",
+            extra={
+                "user_id": user_id,
+                "book_club_id": book_club_id,
+                "action": "get_afterword_friend_thoughts"
+            }
+        )
+        return HTTPException(
+            400,
+            "Unable to grab friend thoughts"
+        )
 
 @router.get("/{book_club_id}/afterword/{user_id}/consensus", name='bookclubs:get_afterword_consensus')
-async def get_afterword_consensus():
+async def get_afterword_consensus(
+    book_club_id: str,
+    user_id: str,
+    current_user: Annotated[User,Depends(get_current_active_user)],
+    book_club_repo: BookClubCRUDRepositoryGraph = Depends(
+        get_repository(BookClubCRUDRepositoryGraph)
+    )
+):
     """
     Gets the third page. This is the consensus thoughts from the group. 
     This includes the ratings of every member, including the current user. 
@@ -1875,9 +1988,61 @@ async def get_afterword_consensus():
                 num_times_result (int): The number of times the user_agreed_with_majority
                     result has happened. Ex. "The user has (agreed/disagreed) n times"
     """
+    if current_user.id != user_id:
+        logger.warning(
+            "Unauthorized User",
+            extra={
+                "current_user_id": current_user.id,
+                "user_id": user_id,
+                "book_club_id": book_club_id,
+                "action": "get_afterword_consensus",
+            },
+        )
+        raise HTTPException(401,"Unauthorized")
+    
+    consensus = book_club_repo.get_afterward_consensus(
+        book_club_id,
+        user_id
+    )
+    
+    if consensus:
+        logger.info(
+            "Retrieved afterword consensus",
+            extra={
+                "user_id": user_id,
+                "book_club_id": book_club_id,
+                "action": "get_afterword_consensus"
+            }
+        )
+        return JSONResponse(
+            200,
+            content={
+                "consensus": consensus
+            }
+        )
+    else:
+        logger.warning(
+            "Error grabbing consensus",
+            extra={
+                "user_id": user_id,
+                "book_club_id": book_club_id,
+                "action": "get_afterword_consensus"
+            }
+        )
+        return HTTPException(
+            400,
+            "Unable to grab consensus"
+        )
 
 @router.get("/{book_club_id}/afterword/{user_id}/highlights", name='bookclubs:get_afterword_highlights')
-async def get_afterword_highlights():
+async def get_afterword_highlights(
+    book_club_id: str,
+    user_id: str,
+    current_user: Annotated[User,Depends(get_current_active_user)],
+    book_club_repo: BookClubCRUDRepositoryGraph = Depends(
+        get_repository(BookClubCRUDRepositoryGraph)
+    )
+):
     """
     This is the fourth page.
     Gets the highlights from this book for the user. This includes:
@@ -1913,9 +2078,61 @@ async def get_afterword_highlights():
         Overlap from one post into multiple highlights
             Ex. Same post is the most agreed with and most controversial
     """
+    if current_user.id != user_id:
+        logger.warning(
+            "Unauthorized User",
+            extra={
+                "current_user_id": current_user.id,
+                "user_id": user_id,
+                "book_club_id": book_club_id,
+                "action": "get_afterword_highlights",
+            },
+        )
+        raise HTTPException(401,"Unauthorized")
+    
+    highlights = book_club_repo.get_afterward_highlights(
+        book_club_id,
+        user_id
+    )
+    
+    if highlights:
+        logger.info(
+            "Retrieved afterword highlights",
+            extra={
+                "user_id": user_id,
+                "book_club_id": book_club_id,
+                "action": "get_afterword_highlights"
+            }
+        )
+        return JSONResponse(
+            200,
+            content={
+                "highlights": highlights
+            }
+        )
+    else:
+        logger.warning(
+            "Error grabbing highlights",
+            extra={
+                "user_id": user_id,
+                "book_club_id": book_club_id,
+                "action": "get_afterword_highlights"
+            }
+        )
+        return HTTPException(
+            400,
+            "Unable to grab highlights"
+        )
 
 @router.get("/{book_club_id}/afterword/{user_id}/club_stats", name='bookclubs:get_afterword_club_stats')
-async def get_afterword_club_stats():
+async def get_afterword_club_stats(
+    book_club_id: str,
+    user_id: str,
+    current_user: Annotated[User,Depends(get_current_active_user)],
+    book_club_repo: BookClubCRUDRepositoryGraph = Depends(
+        get_repository(BookClubCRUDRepositoryGraph)
+    )
+):
     """
     This is the 5th page.
     Gets stats from the clubs reading. This includes:
@@ -1930,7 +2147,51 @@ async def get_afterword_club_stats():
         NOTE: We will need to discuss the best way to return this data.
         Probably best to try a few things
     """
-
+    if current_user.id != user_id:
+        logger.warning(
+            "Unauthorized User",
+            extra={
+                "current_user_id": current_user.id,
+                "user_id": user_id,
+                "book_club_id": book_club_id,
+                "action": "get_afterword_club_stats",
+            },
+        )
+        raise HTTPException(401,"Unauthorized")
+    
+    club_stats = book_club_repo.get_afterward_club_stats(
+        book_club_id,
+        user_id
+    )
+    
+    if club_stats:
+        logger.info(
+            "Retrieved afterword club stats",
+            extra={
+                "user_id": user_id,
+                "book_club_id": book_club_id,
+                "action": "get_afterword_club_stats"
+            }
+        )
+        return JSONResponse(
+            200,
+            content={
+                "club_stats": club_stats
+            }
+        )
+    else:
+        logger.warning(
+            "Error grabbing club stats",
+            extra={
+                "user_id": user_id,
+                "book_club_id": book_club_id,
+                "action": "get_afterword_club_stats"
+            }
+        )
+        return HTTPException(
+            400,
+            "Unable to grab club stats"
+        )
 # TODO:
 """
 - Update minimal preview to include the users status.
