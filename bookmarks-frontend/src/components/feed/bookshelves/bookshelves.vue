@@ -29,8 +29,8 @@
         </div>
 
         <!-- loading indicatorrrr -->
-        <div :aria-busy="!!props.dataLoaded" class="bookshelves loading"> 
-            <div v-if="!props.dataLoaded" class="bookshelf-container gradient" >
+        <div v-if="!props.dataLoaded && !bookshelves?.length" :aria-busy="!!props.dataLoaded" class="bookshelves loading"> 
+            <div class="bookshelf-container gradient" >
                 <div class="bookshelf gradient"></div>
 
                 <div>
