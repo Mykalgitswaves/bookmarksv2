@@ -521,3 +521,12 @@ ul:has(.comments-wrapper) {
     border-color: var(--indigo-500);
     outline: none;
 }
+
+/* Disable scroll bar for text areas and dialogs */
+textarea::-webkit-scrollbar {
+  display: none;
+}
+
+dialog::-webkit-scrollbar {
+  display: none;
+}

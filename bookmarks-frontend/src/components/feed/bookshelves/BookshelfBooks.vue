@@ -764,8 +764,4 @@ defineExpose({ currentBook });
         align-items: center;
         width: 100%;
     }
-
-    textarea::-webkit-scrollbar {
-        display: none;
-    }
 </style>
