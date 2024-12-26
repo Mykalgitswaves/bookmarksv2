@@ -16,7 +16,7 @@
             <div class="my-5">
                 <RadioGroup 
                     id="visibility-options"
-                    :options="VISIBILITY_OPTIONS" 
+                    :options="BOOKSHELVES_VISIBLITY_OPTIONS" 
                     @updated:modelValue="(value) => { 
                         model.visibility = value
                     }"
@@ -53,6 +53,7 @@
     import { db } from '../../../services/db';
     import { XSMALL_TEXT_LENGTH, MEDIUM_TEXT_LENGTH } from '../../../services/forms';    
     import RadioGroup from '../partials/RadioGroup.vue';
+    import { BOOKSHELVES_VISIBLITY_OPTIONS } from '@/components/shared/models.js';
     
     const route = useRoute();
     const router = useRouter();
