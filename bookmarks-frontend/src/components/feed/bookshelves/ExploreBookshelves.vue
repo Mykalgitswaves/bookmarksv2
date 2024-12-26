@@ -8,7 +8,7 @@
 
             <div>    
                 <RouterLink 
-                    :to="navRoutes.toBookshelvesMainPage(user)" 
+                    :to="navRoutes.toBookshelvesMainPage(userId)" 
                     class="btn btn-tiny btn-nav text-sm ml-auto"
                 >
                     back to your shelves

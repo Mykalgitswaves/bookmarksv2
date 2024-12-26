@@ -211,6 +211,13 @@ import AsyncComponent from '@/components/feed/partials/AsyncComponent.vue';
 const route = useRoute();
 const router = useRouter();
 
+// Fix for a weird bug we sometimes run into from bad navigation.
+// If user is ever undefined make us logout.
+watch(() => route.params, (newValue) => {
+  if (newValue.user === 'undefined') {
+    router.push('/');
+  }
+}, {immediate: true})
 
 const noBookYetUrl = 'https://placehold.co/45X45';
 

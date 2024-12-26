@@ -59,6 +59,10 @@
                     </template>
                 </RadioGroup>
 
+
+                <button type="button" class="btn btn-delete" @click="">
+                    Delete bookshelf
+                </button>
             </div>
     </section>    
     <div class="mobile-menu-spacer sm:hidden"></div>
