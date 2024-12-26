@@ -2228,8 +2228,33 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
                     eligible = False
                     break
         return eligible
-            
+    
+    def get_afterward_user_stats(
+        self,
+        book_club_id: str,
+        book_club_book_id: str,
+        user_id: str
+    ):
+        with self.driver.session() as session:
+            result = session.read_transaction(
+                self.get_afterward_user_stats_query,
+                book_club_id,
+                user_id
+            )
+        return result
 
+    @staticmethod
+    def get_afterward_user_stats_query(
+        self,
+        book_club_id: str,
+        book_club_book_id: str,
+        user_id: str
+    ):
+        query = (
+            """
+            MATCH (b:BookClub {id:$book_club_id})-
+            """
+        )
     def search_users_not_in_club(
             self, 
             search_param: BookClubSchemas.BookClubInviteSearch

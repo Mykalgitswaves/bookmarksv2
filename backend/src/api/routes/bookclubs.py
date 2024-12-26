@@ -1797,10 +1797,14 @@ async def get_finished_feed(
     )
     return JSONResponse(status_code=200, content={"posts":jsonable_encoder(posts)})
 
-@router.get("/{book_club_id}/afterword/{user_id}/user_stats", name='bookclubs:get_afterword_user_stats')
+@router.get(
+    "/{book_club_id}/afterword/{user_id}/user_stats/{book_club_book_id}", 
+    name='bookclubs:get_afterword_user_stats'
+    )
 async def get_afterword_user_stats(
     book_club_id: str,
     user_id:str,
+    book_club_book_id: str,
     current_user: Annotated[User, Depends(get_current_active_user)],
     book_club_repo: BookClubCRUDRepositoryGraph = Depends(
         get_repository(repo_type=BookClubCRUDRepositoryGraph)
@@ -1821,6 +1825,8 @@ async def get_afterword_user_stats(
     Args:
         book_club_id (str): The id for the book club they are getting the afterword for
         user_id (str): The id of the user
+        book_club_book_id (str): The id for the BookClubBook node that this
+            afterword is being created for
 
     Returns: 
         stats (dict): This is a json object that contains:
@@ -1876,10 +1882,14 @@ async def get_afterword_user_stats(
         
     
 
-@router.get("/{book_club_id}/afterword/{user_id}/friend_thoughts", name='bookclubs:get_afterword_friend_thoughts')
+@router.get(
+    "/{book_club_id}/afterword/{user_id}/friend_thoughts/{book_club_book_id}", 
+    name='bookclubs:get_afterword_friend_thoughts'
+    )
 async def get_afterword_friend_thoughts(
     book_club_id: str,
     user_id: str,
+    book_club_book_id: str,
     current_user: Annotated[User, Depends(get_current_active_user)],
     book_club_repo: BookClubCRUDRepositoryGraph = Depends(
         get_repository(repo_type=BookClubCRUDRepositoryGraph)
@@ -1896,6 +1906,8 @@ async def get_afterword_friend_thoughts(
     Args:
         book_club_id (str): The id for the book club they are getting the afterword for
         user_id (str): The id of the user
+        book_club_book_id (str): The id for the BookClubBook node that this
+            afterword is being created for
 
     Returns: 
         thoughts (list): This is an array that contains:
@@ -1954,10 +1966,14 @@ async def get_afterword_friend_thoughts(
             "Unable to grab friend thoughts"
         )
 
-@router.get("/{book_club_id}/afterword/{user_id}/consensus", name='bookclubs:get_afterword_consensus')
+@router.get(
+    "/{book_club_id}/afterword/{user_id}/consensus/{book_club_book_id}", 
+    name='bookclubs:get_afterword_consensus'
+    )
 async def get_afterword_consensus(
     book_club_id: str,
     user_id: str,
+    book_club_book_id: str,
     current_user: Annotated[User,Depends(get_current_active_user)],
     book_club_repo: BookClubCRUDRepositoryGraph = Depends(
         get_repository(BookClubCRUDRepositoryGraph)
@@ -1971,7 +1987,9 @@ async def get_afterword_consensus(
     Args:
         book_club_id (str): The id for the book club they are getting the afterword for
         user_id (str): The id of the user
-
+        book_club_book_id (str): The id for the BookClubBook node that this
+            afterword is being created for
+    
     Returns: 
         consensus (dict): This is an object that contains:
             loved (array): An array of the users that loved the book. This contains:
@@ -2034,10 +2052,14 @@ async def get_afterword_consensus(
             "Unable to grab consensus"
         )
 
-@router.get("/{book_club_id}/afterword/{user_id}/highlights", name='bookclubs:get_afterword_highlights')
+@router.get(
+    "/{book_club_id}/afterword/{user_id}/highlights/{book_club_book_id}", 
+    name='bookclubs:get_afterword_highlights'
+    )
 async def get_afterword_highlights(
     book_club_id: str,
     user_id: str,
+    book_club_book_id: str,
     current_user: Annotated[User,Depends(get_current_active_user)],
     book_club_repo: BookClubCRUDRepositoryGraph = Depends(
         get_repository(BookClubCRUDRepositoryGraph)
@@ -2053,6 +2075,8 @@ async def get_afterword_highlights(
     Args:
         book_club_id (str): The id for the book club they are getting the afterword for
         user_id (str): The id of the user
+        book_club_book_id (str): The id for the BookClubBook node that this
+            afterword is being created for
 
     Returns: 
         highlights (dict): An object containing
@@ -2124,10 +2148,14 @@ async def get_afterword_highlights(
             "Unable to grab highlights"
         )
 
-@router.get("/{book_club_id}/afterword/{user_id}/club_stats", name='bookclubs:get_afterword_club_stats')
+@router.get(
+    "/{book_club_id}/afterword/{user_id}/club_stats/{book_club_book_id}"
+    , name='bookclubs:get_afterword_club_stats'
+    )
 async def get_afterword_club_stats(
     book_club_id: str,
     user_id: str,
+    book_club_book_id: str,
     current_user: Annotated[User,Depends(get_current_active_user)],
     book_club_repo: BookClubCRUDRepositoryGraph = Depends(
         get_repository(BookClubCRUDRepositoryGraph)
