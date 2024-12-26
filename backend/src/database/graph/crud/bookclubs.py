@@ -441,8 +441,11 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
         )
 
         response = result.single()
-        print(response.data())
-        return response is not None
+        
+        if not response:
+            return
+        
+        return response.get("book_club_book_id")
     
     def create_currently_reading_club_and_book(
             self,
@@ -524,8 +527,11 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
         )
 
         response = result.single()
-        print(response.data())
-        return response is not None
+        
+        if not response:
+            return
+        
+        return response.get("book_club_book_id")
     
     def create_update_post(
             self,
@@ -1923,8 +1929,8 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
             MATCH (club)-[:IS_READING]->(book:BookClubBook)
             MATCH (award:ClubAward)-[award_rel:AWARD_FOR_BOOK]->(book)
             OPTIONAL MATCH (post:ClubUpdate|ClubUpdateNoText {id:$post_id})
-            OPTIONAL MATCH (post_award)-[:IS_CHILD_OF]->(award)
-            OPTIONAL MATCH (post)<-[:AWARD_FOR_POST]-(post_award)
+                <-[:AWARD_FOR_POST]-(post_award)
+                -[:IS_CHILD_OF]->(award)
             OPTIONAL MATCH (post_award)<-[:GRANTED]-(grant_user:User)
             RETURN award,
                    award_rel.grants_per_member as allowed_uses,
@@ -1939,8 +1945,8 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
             MATCH (award:ClubAward)-[award_rel:AWARD_FOR_BOOK]->(book)
             OPTIONAL MATCH (award)<-[:IS_CHILD_OF]-(user_grants:ClubAwardForPost)<-[:GRANTED]-(u)
             OPTIONAL MATCH (post:ClubUpdate|ClubUpdateNoText {id:$post_id})
-            OPTIONAL MATCH (post_award)-[:IS_CHILD_OF]->(award)
-            OPTIONAL MATCH (post)<-[:AWARD_FOR_POST]-(post_award)
+                <-[:AWARD_FOR_POST]-(post_award)
+                -[:IS_CHILD_OF]->(award)
             OPTIONAL MATCH (post_award)<-[:GRANTED]-(grant_user:User)
             WITH award, award_rel, user_grants, grant_user, post_award
             RETURN award,
@@ -2239,22 +2245,59 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
             result = session.read_transaction(
                 self.get_afterward_user_stats_query,
                 book_club_id,
+                book_club_book_id,
                 user_id
             )
         return result
 
     @staticmethod
     def get_afterward_user_stats_query(
-        self,
+        tx,
         book_club_id: str,
         book_club_book_id: str,
         user_id: str
     ):
         query = (
             """
-            MATCH (b:BookClub {id:$book_club_id})-
+            MATCH (u:User {id: $user_id})-[:IS_MEMBER_OF|OWNS_BOOK_CLUB]->(b:BookClub {id:$book_club_id})
+            MATCH (b)-[fr:FINISHED_READING]->(book:BookClubBook {id: $book_club_book_id})
+            MATCH (u)-[:POSTED]->(post:ClubUpdate|ClubUpdateNoText)-[:POST_FOR_CLUB_BOOK]->(book)
+            WITH u, book, fr, COUNT(post) as num_updates
+            MATCH (u)-[:GRANTED]->(award:ClubAwardForPost)
+                -[:AWARD_FOR_POST]->()-[:POST_FOR_CLUB_BOOK]->(book)
+            WITH u, book, fr, num_updates, COUNT(award) as num_awards
+            MATCH (u)-[u_fr:FINISHED_READING_FOR_CLUB]->(book)
+            RETURN num_updates,
+                   num_awards,
+                   fr.started_date as start_date,
+                   u_fr.last_updated as finish_date
             """
         )
+        result = tx.run(
+            query,
+            book_club_id=book_club_id,
+            book_club_book_id=book_club_book_id,
+            user_id=user_id
+        )
+        
+        response = result.single()
+        
+        if not response:
+            return
+        
+        start_date = response.get("start_date")
+        finish_date = response.get("finish_date")
+        
+        days = (finish_date - start_date).days
+        
+        print(days)
+        
+        return {
+            "days":days,
+            "updates": response.get("num_updates"),
+            "awards": response.get("num_awards")
+        }
+        
     def search_users_not_in_club(
             self, 
             search_param: BookClubSchemas.BookClubInviteSearch

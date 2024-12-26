@@ -133,6 +133,7 @@ class TestBookClubs:
         cls.invite_id_2 = None
         cls.post_id = None
         cls.award_id = None
+        cls.book_club_book_id = None
 
     def test_create_bookclub(self):
         """
@@ -429,6 +430,8 @@ class TestBookClubs:
 
         response = requests.post(endpoint, json=data, headers=headers)
         assert response.status_code == 200, "Starting a currently reading book"
+        print(response.json())
+        self.__class__.book_club_book_id = response.json().get("book_club_book_id")
 
     def test_pace_endpoints(self):
         """
@@ -798,7 +801,30 @@ class TestBookClubs:
         assert any([post['type'] == "club_review" for post in response.json()["posts"]]), "Review post exists"
         assert any([post['type'] == "club_review_no_text" for post in response.json()["posts"]]), "Review post no text exists"
         print(response.json())
+        
+    def test_get_afterword(self):
+        headers = {"Authorization": f"{self.token_type} {self.access_token}"}
 
+        endpoint = (
+            f"{self.endpoint}/api/bookclubs/{self.book_club_id}/"
+            "currently_reading/finish")
+
+        response = requests.post(endpoint, headers=headers)
+        assert response.status_code == 200, "Finishing a currently reading book"
+        
+        endpoint = (
+            f"{self.endpoint}/api/bookclubs/{self.book_club_id}/"
+            f"afterword/{self.user_id}/"
+            f"user_stats/{self.book_club_book_id}"
+            )
+        
+        response = requests.get(
+            endpoint,
+            headers=headers
+        )
+        print(response.json())
+        assert response.status_code == 200, "Getting user stats"
+        
     def test_deleting_member(self):
         headers = {"Authorization": f"{self.token_type} {self.access_token}"}
 
@@ -812,5 +838,11 @@ class TestBookClubs:
 
         response = requests.delete(endpoint, headers=headers, json=data)
         assert response.status_code == 200, "Deleting Member"
-        time.sleep(10)
-
+        time.sleep(5)
+        """
+        NOTE: THIS TEST SHOULD ALWAYS BE RUN LAST. IT FATALLY
+        DELETES MEMEBERS THAT ARE INCLUDED IN THE TESTS
+        
+        IT ALSO PAUSES TO ALLOW TIME FOR THE EMAIL BACKGROUND
+        TASKS TO RUN
+        """

@@ -1151,7 +1151,11 @@ async def start_book_for_club(
             },
         )
         return JSONResponse(
-            status_code=200, content={"message": "Book set as currently reading"}
+            status_code=200, 
+            content={
+                "message": "Book set as currently reading",
+                "book_club_book_id": result
+                }
         )
     else:
         logger.warning(
@@ -1848,7 +1852,8 @@ async def get_afterword_user_stats(
     
     stats = book_club_repo.get_afterward_user_stats(
         book_club_id,
-        user_id
+        book_club_book_id,
+        user_id,
     )
     
     if stats:
@@ -1861,7 +1866,7 @@ async def get_afterword_user_stats(
             }
         )
         return JSONResponse(
-            200,
+            status_code=200,
             content={
                 "stats": stats
             }
@@ -1875,9 +1880,9 @@ async def get_afterword_user_stats(
                 "action": "get_afterword_user_stats"
             }
         )
-        return HTTPException(
-            400,
-            "Unable to grab user stats"
+        raise HTTPException(
+            status_code=400,
+            detail="Unable to grab user stats"
         )
         
     
@@ -1947,7 +1952,7 @@ async def get_afterword_friend_thoughts(
             }
         )
         return JSONResponse(
-            200,
+            status_code=200,
             content={
                 "friend_thoughts": friend_thoughts
             }
@@ -1961,7 +1966,7 @@ async def get_afterword_friend_thoughts(
                 "action": "get_afterword_friend_thoughts"
             }
         )
-        return HTTPException(
+        raise HTTPException(
             400,
             "Unable to grab friend thoughts"
         )
@@ -2047,7 +2052,7 @@ async def get_afterword_consensus(
                 "action": "get_afterword_consensus"
             }
         )
-        return HTTPException(
+        raise HTTPException(
             400,
             "Unable to grab consensus"
         )
@@ -2143,7 +2148,7 @@ async def get_afterword_highlights(
                 "action": "get_afterword_highlights"
             }
         )
-        return HTTPException(
+        raise HTTPException(
             400,
             "Unable to grab highlights"
         )
@@ -2216,7 +2221,7 @@ async def get_afterword_club_stats(
                 "action": "get_afterword_club_stats"
             }
         )
-        return HTTPException(
+        raise HTTPException(
             400,
             "Unable to grab club stats"
         )
