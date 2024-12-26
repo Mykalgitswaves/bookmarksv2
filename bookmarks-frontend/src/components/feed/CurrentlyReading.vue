@@ -62,18 +62,17 @@ import { urls } from '../../services/urls';
 import { ref } from 'vue';
 import { useRoute } from 'vue-router';
 import { truncateText } from '../../services/helpers';
-import { formatUpdateForBookClub } from './bookclubs/bookClubService';
 import { helpersCtrl } from '../../services/helpers';
 import AsyncComponent from './partials/AsyncComponent.vue';
 import Overlay from './partials/overlay/Overlay.vue';
 import CreateUpdateForm from './createPosts/update/createUpdateForm.vue'; 
+import { PubSub } from '../../services/pubsub';
 
 const route = useRoute();
 const { user } = route.params;
 let books = [];
 let bookshelf; 
 const selectedCurrentlyReadingBook = ref({});
-const updateRef = ref({});
 
 const CURRENTLY_READING_SUB_KEY = 'currently-reading-get-currently-reading-bookshelf';
 const currentlyReadingBookShelfFactory = () => db.get(urls.rtc.getCurrentlyReadingForFeed(user), null, false, 

@@ -9,8 +9,8 @@
                     :is-on-section-page="true"
                 >
                     <template v-slot:heading>
-                        <h1 class="bookshelf-wrapper-title font-medium fancy">
-                            {{ titleMap.get(shelfType, '') }} 
+                        <h1 class="bookshelf-wrapper-title font-medium fancy mb-5">
+                            {{ titleMap[shelfType] }} 
                             
                             <span class="text-indigo-500">
                                 {{ bookshelves?.length }}

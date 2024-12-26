@@ -151,14 +151,14 @@ const { user } = route.params;
  * @SHELVES_CONSTANTS
  */
 const presetBookshelves = ref({
-    currentlyReading: {
-        shelf: null,
-        isUnique: 'currently-reading',
-        admin: true,
-    },
     wantToRead: {
         shelf: null,
         isUnique: 'want-to-read',
+        admin: true,
+    },
+    currentlyReading: {
+        shelf: null,
+        isUnique: 'currently-reading',
         admin: true,
     },
 });
