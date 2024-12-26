@@ -177,3 +177,12 @@
     background-color: var(--indigo-200);
     color: var(--indigo-600);
 }
+
+.btn-nav {
+    background-color: var(--blue-500);
+    color: var(--surface-primary);
+}
+
+.btn-nav:hover {
+    background-color: var(--blue-600);
+}

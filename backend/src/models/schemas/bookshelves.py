@@ -108,6 +108,7 @@ class CurrentlyReadingBookPreview(BaseModel):
     small_img_url: str | None
     note_for_shelf:str | None
     current_page: int
+    current_chapter: int | None
     total_pages: int | None
     last_updated: datetime.datetime
     

@@ -161,7 +161,11 @@
             </div>
         </section>
 
-        <div v-if="!dataLoaded" class="mx-auto flex gap-2 items-center">Loading <IconLoading class="loading-spinner"/></div>
+        <div v-if="!dataLoaded" class="mx-auto loading-box">
+            <div class="loading gradient px-20 py-5">
+                <IconLoading class="loading-spinner"/>
+            </div>
+        </div>
     </div>
 </template>
 

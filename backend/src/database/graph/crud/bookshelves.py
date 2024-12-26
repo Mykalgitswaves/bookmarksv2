@@ -895,7 +895,8 @@ class BookshelfCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
             book_id: {
                 'item': book,
                 'description': book_relationship.get('note_for_shelf', None),
-                'current_page': book_relationship.get('current_page', 0)
+                'current_page': book_relationship.get('current_page', 0),
+                'current_chapter': book_relationship.get('current_chapter', 0)
             }
             
             for book_id, book, book_relationship in zip(record["book_object_ids"], record["books"], record["book_relationships"])
@@ -1090,6 +1091,7 @@ class BookshelfCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
                 small_img_url=book_small_image_url,
                 note_for_shelf=book_rel.get('note_for_shelf', None),
                 current_page=book_rel.get('current_page', 0), 
+                current_chapter=book_rel.get('current_chapter', 0),
                 total_pages=total_pages,
                 last_updated=book_rel.get(
                     'last_updated', 

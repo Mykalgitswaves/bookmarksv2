@@ -21,6 +21,10 @@
 
                     <p class="bookshelf-description">{{ truncateText(shelf?.description, 100) }}</p>
                 </div>
+                
+                <div class="ml-auto mr-2 text-sm fancy">
+                    <span :class="{'text-indigo-500': shelf.books?.length > 0 || shelf.books_count > 0}">{{ shelf?.books?.length || shelf?.books_count || 0}} books</span>
+                </div>
             </div>
         </div>
 
@@ -45,21 +49,21 @@
             </div>
         </div>
         
-        <div class="flex gap-2 items-center" v-if="!isUnique">
+        <div class="flex gap-2 items-center mt-5" v-if="!isUnique">
             <button v-if="is_admin"
                 type="button"
-                class="create-bookshelf-btn"
+                class="create-bookshelf-btn btn-tiny text-sm"
                 @click="createNewBookshelf()"
             >
                 Create
             </button>
 
-            <button v-if="!isOnSectionPage && bookshelves?.length" 
+            <button v-if="!isOnSectionPage && bookshelves?.length > 3" 
                 type="button" 
-                class="create-bookshelf-btn"
+                class="create-bookshelf-btn btn-tiny text-sm"
                 @click="router.push(viewBookshelvesForSection(user, 'created_bookshelves'))"
             >
-                View all shelves
+                View all created bookshelves
             </button>
         </div>
     </section>
@@ -108,7 +112,8 @@
     // 
     function isPreview(bookshelves){
         if(props.isPreview){
-            return bookshelves.slice(0,1);
+            // Three shelves
+            return bookshelves.slice(0,3);
         }
         return bookshelves;
     }
@@ -132,7 +137,6 @@
 }
 
 .bookshelves {
-    padding: var(--padding-sm);
     display: flex;
     flex-direction: column;
     row-gap: 10px;
