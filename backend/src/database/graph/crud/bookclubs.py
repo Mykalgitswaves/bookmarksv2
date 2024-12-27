@@ -1,6 +1,6 @@
 from datetime import datetime, timezone
 from neo4j.time import DateTime as Neo4jDateTime
-from typing import List
+from typing import List, Optional
 from datetime import datetime, timedelta
 
 from src.database.graph.crud.base import BaseCRUDRepositoryGraph
@@ -413,6 +413,13 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
             }]->(bc_book)
             WITH b, bc_book
             MATCH (member:User)-[:IS_MEMBER_OF|OWNS_BOOK_CLUB]->(b)
+            OPTIONAL MATCH (member)-[oldRel:IS_READING_FOR_CLUB]->(old_book:BookClubBook)
+            WITH b, bc_book, member, oldRel, old_book
+            // If an existing IS_READING_FOR_CLUB relationship is found, delete it and create FINISHED_READING_FOR_CLUB
+            FOREACH (_ IN CASE WHEN oldRel IS NOT NULL THEN [1] ELSE [] END |
+                DELETE oldRel
+                MERGE (member)-[:FINISHED_READING_FOR_CLUB {last_updated: datetime(), finished_by_user: false}]->(old_book)
+            )
             MERGE (member)-[:IS_READING_FOR_CLUB {
                 last_updated: datetime(),
                 current_chapter: 0
@@ -423,7 +430,6 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
             RETURN bc_book.id as book_club_book_id
             """
         )
-        
         expected_finish_date = Neo4jDateTime.from_native(currently_reading_obj.expected_finish_date)
         result = tx.run(
             query,
@@ -435,7 +441,11 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
         )
 
         response = result.single()
-        return response is not None
+        
+        if not response:
+            return
+        
+        return response.get("book_club_book_id")
     
     def create_currently_reading_club_and_book(
             self,
@@ -484,6 +494,13 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
                 started_date: datetime(),
                 selected_finish_date: $finish_date
             }]->(bc_book)
+            OPTIONAL MATCH (old_member)-[oldRel:IS_READING_FOR_CLUB]->(old_book:BookClubBook)<-[:IS_READING|STOPPED_READING|FINISHED_READING]-(b)
+            WITH b, bc_book, old_member, oldRel, old_book
+            // If an existing IS_READING_FOR_CLUB relationship is found, delete it and create FINISHED_READING_FOR_CLUB
+            FOREACH (_ IN CASE WHEN oldRel IS NOT NULL THEN [1] ELSE [] END |
+                DELETE oldRel
+                MERGE (old_member)-[:FINISHED_READING_FOR_CLUB {last_updated: datetime(), finished_by_user: false}]->(old_book)
+            )
             WITH b, bc_book
             MATCH (member:User)-[:IS_MEMBER_OF|OWNS_BOOK_CLUB]->(b)
             MERGE (member)-[:IS_READING_FOR_CLUB {
@@ -510,7 +527,11 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
         )
 
         response = result.single()
-        return response is not None
+        
+        if not response:
+            return
+        
+        return response.get("book_club_book_id")
     
     def create_update_post(
             self,
@@ -742,7 +763,137 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
         )
 
         return notification
-        
+    
+    def create_review_and_finished_reading(
+            self,
+            review: BookClubSchemas.CreateReviewPost
+    ):
+        """
+        Creates the review in the DB and marks the book as finished reading
+        by user
+        """
+        with self.driver.session() as session:
+            result = session.write_transaction(
+                self.create_review_and_finished_reading_query, 
+                review
+            )
+        return result
+    
+    @staticmethod
+    def create_review_and_finished_reading_query(
+        tx,
+        review
+    ):
+        query = (
+            """
+            MATCH (u:User {id:$user_id})-[:IS_MEMBER_OF|OWNS_BOOK_CLUB]->(b:BookClub {id: $book_club_id})
+            MATCH (b)-[:IS_READING|FINISHED_READING]->(book:BookClubBook)
+            MERGE (r:ClubReview {
+            user_id: $user_id,
+            book_club_book_id: book.id})
+            ON CREATE SET 
+                r.id = "club_review_" + randomUUID(),
+                r.created_date = datetime(),
+                r.headline = $headline,
+                r.questions = $questions,
+                r.question_ids = $question_ids,
+                r.responses = $responses,
+                r.rating = $rating,
+                r.deleted = False,
+                r.likes = 0
+            MERGE (u)-[:POSTED]->(r)
+            MERGE (r)-[:POST_FOR_CLUB_BOOK]->(book)
+            MERGE (u)-[fr:FINISHED_READING_FOR_CLUB]->(book)
+            ON CREATE SET
+                fr.last_updated = datetime(),
+                fr.finished_by_user = True
+            WITH u, book
+            MATCH (u)-[rr:IS_READING_FOR_CLUB]->(book)
+            DELETE rr
+            With u
+            return u.id as user_id
+            """
+        )
+
+        result = tx.run(
+            query,
+            user_id = review.user['id'],
+            book_club_id = review.id,
+            headline = review.headline,
+            questions = review.questions,
+            question_ids = review.question_ids,
+            responses = review.responses,
+            rating = review.rating
+        )
+
+        response = result.single()
+
+        return bool(response)
+    
+    def create_finished_reading(
+            self,
+            user_id: str,
+            book_club_id: str,
+            rating: Optional[int]
+    ):
+        """
+        Creates the review in the DB and marks the book as finished reading
+        by user
+        """
+        with self.driver.session() as session:
+            result = session.write_transaction(
+                self.create_finished_reading_query, 
+                user_id,
+                book_club_id,
+                rating
+            )
+        return result
+    
+    @staticmethod
+    def create_finished_reading_query(
+        tx,
+        user_id,
+        book_club_id,
+        rating
+    ):
+        query = (
+            """
+            MATCH (u:User {id:$user_id})-[:IS_MEMBER_OF|OWNS_BOOK_CLUB]->(b:BookClub {id: $book_club_id})
+            MATCH (b)-[:IS_READING|FINISHED_READING]->(book:BookClubBook)
+            MERGE (u)-[fr:FINISHED_READING_FOR_CLUB]->(book)
+            ON CREATE SET
+                fr.last_updated = datetime(),
+                fr.finished_by_user = True
+                CREATE (r:ClubReviewNoText {
+                    id: "club_review_no_text_" + randomUUID(),
+                    user_id: $user_id,
+                    book_club_book_id: book.id,
+                    created_date: datetime(),
+                    deleted: False,
+                    likes: 0,
+                    rating: $rating
+                })
+                MERGE (u)-[:POSTED]->(r)
+                MERGE (r)-[:POST_FOR_CLUB_BOOK]->(book)
+            WITH u, book
+            MATCH (u)-[rr:IS_READING_FOR_CLUB]->(book)
+            DELETE rr
+            With u
+            return u.id as user_id
+            """
+        )
+
+        result = tx.run(
+            query,
+            user_id = user_id,
+            book_club_id = book_club_id,
+            rating = rating
+        )
+
+        response = result.single()
+
+        return bool(response)
+    
     def get_minimal_book_club(
             self,
             book_club_id: str,
@@ -1507,6 +1658,172 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
             posts.append(post)
             
         return posts
+    
+    def get_book_club_finished_feed(
+            self,
+            book_club_id: str,
+            user_id: str,
+            skip: int,
+            limit: int
+    ) -> List[BookClubSchemas.UpdatePost]:
+        """
+        Gets the book club feed for the user
+        """
+        with self.driver.session() as session:
+            result = session.read_transaction(
+                self.get_book_club_finished_feed_query, 
+                book_club_id, 
+                user_id,
+                skip,
+                limit
+            )
+        return result
+    
+    @staticmethod
+    def get_book_club_finished_feed_query(
+        tx,
+        book_club_id: str,
+        user_id: str,
+        skip: int,
+        limit: int
+    ):
+        
+        query = (
+            """
+            MATCH (cu:User {id: $user_id})-[:IS_MEMBER_OF|OWNS_BOOK_CLUB]->(b:BookClub {id: $book_club_id})
+            MATCH (b)-[:IS_READING]->(book:BookClubBook)
+            MATCH (cu)-[:FINISHED_READING_FOR_CLUB]->(book)
+            MATCH (post {deleted:false})-[:POST_FOR_CLUB_BOOK]->(book)
+            WHERE post:ClubUpdate OR post:ClubUpdateNoText or post:ClubReview or post:ClubReviewNoText
+            match (post)<-[pr:POSTED]-(u:User)
+            optional match (cu)-[lr:LIKES]->(post)
+            optional match (any)-[nl:LIKES]->(post)
+            optional match (book)-[br:IS_EQUIVALENT_TO]-(canon_book:Book)
+            optional match (comments:Comment {deleted:false})<-[:HAS_COMMENT]-(post)
+            optional match (post)<-[:AWARD_FOR_POST]-(post_award:ClubAwardForPost)
+            optional match award_long = (award_user:User)-[:GRANTED]->(post_award)-[CHILD_OF]->(award:ClubAward)
+            RETURN post, labels(post), u.username, canon_book, u.id,
+            CASE WHEN lr IS NOT NULL THEN true ELSE false END AS liked_by_current_user,
+            CASE WHEN u.id = $user_id THEN true ELSE false END AS posted_by_current_user,
+            count(comments) as num_comments,
+            count(nl) as num_likes,
+            collect(award_long) as awards
+            order by post.created_date desc
+            skip $skip
+            limit $limit
+            """
+        )
+    
+        result = tx.run(
+            query,
+            book_club_id=book_club_id,
+            user_id=user_id,
+            skip=skip,
+            limit=limit
+        )
+        
+        posts = []           
+
+        for response in result:
+            book = BookPreview(
+                id=response['canon_book'].get("id"),
+                title=response['canon_book'].get("title"),
+                small_img_url=response['canon_book'].get("small_img_url"),
+                google_id=response['canon_book'].get("google_id")
+            )
+
+            awards = {}
+            if response.get("awards"):
+                for award in response.get("awards"):
+                    _user_id = award.start_node['id']
+                    parent_award = award.end_node
+                    cls = AWARD_CONSTANTS.get(parent_award.get("name"))
+                    parent_award_id = parent_award.get("id")
+                    if parent_award_id not in awards:
+                        awards[parent_award_id] = {
+                            "name": parent_award.get("name",""),
+                            "type": parent_award.get("type",""),
+                            "description": parent_award.get("description",""),
+                            "num_grants": 1,
+                            "cls": cls,
+                            "granted_by_current_user": False,
+                        }
+                    else:
+                        awards[parent_award_id]['num_grants'] += 1
+
+                    if user_id == _user_id:
+                        awards[parent_award_id]['granted_by_current_user'] = True
+
+            if response.get("labels(post)") == ["ClubUpdate"]:
+                post = BookClubSchemas.UpdatePost(
+                    id=response['post'].get("id"),
+                    headline=response['post'].get("headline", ""),
+                    response=response['post'].get("response"),
+                    quote=response['post'].get("quote"),
+                    chapter=response['post'].get("chapter"),
+                    created_date=response['post'].get("created_date"),
+                    user_id=response.get("u.id"),
+                    user_username=response.get("u.username"),
+                    liked_by_current_user=response.get("liked_by_current_user"),
+                    likes=response.get("num_likes"),
+                    posted_by_current_user=response.get("posted_by_current_user"),
+                    num_comments=response.get("num_comments"),
+                    book=book,
+                    awards=awards
+                )
+
+            elif response.get("labels(post)") == ["ClubUpdateNoText"]:
+                post = BookClubSchemas.UpdatePostNoText(
+                    id=response['post'].get("id"),
+                    chapter=response['post'].get("chapter"),
+                    created_date=response['post'].get("created_date"),
+                    user_id=response.get("u.id"),
+                    user_username=response.get("u.username"),
+                    liked_by_current_user=response.get("liked_by_current_user"),
+                    likes=response.get("num_likes"),
+                    posted_by_current_user=response.get("posted_by_current_user"),
+                    num_comments=response.get("num_comments"),
+                    book=book,
+                    awards=awards
+                )
+                
+            elif response.get("labels(post)") == ["ClubReview"]:
+                post = BookClubSchemas.ReviewPost(
+                    id=response['post'].get("id"),
+                    created_date=response['post'].get("created_date"),
+                    user_id=response.get("u.id"),
+                    user_username=response.get("u.username"),
+                    likes=response.get("num_likes"),
+                    liked_by_current_user=response.get("liked_by_current_user"),
+                    posted_by_current_user=response.get("posted_by_current_user"),
+                    num_comments=response.get("num_comments"),
+                    headline=response['post'].get('headline'),
+                    questions=response['post'].get('questions'),
+                    question_ids=response['post'].get('question_ids'),
+                    responses=response['post'].get('responses'),
+                    rating=response['post'].get('rating'),
+                    book=book,
+                    awards=awards
+                )
+                
+            elif response.get("labels(post)") == ["ClubReviewNoText"]:
+                post = BookClubSchemas.ReviewPostNoText(
+                    id=response['post'].get("id"),
+                    created_date=response['post'].get("created_date"),
+                    user_id=response.get("u.id"),
+                    user_username=response.get("u.username"),
+                    likes=response.get("num_likes"),
+                    liked_by_current_user=response.get("liked_by_current_user"),
+                    posted_by_current_user=response.get("posted_by_current_user"),
+                    num_comments=response.get("num_comments"),
+                    rating=response['post'].get('rating'),
+                    book=book,
+                    awards=awards
+                )
+
+            posts.append(post)
+            
+        return posts
 
     def get_awards(
             self,
@@ -1612,8 +1929,8 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
             MATCH (club)-[:IS_READING]->(book:BookClubBook)
             MATCH (award:ClubAward)-[award_rel:AWARD_FOR_BOOK]->(book)
             OPTIONAL MATCH (post:ClubUpdate|ClubUpdateNoText {id:$post_id})
-            OPTIONAL MATCH (post_award)-[:IS_CHILD_OF]->(award)
-            OPTIONAL MATCH (post)<-[:AWARD_FOR_POST]-(post_award)
+                <-[:AWARD_FOR_POST]-(post_award)
+                -[:IS_CHILD_OF]->(award)
             OPTIONAL MATCH (post_award)<-[:GRANTED]-(grant_user:User)
             RETURN award,
                    award_rel.grants_per_member as allowed_uses,
@@ -1628,8 +1945,8 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
             MATCH (award:ClubAward)-[award_rel:AWARD_FOR_BOOK]->(book)
             OPTIONAL MATCH (award)<-[:IS_CHILD_OF]-(user_grants:ClubAwardForPost)<-[:GRANTED]-(u)
             OPTIONAL MATCH (post:ClubUpdate|ClubUpdateNoText {id:$post_id})
-            OPTIONAL MATCH (post_award)-[:IS_CHILD_OF]->(award)
-            OPTIONAL MATCH (post)<-[:AWARD_FOR_POST]-(post_award)
+                <-[:AWARD_FOR_POST]-(post_award)
+                -[:IS_CHILD_OF]->(award)
             OPTIONAL MATCH (post_award)<-[:GRANTED]-(grant_user:User)
             WITH award, award_rel, user_grants, grant_user, post_award
             RETURN award,
@@ -1918,8 +2235,70 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
                     eligible = False
                     break
         return eligible
-            
+    
+    def get_afterward_user_stats(
+        self,
+        book_club_id: str,
+        book_club_book_id: str,
+        user_id: str
+    ):
+        with self.driver.session() as session:
+            result = session.read_transaction(
+                self.get_afterward_user_stats_query,
+                book_club_id,
+                book_club_book_id,
+                user_id
+            )
+        return result
 
+    @staticmethod
+    def get_afterward_user_stats_query(
+        tx,
+        book_club_id: str,
+        book_club_book_id: str,
+        user_id: str
+    ):
+        query = (
+            """
+            MATCH (u:User {id: $user_id})-[:IS_MEMBER_OF|OWNS_BOOK_CLUB]->(b:BookClub {id:$book_club_id})
+            MATCH (b)-[fr:FINISHED_READING]->(book:BookClubBook {id: $book_club_book_id})
+            MATCH (u)-[:POSTED]->(post:ClubUpdate|ClubUpdateNoText)-[:POST_FOR_CLUB_BOOK]->(book)
+            WITH u, book, fr, COUNT(post) as num_updates
+            MATCH (u)-[:GRANTED]->(award:ClubAwardForPost)
+                -[:AWARD_FOR_POST]->()-[:POST_FOR_CLUB_BOOK]->(book)
+            WITH u, book, fr, num_updates, COUNT(award) as num_awards
+            MATCH (u)-[u_fr:FINISHED_READING_FOR_CLUB]->(book)
+            RETURN num_updates,
+                   num_awards,
+                   fr.started_date as start_date,
+                   u_fr.last_updated as finish_date
+            """
+        )
+        result = tx.run(
+            query,
+            book_club_id=book_club_id,
+            book_club_book_id=book_club_book_id,
+            user_id=user_id
+        )
+        
+        response = result.single()
+        
+        if not response:
+            return
+        
+        start_date = response.get("start_date")
+        finish_date = response.get("finish_date")
+        
+        days = (finish_date - start_date).days
+        
+        print(days)
+        
+        return {
+            "days":days,
+            "updates": response.get("num_updates"),
+            "awards": response.get("num_awards")
+        }
+        
     def search_users_not_in_club(
             self, 
             search_param: BookClubSchemas.BookClubInviteSearch
@@ -2102,13 +2481,7 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
                 selected_finish_date: reading.selected_finish_date,
                 actual_finish_date: datetime()
             }]->(bc_book)
-            WITH bc_book, reading
-            MATCH (member:User)-[member_reading:IS_READING_FOR_CLUB]->(bc_book)
-            CREATE (member)-[member_finished:FINISHED_READING_FOR_CLUB {
-                last_updated: member_reading.last_updated,
-                current_chapter: member_reading.current_chapter
-            }]->(bc_book)
-            DELETE reading, member_reading
+            DELETE reading
             RETURN bc_book.id as book_id
             """
         )
@@ -2192,7 +2565,7 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
             OPTIONAL MATCH (b)-[]-(invites:BookClubInvite)
             OPTIONAL MATCH (invites)-[]-(test_emails:InvitedUser)
             OPTIONAL MATCH (user)-[]-(awards:ClubAwardForPost)
-            OPTIONAL MATCH (b)-[]-(posts:ClubUpdate|ClubUpdateNoText)
+            OPTIONAL MATCH (b)-[]-(posts:ClubUpdate|ClubUpdateNoText|ClubReview|ClubReviewNoText)
             DETACH DELETE pace, book, b, invites, test_emails, awards, posts
             return user.id as user_id
             """
