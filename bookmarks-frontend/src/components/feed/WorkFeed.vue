@@ -61,7 +61,9 @@
     </div>
     
     <!-- Your currently reading shown at the top -->
-    <CurrentlyReading />
+    <div class="mt-5 mb-10">
+      <CurrentlyReading />
+    </div>
 
 
     <!-- Create posts for feed! -->

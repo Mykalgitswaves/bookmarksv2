@@ -32,6 +32,12 @@
                     />
                 </template>
             </Overlay>
+
+            <RouterLink 
+                class="btn btn-nav btn-small text-sm ml-5" 
+                :to="navRoutes.toBookshelfPage(user, bookshelf.id)">
+                Go to bookshelf
+            </RouterLink>
         </template>
 
         <template #loading>
@@ -53,12 +59,13 @@
                     <div class="book-img loading gradient"></div>
                 </div>
             </div>
+            <button disabled class="btn btn-tiny btn-specter ml-5 gradient text-sm loading">loading...</button>
         </template>
     </AsyncComponent>
 </template>
 <script setup>
 import { db } from '../../services/db';
-import { urls } from '../../services/urls';
+import { urls, navRoutes } from '../../services/urls';
 import { ref } from 'vue';
 import { useRoute } from 'vue-router';
 import { truncateText } from '../../services/helpers';
@@ -130,7 +137,7 @@ function postUpdateForCurrentlyReading(update) {
         transition: var(--transition-short);
         -ms-overflow-style: none;  /* IE and Edge */
         scrollbar-width: none;
-        border: 1px solid var(--stone-200);
+        // border: 1px solid var(--stone-200);/
         border-radius: var(--radius-md);
     }
 
