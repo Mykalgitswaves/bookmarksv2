@@ -287,3 +287,8 @@
 .bottom-4 {
   bottom: 4%;
 }
+
+.debug {
+  color: var(--red-500);
+  font-weight: 500;
+}

@@ -167,10 +167,10 @@ const awards = computed(() => {
 });
 
 
-function dispatchAwardEvent(postId) {
+function dispatchAwardEvent(post) {
     const event = new CustomEvent('open-award-post-modal', {
         detail:  {
-            post_id: postId
+            post_id: post.id
         }
     });
     window.dispatchEvent(event);

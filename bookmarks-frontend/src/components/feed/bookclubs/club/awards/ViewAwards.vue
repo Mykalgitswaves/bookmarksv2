@@ -13,7 +13,7 @@
     <!-- Default is viewing all the awards not relative to a specific post -->
     <div>
         <!-- maybe we want to use async component here, idk though. -->
-        <AsyncComponent :promises="[getAwardsPromise]"> 
+        <AsyncComponent :promise-factory="getAwardsPromiseFactory" :subscribed-to="GET_AWARDS_PROMISE_KEY"> 
             <template #resolved>
                 <div class="award-grid">
                     <div v-for="(category, key) in awards" 
@@ -34,7 +34,10 @@
                                     @click="grantAwardToPost(postId, award, [award.current_uses, award.allowed_uses])"
                                 >
                                     <span class="award-front">
-                                        <component class="award-icon" v-if="ClubAwardsSvgMap[award.cls]" :is="ClubAwardsSvgMap[award.cls]()" />
+                                        <component class="award-icon" 
+                                            v-if="ClubAwardsSvgMap[award.cls]" 
+                                            :is="ClubAwardsSvgMap[award.cls]()" 
+                                        />
 
                                         <p class="award-title">{{ award.name }}</p>
 
@@ -80,7 +83,7 @@ import { ClubAwardsSvgMap } from '../awards/awards';
 import { PubSub } from '../../../../../services/pubsub.js';
 
 const awardStatuses = ref({});
-let postId;
+const postId = ref('');
 let awards = {};
 let awardNames = [];
 
@@ -94,9 +97,9 @@ db.get(urls.bookclubs.getAwards(bookclub), null, false, (res) => {
     loaded.value = true;
 });
 
-const getAwardsPromise = db.get(urls.bookclubs.getAwards(bookclub), 
+const getAwardsPromiseFactory = () => db.get(urls.bookclubs.getAwards(bookclub), 
     { 
-        post_id: postId,
+        post_id: postId.value,
         current_uses: true,
     },
     false, 
@@ -139,6 +142,7 @@ const getAwardsPromise = db.get(urls.bookclubs.getAwards(bookclub),
         loaded.value = true;
 });
 
+const GET_AWARDS_PROMISE_KEY = 'get-awards-for-post';
 const awardsModal = ref(null);
 const isOpen = ref(false);
 
@@ -152,12 +156,12 @@ function handleClickOutside(event){
         && awardsModal.value.open 
         && !(
             awardsModal.value.contains(event.target) || 
-            postId
+            postId.value
         )
     ) {
         awardsModal.value.close();
         isOpen.value = false;
-        postId = null;
+        postId.value = null;
     }
 }
 
@@ -175,7 +179,8 @@ watch(
 );
 
 window.addEventListener('open-award-post-modal', (event) => {
-    postId = event.detail.post_id;
+    postId.value = event.detail.post_id;
+    PubSub.publish(GET_AWARDS_PROMISE_KEY);
     awardsModal.value?.showModal(); 
     isOpen.value = true; 
 });
