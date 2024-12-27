@@ -80,9 +80,9 @@ import { ClubAwardsSvgMap } from '../awards/awards';
 import { PubSub } from '../../../../../services/pubsub.js';
 
 const awardStatuses = ref({});
-let postId;
 let awards = {};
 let awardNames = [];
+const postId = ref('');
 
 const loading = ref(false);
 const loaded = ref(false);
@@ -96,7 +96,7 @@ db.get(urls.bookclubs.getAwards(bookclub), null, false, (res) => {
 
 const getAwardsPromise = db.get(urls.bookclubs.getAwards(bookclub), 
     { 
-        post_id: postId,
+        post_id: postId.value,
         current_uses: true,
     },
     false, 
@@ -152,12 +152,12 @@ function handleClickOutside(event){
         && awardsModal.value.open 
         && !(
             awardsModal.value.contains(event.target) || 
-            postId
+            postId.value
         )
     ) {
         awardsModal.value.close();
         isOpen.value = false;
-        postId = null;
+        postId.value = null;
     }
 }
 
@@ -175,7 +175,7 @@ watch(
 );
 
 window.addEventListener('open-award-post-modal', (event) => {
-    postId = event.detail.post_id;
+    postId.value = event.detail.post_id;
     awardsModal.value?.showModal(); 
     isOpen.value = true; 
 });
