@@ -754,7 +754,7 @@ class TestBookClubs:
             "responses":[
                 "test_response"
             ],
-            "rating":0,
+            "rating":1,
             "headline": "test_headline"
         }
 
@@ -824,6 +824,19 @@ class TestBookClubs:
         )
         print(response.json())
         assert response.status_code == 200, "Getting user stats"
+
+        endpoint = (
+            f"{self.endpoint}/api/bookclubs/{self.book_club_id}/"
+            f"afterword/{self.user_id}/"
+            f"friend_thoughts/{self.book_club_book_id}"
+            )
+        
+        response = requests.get(
+            endpoint,
+            headers=headers
+        )
+        print(response.json())
+        assert response.status_code == 200, "Getting friend thoughts"
         
     def test_deleting_member(self):
         headers = {"Authorization": f"{self.token_type} {self.access_token}"}

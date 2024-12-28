@@ -1919,6 +1919,7 @@ async def get_afterword_friend_thoughts(
             user (dict): the user who the thought belongs to. A dict with:
                 id (str): The id for the user
                 username (str): The username for the user
+                is_current_user (bool): Whether the user is the current user
             review (dict): Review related information. A dict including:
                 headline (str): The headline for the review
                 rating (int): The rating the user gave the book
@@ -1939,6 +1940,7 @@ async def get_afterword_friend_thoughts(
     
     friend_thoughts = book_club_repo.get_afterward_friend_thoughts(
         book_club_id,
+        book_club_book_id,
         user_id
     )
     
@@ -1967,8 +1969,8 @@ async def get_afterword_friend_thoughts(
             }
         )
         raise HTTPException(
-            400,
-            "Unable to grab friend thoughts"
+            status_code=400,
+            detail="Unable to grab friend thoughts"
         )
 
 @router.get(

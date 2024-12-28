@@ -2297,6 +2297,64 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
             "updates": response.get("num_updates"),
             "awards": response.get("num_awards")
         }
+    
+    def get_afterward_friend_thoughts(
+        self,
+        book_club_id: str,
+        book_club_book_id: str,
+        user_id: str
+    ):
+        with self.driver.session() as session:
+            result = session.read_transaction(
+                self.get_afterward_friend_thoughts_query,
+                book_club_id,
+                book_club_book_id,
+                user_id
+            )
+        return result
+
+    @staticmethod
+    def get_afterward_friend_thoughts_query(
+        tx,
+        book_club_id: str,
+        book_club_book_id: str,
+        user_id: str
+    ):
+        query = (
+            """
+            MATCH (u:User {id: $user_id})-[:IS_MEMBER_OF|OWNS_BOOK_CLUB]->(b:BookClub {id:$book_club_id})
+            MATCH (b)-[fr:FINISHED_READING]->(book:BookClubBook {id: $book_club_book_id})
+            MATCH (member:User)-[:IS_MEMBER_OF|OWNS_BOOK_CLUB]->(b)
+            MATCH (member)-[:POSTED]->(review:ClubReview|ClubReviewNoText)-[:POST_FOR_CLUB_BOOK]->(book)
+            RETURN member.id as user_id,
+                   member.username as user_username,
+                   review.headline as headline,
+                   review.rating as rating
+            """
+        )
+        result = tx.run(
+            query,
+            book_club_id=book_club_id,
+            book_club_book_id=book_club_book_id,
+            user_id=user_id
+        )
+        
+        thoughts = [
+            {
+                "user":{
+                    "id": response['user_id'],
+                    "username": response["user_username"],
+                    "is_current_user": response['user_id'] == user_id
+                },
+                "review":{
+                    "headline": response.get("headline"),
+                    "rating": response.get("rating")
+                }
+            }
+            for response in result
+        ]
+
+        return thoughts
         
     def search_users_not_in_club(
             self, 
