@@ -782,12 +782,13 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
     @staticmethod
     def create_review_and_finished_reading_query(
         tx,
-        review
+        review: BookClubSchemas.CreateReviewPost
     ):
         query = (
             """
             MATCH (u:User {id:$user_id})-[:IS_MEMBER_OF|OWNS_BOOK_CLUB]->(b:BookClub {id: $book_club_id})
             MATCH (b)-[:IS_READING|FINISHED_READING]->(book:BookClubBook)
+            WHERE book.id = $book_club_book_id
             MERGE (r:ClubReview {
             user_id: $user_id,
             book_club_book_id: book.id})
@@ -823,7 +824,8 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
             questions = review.questions,
             question_ids = review.question_ids,
             responses = review.responses,
-            rating = review.rating
+            rating = review.rating,
+            book_club_book_id = review.book_club_book_id
         )
 
         response = result.single()
@@ -834,7 +836,8 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
             self,
             user_id: str,
             book_club_id: str,
-            rating: Optional[int]
+            rating: Optional[int],
+            book_club_book_id: str
     ):
         """
         Creates the review in the DB and marks the book as finished reading
@@ -845,7 +848,8 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
                 self.create_finished_reading_query, 
                 user_id,
                 book_club_id,
-                rating
+                rating,
+                book_club_book_id
             )
         return result
     
@@ -854,12 +858,14 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
         tx,
         user_id,
         book_club_id,
-        rating
+        rating,
+        book_club_book_id
     ):
         query = (
             """
             MATCH (u:User {id:$user_id})-[:IS_MEMBER_OF|OWNS_BOOK_CLUB]->(b:BookClub {id: $book_club_id})
             MATCH (b)-[:IS_READING|FINISHED_READING]->(book:BookClubBook)
+            WHERE book.id = $book_club_book_id
             MERGE (u)-[fr:FINISHED_READING_FOR_CLUB]->(book)
             ON CREATE SET
                 fr.last_updated = datetime(),
@@ -887,7 +893,8 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
             query,
             user_id = user_id,
             book_club_id = book_club_id,
-            rating = rating
+            rating = rating,
+            book_club_book_id = book_club_book_id,
         )
 
         response = result.single()
@@ -927,7 +934,8 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
                    actual_book.title as currently_reading_book_title,
                    actual_book.small_img_url as currently_reading_book_small_img_url,
                    actual_book.id as currently_reading_book_id,
-                   book.chapters as total_chapters
+                   book.chapters as total_chapters,
+                   book.id as book_club_book_id
         """
         result = tx.run(query, book_club_id=book_club_id, user_id=user_id)
         record = result.single()
@@ -935,6 +943,7 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
         if record.get("currently_reading_book_id"):
             current_book = BookClubSchemas.BookClubCurrentlyReading(
                 book_id=record.get("currently_reading_book_id"),
+                book_club_book_id=record.get("book_club_book_id"),
                 title=record.get("currently_reading_book_title"),
                 small_img_url=record.get(
                     "currently_reading_book_small_img_url"),
@@ -1057,7 +1066,8 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
                    actual_book.small_img_url as currently_reading_book_small_img_url,
                    actual_book.id as currently_reading_book_id,
                    actual_book.author_names as currently_reading_book_author_names,
-                   book.chapters as total_chapters
+                   book.chapters as total_chapters,
+                   book.id as book_club_book_id
             LIMIT $limit
             """
         )
@@ -1081,6 +1091,7 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
                 author_names = record.get('currently_reading_book_author_names')
                 current_book = BookClubSchemas.BookClubCurrentlyReading(
                     book_id=record.get("currently_reading_book_id"),
+                    book_club_book_id=record.get("book_club_book_id"),
                     title=record.get("currently_reading_book_title"),
                     small_img_url=record.get(
                         "currently_reading_book_small_img_url"),
@@ -1168,7 +1179,8 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
                    actual_book.small_img_url as currently_reading_book_small_img_url,
                    actual_book.id as currently_reading_book_id,
                    actual_book.author_names as currently_reading_book_author_names,
-                   book.chapters as total_chapters
+                   book.chapters as total_chapters,
+                   book.id as book_club_book_id
             LIMIT $limit
             """
         )
@@ -1193,6 +1205,7 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
                 author_names = record.get('currently_reading_book_author_names')
                 current_book = BookClubSchemas.BookClubCurrentlyReading(
                     book_id=record.get("currently_reading_book_id"),
+                    book_club_book_id=record.get("book_club_book_id"),
                     title=record.get("currently_reading_book_title"),
                     small_img_url=record.get(
                         "currently_reading_book_small_img_url"),
@@ -2089,13 +2102,31 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
         query = """
         MATCH (u:User {id: $user_id})-[:IS_MEMBER_OF|OWNS_BOOK_CLUB]->(bc:BookClub {id: $book_club_id})
         OPTIONAL MATCH (bc)-[:IS_READING]->(currentlyReadingBook:BookClubBook)
-        OPTIONAL MATCH (currentlyReadingBook)-[:IS_EQUIVALENT_TO]-(actualBook:Book)
-        RETURN actualBook.id as book_id, 
-               bc.id as book_club_id,
-               actualBook.title as title,
-               actualBook.small_img_url as small_img_url,
-               actualBook.author_names as author_names,
-               currentlyReadingBook.chapters as chapters
+        OPTIONAL MATCH (currentlyReadingBook)-[:IS_EQUIVALENT_TO]-(actualCurrentlyReadingBook:Book)
+        WITH bc, 
+            currentlyReadingBook, 
+            actualCurrentlyReadingBook, 
+            u
+        OPTIONAL MATCH (bc)-[:FINISHED_READING]->(finishedBook:BookClubBook)
+        WHERE currentlyReadingBook IS NULL
+        WITH bc, 
+            currentlyReadingBook, 
+            actualCurrentlyReadingBook, 
+            finishedBook
+        ORDER BY finishedBook.last_updated DESC
+        WITH bc, 
+            currentlyReadingBook, 
+            actualCurrentlyReadingBook, 
+            head(collect(finishedBook)) AS latestFinishedBook
+        OPTIONAL MATCH (latestFinishedBook)-[:IS_EQUIVALENT_TO]-(actualFinishedBook:Book)
+        RETURN 
+        coalesce(actualCurrentlyReadingBook.id, actualFinishedBook.id) AS book_id,
+        bc.id AS book_club_id,
+        coalesce(actualCurrentlyReadingBook.title, actualFinishedBook.title) AS title,
+        coalesce(actualCurrentlyReadingBook.small_img_url, actualFinishedBook.small_img_url) AS small_img_url,
+        coalesce(actualCurrentlyReadingBook.author_names, actualFinishedBook.author_names) AS author_names,
+        coalesce(currentlyReadingBook.chapters, latestFinishedBook.chapters) AS chapters,
+        coalesce(currentlyReadingBook.id, latestFinishedBook.id) AS book_club_book_id
         """
 
         result = tx.run(
@@ -2112,7 +2143,8 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
                     title=record.get("title"),
                     small_img_url=record.get("small_img_url", ""),
                     author_names=record.get("author_names", []),
-                    chapters=record.get("chapters", 0)
+                    chapters=record.get("chapters", 0),
+                    book_club_book_id=record.get("book_club_book_id")
                 )
                 return current_book
             else: 
@@ -2355,6 +2387,187 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
         ]
 
         return thoughts
+    
+    def get_afterward_consensus(
+        self,
+        book_club_id: str,
+        book_club_book_id: str,
+        user_id: str
+    ):
+        with self.driver.session() as session:
+            result = session.read_transaction(
+                self.get_afterward_consensus_query,
+                book_club_id,
+                book_club_book_id,
+                user_id
+            )
+        return result
+
+    @staticmethod
+    def get_afterward_consensus_query(
+        tx,
+        book_club_id: str,
+        book_club_book_id: str,
+        user_id: str
+    ):
+        query = (
+            """
+            MATCH (u:User {id: $user_id})-[:IS_MEMBER_OF|OWNS_BOOK_CLUB]->(b:BookClub {id:$book_club_id})
+            MATCH (b)-[fr:FINISHED_READING]->(books:BookClubBook)
+            MATCH (member:User)-[:IS_MEMBER_OF|OWNS_BOOK_CLUB]->(b)
+            OPTIONAL MATCH (member)-[:POSTED]->(review:ClubReview|ClubReviewNoText)-[:POST_FOR_CLUB_BOOK]->(books)
+            RETURN books.id as book_club_book_id,
+            collect({
+                        user_id: member.id,
+                        user_username: member.username,
+                        rating: review.rating
+                    }) AS reviews
+            limit 5
+            """
+        )
+        result = tx.run(
+            query,
+            book_club_id=book_club_id,
+            user_id=user_id
+        )
+
+        loved = []
+        liked = []
+        disliked = []
+        current_user_rating = None
+        total_is_same_as_longest = 0
+
+        for response in result:
+            book_loved = []
+            book_liked = []
+            book_disliked = []
+            if response.get("book_club_book_id") == book_club_book_id:
+                for review in response.get("reviews",[]):
+                    rating = review.get("rating")
+
+                    if review.get("user_id") == user_id:
+                        current_user_rating = rating
+                        
+                    # Skip users who have not reviewed
+                    if not rating:
+                        continue
+
+                    if rating == 2:
+                        loved.append(
+                            {
+                                "user":{
+                                    "id": review.get("user_id"),
+                                    "username": review.get("user_username"),
+                                }
+                            }
+                        )
+                    elif rating == 1:
+                        liked.append(
+                            {
+                                "user":{
+                                    "id": review.get("user_id"),
+                                    "username": review.get("user_username"),
+                                }
+                            }
+                        )
+                    else:
+                        disliked.append(
+                            {
+                                "user":{
+                                    "id": review.get("user_id"),
+                                    "username": review.get("user_username"),
+                                }
+                            }
+                        )
+
+                rating_groups = {
+                    2: loved,
+                    1: liked,
+                    0: disliked
+                }
+
+                # Find the rating corresponding to the longest array
+                longest_rating = max(rating_groups, key=lambda rating: len(rating_groups[rating]))
+
+                # Compare the current_user_rating with the longest_rating
+                is_same_as_longest = current_user_rating == longest_rating
+
+                if is_same_as_longest:
+                    total_is_same_as_longest += 1
+
+            else:
+                for review in response.get("reviews",[]):
+                    rating = review.get("rating")
+
+                    if review.get("user_id") == user_id:
+                        book_current_user_rating = rating
+                    # Skip users who have not reviewed
+                    if not rating:
+                        continue
+
+                    if rating == 2:
+                        book_loved.append(
+                            {
+                                "user":{
+                                    "id": review.get("user_id"),
+                                    "username": review.get("user_username"),
+                                }
+                            }
+                        )
+                    elif rating == 1:
+                        book_liked.append(
+                            {
+                                "user":{
+                                    "id": review.get("user_id"),
+                                    "username": review.get("user_username"),
+                                }
+                            }
+                        )
+                    else:
+                        book_disliked.append(
+                            {
+                                "user":{
+                                    "id": review.get("user_id"),
+                                    "username": review.get("user_username"),
+                                }
+                            }
+                        )
+                
+                rating_groups = {
+                    2: book_loved,
+                    1: book_liked,
+                    0: book_disliked
+                }
+
+                # Find the rating corresponding to the longest array
+                book_longest_rating = max(rating_groups, key=lambda rating: len(rating_groups[rating]))
+
+                # Compare the current_user_rating with the longest_rating
+                book_is_same_as_longest = book_current_user_rating == book_longest_rating
+
+                if book_is_same_as_longest:
+                    total_is_same_as_longest += 1
+
+
+        longest_rating_map = ["disliked","liked","loved"]
+        longest_rating_text = longest_rating_map[longest_rating]
+
+        if is_same_as_longest:
+            num_times_result = total_is_same_as_longest
+        else:
+            num_times_result = 5 - total_is_same_as_longest
+
+        return {
+            "loved":loved,
+            "liked":liked,
+            "disliked":disliked,
+            "group_consensus":{
+                "majority": longest_rating_text,
+                "user_agreed_with_majority": is_same_as_longest,
+                "num_times_result": num_times_result
+            }
+        }        
+
         
     def search_users_not_in_club(
             self, 

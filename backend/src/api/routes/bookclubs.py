@@ -1636,9 +1636,10 @@ async def update_club_notification_to_dismiss(
 
 ## Create review for book club
 
-@router.post("/{book_club_id}/review/create", name='bookclubs:create_review')
+@router.post("/{book_club_id}/review/create/{book_club_book_id}", name='bookclubs:create_review')
 async def create_review_for_user(
     book_club_id: str,
+    book_club_book_id: str,
     current_user: Annotated[User, Depends(get_current_active_user)],
     request: Request,
     background_tasks: BackgroundTasks, 
@@ -1688,7 +1689,8 @@ async def create_review_for_user(
                 question_ids=data.get("ids"),
                 responses=data.get("responses"),
                 rating=data.get("rating"),
-                id=book_club_id
+                id=book_club_id,
+                book_club_book_id= book_club_book_id
             )
         except ValueError as e:
             raise HTTPException(status_code=400, detail=str(e))
@@ -1713,7 +1715,8 @@ async def create_review_for_user(
     else:
         try:
             review = BookClubSchemas.CreateReviewPostNoText(
-                rating=data.get("rating")
+                rating=data.get("rating"),
+                book_club_book_id=book_club_book_id
             )
         except ValueError as e:
             raise HTTPException(status_code=400, detail=str(e))
@@ -1721,7 +1724,8 @@ async def create_review_for_user(
         response = book_club_repo.create_finished_reading(
             user_id,
             book_club_id,
-            review.rating
+            review.rating,
+            review.book_club_book_id
         )
 
         if response:
@@ -2027,6 +2031,7 @@ async def get_afterword_consensus(
     
     consensus = book_club_repo.get_afterward_consensus(
         book_club_id,
+        book_club_book_id,
         user_id
     )
     
@@ -2040,7 +2045,7 @@ async def get_afterword_consensus(
             }
         )
         return JSONResponse(
-            200,
+            status_code=200,
             content={
                 "consensus": consensus
             }

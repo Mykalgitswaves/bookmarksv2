@@ -739,7 +739,7 @@ class TestBookClubs:
 
         endpoint = (
             f"{self.endpoint}/api/bookclubs/{self.book_club_id}/"
-            "review/create")
+            f"review/create/{self.book_club_book_id}")
         
         data = {
             "user":{
@@ -770,7 +770,7 @@ class TestBookClubs:
 
         endpoint = (
             f"{self.endpoint}/api/bookclubs/{self.book_club_id}/"
-            "review/create")
+            f"review/create/{self.book_club_book_id}")
         
         data = {
             "user": {
@@ -811,6 +811,15 @@ class TestBookClubs:
 
         response = requests.post(endpoint, headers=headers)
         assert response.status_code == 200, "Finishing a currently reading book"
+
+        endpoint = (
+            f"{self.endpoint}/api/bookclubs/{self.book_club_id}/"
+            "currently_reading")
+
+        response = requests.get(endpoint, headers=headers)
+        assert response.status_code == 200, "Error getting last finished book"
+        print(self.book_club_book_id)
+        print(response.json())
         
         endpoint = (
             f"{self.endpoint}/api/bookclubs/{self.book_club_id}/"
@@ -837,6 +846,19 @@ class TestBookClubs:
         )
         print(response.json())
         assert response.status_code == 200, "Getting friend thoughts"
+
+        endpoint = (
+            f"{self.endpoint}/api/bookclubs/{self.book_club_id}/"
+            f"afterword/{self.user_id}/"
+            f"consensus/{self.book_club_book_id}"
+            )
+        
+        response = requests.get(
+            endpoint,
+            headers=headers
+        )
+        print(response.json())
+        assert response.status_code == 200, "Getting consensus"
         
     def test_deleting_member(self):
         headers = {"Authorization": f"{self.token_type} {self.access_token}"}

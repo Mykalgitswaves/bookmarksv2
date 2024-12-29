@@ -93,6 +93,7 @@ class MinimalBookClub(BaseBookClub):
 
 class BookClubCurrentlyReading(BaseModel):
     book_id: str
+    book_club_book_id:str
     title: str
     small_img_url: str
     author_names: list
@@ -169,6 +170,7 @@ class CreateReviewPost(BaseModel):
     responses: list[str] = []
     rating: int
     id: str
+    book_club_book_id: str
 
     @validator('questions', each_item=True)
     def check_length_questions(cls, v):
@@ -191,6 +193,8 @@ class CreateReviewPost(BaseModel):
     
 class CreateReviewPostNoText(BaseModel):
     rating: Optional[int]
+    book_club_book_id: str
+    
     @validator('rating')
     def check_rating(cls, v):
         if v not in [0, 1, 2, None]:
