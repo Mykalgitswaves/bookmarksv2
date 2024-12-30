@@ -494,6 +494,7 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
                 started_date: datetime(),
                 selected_finish_date: $finish_date
             }]->(bc_book)
+            WITH b, bc_book
             OPTIONAL MATCH (old_member)-[oldRel:IS_READING_FOR_CLUB]->(old_book:BookClubBook)<-[:IS_READING|STOPPED_READING|FINISHED_READING]-(b)
             WITH b, bc_book, old_member, oldRel, old_book
             // If an existing IS_READING_FOR_CLUB relationship is found, delete it and create FINISHED_READING_FOR_CLUB
