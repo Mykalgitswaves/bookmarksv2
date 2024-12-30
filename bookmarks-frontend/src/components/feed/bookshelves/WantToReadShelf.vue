@@ -225,4 +225,16 @@ window.onbeforeunload = () => {
     ws.unsubscribeFromSocketConnection();
     removeWsEventListener();
 };
+
+function remove_book(removed_book_id){
+    let data = {
+        type: 'delete',
+        target_id: removed_book_id,
+        bookshelf_id: route.params.bookshelf,
+    };
+
+    ws.sendData(data);
+    books.value = ws.books;
+    currentBook.value = null;
+}
 </script>

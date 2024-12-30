@@ -2128,7 +2128,13 @@ class BookshelfCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
     def delete_book_from_reading_flow_bookshelf_with_validate_query(tx, book_id, bookshelf_id, user_id):
         query = (
             """
-            MATCH (u:User {id: $user_id})-[:HAS_READING_FLOW_SHELF]->(shelf: {id: $bookshelf_id})
+            MATCH (u:User {id: $user_id})-[:HAS_READING_FLOW_SHELF]->(shelf)
+            WHERE shelf.id = $bookshelf_id
+            AND (
+                shelf:CurrentlyReadingShelf OR 
+                shelf:FinishedReadingShelf OR 
+                shelf:WantToReadShelf
+            )
             MATCH (shelf)-[r:CONTAINS_BOOK]->(book:Book {id: $book_id})
             DELETE r
             SET shelf.books = [book_id IN shelf.books WHERE book_id <> $book_id]

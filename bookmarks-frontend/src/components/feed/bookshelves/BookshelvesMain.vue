@@ -1,18 +1,12 @@
 <template>
     <div class="post-section-wrapper">
-        <h1 class="text-3xl text-stone-600 fancy">Bookshelves</h1>
-
-        <TextAlert :variant="TA.info.cls" :is-collapsible="true" id="text-alert" :icon-override="'none'">
-            <template #alert-heading>
-                More about bookshelves
-            </template>
-            <template #alert-content>
-                <p class="text-xs text-stone-500 italic">
-                    Add books to your shelves in order to keep track of what you are reading, want to read, and books you have finished.<br/>
-                    Use your own private bookshelves or create custom, public bookshelves to share reading lists with your friends.
-                </p>
-            </template>
-        </TextAlert>
+        <div class="explore-header">
+            <h1 class="text-3xl text-stone-700 fancy mb-2">Bookshelves</h1>
+            <p class="text-xs text-stone-600 italic">
+                Add books to your shelves in order to keep track of what you are reading, want to read, and books you have finished.<br/>
+                Use your own private bookshelves or create custom, public bookshelves to share reading lists with your friends.
+            </p>
+        </div>
 
         <div class="bookshelf-filters">
             <TextInput 

@@ -106,7 +106,11 @@ export const ws = {
         }
     },
 
-    sendData(data) {
+    sendData(data, isDebug) {
+        if(isDebug) {
+            debugger;
+        }
+        
         if (ws.socket && ws.socket.readyState === WebSocket.OPEN) {
             data.token = ws.secure_token;
             ws.socket.send(JSON.stringify(data));

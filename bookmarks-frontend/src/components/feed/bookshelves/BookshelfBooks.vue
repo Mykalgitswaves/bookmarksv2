@@ -25,6 +25,7 @@
                 :is-editing="isEditing"
                 :note-for-shelf="book.note_for_shelf"
                 :unique="unique"
+                @editing-current-book-note="(book_id) => startEditingCurrentBookNote(book_id)"
                 @set-sort="(data) => setSort(data)"
                 @swapped-with="(data) => swappedWithHandler(data)"
                 @removed-book="$emit('removed-book', $event)"
@@ -100,7 +101,6 @@
             
             <div class="w-100" :class="{'mt-5': !editingCurrentBookNote}">
                 <button 
-                    v-if="moveToSelectedShelfData.shelf === Bookshelves.CURRENTLY_READING.prefix"
                     type="button"
                     class="text-stone-500 underline pl-2"
                     @click="setOrUnsetEditingCurrentBookNote"
@@ -236,10 +236,28 @@
             </div>
 
             <h3 v-else>
-                <span>Click on a book to edit</span> 
+                <span class="fancy text-stone-700">Click on a book to edit</span> 
             </h3>
 
-            <div class="sorting-footer-controls">
+            <div class="flex gap-2 items-center">
+                <button v-if="currentBook" 
+                    type="button"
+                    class="btn btn-tiny text-sm text-stone-400 icon mr-5" 
+                    @click=""
+                >
+                    <IconNote />
+                </button>
+
+                <button 
+                    v-if="currentBook" 
+                    type="button" 
+                    class="btn btn-tiny text-sm text-red-500 btn-remove icon mr-5" 
+                    @click="emit('removed-book', currentBook.id)"
+                >
+                    <IconTrash />
+                    Remove from shelf
+                </button>
+
                 <button type="button" class="btn s-f-c--btn" @click="resetSort()">
                     Cancel
                 </button>
@@ -247,6 +265,14 @@
         </div>    
     </teleport>
     <!-- End regular shelves -->
+    <!-- Edit a books note -->
+    
+    <Overlay :ref="(el) = editNoteOverlay = el?.dialogRef">
+        <template #overlay-main>
+
+        </template>
+    </Overlay>
+    
     <Transition name="content">
         <ErrorToast v-if="error.isShowing" :message="error.message" :refresh="true"/>
     </Transition>
@@ -259,6 +285,7 @@ import { ref, computed, watch, onMounted, toRaw, defineExpose } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import SortableBook from './SortableBook.vue';
 import IconExit from '../../svg/icon-exit.vue';
+import IconTrash from '../../svg/icon-trash.vue';
 import { db } from '../../../services/db';
 import { urls, navRoutes } from '../../../services/urls';
 import { Bookshelves } from '../../../models/bookshelves';
@@ -267,6 +294,7 @@ import CreateUpdateForm from '../createPosts/update/createUpdateForm.vue';
 import CreateReviewPost from '../createPosts/createReviewPost.vue'
 import ErrorToast from '../../shared/ErrorToast.vue';
 import SuccessToast from '../../shared/SuccessToast.vue';
+import Overlay from '../partials/overlay/Overlay.vue';
 
 const props = defineProps({
     books: {
@@ -308,6 +336,7 @@ const error = ref({
     message: '',
 });
 const toast = ref(null);
+const editNoteOverlay = ref(null)
 
 FLOWSHELVES.filter((shelf) => (shelf.prefix !== props.unique)).forEach(
         (shelf) => {
@@ -540,15 +569,17 @@ function setOrUnsetEditingCurrentBookNote() {
 }
 
 
-async function saveBookNoteForCurrentBook() {
+async function saveBookNoteForCurrentBook(isDebug) {
     let _data = {
         book_id: currentBookForOverlay.value.id,
         note_for_shelf: currentBookForOverlay.value.note_for_shelf,
     };
 
-    console.log(_data);
+    if (isDebug) {
+        console.log(_data);
+    }
 
-    db.put(urls.rtc.updateBookNoteForShelf(route.params.bookshelf), _data).then((res) => {
+    await db.put(urls.rtc.updateBookNoteForShelf(route.params.bookshelf), _data).then((res) => {
         console.log(res);
     });
 }
@@ -592,6 +623,20 @@ function moveToShelf(bookshelf) {
     }
     
 }
+
+// Edit note functions
+// ------------------------------
+
+
+
+function startEditingCurrentBookNote(bookId) {
+    currentBook = book;
+    editNoteOverlay.value.showModal();
+}
+
+// ------------------------------
+//
+
 // End of book controls overlay function
 // ------------------------------
 

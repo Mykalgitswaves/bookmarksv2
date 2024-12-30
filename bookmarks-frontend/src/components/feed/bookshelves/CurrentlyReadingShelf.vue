@@ -216,6 +216,7 @@ function removeBookFromShelf(removed_book_id) {
         ws.sendData({
             type: 'delete',
             target_id: removed_book_id,
+            bookshelf_id: route.params.bookshelf,
         });
     } catch (error) {
         console.error(error);

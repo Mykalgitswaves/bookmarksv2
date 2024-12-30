@@ -83,7 +83,6 @@ import { ClubAwardsSvgMap } from '../awards/awards';
 import { PubSub } from '../../../../../services/pubsub.js';
 
 const awardStatuses = ref({});
-const postId = ref('');
 let awards = {};
 let awardNames = [];
 const postId = ref('');

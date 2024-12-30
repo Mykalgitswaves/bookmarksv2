@@ -150,7 +150,6 @@ import IconEdit from '../../svg/icon-edit.vue';
 import BookshelfBooks from './BookshelfBooks.vue';
 import BookshelfManageCollaborators from './BookshelfManageCollaborators.vue';
 import SearchBooks from '../createPosts/searchBooks.vue';
-import PlaceholderImage from '../../svg/placeholderImage.vue';
 import ErrorToast from '../../shared/ErrorToast.vue';
 import { 
     getBookshelf, 
@@ -314,6 +313,8 @@ function remove_book(removed_book_id){
     };
 
     ws.sendData(data);
+    // unset key is what we use to remove the current book in this component, kinda weird but i made this when i didnt understand js. 
+    // forgive me.
     unsetKey++;
 }
 /**

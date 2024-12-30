@@ -147,6 +147,11 @@
     gap: 8px;
     color: var(--red-500);
     background-color: var(--surface-primary);
+    transition: all 250ms ease;
+}
+
+.btn-remove:hover {
+    background-color: var(--red-100);
 }
 
 .btn.small {
