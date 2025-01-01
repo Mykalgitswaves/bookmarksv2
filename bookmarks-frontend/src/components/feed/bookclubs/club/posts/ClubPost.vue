@@ -54,6 +54,7 @@
                     <!-- todo add in n more awards stuff here. -->
                 <div class="flex items-center">
                     <button 
+                        type="button"
                         title="like post"
                         class="btn btn-tiny btn-icon mr-auto btn-specter relative b-0 m-r-5" 
                         :class="{'liked': isLikedByCurrentUser}"
@@ -69,18 +70,28 @@
                         </span>
                     </button>
 
-
                     <button 
+                        type="button"
+                        title="comment"
+                        class="btn btn-tiny btn-icon mr-auto btn-specter b-0" 
+                        @click=""
+                    >
+                        <IconComment />
+                    </button>
+                </div>
+                
+                <div class="awards-list" :class="{'expanded': false}">
+                    <button 
+                        type="button"
                         title="view awards"
                         class="btn btn-tiny btn-icon mr-auto btn-specter b-0" 
                         @click="dispatchAwardEvent(post)"
                     >
                         <IconAwards />
                     </button>
-                </div>
-                
-                <div class="awards-list" :class="{'expanded': false}" v-if="awards.length">
-                    <div v-for="(award, index) in awards" 
+
+                    <div v-if="awards.length" 
+                        v-for="(award, index) in awards" 
                         :key="award.id" 
                     >
                         <div v-if="award.num_grants > 0" 
@@ -132,6 +143,7 @@ import { ClubUpdatePost, ClubReviewPost } from '../../models/models';
 import { ClubAwardsSvgMap } from '../awards/awards';
 import { computed, ref } from 'vue';
 import { useRoute } from 'vue-router';
+import IconComment from '../../../../svg/icon-club-comment.vue';
 import IconAwards from '../awards/icons/Awards.vue';
 import IconClubLike from '../awards/icons/ClubLike.vue';
 import SuccessToast from '../../../../shared/SuccessToast.vue';
@@ -144,6 +156,8 @@ const props = defineProps({
         required: true,
     }
 });
+
+console.log(props.post.id)
 
 const awardsRef = ref(
     Object.entries(props.post.awards).map(([key, award]) => {
@@ -168,12 +182,9 @@ const awards = computed(() => {
 
 
 function dispatchAwardEvent(post) {
-    const event = new CustomEvent('open-award-post-modal', {
-        detail:  {
-            post_id: post.id
-        }
+    PubSub.publish('open-award-post-modal', {
+        post_id: post.id
     });
-    window.dispatchEvent(event);
 };
 
 function successDeleteFunction(award, vForIndex) {

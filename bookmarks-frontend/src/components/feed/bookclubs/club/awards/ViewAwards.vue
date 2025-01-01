@@ -97,50 +97,52 @@ db.get(urls.bookclubs.getAwards(bookclub), null, false, (res) => {
     loaded.value = true;
 });
 
-const getAwardsPromiseFactory = () => db.get(urls.bookclubs.getAwards(bookclub), 
-    { 
-        post_id: postId.value,
-        current_uses: true,
-    },
-    false, 
-    (res) => {
-        let _awards = res.awards;
-        let awardsByType = {};
-        
-        let awardLimit = _awards.length;
-        let index = 0;
-
-        // This is marginally faster than a normal for loop.
-        while (index < awardLimit) {
-            awardStatuses.value[_awards[index].id] = {};
-            if (!awardsByType[_awards[index].type]) {
-                awardsByType[_awards[index].type] = []
-                awardNames.push(_awards[index].type);
-            }
-
-            // two conditions here, either you can grant awards or you cant
-            if (_awards[index].current_uses === _awards[index].allowed_uses) {
-                awardStatuses.value[_awards[index].id].status = Award.statuses.expired;
-            }
+function getAwardsPromiseFactory() {
+    return db.get(urls.bookclubs.getAwards(bookclub), 
+        { 
+            post_id: postId.value,
+            current_uses: true,
+        },
+        false, 
+        (res) => {
+            let _awards = res.awards;
+            let awardsByType = {};
             
-            if (_awards[index].current_uses > 0 && _awards[index].current_uses < _awards[index].allowed_uses) { 
-                awardStatuses.value[_awards[index].id].status = Award.statuses.grantable;
+            let awardLimit = _awards.length;
+            let index = 0;
+
+            // This is marginally faster than a normal for loop.
+            while (index < awardLimit) {
+                awardStatuses.value[_awards[index].id] = {};
+                if (!awardsByType[_awards[index].type]) {
+                    awardsByType[_awards[index].type] = []
+                    awardNames.push(_awards[index].type);
+                }
+
+                // two conditions here, either you can grant awards or you cant
+                if (_awards[index].current_uses === _awards[index].allowed_uses) {
+                    awardStatuses.value[_awards[index].id].status = Award.statuses.expired;
+                }
+                
+                if (_awards[index].current_uses > 0 && _awards[index].current_uses < _awards[index].allowed_uses) { 
+                    awardStatuses.value[_awards[index].id].status = Award.statuses.grantable;
+                };
+
+                index += 1;
             };
 
-            index += 1;
-        };
+            // Set the awards by type.
+            Object.keys(awardsByType).forEach((key) => {
+                awardsByType[key] = (_awards
+                    .filter((award) => award.type === key)
+                    .sort((a, b) => a.current_uses - b.current_uses)
+                );
+            });
 
-        // Set the awards by type.
-        Object.keys(awardsByType).forEach((key) => {
-            awardsByType[key] = (_awards
-                .filter((award) => award.type === key)
-                .sort((a, b) => a.current_uses - b.current_uses)
-            );
-        });
-
-        awards = awardsByType;
-        loaded.value = true;
-});
+            awards = awardsByType;
+            loaded.value = true;
+    });
+};
 
 const GET_AWARDS_PROMISE_KEY = 'get-awards-for-post';
 const awardsModal = ref(null);
@@ -178,8 +180,8 @@ watch(
     },
 );
 
-window.addEventListener('open-award-post-modal', (event) => {
-    postId.value = event.detail.post_id;
+PubSub.subscribe('open-award-post-modal', (payload) => {
+    postId.value = payload.post_id;
     PubSub.publish(GET_AWARDS_PROMISE_KEY);
     awardsModal.value?.showModal(); 
     isOpen.value = true; 
@@ -196,8 +198,13 @@ function grantAwardToPost(post, award, useArray) {
     // use array, 0 index is current Uses, 1 index is allowed uses.
     // early out if you are already at the limit of the awards allotted uses.
     if (awardStatuses.value[awardId].grantable && useArray[0] >= useArray[1]) return;
+    let _postId = post.id;
 
-    db.put(urls.bookclubs.grantAwardToPost(bookclub, post.id, awardId), null, false, 
+    if (postId.value && !post.id) {
+        _postId = postId.value;
+    }
+
+    db.put(urls.bookclubs.grantAwardToPost(bookclub, _postId, awardId), null, false, 
         (res) => {
             // this is where you should see whether the award can still be granted or not by incrementing the count of grants a particular award has been given.
             // TODO: Update this so that it works.
