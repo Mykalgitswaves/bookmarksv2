@@ -25,7 +25,7 @@
                 :is-editing="isEditing"
                 :note-for-shelf="book.note_for_shelf"
                 :unique="unique"
-                @editing-current-book-note="(book_id) => startEditingCurrentBookNote(book_id)"
+                @editing-current-book-note="(book) => startEditingCurrentBookNote(book)"
                 @set-sort="(data) => setSort(data)"
                 @swapped-with="(data) => swappedWithHandler(data)"
                 @removed-book="$emit('removed-book', $event)"
@@ -243,7 +243,7 @@
                 <button v-if="currentBook" 
                     type="button"
                     class="btn btn-tiny text-sm text-stone-400 icon mr-5" 
-                    @click=""
+                    @click="startEditingCurrentBookNote(currentBook)"
                 >
                     <IconNote />
                 </button>
@@ -265,11 +265,33 @@
         </div>    
     </teleport>
     <!-- End regular shelves -->
-    <!-- Edit a books note -->
-    
-    <Overlay :ref="(el) = editNoteOverlay = el?.dialogRef">
-        <template #overlay-main>
 
+    <!-- Edit a books note -->
+    <Overlay 
+        :ref="(el) => editNoteOverlay = el?.dialogRef" 
+        @closed-modal="currentBook = null"
+    >
+        <template #overlay-main>
+            <div style="min-width: 300px; width: 60vw; max-width: 600px;"> 
+                <GenericTextArea 
+                    name="current-book-note" 
+                    :v-model="currentBook?.note_for_shelf"
+                    @updated:modelValue="(noteForShelf) => currentBook.note_for_shelf = noteForShelf"    
+                >
+                    <template #labelAbove>
+                        Note for shelf
+                    </template>
+                </GenericTextArea>
+            </div>
+        </template>
+        <template #overlay-footer>
+            <button
+                type="button" 
+                :disabled="!currentBook?.note_for_shelf"
+                class="mt-5 btn btn-submit btn-wide" 
+                @click="submitNoteForShelfForCurrentBook(currentBook)">
+                Submit
+            </button>
         </template>
     </Overlay>
     
@@ -295,6 +317,7 @@ import CreateReviewPost from '../createPosts/createReviewPost.vue'
 import ErrorToast from '../../shared/ErrorToast.vue';
 import SuccessToast from '../../shared/SuccessToast.vue';
 import Overlay from '../partials/overlay/Overlay.vue';
+import GenericTextArea from '../partials/GenericTextArea.vue';
 
 const props = defineProps({
     books: {
@@ -326,8 +349,8 @@ const props = defineProps({
 
 const route = useRoute();
 const router = useRouter();
-const { user } = route.params;
-const emit = defineEmits(['send-bookdata-socket', 'cancelled-reorder']);
+const { user, bookshelf } = route.params;
+const emit = defineEmits(['send-bookdata-socket', 'cancelled-reorder', 'start-ws-connection']);
 const userShelves = ref([]);
 const loaded = ref(false);
 const FLOWSHELVES = [Bookshelves.WANT_TO_READ, Bookshelves.CURRENTLY_READING, Bookshelves.FINISHED_READING];
@@ -629,10 +652,23 @@ function moveToShelf(bookshelf) {
 
 
 
-function startEditingCurrentBookNote(bookId) {
-    currentBook = book;
-    editNoteOverlay.value.showModal();
+function startEditingCurrentBookNote(book) {
+    emit('start-ws-connection')
+    currentBook.value = book;
+    editNoteOverlay.value?.showModal();
 }
+
+async function submitNoteForShelfForCurrentBook(book) {
+    db.put(urls.rtc.updateBookNoteForShelf(bookshelf), {
+        book_id: book.id,
+        note_for_shelf: book.note_for_shelf,
+        id: bookshelf,
+    }, false, (res) => {
+        editNoteOverlay.value?.close();
+    }, (err) => {
+        console.error(err);
+    });
+};
 
 // ------------------------------
 //

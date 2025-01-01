@@ -62,6 +62,7 @@
                 :is-editing="isEditingModeEnabled.value"    
                 :is-reordering="isReordering"
                 :unset-current-book="unsetKey"
+                @start-ws-connection="Bookshelves.enterEditingMode(bookshelf, isEditingModeEnabled)"
                 @send-bookdata-socket="
                     (bookdata) => reorder_books(bookdata)
                 "
@@ -137,7 +138,7 @@ import SuccessToast from '../../shared/SuccessToast.vue';
 // // // // // // // // // // // // // 
 // -- -- -- --- Routes --- -- -- -- // 
 const route = useRoute();
-const { user } = route.params;
+const { user, bookshelf } = route.params;
 // // // // // // // // // // // // // 
 
 

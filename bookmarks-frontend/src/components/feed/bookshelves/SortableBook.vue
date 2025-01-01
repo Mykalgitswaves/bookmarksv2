@@ -51,7 +51,7 @@
             <div class="flex gap-2">
                 <button type="button" 
                     class="btn btn-icon btn-tiny icon text-stone-400 btn-ghost text-xs fancy" 
-                    @click="emit('editing-current-book-note', { book_id: book.id })"
+                    @click="emit('editing-current-book-note', book )"
                 >
                     <IconNote />
                     
