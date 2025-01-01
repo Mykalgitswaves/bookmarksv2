@@ -25,6 +25,7 @@
                 :is-editing="isEditing"
                 :note-for-shelf="book.note_for_shelf"
                 :unique="unique"
+                @editing-current-book-note="(book) => startEditingCurrentBookNote(book)"
                 @set-sort="(data) => setSort(data)"
                 @swapped-with="(data) => swappedWithHandler(data)"
                 @removed-book="$emit('removed-book', $event)"
@@ -98,9 +99,8 @@
                 </label>
             </div>
             
-            <div class="w-100" :class="{'mt-5': !editingCurrentBookNote}">
+            <!-- <div class="w-100" :class="{'mt-5': !editingCurrentBookNote}">
                 <button 
-                    v-if="moveToSelectedShelfData.shelf === Bookshelves.CURRENTLY_READING.prefix"
                     type="button"
                     class="text-stone-500 underline pl-2"
                     @click="setOrUnsetEditingCurrentBookNote"
@@ -118,8 +118,8 @@
                     v-model="currentBookForOverlay.note_for_shelf"
                     @input="generatedHeightForTextArea(textAreas.wantToReadNoteTextArea)"
                 ></textarea>
-                <!-- Saving the note you just made -->
-                <div class="flex justify-between mt-5">
+                Saving the note you just made -->
+                <!-- <div class="flex justify-between mt-5">
                     <button type="button" class="btn btn-submit" @click="saveBookNoteForCurrentBook()">
                         Save
                     </button>
@@ -127,7 +127,7 @@
                         cancel
                     </button>
                 </div>
-            </div>
+            </div> -->
 
             <!-- Move to currently reading code and not editing current book note for shelf -->
             <div v-if="moveToSelectedShelfData.shelf === Bookshelves.CURRENTLY_READING.prefix && !editingCurrentBookNote">
@@ -236,10 +236,28 @@
             </div>
 
             <h3 v-else>
-                <span>Click on a book to edit</span> 
+                <span class="fancy text-stone-700">Click on a book to edit</span> 
             </h3>
 
-            <div class="sorting-footer-controls">
+            <div class="flex gap-2 items-center">
+                <button v-if="currentBook" 
+                    type="button"
+                    class="btn btn-tiny text-sm text-stone-400 icon mr-5" 
+                    @click="startEditingCurrentBookNote(currentBook)"
+                >
+                    <IconNote />
+                </button>
+
+                <button 
+                    v-if="currentBook" 
+                    type="button" 
+                    class="btn btn-tiny text-sm text-red-500 btn-remove icon mr-5" 
+                    @click="emit('removed-book', currentBook.id)"
+                >
+                    <IconTrash />
+                    Remove from shelf
+                </button>
+
                 <button type="button" class="btn s-f-c--btn" @click="resetSort()">
                     Cancel
                 </button>
@@ -247,6 +265,36 @@
         </div>    
     </teleport>
     <!-- End regular shelves -->
+
+    <!-- Edit a books note -->
+    <Overlay 
+        :ref="(el) => editNoteOverlay = el?.dialogRef" 
+        @closed-modal="currentBook = null"
+    >
+        <template #overlay-main>
+            <div style="min-width: 300px; width: 60vw; max-width: 600px;"> 
+                <GenericTextArea 
+                    name="current-book-note" 
+                    :v-model="currentBook?.note_for_shelf"
+                    @updated:modelValue="(noteForShelf) => currentBook.note_for_shelf = noteForShelf"    
+                >
+                    <template #labelAbove>
+                        Note for shelf
+                    </template>
+                </GenericTextArea>
+            </div>
+        </template>
+        <template #overlay-footer>
+            <button
+                type="button" 
+                :disabled="!currentBook?.note_for_shelf"
+                class="mt-5 btn btn-submit btn-wide" 
+                @click="submitNoteForShelfForCurrentBook(currentBook)">
+                Submit
+            </button>
+        </template>
+    </Overlay>
+    
     <Transition name="content">
         <ErrorToast v-if="error.isShowing" :message="error.message" :refresh="true"/>
     </Transition>
@@ -259,6 +307,7 @@ import { ref, computed, watch, onMounted, toRaw, defineExpose } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import SortableBook from './SortableBook.vue';
 import IconExit from '../../svg/icon-exit.vue';
+import IconTrash from '../../svg/icon-trash.vue';
 import { db } from '../../../services/db';
 import { urls, navRoutes } from '../../../services/urls';
 import { Bookshelves } from '../../../models/bookshelves';
@@ -267,6 +316,8 @@ import CreateUpdateForm from '../createPosts/update/createUpdateForm.vue';
 import CreateReviewPost from '../createPosts/createReviewPost.vue'
 import ErrorToast from '../../shared/ErrorToast.vue';
 import SuccessToast from '../../shared/SuccessToast.vue';
+import Overlay from '../partials/overlay/Overlay.vue';
+import GenericTextArea from '../partials/GenericTextArea.vue';
 
 const props = defineProps({
     books: {
@@ -298,8 +349,8 @@ const props = defineProps({
 
 const route = useRoute();
 const router = useRouter();
-const { user } = route.params;
-const emit = defineEmits(['send-bookdata-socket', 'cancelled-reorder']);
+const { user, bookshelf } = route.params;
+const emit = defineEmits(['send-bookdata-socket', 'cancelled-reorder', 'start-ws-connection']);
 const userShelves = ref([]);
 const loaded = ref(false);
 const FLOWSHELVES = [Bookshelves.WANT_TO_READ, Bookshelves.CURRENTLY_READING, Bookshelves.FINISHED_READING];
@@ -308,6 +359,7 @@ const error = ref({
     message: '',
 });
 const toast = ref(null);
+const editNoteOverlay = ref(null)
 
 FLOWSHELVES.filter((shelf) => (shelf.prefix !== props.unique)).forEach(
         (shelf) => {
@@ -540,15 +592,17 @@ function setOrUnsetEditingCurrentBookNote() {
 }
 
 
-async function saveBookNoteForCurrentBook() {
+async function saveBookNoteForCurrentBook(isDebug) {
     let _data = {
         book_id: currentBookForOverlay.value.id,
         note_for_shelf: currentBookForOverlay.value.note_for_shelf,
     };
 
-    console.log(_data);
+    if (isDebug) {
+        console.log(_data);
+    }
 
-    db.put(urls.rtc.updateBookNoteForShelf(route.params.bookshelf), _data).then((res) => {
+    await db.put(urls.rtc.updateBookNoteForShelf(route.params.bookshelf), _data).then((res) => {
         console.log(res);
     });
 }
@@ -592,6 +646,33 @@ function moveToShelf(bookshelf) {
     }
     
 }
+
+// Edit note functions
+// ------------------------------
+
+
+
+function startEditingCurrentBookNote(book) {
+    emit('start-ws-connection')
+    currentBook.value = book;
+    editNoteOverlay.value?.showModal();
+}
+
+async function submitNoteForShelfForCurrentBook(book) {
+    db.put(urls.rtc.updateBookNoteForShelf(bookshelf), {
+        book_id: book.id,
+        note_for_shelf: book.note_for_shelf,
+        id: bookshelf,
+    }, false, (res) => {
+        editNoteOverlay.value?.close();
+    }, (err) => {
+        console.error(err);
+    });
+};
+
+// ------------------------------
+//
+
 // End of book controls overlay function
 // ------------------------------
 
@@ -763,9 +844,5 @@ defineExpose({ currentBook });
         margin-bottom: 10px;
         align-items: center;
         width: 100%;
-    }
-
-    textarea::-webkit-scrollbar {
-        display: none;
     }
 </style>

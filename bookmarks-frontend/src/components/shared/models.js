@@ -11,3 +11,9 @@ export const Toast = {
         DESTROYED
     },
 }
+
+export const BOOKSHELVES_VISIBLITY_OPTIONS = [
+    { label: 'Public', value: 'public' }, 
+    { label: 'Private', value: 'private' },
+    { label: 'Friends', value: 'friends' },
+];

@@ -48,9 +48,22 @@
                 </InlineTooltip>
             </div>
 
-            <button class="btn btn-ghost btn-small" type="button" @click="$emit('update-currently-reading-book', book)">
-                update progress
-            </button>
+            <div class="flex gap-2">
+                <button type="button" 
+                    class="btn btn-icon btn-tiny icon text-stone-400 btn-ghost text-xs fancy" 
+                    @click="emit('editing-current-book-note', book )"
+                >
+                    <IconNote />
+                    
+                    <span v-if="!noteForShelf">Add note</span>
+
+                    <span v-else>Edit note</span>
+                </button>
+
+                <button class="btn btn-ghost btn-tiny text-xs text-stone-400 fancy" type="button" @click="$emit('update-currently-reading-book', book)">
+                    update progress
+                </button>    
+            </div>
         </div>
 
         <KeepAlive>
@@ -64,7 +77,19 @@
             </Transition>
         </KeepAlive>
     </div>
+    <div class="w-100" v-else>
+        <button type="button" 
+            class="btn btn-icon btn-tiny icon text-stone-400 btn-ghost text-xs fancy ml-auto" 
+            @click="emit('editing-current-book-note', book )"
+        >
+            <IconNote />
+            
+            <span v-if="!noteForShelf">Add note</span>
 
+            <span v-else>Edit note</span>
+        </button>
+    </div>
+        
     <p v-if="noteForShelf" class="text-stone-500 weight-300 mr-auto max-w-[768px]">
         {{ truncateText(noteForShelf, 150) }}
     </p>
@@ -78,14 +103,15 @@
       {{ currentBook?.order > order ? order + 2 : order + 1  }}
     </button>
     
-    <button v-if="shouldShowBookToolbar"
+    <!-- <button v-if="shouldShowBookToolbar"
         type="button"
-        class="btn btn-remove icon ml-auto"
+        class="btn btn-tiny text-sm icon btn-remove ml-auto"
         @click="$emit('removed-book', props.id)"
     >
-            Remove from shelf
-            <IconDelete />
-    </button>
+        <IconDelete />
+
+        Remove from shelf
+    </button> -->
 </template>
 <script setup>
 import { computed, ref } from 'vue';
@@ -95,6 +121,7 @@ import { Bookshelves } from '../../../models/bookshelves';
 import IconDelete from '../../svg/icon-trash.vue';
 import BookProgressBar from './BookProgressBar.vue';
 import InlineTooltip from '../../shared/InlineTooltip.vue';
+import IconNote from '../../svg/icon-note.vue';
 
 const props = defineProps({
     order: {

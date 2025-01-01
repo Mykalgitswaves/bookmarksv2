@@ -397,6 +397,7 @@ class SearchCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
         score,
         collect(book) as books,
         count(book) as number_of_books,
+        CASE WHEN owner.id = node.created_by THEN true ELSE false END as is_user_owner,
         owner.username as owner_username
         ORDER BY score DESC
         SKIP $skip
@@ -426,8 +427,7 @@ class SearchCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
                             'id': book.get("id"),
                             'small_img_url': book.get("small_img_url")
                         }
-                        break
-            
+                        break 
 
             bookshelf = {
                 'name': response['node'].get("title"),
@@ -435,6 +435,7 @@ class SearchCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
                 'number_of_books': response.get("number_of_books", 0),
                 'first_book': first_book,
                 'owner_username': response.get("owner_username", None),
+                'is_current_user_owner': response.get('is_user_owner', None),
                 'id': response['node'].get("id")
             }
             bookshelf_list.append(bookshelf)

@@ -400,9 +400,11 @@ ul:has(.comments-wrapper) {
 
 .bookshelves-main-container {
   display: grid;
+  grid-template-columns: 1fr;
+  column-gap: 8px;
   max-width: 880px;
-  row-gap: 20px;
-  margin-top: 10vh;
+  row-gap: 4px;
+  margin-top: 10px;
 }
 
 .modal.delete {
@@ -518,4 +520,24 @@ ul:has(.comments-wrapper) {
 .add-book-note:focus {
     border-color: var(--indigo-500);
     outline: none;
+}
+
+/* Disable scroll bar for text areas and dialogs */
+textarea::-webkit-scrollbar {
+  display: none;
+}
+
+dialog::-webkit-scrollbar {
+  display: none;
+}
+
+.explore-header {
+  display: grid;
+  justify-content: start;
+  row-gap: 10px;
+  padding: 20px;
+  padding-left: 40px;
+  background-color: var(--stone-100);
+  border-radius: 8px;
+  margin-bottom: 20px;
 }

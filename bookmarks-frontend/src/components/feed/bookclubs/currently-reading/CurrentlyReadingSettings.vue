@@ -26,7 +26,7 @@
                         @updated-current-book="(book) => {
                             data.currentlyReadingBook = book;
                             data.isShowingSetCurrentBookForm = false;
-                            router.push(navRoutes.toBookClubFeed(route.params.user, route.params.club))
+                            router.push(navRoutes.toBookClubFeed(route.params.user, route.params.bookclub))
                         }"
                     />
                 </div>

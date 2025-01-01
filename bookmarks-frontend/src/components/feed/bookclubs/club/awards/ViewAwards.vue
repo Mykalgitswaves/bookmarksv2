@@ -83,9 +83,9 @@ import { ClubAwardsSvgMap } from '../awards/awards';
 import { PubSub } from '../../../../../services/pubsub.js';
 
 const awardStatuses = ref({});
-const postId = ref('');
 let awards = {};
 let awardNames = [];
+const postId = ref('');
 
 const loading = ref(false);
 const loaded = ref(false);

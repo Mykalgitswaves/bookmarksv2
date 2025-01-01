@@ -117,6 +117,8 @@ export const urls = {
         getBookshelfWsToken: (bookshelf_id) => (baseUrl + `${BOOK_SHELVES_PREFIX}${bookshelf_id}/get_token`),
         updateBookNoteForShelf: (bookshelf_id) => (baseUrl + `${BOOK_SHELVES_PREFIX}${bookshelf_id}/update_book_note`),
         removeBookFromShelf: (bookshelf_id, book_id) => (baseUrl + `${BOOK_SHELVES_PREFIX}${bookshelf_id}/remove_book/${book_id}`),
+        // Following!
+        followPublicBookshelf: (bookshelf_id) => (`${baseUrl}${BOOK_SHELVES_PREFIX}${bookshelf_id}/follow`),
     },
     bookclubs: {
         // Create / POST
@@ -195,6 +197,8 @@ export const navRoutes = {
     toUserPage: (current_user, user) => (`/feed/${current_user}/user/${user}`),
     toBookPageFromPost: (current_user, book_id) => (`/feed/${current_user}/works/${book_id}`),
     toPostPageFromFeed: (current_user, post_id) => (`/feed/${current_user}/post/${post_id}`),
+    toBookshelvesMainPage: (current_user) => (`/feed/${current_user}/bookshelves/all`),
+    toBookshelvesCreate: (current_user) => (`/feed/${current_user}/bookshelves/create`),
     toBookshelfSectionPage: (current_user, shelfType) => (`/feed/${current_user}/bookshelves/by/${shelfType}`),
     toBookshelfPage: (current_user, bookshelf_id) => (`/feed/${current_user}/bookshelves/${bookshelf_id}`),
     toBookClubsPage: (current_user) => (`/feed/${current_user}/bookclubs/`),

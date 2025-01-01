@@ -1,13 +1,19 @@
 <template>
 <div :class="alertVariantCss()">
-    <component class="icon" :is="TEXT_ALERT[variant].icon" />
+    <component class="icon" :is="TEXT_ALERT[iconOverride ?? variant].icon"/>
 
     <div>
-        <h3 class="alert-heading">
-            <slot name="alert-heading"></slot>
-        </h3>
+        <div class="flex" :class="{'justify-between items-center': isCollapsible}">
+            <h3 class="alert-heading">
+                <slot name="alert-heading"></slot>
+            </h3>
 
-        <p class="alert-content">
+            <button v-if="isCollapsible" class="btn btn-subtle btn-tiny pt-0" :class="{'one-80-deg': !isCollapsed}" @click="isCollapsed = !isCollapsed">
+                <IconChevron/>
+            </button>
+        </div>
+
+        <p class="alert-content" v-if="isCollapsed">
             <slot name="alert-content"></slot>
         </p>
     </div>
@@ -15,6 +21,8 @@
 </template>
 <script setup>
 import { TEXT_ALERT } from './textAlert.js';
+import { ref } from 'vue';
+import IconChevron from '../../../svg/icon-chevron.vue';
 
 const props = defineProps({
     variant: {
@@ -26,19 +34,29 @@ const props = defineProps({
             // default which we know is true.
             return variant ? TEXT_ALERT.variants.includes(variant) : true;
         },
+    },
+    isCollapsible: {
+        type: Boolean,
+        required: false,
+        default: () => false,
+    },
+    iconOverride: {
+        type: String
     }
 });
 
 const alertVariantCss = () => (`text-alert ${props.variant}`);
+const isCollapsed = ref(true);
 </script>
 <style scoped>
+
+
  .text-alert {
     max-width: 768px;
     padding: 8px 14px;
     border-radius: 8px;
     border: 1px solid var(--stone-300);
     display: grid;
-    grid-template-columns: 40px 1fr;
     column-gap: 14px;
     margin-left: auto;
     margin-right: auto;
@@ -56,10 +74,21 @@ const alertVariantCss = () => (`text-alert ${props.variant}`);
         font-family: var(--fancy-script);
     }
     
+    @starting-style {
+        .alert-content {
+            opacity: 0;
+        }
+    }
+
+    .text-alert:has(svg) {
+        grid-template-columns: 40px 1fr;
+    }
+
     .alert-content {
         padding-top: .5rem;
         font-size: var(--font-sm);
         color: var(--stone-500);
+        transition: all 150ms ease-in-out;
     }
 
     &.info {

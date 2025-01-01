@@ -8,7 +8,7 @@
                     type="button" 
                     class="btn btn-tiny text-stone-600"
                     role="navigation"
-                    @click="dialogRef.close()"    
+                    @click="dialogRef.close(); emit('closed-modal')"    
                 >
                     <IconExit />
                 </button>
@@ -26,6 +26,7 @@ import { ref, defineExpose } from 'vue';
 import IconExit from '@/components/svg/icon-exit.vue'
 
 const dialogRef = ref(null);
+const emit = defineEmits(['closed-modal']);
 
 defineExpose({
     dialogRef

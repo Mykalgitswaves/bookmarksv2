@@ -5,7 +5,7 @@ import IconError from './icons/IconError.vue';
 export const TEXT_ALERT = {
     default: 'warning',
     variants: [
-        'info', 'warning', 'error' 
+        'info', 'warning', 'error', 'none',
     ],
     info: {
         cls: 'info',
@@ -17,6 +17,10 @@ export const TEXT_ALERT = {
     }, 
     error: {
         cls: 'error',
+        icon: () => {}
+    },
+    none: {
+        cls: 'none',
         icon: () => {}
     }
 }

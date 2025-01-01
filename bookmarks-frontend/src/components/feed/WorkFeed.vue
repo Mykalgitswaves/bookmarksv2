@@ -20,13 +20,12 @@
 
                 <!-- In case there are more than three load a button in the toolbar to view all! -->
                 <div v-if="bookclubs.ownedByUser.length > 2">
-                  <button 
-                    type="button"
-                    class="btn btn-tiny btn-submit text-sm fancy"
-                    @click="router.push(navRoutes.toBookClubsPage(user))"
+                  <RouterLink 
+                    class="btn btn-tiny btn-nav text-sm fancy"
+                    :to="navRoutes.toBookClubsPage(user)"
                   >
                     View all
-                  </button>
+                  </RouterLink>
                 </div>
             </div>
         </template>
@@ -61,7 +60,9 @@
     </div>
     
     <!-- Your currently reading shown at the top -->
-    <CurrentlyReading />
+    <div class="mt-5 mb-10">
+      <CurrentlyReading />
+    </div>
 
 
     <!-- Create posts for feed! -->
@@ -146,12 +147,7 @@ const feedData = ref([]);
 const privateFeed = ref([]);
 const postOptions = ['review', 'update', 'comparison'];
 const route = useRoute();
-const router = useRouter();
 const { user } = route.params; 
-
-function closeModal(reactiveKey) {
-  modals[reactiveKey] = false;
-}
 
 async function loadWorks() {
     await db.get(urls.reviews.getFeed(), true).then((res) => {
@@ -160,6 +156,7 @@ async function loadWorks() {
       privateFeed.value = res.data.filter((post) => post.type === 'milestone');
     });
 }
+
 const deletedPosts = ref([]);
 
 function hideDeletedPost(deletedPostId){
@@ -187,11 +184,7 @@ const clubsPromise = Promise.allSettled([clubsOwnedByUserFactory(), clubsJoinedB
 /**
  * @end_bookclubs_promises
  */
-
- 
-onMounted(() => {
-    loadWorks();
-});
+loadWorks();
 </script>
 <style scoped>
 
@@ -315,6 +308,12 @@ onMounted(() => {
     column-gap: 1.5rem;
     border-radius: var(--radius-md);
     border: 1px solid var(--stone-200);
+  }
+
+  @media screen and (max-width: 768px) {
+    .bookclubs-gallery {
+      grid-template-columns: 1fr;
+    }
   }
 
   @starting-style {

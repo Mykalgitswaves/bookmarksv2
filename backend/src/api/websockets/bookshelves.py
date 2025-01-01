@@ -123,7 +123,7 @@ class BookshelfWSManager:
         books, book_ids = jsonable_encoder(_bookshelf.get_books())
 
         if any(bookshelf_id.startswith(prefix) for prefix in prefixes):
-            response = bookshelf_repo.delete_book_from_reading_flow_bookshelf_with_validate(book_to_remove=data.book.id, books=book_ids, bookshelf_id=bookshelf_id)
+            response = bookshelf_repo.delete_book_from_reading_flow_bookshelf_with_validate(book_id=data.book.id, bookshelf_id=bookshelf_id, user_id=current_user.id)
         else:
             response = bookshelf_repo.delete_book_from_bookshelf(book_to_remove=data.book.id, books=book_ids, bookshelf_id=bookshelf_id)
 
@@ -269,7 +269,7 @@ class BookshelfWSManager:
         books, book_ids = jsonable_encoder(_bookshelf.get_books())
 
         if any(bookshelf_id.startswith(prefix) for prefix in prefixes):
-            response = bookshelf_repo.delete_book_from_reading_flow_bookshelf_with_validate(book_to_remove=data.book_id, books=book_ids, bookshelf_id=bookshelf_id)
+            response = bookshelf_repo.delete_book_from_reading_flow_bookshelf_with_validate(book_id=data.book_id, bookshelf_id=bookshelf_id, user_id=current_user.id)
         else:
             response = bookshelf_repo.delete_book_from_bookshelf(book_to_remove=data.book_id, books=book_ids, bookshelf_id=bookshelf_id)
 

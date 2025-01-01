@@ -62,6 +62,7 @@
                 :is-editing="isEditingModeEnabled.value"    
                 :is-reordering="isReordering"
                 :unset-current-book="unsetKey"
+                @start-ws-connection="Bookshelves.enterEditingMode(bookshelf, isEditingModeEnabled)"
                 @send-bookdata-socket="
                     (bookdata) => reorder_books(bookdata)
                 "
@@ -137,7 +138,7 @@ import SuccessToast from '../../shared/SuccessToast.vue';
 // // // // // // // // // // // // // 
 // -- -- -- --- Routes --- -- -- -- // 
 const route = useRoute();
-const { user } = route.params;
+const { user, bookshelf } = route.params;
 // // // // // // // // // // // // // 
 
 
@@ -216,6 +217,7 @@ function removeBookFromShelf(removed_book_id) {
         ws.sendData({
             type: 'delete',
             target_id: removed_book_id,
+            bookshelf_id: route.params.bookshelf,
         });
     } catch (error) {
         console.error(error);

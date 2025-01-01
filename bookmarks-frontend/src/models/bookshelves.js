@@ -110,7 +110,6 @@ export const Bookshelves = {
             book = null;
         });
     }
-
 }
 
 

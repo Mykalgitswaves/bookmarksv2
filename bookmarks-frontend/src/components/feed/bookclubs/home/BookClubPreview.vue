@@ -69,18 +69,6 @@ const paceOfCurrentUserForClub = computed(() => {
 
 </script>
 <style scoped>
-
-@media and screen(max-width: 768px) {
-    .bookclub-preview {
-        display: flex;
-        flex-direction: column;
-        flex-wrap: wrap;
-        justify-content: center;
-
-
-    }
-}
-
 .bookclub-preview {
     width: 100%;
     border-radius: var(--radius-sm);
@@ -131,6 +119,15 @@ const paceOfCurrentUserForClub = computed(() => {
     background-color: var(--stone-200);
     width: 70px;
     height: 100px;
+}
+
+@media screen and (max-width: 768px) {
+    .bookclub-preview {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-around;
+        align-items: center;
+    }
 }
 
 </style>

@@ -895,7 +895,8 @@ class BookshelfCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
             book_id: {
                 'item': book,
                 'description': book_relationship.get('note_for_shelf', None),
-                'current_page': book_relationship.get('current_page', 0)
+                'current_page': book_relationship.get('current_page', 0),
+                'current_chapter': book_relationship.get('current_chapter', 0)
             }
             
             for book_id, book, book_relationship in zip(record["book_object_ids"], record["books"], record["book_relationships"])
@@ -1090,6 +1091,7 @@ class BookshelfCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
                 small_img_url=book_small_image_url,
                 note_for_shelf=book_rel.get('note_for_shelf', None),
                 current_page=book_rel.get('current_page', 0), 
+                current_chapter=book_rel.get('current_chapter', 0),
                 total_pages=total_pages,
                 last_updated=book_rel.get(
                     'last_updated', 
@@ -2126,7 +2128,13 @@ class BookshelfCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
     def delete_book_from_reading_flow_bookshelf_with_validate_query(tx, book_id, bookshelf_id, user_id):
         query = (
             """
-            MATCH (u:User {id: $user_id})-[:HAS_READING_FLOW_SHELF]->(shelf: {id: $bookshelf_id})
+            MATCH (u:User {id: $user_id})-[:HAS_READING_FLOW_SHELF]->(shelf)
+            WHERE shelf.id = $bookshelf_id
+            AND (
+                shelf:CurrentlyReadingShelf OR 
+                shelf:FinishedReadingShelf OR 
+                shelf:WantToReadShelf
+            )
             MATCH (shelf)-[r:CONTAINS_BOOK]->(book:Book {id: $book_id})
             DELETE r
             SET shelf.books = [book_id IN shelf.books WHERE book_id <> $book_id]

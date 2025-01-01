@@ -82,6 +82,7 @@ class ReviewPost(Post):
     
 class UpdateCreate(PostCreate):
     page: int = Field(..., ge = 0, le=10000)
+    chapter: int = Field(..., ge = 0, le=10000)
     response: str = Field("", max_length = settings.LARGE_TEXT_LENGTH) 
     spoiler: bool
     headline: str = Field("", max_length = settings.SMALL_TEXT_LENGTH) 
@@ -90,6 +91,7 @@ class UpdateCreate(PostCreate):
 
 class UpdatePost(Post):
     page: int
+    chapter: int | None = None
     response: str
     spoiler: bool
     headline: str = ""

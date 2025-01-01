@@ -3,7 +3,10 @@
         <br><span class="text-sm">Books in your currently reading bookshelf</span>
     </h1>
         <!-- If loaded -->
-    <AsyncComponent :promises="[currentlyReadingBookClub]">
+    <AsyncComponent 
+        :promise-factory="currentlyReadingBookShelfFactory" 
+        :subscribed-to="CURRENTLY_READING_SUB_KEY"
+    >
         <template #resolved>
             <div class="currently-reading" v-if="books.length">
                 <div class="currently-reading-book" 
@@ -29,6 +32,12 @@
                     />
                 </template>
             </Overlay>
+
+            <RouterLink 
+                class="btn btn-nav btn-small text-sm ml-5 fancy" 
+                :to="navRoutes.toBookshelfPage(user, bookshelf.id)">
+                Go to bookshelf
+            </RouterLink>
         </template>
 
         <template #loading>
@@ -50,29 +59,30 @@
                     <div class="book-img loading gradient"></div>
                 </div>
             </div>
+            <button disabled class="btn btn-tiny btn-specter ml-5 gradient text-sm loading fancy">loading...</button>
         </template>
     </AsyncComponent>
 </template>
 <script setup>
 import { db } from '../../services/db';
-import { urls } from '../../services/urls';
+import { urls, navRoutes } from '../../services/urls';
 import { ref } from 'vue';
 import { useRoute } from 'vue-router';
 import { truncateText } from '../../services/helpers';
-import { formatUpdateForBookClub } from './bookclubs/bookClubService';
 import { helpersCtrl } from '../../services/helpers';
 import AsyncComponent from './partials/AsyncComponent.vue';
 import Overlay from './partials/overlay/Overlay.vue';
 import CreateUpdateForm from './createPosts/update/createUpdateForm.vue'; 
+import { PubSub } from '../../services/pubsub';
 
 const route = useRoute();
 const { user } = route.params;
 let books = [];
 let bookshelf; 
 const selectedCurrentlyReadingBook = ref({});
-const updateRef = ref({});
 
-const currentlyReadingBookClub = db.get(urls.rtc.getCurrentlyReadingForFeed(user), null, false, 
+const CURRENTLY_READING_SUB_KEY = 'currently-reading-get-currently-reading-bookshelf';
+const currentlyReadingBookShelfFactory = () => db.get(urls.rtc.getCurrentlyReadingForFeed(user), null, false, 
     (res) => {
         bookshelf = res.bookshelf;
         books = res.bookshelf.books;
@@ -90,14 +100,14 @@ function showCurrentlyReadingBookOverlay(book) {
 }
 
 function postUpdateForCurrentlyReading(update) {
-    console.log(update);
     let payload = helpersCtrl.formatUpdateData(update)
-    console.log(update);
+    console.assert(payload.title)
     db.post(urls.reviews.update, payload, false, 
         (res) => {
             // Refresh;
             console.log(res)
-            currentlyReadingDialogRef?.close();
+            PubSub.publish(CURRENTLY_READING_SUB_KEY, Symbol('load'));
+            currentlyReadingDialogRef.value.close();
         },
         (err) => {
             console.warn(err);

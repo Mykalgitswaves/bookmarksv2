@@ -13,6 +13,20 @@
                 <textarea id="bookshelf_description" v-model="model.bookshelf_description" :maxlength="MEDIUM_TEXT_LENGTH"/>
             </label>
 
+            <div class="my-5">
+                <RadioGroup 
+                    id="visibility-options"
+                    :options="BOOKSHELVES_VISIBLITY_OPTIONS" 
+                    @updated:modelValue="(value) => { 
+                        model.visibility = value
+                    }"
+                    >
+                    <template #heading>
+                        Club visibility 
+                    </template>
+                </RadioGroup>
+            </div>
+
             <button 
                 class="create-bookshelf-btn"
                 type="button"
@@ -38,14 +52,20 @@
     import { urls } from '../../../services/urls';
     import { db } from '../../../services/db';
     import { XSMALL_TEXT_LENGTH, MEDIUM_TEXT_LENGTH } from '../../../services/forms';    
+    import RadioGroup from '../partials/RadioGroup.vue';
+    import { BOOKSHELVES_VISIBLITY_OPTIONS } from '@/components/shared/models.js';
+    
     const route = useRoute();
     const router = useRouter();
     // All shelves start as private.
     const model = reactive({
-        'visibility': 'private',
+        visibility: 'private',
     });
+
     const error_message = ref('');
     const isShowingErrorMessage = ref(false);
+
+
 
     function failureFn(err){
         error_message.value = err.detail

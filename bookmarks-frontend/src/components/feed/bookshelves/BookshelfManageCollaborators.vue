@@ -1,151 +1,171 @@
 <template>
-    <div class="mt-5">
-        <button type="button" 
-            class="btn flex gap-2 mb-2 pl-0" 
-            @click="modals.showInfoModal = !modals.showInfoModal"
+    <!-- Toolbar -->
+    <div class="toolbar my-5">
+        <button type="button"
+            class="btn btn-tiny btn-toolbar"
+            :class="{'active': isViewingContributors}"
+            @click="isViewingContributors = true"
         >
-            <IconInfo />
-
-            learn more about contributors
-
-            <IconChevron :style="{transform: modals.showInfoModal ? 'rotate(180deg)' : ''}" class="ml-2"/>
+            Manage contributors
         </button>
+        <button type="button"
+            class="btn btn-tiny btn-toolbar"
+            :class="{'active': !isViewingContributors}"
+            @click="isViewingContributors = false"
+        >
+            Add contributors
+        </button>
+    </div>
 
-        <Transition name="content" tag="div">
-            <div role="note" 
-                id="collaborator-note" 
-                v-if="!modals.showInfoModal" 
-                @click="modals.showInfoModal = !modals.showInfoModal">
-                <p class="bookshelf-note">
-                    Contributors have the ability to add, remove and reorder books.
-                    You can manage your contributors here. bookshelves can have a maximum limit of 5 contributors.
-                    Members are able to view books but cannot edit bookshelves.
-                </p>
-            </div>
-        </Transition>
+    <div class="mt-5">
+        <section v-if="isViewingContributors">
+            <button type="button" 
+                class="btn flex gap-2 mb-2 pl-0" 
+                @click="modals.showInfoModal = !modals.showInfoModal"
+            >
+                <IconInfo />
 
-        <TransitionGroup tag="div" name="content">
-            <div v-if="dataLoaded">
-                <h2 class="section-heading">Owner</h2>
+                learn more about contributors
 
-                <BookshelfCollaborator 
-                    v-if="bookshelfOwner"
-                    :role="bookshelfOwner?.role"
-                    :friend="bookshelfOwner" 
-                    :current-user-is-admin="currentUserCanRemoveContributors()"
-                />
-            </div>
+                <IconChevron :style="{transform: modals.showInfoModal ? 'rotate(180deg)' : ''}" class="ml-2"/>
+            </button>
 
-            <!-- All contributors of shelf. -->
-            <div v-if="bookshelfContributors?.length">
-                <div class="divider"></div>
-                
-                <h2 class="section-heading">
-                    <span v-if="bookshelfContributors?.length" 
-                        class="accent"
-                    >{{ bookshelfContributors.length }}</span> Contributors
-                </h2>
+            <Transition name="content" tag="div">
+                <div role="note" 
+                    id="collaborator-note" 
+                    v-if="!modals.showInfoModal" 
+                    @click="modals.showInfoModal = !modals.showInfoModal">
+                    <p class="bookshelf-note">
+                        Contributors have the ability to add, remove and reorder books.
+                        You can manage your contributors here. bookshelves can have a maximum limit of 5 contributors.
+                        Members are able to view books but cannot edit bookshelves.
+                    </p>
+                </div>
+            </Transition>
 
-                <ul class="collaborators-list">
-                    <li v-for="(friend, index) in bookshelfContributors" :key="friend.id">
-                        <BookshelfCollaborator role="contributor"
-                            :friend="friend" 
-                            :bookshelf-id="route.params.bookshelf"
-                            :current-user-is-admin="currentUserCanRemoveContributors()"
-                            @removed-contributor="(contributor_id) => removeFromList('contributor', contributor_id)"
-                        />
-                    </li>
-                </ul>
-            </div>
+            <TransitionGroup tag="div" name="content">
+                <div v-if="dataLoaded">
+                    <h2 class="section-heading">Owner</h2>
 
-            <!-- All members of a shelf -->
-            <div v-if="bookshelfMembers?.length">
-                <div class="divider"></div>
-
-                <h2 class="section-heading">
-                    <span v-if="bookshelfMembers?.length" 
-                        class="accent"
-                    >{{ bookshelfMembers.length }}</span> Members
-                </h2>
-
-                <ul class="collaborators-list">
-                    <li v-for="(friend, index) in bookshelfMembers" :key="friend?.id">
-                        <BookshelfCollaborator role="contributor"
-                            :friend="friend" 
-                            :bookshelf-id="route.params.bookshelf"
-                            :current-user-is-admin="currentUserCanRemoveContributors()"
-                            @removed-member="(member_id) => removeFromList('member', member_id)"
-                        />
-                    </li>
-                </ul>
-            </div>
-        </TransitionGroup>
-
-        <div class="divider"></div>
-
-        <!-- If user has friends render this shit -->
-        <div v-if="dataLoaded">
-            <h3 class="collaborator-tab active text-center">
-                Add friends to your bookshelf
-            </h3>
-
-            <ul class="collaborators-list">
-                <div class="mx-auto">
-                    <SearchUsers v-if="suggestedFriendsForShelf?.length" 
-                        :friends-only="true"
-                        class="mb-5"
-                        :bookshelf-id="route.params.bookshelf"
-                        label-above="Friends added to this shelf as members or contributors won't appear in search results"
-                        @search-friends-result="(friendData) => searchFriendsResult = friendData"
+                    <BookshelfCollaborator 
+                        v-if="bookshelfOwner"
+                        :role="bookshelfOwner?.role"
+                        :friend="bookshelfOwner" 
+                        :current-user-is-admin="currentUserCanRemoveContributors()"
                     />
                 </div>
-                
-                <div v-if="searchFriendsResult?.length">
-                    <li v-for="friend in searchFriendsResult" :key="friend?.id">
-                        <BookshelfCollaborator :friend="friend"
-                            @added-contributor="(user_id) => addFriendToList('contributor', user_id)"
-                            @added-member="(user_id) => addFriendToList('member', user_id)"
-                        />
-                    </li>
+
+                <!-- All contributors of shelf. -->
+                <div v-if="bookshelfContributors?.length">
+                    <div class="divider"></div>
+                    
+                    <h2 class="section-heading">
+                        <span v-if="bookshelfContributors?.length" 
+                            class="accent"
+                        >{{ bookshelfContributors.length }}</span> Contributors
+                    </h2>
+
+                    <ul class="collaborators-list">
+                        <li v-for="(friend, index) in bookshelfContributors" :key="friend.id">
+                            <BookshelfCollaborator role="contributor"
+                                :friend="friend" 
+                                :bookshelf-id="route.params.bookshelf"
+                                :current-user-is-admin="currentUserCanRemoveContributors()"
+                                @removed-contributor="(contributor_id) => removeFromList('contributor', contributor_id)"
+                            />
+                        </li>
+                    </ul>
                 </div>
 
-                <div v-else-if="suggestedFriendsForShelf?.length">
-                    <li v-for="friend in suggestedFriendsForShelf" :key="friend?.id">
-                        <BookshelfCollaborator :friend="friend" 
+                <!-- All members of a shelf -->
+                <div v-if="bookshelfMembers?.length">
+                    <div class="divider"></div>
+
+                    <h2 class="section-heading">
+                        <span v-if="bookshelfMembers?.length" 
+                            class="accent"
+                        >{{ bookshelfMembers.length }}</span> Members
+                    </h2>
+
+                    <ul class="collaborators-list">
+                        <li v-for="(friend, index) in bookshelfMembers" :key="friend?.id">
+                            <BookshelfCollaborator role="contributor"
+                                :friend="friend" 
+                                :bookshelf-id="route.params.bookshelf"
+                                :current-user-is-admin="currentUserCanRemoveContributors()"
+                                @removed-member="(member_id) => removeFromList('member', member_id)"
+                            />
+                        </li>
+                    </ul>
+                </div>
+            </TransitionGroup>
+        </section>
+
+        <section v-else>
+            <!-- If user has friends render this shit -->
+            <div v-if="dataLoaded">
+                <ul class="collaborators-list">
+                    <div class="mx-auto">
+                        <SearchUsers v-if="suggestedFriendsForShelf?.length" 
+                            :friends-only="true"
+                            class="mb-5"
                             :bookshelf-id="route.params.bookshelf"
-                            :is-suggested="true"
-                            @added-contributor="(user_id) => addFriendToList('contributor', user_id)"
-                            @added-member="(user_id) => addFriendToList('member', user_id)"
+                            label-above="Friends added to this shelf as members or contributors won't appear in search results"
+                            @search-friends-result="(friendData) => searchFriendsResult = friendData"
                         />
-                        <!-- Figure out what we are doing with remove friend from suggested. -->
-                        <!-- @remove-friend-from-suggested="(id) => removeFriendFromSuggested(id)" -->
-                    </li>
+                    </div>
+                    
+                    <div v-if="searchFriendsResult?.length">
+                        <li v-for="friend in searchFriendsResult" :key="friend?.id">
+                            <BookshelfCollaborator :friend="friend"
+                                @added-contributor="(user_id) => addFriendToList('contributor', user_id)"
+                                @added-member="(user_id) => addFriendToList('member', user_id)"
+                            />
+                        </li>
+                    </div>
+
+                    <div v-else-if="suggestedFriendsForShelf?.length">
+                        <li v-for="friend in suggestedFriendsForShelf" :key="friend?.id">
+                            <BookshelfCollaborator :friend="friend" 
+                                :bookshelf-id="route.params.bookshelf"
+                                :is-suggested="true"
+                                @added-contributor="(user_id) => addFriendToList('contributor', user_id)"
+                                @added-member="(user_id) => addFriendToList('member', user_id)"
+                            />
+                            <!-- Figure out what we are doing with remove friend from suggested. -->
+                            <!-- @remove-friend-from-suggested="(id) => removeFriendFromSuggested(id)" -->
+                        </li>
+                    </div>
+                </ul>
+                <!-- <PaginationControls @increment="(startEndInts) => setPagination(startEndInts)"/> -->
+            </div>
+
+            <!-- What to do if users don't have friends, direct them to either a link generator for sign up that sends a friend request auto  -->
+            <div v-if="dataLoaded && !suggestedFriendsForShelf?.length">
+                <!-- Only render one of these depending on whether or not users have pending friend requests or not-->
+                <div class="collaborator-cta" v-if="!pendingFriendCount">
+                    <h2 class="add-friends-heading-text">Need more friends? <span>(dont worry we do too 🫥)</span></h2>
+                    
+                    <p class="add-friends-description-text">Invite them to join <a href="" class="underline text-indigo-500">here.</a> <br/></p>
                 </div>
-            </ul>
-            <!-- <PaginationControls @increment="(startEndInts) => setPagination(startEndInts)"/> -->
-        </div>
 
-        <!-- What to do if users don't have friends, direct them to either a link generator for sign up that sends a friend request auto  -->
-        <div v-if="dataLoaded && !suggestedFriendsForShelf?.length">
-            <!-- Only render one of these depending on whether or not users have pending friend requests or not-->
-            <div class="collaborator-cta" v-if="!pendingFriendCount">
-                <h2 class="add-friends-heading-text">Need more friends? <span>(dont worry we do too 🫥)</span></h2>
-                
-                <p class="add-friends-description-text">Invite them to join <a href="" class="underline text-indigo-500">here.</a> <br/></p>
+                <div class="collaborator-cta" v-else>
+                    <h2 class="add-friends-heading-text">You haven't connected with your friends on (name of our app) yet.</h2>
+                    
+                    <p class="add-friends-description-text">Accept your requests to add a friend to this bookshelf</p>
+
+                    <a href="" class="underline text-indigo-500">
+                        Accept friend requests
+                    </a>
+                </div>
             </div>
+        </section>
 
-            <div class="collaborator-cta" v-else>
-                <h2 class="add-friends-heading-text">You haven't connected with your friends on (name of our app) yet.</h2>
-                
-                <p class="add-friends-description-text">Accept your requests to add a friend to this bookshelf</p>
-
-                <a href="" class="underline text-indigo-500">
-                    Accept friend requests
-                </a>
+        <div v-if="!dataLoaded" class="mx-auto loading-box">
+            <div class="loading gradient px-20 py-5">
+                <IconLoading class="loading-spinner"/>
             </div>
         </div>
-
-        <div v-if="!dataLoaded" class="mx-auto flex gap-2 items-center">Loading <IconLoading class="loading-spinner"/></div>
     </div>
 </template>
 
@@ -175,6 +195,7 @@ const bookshelfMembers = ref([]);
 const bookshelfOwner = ref(null);
 const searchFriendsResult = ref([]);
 const dataLoaded = ref(false);
+const isViewingContributors = ref(false);
 let hiddenFriends = [];
 
 const modals = ref({
@@ -288,7 +309,7 @@ onMounted(async () => {
 }
 
 .collaborators-list {
-    margin-top: var(--margin-md);
+    margin-top: calc(2 * var(--margin-md));
     margin-bottom: var(--margin-md);
 }
 
