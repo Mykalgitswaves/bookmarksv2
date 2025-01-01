@@ -77,6 +77,18 @@
             </Transition>
         </KeepAlive>
     </div>
+    <div class="w-100" v-else>
+        <button type="button" 
+            class="btn btn-icon btn-tiny icon text-stone-400 btn-ghost text-xs fancy ml-auto" 
+            @click="emit('editing-current-book-note', book )"
+        >
+            <IconNote />
+            
+            <span v-if="!noteForShelf">Add note</span>
+
+            <span v-else>Edit note</span>
+        </button>
+    </div>
         
     <p v-if="noteForShelf" class="text-stone-500 weight-300 mr-auto max-w-[768px]">
         {{ truncateText(noteForShelf, 150) }}

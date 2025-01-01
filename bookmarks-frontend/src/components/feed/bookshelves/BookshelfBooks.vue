@@ -99,7 +99,7 @@
                 </label>
             </div>
             
-            <div class="w-100" :class="{'mt-5': !editingCurrentBookNote}">
+            <!-- <div class="w-100" :class="{'mt-5': !editingCurrentBookNote}">
                 <button 
                     type="button"
                     class="text-stone-500 underline pl-2"
@@ -118,8 +118,8 @@
                     v-model="currentBookForOverlay.note_for_shelf"
                     @input="generatedHeightForTextArea(textAreas.wantToReadNoteTextArea)"
                 ></textarea>
-                <!-- Saving the note you just made -->
-                <div class="flex justify-between mt-5">
+                Saving the note you just made -->
+                <!-- <div class="flex justify-between mt-5">
                     <button type="button" class="btn btn-submit" @click="saveBookNoteForCurrentBook()">
                         Save
                     </button>
@@ -127,7 +127,7 @@
                         cancel
                     </button>
                 </div>
-            </div>
+            </div> -->
 
             <!-- Move to currently reading code and not editing current book note for shelf -->
             <div v-if="moveToSelectedShelfData.shelf === Bookshelves.CURRENTLY_READING.prefix && !editingCurrentBookNote">
