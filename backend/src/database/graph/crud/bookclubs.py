@@ -1499,7 +1499,8 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
             user_id: str,
             skip: int,
             limit: int,
-            filter: bool
+            filter: bool,
+            post_id: Optional[str]
     ) -> List[BookClubSchemas.UpdatePost]:
         """
         Gets the book club feed for the user
@@ -1511,7 +1512,8 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
                 user_id,
                 skip,
                 limit,
-                filter
+                filter,
+                post_id,
             )
         return result
     
@@ -1523,6 +1525,7 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
         skip: int,
         limit: int,
         filter: bool,
+        post_id: Optional[str]
     ):
         
         query = (
@@ -1531,6 +1534,31 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
             MATCH (b)-[:IS_READING]->(book:BookClubBook)
             MATCH (post {deleted:false})-[:POST_FOR_CLUB_BOOK]->(book)
             WHERE post:ClubUpdate OR post:ClubUpdateNoText
+            match (post)<-[pr:POSTED]-(u:User)
+            optional match (cu)-[lr:LIKES]->(post)
+            optional match (any)-[nl:LIKES]->(post)
+            optional match (book)-[br:IS_EQUIVALENT_TO]-(canon_book:Book)
+            optional match (comments:Comment {deleted:false})<-[:HAS_COMMENT]-(post)
+            optional match (post)<-[:AWARD_FOR_POST]-(post_award:ClubAwardForPost)
+            optional match award_long = (award_user:User)-[:GRANTED]->(post_award)-[CHILD_OF]->(award:ClubAward)
+            RETURN post, labels(post), u.username, canon_book, u.id,
+            CASE WHEN lr IS NOT NULL THEN true ELSE false END AS liked_by_current_user,
+            CASE WHEN u.id = $user_id THEN true ELSE false END AS posted_by_current_user,
+            count(comments) as num_comments,
+            count(nl) as num_likes,
+            collect(award_long) as awards
+            order by post.created_date desc
+            skip $skip
+            limit $limit
+            """
+        )
+        
+        query_w_post_id = (
+            """
+            MATCH (cu:User {id: $user_id})-[:IS_MEMBER_OF|OWNS_BOOK_CLUB]->(b:BookClub {id: $book_club_id})
+            MATCH (b)-[:IS_READING]->(book:BookClubBook)
+            MATCH (post {deleted:false})-[:POST_FOR_CLUB_BOOK]->(book)
+            WHERE (post:ClubUpdate OR post:ClubUpdateNoText) AND post.id = $post_id
             match (post)<-[pr:POSTED]-(u:User)
             optional match (cu)-[lr:LIKES]->(post)
             optional match (any)-[nl:LIKES]->(post)
@@ -1574,8 +1602,17 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
             limit $limit
             """
         )
-    
-        if filter:
+
+        if post_id:
+            result = tx.run(
+                query_w_post_id,
+                book_club_id=book_club_id,
+                user_id=user_id,
+                post_id=post_id,
+                skip=0,
+                limit=10,
+            )
+        if not post_id and filter:
             result = tx.run(
                 query_w_filter,
                 book_club_id=book_club_id,
@@ -1583,7 +1620,7 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
                 skip=skip,
                 limit=limit
             )
-        else:
+        if not post_id and not filter:
             result = tx.run(
                 query,
                 book_club_id=book_club_id,
@@ -1591,7 +1628,6 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
                 skip=skip,
                 limit=limit
             )
-        
         posts = []           
 
         for response in result:
@@ -1657,8 +1693,10 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
                 )
 
             posts.append(post)
-            
-        return posts
+        if post_id:
+            return posts[0] if posts is not None else False
+        else:
+            return posts
     
     def get_book_club_finished_feed(
             self,

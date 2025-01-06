@@ -95,7 +95,6 @@ import { formatUpdateForBookClub } from '../bookClubService';
 import { useRoute, useRouter } from 'vue-router';
 import LoadingCard from '../../../shared/LoadingCard.vue';
 
-
 const props = defineProps({
     club: {
         type: Object,
@@ -115,6 +114,7 @@ const overlays = ref({
 
 const route = useRoute();
 const router = useRouter();
+const {user, bookclub} = route.params;
 const isUserFinishedReadingBook = ref(false);
 const reviewPost = ref(null);
 
@@ -135,14 +135,14 @@ function showFinishedReadingForm() {
  * @description – Reruns every time the club loads
  */
 
-const clubFeedPromise = db.get(urls.bookclubs.getClubFeed(route.params.bookclub), null, false, (res) => {
+const clubFeedPromise = db.get(urls.bookclubs.getClubFeed(bookclub), null, false, (res) => {
     data.value.posts = res.posts;
 },
 (err) => {
     console.log(err);
 });
 
-const currentlyReadingPromise = db.get(urls.bookclubs.getCurrentlyReadingForClub(route.params.bookclub), null, false, (res) => {
+const currentlyReadingPromise = db.get(urls.bookclubs.getCurrentlyReadingForClub(bookclub), null, false, (res) => {
     currentlyReadingBook = res.currently_reading_book;
 });
 
@@ -175,7 +175,7 @@ function refreshFeed() {
 function postUpdateForBookClub(update) {
     update = formatUpdateForBookClub(update, route.params.user)
 
-    db.post(urls.bookclubs.createClubUpdate(route.params.bookclub), update, false, 
+    db.post(urls.bookclubs.createClubUpdate(bookclub), update, false, 
         (res) => {
             console.log(res);
             // Refresh;
@@ -190,7 +190,7 @@ function postUpdateForBookClub(update) {
 };
 
 function postReviewAndFinishReadingCurrentBook(post) {
-    db.post(urls.bookclubs.postClubReviewAndFinishReading(route.params.bookclub), post, false, (res) => {
+    db.post(urls.bookclubs.postClubReviewAndFinishReading(bookclub), post, false, (res) => {
         isUserFinishedReadingBook.value = true;
     });
 }

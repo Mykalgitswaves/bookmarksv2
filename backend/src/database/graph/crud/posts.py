@@ -1107,7 +1107,7 @@ class PostCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
                 output.append(currently_reading)
 
         return(output)
-    
+
     def get_post(self, post_id, username):
         """
         Returns a post by UUID. Works for post types Update, Comparison, Review, and Milestone

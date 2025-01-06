@@ -6,6 +6,10 @@
                     :club="club"
                 />
 
+                <ClubPostCommentsView 
+                    v-else-if="currentView == subComponentRoutes.feedCommentsPage"
+                />
+
                 <ClubMemberSettingsMain 
                     v-else-if="currentView === subComponentRoutes.settings.manageMembers"
                     :club="club"
@@ -38,6 +42,7 @@ import { navRoutes, urls } from '../../../../services/urls';
 import BookClubFeed from './BookClubFeed.vue';
 import ClubMemberSettingsMain from './invite/ClubMemberSettingsMain.vue';
 import CurrentlyReadingSettings from '../currently-reading/CurrentlyReadingSettings.vue';
+import ClubPostCommentsView from './posts/ClubPostCommentsView.vue';
 
 /**
  * ----------------------------------------------------------------------------
@@ -55,6 +60,7 @@ let club;
 
 const subComponentRoutes = {
     feed: 'feed',
+    feedCommentsPage: 'feed-comments-page',
     settings: {
         currentlyReading: 'currently-reading',
         manageMembers: 'manage-members',
@@ -72,6 +78,8 @@ const currentView = computed(() => {
     } else if (route.path === navRoutes.bookClubSettingsManageMembersIndex(user, bookclub)) {
         console.log('manage-members')
         return subComponentRoutes.settings.manageMembers;
+    } else if (route.path === navRoutes.toBookClubCommentPage(user, bookclub, route.params?.postId)) {
+        return subComponentRoutes.feedCommentsPage;
     }
 });
 
@@ -92,21 +100,17 @@ const currentView = computed(() => {
 
 
 async function loadBookClub() {
-    console.log(route.params)
-    const clubPromise = db.get(urls.bookclubs.getMinimalClub(bookclub, user), null, false, 
+    db.get(urls.bookclubs.getMinimalClub(bookclub, user), null, false, 
         (res) => {
             console.log('this worked')
             club = res.book_club;
+            loaded.value = true;
         },
         (err) => {
             console.log('this failed')
             error = err;
         }
     );
-
-    Promise.all([clubPromise]).then(() => {
-        loaded.value = true;
-    });
 }
 
 

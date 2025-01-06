@@ -2,7 +2,7 @@ import fastapi
 from fastapi import HTTPException, Depends, BackgroundTasks, Request, Query
 from fastapi.encoders import jsonable_encoder
 from fastapi.responses import JSONResponse
-from typing import Annotated
+from typing import Annotated, Optional
 
 from src.api.utils.database import get_repository
 from src.models.schemas.users import User
@@ -955,6 +955,10 @@ async def get_comments_for_post(
     ),
     skip: int = Query(default=0),
     limit: int = Query(default=10),
+    bookclub_id: Optional[str] = Query(
+        None,
+        description="Used to check that the current user is a member of the book club before returning a post",
+    ),
 ):
     """
     Gets the comments on a post
@@ -963,9 +967,17 @@ async def get_comments_for_post(
     if not current_user:
         raise HTTPException(401, "Unauthorized")
     if post_id:
-        comments = comment_repo.get_all_comments_for_post(
-            post_id=post_id, username=current_user.username, skip=skip, limit=limit
-        )
+        # Check that you are a member of a club before returning any comments. Slightly slower. 
+        # TO_CONSIDER: Alternatively you could save a token to authenticate on the client 
+        # what their permissions are to view comments. Would be way faster but would require a little bit of setup. 
+        if bookclub_id:
+            comments = comment_repo.get_paginated_comments_for_book_club_post(
+                post_id=post_id, username=current_user.username, skip=skip, limit=limit, bookclub_id=bookclub_id,
+            )    
+        else:
+            comments = comment_repo.get_all_comments_for_post(
+                post_id=post_id, username=current_user.username, skip=skip, limit=limit
+            )
 
         return JSONResponse(
             content={

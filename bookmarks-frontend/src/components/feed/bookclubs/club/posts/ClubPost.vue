@@ -71,10 +71,11 @@
                     </button>
 
                     <button 
+                        v-if="!isViewingPost"
                         type="button"
                         title="comment"
                         class="btn btn-tiny btn-icon mr-auto btn-specter b-0" 
-                        @click=""
+                        @click="router.push(navRoutes.toBookClubCommentPage(user, bookclub, post.id))"
                     >
                         <IconComment />
                     </button>
@@ -109,7 +110,20 @@
                 </div>
             </div>
         </div>
+        <!-- 
+            If you are not previewing the post in feed that 
+            means you are on the post page, but if youre on the post
+            page we are calling clubcomments separately
+         -->
+        <div v-if="!isViewingPost && !!post.comments?.length">
+            <ClubComment
+                :is-preview="true" 
+                :comment-data="helpersCtrl.firstOrNone(post.comments)"
+                :url-to-comment-page="navRoutes.toBookClubCommentPage(user, bookclub, post.id)"
+            />
+        </div>
     </div>
+
     <div v-else-if="post.type === ClubReviewPost.cls"
         class="post club-review-post"
     >
@@ -137,23 +151,31 @@
     </Teleport>
 </template>
 <script setup>
-import { urls } from '../../../../../services/urls';
+import { urls, navRoutes } from '../../../../../services/urls';
+import { helpersCtrl } from '../../../../../services/helpers';
 import { db } from '../../../../../services/db';
 import { ClubUpdatePost, ClubReviewPost } from '../../models/models';
 import { ClubAwardsSvgMap } from '../awards/awards';
 import { computed, ref } from 'vue';
-import { useRoute } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 import IconComment from '../../../../svg/icon-club-comment.vue';
 import IconAwards from '../awards/icons/Awards.vue';
 import IconClubLike from '../awards/icons/ClubLike.vue';
 import SuccessToast from '../../../../shared/SuccessToast.vue';
 import { Toast } from '../../../../shared/models';
 import { PubSub } from '../../../../../services/pubsub';
+import CommentBar from './comments/CommentBar.vue';
+import ClubComment from './comments/ClubComment.vue';
 
 const props = defineProps({
     post: {
         type: Object,
         required: true,
+    },
+    isViewingPost: {
+        type: Boolean,
+        required: false,
+        default: false,
     }
 });
 
@@ -167,6 +189,8 @@ const awardsRef = ref(
 );
 
 const route = useRoute();
+const router = useRouter();
+const { bookclub, user } = route.params;
 const toast = ref(null); 
 
 /**

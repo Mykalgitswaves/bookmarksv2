@@ -3,6 +3,13 @@ import JSConfetti from 'js-confetti'
 
 // Helper functions used throughout our app!
 export const helpersCtrl = {
+    firstOrNone: (list) => {
+        if (!list) {
+            return null;
+        } else {
+            return list[0];
+        }
+    },
     // Handles commas
     commanator: (index, arrayLength) => {
         if (arrayLength === 1) return '';

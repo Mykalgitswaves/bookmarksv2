@@ -907,6 +907,10 @@ async def get_club_feed(
     ),
     skip: Optional[int] = 0,
     limit: Optional[int] = 10,
+    post_id: Optional[str] = Query(
+        None,
+        description="to grab an individual post"
+    )
 ) -> List[Any]:
     """
         Gets the feed for a specific book club
@@ -942,20 +946,22 @@ async def get_club_feed(
                 description (str): the description of the award
                 num_grants (int): the number of grants for the award
     """
-
+    print(post_id)
     posts = book_club_repo.get_book_club_feed(
         book_club_id=book_club_id,
         user_id=current_user.id,
         skip=skip,
         limit=limit,
-        filter=filter
+        filter=filter,
+        post_id=post_id,
     )
+    print(posts)
     logger.info(
         "Fetched club feed",
         extra={
             "user_id": current_user.id,
             "book_club_id": book_club_id,
-            "num_posts": len(posts),
+            "num_posts": len(posts) if isinstance(posts, list) else 1,
             "action": "get_club_feed",
         },
     )
