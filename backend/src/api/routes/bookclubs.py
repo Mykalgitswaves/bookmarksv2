@@ -2176,15 +2176,52 @@ async def get_afterword_club_stats(
     This is the 5th page.
     Gets stats from the clubs reading. This includes:
         Data for line graph of reading history
-        Data for table of awards received
 
     Args:
         book_club_id (str): The id for the book club they are getting the afterword for
         user_id (str): The id of the user
+        book_club_book_id (str): The id for the BookClubBook node that this
+            afterword is being created for
 
     Returns: 
-        NOTE: We will need to discuss the best way to return this data.
-        Probably best to try a few things
+        reading_history (array): An array of each user's reading progress. 
+            Each object in the array contains a dictionary with:
+                user (dict): the data for the user this object is about,
+                    this contains:
+                        id (str): The user id
+                        username (str): The user username
+                progress_over_time (array): An array of the users progress over time,
+                    Each object in the array contains a dictionary with:
+                        timestamp (datetime): The datetime of the progress
+                        chapter (int): The chapter the progress is associated with
+
+        Here is an example return:
+            {
+                "reading_history": [
+                    {
+                        "user": {
+                            "id":"user123",
+                            "username": "Alice",
+                            },
+                        "progress_over_time": [
+                            {"timestamp": "2025-01-01T10:00:00Z", "chapter": 10},
+                            {"timestamp": "2025-01-02T10:00:00Z", "chapter": 25},
+                            {"timestamp": "2025-01-03T10:00:00Z", "chapter": 50}
+                        ]
+                    },
+                    {
+                        "user": {
+                            "id":"user456",
+                            "username": "Bob",
+                            },
+                        "progress_over_time": [
+                            {"timestamp": "2025-01-01T10:00:00Z", "chapter": 5},
+                            {"timestamp": "2025-01-02T10:00:00Z", "chapter": 20},
+                            {"timestamp": "2025-01-03T10:00:00Z", "chapter": 30}
+                        ]
+                    }
+                ]
+                }
     """
     if current_user.id != user_id:
         logger.warning(
@@ -2200,6 +2237,7 @@ async def get_afterword_club_stats(
     
     club_stats = book_club_repo.get_afterward_club_stats(
         book_club_id,
+        book_club_book_id,
         user_id
     )
     
@@ -2213,9 +2251,9 @@ async def get_afterword_club_stats(
             }
         )
         return JSONResponse(
-            200,
+            status_code=200,
             content={
-                "club_stats": club_stats
+                "club_stats": jsonable_encoder(club_stats)
             }
         )
     else:
@@ -2225,6 +2263,81 @@ async def get_afterword_club_stats(
                 "user_id": user_id,
                 "book_club_id": book_club_id,
                 "action": "get_afterword_club_stats"
+            }
+        )
+        raise HTTPException(
+            400,
+            "Unable to grab club stats"
+        )
+    
+@router.get(
+    "/{book_club_id}/afterword/{user_id}/award_stats/{book_club_book_id}"
+    , name='bookclubs:get_afterword_club_stats'
+    )
+async def get_afterword_award_stats(
+    book_club_id: str,
+    user_id: str,
+    book_club_book_id: str,
+    current_user: Annotated[User,Depends(get_current_active_user)],
+    book_club_repo: BookClubCRUDRepositoryGraph = Depends(
+        get_repository(BookClubCRUDRepositoryGraph)
+    )
+):
+    """
+    This is the 5th page.
+    Gets stats from the clubs reading. This includes:
+        Data for table of awards granted to each user
+
+    Args:
+        book_club_id (str): The id for the book club they are getting the afterword for
+        user_id (str): The id of the user
+        book_club_book_id (str): The id for the BookClubBook node that this
+            afterword is being created for
+
+    Returns: 
+        awards_table (array): 
+
+    """
+    if current_user.id != user_id:
+        logger.warning(
+            "Unauthorized User",
+            extra={
+                "current_user_id": current_user.id,
+                "user_id": user_id,
+                "book_club_id": book_club_id,
+                "action": "get_afterword_award_stats",
+            },
+        )
+        raise HTTPException(401,"Unauthorized")
+    
+    award_stats = book_club_repo.get_afterward_award_stats(
+        book_club_id,
+        book_club_book_id,
+        user_id
+    )
+    
+    if award_stats:
+        logger.info(
+            "Retrieved afterword club stats",
+            extra={
+                "user_id": user_id,
+                "book_club_id": book_club_id,
+                "action": "get_afterword_award_stats"
+            }
+        )
+        return JSONResponse(
+            status_code=200,
+            content={
+                "award_stats": jsonable_encoder(award_stats)
+            }
+        )
+    else:
+        logger.warning(
+            "Error grabbing club stats",
+            extra={
+                "user_id": user_id,
+                "book_club_id": book_club_id,
+                "action": "get_afterword_award_stats"
             }
         )
         raise HTTPException(

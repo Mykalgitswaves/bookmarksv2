@@ -860,8 +860,6 @@ class TestBookClubs:
         print(response.json())
         assert response.status_code == 200, "Getting consensus"
 
-        # headers_2 = {"Authorization": f"{self.token_type_2} {self.access_token_2}"}
-
         endpoint = (
             f"{self.endpoint}/api/bookclubs/{self.book_club_id}/"
             f"afterword/{self.user_id}/"
@@ -874,6 +872,19 @@ class TestBookClubs:
         )
         print(response.json())
         assert response.status_code == 200, "Getting highlights"
+
+        endpoint = (
+            f"{self.endpoint}/api/bookclubs/{self.book_club_id}/"
+            f"afterword/{self.user_id}/"
+            f"club_stats/{self.book_club_book_id}"
+            )
+        
+        response = requests.get(
+            endpoint,
+            headers=headers
+        )
+        print(response.json())
+        assert response.status_code == 200, "Getting club stats"
         
     def test_deleting_member(self):
         headers = {"Authorization": f"{self.token_type} {self.access_token}"}

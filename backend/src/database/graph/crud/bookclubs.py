@@ -2595,8 +2595,10 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
             """
             MATCH (u:User {id: $user_id})-[:IS_MEMBER_OF|OWNS_BOOK_CLUB]->(b:BookClub {id:$book_club_id})
             MATCH (b)-[fr:FINISHED_READING]->(book:BookClubBook {id: $book_club_book_id})
-            MATCH (u)-[:POSTED]->(post:ClubUpdate|ClubUpdateNoText)-[:POST_FOR_CLUB_BOOK]->(book)
-            OPTIONAL MATCH (award:ClubAward {type: 'Commendable'})<-[:IS_CHILD_OF]-(post_award:ClubAwardForPost)-[:AWARD_FOR_POST]->(post)
+            MATCH (u)-[:POSTED]->(post:ClubUpdate|ClubUpdateNoText {deleted: False})
+                -[:POST_FOR_CLUB_BOOK]->(book)
+            OPTIONAL MATCH (award:ClubAward {type: 'Commendable'})<-[:IS_CHILD_OF]
+                -(post_award:ClubAwardForPost)-[:AWARD_FOR_POST]->(post)
             WITH post, 
                  COUNT(post_award) AS commendable_award_count, 
                  COLLECT({
@@ -2712,14 +2714,86 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
         else:
             controversial_post = {}
 
-        print(agreed_post)
-        print(controversial_post)
-
         return {
             "agreed_post": agreed_post,
             "controversial_post": controversial_post
         }
+    
+    def get_afterward_club_stats(
+            self,
+            book_club_id: str,
+            book_club_book_id: str,
+            user_id: str
+    ):
+        with self.driver.session() as session:
+            result = session.read_transaction(
+                self.get_afterward_club_stats_query,
+                book_club_id,
+                book_club_book_id,
+                user_id
+            )
+        return result
 
+    @staticmethod
+    def get_afterward_club_stats_query(
+        tx,
+        book_club_id: str,
+        book_club_book_id: str,
+        user_id: str
+    ):
+        query = (
+            """
+            MATCH (cu:User)-[:IS_MEMBER_OF|OWNS_BOOK_CLUB]->(b:BookClub {id:$book_club_id})
+            MATCH (u:User)-[:IS_MEMBER_OF|OWNS_BOOK_CLUB]->(b)
+            MATCH (b)-[fr:FINISHED_READING]->(book:BookClubBook {id: $book_club_book_id})
+            OPTIONAL MATCH (u)-[:POSTED]
+                ->(post:ClubUpdate|ClubUpdateNoText|ClubReview|ClubReviewNoText {deleted: False})
+                -[:POST_FOR_CLUB_BOOK]->(book)
+            WITH DISTINCT u, book, collect(DISTINCT post) AS posts
+            RETURN u.id AS user_id, 
+                u.username AS username,
+                posts,
+                book.chapters as total_chapters
+            """
+        )
+
+        result = tx.run(
+            query,
+            book_club_id=book_club_id,
+            book_club_book_id=book_club_book_id
+        )
+
+        club_stats = []
+        for response in result:
+            user = {
+                "id": response.get("user_id"),
+                "username": response.get("username")
+            }
+            progress_over_time = []
+            for post in response.get("posts",[]):
+                if list(post.labels) == ["ClubReview"] or list(post.labels) == ["ClubReviewNoText"]:
+                    progress_over_time.append(
+                        {
+                            "timestamp": post.get("created_date").to_native(),
+                            "chapter": response.get("total_chapters")
+                        }
+                    )
+
+                else:
+                    progress_over_time.append(
+                        {
+                            "timestamp": post.get("created_date").to_native(),
+                            "chapter": post.get("chapter")
+                        }
+                    )
+            club_stats.append(
+                {
+                    "user":user,
+                    "progress_over_time": progress_over_time
+                }
+            )
+
+        return club_stats
         
     def search_users_not_in_club(
             self, 
