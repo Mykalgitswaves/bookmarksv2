@@ -2396,7 +2396,6 @@ async def get_afterword_award_stats(
                 "action": "get_afterword_award_stats"
             }
         )
-        print(award_stats)
         return JSONResponse(
             status_code=200,
             content={
