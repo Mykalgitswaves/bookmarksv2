@@ -1549,7 +1549,7 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
             optional match (book)-[br:IS_EQUIVALENT_TO]-(canon_book:Book)
             optional match (comments:Comment {deleted:false})<-[:HAS_COMMENT]-(post)
             optional match (post)<-[:AWARD_FOR_POST]-(post_award:ClubAwardForPost)
-            optional match award_long = (award_user:User)-[:GRANTED]->(post_award)-[CHILD_OF]->(award:ClubAward)
+            optional match award_long = (award_user:User)-[:GRANTED]->(post_award)-[:IS_CHILD_OF]->(award:ClubAward)
             RETURN post, labels(post), u.username, canon_book, u.id,
             CASE WHEN lr IS NOT NULL THEN true ELSE false END AS liked_by_current_user,
             CASE WHEN u.id = $user_id THEN true ELSE false END AS posted_by_current_user,
@@ -1574,7 +1574,7 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
             optional match (book)-[br:IS_EQUIVALENT_TO]-(canon_book:Book)
             optional match (comments:Comment {deleted:false})<-[:HAS_COMMENT]-(post)
             optional match (post)<-[:AWARD_FOR_POST]-(post_award:ClubAwardForPost)
-            optional match award_long = (award_user:User)-[:GRANTED]->(post_award)-[CHILD_OF]->(award:ClubAward)
+            optional match award_long = (award_user:User)-[:GRANTED]->(post_award)-[:IS_CHILD_OF]->(award:ClubAward)
             RETURN post, labels(post), u.username, canon_book, u.id, user_reading.current_chapter,
             CASE WHEN lr IS NOT NULL THEN true ELSE false END AS liked_by_current_user,
             CASE WHEN u.id = $user_id THEN true ELSE false END AS posted_by_current_user,
@@ -1714,7 +1714,7 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
             optional match (book)-[br:IS_EQUIVALENT_TO]-(canon_book:Book)
             optional match (comments:Comment {deleted:false})<-[:HAS_COMMENT]-(post)
             optional match (post)<-[:AWARD_FOR_POST]-(post_award:ClubAwardForPost)
-            optional match award_long = (award_user:User)-[:GRANTED]->(post_award)-[CHILD_OF]->(award:ClubAward)
+            optional match award_long = (award_user:User)-[:GRANTED]->(post_award)-[:IS_CHILD_OF]->(award:ClubAward)
             RETURN post, labels(post), u.username, canon_book, u.id,
             CASE WHEN lr IS NOT NULL THEN true ELSE false END AS liked_by_current_user,
             CASE WHEN u.id = $user_id THEN true ELSE false END AS posted_by_current_user,
@@ -1875,7 +1875,7 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
             MATCH (u:User {id:$user_id})-[:IS_MEMBER_OF|OWNS_BOOK_CLUB]->(club:BookClub {id:$book_club_id})
             MATCH (club)-[:IS_READING]->(book:BookClubBook)
             MATCH (award:ClubAward)-[award_rel:AWARD_FOR_BOOK]->(book)
-            OPTIONAL MATCH (award)<-[:CHILD_OF]-(post_award:ClubAwardForPost)<-[:GRANTED]-(u)
+            OPTIONAL MATCH (award)<-[:IS_CHILD_OF]-(post_award:ClubAwardForPost)<-[:GRANTED]-(u)
             RETURN award,
                    award_rel.grants_per_member as allowed_uses,
                    count(post_award) as current_uses
@@ -2567,6 +2567,158 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
                 "num_times_result": num_times_result
             }
         }        
+    
+    def get_afterward_highlights(
+            self,
+            book_club_id: str,
+            book_club_book_id: str,
+            user_id: str
+            ):
+        
+        with self.driver.session() as session:
+            result = session.read_transaction(
+                self.get_afterward_highlights_query,
+                book_club_id,
+                book_club_book_id,
+                user_id
+            )
+        return result
+
+    @staticmethod
+    def get_afterward_highlights_query(
+        tx,
+        book_club_id: str,
+        book_club_book_id: str,
+        user_id: str
+    ):
+        query = (
+            """
+            MATCH (u:User {id: $user_id})-[:IS_MEMBER_OF|OWNS_BOOK_CLUB]->(b:BookClub {id:$book_club_id})
+            MATCH (b)-[fr:FINISHED_READING]->(book:BookClubBook {id: $book_club_book_id})
+            MATCH (u)-[:POSTED]->(post:ClubUpdate|ClubUpdateNoText)-[:POST_FOR_CLUB_BOOK]->(book)
+            OPTIONAL MATCH (award:ClubAward {type: 'Commendable'})<-[:IS_CHILD_OF]-(post_award:ClubAwardForPost)-[:AWARD_FOR_POST]->(post)
+            WITH post, 
+                 COUNT(post_award) AS commendable_award_count, 
+                 COLLECT({
+                    id: award.id,
+                    name: award.name,
+                    type: award.type,
+                    description: award.description
+                 }) as commendable_awards
+            ORDER BY commendable_award_count DESC
+            LIMIT 1
+            WITH collect(
+                {post: post, 
+                commendable_awards: commendable_awards,
+                commendable_award_count: commendable_award_count
+                }) AS top_commendable_posts
+
+            MATCH (u:User {id: $user_id})-[:IS_MEMBER_OF|OWNS_BOOK_CLUB]->(b:BookClub {id:$book_club_id})
+            MATCH (b)-[:FINISHED_READING]->(book:BookClubBook {id: $book_club_book_id})
+            MATCH (u)-[:POSTED]->(post:ClubUpdate|ClubUpdateNoText)-[:POST_FOR_CLUB_BOOK]->(book)
+            OPTIONAL MATCH (award:ClubAward {type: 'Questionable'})<-[:IS_CHILD_OF]-(post_award:ClubAwardForPost)-[:AWARD_FOR_POST]->(post)
+            WITH top_commendable_posts, 
+                 post, 
+                 COUNT(post_award) AS questionable_award_count,
+                 COLLECT({
+                    id: award.id,
+                    name: award.name,
+                    type: award.type,
+                    description: award.description
+                 }) as questionable_awards
+            ORDER BY questionable_award_count DESC
+            LIMIT 1
+            RETURN top_commendable_posts, 
+                   collect({
+                        post: post, 
+                        questionable_awards: questionable_awards,
+                        questionable_award_count: questionable_award_count
+                        }) AS top_questionable_posts
+            """
+        )
+
+        result = tx.run(
+            query,
+            book_club_id=book_club_id,
+            book_club_book_id=book_club_book_id,
+            user_id=user_id
+        )
+
+        response = result.single()
+        
+        top_commendable_posts = response.get("top_commendable_posts") 
+        if top_commendable_posts:
+            top_commendable_post = top_commendable_posts[0]
+            top_commendable_post_obj = top_commendable_post.get("post")
+
+            awards = {}
+            if top_commendable_post.get("commendable_awards") and top_commendable_post.get("commendable_award_count"):
+                for award in top_commendable_post.get("commendable_awards"):
+                    cls = AWARD_CONSTANTS.get(award.get("name"))
+                    parent_award_id = award.get("id")
+                    if parent_award_id not in awards:
+                        awards[parent_award_id] = {
+                            "name": award.get("name",""),
+                            "type": award.get("type",""),
+                            "description": award.get("description",""),
+                            "num_grants": 1,
+                            "cls": cls
+                        }
+                    else:
+                        awards[parent_award_id]['num_grants'] += 1
+
+            agreed_post = {
+                "id": top_commendable_post_obj['id'],
+                "created_date": top_commendable_post_obj['created_date'].to_native(),
+                "headline": top_commendable_post_obj.get("headline"),
+                "response": top_commendable_post_obj.get("response"),
+                "likes": top_commendable_post_obj.get("likes",0),
+                "awards": awards
+            }
+
+        else:
+            agreed_post = {}
+
+        top_questionable_posts = response.get("top_questionable_posts") 
+        if top_questionable_posts:
+            top_questionable_post = top_questionable_posts[0]
+            top_questionable_post_obj = top_questionable_post.get("post")
+
+            awards = {}
+            if top_questionable_post.get("questionable_awards") and top_questionable_post.get("questionable_award_count"):
+                for award in top_questionable_post.get("questionable_awards"):
+                    cls = AWARD_CONSTANTS.get(award.get("name"))
+                    parent_award_id = award.get("id")
+                    if parent_award_id not in awards:
+                        awards[parent_award_id] = {
+                            "name": award.get("name",""),
+                            "type": award.get("type",""),
+                            "description": award.get("description",""),
+                            "num_grants": 1,
+                            "cls": cls
+                        }
+                    else:
+                        awards[parent_award_id]['num_grants'] += 1
+
+            controversial_post = {
+                "id": top_questionable_post_obj['id'],
+                "created_date": top_questionable_post_obj['created_date'].to_native(),
+                "headline": top_questionable_post_obj.get("headline"),
+                "response": top_questionable_post_obj.get("response"),
+                "likes": top_questionable_post_obj.get("likes",0),
+                "awards": awards
+            }
+
+        else:
+            controversial_post = {}
+
+        print(agreed_post)
+        print(controversial_post)
+
+        return {
+            "agreed_post": agreed_post,
+            "controversial_post": controversial_post
+        }
 
         
     def search_users_not_in_club(

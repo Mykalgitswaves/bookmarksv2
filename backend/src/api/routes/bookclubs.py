@@ -2082,7 +2082,6 @@ async def get_afterword_highlights(
     Gets the highlights from this book for the user. This includes:
         - Most controversial update
         - Most agreed with update
-        - Most ignored update
 
     Args:
         book_club_id (str): The id for the book club they are getting the afterword for
@@ -2099,15 +2098,14 @@ async def get_afterword_highlights(
                 chapter (int): the chapter for the post
                 response (str | None): the response for the post
                 likes (int): the number of likes on a post
-                awards (array): an array of awards for the post. Each award object
+                awards (dict): an array of awards for the post. Each award object
                 will contain:
-                    id (str): the uuid of the award
+                    id (key, str): the uuid of the award
                     name (str): the name of the award
                     type (str): the type of the award
                     description (str): the description of the award
                     num_grants (int): the number of grants for the award
             agreed_post (dict): A post object
-            ignored_post (dict): A post object
 
     NOTE: Need to think about edge cases here for:
         User made no updates
@@ -2128,6 +2126,7 @@ async def get_afterword_highlights(
     
     highlights = book_club_repo.get_afterward_highlights(
         book_club_id,
+        book_club_book_id,
         user_id
     )
     
@@ -2141,9 +2140,9 @@ async def get_afterword_highlights(
             }
         )
         return JSONResponse(
-            200,
+            status_code=200,
             content={
-                "highlights": highlights
+                "highlights": jsonable_encoder(highlights)
             }
         )
     else:
