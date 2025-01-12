@@ -133,6 +133,7 @@ class TestBookClubs:
         cls.invite_id_2 = None
         cls.post_id = None
         cls.award_id = None
+        cls.award_ids = None
         cls.book_club_book_id = None
 
     def test_create_bookclub(self):
@@ -587,6 +588,8 @@ class TestBookClubs:
         assert response.status_code == 200, "Getting awards"
         print(response.json())
         self.__class__.award_id = response.json()['awards'][0]['id']
+        award_ids = [award['id'] for award in response.json()['awards']]
+        self.__class__.award_ids = award_ids
 
         headers = {"Authorization": f"{self.token_type} {self.access_token}"}
         
@@ -646,6 +649,34 @@ class TestBookClubs:
             f"{self.endpoint}/api/bookclubs/{self.book_club_id}/"
             f"post/{self.post_id}/award/{self.award_id}")
         
+        response = requests.put(endpoint, headers=headers)
+        print(response.json())
+        assert response.status_code == 200, "Putting Award"
+
+        headers = {"Authorization": f"{self.token_type} {self.access_token}"}
+
+        endpoint = (
+            f"{self.endpoint}/api/bookclubs/{self.book_club_id}/"
+            f"post/{self.post_id}/award/{self.award_ids[2]}")
+        
+        response = requests.put(endpoint, headers=headers)
+        print(response.json())
+        assert response.status_code == 200, "Putting Award"
+
+        endpoint = (
+            f"{self.endpoint}/api/bookclubs/{self.book_club_id}/"
+            f"post/{self.post_id}/award/{self.award_ids[4]}")
+        
+        response = requests.put(endpoint, headers=headers)
+        print(response.json())
+        assert response.status_code == 200, "Putting Award"
+
+        endpoint = (
+            f"{self.endpoint}/api/bookclubs/{self.book_club_id}/"
+            f"post/{self.post_id}/award/{self.award_ids[2]}")
+        
+        headers = {"Authorization": f"{self.token_type_2} {self.access_token_2}"}
+
         response = requests.put(endpoint, headers=headers)
         print(response.json())
         assert response.status_code == 200, "Putting Award"
@@ -885,6 +916,19 @@ class TestBookClubs:
         )
         print(response.json())
         assert response.status_code == 200, "Getting club stats"
+
+        endpoint = (
+            f"{self.endpoint}/api/bookclubs/{self.book_club_id}/"
+            f"afterword/{self.user_id}/"
+            f"award_stats/{self.book_club_book_id}"
+            )
+        
+        response = requests.get(
+            endpoint,
+            headers=headers
+        )
+        print(response.json())
+        assert response.status_code == 200, "Getting award stats"
         
     def test_deleting_member(self):
         headers = {"Authorization": f"{self.token_type} {self.access_token}"}

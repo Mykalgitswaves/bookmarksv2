@@ -652,12 +652,13 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
             MATCH (club)-[:IS_READING]->(book:BookClubBook)
             MATCH (book)<-[award_rel:AWARD_FOR_BOOK]-(award:ClubAward {id:$award_id})
             MATCH (post:ClubUpdate|ClubUpdateNoText {id:$post_id})-[:POST_FOR_CLUB_BOOK]->(book)
-            OPTIONAL MATCH (u)-[:GRANTED]->(club_award:ClubAwardForPost)-[:AWARD_FOR_POST]->(post)
+            OPTIONAL MATCH (u)-[:GRANTED]->(club_award:ClubAwardForPost {award_id:$award_id})-[:AWARD_FOR_POST]->(post)
             WITH u, award, COUNT(club_award) AS existing_award_count, award_rel, post
                 WHERE existing_award_count < 1
                 CREATE (created_award:ClubAwardForPost {
                     id: "post_award_" + randomUUID(),
-                    created_date: datetime()
+                    created_date: datetime(),
+                    award_id: $award_id
                 })
                 MERGE (u)-[:GRANTED]->(created_award)-[:IS_CHILD_OF]->(award)
                 MERGE (created_award)-[:AWARD_FOR_POST]->(post)
@@ -2743,7 +2744,7 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
     ):
         query = (
             """
-            MATCH (cu:User)-[:IS_MEMBER_OF|OWNS_BOOK_CLUB]->(b:BookClub {id:$book_club_id})
+            MATCH (cu:User {id: $user_id})-[:IS_MEMBER_OF|OWNS_BOOK_CLUB]->(b:BookClub {id:$book_club_id})
             MATCH (u:User)-[:IS_MEMBER_OF|OWNS_BOOK_CLUB]->(b)
             MATCH (b)-[fr:FINISHED_READING]->(book:BookClubBook {id: $book_club_book_id})
             OPTIONAL MATCH (u)-[:POSTED]
@@ -2760,7 +2761,8 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
         result = tx.run(
             query,
             book_club_id=book_club_id,
-            book_club_book_id=book_club_book_id
+            book_club_book_id=book_club_book_id,
+            user_id=user_id
         )
 
         club_stats = []
@@ -2794,6 +2796,100 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
             )
 
         return club_stats
+    
+    def get_afterward_award_stats(
+            self,
+            book_club_id: str,
+            book_club_book_id: str,
+            user_id: str
+    ):
+        with self.driver.session() as session:
+            result = session.read_transaction(
+                self.get_afterward_award_stats_query,
+                book_club_id,
+                book_club_book_id,
+                user_id
+            )
+        return result
+
+    @staticmethod
+    def get_afterward_award_stats_query(
+        tx,
+        book_club_id: str,
+        book_club_book_id: str,
+        user_id: str
+    ):
+        query = (
+            """
+            MATCH (cu:User {id: $user_id})-[:IS_MEMBER_OF|OWNS_BOOK_CLUB]->(b:BookClub {id:$book_club_id})
+            MATCH (u:User)-[:IS_MEMBER_OF|OWNS_BOOK_CLUB]->(b)
+            MATCH (b)-[fr:FINISHED_READING]->(book:BookClubBook {id: $book_club_book_id})
+            MATCH (award:ClubAward)-[:AWARD_FOR_BOOK]->(book)
+            OPTIONAL MATCH (u)-[:POSTED]
+                ->(post:ClubUpdate|ClubUpdateNoText|ClubReview|ClubReviewNoText {deleted: False})
+                <-[:AWARD_FOR_POST]-(award_grant:ClubAwardForPost)
+                -[:IS_CHILD_OF]->(award)
+            WITH u, award, COUNT(award_grant) AS award_count
+            RETURN u.id AS user_id, 
+                u.username AS username,
+                collect({
+                    id: award.id, 
+                    name: award.name, 
+                    type: award.type, 
+                    description: award.description,
+                    count: award_count
+                }) as award_counts
+            """
+        )
+
+        result = tx.run(
+            query,
+            book_club_id=book_club_id,
+            book_club_book_id=book_club_book_id,
+            user_id=user_id
+        )
+        awards = None
+        users_table = []
+        for response in result:
+            awards_ = {}
+            user = {
+                "id":response['user_id'],
+                "username":response['username']
+            }
+            award_counts = []
+            for award in response.get('award_counts'):
+                award_counts.append(
+                    {
+                        "id": award.get("id"),
+                        "count": award.get("count", 0)
+                    }
+                )
+                if not awards:
+                    award_dict = {
+                        award.get("id"): {
+                            "name": award.get("name"),
+                            "description": award.get("description"),
+                            "type": award.get("type"),
+                            "cls": AWARD_CONSTANTS.get(award.get("name"))
+                        }
+                    }
+                    awards_.update(award_dict)
+
+            users_table.append(
+                {
+                    "user": user,
+                    "award_counts": award_counts
+                }
+            )   
+
+            if not awards:
+                awards = awards_
+
+        return {
+            "users_table": users_table,
+            "awards": awards
+        }
+
         
     def search_users_not_in_club(
             self, 

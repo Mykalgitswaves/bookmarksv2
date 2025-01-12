@@ -2202,7 +2202,7 @@ async def get_afterword_club_stats(
                         "user": {
                             "id":"user123",
                             "username": "Alice",
-                            },
+                        },
                         "progress_over_time": [
                             {"timestamp": "2025-01-01T10:00:00Z", "chapter": 10},
                             {"timestamp": "2025-01-02T10:00:00Z", "chapter": 25},
@@ -2213,7 +2213,7 @@ async def get_afterword_club_stats(
                         "user": {
                             "id":"user456",
                             "username": "Bob",
-                            },
+                        },
                         "progress_over_time": [
                             {"timestamp": "2025-01-01T10:00:00Z", "chapter": 5},
                             {"timestamp": "2025-01-02T10:00:00Z", "chapter": 20},
@@ -2295,7 +2295,78 @@ async def get_afterword_award_stats(
             afterword is being created for
 
     Returns: 
-        awards_table (array): 
+        users_table (array): An array of each user's award stats. 
+            Each object in the array contains a dictionary with:
+                user (dict): the data for the user this object is about,
+                    this contains:
+                        id (str): The user id
+                        username (str): The user username
+                award_counts (array): An array of the users awards received for this book,
+                    Each object in the array contains a dictionary with:
+                        id (str): The id for the award
+                        name (str): The name of the award
+                        type (str): The type of the award
+                        description (str): The description for the award
+                        count (int): The number of times the award was granted
+        awards (dict): All of the awards for this club. This contains
+            id (key, str): The award id
+            name (str): The name of the award
+            description (str): The description for the award
+            type (str): The type of the award
+            cls (str): The class of the award
+
+
+        Here is an example of the return object:
+
+        {
+            "users_table": [
+                {
+                "user": {
+                    "id":"user123",
+                    "username": "Alice",
+                }
+                "award_counts": [
+                    {
+                    "id": "award1",
+                    "count": 10
+                    },
+                    {
+                    "id": "award2",
+                    "count": 3
+                    }
+                ]
+                },
+                {
+                "user": {
+                    "id":"user456",
+                    "username": "Bob",
+                }
+                "award_counts": [
+                    {
+                    "id": "award1",
+                    "count": 1
+                    },
+                    {
+                    "id": "award2",
+                    "count": 4
+                    }
+                ]
+                },
+            ],
+        "awards": {
+            "award1": {
+                "name": "Commendable",
+                "type": "Positive",
+                "description": "Given for outstanding contributions.",
+                "cls": "class"
+            },
+            "award2": {
+                "name": "Questionable",
+                "type": "Negative",
+                "description": "Given for dubious contributions.",
+                "cls": "class"
+            }
+}
 
     """
     if current_user.id != user_id:
@@ -2318,13 +2389,14 @@ async def get_afterword_award_stats(
     
     if award_stats:
         logger.info(
-            "Retrieved afterword club stats",
+            "Retrieved afterword award stats",
             extra={
                 "user_id": user_id,
                 "book_club_id": book_club_id,
                 "action": "get_afterword_award_stats"
             }
         )
+        print(award_stats)
         return JSONResponse(
             status_code=200,
             content={
@@ -2333,7 +2405,7 @@ async def get_afterword_award_stats(
         )
     else:
         logger.warning(
-            "Error grabbing club stats",
+            "Error grabbing award stats",
             extra={
                 "user_id": user_id,
                 "book_club_id": book_club_id,
@@ -2342,7 +2414,7 @@ async def get_afterword_award_stats(
         )
         raise HTTPException(
             400,
-            "Unable to grab club stats"
+            "Unable to grab award stats"
         )
 # TODO:
 """
