@@ -117,7 +117,7 @@ class TestSearch:
             "Authorization": f"{self.token_type_friend} {self.access_token_friend}"
         }
 
-        response = requests.put(f"{self.endpoint}/api/user/{self.user_id_friend}/send_friend_request", headers=headers)
+        response = requests.put(f"{self.endpoint}/api/user/{self.user_id}/send_friend_request/{self.user_id_friend}", headers=headers)
         assert response.status_code == 200, "Testing Send Friend Request"
 
         response = requests.put(f"{self.endpoint}/api/user/{self.user_id}/accept_friend_request", headers=friend_headers)
