@@ -1,9 +1,30 @@
-FROM --platform=linux/amd64 python:3.10.9
+FROM --platform=linux/amd64 python:3.10-slim
 
-WORKDIR /app
+# Create a non-root user 'appuser'
+RUN adduser --disabled-password appuser
 
-COPY . /app
+WORKDIR /home/appuser
 
+# Update PATH so executables installed to .local/bin are found
+ENV PATH="/home/appuser/.local/bin:${PATH}"
+
+COPY requirements.txt /home/appuser
 RUN pip install -r requirements.txt
 
-CMD ["uvicorn", "src.main:backend_app", "--host", "0.0.0.0", "--port", "8000"]
+COPY . /home/appuser
+
+RUN mkdir -p src/utils/logging/logs
+
+RUN chown -R appuser:appuser src/utils/logging/logs
+RUN chmod -R 755 src/utils/logging/logs
+
+EXPOSE 8000
+
+USER appuser
+
+ENV GUNICORN_WORKERS=1
+
+CMD gunicorn -w $GUNICORN_WORKERS \
+             -k uvicorn.workers.UvicornWorker \
+             src.main:backend_app \
+             --bind 0.0.0.0:8000
