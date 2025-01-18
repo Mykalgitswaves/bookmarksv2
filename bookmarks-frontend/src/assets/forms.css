@@ -345,7 +345,7 @@ ul:has(.comments-wrapper) {
   border-color: rgb(238 242 255);
   transform: scaleX(95%);
   margin-right: -20px;
-  margin-top: 1.25rem;
+  /* margin-top: 1.25rem; */
   margin-bottom: 1.25rem;
 }
 

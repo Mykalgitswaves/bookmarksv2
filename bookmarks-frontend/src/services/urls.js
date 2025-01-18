@@ -171,6 +171,8 @@ export const urls = {
         dismissClubNotification: (notification_id) => (`${baseUrl}${BOOK_CLUBS_PREFIX}dismiss_notification/${notification_id}`),
         // Is user finished reading
         getCurrentUserFinishedReading: (bookclub_id, user_id) => (`${baseUrl}${BOOK_CLUBS_PREFIX}${bookclub_id}/is_user_finished_reading/${user_id}`),
+        // Used to have presence for club. Knowing where people are having conversations in an actual club. 
+        establishWebsocketConnectionForClub: (bookclub_id) => `${wsUrl}${BOOK_CLUBS_PREFIX}${bookclub_id}/thread`
     },
     concatQueryParams: (url, newQueryParams, returnUrl) => {
         if (!url) {

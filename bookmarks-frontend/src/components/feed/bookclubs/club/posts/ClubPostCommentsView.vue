@@ -2,9 +2,11 @@
     <!-- Load the post first. -->
     <AsyncComponent :promises="[getPostPromise]">
         <template #resolved>
-            <ClubPost :post="data.post" :is-viewing-post="true"/>
-
-            <CommentBar :post-id="data.post.id" @comment-created="(comment) => addToComments(comment)"/>
+            <div class="post-section">
+                <ClubPost :post="data.post" :is-viewing-post="true"/>
+                
+                <CommentBar :post-id="data.post.id" @pre-success-comment="(comment) => addToComments(comment)" />
+            </div>
         </template>
         <template #loading>
             <div class="fancy loading gradient">Loading...</div>
@@ -14,7 +16,7 @@
     <!-- Then load the comments as separate components -->
     <AsyncComponent :promises="[getPaginatedCommentsForPostPromise]">
         <template #resolved>
-            <div v-if="commentData.comments?.length" class="club-comments">
+            <div v-if="commentData.comments?.length" class="mt-5">
                 <ClubComment 
                     v-for="comment in commentData.comments" 
                     :key="comment.id" 
@@ -34,20 +36,27 @@
 </template>
 <script setup>
 import {useRoute, useRouter} from 'vue-router';
-import { ref } from 'vue';
+import { ref, onMounted, computed } from 'vue';
 import { urls, navRoutes } from '../../../../../services/urls';
 import { db } from '../../../../../services/db';
 import ClubPost from './ClubPost.vue';
 import AsyncComponent from '../../../partials/AsyncComponent.vue';
 import CommentBar from './comments/CommentBar.vue';
 import ClubComment from './comments/ClubComment.vue';
+import { ws } from '../../../bookshelves/bookshelvesRtc';
+import { currentUser } from './../../../../../stores/currentUser';
 
 const route = useRoute();
 const { user, bookclub, postId } = route.params;
+
 let data = {
     post: {},
     error: {},
 };
+
+// onMounted(() => {
+//     ws.createNewSocketConnection(urls.bookclubs.establishWebsocketConnectionForClub(bookclub))
+// })
 
 const commentData = ref({
     comments: [],
@@ -83,12 +92,23 @@ const getPaginatedCommentsForPostPromise = db.get(
     {...pagination.value}, 
     false, 
     (res) => {
-        commentData.value.comments = res.data.comments
+        commentData.value.comments = res.data.comments;
     }, (err) => {
         commentData.errors = [err];
-    });
+    }
+);
 
-function addToComments(comment) {
-    commentData.value.comments.push(comment);
+function addToComments(message) {
+    const comment = {
+        text: message,
+        username: currentUser.value.username,
+        created_date: null,
+        num_replies: 0,
+        replies: [],
+        liked_by_current_user: false,
+        post_id: postId,
+    }
+    // See this at the top.
+    commentData.value.comments.unshift({comment});
 }
 </script>

@@ -1,6 +1,6 @@
 <template>
-    <form class="flex gap-2 items-center" @submit.prevent="postComment(modelComment)">
-        <div class="searchbar">
+    <form class="flex gap-2 items-center" @submit.prevent="debouncedPostComment(modelComment)">
+        <div class="searchbar" :class="{'comment': !!props.comment}">
             <div class="searchbar-prefix">
                 $
             </div>
@@ -13,44 +13,92 @@
             />
 
             <div class="searchbar-end">
-                <button class="btn btn-tiny btn-submit fancy submit-comments" type="submit">
+                <button 
+                    type="submit" 
+                    :disabled="submitting"
+                    class="btn btn-tiny btn-submit fancy submit-comments" 
+                >
                     submit
                 </button>
             </div>
         </div>
-
     </form>
+
+    <Teleport to="body">
+        <SuccessToast v-if="toast" :toast="toast" :toast-type="Toast.TYPES.MESSAGE_TYPE" @dismiss="() => toast = null"/>
+    </Teleport>
 </template>
 <script setup>
 import { ref } from 'vue';
 import { urls } from '../../../../../../services/urls';
 import { db } from '../../../../../../services/db';
 import { XLARGE_TEXT_LENGTH } from '../../../../../../services/forms';
+import { helpersCtrl } from '../../../../../../services/helpers';
+import SuccessToast from '../../../../../shared/SuccessToast.vue';
+import { Toast } from '../../../../../shared/models';
 
 const props = defineProps({
     postId: {
         type: String,
         required: true,
+    },
+    // used to reply to a comment
+    comment: {
+        type: Object,
+        required: false,
     }
 });
 
+const submitting = ref(false);
 const modelComment = ref('')
-const emit = defineEmits(['comment-created']);
+const emit = defineEmits(['comment-created', 'pre-success-comment']);
+const { debounce } = helpersCtrl;
+const toast = ref(null);
 
+
+// Used to post comments.
 async function postComment() {
-    const data = {
-        post_id: props.postId,
-        text: modelComment.value,
-        pinned: false,
-        replied_to: null,
+    submitting.value = true;
+    let data;
+    // If you are commenting on a post 
+    if (!props.comment) {
+        data = {
+            post_id: props.postId,
+            text: modelComment.value,
+            pinned: false,
+            replied_to: null,
+        }
+    } else {
+        data = {
+            post_id: props.postId,
+            text: modelComment.value,
+            pinned: false,
+            replied_to: props.comment.id
+        }
     }
 
-    db.post(urls.reviews.createComment(), data, false, (res) => {
-        emit('comment-created', res.data);
-    }, (err) => {
-        console.error(err);
-    });
-}
+    // Used for snappier feeling comments, in case you want dont want to wait for the post.
+    emit('pre-success-comment', modelComment.value);
+
+    db.post(urls.reviews.createComment(), 
+        data, 
+        false, 
+        (res) => {
+            emit('comment-created', res.data);
+            modelComment.value = '';
+            toast.value = {
+                message: 'Comment created 🎉',
+            }
+            submitting.value = false;
+        }, 
+        () => {
+            emit('post-failure-comment');
+            submitting.value = false;
+        }
+    );
+};
+
+const debouncedPostComment = debounce(postComment, 500, true);
 </script>
 <style scoped>
 
@@ -65,6 +113,11 @@ async function postComment() {
     padding-left: 8px;
     padding-right: 8px;
     position: relative;
+}
+
+.searchbar.comment {
+    width: 90%;
+    margin-bottom: 10px;
 }
 
 .searchbar-prefix {
