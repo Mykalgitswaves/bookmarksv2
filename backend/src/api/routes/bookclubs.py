@@ -2270,3 +2270,106 @@ async def get_afterword_club_stats(
 - Should all of the afterword endpoints confirm the book is finished first? Probably
 
 """
+
+# TODO: implement some WS connection manager for members of a bookclub 
+# so they can find where someone is on a post, to be able to have some sense of 
+# where the conversation is happening while you are on the app.
+"""
+"""
+@router.websocket("/ws/{bookclub_id}/thread")
+async def bookshelf_connection(
+    websocket: WebSocket,
+    bookshelf_id: str,
+    token: str = Query(...),
+    bookshelf_repo: BookshelfCRUDRepositoryGraph = Depends(
+        get_repository(repo_type=BookshelfCRUDRepositoryGraph)
+    ),
+    user_repo: UserCRUDRepositoryGraph = Depends(
+        get_repository(repo_type=UserCRUDRepositoryGraph)
+    ),
+    book_repo: BookCRUDRepositoryGraph = Depends(
+        get_repository(repo_type=BookCRUDRepositoryGraph)
+    ),
+):
+    try:
+        current_user = await get_bookclub_websocket_user(token=token)
+        print("entered bookshelf_connection")
+    except:
+        logger.warning(
+            "Failed to authenticate user for bookshelf websocket",
+            extra={
+                "bookshelf_id": bookshelf_id
+            }
+        )
+        await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
+        return
+
+    if current_user.bookshelf_id != bookshelf_id:
+        logger.warning(
+            "Bookshelf id does not match id from token",
+            extra={
+                "bookshelf_id": bookshelf_id,
+                "token_bookshelf_id": current_user.bookshelf_id
+            }
+        )
+        await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
+        return
+
+    if bookclub_id not in bookclub_ws_manager.cache:
+        logger.warning(
+            "Bookshelf not  in cache",
+            extra={
+                "bookshelf_id": bookshelf_id
+            }
+        )
+        # THIS NEEDS TO REDIRECT TO THE /api/bookshelves/{bookshelf_id} endpoint
+        await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
+        return
+
+    if current_user.id not in bookclub_ws_manager.cache[bookshelf_id].contributors:
+        logger.warning(
+            "User is not authorized to connect to this bookshelf",
+            extra={
+                "user_id": current_user.id,
+                "bookshelf_id": bookshelf_id
+            }
+        )
+        await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
+        return
+
+    await websocket.accept()
+    await bookclub_ws_manager.connect(bookshelf_id, current_user.id, websocket)
+
+    try:
+        while (
+            True and bookshelf_id in bookclub_ws_manager.cache
+        ):  # CAN THE TRUE BE REMOVED?
+            data = await websocket.receive_json()
+            background_tasks = BackgroundTasks()
+            print(data)
+            try:
+                task = BookshelfTaskRoute(type=data["type"], token=data["token"])
+            except ValueError as e:
+                await bookshelf_ws_manager.invalid_data_error(bookshelf_id=bookshelf_id)
+                continue
+
+            try:
+                current_user = await get_bookshelf_websocket_user(token=task.token)
+            except:
+                logger.warning(
+                    "Failed to authenticate user for bookshelf websocket",
+                    extra={
+                        "bookshelf_id": bookshelf_id
+                    }
+                )
+                await bookshelf_ws_manager.disconnect(bookshelf_id, websocket)
+                return
+          
+
+            if data["type"] == "joined":
+                pass
+
+            if data["type"] == "left":
+                pass
+    except WebSocketDisconnect:
+        await bookshelf_ws_manager.disconnect_without_close(bookshelf_id, websocket)

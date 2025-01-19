@@ -2,14 +2,14 @@
     <form class="flex gap-2 items-center" @submit.prevent="debouncedPostComment(modelComment)">
         <div class="searchbar" :class="{'comment': !!props.comment}">
             <div class="searchbar-prefix">
-                $
+               🙋
             </div>
+
             <textarea 
                 class="comment-textarea" 
                 type="text" 
                 :max="XLARGE_TEXT_LENGTH" 
                 v-model="modelComment" 
-                placeholder="Got something on your mind?" 
             />
 
             <div class="searchbar-end">
@@ -113,6 +113,7 @@ const debouncedPostComment = debounce(postComment, 500, true);
     padding-left: 8px;
     padding-right: 8px;
     position: relative;
+    background-color: var(--surface-primary);
 }
 
 .searchbar.comment {
@@ -124,6 +125,7 @@ const debouncedPostComment = debounce(postComment, 500, true);
     padding-right: 4px;
     font-family: var(--fancy-script);
     color: var(--stone-400);
+    background-color: var(--surface-primary);
 }
 
 textarea {
@@ -136,6 +138,7 @@ textarea {
     min-height: var(--min-height);
     resize: none;
     transition: all 250ms ease-in-out;
+    word-break: break-all;
 }
 
 textarea:focus {
@@ -144,13 +147,18 @@ textarea:focus {
     padding-top: 6px;
     padding-bottom: 6px;
     min-height: var(--min-height);
+    
+    &::placeholder {
+        display: none;
+    }
 }
 
 textarea::placeholder {
     position: absolute;
-    top: 50%;
-    transform: translateY(-50%);
-    left: 10px;
+    top: 55%;
+    transform: translateY(55%);
+    padding-left: 20px;
+    font-size: var(--font-sm)
 }
 
 .submit-comments {

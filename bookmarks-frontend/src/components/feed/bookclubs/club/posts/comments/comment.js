@@ -4,16 +4,24 @@ import { db } from "../../../../../../services/db"
 
 const emit = defineEmits(['comment-deleted', 'deletion-failed']);
 
-export async function deleteComment(comment) {
-    db.delete(urls.reviews.deleteComment(comment.id), null, false, () => {
+export async function deleteClubComment(comment, bookClubId) {
+    db.delete(
+        urls.concatQueryParams(
+            urls.reviews.deleteComment(comment.id), 
+            {bookclub: bookClubId}
+        ), null, false, () => {
         emit('comment-deleted', { comment })
     }, () => {
         emit('deletion-failed');
     })
 }
 
-export async function likeComment(comment) {
-    db.put(urls.reviews.likeComment(comment.id), null, false, () => {
+export async function likeClubComment(comment, bookClubId) {
+    db.put(
+        urls.concatQueryParams(
+            urls.reviews.likeComment(comment.id), 
+            {bookclub: bookClubId}
+        ), null, false, () => {
         return true;
     }, () => {
         return false;

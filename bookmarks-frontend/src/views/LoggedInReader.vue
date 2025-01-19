@@ -191,8 +191,8 @@
     </template>
 
     <template #loading>
-      <div>
-        Authenticating....
+      <div class="mt-10 mx-10 loading gradient radius-md text-center py-5">
+        Authenticating...👀
       </div>
     </template>
   </AsyncComponent>
@@ -398,7 +398,7 @@ watch(searchData, (newValue) => {
   .main-layout {
     min-height: 100%;
     width: 100%;
-    padding: 1.25rem;
+    padding: 8px;
     gap: 2ch;
     justify-content: center;
   }
@@ -406,6 +406,7 @@ watch(searchData, (newValue) => {
   @media only screen and (min-width: 768px) {
     .main-layout {
       justify-content: start;
+      padding: 1.25rem;
       padding-left: 14vw;
     }
     .sidebar {

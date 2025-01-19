@@ -45,7 +45,7 @@
     <div class="comment-nest-wrapper" :style="{ '--nest': 0 }" ref="commentRef">
         <!-- Real comment thread -->
         <!-- {{ Object.values(comment).find('post_id') }} -->
-        <div class="comment">
+        <div v-if="!isDeletingView" class="comment">
             <div class="comment-header">
                 <h5 class="mr-2 text-stone-600 bold text-base">{{ comment?.username }}</h5>
 
@@ -60,20 +60,11 @@
 
             <div class="comment-footer">
                 <div class="flex gap-2 items-center w-100">
-                    <button
-                        v-if="comment?.num_replies > 1"
-                        type="button"
-                        class="btn btn-icon btn-tiny text-sm text-stone-700 underline"
-                        @click="showThread = !showThread"
-                    >
-                        View all {{ comment?.num_replies }} comments
-                    </button>
-
                     <button 
                         type="button"
                         class="btn btn-tiny btn-icon mr-auto"
                         :class="{'active': isShowingCommentBar}"
-                        @click="isShowingCommentBar = !isShowingCommentBar"
+                        @click="selectCommentAndShowCommentBarFooter(comment)"
                     >
                         <IconClubComment/>
                     </button>
@@ -88,6 +79,7 @@
                     <button 
                     type="button"
                     class="flipped btn btn-tiny text-red-400 btn-specter"
+                    @click="likeClubComment(props.commentData.comment)"
                     >
                         <IconClubLike/>
                     </button>
@@ -95,13 +87,16 @@
             </div>
         </div>
 
-        <CommentBar 
-            v-if="isShowingCommentBar"  
-            :post-id="comment.post_id"
-            :comment="comment"
-            @pre-success-comment="$emit('pre-success-comment', $event)" 
-            @post-failure-comment="(err) => dispatchFailureToast(err)"
-        />
+        <!-- Are you deleting a comment, make people confirm that they want to do this! -->
+        <div v-if="isDeletingView" class="comment deleting">
+            <button class="btn btn-large btn-red fancy" @click="deleteClubComment(props.commentData.comment);">
+                delete
+            </button>
+
+            <button class="btn btn-large btn-green fancy" @click="isDeletingView = false">
+                cancel
+            </button>
+        </div>
     </div>
 
     <div v-for="reply in commentData.replies" :key="reply.id" class="comment-nest-wrapper" :style="{ '--nest': 1 }">
@@ -121,21 +116,11 @@
             </div>
 
             <div class="comment-footer">
-
-                    <button
-                        v-if="comment?.num_replies > 1"
-                        type="button"
-                        class="btn btn-icon btn-tiny text-sm text-stone-700 underline"
-                        @click="showThread = !showThread"
-                    >
-                        View all {{ comment?.num_replies }} comments
-                    </button>
-
                     <button 
                         type="button"
                         class="btn btn-tiny btn-icon mr-auto"
                         :class="{'active': isShowingCommentBar}"
-                        @click="isShowingCommentBar = !isShowingCommentBar"
+                        @click="selectCommentAndShowCommentBarFooter(reply.comment)"
                     >
                         <IconClubComment/>
                     </button>
@@ -155,18 +140,6 @@
                     </button>
             </div>
         </div>
-
-        <CommentBar 
-            v-if="isShowingCommentBar"  
-            :post-id="comment.post_id"
-            :comment="comment"
-            @pre-success-comment="$emit('pre-success-comment', $event)" 
-            @post-failure-comment="(err) => dispatchFailureToast(err)"
-        />
-
-        <dialog class="deleteDialog">
-
-        </dialog>
     </div>
 </div>
 </template>
@@ -178,7 +151,8 @@ import IconClubComment from '../../../../../svg/icon-club-comment.vue';
 import CommentBar from './CommentBar.vue';
 import SuccessToast from '../../../../../shared/SuccessToast.vue';
 import TouchEvent from '../../../../../../services/swipe';
-import { deleteComment, likeComment } from './comment';
+import { deleteClubComment, likeClubComment } from './comment';
+import { PubSub } from '../../../../../../services/pubsub'; 
 
 const props = defineProps({
     isPreview: {
@@ -203,9 +177,10 @@ const comment = computed(() => {
 
 const isShowingCommentBar = ref(false);
 const commentRef = ref(null);
+const isDeletingView = ref(false);
 
 onMounted(() => {
-    let commentElement = commentRef.value.el
+    let commentElement = commentRef.value
     let touchEvent = null;
 
     commentElement.addEventListener('touchstart', (event) => {
@@ -223,7 +198,12 @@ onMounted(() => {
 
         if (touchEvent.isSwipeLeft()) {
             // delete comment
-            deleteComment(props.commentData.comment);
+            isDeletingView.value = true;
+        }
+
+        // Reset if they swipe right after opening delete view.
+        if (isDeletingView.value && touchEvent.isSwipeRight()) {
+            isDeletingView.value = false;
         }
 
         // Reset event for next touch
@@ -231,6 +211,16 @@ onMounted(() => {
     }
 })
 
+/**
+ * @description - function that selects the clicked comment 
+ * and reveals a comment bar in the footer.
+ * @param comment - Proxy object.
+ * @returns { void }
+ */
+function selectCommentAndShowCommentBarFooter(comment) {
+    isShowingCommentBar.value = true;
+    PubSub.publish('start-commenting-club-post', comment);
+}
 </script>
 <style scoped>
 
@@ -243,19 +233,40 @@ onMounted(() => {
 }
 
 .comment {
+    --comment-inline-start-margin: 8px;
+    --comment-inline-end-margin: 0;
+    
+    @media screen and (max-width: 768px)  {
+        --comment-inline-end-margin: 8px;
+    }
+
     transition: all 250ms ease-in-out;
-    margin-right: 12px;
+    margin-right: var(--comment-inline-end-margin);
     position: relative;
     padding: 4px 6px;
     background-color: var(--surface-primary);
-    margin-left: 24px;  /* Space for the connector */
+    margin-left: var(--comment-inline-start-margin);  /* Space for the connector */
     transition: all 250ms ease-in-out; 
     left: 0;
 }
 
+.comment.deleting {
+    left: 0;
+    right: 0;
+    background-color: var(--stone-50);
+    border: 1px solid var(--stone-300);
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    column-gap: 12px;
+    padding: 8px;
+}
+
+
 .comment-nest-wrapper {
-    margin-left: calc(2ch * var(--nest, 0) );
+    margin-left: calc(5% * var(--nest, 0) );
     position: relative;
+    scroll-behavior: smooth;
+    overflow-x: auto;
 }
 
 /* .comment::before {

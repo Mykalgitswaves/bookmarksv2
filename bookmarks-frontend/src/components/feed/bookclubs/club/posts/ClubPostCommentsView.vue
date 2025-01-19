@@ -45,6 +45,7 @@ import CommentBar from './comments/CommentBar.vue';
 import ClubComment from './comments/ClubComment.vue';
 import { ws } from '../../../bookshelves/bookshelvesRtc';
 import { currentUser } from './../../../../../stores/currentUser';
+import { PubSub } from '../../../../../services/pubsub';
 
 const route = useRoute();
 const { user, bookclub, postId } = route.params;
@@ -111,4 +112,26 @@ function addToComments(message) {
     // See this at the top.
     commentData.value.comments.unshift({comment});
 }
+
+// ON pre success of posting a reply, 
+// find the correct parent comment thread and add your comment to the end of the list.
+// Different than commenting to a post which goes to the start of the list. 
+PubSub.subscribe('footer-comment-pre-success-comment', (payload) => {
+    const refComment = commentData.value.comments.find((comment) => comment.id === payload.commentId);
+    const reply = {
+        text: payload.reply,
+        username: currentUser.value.username,
+        created_date: null, 
+        num_replies: 0,
+        liked_by_current_user: false,
+        post_id: postId,
+    };
+
+    refComment.value.replies.push(reply);
+});
+
+PubSub.subscribe('footer-comment-failure-comment', (payload) => {
+    const refComment = commentData.value.comments.find((comment) => comment.id === payload.commentId);
+    refComment.value.failedPosting = true;
+});
 </script>
