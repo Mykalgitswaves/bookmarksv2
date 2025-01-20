@@ -4,8 +4,12 @@
         <template #resolved>
             <div class="post-section">
                 <ClubPost :post="data.post" :is-viewing-post="true"/>
-                
-                <CommentBar :post-id="data.post.id" @pre-success-comment="(comment) => addToComments(comment)" />
+
+                <ViewAwards/>
+
+                <div style="margin-top: 20px;">
+                    <CommentBar :post-id="data.post.id" @pre-success-comment="(comment) => addToComments(comment)" />
+                </div>
             </div>
         </template>
         <template #loading>
@@ -33,6 +37,8 @@
             <div class="fancy loading gradient">Loading comments...</div>
         </template>
     </AsyncComponent>
+
+    <ErrorToast v-if="errorToastMessage" :message="errorToastMessage"/>
 </template>
 <script setup>
 import {useRoute, useRouter} from 'vue-router';
@@ -46,6 +52,8 @@ import ClubComment from './comments/ClubComment.vue';
 import { ws } from '../../../bookshelves/bookshelvesRtc';
 import { currentUser } from './../../../../../stores/currentUser';
 import { PubSub } from '../../../../../services/pubsub';
+import ErrorToast from './../../../../../components/shared/ErrorToast.vue';
+import ViewAwards from '../awards/ViewAwards.vue';
 
 const route = useRoute();
 const { user, bookclub, postId } = route.params;
@@ -68,6 +76,8 @@ const pagination = ref({
     skip: 0,
     limit: 20,
 });
+
+const errorToastMessage = ref(null);
 
 const getPostPromise = db.get(
     urls.concatQueryParams(
@@ -118,16 +128,24 @@ function addToComments(message) {
 // Different than commenting to a post which goes to the start of the list. 
 PubSub.subscribe('footer-comment-pre-success-comment', (payload) => {
     const refComment = commentData.value.comments.find((comment) => comment.id === payload.commentId);
-    const reply = {
-        text: payload.reply,
-        username: currentUser.value.username,
-        created_date: null, 
-        num_replies: 0,
-        liked_by_current_user: false,
-        post_id: postId,
-    };
+    
+    console.log(refComment)
 
-    refComment.value.replies.push(reply);
+    if (refComment) {
+        const reply = {
+            text: payload.reply,
+            username: currentUser.value.username,
+            created_date: null, 
+            num_replies: 0,
+            liked_by_current_user: false,
+            post_id: postId,
+        };   
+        refComment.replies.push(reply);
+    } else {
+        setTimeout(() => {
+            errorToastMessage.value = 'Something weird happened 🤔';
+        }, 1500);
+    }
 });
 
 PubSub.subscribe('footer-comment-failure-comment', (payload) => {

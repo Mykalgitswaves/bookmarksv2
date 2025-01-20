@@ -19,7 +19,7 @@
                     'created-invite': invite.user_id
                 }"
             >
-                <div v-if="!invite.user_id" class="flex items-center gap-2">
+                <div v-if="!invite.user_id" class="flex items-center gap-2 flex-wrap">
                     <!-- Add placeholder for searched existing user here. -->
                     <SearchUserOverlay 
                         :book-club-id="route.params.bookclub" 
@@ -94,7 +94,7 @@
     </form>
 
     <!-- Sent invitations go below -->
-    <AsyncComponent :promises="[getInvitesForClubPromise]">
+    <AsyncComponent :promise-factory="getInvitesForClubPromiseFactory" :subscription-key="INVITE_SUBSCRIPTION_KEY">
         <template #resolved>
             <div class="transition">
                 <h3 class="text-2xl text-stone-600 fancy">Invited readers</h3>
@@ -135,6 +135,7 @@ import { useRoute } from 'vue-router';
 import { Invitation, BaseInvitation } from '../../models/models';
 import { db } from  '../../../../../services/db';
 import { urls } from  '../../../../../services/urls';
+import { PubSub } from '../../../../../services/pubsub';
 import { createConfetti } from '../../../../../services/helpers';
 import TextAlert from '@/components/feed/partials/textAlert/TextAlert.vue';
 import SearchUserOverlay from './SearchUserOverlay.vue'
@@ -165,6 +166,9 @@ const invitation = new BaseInvitation();
 const invitations = ref([
     invitation
 ]);
+
+const INVITE_SUBSCRIPTION_KEY = 'get-new-invites-for-club';
+
 const sentInvitations = ref([]);
 
 /**
@@ -226,19 +230,20 @@ function populateInvitesForClub(invites) {
 }
 
 function cleanUpOldInvitesAndUpdateSentInvitesList(invitesMap) {
-    Object.values(invitesMap).forEach(([id, invite]) => {
-        // Oñ^2 but what are you going to do?
-        let inviteInList = invitations.value.find((invitation) => invitation.id === id);
-        let index = invitations.value.indexOf(inviteInList);
+    PubSub.publish('INVITE_SUBSCRIPTION_KEY', {});
+    // Object.values(invitesMap).forEach(([id, invite]) => {
+    //     // Oñ^2 but what are you going to do?
+    //     let inviteInList = invitations.value.find((invitation) => invitation.id === id);
+    //     let index = invitations.value.indexOf(inviteInList);
         
-        // delete the old invite and remove it from the ui;
-        inviteInList.delete();
-        invitations.value.splice(index, 1);
+    //     // delete the old invite and remove it from the ui;
+    //     inviteInList.delete();
+    //     invitations.value.splice(index, 1);
 
-        // then recreate it in the sent invites list
-        const sentInvite = new BaseInvitation(invite)
-        sentInvitations.value.push(sentInvite);
-    });
+    //     // then recreate it in the sent invites list
+    //     const sentInvite = new BaseInvitation(invite)
+    //     sentInvitations.value.push(sentInvite);
+    // });
 }
 
 /**
@@ -281,7 +286,7 @@ async function sendInvites(inviteMatrix, invitations) {
 }
 
 
-const getInvitesForClubPromise = db.get(urls.bookclubs.getInvitesForClub(route.params.bookclub), 
+const getInvitesForClubPromiseFactory = () => db.get(urls.bookclubs.getInvitesForClub(route.params.bookclub), 
     null,
     false,
     (res) => {

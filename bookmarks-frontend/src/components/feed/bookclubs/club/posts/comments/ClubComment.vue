@@ -26,6 +26,7 @@
                 <button 
                     type="button" 
                     class="btn btn-tiny text-green-400 btn-specter mr-2"
+                    @click="likeClubComment(comment)"
                     >
                     <IconClubLike/>
                 </button>
@@ -33,6 +34,7 @@
                 <button 
                 type="button"
                 class="flipped btn btn-tiny text-red-400 btn-specter"
+                @click="dislikeClubComment(comment)"
                 >
                     <IconClubLike/>
                 </button>
@@ -151,7 +153,7 @@ import IconClubComment from '../../../../../svg/icon-club-comment.vue';
 import CommentBar from './CommentBar.vue';
 import SuccessToast from '../../../../../shared/SuccessToast.vue';
 import TouchEvent from '../../../../../../services/swipe';
-import { deleteClubComment, likeClubComment } from './comment';
+import { deleteClubComment, likeClubComment, dislikeClubComment } from './comment';
 import { PubSub } from '../../../../../../services/pubsub'; 
 
 const props = defineProps({

@@ -69,13 +69,21 @@ export const Invitation = {
     }
 };
 
+export function generateUUID() {
+     // Simple UUID generation function
+     return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+        const r = Math.random() * 16 | 0, v = c === 'x' ? r : (r & 0x3 | 0x8);
+        return v.toString(16);
+    });
+}
+
 // Default for new invitations
 export class BaseInvitation {
     static invitations = []
-
     constructor(invite) {
+        const id = generateUUID();
         if (!invite) {
-            this.id = crypto.randomUUID();
+            this.id = id;
             this.email = '';
             this.user_id = '';
             this.type = Invitation.types.email;
@@ -126,7 +134,8 @@ export class Member {
             this.email = member.user.email;
             this.role = member.role;
         } else {
-            this.id = crypto.randomUUID();
+            const id = generateUUID();;
+            this.id = id;
             this.email = '';
             this.user_id = '';
             this.role = '';

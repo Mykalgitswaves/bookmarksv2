@@ -401,6 +401,7 @@ watch(searchData, (newValue) => {
     padding: 8px;
     gap: 2ch;
     justify-content: center;
+    overflow-x: hidden;
   }
 
   @media only screen and (min-width: 768px) {

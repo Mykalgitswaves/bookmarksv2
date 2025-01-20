@@ -16,7 +16,7 @@
 
             <RouterLink 
                 :to="navRoutes.toBookshelfSectionPage(user, 'explore')" 
-                class="ml-auto btn btn-tiny text-indigo-500 text-sm btn-nav"
+                class="btn btn-tiny text-indigo-500 text-sm btn-nav"
             >
                 Explore bookshelves
             </RouterLink>
@@ -257,12 +257,19 @@ async function searchForBookshelf(value) {
 }
 
 .bookshelf-filters {
+    --justify: space-between;
+    @media screen and (max-width: 500px) {
+        --justify: start;
+    }
+
     margin-top: 12px;
     padding: 8px 20px;
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(12ch, 1fr));
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: var(--justify) ;
+    align-items: center;
     column-gap: 8px;
-    row-gap: 8px;
+    row-gap: 8px;   
 }
 
 .bookshelf-filter {

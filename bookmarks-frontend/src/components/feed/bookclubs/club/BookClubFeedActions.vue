@@ -19,41 +19,7 @@
             </button>
         </div>
 
-        <div class="flex gap-2">
-            <TransitionGroup name="content" tag="div" class="btn-relative">
-                <button 
-                    ref="show-modal-btn"
-                    class="btn btn-ghost btn-tiny text-sm btn-icon"
-                    type="button"
-                    @click="modals.selectDropdown = !modals.selectDropdown"
-                >
-                    Filter
-                </button>
-
-                <div v-close-modal="{
-                    exclude: ['show-modal-btn'],
-                    handler: closeModal,
-                    args: ['selectDropdown']
-                }">
-                    <div v-if="modals.selectDropdown"
-                        class="popout-flyout shadow-lg filter"
-                    >
-                        <button 
-                            type="button" 
-                            v-for="(option, index) in filterOptions"
-                            :key="index"
-                            @click="currentFilterOptions[option] = true"  
-                        >
-                            <span class="text-stone-600 text-sm hover:text-stone-700">
-                                {{ option }}
-                            </span>
-                        </button>
-                    </div>
-                </div>
-            </TransitionGroup>
-
-            <ViewAwards/>
-        </div>
+        <ViewAwards/>
     </div>
 </template>
 <script setup>

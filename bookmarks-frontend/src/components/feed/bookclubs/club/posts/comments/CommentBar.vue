@@ -1,9 +1,9 @@
 <template>
     <form class="flex gap-2 items-center" @submit.prevent="debouncedPostComment(modelComment)">
         <div class="searchbar" :class="{'comment': !!props.comment}">
-            <div class="searchbar-prefix">
+            <!-- <div class="searchbar-prefix">
                🙋
-            </div>
+            </div> -->
 
             <textarea 
                 class="comment-textarea" 
@@ -147,10 +147,6 @@ textarea:focus {
     padding-top: 6px;
     padding-bottom: 6px;
     min-height: var(--min-height);
-    
-    &::placeholder {
-        display: none;
-    }
 }
 
 textarea::placeholder {
@@ -162,7 +158,14 @@ textarea::placeholder {
 }
 
 .submit-comments {
+    --font-size: var(--font-sm);
+
+    /* Decrease for mobile so you have more horizontal clearance */
+    @media screen and (max-width: 768px) {
+        --font-size: var(--font-xs);
+    }
+
     height: 40px;
-    font-size: var(--font-sm);
+    font-size: var(--font-size);
 }
 </style>

@@ -2271,10 +2271,10 @@ async def get_afterword_club_stats(
 
 """
 
+
 # TODO: implement some WS connection manager for members of a bookclub 
 # so they can find where someone is on a post, to be able to have some sense of 
 # where the conversation is happening while you are on the app.
-"""
 """
 @router.websocket("/ws/{bookclub_id}/thread")
 async def bookshelf_connection(
@@ -2373,3 +2373,4 @@ async def bookshelf_connection(
                 pass
     except WebSocketDisconnect:
         await bookshelf_ws_manager.disconnect_without_close(bookshelf_id, websocket)
+"""

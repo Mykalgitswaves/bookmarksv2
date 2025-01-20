@@ -632,7 +632,7 @@ onBeforeUnmount(() => {
 }
 
 .sidebar-menu[open] {
-    --mobile-sidebar-width: 70vw;
+    --mobile-sidebar-width: 90vw;
     @media screen and (min-width: 768px) {
         --mobile-sidebar-width: 700px;
     }
@@ -645,7 +645,7 @@ onBeforeUnmount(() => {
     border-radius: var(--radius-md);
     margin: var(--margin-md);
     margin-left: auto;
-    margin-top: 60px;
+    margin-top: 70px;
     padding: 24px;
     background-color: var(--surface-primary);
 }

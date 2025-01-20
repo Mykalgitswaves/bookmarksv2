@@ -81,7 +81,7 @@
                     </button>
                 </div>
                 
-                <div class="awards-list" :class="{'expanded': false}">
+                <div :class="{'expanded': false}">
                     <button 
                         type="button"
                         title="view awards"
@@ -90,23 +90,25 @@
                     >
                         <IconAwards />
                     </button>
+                </div>
+            </div>
+        </div>
 
-                    <div v-if="awards.length" 
-                        v-for="(award, index) in awards" 
-                        :key="award.id" 
-                    >
-                        <div v-if="award.num_grants > 0" 
-                            class="award"
-                            :class="{'granted-by-user': award.granted_by_current_user}"
-                            :title="award.name"
-                            @click="grantOrUngrantAward(award, index - 1)"
-                        >
-                            <span>
-                                <span class="num-grants">{{ award.num_grants }}</span>
-                                <component v-if="ClubAwardsSvgMap[award.cls]" :is="ClubAwardsSvgMap[award.cls]()"/>
-                            </span>
-                        </div>
-                    </div>
+        <div class="awards-list" v-if="awards.length">
+            <div
+                v-for="(award, index) in awards" 
+                :key="award.id" 
+            >
+                <div v-if="award.num_grants > 0" 
+                    class="award"
+                    :class="{'granted-by-user': award.granted_by_current_user}"
+                    :title="award.name"
+                    @click="grantOrUngrantAward(award, index - 1)"
+                >
+                    <span>
+                        <span class="num-grants">{{ award.num_grants }}</span>
+                        <component v-if="ClubAwardsSvgMap[award.cls]" :is="ClubAwardsSvgMap[award.cls]()"/>
+                    </span>
                 </div>
             </div>
         </div>
@@ -326,9 +328,12 @@ function likeOrUnlikeClubPost() {
 }
 
 .awards-list {
+    width: 100%;
     margin-bottom: -10px;
-    margin-right: -10px;
+    margin-right: 10px;
+    margin-left: 10px;
     display: flex;
+    flex-direction: row;
     column-gap: 4px;
     row-gap: 4px;
     justify-content: start;
