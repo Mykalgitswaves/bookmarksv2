@@ -296,3 +296,7 @@
 .flipped {
   transform: rotateX(180deg) rotateY(180deg);
 }
+
+.inline-block {
+  display: inline-block;
+}

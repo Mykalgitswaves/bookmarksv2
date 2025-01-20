@@ -1,14 +1,12 @@
 <template>
   <nav class="nav-menu">
-    <div class="flex space-between w-100 items-bottom">
-      <h4 class="text-stone-600 fancy pl-2 pt-2">HardcoverLit</h4>
+    <div class="flex w-100 items-bottom justify-between">
+      <h4 v-if="!isSearchFocused" class="transition text-stone-600 fancy pl-2 pt-2">HardcoverLit</h4>
 
-      <div class="flex gap-2 items-bottom">
-          <NavSearchBar/>
+      <div class="flex gap-2 items-bottom ml-auto justify-end"  style="min-width: 200px">
+          <NavSearchBar @is-search-focused="(value) => isSearchFocused = value"/>
 
           <Notifications />
-          
-          <MobileMenu />
       </div>
     </div>
   </nav>
@@ -17,9 +15,22 @@
   import Notifications from './social/Notifications.vue';
   import MobileMenu from './partials/mobile-menu.vue';
   import NavSearchBar from './navigation/NavSearchBar.vue';
+  import { ref } from 'vue';
 
+  const isSearchFocused = ref(false);
 </script>
 <style scoped>
+@starting-style {
+  .transition {
+    opacity: 0;
+    width: 40px;
+  }
+}
+
+.transition {
+  transition: all 250ms ease-in-out;
+}
+
 .nav-menu {
     position: sticky;
     height: 40px;

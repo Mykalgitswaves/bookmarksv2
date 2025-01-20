@@ -17,17 +17,16 @@
                     :bookclub="bookclub"
                     :user="user"
                 />
-
                 <!-- In case there are more than three load a button in the toolbar to view all! -->
-                <div v-if="bookclubs.ownedByUser.length > 2">
-                  <RouterLink 
-                    class="btn btn-tiny btn-nav text-sm fancy"
-                    :to="navRoutes.toBookClubsPage(user)"
-                  >
-                    View all
-                  </RouterLink>
-                </div>
-            </div>
+              </div>
+
+              <RouterLink
+                v-if="bookclubs.ownedByUser.length > 2" 
+                class="ml-10 btn btn-tiny btn-nav text-sm fancy"
+                :to="navRoutes.toBookClubsPage(user)"
+              >
+                View all
+              </RouterLink>
         </template>
 
         <template #loading>
@@ -312,7 +311,8 @@ loadWorks();
 
   @media screen and (max-width: 768px) {
     .bookclubs-gallery {
-      grid-template-columns: 1fr;
+      grid-template-columns: repeat(3, 200px);
+      overflow-x: scroll;
     }
   }
 
