@@ -5,13 +5,27 @@
         <div>
             <label for="bookshelf_title" class="title-input">
                 <p>Add a title for your bookshelf</p>
-                <input id="bookshelf_title" type="text" v-model="model.bookshelf_name">
+                <input id="bookshelf_title" type="text" v-model="model.bookshelf_name" :maxlength="XSMALL_TEXT_LENGTH">
             </label>
 
             <label for="bookshelf_description" class="summary-update bookshelf">
                 <p>Add a description for your bookshelf</p>
-                <textarea id="bookshelf_description" v-model="model.bookshelf_description"/>
+                <textarea id="bookshelf_description" v-model="model.bookshelf_description" :maxlength="MEDIUM_TEXT_LENGTH"/>
             </label>
+
+            <div class="my-5">
+                <RadioGroup 
+                    id="visibility-options"
+                    :options="BOOKSHELVES_VISIBLITY_OPTIONS" 
+                    @updated:modelValue="(value) => { 
+                        model.visibility = value
+                    }"
+                    >
+                    <template #heading>
+                        Club visibility 
+                    </template>
+                </RadioGroup>
+            </div>
 
             <button 
                 class="create-bookshelf-btn"
@@ -37,14 +51,21 @@
     import { useRoute, useRouter } from 'vue-router'
     import { urls } from '../../../services/urls';
     import { db } from '../../../services/db';
+    import { XSMALL_TEXT_LENGTH, MEDIUM_TEXT_LENGTH } from '../../../services/forms';    
+    import RadioGroup from '../partials/RadioGroup.vue';
+    import { BOOKSHELVES_VISIBLITY_OPTIONS } from '@/components/shared/models.js';
+    
     const route = useRoute();
     const router = useRouter();
     // All shelves start as private.
     const model = reactive({
-        'visibility': 'private',
+        visibility: 'private',
     });
+
     const error_message = ref('');
     const isShowingErrorMessage = ref(false);
+
+
 
     function failureFn(err){
         error_message.value = err.detail

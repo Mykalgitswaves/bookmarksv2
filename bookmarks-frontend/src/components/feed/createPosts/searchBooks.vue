@@ -4,11 +4,12 @@
       
       <input
         id="search-book"
-        class="py-2 px-4 rounded-md border-2 border-indigo-200 w-62 max-w-[600px]"
+        class="py-2 px-4 rounded-md border-2 border-indigo-200 w-62"
         :ref="(el) => (inputRef.push(el))"
         :class="{'mt-0': props.labelAbove, 
           'mt-5': !props.labelAbove,
-          'w-100 mx-auto': props.centered
+          'w-100 mx-auto': props.centered,
+          'max-w-[600px]': !isUnsetMaxWidth
         }"
         placeholder="Search for books"
         name="searchForBooks"
@@ -23,16 +24,26 @@
       >Tap a book to select it</label>
     </form>
 
-    <BookSearchResults 
-      class="max-w-[600px] mx-auto" 
-      :data="books" 
-      :is-auth="true"
-      :is-comparison="props.isComparison"
-      @book-id="toParent"
-    />
+    <div class="transition-content">
+      <div v-if="loading" class="mt-5 gradient fancy text-center text-xl loading-box">
+        loading books
+      </div>
+
+      <BookSearchResults 
+        v-if="!loading && books?.length"
+        unset-max-width
+        :style="maxHeight ? `max-height: ${maxHeight}; overflow-y: scroll;`: ''"
+        class="mx-auto"
+        :class="{'max-w-[600px]': !isUnsetMaxWidth}" 
+        :data="books" 
+        :is-auth="true"
+        :is-comparison="props.isComparison"
+        @book-id="toParent"
+      />
+    </div>
 </template>
 <script setup>
-import { ref, computed, watch } from 'vue';
+import { ref, computed, watch, useAttrs } from 'vue';
 import BookSearchResults from '../../create/booksearchresults.vue';
 import { db } from '../../../services/db';
 import { urls } from '../../../services/urls';
@@ -54,6 +65,10 @@ const props = defineProps({
     type: Function,
     default: () => '',
     required: false,
+  },
+  maxHeight: {
+    type: String,
+    required: false,
   }
 });
 
@@ -62,10 +77,15 @@ const { debounce } = helpersCtrl;
 const searchResultsArray = ref(null);
 const book = ref(null);
 const inputRef = ref([]);
+const attrs = useAttrs();
+const isUnsetMaxWidth = Object.keys(attrs).includes('unset-max-width');
+const loading = ref(false);
 
 async function searchBooks(e) {
-  searchResultsArray.value = await db.get(urls.create.searchBook(e.target.value))
-  console.log(searchResultsArray.value,'searchBookEndpoint')
+  loading.value = true;
+  searchResultsArray.value = await db.get(urls.create.searchBook(e.target.value), null, false, () => {
+    loading.value = false;
+  })
 }
 
 const debouncedSearchBooks = debounce(searchBooks, 500, false)
@@ -89,3 +109,18 @@ watch(book, () => {
   }
 });
 </script>
+<style>
+
+.transition-content {
+  opacity: 1;
+  transition: all 250ms ease;
+}
+
+@starting-style {
+  .transition-content {
+    opacity: 0;
+    height: 0;
+    width: 0;
+  }
+}
+</style>

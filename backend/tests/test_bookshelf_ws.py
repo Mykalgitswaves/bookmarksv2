@@ -21,7 +21,7 @@ def setup_class(request):
     request.cls.endpoint = "http://127.0.0.1:8000"
     request.cls.username = "testuser123_shelves"
     request.cls.email = "testuser_shelves@testemail.com"
-    request.cls.password = "testpassword"
+    request.cls.password = "testPassword1!"
 
     request.cls.admin_credentials = config["ADMIN_CREDENTIALS"]
 
@@ -40,7 +40,7 @@ def setup_class(request):
 
     request.cls.username_2 = "testuser123_shelves_2"
     request.cls.email_2 = "testuser_shelves_2@testemail.com"
-    request.cls.password_2 = "testpassword"
+    request.cls.password_2 = "testpassworD1!"
 
     request.cls.admin_credentials = config["ADMIN_CREDENTIALS"]
 
@@ -58,6 +58,12 @@ def setup_class(request):
     request.cls.user_id_2 = response.json()["user_id"]
 
     yield
+
+    response = requests.post(f"{request.cls.endpoint}/api/admin/delete_user_bookshelf_data",
+                            json={"user_id": request.cls.user_id, "admin_credentials": config["ADMIN_CREDENTIALS"]})
+    
+    response = requests.post(f"{request.cls.endpoint}/api/admin/delete_user_bookshelf_data",
+                            json={"user_id": request.cls.user_id_2, "admin_credentials": config["ADMIN_CREDENTIALS"]})
 
     response = requests.post(f"{request.cls.endpoint}/api/admin/delete_user_by_username", 
                              json={"username": request.cls.username, "admin_credentials": config["ADMIN_CREDENTIALS"]})
@@ -554,7 +560,7 @@ class TestBookshelfWS:
 
         bookshelf_id = response.json()["bookshelf_id"]
 
-        response = requests.put(f"{self.endpoint}/api/user/{self.user_id_2}/send_friend_request", headers=headers)
+        response = requests.put(f"{self.endpoint}/api/user/{self.user_id}/send_friend_request/{self.user_id_2}", headers=headers)
         assert response.status_code == 200, "Testing Send Friend Request"
 
         friend_headers = {"Authorization": f"{self.token_type_2} {self.access_token_2}"}

@@ -15,6 +15,15 @@
     fill: var(--stone-500);
 }
 
+.btn-specter {
+    color: var(--stone-500);
+    fill: var(--stone-500);
+    
+    &:hover {
+        background-color: var(--stone-100);
+    }
+}
+
 .btn-icon {
     display: flex;
     align-items: center;
@@ -42,11 +51,21 @@
     border-radius: .25rem;
 }
 
+.btn-tiny {
+    /* depends on text being smaller */
+    padding: .5rem 8px;
+    border-radius: .25rem;
+}
+
 .btn.btn-submit {
     background-color: var(--indigo-50);
     color: var(--indigo-500);
     border: 1px solid var(--indigo-400);
     transition: var(--transition-short);
+}
+
+.btn.btn-wide {
+    width: 100%;
 }
 
 .btn.btn-submit:hover {
@@ -58,6 +77,39 @@
     color: var(--red-500);
     transition: var(--transition-short);
 }
+
+.btn.btn-toolbar {
+    background-color: var(--surface-primary);
+    border-width: 0;
+    border-bottom: 2px solid var(--stone-200);
+    border-bottom-right-radius: 0;
+    border-bottom-left-radius: 0;
+    color: var(--stone-500);
+    
+    &.active {
+        border-color: var(--indigo-500);
+        background-color: var(--indigo-50);
+        color: var(--indigo-600);
+    }
+}
+
+.btn-green {
+    background-color: var(--green-100);
+    color: var(--stone-700);
+}
+
+.btn.disabled {
+    border: 1px solid var(--stone-300);
+    color: var(--stone-500);
+    transition: var(--transition-short);
+    background-color: var(--surface-primary);
+    cursor: not-allowed;
+}
+
+.btn.disabled:hover {
+    background-color: var(--surface-primary);
+}
+
 
 .btn.btn-red:hover {
     background-color: var(--red-300);
@@ -76,7 +128,6 @@
 
 .btn.icon-btn, .btn-small.icon-btn {
     display: flex;
-    column-gap: 10px;
     align-items: center;
     justify-content: center;
 }
@@ -88,6 +139,23 @@
 
 .btn-red-ghost:hover {
     background-color: var(--red-100);
+}
+
+.btn-remove.icon {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--red-500);
+    background-color: var(--surface-primary);
+    transition: all 250ms ease;
+}
+
+.btn-remove:hover {
+    background-color: var(--red-100);
+}
+
+.btn.small {
+    font-size: var(--font-sm);
 }
 
 .post-btn {
@@ -108,4 +176,18 @@
     background-color: var(--stone-200);
     font-family: var(--fancy-script);
     font-size: var(--font-xl)
+}
+
+.btn-add-friend {
+    background-color: var(--indigo-200);
+    color: var(--indigo-600);
+}
+
+.btn-nav {
+    background-color: var(--blue-500);
+    color: var(--surface-primary);
+}
+
+.btn-nav:hover {
+    background-color: var(--blue-600);
 }

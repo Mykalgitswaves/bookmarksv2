@@ -72,7 +72,7 @@
 
 
 .activity-comment-text {
-    font-size: var(--text-sm);
+    font-size: var(--font-sm);
     color: var(--slate-600);
     line-break: auto;
 }

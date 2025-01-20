@@ -2,7 +2,8 @@
 <template>
   <section class="login-wrapper">
 
-    <h1 class="text-center text-4xl font-medium mb-16">Log in</h1>
+    <!-- <h1 class="text-center text-xl mb-5 fancy text-indigo-400">Hardcoverlit</h1> -->
+    <h1 class="text-center text-4xl mb-16 text-stone-600">Log in</h1>
 
     <form
       class="grid grid-cols-1 h-80 gap-2 place-content-center px-5"
@@ -52,18 +53,6 @@
     >
       Username or password invalid please try a different login
     </span>
-    
-    <div class="grid mt-10 text-center">
-      <RouterLink to="/create-user">
-        <button type="button" class="my-2">
-            <span class="italic">For readers</span><br>
-
-            <span class="text-md text-indigo-600 font-semibold underline underline-offset-2">
-            create an account
-            </span>
-        </button>
-      </RouterLink>
-    </div>
 </section>
 </template>
 
@@ -88,29 +77,41 @@ async function submitForm() {
   formData.append('password', toRaw(formBlob.value.password));
   
   try {
-    await fetch(urls.login, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-        'Accept': 'application/json'
-      },
-      // convert this from proxy toRaw
-      body: formData,
-    }).then((res) => res.json())
-    .then((data) => {
-      const user_id = data.user_id;
-      const token = `token=${data.access_token}`;
-      document.cookie = token;
-      return router.push(navRoutes.toLoggedInFeed(user_id));
-    });
-  } catch(error) {
-      console.error(error);
-      message.value = error.detail;
-      errorMessage.value = true
-      
-      setTimeout(() => {
-        errorMessage.value = false;
-      }, 2000);
+  const response = await fetch(urls.login, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded',
+      'Accept': 'application/json'
+    },
+    // convert this from proxy toRaw
+    body: formData,
+  });
+
+  if (!response.ok) { // Check if the response status is not OK (not 200-299)
+    errorMessage.value = true;
+    setTimeout(() => {
+    errorMessage.value = false;
+  }, 2000);
   }
+  else {
+    const data = await response.json();
+    console.log(data);
+
+    const user_id = data.user_id;
+    const token = `token=${data.access_token}`;
+    document.cookie = token;
+    
+    return router.push(navRoutes.toLoggedInFeed(user_id));
+  }
+  
+} catch (error) {
+  console.error(error);
+  message.value = error.detail || error.message; // Use error message if detail is not available
+  errorMessage.value = true;
+
+  setTimeout(() => {
+    errorMessage.value = false;
+  }, 2000);
+}
 }
 </script>

@@ -16,3 +16,7 @@ config.feature.json
 config.prod.json
 test_health.py
 health
+.vscode
+test.ipynb
+backend/src/utils/logging/logs/*
+!backend/src/utils/logging/logs/.gitkeep

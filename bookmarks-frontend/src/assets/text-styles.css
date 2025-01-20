@@ -10,6 +10,22 @@
   color: var(--slate-600);
 }
 
+.text-red-500 {
+  color: var(--red-500);
+}
+
+.text-stone-300 {
+  color: var(--stone-300);
+}
+
+.text-stone-400 {
+  color: var(--stone-400);
+}
+
+.text-stone-500 {
+  color: var(--stone-500);
+}
+
 .text-stone-700 {
   color: var(--stone-700);
 }
@@ -90,10 +106,13 @@
 
 /* Used for titles on work feed view */
 .work-feed-heading {
+  padding-top: var(--padding-md);
+  padding-bottom: var(--padding-md);
   font-size: var(--font-2xl);
   padding-left: var(--margin-sm);
   font-family: var(--fancy-script);
   color: var(--stone-600);
+  line-height: 1;
 }
 
 .section-heading {

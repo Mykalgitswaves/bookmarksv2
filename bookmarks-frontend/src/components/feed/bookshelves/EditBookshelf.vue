@@ -90,14 +90,7 @@
                 <div v-if="currentView.value === 'edit-books' && !isReorderModeEnabled && !isEditingModeEnabled" class="flex gap-2">
                     <button class="btn reorder-btn"
                         :disabled="books.length <= 1"
-                        @click="enterReorderMode()"
-                    >
-                        Reorder
-                    </button>
-
-                    <button class="btn reorder-btn"
-                        :disabled="books.length <= 1"
-                        @click="enterEditMode()"
+                        @click="enterEditMode"
                     >
                         Edit
                     </button>
@@ -110,7 +103,7 @@
                         v-if="books?.length"
                         :is-admin="isAdmin"
                         :books="books"
-                        :can-reorder="isReorderModeEnabled"
+                        :can-reorder="isEditingModeEnabled"
                         :is-editing="isEditingModeEnabled"    
                         :is-reordering="isReordering"
                         :unset-current-book="unsetKey"
@@ -137,6 +130,7 @@
             <!-- Where you search for books for adding -->
             <SearchBooks 
                 v-if="isAdmin && currentView.value === 'add-books'"
+                :centered="true"
                 @book-to-parent="(book) => addBook(book)"  
             />
         </section>   
@@ -156,7 +150,6 @@ import IconEdit from '../../svg/icon-edit.vue';
 import BookshelfBooks from './BookshelfBooks.vue';
 import BookshelfManageCollaborators from './BookshelfManageCollaborators.vue';
 import SearchBooks from '../createPosts/searchBooks.vue';
-import PlaceholderImage from '../../svg/placeholderImage.vue';
 import ErrorToast from '../../shared/ErrorToast.vue';
 import { 
     getBookshelf, 
@@ -235,7 +228,7 @@ async function get_shelf() {
  * This function is used to add a book to the bookshelf. It will send the data to the ws server
  */
 async function addBook(book){
-    if(ws.socket?.readyState !== 1){
+    if (ws.socket?.readyState !== 1) {
         error.value.message = 'There was an error adding the book to the bookshelf. Please try again.';
         error.value.isShowing = true;
         // Hide toast manually after three seconds.
@@ -320,9 +313,14 @@ function remove_book(removed_book_id){
     };
 
     ws.sendData(data);
+    // unset key is what we use to remove the current book in this component, kinda weird but i made this when i didnt understand js. 
+    // forgive me.
     unsetKey++;
 }
-
+/**
+ * @description
+ * THiS IS WHAT MAKES YOUR BOOKS UPDATE IN REAL TIME WITH THE EVENT LISTENER DUDE.
+ */
 onMounted(() => {
     // Probably could do a better way to generate link in this file. We can figure out later i guess?
     bookshelfData.value = getBookshelf(route.params.bookshelf);
@@ -341,7 +339,7 @@ onMounted(() => {
             error.value.isShowing = false;
         }, 5000);
 
-        if(ws.socket.readyState === 3) {
+        if (ws.socket?.readyState === 3) {
             console.log('socket is closed, reconnecting');
             ws.createNewSocketConnection(route.params.bookshelf);
         }

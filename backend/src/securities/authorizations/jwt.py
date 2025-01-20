@@ -8,6 +8,7 @@ from src.config.config import settings
 from src.models.schemas.jwt import JWToken, JWTUser, JWTBookshelfWSUser
 from src.models.schemas.users import User
 from src.utils.exceptions.database import EntityDoesNotExist
+from src.utils.logging.logger import logger
 
 
 class JWTGenerator:
@@ -36,6 +37,13 @@ class JWTGenerator:
         if not username:
             raise EntityDoesNotExist(f"Cannot generate JWT token for without User entity!")
 
+        logger.info(
+            "Access token being generated",
+            extra={
+                "username": username,
+                "action": "generate_access_token",
+            }
+        )
         return self._generate_jwt_token(
             jwt_data=JWTUser(username=username).dict(),  # type: ignore
             expires_delta=datetime.timedelta(minutes=settings.JWT_MIN_EXPIRE),
@@ -47,9 +55,23 @@ class JWTGenerator:
             jwt_user = JWTUser(username=payload["username"])
 
         except JoseJWTError as token_decode_error:
+            logger.warning(
+                "Unable to decode JWT Token",
+                extra={
+                    "token": token,
+                    "action": "retrieve_details_from_token",
+                }
+            )
             raise ValueError("Unable to decode JWT Token") from token_decode_error
 
         except pydantic.ValidationError as validation_error:
+            logger.warning(
+                "Invalid payload in token",
+                extra={
+                    "token": token,
+                    "action": "retrieve_details_from_token",
+                }
+            )
             raise ValueError("Invalid payload in token") from validation_error
 
         return jwt_user.username
@@ -76,6 +98,15 @@ class JWTGenerator:
         if not user_id or not bookshelf_id:
             raise EntityDoesNotExist(f"Cannot generate JWT token for WS without User or bookshelf entity!")
 
+        logger.info(
+            "Bookshelf websocket token being generated",
+            extra={
+                "user_id": user_id,
+                "bookshelf_id": bookshelf_id,
+                "action": "generate_bookshelf_websocket_token",
+            }
+        )
+
         return self._generate_bookshelf_websocket_token(
             jwt_data=JWTBookshelfWSUser(id=user_id,
                                         bookshelf_id=bookshelf_id).dict(),  # type: ignore
@@ -88,9 +119,23 @@ class JWTGenerator:
             ws_user = JWTBookshelfWSUser(id=payload["id"], bookshelf_id=payload["bookshelf_id"])
 
         except JoseJWTError:
+            logger.warning(
+                "Unable to decode JWT Token",
+                extra={
+                    "token": token,
+                    "action": "retrieve_details_from_bookshelf_ws_token",
+                }
+            )
             return
 
         except pydantic.ValidationError:
+            logger.warning(
+                "Invalid payload in token",
+                extra={
+                    "token": token,
+                    "action": "retrieve_details_from_bookshelf_ws_token",
+                }
+            )
             return
 
         return ws_user.id, ws_user.bookshelf_id

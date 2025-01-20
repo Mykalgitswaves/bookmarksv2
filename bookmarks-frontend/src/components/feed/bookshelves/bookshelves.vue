@@ -14,20 +14,24 @@
                 :key="shelf?.id"
                 @click="goToBookshelfPage(user, shelf?.id)"
             >
-                <img class="bookshelf" :src="shelf?.book_img_urls && shelf?.book_img_urls[0] || noBookYetUrl" alt=""/>
+                <img class="bookshelf" :src=getImgUrl(shelf) alt=""/>
 
                 <div>
                     <h4 class="bookshelf-title">{{ shelf?.title }}</h4>
 
                     <p class="bookshelf-description">{{ truncateText(shelf?.description, 100) }}</p>
                 </div>
+                
+                <div class="ml-auto mr-2 text-sm fancy">
+                    <span :class="{'text-indigo-500': shelf.books?.length > 0 || shelf.books_count > 0}">{{ shelf?.books?.length || shelf?.books_count || 0}} books</span>
+                </div>
             </div>
         </div>
 
         <!-- loading indicatorrrr -->
-        <div :aria-busy="!!props.dataLoaded" class="bookshelves loading"> 
-            <div v-if="!props.dataLoaded" class="bookshelf-container" >
-                <img class="bookshelf" :src="noBookYetUrl" alt="">
+        <div v-if="!props.dataLoaded && !bookshelves?.length" :aria-busy="!!props.dataLoaded" class="bookshelves loading"> 
+            <div class="bookshelf-container gradient" >
+                <div class="bookshelf gradient"></div>
 
                 <div>
                     <h4 class="bookshelf-title">loading...</h4>
@@ -45,21 +49,21 @@
             </div>
         </div>
         
-        <div class="flex gap-2 items-center" v-if="!isUnique">
+        <div class="flex gap-2 items-center mt-5" v-if="!isUnique">
             <button v-if="is_admin"
                 type="button"
-                class="create-bookshelf-btn"
+                class="create-bookshelf-btn btn-tiny text-sm"
                 @click="createNewBookshelf()"
             >
                 Create
             </button>
 
-            <button v-if="!isOnSectionPage && bookshelves?.length" 
+            <button v-if="!isOnSectionPage && bookshelves?.length > 3" 
                 type="button" 
-                class="create-bookshelf-btn"
+                class="create-bookshelf-btn btn-tiny text-sm"
                 @click="router.push(viewBookshelvesForSection(user, 'created_bookshelves'))"
             >
-                View all shelves
+                View all created bookshelves
             </button>
         </div>
     </section>
@@ -108,11 +112,23 @@
     // 
     function isPreview(bookshelves){
         if(props.isPreview){
-            return bookshelves.slice(0,1);
+            // Three shelves
+            return bookshelves.slice(0,3);
         }
         return bookshelves;
     }
 
+    function getImgUrl(bookshelf){
+        // If book_img_urls is not an array, check for books[0].small_img_url
+        // If that is not available, return a placeholder image
+        if (bookshelf?.book_img_urls && bookshelf?.book_img_urls[0]) {
+            return bookshelf?.book_img_urls[0];
+        } else if (bookshelf?.books && bookshelf?.books[0]?.small_img_url) {
+            return bookshelf?.books[0]?.small_img_url;
+        } else {
+            return noBookYetUrl;
+        }
+    }
 </script>
 <style scoped lang="scss">
 
@@ -121,7 +137,6 @@
 }
 
 .bookshelves {
-    padding: var(--padding-sm);
     display: flex;
     flex-direction: column;
     row-gap: 10px;
@@ -196,6 +211,7 @@
     min-width: 300px;
     text-align: start;
     cursor: auto;
+    padding-left: 0;
 }
 
 .create-bookshelf-btn {

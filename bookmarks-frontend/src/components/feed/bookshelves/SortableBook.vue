@@ -2,9 +2,13 @@
     <label
         ref="input"
         for="bs-books"
-        :class="['bs-b--book', { 'is-sorting': !isSorted && currentBook, 'sort-target': isSorted }]"
-        :disabled="(!isSorted && isLocked)"
-        @click="emit('set-sort', id)"
+        :class="['bs-b--book', { 
+            'is-sorting': !isSorting && currentBook,
+            'sort-target': isSorting || isCurrentBookOnOverlay,
+            }
+        ]"
+        :disabled="!unique && (!isSorting && isLocked)"
+        @click="showShelfControlsClickHandler"
     >
       <div class="sort">{{ order + 1 }}</div>
 
@@ -12,7 +16,7 @@
 
       <div class="meta">
         <p class="title">{{ bookTitle }}</p>
-        <p class="author">{{ author }}</p>
+        <p class="author">{{ formatAuthorProps(author) }}</p>
       </div>
 
       <input
@@ -20,12 +24,75 @@
         id="bs-books"
         :name="`bs-books-${id}`"
         type="radio"
-        :disabled="(!isSorted && isLocked)"
+        :disabled="(!isSorting && isLocked)"
         :value="name"
-        :checked="isSorted"
-        @click="emit('set-sort', id)"
+        :checked="isSorting"
+        @click="emit('set-sort', props.id)"
       />
     </label>
+
+    <div v-if="unique === Bookshelves.CURRENTLY_READING.prefix && currentlyReadingProgress" class="w-100 mt-2 text-start">
+        <div class="progress-toolbar">
+            <div class="flex items-center justify-center">
+                <button class="badge badge-small badge-purple mt-auto mr-2"
+                    type="button"
+                    @click="showProgressBar = !showProgressBar"
+                >
+                    {{ currentlyReadingProgress.progress + ' / ' + currentlyReadingProgress.remaining }}
+                </button>
+
+                <InlineTooltip alignment="left" color="purple">
+                    <template #message>
+                        Click on the pages to view your progress on this book
+                    </template>
+                </InlineTooltip>
+            </div>
+
+            <div class="flex gap-2">
+                <button type="button" 
+                    class="btn btn-icon btn-tiny icon text-stone-400 btn-ghost text-xs fancy" 
+                    @click="emit('editing-current-book-note', book )"
+                >
+                    <IconNote />
+                    
+                    <span v-if="!noteForShelf">Add note</span>
+
+                    <span v-else>Edit note</span>
+                </button>
+
+                <button class="btn btn-ghost btn-tiny text-xs text-stone-400 fancy" type="button" @click="$emit('update-currently-reading-book', book)">
+                    update progress
+                </button>    
+            </div>
+        </div>
+
+        <KeepAlive>
+            <Transition name="content">
+                <BookProgressBar 
+                    v-if="showProgressBar" 
+                    :book="book" 
+                    :current-page="currentlyReadingProgress.progress" 
+                    :total-pages="currentlyReadingProgress.remaining"
+                />
+            </Transition>
+        </KeepAlive>
+    </div>
+    <div class="w-100" v-else>
+        <button type="button" 
+            class="btn btn-icon btn-tiny icon text-stone-400 btn-ghost text-xs fancy ml-auto" 
+            @click="emit('editing-current-book-note', book )"
+        >
+            <IconNote />
+            
+            <span v-if="!noteForShelf">Add note</span>
+
+            <span v-else>Edit note</span>
+        </button>
+    </div>
+        
+    <p v-if="noteForShelf" class="text-stone-500 weight-300 mr-auto max-w-[768px]">
+        {{ truncateText(noteForShelf, 150) }}
+    </p>
 
     <button
       v-if="shouldShowSwap()"
@@ -33,24 +100,28 @@
       type="button"
       @click="swapWith(index)"
     >
-      {{ index }}
+      {{ currentBook?.order > order ? order + 2 : order + 1  }}
     </button>
     
-    <button v-if="shouldShowBookToolbar"
+    <!-- <button v-if="shouldShowBookToolbar"
         type="button"
-        class="remove-btn-button"
+        class="btn btn-tiny text-sm icon btn-remove ml-auto"
         @click="$emit('removed-book', props.id)"
     >
-        <span class="flex items-center gap-2 text-stone-800">
-            Remove from shelf
-            <IconDelete />
-        </span>
-    </button>
+        <IconDelete />
+
+        Remove from shelf
+    </button> -->
 </template>
 <script setup>
 import { computed, ref } from 'vue';
 import { wsCurrentState } from './bookshelvesRtc';
+import { truncateText } from '../../../services/helpers';
+import { Bookshelves } from '../../../models/bookshelves';
 import IconDelete from '../../svg/icon-trash.vue';
+import BookProgressBar from './BookProgressBar.vue';
+import InlineTooltip from '../../shared/InlineTooltip.vue';
+import IconNote from '../../svg/icon-note.vue';
 
 const props = defineProps({
     order: {
@@ -68,6 +139,10 @@ const props = defineProps({
     imgUrl: {
         type: String,
     },
+    book: {
+        type: Object,
+        required: true,
+    },
     currentBook: {
         type: Object,
     },
@@ -82,16 +157,30 @@ const props = defineProps({
     },
     isEditing: {
         type: Boolean
+    },
+    noteForShelf: {
+        type: String
+    },
+    unique: {
+        type: String,
+    },
+    currentBookForOverlay: {
+        type: Object
     }
 });
-const input = ref('input');
-const emit = defineEmits(['set-sort']);
 
-const isSorted = computed(() => {
+const input = ref('input');
+const emit = defineEmits(['set-sort', 'show-book-controls-overlay', 'swapped-with', 'update-currently-reading-book']);
+
+const isSorting = computed(() => {
     if(props.currentBook){
         return props.currentBook.id === props.id;
     }
 });
+
+const isCurrentBookOnOverlay = computed(() => {
+    return !!(props.currentBookForOverlay?.id === props.id)
+})
 
 function swapWith(index) {
     // Pass in an index of the book you want to swap with!
@@ -105,13 +194,36 @@ function swapWith(index) {
     input.value.scrollIntoView({ behavior: 'smooth', block: 'center' });
 };
 
+
+function formatAuthorProps(authorData){
+    if (authorData && Array.isArray(authorData) && authorData.length) {
+        return authorData[0];
+    }
+    return '';
+}
+
+// Show shelf controls for each book while not editing the shelves.
+function showShelfControlsClickHandler(){
+    if(!props.isEditing){
+        let payload = {};
+
+        payload[props.unique] = props.id;
+        emit('show-book-controls-overlay', payload);
+    }
+    emit('set-sort', props.id);
+}
+
 function shouldShowSwap() {
     if (!props.currentBook) {
         return false; // If there's no current book, don't show the swap button
     }
 
-    // We dont want to show swap buttons for editing books.
-    if(props.isEditing){
+    // // We dont want to show swap buttons for editing books.
+    // if(props.isEditing){
+    //     return false;
+    // }
+
+    if (props.currentBookForOverlay) {
         return false;
     }
 
@@ -139,6 +251,29 @@ const shouldShowBookToolbar = computed(() => {
 
 const isLocked = computed(() => wsCurrentState.value === 'locked');
 
+/**
+ * @description computed props for progress bars on currently reading shelf
+ */
+const currentlyReadingProgress = computed(() => {
+    if (props.unique === Bookshelves.CURRENTLY_READING.prefix) {
+        return { 
+            progress: props.book.current_page ||= 0,
+            remaining: props.book.total_pages ||= 0,
+        }
+    } 
+    return false;
+});
+
+/**
+ * currently reading bookshelf functions
+ * For shit related to SortableBook components in the context of a currently reading shelf
+ */
+
+const showProgressBar = ref(false);
+
+/**
+ * End currently reading shelf functions
+ */
 
 </script>
 <styles scoped lang="scss">
@@ -156,6 +291,7 @@ const isLocked = computed(() => wsCurrentState.value === 'locked');
         align-items: center;
         column-gap: 8px;
         transition: all 250ms ease;
+        
         cursor: grab;
 
         &:hover {
@@ -251,5 +387,11 @@ const isLocked = computed(() => wsCurrentState.value === 'locked');
     .remove-btn-button:hover {
         color: var(--red-500);
         text-decoration: underline;
+    }
+
+    .progress-toolbar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
     }
 </styles>  

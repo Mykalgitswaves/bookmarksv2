@@ -1,6 +1,8 @@
 import { toRaw } from 'vue'
 import { useRouter } from 'vue-router'
 import { helpersCtrl } from './helpers';
+// import { memCache } from './cache/memCache';
+
 /**
 // @param successRouterFunction: This is an optional param to control the routes after a successfull request,
  must be passed in as a regular function
@@ -36,11 +38,12 @@ export const db = {
         }
     },
         // Note params must be an object for this to work. Use key value.
-    get: async (url, params, debug, successRouterFunction) => {
+    get: async (url, params, debug, successRouterFunction, failureFunction) => {
         params = (typeof params === Proxy ? toRaw(params) : params)
         try {
             const token = helpersCtrl.getCookieByParam(['token'])
-            const response = await fetch(url + '?' + new URLSearchParams(params), {
+            url = params ? url + '?' + new URLSearchParams(params) : url;
+            const response = await fetch(url, {
                 method: 'GET',
                 headers: {
                     Authorization: `Bearer ${token}`
@@ -53,10 +56,14 @@ export const db = {
                 }
                 if(response.ok || response.status === 200) {
                     if(successRouterFunction) {
-                        return data && successRouterFunction
+                        successRouterFunction(data)
                     }
                     console.log('returning', data)
                     return data
+                }
+
+                if (!response.ok && failureFunction) {
+                    failureFunction(data)
                 }
         } catch(err) { return console.error(err); }
     },
@@ -86,13 +93,16 @@ export const db = {
             // Success state
             if(response.ok) {
                 if(successRouterFunction) {
+                    console.log('successRouterFunction')
                     successRouterFunction(data)
                 }
                 return data
             }
+        
             if(!response.ok){
+
                 if(failureFunction){
-                    failureFunction(data)
+                    failureFunction({...data, status: response.status})
                 }
             }
             
@@ -101,12 +111,15 @@ export const db = {
         }
     },
     // Can use raw params not strinfigied,can even pass in proxy
-    put: async (url, params, debug, successRouterFunction) => {
+    put: async (url, requestData, debug, successRouterFunction, failureFunction) => {
         const token = helpersCtrl.getCookieByParam(['token']);
         console.log(token)
         // Check if you are passing in proxy and if you are convert it to a raw object before posting to database.
         try {
-        params = typeof params === Proxy ? toRaw(params) : params
+            // unwap before you send, duh.
+            requestData = typeof requestData === Proxy ? toRaw(requestData) : requestData;
+
+            // Modify url to include query params.
             const response = await fetch(url, {
                 method: 'put',
                 headers: {
@@ -114,23 +127,30 @@ export const db = {
                     Accept: 'application.json',
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify(params)
+                body: JSON.stringify(requestData)
             });
+
             const data = await response.json();
 
             // Debug state
-            if(debug) {
+            if (debug) {
                 console.log(response, 'response')
                 console.log(data, 'data')
             }
+
             // Success state
-            if(response.ok) {
+            if (response.ok) {
                 if(successRouterFunction) {
-                    return data && successRouterFunction
+                    successRouterFunction(data)
                 }
-                return data
+
+                return data;
+            // and failing!
+            } else {
+                if (failureFunction) {
+                    failureFunction(data);
+                }
             }
-            
         } catch(err) {
             console.error(err)
         }
@@ -166,5 +186,5 @@ export const db = {
         } catch(err) {
             console.error(err)
         }
-    }
+    },
 }

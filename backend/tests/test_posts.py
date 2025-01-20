@@ -18,11 +18,11 @@ def setup_class(request):
     request.cls.endpoint = "http://127.0.0.1:8000"
     request.cls.username = "testuser123_posts"
     request.cls.email = "testuser_posts@testemail.com"
-    request.cls.password = "testpassword"
+    request.cls.password = "testPassword1!"
 
     request.cls.username2 = "testuser123_posts2"
     request.cls.email2 = "testuser_posts2@testemail.com"
-    request.cls.password2 = "testpassword"
+    request.cls.password2 = "testPassword1!"
 
     request.cls.book_id_in_db = "c707fd781-dd1a-4ba7-91f1-f1a2e7ecb872"
     request.cls.book_title_in_db = "Second Foundation"
@@ -545,3 +545,41 @@ class TestPosts:
         response = requests.get(f"{self.endpoint}/api/posts", headers=headers)
         assert response.status_code == 200, "Testing feed"
         assert len(response.json()['data']) > 0, "Testing feed"
+
+    def test_too_long_post(self):
+        """
+        Tests if the correct error is thrown when the response field is too long
+        """
+        headers = {"Authorization": f"{self.token_type} {self.access_token}"}
+
+        data = {
+            "book_id": self.book_id_in_db,
+            "small_img_url": self.book_small_img_url_in_db,
+            "title": self.book_title_in_db,
+            "headline":"Test Headline",
+            "questions":["Test Question 1","Test Question 2"],
+            "ids":[-1,-1],
+            "responses":["a"*10001, "Response 2"],
+            "spoilers":[False, True],
+            "rating": 1
+        }
+        
+        response = requests.post(f"{self.endpoint}/api/posts/create_review", headers=headers, json=data)
+        print(response.json()['detail'])
+        assert response.status_code == 400, "Testing too long response"
+
+        data = {
+            "book_id": self.book_id_in_db,
+            "small_img_url": self.book_small_img_url_in_db,
+            "title": self.book_title_in_db,
+            "headline":"a"*1000,
+            "questions":["Test Question 1","Test Question 2"],
+            "ids":[-1,-1],
+            "responses":["a", "Response 2"],
+            "spoilers":[False, True],
+            "rating": 1
+        }
+        
+        response = requests.post(f"{self.endpoint}/api/posts/create_review", headers=headers, json=data)
+        print(response.json()['detail'])
+        assert response.status_code == 400, "Testing too long headline"

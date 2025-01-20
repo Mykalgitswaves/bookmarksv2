@@ -51,6 +51,21 @@ class Config(BaseSettings):
     MYSQL_DATABASE: str
     MYSQL_ECHO: bool
 
+    #Text length configs
+    XSMALL_TEXT_LENGTH: int
+    SMALL_TEXT_LENGTH: int
+    MEDIUM_TEXT_LENGTH: int
+    LARGE_TEXT_LENGTH: int
+    XLARGE_TEXT_LENGTH: int
+
+    # Email Configs
+    MAIL_USERNAME: str 
+    MAIL_PASSWORD: str
+    MAIL_FROM: str
+    MAIL_PORT: str
+    MAIL_SERVER: str
+    MAIL_FROM_NAME: str
+
 environment = os.getenv("ENVIRONMENT", "feature")
 
 if environment.lower() == "prod":

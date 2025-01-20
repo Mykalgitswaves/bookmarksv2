@@ -1,4 +1,5 @@
 import { router } from '../../router/index';
+import { navRoutes } from '../../services/urls';
 
 export function goToSearchPage(user) {
     router.push(`/feed/${user}/search`);
@@ -22,4 +23,13 @@ export function goToBookshelvesPage(user) {
 
 export function goToBookshelfPage(user, bookshelf_id) {
     router.push(`/feed/${user}/bookshelves/${bookshelf_id}`);
+}
+
+export function goToBookClubsPage(user) {
+    router.push(navRoutes.toBookClubsPage(user));
+}
+
+export const FooterViews = {
+    default: 'default',
+    bookclubs: 'bookclubs'
 }

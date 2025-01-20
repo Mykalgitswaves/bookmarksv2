@@ -1,0 +1,81 @@
+{
+    "version": 1,
+    "disable_existing_loggers": false,
+    "formatters": {
+      "simple": {
+        "format": "[%(levelname)s|%(pathname)s|L%(lineno)d] %(asctime)s: %(message)s",
+        "datefmt": "%Y-%m-%dT%H:%M:%S%z"
+      },
+      "json": {
+        "()": "src.utils.logging.formatters.JSONFormatter",
+        "fmt_keys": {
+          "level": "levelname",
+          "message": "message",
+          "timestamp": "timestamp",
+          "logger": "name",
+          "pathname": "pathname",
+          "function": "funcName",
+          "line": "lineno",
+          "thread_name": "threadName"
+        }
+      },
+      "dynamic": {
+        "()": "src.utils.logging.formatters.DynamicExtraFieldsFormatter",
+        "format": "[%(levelname)s|%(pathname)s|L%(lineno)d] %(asctime)s: %(message)s",
+        "datefmt": "%Y-%m-%dT%H:%M:%S%z"
+      }
+    },
+    "filters": {
+      "warning_only": {
+          "()": "src.utils.logging.filters.WarningOnlyFilter"
+        },
+      "info_only": {
+          "()": "src.utils.logging.filters.InfoOnlyFilter"
+        }
+    },
+    "handlers": {
+      "stderr": {
+        "class": "logging.StreamHandler",
+        "level": "WARNING",
+        "formatter": "simple",
+        "stream": "ext://sys.stderr"
+      },
+      "warning_logs": {
+        "class": "logging.handlers.RotatingFileHandler",
+        "level": "WARNING",
+        "filters": ["warning_only"],
+        "filename": "src/utils/logging/logs/warning.log",
+        "formatter": "dynamic",
+        "maxBytes": 10000000,
+        "backupCount": 3
+      },
+      "error_logs": {
+        "class": "logging.handlers.RotatingFileHandler",
+        "level": "ERROR",
+        "filename": "src/utils/logging/logs/error.log",
+        "formatter": "simple",
+        "maxBytes": 10000000,
+        "backupCount": 3
+      },
+      "file_json": {
+        "class": "logging.handlers.RotatingFileHandler",
+        "level": "INFO",
+        "formatter": "json",
+        "filters": ["info_only"],
+        "filename": "src/utils/logging/logs/info.log.jsonl",
+        "maxBytes": 10000000,
+        "backupCount": 3
+      }
+    },
+    "loggers": {
+      "root": {
+        "level": "DEBUG",
+        "handlers": [
+          "stderr",
+          "file_json",
+          "warning_logs",
+          "error_logs"
+        ]
+      }
+    }
+  }

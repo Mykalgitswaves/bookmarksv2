@@ -1,5 +1,11 @@
 <template>
     <section class="settings-section mt-10">
+            <RouterLink class="btn btn-tiny text-sm btn-nav" 
+                :to="navRoutes.toBookshelfPage(user, bookshelf)"
+            >
+                Back to shelf
+            </RouterLink>
+
             <div class="settings-info-form">
                 <FormInputCluster 
                     input-id="bookshelfTitle" 
@@ -40,15 +46,23 @@
             <div class="settings-info-form danger-zone">
                 <h3 class="danger-zone-text text-center">Danger zone</h3>
                 
-                <div>
-                    <label class="select-label" for="">
-                        Visibility
-                    </label>
-                    <select class="select" name="visibility" id="" v-model="data.visibility">
-                        <option value="public">public</option>
-                        <option value="private">private</option>
-                    </select>
-                </div>
+                <RadioGroup 
+                    id="visibility-options"
+                    :default="data.visibility"
+                    :options="BOOKSHELVES_VISIBLITY_OPTIONS" 
+                    @updated:modelValue="(value) => { 
+                        data.visibility = value
+                    }"
+                    >
+                    <template #heading>
+                        Club visibility 
+                    </template>
+                </RadioGroup>
+
+
+                <button type="button" class="btn btn-delete" @click="">
+                    Delete bookshelf
+                </button>
             </div>
     </section>    
     <div class="mobile-menu-spacer sm:hidden"></div>
@@ -58,11 +72,14 @@ import { onMounted, reactive } from 'vue';
 import { useRoute } from 'vue-router';
 import FormInputCluster from '../settings/FormInputCluster.vue';
 import { db } from '../../../services/db';
-import { urls } from '../../../services/urls';
+import { urls, navRoutes } from '../../../services/urls';
+import RadioGroup from '../partials/RadioGroup.vue';
+import { BOOKSHELVES_VISIBLITY_OPTIONS } from '@/components/shared/models.js';
 
 const route = useRoute();
-const { bookshelf } = route.params;
+const { user, bookshelf } = route.params;
 
+// TODO: Fix this shit.
 const data = reactive({
     loaded: false,
     title: 'Untitled',

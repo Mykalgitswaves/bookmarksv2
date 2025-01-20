@@ -1,0 +1,103 @@
+{% extends "Base.html" %}
+
+{% block title %}{{ invite_user_username }} has invited you to join {{ book_club_name }}{% endblock %}
+
+{% from "headings.html" import extra_large, large with context %}
+{% from "buttons.html" import link_button with context %}
+
+{% block content %}
+    {% set heading_text = invite_user_username ~ ' has invited you to join their bookclub: <br/><span style="font-weight: 400; text-align: center; color: ' ~ styles.indigo['400'] ~ ';font-size: ' ~ styles.font_sizes['xl'] ~ ';">' ~ '" ' ~ book_club_name ~ ' "' ~ '</span>' %}
+    {% set book_club_href = 'http://localhost:5173/invite/' ~ invite_id %}
+    
+    {% if not current_book %}
+        <!-- TODO: Replace the localhost with hardcoverlit.com/ once we are ready to go! -->
+        <section style="background-color: {{ styles.stone['100'] }};">
+            <table style="width: 100%; ">
+                <tr>
+                    <td>
+                        <div style="
+                            width: 80%; 
+                            padding: 40px;
+                            border-radius: {{ styles.radius.md }};
+                            text-align: center;    
+                            background-color: #ffffff;
+                            border: 1px solid {{ styles.stone['300'] }};
+                            margin: 40px auto;
+                        ">
+                            {{ large(text=heading_text) }}
+                            
+                            <p style="
+                                padding-top: {{ styles.spacing.xs }}; 
+                                margin-top: 24px; 
+                                margin-bottom: 14px; 
+                                text-align: center;
+                                font-size: {{ styles.font_sizes.base }};
+                                color: {{ styles.stone['700'] }};
+                                font-weight: 400;
+                            ">
+                                Please click the link below to register.
+                            </p>
+
+                            {{ link_button(button_text='Sign up and join club', link_href=book_club_href, background_color=styles.indigo['600'], text_color='#ffffff', is_fancy=false ) }}
+                        </div>
+                    </td>
+                </tr>
+            </table>
+        </section>
+    {% else %}
+        <section>
+            <table>
+                <tr></tr>
+                    <td>
+                        <div style="
+                            width: 80%; 
+                            padding: 40px;
+                            border-radius: {{ styles.radius.md }};
+                            text-align: center;    
+                            background-color: #ffffff;
+                            border: 1px solid {{ styles.stone['300'] }};
+                            margin: 40px auto;
+                        ">
+                            {{ large(text=heading_text) }}
+                            
+                            <!-- TODO: FINISH THIS SHIT! -->
+                            <div>
+                                Currently reading:
+                                <table width="100" style="
+                                height: 100px; 
+                                padding: 8px;
+                                border-radius: 8px;
+                                border: 1px solid {{ styles.stone['400'] }};
+                            ">
+                                    <tr>
+                                        <td style="height: 100px; border-radius: 4px; overflow-x: clip;">
+                                            <img src="{{ current_book_img }}" alt="">
+                                        </td>
+                                        <td>
+                                            {{ large(text=current_book_title) }}
+                                            <p>By {{ current_book_authors }}</p>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </div>
+
+                            <p style="
+                                padding-top: {{ styles.spacing.xs }}; 
+                                margin-top: 24px; 
+                                margin-bottom: 14px; 
+                                text-align: center;
+                                font-size: {{ styles.font_sizes.base }};
+                                color: {{ styles.stone['700'] }};
+                                font-weight: 400;
+                            ">
+                                Please click the link below to register.
+                            </p>
+
+                            {{ link_button(button_text='Sign up and join club', link_href=book_club_href, background_color=styles.indigo['600'], text_color='#ffffff', is_fancy=false ) }}
+                        </div>
+                    </td>
+                </tr>
+            </table>
+        </section>
+    {% endif %}
+{% endblock %}

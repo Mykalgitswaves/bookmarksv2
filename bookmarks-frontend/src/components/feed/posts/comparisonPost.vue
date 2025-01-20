@@ -3,7 +3,7 @@
         <!-- Username of OP -->
         <div class="card-header">
             <p  class="text-slate-600"
-                @click="router.push(navRoutes.toUserPageFromPost(route.params.user, props.user_id))"
+                @click="router.push(navRoutes.toUserPage(route.params.user, props.user_id))"
             >
                 <span class="text-indigo-600 underline italic cursor-pointer">
                     @{{ props.username }}</span> made a comparison
@@ -78,16 +78,16 @@
                     @click="navigateToCommentPage()"
                 >
                     <IconComment/>
-                    <span class="ml-2">{{ num_comments }} comments</span>
+                    <span style="visibility: hidden; width: 0;">{{ num_comments }} comments</span>
                 </button>
                 
                 <button v-if="posted_by_current_user"
                     type="button"
-                    class="btn-small icon-btn btn-red-ghost ml-2"
+                    class="btn-small icon-btn btn-red-ghost"
                     @click="setDeletePost(props.id)"
                 >
                     <IconTrash />
-                    Delete post
+                    <span style="visibility: hidden; width: 0;">Delete post</span>
                 </button>
             </div>
             

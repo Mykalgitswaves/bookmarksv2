@@ -15,7 +15,7 @@
             Doing it this way in case i need to ever make global changes. 
             Also probs good to have a standard unit of measurement 
         */
-
+        --spacing-xs: 7px;
         --spacing-sm: 14px;
         --padding-sm: var(--spacing-sm);
         --margin-sm: var(--spacing-sm);
@@ -173,6 +173,7 @@
         --purple-900: #4c1d95;
 
         --surface-primary: #fff;
+        --semi-transparent-surface: rgba(255, 255, 255, 0.98);
     }
 
     html[data-theme="dark"] {

@@ -1,10 +1,8 @@
 <template>
-    <div class>
+    <div :class="{'text-center': textCentered}">
         <p class="mb-2 mt-5 text-stone-600">Add a headline for your {{ props.reviewType }}.</p>
         
-        <label 
-            for="headline"
-        >
+        <label for="headline">
             <input 
                 id="headline" 
                 type="text"
@@ -12,15 +10,22 @@
                 class="border-indigo-200 border-2 rounded-md px-2 py-2 w-100"
                 :class="{'max-w-[600px] border-solid': !reviewVersion, 'review-search-bar': reviewVersion}"
                 v-model="headline"
+                :maxlength="SMALL_TEXT_LENGTH"
             >
-            <span class="block text-gray-600 text-sm my-2">This will appear front and center on your {{ props.reviewType }}</span>
+            <span v-if="!headlineError" class="block text-gray-600 text-sm my-2">This will appear front and center on your {{ props.reviewType }}</span>
+            <span v-if="headlineError" class="block text-red-500 text-sm my-2"> {{ headlineError }}</span>
         </label>
     </div>
 </template>
 
 <script setup>
 import { ref, watch } from 'vue'
+import { SMALL_TEXT_LENGTH } from '../../../services/forms'
 const props = defineProps({
+    headlineError: {
+        type: String,
+        required: false,
+    },
     propHeadline: {
         type: String,
         required: false,
@@ -33,7 +38,11 @@ const props = defineProps({
     reviewVersion: {
         type: Boolean,
         default: false,
-    }
+    },
+    textCentered: {
+        type: Boolean,
+        required: false,
+    },
 });
 const headline = ref('')
 

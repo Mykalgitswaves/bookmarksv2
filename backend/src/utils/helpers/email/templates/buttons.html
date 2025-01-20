@@ -1,0 +1,20 @@
+{% macro link_button(button_text='', background_color='', text_color='', link_href='', is_fancy=true) -%}
+    <form action="{{ link_href }}" target="_blank">
+        <button type="submit" style="
+            font-family: 
+                {% if is_fancy %}
+                    {{ styles.font_family.fancy }}
+                {% else %}
+                    {{ styles.font_family.base }}  
+                {% endif %};
+            background-color: {{ background_color }};
+            font-size: {{ styles.font_sizes.lg }};
+            color: {{ text_color }};
+            font-weight: 500;
+            border-radius: 8px;
+            padding: 10px 20px;
+        ">
+            {{ button_text }}
+        </button>
+    </form>
+{%- endmacro %}

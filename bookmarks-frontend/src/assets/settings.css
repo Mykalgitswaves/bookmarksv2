@@ -18,6 +18,10 @@
     max-width: 880px;
 }
 
+.section-width {
+    max-width: 768px;
+}
+
 .section-wrapper {
    margin-left: auto;
    margin-right: auto;
@@ -271,88 +275,6 @@
     --white: hsl(var(--hue), 10%, 100%);
     --white-d: hsl(var(--hue), 10%, 45%);
     /* font-size: calc(16px + (24 - 16) * (100vw - 320px) / (1280 - 320)); */
-}
-
-.book-wrapper {
-    color: var(--fg);
-    font: 1em/1.5 sans-serif;
-    height: fit-content;
-    display: grid;
-    place-items: center;
-    margin-top: 40px;
-}
-
-.book,
-.book__pg-shadow,
-.book__pg {
-    animation: cover 7s ease-in-out infinite;
-}
-
-.book {
-    background-color: var(--primary-l);
-    border-radius: 0.25em;
-    box-shadow:
-        0 0.25em 0.5em hsla(0,0%,0%,0.3),
-        0 0 0 0.25em var(--primary) inset;
-    padding: 0.25em;
-    perspective: 37.5em;
-    position: relative;
-    width: 8em;
-    height: 6em;
-    transform: translate3d(0,0,0);
-    transform-style: preserve-3d;
-}
-
-.book__pg-shadow,
-.book__pg {
-    position: absolute;
-    left: 0.25em;
-    width: calc(50% - 0.25em);
-}
-
-.book__pg-shadow {
-    animation-name: shadow;
-    background-image: linear-gradient(-45deg,hsla(0,0%,0%,0) 50%,hsla(0,0%,0%,0.3) 50%);
-    filter: blur(0.25em);
-    top: calc(100% - 0.25em);
-    height: 3.75em;
-    transform: scaleY(0);
-    transform-origin: 100% 0%;
-}
-
-.book__pg {
-    animation-name: pg1;
-    background-color: var(--white);
-    background-image: linear-gradient(90deg,hsla(var(--hue),10%,90%,0) 87.5%,hsl(var(--hue),10%,90%));
-    height: calc(100% - 0.5em);
-    transform-origin: 100% 50%;
-}
-
-.book__pg--2,
-.book__pg--3,
-.book__pg--4 {
-    background-image:
-        repeating-linear-gradient(hsl(var(--hue),10%,10%) 0 0.125em,hsla(var(--hue),10%,10%,0) 0.125em 0.5em),
-        linear-gradient(90deg,hsla(var(--hue),10%,90%,0) 87.5%,hsl(var(--hue),10%,90%));
-    background-repeat: no-repeat;
-    background-position: center;
-    background-size: 2.5em 4.125em, 100% 100%;
-}
-
-.book__pg--2 {
-    animation-name: pg2;
-}
-
-.book__pg--3 {
-    animation-name: pg3;
-}
-
-.book__pg--4 {
-    animation-name: pg4;
-}
-
-.book__pg--5 {
-    animation-name: pg5;
 }
 
 /* Dark theme */

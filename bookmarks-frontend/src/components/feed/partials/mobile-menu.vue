@@ -1,77 +1,81 @@
 <template>
-    <nav class="nav-menu">
-    <button
-        class="btn relative" 
-        type="button"
-        @click="isShowingMenu = !isShowingMenu"
-    >
-        <IconMenu />
-    </button>
+        <!-- We need to get our marketing site up and running tbd -->
+        <!-- href="https://www.hardcoverlit.com/home" -->
+        <!-- Switch this to an a tag finally -->
+        <button
+            ref="mobileMenuButton"
+            class="btn relative" 
+            type="button"
+            :class="{'active': isMobileMenuShowing}"
+            @click="isMobileMenuShowing = !isMobileMenuShowing"
+        >
+            <IconMenu />
+        </button>
 
-    <div id="nav_menu_sidebar" 
-        v-if="isShowingMenu" 
-        class="d_hidden nav-menu-sidebar" 
-        ref="mobileMenu"
-    >
-        <h3 class="n-m-s--header">Biblio</h3>
-        <div class="n-m-s--content">
-            <button 
-                class="n-m-s--li"
-                alt="settings"
-                @click="router.push(pathToSettings)"
-            >
-                Settings
-                <IconSettings />
-            </button>
+    <Transition name="content">
+        <div id="nav_menu_sidebar" 
+            v-show="isMobileMenuShowing" 
+            class="d_hidden nav-menu-sidebar" 
+            ref="mobileMenu"
+        >
+            <h3 class="n-m-s--header fancy">HardcoverLit</h3>
+
+            <div class="n-m-s--content">
+                <button 
+                    class="n-m-s--li fancy"
+                    alt="settings"
+                    @click="router.push(pathToSettings)"
+                >
+                    Settings
+                </button>
+            </div>
+
+            <div class="n-m-s--content">
+                <button 
+                    class="n-m-s--li fancy"
+                    alt="settings"
+                    @click="logOut"
+                >
+                    Log out
+                </button>
+            </div>
         </div>
-    </div>
-</nav> 
+    </Transition>
 </template>
 <script setup>
 import { onMounted, onUnmounted, ref, watch } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
-import IconSettings from '../../svg/icon-settings.vue';
 import IconMenu from '../../svg/icon-hmenu.vue';
-import { autoCloseElementWithRef } from  './autoclose';
+import { autoCloseElementWithRef, isMobileMenuShowing} from  './autoclose';
 const router = useRouter();
 const route = useRoute();
 const { user } = route.params;
 const pathToSettings = `/feed/${user}/settings`
 
-const isShowingMenu = ref(false);
 const mobileMenu = ref(null);
-// Handle all event listeners for clicking in and out of menu to auto close it.
+const mobileMenuButton = ref(null);
 
+// Handle all event listeners for clicking in and out of menu to auto close it.
 onMounted(() => {
-    
+    autoCloseElementWithRef([mobileMenu.value, mobileMenuButton.value]);
 });
 
-onUnmounted(() => {
-
-})
-
+function logOut() {
+    document.cookie = 'token'+'=; Max-Age=-99999999;';
+    router.push('/');
+}
 </script>
 <style scoped>
-.nav-menu {
-    position: sticky;
-    height: 40px;
-    margin-bottom: 10px;
-    top: 0;
-    right: 0;
-    width: 100%;
-    display: flex;
-    justify-content: end;
-    padding: var(--padding-md);
-    padding-top: var(--padding-sm);
-    z-index: 1000;
-}
-
 .btn {
     background-color: var(--gray-50);
     padding: var(--btn-padding-sm);
     border-radius: var(--radius-sm);
     transition: all 150ms ease;
     height: 40px;
+}
+
+.btn.active {
+    background-color: var(--indigo-100);
 }
 
 .btn:hover {
@@ -88,7 +92,7 @@ onUnmounted(() => {
     transition: var(--transition-short);
     border-radius: var(--radius-sm);
     box-shadow: var(--shadow-lg);
-    overflow-y: clip;
+    overflow: clip;
 }
 
 .n-m-s--header {
@@ -96,7 +100,7 @@ onUnmounted(() => {
     padding: var(--padding-sm);
     padding-left: calc(var(--padding-sm) + var(--margin-shim-sm));
     font-size: var(--font-xl);
-    font-weight: 600;
+    font-weight: 400;
     color: var(--stone-600);
 }
 
@@ -114,7 +118,7 @@ onUnmounted(() => {
 }
 
 .n-m-s--li:hover {
-    background-color: var(--stone-300);
+    background-color: var(--indigo-100);
     color: var(--stone-800);
 }
 </style>

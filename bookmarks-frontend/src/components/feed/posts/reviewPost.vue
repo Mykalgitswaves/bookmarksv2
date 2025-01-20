@@ -4,7 +4,7 @@
 >
     <div class="card-header">
         <p class="text-slate-600 text-center"
-            @click="router.push(navRoutes.toUserPageFromPost(route.params.user, props.user_id))"
+            @click="router.push(navRoutes.toUserPage(route.params.user, props.user_id))"
         >
             <span class="text-indigo-600 cursor-pointer">{{ username }}'s</span>
             made a review: 
@@ -58,18 +58,18 @@
                 >
                     <IconComment/>
                     
-                    <span class="ml-2">
+                    <span style="visibility: hidden; width: 0;">
                         {{ num_comments }} comments
                     </span>
                 </button>
 
                 <button v-if="posted_by_current_user"
                     type="button"
-                    class="btn-small icon-btn btn-red-ghost ml-2"
+                    class="btn-small btn-red-ghost icon-btn"
                     @click="setDeletePost(props.id)"
                 >
                     <IconTrash />
-                    Delete post
+                    <span style="visibility: hidden; width: 0;">Delete post</span>
                 </button>
             </div>
         

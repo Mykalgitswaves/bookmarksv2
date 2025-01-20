@@ -1,0 +1,20 @@
+:root {
+    --badge-padding-inline: 5px;
+    --badge-padding-block: 3px;
+}
+
+.badge {
+    padding: var(--padding-sm) calc(var(--padding-md) * 2);
+    border-radius: var(--radius-md);
+}
+
+.badge-small {
+    padding:  var(--badge-padding-block) var(--badge-padding-inline);
+    font-size: var(--font-sm);
+    border-radius: var(--radius-sm);
+}
+
+.badge-purple {
+    background-color: var(--indigo-100);
+    color: var(--indigo-600);
+}

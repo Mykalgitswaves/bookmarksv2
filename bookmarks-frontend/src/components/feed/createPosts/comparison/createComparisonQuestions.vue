@@ -37,6 +37,7 @@
                                 v-model="question.response"
                                 ref="textarea"
                                 :placeholder="question.id >= 0 ? 'type your response here...' : 'Add your own thoughts here...'"
+                                :maxlength="LARGE_TEXT_LENGTH"
                                 @keyup="debouncedAddQuestionToStore(question); debouncedGenQuestionHeight(question.id)"
                             />
                         </form>
@@ -75,6 +76,7 @@
 <script setup>
 import { ref, onUnmounted, reactive, onMounted, computed, watch } from 'vue';
 import { helpersCtrl, ToTitleCase } from '../../../../services/helpers';
+import { LARGE_TEXT_LENGTH } from '../../../../services/forms';
 import { Comparison, formatQuestionStoreForPost, initialize, customQuestion, resetQuestions } from './comparison';
 import { createQuestionStore } from '../../../../stores/createPostStore';
 import IconChevron from '../../../svg/icon-chevron.vue';

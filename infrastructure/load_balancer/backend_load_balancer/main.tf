@@ -24,9 +24,14 @@ resource "aws_lb" "backend_load_balancer" {
 
 resource "aws_lb_target_group" "backend_target_group" {
   name     = "backend-target-group"
-  port     = 80
-  protocol = "HTTP"
+  port     = 443
+  protocol = "HTTPS"
   vpc_id   = "vpc-0de1958ab90b56cf7"
+
+  stickiness {
+    type            = "lb_cookie"
+    cookie_duration = 86400  # Duration in seconds (1 day)
+  }
 
   health_check {
     path = "/api/health/"
@@ -49,14 +54,9 @@ resource "aws_lb_listener" "backend_listener" {
   default_action {
     type             = "forward"
     target_group_arn = aws_lb_target_group.backend_target_group.arn
-
-    redirect {
-      port        = "80"
-      protocol    = "HTTP"
-      status_code = "HTTP_301"    
-    }
   }
 }
+
 
 output "load_balancer_arn" {
   value = aws_lb.backend_load_balancer.arn

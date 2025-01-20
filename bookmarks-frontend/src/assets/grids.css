@@ -37,3 +37,14 @@
   .grid-auto-cols {
     grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
   }
+
+  .place-content-center {
+    display: grid;
+    place-content: center;
+  }
+
+  .grid-two-cols {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+  }

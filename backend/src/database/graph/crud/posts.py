@@ -163,9 +163,12 @@ class PostCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
         query = """
             match (u:User {username:$username})
             match (b:Book {id:$book_id})
+            MATCH (u)-[:HAS_READING_FLOW_SHELF]->(shelf:CurrentlyReadingShelf)
+            OPTIONAL MATCH (shelf)-[rr:CONTAINS_BOOK]->(b)
             create (d:Update {id:randomUUID(), 
                             created_date:datetime(),
                             page:$page,
+                            chapter:$chapter,
                             headline:$headline,
                             response:$response,
                             spoiler:$spoiler,
@@ -174,12 +177,15 @@ class PostCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
                             likes:0})
             create (u)-[p:POSTED]->(d)
             create (d)-[pp:POST_FOR_BOOK]->(b)
+            set rr.current_page = $page
+            set rr.last_updated = datetime()
             return d.created_date, d.id
             """
         result = tx.run(query, 
                         username=update_post.user_username, 
                         book_id=update_post.book.id,
                         page=update_post.page, 
+                        chapter=update_post.chapter,
                         headline=update_post.headline, 
                         response=update_post.response,
                         spoiler=update_post.spoiler,
@@ -190,6 +196,7 @@ class PostCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
                         user_username=update_post.user_username, 
                         book=update_post.book,
                         page=update_post.page, 
+                        chapter=update_post.chapter,
                         headline=update_post.headline, 
                         response=update_post.response,
                         spoiler=update_post.spoiler,
@@ -220,6 +227,8 @@ class PostCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
                             google_id:$book_id, 
                             title:$title, 
                             small_img_url:$small_img_url})
+            MATCH (u)-[:HAS_READING_FLOW_SHELF]->(shelf:CurrentlyReadingShelf)
+            OPTIONAL MATCH (shelf)-[rr:CONTAINS_BOOK]->(b)
             create (d:Update {id:randomUUID(), 
                             created_date:datetime(),
                             page:$page,
@@ -231,6 +240,8 @@ class PostCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
                             likes:0})
             create (u)-[p:POSTED]->(d)
             create (d)-[pp:POST_FOR_BOOK]->(b)
+            set rr.current_page = $page
+            set rr.last_updated = datetime()
             return d.created_date, d.id, b.id as book_id
             """
         result = tx.run(query, 
@@ -628,14 +639,16 @@ class PostCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
         query = """
                 match (uu:User {username: $username}) 
                 match (rr {id: $post_id}) 
-                with uu, rr
-                where not exists ((uu)-[:LIKES]-(rr))
-                    create (uu)-[ll:LIKES {created_date:datetime()}]->(rr)
-                    set rr.likes = rr.likes + 1
+                merge (uu)-[ll:LIKES]->(rr)
+                on create 
+                set ll.created_date = datetime(),
+                    rr.likes = coalesce(rr.likes, 0) + 1
                 return rr.likes as likes
                 """
+        
         result = tx.run(query, username=liked_post.username, post_id=liked_post.post_id)
         response = result.single()
+        print(response)
         return response is not None
     
     def get_feed(self, current_user, skip:int, limit:int): 

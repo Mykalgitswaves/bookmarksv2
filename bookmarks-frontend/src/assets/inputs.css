@@ -2,6 +2,15 @@
     --checked-color: #6366f1;
 }
 
+.input-styles {
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--indigo-300); 
+  margin-top: 10px;
+  font-family: var(--fancy-script);
+  color: var(--indigo-400);
+}
+
 .input-number .input-title {
     display: block;
     font-size: 16px;
@@ -9,11 +18,15 @@
     padding-bottom: 5px;
 }
 
-.input-number input[type="number"] {
+.input-number {
     display: block;
     border: solid 2px #c7d2fe;
     padding: 10px 8px;
     border-radius: 4px;
+}
+
+.input-number.short {
+  max-width: 88px;
 }
 
 .title-input input {
@@ -30,12 +43,29 @@
     width: 100px;
 }
 
+.input--invitation {
+  border-radius: 4px;
+  border-color: var(--indigo-300);
+  border-width: 1px;
+  padding-left: 8px;
+}
+
 .summary-update textarea {
     border: solid 2px #c7d2fe;
     border-radius: 4px;
     width: 100%;
     max-width: 600px;
     padding: 1ch;
+    resize: none;
+    min-height: 140px;
+}
+
+.summary-update.bookclub textarea {
+  max-width: 100%;
+}
+
+.summary-update.no-max textarea {
+  max-width: none;
 }
 
 .summary-update.comparison textarea {
@@ -79,6 +109,10 @@
     color: #1f2937;
     border-radius: 4px;
     border: 2px solid #c7d2fe;
+}
+
+.select-1 select.block {
+  display: block;
 }
 
 .spoiler {
@@ -213,4 +247,11 @@ input[type="checkbox"] {
     right: 10px;
     top: 50%;
     transform: translateY(-50%);
+  }
+
+  .input-base-padding {
+    padding-left: var(--padding-sm);
+    padding-right: var(--padding-sm);
+    padding-top: var(--spacing-xs);
+    padding-bottom: var(--spacing-xs);
   }

@@ -1,5 +1,5 @@
 <template>
-  <div :class="{'px-4 pt-5': !props.disabled}">
+  <div :class="{'px-4 pt-5': !props.disabled}" class="transition-content">
     <KeepAlive>
       <ul 
         v-for="book in books" 
@@ -7,14 +7,17 @@
       >
         <li v-if="!props.disabled"
           @click="bookClickHandler(book);"
-          :class="'flex flex-row gap-5 py-4 px-4 place-content-start bg-gray-100 rounded-md my-3 hover:bg-gray-200 max-w-[700px]' +
-            (isToggled[book.id] === true ? 'border-solid border-indigo-200 border-[1px] bg-indigo-50' : '')"
+          class="flex flex-row gap-5 py-4 px-4 place-content-start bg-gray-100 rounded-md my-3 hover:bg-gray-200"
+          :class="{
+            'border-solid border-indigo-200 border-[1px] bg-indigo-50': isToggled[book.id],
+            'max-w-[700px]': !isUnsetMaxWidth,
+          }"
         >
           <img class="h-24" :src="book.small_img_url" />
           <div class="flex flex-col justify-center">
             <p class="text-xl font-semibold text-gray-800">{{ book.title }}</p>
             
-            <p v-for="name in book.author_names" :key="name" class="inline text-sm text-gray-800">{{ name }}</p>
+            <p v-for="name in book.author_names" :key="name" claass="inline text-sm text-gray-800">{{ name }}</p>
             <span class="text-sm text-gray-500">{{ book.publication_year }}</span>
           </div>
         </li>
@@ -22,8 +25,9 @@
         <!-- This one is display only -->
         <li v-else
           class="flex flex-row gap-5 py-4 px-4 place-content-start 
-            rounded-md my-3 max-w-[700px] border-dotted border-indigo-200
+            rounded-md my-3 border-dotted border-indigo-200
             border-[1px]"
+          :class="{'max-w-[700px]': !isUnsetMaxWidth}"
         >
           <img class="h-24" :src="book.small_img_url" />
           <div class="flex flex-col justify-center">
@@ -58,7 +62,7 @@
 
 <script setup>
 import { useBookStore } from '../../stores/books'
-import { toRaw, ref, computed, onMounted, defineProps, watch, defineEmits } from 'vue'
+import { toRaw, ref, computed, onMounted, watch, useAttrs } from 'vue'
 import Star from '../svg/icon-star.vue'
 
 const promiseBooks = ref(null)
@@ -91,8 +95,8 @@ const reviewRange = ref(5)
   const emit = defineEmits();
 
   const books = computed(() => (props.data));
-
-  
+  const attrs = useAttrs();
+  const isUnsetMaxWidth = Object.keys(attrs).includes('unset-max-width');
 
   function addScore(object){
     // set to map obj cause its better ds for this.

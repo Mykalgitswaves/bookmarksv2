@@ -1,7 +1,7 @@
 <template>
-    <section>
+    <section :class="quickReview ? 'p-20' : ''">
         <BackBtn/>
-        <div v-if="!book">
+        <div v-if="!book && !book_id">
             <p class="text-2xl mb-2 mt-5 font-semibold text-center">The content monster is hungry for your thoughts 🍪. <br/>
                 <span class="text-indigo-500">Start by picking a book </span>
             </p>
@@ -11,7 +11,12 @@
 
         <div v-if="book" class="container text-center">
             <div class="my-5">
-                <p class="create-post-heading-text">You're reviewing
+                <p class="create-post-heading-text">
+                {{ 
+                    quickReview 
+                        ? 'You\'ve finished reading ' 
+                        : 'You\'re reviewing' 
+                }}
                     <span class=" create-post-heading-book-title">
                         {{ book.title }}
                     </span>
@@ -55,14 +60,16 @@
 
             <!-- Did you like it buttons -->
             <div v-if="step === 1">
-                <ReviewRating @set-rating="(_rating) => rating = _rating" />
+                <ReviewRating @set-rating="(_rating) => setRatingAndIncrementStep(_rating)" />
             </div>
 
             <!-- Adding questions -->
             <div v-if="step === 2">
 
                 <div class="mt-10 mb-10">
-                    <h4 class="heading">Click into a topic to add questions to your review.</h4>
+                    <h4 class="heading">
+                        Click into a topic to add to your review.
+                    </h4>
 
                     <p class="subheading">Pick from some pre-made prompts or add your own</p>
                 </div>
@@ -81,9 +88,18 @@
 
             <div v-if="step === 3">
                 <div class="m-tb-40">
+                    <div v-if="rating" class="fancy text-stone-500 pb-5">
+                        {{ ratingSummary }} 
+                    </div>
+
                     <img class="book-img" :src="book?.small_img_url || book.img_url" alt="">
                     <!-- Setting headlines -->
-                    <CreatePostHeadline :prop-headline="headline" @headline-changed="headlineHandler" :review-version="true"/>
+                    <CreatePostHeadline 
+                        :headline-error="headlineError" 
+                        :prop-headline="headline" 
+                        :review-version="true"
+                        @headline-changed="headlineHandler" 
+                    />
 
                     <div class="divider m-tb-40"></div>
 
@@ -95,21 +111,32 @@
                         @go-to-edit-section="decrementStep"
                     />
                 </div>
+                
+                <button  v-if="unique === 'bookclub'"
+                    type="button"
+                    class="post-btn fancy"
+                    :disabled="step !== 3"
+                    @click="emit('post-data')"
+                >
+                    Post review and mark as finished
+                </button>
 
-                <button 
+                <button v-else
                     type="button"
                     class="post-btn"
                     :disabled="step !== 3 || !isPostableData"
                     @click="emit('post-data')"
                 >
-                    Post
+                    {{ quickReview ? 'Move to shelf and post review' : 'Post' }}
                 </button>
+
+                
             </div>
         </div>
     </section>
 </template>
 <script setup>
-import { ref, defineEmits, watch, computed, reactive } from 'vue'
+import { ref, defineEmits, watch, computed, reactive, onMounted } from 'vue'
 import { postData } from '../../../../postsData.js';
 import { createQuestionStore } from '../../../stores/createPostStore';
 import { helpersCtrl } from '../../../services/helpers';
@@ -118,19 +145,43 @@ import CreatePostHeadline from './createPostHeadline.vue';
 import CreateReviewQuestions from './createReviewQuestions.vue';
 import YourReviewQuestions from './yourReviewQuestions.vue';
 import ReviewRating from './ReviewRating.vue';
+import { Bookshelves } from '../../../models/bookshelves';
+import { db } from '../../../services/db';
+import { urls } from '../../../services/urls';
 
-defineProps({
+const props = defineProps({
+    headlineError: {
+        type: String,
+        required: false
+        },
+    book: {
+        type: Object,
+        required: false,
+    },
     isPostableData: {
         type: Boolean,
         required: true,
+    },
+    /**
+     * @description – param used to designate specific component instance where logic / functionality of createReviewPost may differ
+     * @variant Bookshelves.currentlyReading.prefix this is for users that are moving books from currently reading into finished reading  
+     */
+    unique: {
+        type: String,
+        required: false,
+    },
+    bookId: { 
+        type: String, 
+        default: null 
     }
 });
+
 
 // get qs from data and add in entries.
 const questionCats = Array.from(Object.keys(postData.posts.review))
 
 // Refs
-const book = ref(null);
+const book = ref(props.book ? props.book : null);
 const { clone, debounce } = helpersCtrl;
 const currentTopic = ref('Your post');
 
@@ -159,6 +210,14 @@ const questionMapping = reactive({
     'tone': toneQuestions,
     // 'all': allQuestions,
 });
+
+const ratingMapping = {
+    1: 'didn\'t love',
+    2: 'liked',
+    3: 'loved',
+};
+
+const ratingSummary = computed(() => `You ${ratingMapping[rating.value]} ${ book.value.title || book.value.name }`);
 
 const progressTotal = computed(() => Math.floor((step.value * 100) / 3));
 const remainderTotal = computed(() => 100 - progressTotal.value);
@@ -228,6 +287,13 @@ function decrementStep() {
     }
 }
 
+function setRatingAndIncrementStep(_rating) {
+    rating.value = _rating;
+    setTimeout(() => {
+        incrementStep();
+    }, 100);
+}
+
 // Add a watcher to emit up when something is added, doesn't seem to capture when entries
 // loses entry with splice so we have duplicate above.
 watch(entries, () => {
@@ -244,6 +310,32 @@ watch(headline, () => {
 watch(currentTopic, () => {
     characterQuestions = JSON.parse(JSON.stringify(postData.posts.review[currentTopic.value]));
 });
+// end of watchers
+
+let quickReview = false;
+// start of unique logic.
+if (props.unique === Bookshelves.CURRENTLY_READING.prefix || props.unique === 'bookclub') {
+    quickReview = true;
+}
+
+function getWorkPage(book_id) {
+    db.get(urls.books.getBookPage(book_id), null, true, 
+      (res) => { 
+          book.value = res.data 
+       }, 
+       (err) => console.log(err)  
+  ); 
+}
+
+watch(
+    () => props.bookId,
+    (newBookId) => {
+        if (newBookId) {
+            getWorkPage(newBookId);
+        }
+    },
+    { immediate: true } // Trigger immediately if book_id is provided at mount
+);
 </script>
 
 <style scoped>

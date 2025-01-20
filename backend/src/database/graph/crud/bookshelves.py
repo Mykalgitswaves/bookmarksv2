@@ -1,13 +1,23 @@
+import datetime
+from collections import Counter
+
 from src.database.graph.crud.base import BaseCRUDRepositoryGraph
 from src.models.schemas.bookshelves import (
     Bookshelf, 
+    MinimalBookshelf,
     BookshelfPage,
     BookshelfPreview, 
     BookshelfBook,
     BookshelfContributor,
     BookshelfMember,
-    BookshelfFollower
+    BookshelfFollower,
+    CurrentlyReadingBookPreview,
+    CurrentlyReadingBookshelfPreview,
+    CurrentlyReadingUpdatePreview,
+    CurrentlyReadingUpdateFilter,
+    BookshelfProgressBar
 )
+from src.models.schemas.users import UserId
 
 class BookshelfCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
     def get_bookshelf(self, bookshelf_id):
@@ -57,7 +67,7 @@ class BookshelfCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
         book_map = {
         book_id: {
             'item': book,
-            'description': getattr(note_for_shelf, 'note_for_shelf', None)
+            'description': note_for_shelf.get('note_for_shelf', None)
         }
         for book_id, book, note_for_shelf in zip(record["book_object_ids"], record["books"], record["book_note_for_shelves"])
 }
@@ -263,6 +273,155 @@ class BookshelfCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
             bookshelves.append(bookshelf)
         return bookshelves
     
+    def get_minimal_shelves_for_user(self, user_id):
+        with self.driver.session() as session:
+            result = session.read_transaction(self.get_minimal_shelves_for_user_query, user_id)
+        return result
+
+    @staticmethod
+    def get_minimal_shelves_for_user_query(tx, user_id):
+        query = (
+            """
+            MATCH (b:Bookshelf)<-[r:HAS_BOOKSHELF_ACCESS]-(u:User {id: $user_id})
+            WHERE r.type IN ["owner", "contributor"]
+            RETURN b.id as id,
+                b.title as title,
+                b.visibility as visibility
+            """
+        )
+        result = tx.run(query, user_id=user_id)
+        bookshelves = []
+        for record in result:
+            bookshelf = MinimalBookshelf(
+                id=record["id"],
+                title=record["title"],
+                visibility=record["visibility"]
+            )
+            bookshelves.append(bookshelf)
+
+        return bookshelves
+    
+    def get_update_previews_for_currently_reading_shelf_by_range(
+            self, 
+            update_filters: CurrentlyReadingUpdateFilter
+        ):
+        """Gets all the updates for a specific book within a range of pages any shelf.
+        
+        """
+        with self.driver.session() as session:
+            result = session.read_transaction(
+                self.get_update_previews_for_currently_reading_shelf_by_range_query,
+                update_filters
+            )
+        return result
+    
+    @staticmethod
+    def get_update_previews_for_currently_reading_shelf_by_range_query(
+        tx, 
+        update_filters: CurrentlyReadingUpdateFilter
+    ):
+        query = (
+            """
+            MATCH (p:Update {deleted:false})<-[pr:POSTED]-(u:User {id: $user_id})
+            MATCH (p)-[br:POST_FOR_BOOK]-(b:Book {id: $book_id}) 
+            WHERE p.page >= $starting_page_for_range AND p.page <= $end_of_range
+            WITH p, COUNT(p) AS total_count
+            ORDER BY p.page 
+            LIMIT $updates_per_page
+            RETURN 
+                p.page,
+                p.headline,
+                p.id,
+                p.created_date,
+                total_count
+            """
+        )
+        result = tx.run(query, 
+            user_id=update_filters.user_id,
+            book_id=update_filters.book_id,
+            starting_page_for_range=update_filters.starting_page_for_range,
+            end_of_range=update_filters.starting_page_for_range+update_filters.size_of_range,
+            updates_per_page=update_filters.updates_per_page
+        )
+        
+        updates = []
+        for record in result:
+            update = CurrentlyReadingUpdatePreview(
+                id=record['p.id'],
+                page=record.get('p.page', 0),
+                headline=record.get('p.headline', ''),
+                created_date=record['p.created_date'],
+                user= UserId(id=update_filters.user_id)
+            )
+            updates.append(update)
+
+        
+        try:
+            additional_updates_not_shown = max(record['total_count']-update_filters.updates_per_page, 0)
+        except:
+            additional_updates_not_shown = 0 
+
+        return {
+            "updates": updates,
+            "additional_updates_not_shown": additional_updates_not_shown
+        }
+
+    def get_updates_progress_bar(
+            self,
+            user_id: str,
+            book_id: str
+    ):
+        """
+        Gets the progress bar for a specific book and user.
+        """
+        with self.driver.session() as session:
+            result = session.read_transaction(
+                self.get_updates_progress_bar_query,
+                user_id,
+                book_id
+            )
+        return result
+    
+    @staticmethod
+    def get_updates_progress_bar_query(tx, user_id, book_id):
+        query = (
+            """
+            MATCH (b:Book {id: $book_id})
+            OPTIONAL MATCH (b)<-[:POST_FOR_BOOK]-(p:Update {deleted:false})<-[pr:POSTED]-(u:User {id: $user_id})
+            RETURN 
+                COLLECT(p.page) AS post_pages,
+                b.pages AS total_pages
+            """
+        )
+        result = tx.run(query, user_id=user_id, book_id=book_id)
+        record = result.single()
+        page_values = record.get("post_pages", [])
+        total_pages = record.get("total_pages", 0)
+
+        page_dist = Counter(page_values)
+        
+        # Initialize the array with zeros
+        weights = [0] * 10
+        
+        # Fill in the weights from the dictionary
+        for page, num_posts in page_dist.items():
+            norm_page = min(page, total_pages - 1)
+            index = int(norm_page // (total_pages / 10))
+            weights[index] += int(num_posts)
+        max_weight = max(weights)
+        if max_weight != 0:
+            norm_weights = [weight / max_weight for weight in weights]
+        else:
+            norm_weights = weights
+
+        progress_bar = BookshelfProgressBar(
+            weights=norm_weights,
+            total_pages=total_pages,
+            default_page_range=total_pages/6
+        )
+        
+        return progress_bar
+
     def get_bookshelves_member_of_by_user(self, user_id):
         with self.driver.session() as session:
             result = session.read_transaction(self.get_bookshelves_member_of_by_user_query, user_id)
@@ -621,7 +780,7 @@ class BookshelfCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
         book_map = {
         book_id: {
             'item': book,
-            'description': getattr(note_for_shelf, 'note_for_shelf', None)
+            'description': note_for_shelf.get('note_for_shelf', None)
         }
         for book_id, book, note_for_shelf in zip(record["book_object_ids"], record["books"], record["book_note_for_shelves"])
 }
@@ -722,7 +881,7 @@ class BookshelfCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
                    u as user,
                    collect(bb.id) as book_object_ids,
                    collect(bb) as books,
-                   collect(rr) as book_note_for_shelves
+                   collect(rr) as book_relationships
             """
         )
         
@@ -733,13 +892,15 @@ class BookshelfCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
         record = result.single()
 
         book_map = {
-        book_id: {
-            'item': book,
-            'description': getattr(note_for_shelf, 'note_for_shelf', None)
+            book_id: {
+                'item': book,
+                'description': book_relationship.get('note_for_shelf', None),
+                'current_page': book_relationship.get('current_page', 0),
+            }
+            
+            for book_id, book, book_relationship in zip(record["book_object_ids"], record["books"], record["book_relationships"])
         }
-        for book_id, book, note_for_shelf in zip(record["book_object_ids"], record["books"], record["book_note_for_shelves"])
-}
-        
+
         for ix, key in enumerate(record["book_ids"]):
             book = book_map[key]["item"]
             description = book_map[key]["description"]
@@ -751,7 +912,9 @@ class BookshelfCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
                 title=book["title"],
                 authors=book["author_names"],
                 small_img_url=book["small_img_url"],
-                note_for_shelf=description
+                note_for_shelf=description,
+                current_page=book_map[key]["current_page"],
+                total_pages=book.get('pages', 0),
             ))
         
         bookshelf = BookshelfPage(
@@ -788,7 +951,8 @@ class BookshelfCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
                    u as user,
                    collect(bb.id) as book_object_ids,
                    collect(bb) as books,
-                   collect(rr) as book_note_for_shelves
+                   collect(rr) as book_relationships,
+                   
             """
         )
         
@@ -796,11 +960,11 @@ class BookshelfCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
         book_objects = []
 
         record = result.single()
-
+        
         book_map = {
         book_id: {
             'item': book,
-            'description': getattr(note_for_shelf, 'note_for_shelf', None)
+            'description': note_for_shelf.get('note_for_shelf', None)
         }
         for book_id, book, note_for_shelf in zip(record["book_object_ids"], record["books"], record["book_note_for_shelves"])
 }
@@ -831,7 +995,7 @@ class BookshelfCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
             contributors=set([record["user"]["id"]])
         )
 
-        return bookshelf
+        return 
     
     def get_user_currently_reading_preview(self, user_id):
         with self.driver.session() as session:
@@ -881,6 +1045,77 @@ class BookshelfCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
 
         return bookshelf
     
+    def get_user_currently_reading_front_page(self, user_id):
+        with self.driver.session() as session:
+            result = session.read_transaction(self.get_user_currently_reading_front_page_query, user_id)
+        return result
+    
+    @staticmethod
+    def get_user_currently_reading_front_page_query(tx, user_id):
+        query = (
+            """
+            MATCH (u:User {id: $user_id})-[:HAS_READING_FLOW_SHELF]->(shelf:CurrentlyReadingShelf)
+            OPTIONAL MATCH (shelf)-[rr:CONTAINS_BOOK]->(bb:Book)
+            RETURN shelf.id as id, 
+                   shelf.title as title, 
+                   shelf.description as description, 
+                   shelf.books as book_ids,
+                   shelf.visibility as visibility,
+                   shelf.img_url as img_url,
+                   u.id as created_by,
+                   u.username as created_by_username,
+                   collect(bb.title) as book_titles,
+                   collect(bb.id) as book_object_ids,
+                   collect(bb.small_img_url) as book_small_img_urls,
+                   collect(bb.pages) as book_page_counts,
+                   count(bb) as book_count,
+                   collect(rr) as book_relationships
+            """
+        )
+
+        result = tx.run(query, user_id=user_id)
+        record = result.single()
+        
+        book_list = []
+            
+        for book_id, book_title, book_small_image_url, book_rel, total_pages in zip(record["book_object_ids"], 
+                                                                                    record["book_titles"],
+                                                                                    record["book_small_img_urls"], 
+                                                                                    record["book_relationships"],
+                                                                                    record["book_page_counts"]):
+            book_list.append(
+                CurrentlyReadingBookPreview(
+                id=book_id,
+                title=book_title,  
+                small_img_url=book_small_image_url,
+                note_for_shelf=book_rel.get('note_for_shelf', None),
+                current_page=book_rel.get('current_page', 0), 
+                total_pages=total_pages,
+                last_updated=book_rel.get(
+                    'last_updated', 
+                    book_rel.get(
+                        'create_date',
+                        datetime.datetime.min.replace(
+                            tzinfo=datetime.timezone.utc
+                            )
+                        )  # Default to datetime.min if last_updated is None
+                    )
+                )
+            )
+            
+        sorted_book_list = sorted(book_list, key=lambda x: x.last_updated, reverse=True)
+        first_four_books = sorted_book_list[:4]
+        
+        bookshelf = CurrentlyReadingBookshelfPreview(
+            id=record["id"],
+            title=record["title"],
+            description=record["description"],
+            books=first_four_books,
+            visibility=record["visibility"]
+            )
+
+        return bookshelf
+    
     def get_user_finished_reading(self, user_id):
         with self.driver.session() as session:
             result = session.read_transaction(self.get_user_finished_reading_query, user_id)
@@ -914,7 +1149,7 @@ class BookshelfCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
         book_map = {
         book_id: {
             'item': book,
-            'description': getattr(note_for_shelf, 'note_for_shelf', None)
+            'description': note_for_shelf.get('note_for_shelf', None)
         }
         for book_id, book, note_for_shelf in zip(record["book_object_ids"], record["books"], record["book_note_for_shelves"])
 }
@@ -979,7 +1214,7 @@ class BookshelfCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
         book_map = {
         book_id: {
             'item': book,
-            'description': getattr(note_for_shelf, 'note_for_shelf', None)
+            'description': note_for_shelf.get('note_for_shelf', None)
         }
         for book_id, book, note_for_shelf in zip(record["book_object_ids"], record["books"], record["book_note_for_shelves"])
 }
@@ -1098,7 +1333,7 @@ class BookshelfCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
         query = (
             """
             MATCH (b:Bookshelf {id: $bookshelf_id})
-            match (book:Book {id:$book_id})
+            match (book:Book {id: $book_id})
             with b, book
             OPTIONAL MATCH (b)-[rr:CONTAINS_BOOK]->(book)
             WITH b, book, rr, EXISTS((b)-[:CONTAINS_BOOK]->(book)) AS relationshipExists
@@ -1198,7 +1433,8 @@ class BookshelfCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
                     r.create_date = datetime(),
                     r.added_by_id = $user_id,
                     r.note_for_shelf = $note_for_shelf
-                RETURN NOT relationshipExists AS wasAdded
+                RETURN NOT relationshipExists AS wasAdded,
+                       b.id as bookshelf_id
                 """
             )
         elif bookshelf_type == "currently_reading":
@@ -1214,9 +1450,11 @@ class BookshelfCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
                     b.books = COALESCE(b.books, []) + $book_id, 
                     b.last_edited_date = datetime(),
                     r.create_date = datetime(),
+                    r.last_updated = datetime(),
                     r.added_by_id = $user_id,
                     r.note_for_shelf = $note_for_shelf
-                RETURN NOT relationshipExists AS wasAdded
+                RETURN NOT relationshipExists AS wasAdded,
+                       b.id as bookshelf_id
                 """
             )
         elif bookshelf_type == "finished_reading":
@@ -1234,7 +1472,8 @@ class BookshelfCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
                     r.create_date = datetime(),
                     r.added_by_id = $user_id,
                     r.note_for_shelf = $note_for_shelf
-                RETURN NOT relationshipExists AS wasAdded
+                RETURN NOT relationshipExists AS wasAdded,
+                       b.id as bookshelf_id
                 """
             )
         else:
@@ -1246,9 +1485,8 @@ class BookshelfCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
             note_for_shelf=book_to_add.note_for_shelf, 
             user_id=user_id)
         response = result.single()
-        if not response:
-            return False
-        return response['wasAdded']
+        
+        return response.get('wasAdded',False), response.get('bookshelf_id','')
     
     def create_book_in_reading_flow_bookshelf_rel_with_shelf_id(
             self, 
@@ -1333,7 +1571,8 @@ class BookshelfCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
                     r.added_by_id = $user_id,
                     r.note_for_shelf = $note_for_shelf
                 RETURN NOT relationshipExists AS wasAdded,
-                        book.id as id
+                        book.id as id,
+                        b.id as bookshelf_id
                 """
             )
         elif bookshelf_type == "currently_reading":
@@ -1353,10 +1592,12 @@ class BookshelfCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
                     b.books = COALESCE(b.books, []) + book.id, 
                     b.last_edited_date = datetime(),
                     r.create_date = datetime(),
+                    r.last_updated = datetime(),
                     r.added_by_id = $user_id,
                     r.note_for_shelf = $note_for_shelf
                 RETURN NOT relationshipExists AS wasAdded,
-                        book.id as id
+                        book.id as id,
+                        b.id as bookshelf_id
                 """
             )
         elif bookshelf_type == "finished_reading":
@@ -1379,7 +1620,8 @@ class BookshelfCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
                     r.added_by_id = $user_id,
                     r.note_for_shelf = $note_for_shelf
                 RETURN NOT relationshipExists AS wasAdded,
-                        book.id as id
+                        book.id as id,
+                        b.id as bookshelf_id
                 """
             )
         else:
@@ -1395,11 +1637,10 @@ class BookshelfCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
             user_id=user_id)
 
         response = result.single()
-        if not response:
-            return False
-        if response['wasAdded']:
-            return response['id']
-        return False
+        
+        if response.get('wasAdded'):
+            return response['id'], response['bookshelf_id']
+        return False, False
     
     def create_book_in_reading_flow_bookshelf_rel_with_shelf_id_and_book(
             self, 
@@ -1534,7 +1775,7 @@ class BookshelfCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
     def update_books_in_bookshelf_query(tx, books, bookshelf_id):
         query = (
             """
-            MATCH (b:Bookshelf {id: $bookshelf_id})
+            MATCH (b {id: $bookshelf_id})
             SET b.books = $books, b.last_edited_date = datetime()
             RETURN b.id as id
             """
@@ -1616,6 +1857,63 @@ class BookshelfCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
         result = tx.run(query, bookshelf_id=bookshelf_id, book_id=book_id, note_for_shelf=note_for_shelf, user_id=user_id)
         response = result.single()
         return response is not None
+
+    def update_book_note_for_shelf_reading_flow(self, bookshelf_id, book_id, note_for_shelf, user_id):
+        with self.driver.session() as session:
+            result = session.write_transaction(self.update_book_note_for_shelf_reading_flow_query, bookshelf_id, book_id, note_for_shelf, user_id)
+        return result
+    
+    @staticmethod
+    def update_book_note_for_shelf_reading_flow_query(tx, bookshelf_id, book_id, note_for_shelf, user_id):
+        query = (
+            """
+            MATCH (b {id: $bookshelf_id})<-[r:HAS_READING_FLOW_SHELF]-(u:User {id: $user_id})
+            MATCH (b)-[rr:CONTAINS_BOOK]->(book:Book {id: $book_id})
+            SET rr.note_for_shelf = $note_for_shelf, b.last_edited_date = datetime(), rr.last_updated = datetime()
+            RETURN b.id as id
+            """
+        )
+        result = tx.run(query, bookshelf_id=bookshelf_id, book_id=book_id, note_for_shelf=note_for_shelf, user_id=user_id)
+        response = result.single()
+        return response is not None    
+    
+    def update_currently_reading_page(
+        self,
+        user_id,
+        book_id,
+        new_current_page):
+        with self.driver.session() as session:
+            result = session.write_transaction(
+                self.update_currently_reading_page_query,
+                user_id,
+                book_id,
+                new_current_page)
+        return result
+    
+    @staticmethod
+    def update_currently_reading_page_query(
+        tx,
+        user_id,
+        book_id,
+        new_current_page):
+        
+        query = (
+            """
+            MATCH (u:User {id: $user_id})-[:HAS_READING_FLOW_SHELF]->(b:CurrentlyReadingShelf)
+            MATCH (b)-[r:CONTAINS_BOOK]->(book:Book {id: $book_id})
+            set r.current_page = $new_current_page
+            set r.last_updated = datetime()
+            return book
+            """
+        )
+        
+        result = tx.run(query,
+                        user_id=user_id,
+                        book_id=book_id,
+                        new_current_page=new_current_page)
+        response = result.single()
+        return response is not None
+        
     
     def delete_book_from_bookshelf(self, book_to_remove, books, bookshelf_id):
         with self.driver.session() as session:
@@ -1828,7 +2126,13 @@ class BookshelfCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
     def delete_book_from_reading_flow_bookshelf_with_validate_query(tx, book_id, bookshelf_id, user_id):
         query = (
             """
-            MATCH (u:User {id: $user_id})-[:HAS_READING_FLOW_SHELF]->(shelf: {id: $bookshelf_id})
+            MATCH (u:User {id: $user_id})-[:HAS_READING_FLOW_SHELF]->(shelf)
+            WHERE shelf.id = $bookshelf_id
+            AND (
+                shelf:CurrentlyReadingShelf OR 
+                shelf:FinishedReadingShelf OR 
+                shelf:WantToReadShelf
+            )
             MATCH (shelf)-[r:CONTAINS_BOOK]->(book:Book {id: $book_id})
             DELETE r
             SET shelf.books = [book_id IN shelf.books WHERE book_id <> $book_id]
@@ -1843,3 +2147,18 @@ class BookshelfCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
         response = result.single()
         return response is not None
     
+    def delete_book_shelf_data_for_user(self, user_id:str):
+        with self.driver.session() as session:
+            result = session.write_transaction(self.delete_book_shelf_data_for_user_query, user_id)
+        return result
+    
+    @staticmethod
+    def delete_book_shelf_data_for_user_query(tx, user_id:str):
+        query = (
+            """
+            MATCH (u:User {id: $user_id})-[:HAS_BOOKSHELF_ACCESS {type:"owner"}]->(shelf:Bookshelf)
+            DETACH DELETE shelf
+            """
+        )
+        result = tx.run(query, user_id=user_id)
+        return True

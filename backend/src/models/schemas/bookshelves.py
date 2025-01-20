@@ -1,4 +1,4 @@
-from pydantic import BaseModel, validator
+from pydantic import BaseModel, validator, Field
 from pydantic.typing import Literal
 import datetime
 from neo4j.time import DateTime as Neo4jDateTime
@@ -14,15 +14,16 @@ from src.utils.exceptions.bookshelves import (
     EmptyShelfError,
     InvalidAuthorPermission
 )
+from src.config.config import settings
 
 class BookshelfId(BaseModel):
     id: str
 
 class BookshelfTitle(BookshelfId):
-    title: str
+    title: str = Field(..., min_length=1, max_length=settings.XSMALL_TEXT_LENGTH)
 
 class BookshelfDescription(BookshelfId):
-    description: str
+    description: str = Field(..., min_length=1, max_length=settings.LARGE_TEXT_LENGTH)
 
 class BookshelfVisibility(BookshelfId):
     visibility: Literal['public', 'private', 'friends']
@@ -31,7 +32,7 @@ class BookshelfUser(BookshelfId):
     user_id: str
 
 class BookshelfBookNote(BookshelfId):
-    note_for_shelf: str | None
+    note_for_shelf: str | None = Field(None, max_length=settings.MEDIUM_TEXT_LENGTH)
     book_id: str
 
 class BookshelfContributor(BaseModel):
@@ -57,8 +58,8 @@ class BookshelfFollower(BookshelfContributor):
     pass
 
 class BookshelfCreate(BaseModel):
-    title: str
-    description: str
+    title: str = Field(..., max_length=settings.XSMALL_TEXT_LENGTH)
+    description: str = Field(..., max_length=settings.MEDIUM_TEXT_LENGTH)
     created_by: str
     visibility: Literal['public', 'private', 'friends']
     # created_date: datetime.datetime
@@ -97,6 +98,29 @@ class BookshelfBook(BaseModel):
     small_img_url: str | None
     note_for_shelf: str | None = None
     google_id: str | None = None
+    current_page: int | None = None
+    total_pages: int | None = None
+    
+class CurrentlyReadingBookPreview(BaseModel):
+    id: str
+    title: str
+    small_img_url: str | None
+    note_for_shelf:str | None
+    current_page: int
+    total_pages: int | None
+    last_updated: datetime.datetime
+    
+    @validator('last_updated', pre=True, allow_reuse=True)
+    def parse_neo4j_datetime(cls, v):
+        if isinstance(v, Neo4jDateTime):
+            # Convert Neo4jDateTime to Python datetime
+            return v.to_native()
+        return v
+
+class CurrentlyReadingPageUpdate(BaseModel):
+    user_id: str
+    book_id: str
+    new_current_page: int
 
 class Node:
     def __init__(self, book):
@@ -424,6 +448,7 @@ class BookshelfPreview(BaseModel):
     description: str
     books_count: int
     book_ids: list[str]
+    book_titles: list[str] | None
     img_url: str | None = None
     book_img_urls: list[str]
     visibility: Literal['public', 'private', 'friends']
@@ -431,6 +456,39 @@ class BookshelfPreview(BaseModel):
     created_by: str
     created_by_username: str
     follower_count: int = 0
+    
+class CurrentlyReadingBookshelfPreview(BaseModel):
+    id: str
+    title: str
+    description: str
+    books: list[CurrentlyReadingBookPreview]
+    visibility: Literal['public', 'private', 'friends']
+
+class CurrentlyReadingUpdateFilter(BaseModel):
+    user_id: str
+    book_id: str
+    starting_page_for_range: int
+    size_of_range: int
+    updates_per_page: int
+
+class CurrentlyReadingUpdatePreview(BaseModel):
+    id: str
+    headline: str
+    page: int
+    created_date: datetime.datetime
+    user: Any
+    
+    @validator('created_date', pre=True, allow_reuse=True)
+    def parse_neo4j_datetime(cls, v):
+        if isinstance(v, Neo4jDateTime):
+            # Convert Neo4jDateTime to Python datetime
+            return v.to_native()
+        return v
+    
+class BookshelfProgressBar(BaseModel):
+    weights: List[float]
+    total_pages: int
+    default_page_range: int
 
 class BookshelfPage(BaseModel):
     created_by: str
@@ -444,7 +502,12 @@ class BookshelfPage(BaseModel):
     follower_count: int = 0
     contributors: set = set()
     visibility: Literal['public', 'private', 'friends']
-    
+
+class MinimalBookshelf(BaseModel):
+    id: str
+    title: str
+    visibility: Literal['public', 'private', 'friends']
+
 class Bookshelf(BaseModel):
     created_by: str
     created_by_username: str

@@ -3,7 +3,7 @@
         <!-- Header dude no shit -->
         <div class="card-header">
             <p class="text-slate-600 text-center"
-                @click="router.push(navRoutes.toUserPageFromPost(route.params.user, user_id))"
+                @click="router.push(navRoutes.toUserPage(route.params.user, user_id))"
             >
                 <span class="text-indigo-600 cursor-pointer">{{ props.username }}'s</span>
                 made an update: 
@@ -58,16 +58,16 @@
                     @click="router.push(navRoutes.toPostPageFromFeed(user, props.id))"
                 >
                     <IconComment/>
-                    <span class="ml-2">{{ num_comments }} comments</span>
+                    <span style="visibility: hidden; width: 0;">{{ num_comments }} comments</span>
                 </button>
 
                 <button v-if="posted_by_current_user"
                     type="button"
-                    class="btn-small icon-btn btn-red-ghost ml-2"
+                    class="btn-small btn-red-ghost"
                     @click="setDeletePost(props.id)"
                 >
                     <IconTrash />
-                    Delete post
+                    <span style="visibility: hidden; display: none;">Delete post</span>
                 </button>
             </div>
 

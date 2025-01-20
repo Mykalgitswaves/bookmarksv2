@@ -68,6 +68,7 @@ class BookshelfWSManager:
 
     async def reorder_books_and_send_updated_data(self, current_user, bookshelf_id, data, bookshelf_repo:BookshelfCRUDRepositoryGraph):
         _bookshelf = self.cache[bookshelf_id]
+
         if current_user.bookshelf_id != bookshelf_id:
             await self.send_data(data={"state": "error", 
                 "data": self.errors['INVALID_AUTHOR_PERMISSION'] },
@@ -122,7 +123,7 @@ class BookshelfWSManager:
         books, book_ids = jsonable_encoder(_bookshelf.get_books())
 
         if any(bookshelf_id.startswith(prefix) for prefix in prefixes):
-            response = bookshelf_repo.delete_book_from_reading_flow_bookshelf_with_validate(book_to_remove=data.book.id, books=book_ids, bookshelf_id=bookshelf_id)
+            response = bookshelf_repo.delete_book_from_reading_flow_bookshelf_with_validate(book_id=data.book.id, bookshelf_id=bookshelf_id, user_id=current_user.id)
         else:
             response = bookshelf_repo.delete_book_from_bookshelf(book_to_remove=data.book.id, books=book_ids, bookshelf_id=bookshelf_id)
 
@@ -268,7 +269,7 @@ class BookshelfWSManager:
         books, book_ids = jsonable_encoder(_bookshelf.get_books())
 
         if any(bookshelf_id.startswith(prefix) for prefix in prefixes):
-            response = bookshelf_repo.delete_book_from_reading_flow_bookshelf_with_validate(book_to_remove=data.book_id, books=book_ids, bookshelf_id=bookshelf_id)
+            response = bookshelf_repo.delete_book_from_reading_flow_bookshelf_with_validate(book_id=data.book_id, bookshelf_id=bookshelf_id, user_id=current_user.id)
         else:
             response = bookshelf_repo.delete_book_from_bookshelf(book_to_remove=data.book_id, books=book_ids, bookshelf_id=bookshelf_id)
 
@@ -291,6 +292,7 @@ class BookshelfWSManager:
             bookshelf_repo:BookshelfCRUDRepositoryGraph, 
             book_repo:BookCRUDRepositoryGraph,
             book_exists:bool):
+
         prefixes = ["want_to_read", "currently_reading", "finished_reading"]
         
         _bookshelf = self.cache[bookshelf_id]

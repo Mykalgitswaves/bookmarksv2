@@ -1,5 +1,5 @@
 from src.database.graph.crud.base import BaseCRUDRepositoryGraph
-from src.models.schemas.search import SearchResultUser
+from src.models.schemas.search import SearchResultUser, SearchResultBookClub
 
 class SearchCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
     def search_for_param(self, param: str, skip: int, limit: int):
@@ -15,15 +15,6 @@ class SearchCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
     def search_for_param_query(tx, param, skip, limit):
         param = "(?i)" + "".join([f".*{word.lower()}.*" for word in param.split(" ")])
         query = """
-                OPTIONAL MATCH (u:User)
-                WHERE toLower(u.username) =~ $param
-                WITH u.username AS user, null AS author, null AS book, null AS book_genre, null AS book_author
-                WHERE u IS NOT NULL
-                RETURN book_genre, user, author, book, book_author
-                LIMIT $limit
-
-                UNION
-
                 OPTIONAL MATCH (a:Author)
                 WHERE toLower(a.name) =~ $param
                 WITH null AS user, a AS author, null AS book, null AS book_genre, null AS book_author
@@ -101,6 +92,7 @@ class SearchCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
                                          skip:int, 
                                          limit:int, 
                                          current_user_id:str):
+        search_query = "(?i)" + "*" + search_query + "*"
         query = """
         MATCH (currentUser:User {id: $current_user_id})
         CALL db.index.fulltext.queryNodes('userFullText', $search_query)
@@ -144,8 +136,10 @@ class SearchCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
             elif response['outgoingFriendStatus'] == 'pending':
                 relationship_to_current_user = 'current_user_friend_requested'
             elif response['incomingBlockStatus']:
+                continue
                 relationship_to_current_user = 'current_user_blocked_by_anonymous_user'
             elif response['outgoingBlockStatus']:
+                continue
                 relationship_to_current_user = 'anonymous_user_blocked_by_current_user'
             elif response['node']['id'] == current_user_id:
                 relationship_to_current_user = 'is_current_user'
@@ -295,3 +289,155 @@ class SearchCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
             user_list.append(user)
 
         return user_list
+    
+    def get_bookclubs_full_text_search(
+            self, 
+            search_query:str, 
+            skip:int, 
+            limit:int):
+        
+        """
+        Searches all user by the full text index (username and full name)
+        """
+        with self.driver.session() as session:
+            result = session.execute_read(
+                self.get_bookclubs_full_text_search_query, 
+                search_query=search_query, 
+                skip=skip, 
+                limit=limit
+                )
+        return(result)
+    
+    @staticmethod
+    def get_bookclubs_full_text_search_query(
+        tx, 
+        search_query:str, 
+        skip:int, 
+        limit:int):
+
+        query = (
+            """
+        CALL db.index.fulltext.queryNodes('bookclubsFullText', "*" + $search_query + "*")
+        YIELD node, score
+        MATCH (node)-[:IS_MEMBER_OF|OWNS_BOOK_CLUB]-(members:User)
+        OPTIONAL MATCH (node)-[:IS_READING]->(bc_book:BookClubBook)-[:IS_EQUIVALENT_TO]->(book:Book)
+        RETURN node, 
+        score,
+        count(members) as number_of_members,
+        book.title as current_book_title, 
+        book.id as current_book_id, 
+        book.small_img_url as current_book_small_img_url
+        ORDER BY score DESC
+        SKIP $skip
+        LIMIT $limit
+        """
+        )
+
+        result = tx.run(
+            query, 
+            search_query=search_query, 
+            skip=skip, 
+            limit=limit
+            )
+        
+        bookclub_list = []
+
+        for response in result:
+            if response['current_book_title'] != None:
+                current_book = {
+                    'title': response.get('current_book_title'),
+                    'id': response['current_book_id'],
+                    'small_img_url': response.get('current_book_small_img_url')
+                }
+            else:
+                current_book = None
+
+            bookclub = SearchResultBookClub(
+                current_book=current_book,
+                name=response['node'].get("name"),
+                number_of_members=response.get("number_of_members", 0),
+                id=response['node'].get("id")
+            )
+            bookclub_list.append(bookclub)
+
+        return bookclub_list
+    
+    def get_bookshelves_full_text_search(
+            self, 
+            search_query:str, 
+            skip:int, 
+            limit:int):
+        
+        """
+        Searches all user by the full text index (username and full name)
+        """
+        with self.driver.session() as session:
+            result = session.execute_read(
+                self.get_bookshelves_full_text_search_query, 
+                search_query=search_query, 
+                skip=skip, 
+                limit=limit
+                )
+        return(result)
+    
+    @staticmethod
+    def get_bookshelves_full_text_search_query(
+        tx, 
+        search_query:str, 
+        skip:int, 
+        limit:int):
+
+        query = (
+            """
+        CALL db.index.fulltext.queryNodes('bookshelvesFullText', "*" + $search_query + "*")
+        YIELD node, score
+        MATCH (node)-[:HAS_BOOKSHELF_ACCESS {type:"owner"}]-(owner:User)
+        OPTIONAL MATCH (node)-[:CONTAINS_BOOK]->(book:Book)
+        RETURN node, 
+        score,
+        collect(book) as books,
+        count(book) as number_of_books,
+        CASE WHEN owner.id = node.created_by THEN true ELSE false END as is_user_owner,
+        owner.username as owner_username
+        ORDER BY score DESC
+        SKIP $skip
+        LIMIT $limit
+        """
+        )
+
+        result = tx.run(
+            query, 
+            search_query=search_query, 
+            skip=skip, 
+            limit=limit
+            )
+        
+        bookshelf_list = []
+
+        for response in result:
+            print(response['node'].get("books"))
+            print(response.get("books"))
+            first_book = None
+            if response['node'].get("books") and response.get("books"):
+                first_book_id = response['node'].get("books")[0]
+                for book in response.get("books"):
+                    if book.get("id") == first_book_id:
+                        first_book = {
+                            'title': book.get("title"),
+                            'id': book.get("id"),
+                            'small_img_url': book.get("small_img_url")
+                        }
+                        break 
+
+            bookshelf = {
+                'name': response['node'].get("title"),
+                'description': response['node'].get("description"),
+                'number_of_books': response.get("number_of_books", 0),
+                'first_book': first_book,
+                'owner_username': response.get("owner_username", None),
+                'is_current_user_owner': response.get('is_user_owner', None),
+                'id': response['node'].get("id")
+            }
+            bookshelf_list.append(bookshelf)
+
+        return bookshelf_list
