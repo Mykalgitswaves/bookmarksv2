@@ -541,3 +541,9 @@ dialog::-webkit-scrollbar {
   border-radius: 8px;
   margin-bottom: 20px;
 }
+
+.comment-bar-section {
+  display: grid;
+  grid-template-columns: auto min-content;
+  align-items: center;
+}

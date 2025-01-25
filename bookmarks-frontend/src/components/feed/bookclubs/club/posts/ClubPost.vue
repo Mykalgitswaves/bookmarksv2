@@ -328,7 +328,6 @@ function likeOrUnlikeClubPost() {
 }
 
 .awards-list {
-    width: 100%;
     margin-bottom: -10px;
     margin-right: 10px;
     margin-left: 10px;
@@ -339,6 +338,9 @@ function likeOrUnlikeClubPost() {
     justify-content: start;
     flex-wrap: wrap;
     background-color: var(--surface-primary);
+    border: 1px solid var(--slate-400);
+    border-radius: var(--radius-sm);
+    padding: 6px 8px;
 
     .award {
         position: relative;

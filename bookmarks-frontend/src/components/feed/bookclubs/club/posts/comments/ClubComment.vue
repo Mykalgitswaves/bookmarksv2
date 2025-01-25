@@ -22,23 +22,13 @@
                 View all comments
             </RouterLink>
 
-            <div>
-                <button 
-                    type="button" 
-                    class="btn btn-tiny text-green-400 btn-specter mr-2"
-                    @click="likeClubComment(comment)"
-                    >
-                    <IconClubLike/>
-                </button>
-                
-                <button 
-                type="button"
-                class="flipped btn btn-tiny text-red-400 btn-specter"
-                @click="dislikeClubComment(comment)"
+            <button 
+                type="button" 
+                class="btn btn-tiny text-green-400 btn-specter mr-2"
+                @click="likeClubComment(comment)"
                 >
-                    <IconClubLike/>
-                </button>
-            </div>
+                <IconClubLike/>
+            </button>
         </div>
     </div>
 </div>
@@ -47,7 +37,10 @@
     <div class="comment-nest-wrapper" :style="{ '--nest': 0 }" ref="commentRef">
         <!-- Real comment thread -->
         <!-- {{ Object.values(comment).find('post_id') }} -->
-        <div v-if="!isDeletingView" class="comment">
+        <div v-if="!isDeletingView" 
+            class="comment"
+            :class="{'replying-to': props.isReplyingToKey === comment.id}"
+        >
             <div class="comment-header">
                 <h5 class="mr-2 text-stone-600 bold text-base">{{ comment?.username }}</h5>
 
@@ -62,27 +55,37 @@
 
             <div class="comment-footer">
                 <div class="flex gap-2 items-center w-100">
+                    <!-- THis is mobile, only show up on mobile -->
                     <button 
+                        role="mobile-comment"
                         type="button"
-                        class="btn btn-tiny btn-icon mr-auto"
+                        class="btn btn-tiny btn-icon mobile-only"
                         :class="{'active': isShowingCommentBar}"
-                        @click="selectCommentAndShowCommentBarFooter(comment)"
+                        @click="
+                            selectCommentAndShowCommentBarFooter(comment); 
+                            isShowingCommentBar = true;
+                        "
+                    >
+                        <IconClubComment/>
+                    </button>
+                    <!-- This is desktop one. -->
+                    <button 
+                        role="mobile-comment"
+                        type="button"
+                        class="btn btn-tiny btn-icon desktop-only"
+                        :class="{'active': isShowingCommentBar}"
+                        @click="
+                            emit('comment-selected', comment) 
+                        "
                     >
                         <IconClubComment/>
                     </button>
 
                     <button 
                         type="button" 
-                        class="btn btn-tiny text-green-400 btn-specter mr-2"
+                        class="btn btn-tiny text-green-400 btn-specter mr-2 ml-auto"
+                        @click=""
                         >
-                        <IconClubLike/>
-                    </button>
-                    
-                    <button 
-                    type="button"
-                    class="flipped btn btn-tiny text-red-400 btn-specter"
-                    @click="likeClubComment(props.commentData.comment)"
-                    >
                         <IconClubLike/>
                     </button>
                 </div>
@@ -91,7 +94,10 @@
 
         <!-- Are you deleting a comment, make people confirm that they want to do this! -->
         <div v-if="isDeletingView" class="comment deleting">
-            <button class="btn btn-large btn-red fancy" @click="deleteClubComment(props.commentData.comment);">
+            <button 
+                class="btn btn-large btn-red fancy" 
+                @click="deleteClubComment(props.commentData.comment);"
+            >
                 delete
             </button>
 
@@ -104,7 +110,7 @@
     <div v-for="reply in commentData.replies" :key="reply.id" class="comment-nest-wrapper" :style="{ '--nest': 1 }">
         <!-- Real comment thread -->
         <!-- {{ Object.values(comment).find('post_id') }} -->
-        <div class="comment reply">
+        <div class="comment reply" :class="{'replying-to': props.isReplyingToKey === reply.comment.id}">
             <div class="comment-header">
                 <h5 class="mr-2 text-stone-600 bold text-base">{{ reply.comment.username }}</h5>
 
@@ -118,28 +124,34 @@
             </div>
 
             <div class="comment-footer">
-                    <button 
-                        type="button"
-                        class="btn btn-tiny btn-icon mr-auto"
-                        :class="{'active': isShowingCommentBar}"
-                        @click="selectCommentAndShowCommentBarFooter(reply.comment)"
-                    >
-                        <IconClubComment/>
-                    </button>
-
-                    <button 
-                        type="button" 
-                        class="btn btn-tiny text-green-400 btn-specter mr-2"
-                        >
-                        <IconClubLike/>
-                    </button>
-                    
-                    <button 
+                <!-- Mobile only -->
+                <button 
                     type="button"
-                    class="flipped btn btn-tiny text-red-400 btn-specter"
+                    class="btn btn-tiny btn-icon mobile-only"
+                    :class="{'active': isShowingCommentBar}"
+                    @click="selectCommentAndShowCommentBarFooter(reply.comment)"
+                >
+                    <IconClubComment/>
+                </button>
+
+                <!-- Desktop -->
+                <button 
+                    type="button"
+                    class="btn btn-tiny btn-icon desktop-only"
+                    :class="{'active': isShowingCommentBar}"
+                    @click="emit('comment-selected', reply.comment)"
+                >
+                    <IconClubComment/>
+                </button>
+
+
+                <button 
+                    type="button" 
+                    class="btn btn-tiny text-green-400 btn-specter ml-auto mr-2"
+                    @click="likeClubComment(reply.comment)"
                     >
-                        <IconClubLike/>
-                    </button>
+                    <IconClubLike/>
+                </button>
             </div>
         </div>
     </div>
@@ -168,10 +180,15 @@ const props = defineProps({
     commentData: {
         type: Object,
         required: true,
+    },
+    // light up the ui
+    isReplyingToKey: {
+        type: String,
+        required: false,
     }
 });
 
-const emit = defineEmits(['pre-success-comment']);
+const emit = defineEmits(['pre-success-comment', 'comment-selected']);
 
 const comment = computed(() => {
     return props.commentData.comment;
@@ -185,11 +202,19 @@ onMounted(() => {
     let commentElement = commentRef.value
     let touchEvent = null;
 
-    commentElement.addEventListener('touchstart', (event) => {
-        touchEvent = new TouchEvent(event);
-    });
+    commentElement.addEventListener(
+        'touchstart', 
+        (event) => {
+            touchEvent = new TouchEvent(event);
+        }, 
+        { passive: true }
+    );
 
-    commentElement.addEventListener('touchend', handleSwipe);
+    commentElement.addEventListener(
+        'touchend', 
+        handleSwipe, 
+        { passive: true }
+    );
 
     function handleSwipe(event) {
         if (!touchEvent) {
@@ -220,7 +245,6 @@ onMounted(() => {
  * @returns { void }
  */
 function selectCommentAndShowCommentBarFooter(comment) {
-    isShowingCommentBar.value = true;
     PubSub.publish('start-commenting-club-post', comment);
 }
 </script>
@@ -261,6 +285,8 @@ function selectCommentAndShowCommentBarFooter(comment) {
     grid-template-columns: 1fr 1fr;
     column-gap: 12px;
     padding: 8px;
+    margin-top: 8px; 
+    margin-bottom: 8px; 
 }
 
 
@@ -327,5 +353,13 @@ function selectCommentAndShowCommentBarFooter(comment) {
     justify-content: space-between;
     align-items: start;
     width: 100%;
+}
+
+.comment.replying-to {
+    border: 2px dotted var(--indigo-500);
+    background-color: var(--surface-primary);
+    box-shadow: var(--shadow-lg);
+    border-radius: var(--radius-sm);
+    padding: 8px;
 }
 </style>

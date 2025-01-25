@@ -455,10 +455,4 @@ nav .nav-button-group {
     flex-direction: column;
     row-gap: 8px;
 }
-
-.comment-bar-section {
-    display: grid;
-    grid-template-columns: auto min-content;
-    align-items: center;
-}
 </style>

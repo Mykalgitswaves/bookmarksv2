@@ -60,7 +60,7 @@ const toast = ref(null);
 async function postComment() {
     submitting.value = true;
     let data;
-    // If you are commenting on a post 
+    // If you are commenting on a post, not replying 
     if (!props.comment) {
         data = {
             post_id: props.postId,

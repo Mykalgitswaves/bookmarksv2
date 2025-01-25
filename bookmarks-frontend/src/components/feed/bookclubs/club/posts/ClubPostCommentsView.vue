@@ -2,18 +2,41 @@
     <!-- Load the post first. -->
     <AsyncComponent :promises="[getPostPromise]">
         <template #resolved>
-            <div class="post-section">
                 <ClubPost :post="data.post" :is-viewing-post="true"/>
 
                 <ViewAwards/>
 
-                <div style="margin-top: 20px;">
-                    <CommentBar :post-id="data.post.id" @pre-success-comment="(comment) => addToComments(comment)" />
+                <div 
+                    style="margin-top: 20px" 
+                    :class="{'scrolled-below-post': isScrollPastCommentBar && clubCommentSelectedForReply}"
+                    ref="commentBarRef"
+                >   
+                    <!-- If you have selected a comment to reply to then do that shit -->
+                     <span v-if="clubCommentSelectedForReply" class="text-sm ml-5 mb-2 block">replying to
+                        <span class="text-indigo-500 fancy">{{ clubCommentSelectedForReply.username }}'s'</span>
+                        comment
+                    </span>
+
+                    <div :class="{'comment-bar-section': clubCommentSelectedForReply}">
+                        <CommentBar 
+                            :post-id="data.post.id"
+                            :comment="clubCommentSelectedForReply" 
+                            @pre-success-comment="(comment) => addToComments(comment)" 
+                        />
+
+                        <button 
+                            v-if="clubCommentSelectedForReply"
+                            type="button" 
+                            class="btn btn-tiny btn-red mb-2"
+                            @click="clubCommentSelectedForReply = null"
+                        >
+                            <IconExit/>
+                        </button>
+                    </div>
                 </div>
-            </div>
         </template>
         <template #loading>
-            <div class="fancy loading gradient">Loading...</div>
+            <div class="fancy loading gradient radius-sm py-5 text-center mb-5">Loading post...</div>
         </template>
     </AsyncComponent>
     
@@ -25,16 +48,18 @@
                     v-for="comment in commentData.comments" 
                     :key="comment.id" 
                     :comment-data="comment"
+                    :is-replying-to-key="clubCommentSelectedForReply?.id"
+                    @comment-selected="(comment) => clubCommentSelectedForReply = comment"
                 />
             </div>
 
             <div v-else class="mt-5 text-2xl fancy text-stone-600 text-center">
                 <!-- if there are no comments -->
-                 🎉No comments yet🎉
+                🎉No comments yet🎉
             </div>
         </template>
         <template #loading>
-            <div class="fancy loading gradient">Loading comments...</div>
+            <div class="fancy loading gradient radius-sm py-5 text-center mb-5">Loading comments...</div>
         </template>
     </AsyncComponent>
 
@@ -42,8 +67,9 @@
 </template>
 <script setup>
 import {useRoute, useRouter} from 'vue-router';
-import { ref, onMounted, computed } from 'vue';
+import { ref, onMounted } from 'vue';
 import { urls, navRoutes } from '../../../../../services/urls';
+import { helpersCtrl } from '../../../../../services/helpers';
 import { db } from '../../../../../services/db';
 import ClubPost from './ClubPost.vue';
 import AsyncComponent from '../../../partials/AsyncComponent.vue';
@@ -54,6 +80,7 @@ import { currentUser } from './../../../../../stores/currentUser';
 import { PubSub } from '../../../../../services/pubsub';
 import ErrorToast from './../../../../../components/shared/ErrorToast.vue';
 import ViewAwards from '../awards/ViewAwards.vue';
+import IconExit from '../../../../svg/icon-exit.vue';
 
 const route = useRoute();
 const { user, bookclub, postId } = route.params;
@@ -63,6 +90,9 @@ let data = {
     error: {},
 };
 
+const { debounce } = helpersCtrl;
+
+// #TODO: @michael do this later.
 // onMounted(() => {
 //     ws.createNewSocketConnection(urls.bookclubs.establishWebsocketConnectionForClub(bookclub))
 // })
@@ -152,4 +182,70 @@ PubSub.subscribe('footer-comment-failure-comment', (payload) => {
     const refComment = commentData.value.comments.find((comment) => comment.id === payload.commentId);
     refComment.value.failedPosting = true;
 });
+
+
+const isScrollPastCommentBar = ref(false);
+const commentBarRef = ref(null);
+const clubCommentSelectedForReply = ref(null);
+// This is all so we can have some smarter comment bar on desktop.
+// probably bad component design on my part though.
+onMounted(() => {
+    const initialScrollHeight = window.scrollY;
+    
+    function handleScrollEvent() {
+        console.log('called')
+        
+            console.log('made it apst first check')
+            // im prefixing a dom element with $. 
+            // All that means is that its the actual dom element 
+            // Im adding an event listener to. CHat im just using slang.
+            const $commentBar = commentBarRef.value;
+            
+            if ($commentBar) {
+                const { bottom } = $commentBar.getBoundingClientRect();
+                const isCurrentlyPastBottom = !!(bottom < 0);
+                // if the value has changed since you last set it and the currnt scroll y is greater than the initial scroll y height.
+                 // Only check if the user has scrolled past the initial scroll height
+
+                if (initialScrollHeight + 20 <= window.scrollY) {
+                    // Set to true only if it was previously false
+                    if (!isScrollPastCommentBar.value && isCurrentlyPastBottom) {
+                        isScrollPastCommentBar.value = true;
+                        console.log('Scrolled past the comment bar');
+                    }
+                } else {
+                    // If scrolling back up and the comment bar is visible, set to false
+                    if (isScrollPastCommentBar.value && !isCurrentlyPastBottom) {
+                        isScrollPastCommentBar.value = false;
+                        console.log('Scrolled back up to the comment bar');
+                        // if you haven't figured out what you want to say already, nock it off and make em reselect.
+                        clubCommentSelectedForReply.value = null;
+                    }
+                }
+            }
+    }
+
+    const debouncedScrollEvent = debounce(handleScrollEvent, 250, false);
+    window.addEventListener('scroll', debouncedScrollEvent, {passive: true});
+});
 </script>
+<style scoped>
+@starting-style {
+    .scrolled-below-post {
+        opacity: 0;
+    }
+}
+
+.scrolled-below-post {
+    position: fixed;
+    bottom: 20px;
+    width: 90vw;
+    max-width: 768px;
+    z-index: 99999;
+    background-color: var(--surface-primary);
+    box-shadow: var(--shadow-lg);
+    border-radius: var(--radius-md);
+    padding: 20px;
+    transition: all 250ms ease-in-out;
+}
+</style>
