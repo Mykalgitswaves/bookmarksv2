@@ -24,8 +24,8 @@ resource "aws_lb" "backend_load_balancer" {
 
 resource "aws_lb_target_group" "backend_target_group" {
   name     = "backend-target-group"
-  port     = 443
-  protocol = "HTTPS"
+  port     = 80
+  protocol = "HTTP"
   vpc_id   = "vpc-0de1958ab90b56cf7"
 
   stickiness {
