@@ -2,7 +2,12 @@
   "name": "bookmarks-frontend",
   "version": "0.0.0",
   "private": true,
-  "proxy": ["http://127.0.0.1:8000","http://backend-load-balancer-1064516976.us-east-1.elb.amazonaws.com"],
+  "proxy": [
+    "http://127.0.0.1:8000",
+    "http://backend-load-balancer-1064516976.us-east-1.elb.amazonaws.com", 
+    "http://192.168.4.40:8000",
+    "http://0.0.0.0:8000"
+  ],
   "scripts": {
     "dev": "vite",
     "build": "vite build",

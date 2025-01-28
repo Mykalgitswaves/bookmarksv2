@@ -245,4 +245,14 @@ export function ToTitleCase(str) {
         return ""
     }
     return str.toLowerCase().replace(/\b\w/g, s => s.toUpperCase());
-  }
+}
+
+// Dont use this for real things in our db. 
+// just to use this as a safe way to create in memory unique id's for components with iterators
+export function generateUUID() {
+    // Simple UUID generation function
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+       const r = Math.random() * 16 | 0, v = c === 'x' ? r : (r & 0x3 | 0x8);
+       return v.toString(16);
+    });
+}

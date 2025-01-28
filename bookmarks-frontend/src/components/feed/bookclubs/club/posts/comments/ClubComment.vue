@@ -42,9 +42,13 @@
             :class="{'replying-to': props.isReplyingToKey === comment.id}"
         >
             <div class="comment-header">
-                <h5 class="mr-2 text-stone-600 bold text-base">{{ comment?.username }}</h5>
+                <h5 class="mr-2 text-stone-600 bold text-base">
+                    {{ comment?.username }}
+                </h5>
 
-                <p class="text-stone-500 text-xs">{{ dates.timeAgoFromNow(comment?.created_date, true) }}</p>
+                <p class="text-stone-500 text-xs">
+                    {{ dates.timeAgoFromNow(comment?.created_date, true) }}
+                </p>
             </div>
 
             <div class="comment-body">
@@ -75,7 +79,7 @@
                         class="btn btn-tiny btn-icon desktop-only"
                         :class="{'active': isShowingCommentBar}"
                         @click="
-                            emit('comment-selected', comment) 
+                            emit('comment-selected', {comment, index}) 
                         "
                     >
                         <IconClubComment/>
@@ -87,6 +91,14 @@
                         @click=""
                         >
                         <IconClubLike/>
+                    </button>
+
+                    <button 
+                        type="button" 
+                        class="btn btn-tiny text-green-400 btn-specter ml-2"
+                        @click="isDeletingView = true"
+                        >
+                        <IconTrash/>
                     </button>
                 </div>
             </div>
@@ -107,10 +119,15 @@
         </div>
     </div>
 
-    <div v-for="reply in commentData.replies" :key="reply.id" class="comment-nest-wrapper" :style="{ '--nest': 1 }">
+    <div v-for="reply in commentData.replies" 
+        :key="reply.id" 
+        class="comment-nest-wrapper" 
+        :ref="(reply) => replyDistanceMapping[reply.id] = reply"
+        :style="{ '--nest': 1, '--distance-from-top': generateDistanceFromTopComment(reply.id) }"
+    >
         <!-- Real comment thread -->
         <!-- {{ Object.values(comment).find('post_id') }} -->
-        <div class="comment reply" :class="{'replying-to': props.isReplyingToKey === reply.comment.id}">
+        <div class="comment reply" :class="{'replying-to': props.isReplyingToKey === reply.comment?.id}">
             <div class="comment-header">
                 <h5 class="mr-2 text-stone-600 bold text-base">{{ reply.comment.username }}</h5>
 
@@ -129,7 +146,7 @@
                     type="button"
                     class="btn btn-tiny btn-icon mobile-only"
                     :class="{'active': isShowingCommentBar}"
-                    @click="selectCommentAndShowCommentBarFooter(reply.comment)"
+                    @click="selectCommentAndShowCommentBarFooter(reply.comment, reply.comment.id)"
                 >
                     <IconClubComment/>
                 </button>
@@ -139,7 +156,7 @@
                     type="button"
                     class="btn btn-tiny btn-icon desktop-only"
                     :class="{'active': isShowingCommentBar}"
-                    @click="emit('comment-selected', reply.comment)"
+                    @click="replyToReply(reply.comment, reply.comment.id)"
                 >
                     <IconClubComment/>
                 </button>
@@ -155,6 +172,24 @@
             </div>
         </div>
     </div>
+
+    <!-- If you have more than two replies to preview you need to make your users click into get the next ten -->
+    <!-- hasExpandedComments gets reset to false on every call to pagination endpoint -->
+    <div v-if="commentData.comment.num_replies > 2 && !hasExpandedComments" 
+        class="comment-nest-wrapper" 
+        :style="{
+            '--nest': 1,
+            '--distance-from-top': generateDistanceFromTopComment(undefined)
+        }"
+    >
+        <div class="more-comments">
+            <button type="button" class="flex items-center gap-2">
+                <IconPlus /> 
+                
+                <span>{{ commentData.comment.num_replies - 2 }} more comments</span>
+            </button>
+        </div>
+    </div>
 </div>
 </template>
 <script setup>
@@ -167,6 +202,8 @@ import SuccessToast from '../../../../../shared/SuccessToast.vue';
 import TouchEvent from '../../../../../../services/swipe';
 import { deleteClubComment, likeClubComment, dislikeClubComment } from './comment';
 import { PubSub } from '../../../../../../services/pubsub'; 
+import IconTrash from '../../../../../svg/icon-trash.vue';
+import IconPlus from '../../../../../svg/icon-plus.vue';
 
 const props = defineProps({
     isPreview: {
@@ -185,6 +222,11 @@ const props = defineProps({
     isReplyingToKey: {
         type: String,
         required: false,
+    },
+    // Used to find where to insert replies to if the user is replying.
+    index: {
+        type: Number,
+        required: true
     }
 });
 
@@ -197,6 +239,51 @@ const comment = computed(() => {
 const isShowingCommentBar = ref(false);
 const commentRef = ref(null);
 const isDeletingView = ref(false);
+
+/**
+ * @distance function for setting the height of --distance-from-top, which allows us 
+ * to know exactly how far away the distances are on the y axis for calculating each
+ * ::after height for the comments. This gives us the ability to create a comment thread 
+ * appearance to our commments feature similar to what reddit uses.  
+ * @dependency { replyDistanceMapping } - a dictionary containing the id's of each reply $element and their corresponding dom ref needed to do calculations.
+ * @dependency commentRef - a global ref constant that can be used to find the parent comment in the dom.
+ * @function generateDistanceFromTopComment -  A function that accepts an id, and returns an integer (in pixels) for the height
+ *  difference between the yOffset of the provided reply and the original comment. 
+ * @returns String in pixels of the height used for each comment
+ */
+const replyDistanceMapping = ref({});
+// I know these are global but save us from having to recompute every time this runs.
+let $parentComment;
+let parentBoundingRect;
+
+function generateDistanceFromTopComment(replyId) {
+    // If this function receives a falsey value it means that you are calculating 
+    // the distance between a view more comments button and the first reply (otherwise known as the offset).
+    // so calling object keys should not be that expensive. 
+    // At most it iterates through every comment in the viewport one time. 
+    if (replyId === undefined && Object.keys(replyDistanceMapping.value).length) {
+        const $firstReply = Object.values(replyDistanceMapping.value)[0];
+        const { top, bottom } = $firstReply.getBoundingClientRect();
+
+        return `${Math.abs(bottom) - Math.abs(top)}px`
+    }
+
+    if (!$parentComment && commentRef.value) {
+        $parentComment = commentRef.value;
+        parentBoundingRect = $parentComment.getBoundingClientRect();
+    }
+    // instantiate a temp var, $means non v dom element. 
+    const $reply = replyDistanceMapping.value[replyId];
+
+    // Early out if you dont have a reply.
+    if (!$reply) return;
+
+    // Find the bottom of the parent comment
+    const replyBoundingRect = $reply.getBoundingClientRect();
+
+    return `${(replyBoundingRect.top + window.scrollY) - (parentBoundingRect.bottom + window.scrollY)}px`; 
+}
+
 
 onMounted(() => {
     let commentElement = commentRef.value
@@ -244,8 +331,23 @@ onMounted(() => {
  * @param comment - Proxy object.
  * @returns { void }
  */
-function selectCommentAndShowCommentBarFooter(comment) {
-    PubSub.publish('start-commenting-club-post', comment);
+function selectCommentAndShowCommentBarFooter(comment, replyingToId) {
+    // If you are replying to a someones reply put which one. 
+    if (replyingToId) {
+        comment.replyingTo = replyingToId;
+    }
+
+    PubSub.publish('start-commenting-club-post', 
+        {
+            comment: comment, 
+            index: props.index, 
+        }
+    );
+}
+
+function replyToReply(comment, repliedToId) {
+    comment.replyingTo = repliedToId;
+    emit('comment-selected', comment)
 }
 </script>
 <style scoped>
@@ -291,22 +393,14 @@ function selectCommentAndShowCommentBarFooter(comment) {
 
 
 .comment-nest-wrapper {
-    margin-left: calc(5% * var(--nest, 0) );
+    margin-left: calc(5% * var(--nest, 0));
     position: relative;
     scroll-behavior: smooth;
     overflow-x: auto;
+    overflow-x: visible;
 }
 
-/* .comment::before {
-    content: '';
-    position: absolute;
-    background-color: var(--indigo-400);
-    width: 6px;
-    height: 6px;
-    top: 15px;
-    left: -6px;
-} */
-
+.comment.reply { margin-bottom: unset; }
 
 .comment.reply::before {
     content: '';
@@ -324,14 +418,41 @@ function selectCommentAndShowCommentBarFooter(comment) {
     content: '';
     position: absolute;
     left: -16px;
-    bottom: 20px;  /* Should match the height in ::before */
+    bottom: var(--distance-from-top);  /* Should match the height in ::before */
     bottom: 0;
     width: 2px;
     background: var(--indigo-300);  /* Same color as the curve */
 }
 
-.comment:hover {
-   
+.more-comments {
+    position: relative;
+    font-size: var(--font-sm);
+    margin-left: 8px;
+    font-family: var(--fancy-script);
+    text-decoration: underline;
+    padding-left: 4px;
+}
+
+.more-comments::before {
+    content: '';
+    position: absolute;
+    left: calc(var(--nest) * -16px);  /* Adjust based on your indentation needs */
+    bottom: 10px;
+    width: calc(var(--nest) * 16px);  /* Width of the curve */
+    height: calc(var(--distance-from-top) - 20px); /* Height of the curve - adjust based on your needs */
+    border-left: 2px solid var(--indigo-300);  /* Discord-like gray color */
+    border-bottom: 2px solid var(--indigo-300);
+    border-bottom-left-radius: 8px;  /* Creates the curve */
+}
+
+.more-comments::after {
+    content: '';
+    position: absolute;
+    left: -16px;
+    bottom: var(--distance-from-top);  /* Should match the height in ::before */
+    bottom: 0;
+    width: 2px;
+    background: var(--indigo-300);
 }
 
 .comment-header {

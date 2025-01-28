@@ -13,7 +13,7 @@
                 >   
                     <!-- If you have selected a comment to reply to then do that shit -->
                      <span v-if="clubCommentSelectedForReply" class="text-sm ml-5 mb-2 block">replying to
-                        <span class="text-indigo-500 fancy">{{ clubCommentSelectedForReply.username }}'s'</span>
+                        <span class="text-indigo-500 fancy">{{ clubCommentSelectedForReply.comment?.username }}'s'</span>
                         comment
                     </span>
 
@@ -45,11 +45,22 @@
         <template #resolved>
             <div v-if="commentData.comments?.length" class="mt-5">
                 <ClubComment 
-                    v-for="comment in commentData.comments" 
+                    v-for="(comment, index) in commentData.comments" 
                     :key="comment.id" 
+                    :index="index"
                     :comment-data="comment"
                     :is-replying-to-key="clubCommentSelectedForReply?.id"
-                    @comment-selected="(comment) => clubCommentSelectedForReply = comment"
+                    @comment-selected="(comment) => { clubCommentSelectedForReply = comment; console.log(comment)}"
+                />
+
+                <ClubCommentV2 
+                    v-for="(comment, index) in flatComments" 
+                    :key="comment.id"
+                    :comment-data="comment"
+                    :index="index"
+                    :max-depth-of-thread="maxDepth"
+                    :comment-depth="index"
+                    :sub-thread-collapsed="false"
                 />
             </div>
 
@@ -69,12 +80,14 @@
 import {useRoute, useRouter} from 'vue-router';
 import { ref, onMounted } from 'vue';
 import { urls, navRoutes } from '../../../../../services/urls';
-import { helpersCtrl } from '../../../../../services/helpers';
+import { helpersCtrl, generateUUID } from '../../../../../services/helpers';
 import { db } from '../../../../../services/db';
 import ClubPost from './ClubPost.vue';
 import AsyncComponent from '../../../partials/AsyncComponent.vue';
 import CommentBar from './comments/CommentBar.vue';
 import ClubComment from './comments/ClubComment.vue';
+// testing a second one.
+import ClubCommentV2 from './comments/ClubCommentV2.vue';
 import { ws } from '../../../bookshelves/bookshelvesRtc';
 import { currentUser } from './../../../../../stores/currentUser';
 import { PubSub } from '../../../../../services/pubsub';
@@ -96,6 +109,7 @@ const { debounce } = helpersCtrl;
 // onMounted(() => {
 //     ws.createNewSocketConnection(urls.bookclubs.establishWebsocketConnectionForClub(bookclub))
 // })
+
 
 const commentData = ref({
     comments: [],
@@ -128,7 +142,7 @@ const getPostPromise = db.get(
 const getPaginatedCommentsForPostPromise = db.get(
     urls.concatQueryParams(
         urls.reviews.getComments(postId), 
-        { 'bookclub': bookclub }
+        { 'bookclub_id': bookclub }
     ),
     {...pagination.value}, 
     false, 
@@ -139,8 +153,26 @@ const getPaginatedCommentsForPostPromise = db.get(
     }
 );
 
+const comments = ref([])
+
+const processedComments = computed(() => {
+    return CommentService.processComments(commentData.value.comments)
+})
+
+// Or if you need a flat list:
+const flatComments = computed(() => {
+    return CommentService.flattenComments(commentData.value.comments)
+})
+ 
+// Get max depth for styling purposes:
+const maxDepth = computed(() => {
+    return CommentService.getMaxDepth(commentData.value.comments)
+})
+
+
 function addToComments(message) {
     const comment = {
+        id: generateUUID(), // In memory uuid to avoid collisions when possible.
         text: message,
         username: currentUser.value.username,
         created_date: null,
@@ -149,8 +181,14 @@ function addToComments(message) {
         liked_by_current_user: false,
         post_id: postId,
     }
-    // See this at the top.
-    commentData.value.comments.unshift({comment});
+
+    // If you are replying to a specific comment push to the bottom of the replies of that comment.
+    if (clubCommentSelectedForReply.value) {
+        commentData.value.comments[clubCommentSelectedForReply.value.index]?.replies.push({comment: comment})
+        // 
+    } else {
+        commentData.value.comments.unshift({comment});
+    }
 }
 
 // ON pre success of posting a reply, 

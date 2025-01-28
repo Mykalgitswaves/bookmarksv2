@@ -73,7 +73,7 @@ async function postComment() {
             post_id: props.postId,
             text: modelComment.value,
             pinned: false,
-            replied_to: props.comment.id
+            replied_to: props.comment.replyingTo || props.comment.id // see if you are replying to a reply, if not see if you are replying to a comment
         }
     }
 

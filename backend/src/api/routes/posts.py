@@ -973,7 +973,17 @@ async def get_comments_for_post(
         if bookclub_id:
             comments = comment_repo.get_paginated_comments_for_book_club_post(
                 post_id=post_id, username=current_user.username, skip=skip, limit=limit, bookclub_id=bookclub_id,
-            )    
+            )
+
+            return JSONResponse(
+                content={
+                    "data": jsonable_encoder(
+                        {
+                            "comments": comments,
+                        }
+                    )
+                }
+            )
         else:
             comments = comment_repo.get_all_comments_for_post(
                 post_id=post_id, username=current_user.username, skip=skip, limit=limit

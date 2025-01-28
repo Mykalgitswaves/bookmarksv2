@@ -1,3 +1,5 @@
+import { generateUUID } from '../../../../services/helpers';
+
 const paceIntervals = {
     DAY: 'days',
     WEEK: 'weeks',
@@ -68,14 +70,6 @@ export const Invitation = {
         refused: 'refused',
     }
 };
-
-export function generateUUID() {
-     // Simple UUID generation function
-     return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
-        const r = Math.random() * 16 | 0, v = c === 'x' ? r : (r & 0x3 | 0x8);
-        return v.toString(16);
-    });
-}
 
 // Default for new invitations
 export class BaseInvitation {
