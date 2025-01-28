@@ -78,10 +78,11 @@
 </template>
 <script setup>
 import {useRoute, useRouter} from 'vue-router';
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, computed } from 'vue';
 import { urls, navRoutes } from '../../../../../services/urls';
 import { helpersCtrl, generateUUID } from '../../../../../services/helpers';
 import { db } from '../../../../../services/db';
+import { CommentService } from './comments/comment'
 import ClubPost from './ClubPost.vue';
 import AsyncComponent from '../../../partials/AsyncComponent.vue';
 import CommentBar from './comments/CommentBar.vue';
