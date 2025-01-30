@@ -201,15 +201,17 @@
 import TopNav from '@/components/feed/topnav.vue';
 import FooterNav from '@/components/feed/footernav.vue'
 import CloseButton from '../components/feed/partials/CloseButton.vue';
-import { ref, computed, watch, nextTick } from "vue";
+import { ref, computed, watch, nextTick, onMounted } from "vue";
 import { useRoute, useRouter } from 'vue-router';
 import { db } from '../services/db'
 import { urls, navRoutes } from '../services/urls'
 import { PubSub } from '../services/pubsub';
+import { getCurrentUser } from '../stores/currentUser';
 import AsyncComponent from '@/components/feed/partials/AsyncComponent.vue';
 
 const route = useRoute();
 const router = useRouter();
+const { user } = route.params;
 
 // Fix for a weird bug we sometimes run into from bad navigation.
 // If user is ever undefined make us logout.
@@ -238,7 +240,16 @@ const searchData = ref({
 // This will make ui rerender whenever any dependency changes in length.
 const hasSearchResults = computed(() => Object.values(searchData.value).some((val) => val.length));
 
-const authPromise = db.authenticate(urls.authUrl, route.params.user);
+const authPromise = db.authenticate(urls.authUrl, user);
+
+onMounted(async () => {
+  try {
+    getCurrentUser(user);
+  } catch(err) {
+    console.log(err);
+  }
+});
+
 const loadedSearchResults = ref(false);
 
 /**
@@ -380,7 +391,7 @@ function declineFriendRequest(user) {
 
 // Filter out blocked users from the search results
 watch(searchData, (newValue) => {
-  loadingSearchResults.value = true;
+  loadedSearchResults.value = true;
   searchData.value.users = newValue.users.filter((user) => user.relationship_to_current_user !== 'current_user_blocked_by_anonymous_user')
 });
 </script>
