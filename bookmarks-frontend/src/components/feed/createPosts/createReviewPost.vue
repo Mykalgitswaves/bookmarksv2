@@ -112,7 +112,8 @@
                     />
                 </div>
                 
-                <button  v-if="unique === 'bookclub'"
+                <button  
+                    v-if="unique === BookClub.cls"
                     type="button"
                     class="post-btn fancy"
                     :disabled="step !== 3"
@@ -121,7 +122,8 @@
                     Post review and mark as finished
                 </button>
 
-                <button v-else
+                <button 
+                    v-else
                     type="button"
                     class="post-btn"
                     :disabled="step !== 3 || !isPostableData"
@@ -129,9 +131,19 @@
                 >
                     {{ quickReview ? 'Move to shelf and post review' : 'Post' }}
                 </button>
-
-                
             </div>
+        </div>
+        <div v-if="unique === BookClub.cls" class="ml-auto mr-auto text-center">
+            <p class="text-xs text-stone-400">
+                (Optional) skip reviewing
+            </p>
+            <div class="divider"></div>
+            <button type="button" 
+                class="mb-5 btn btn-tiny btn-wide btn-ghost fancy text-sm" 
+                @click="emit('user-skipped-review')"
+            >
+                I have good ideas but don't like sharing them
+            </button>
         </div>
     </section>
 </template>
@@ -148,6 +160,7 @@ import ReviewRating from './ReviewRating.vue';
 import { Bookshelves } from '../../../models/bookshelves';
 import { db } from '../../../services/db';
 import { urls } from '../../../services/urls';
+import { BookClub } from '../bookclubs/models/models.js';
 
 const props = defineProps({
     headlineError: {
@@ -223,7 +236,7 @@ const progressTotal = computed(() => Math.floor((step.value * 100) / 3));
 const remainderTotal = computed(() => 100 - progressTotal.value);
 
 // functions
-const emit = defineEmits(['is-postable-data']);
+const emit = defineEmits(['is-postable-data', 'user-skipped-review']);
 
 function hasQuestionDataHandler(){
     entries.value = store.arr

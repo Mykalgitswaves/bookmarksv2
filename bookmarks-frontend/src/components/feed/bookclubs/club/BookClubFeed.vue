@@ -64,6 +64,7 @@
                             unique="bookclub"
                             @is-postable-data="(post) => reviewPost = post" 
                             @post-data="postReviewAndFinishReadingCurrentBook(reviewPost)"
+                            @user-skipped-review="postReviewAndFinishReadingCurrentBook(null)"
                         />
                 </template>
             </Overlay>
@@ -94,6 +95,7 @@ import { navRoutes, urls } from '../../../../services/urls';
 import { formatUpdateForBookClub } from '../bookClubService';
 import { useRoute, useRouter } from 'vue-router';
 import LoadingCard from '../../../shared/LoadingCard.vue';
+import { createConfetti } from '../../../../services/helpers';
 
 
 const props = defineProps({
@@ -115,6 +117,7 @@ const overlays = ref({
 
 const route = useRoute();
 const router = useRouter();
+const { bookclub } = route.params;
 const isUserFinishedReadingBook = ref(false);
 const reviewPost = ref(null);
 
@@ -168,20 +171,21 @@ function refreshFeed() {
     });
 }
 
+
 /**
  * @post
  */
-
 function postUpdateForBookClub(update) {
     update = formatUpdateForBookClub(update, route.params.user)
 
-    db.post(urls.bookclubs.createClubUpdate(route.params.bookclub), update, false, 
+    db.post(urls.bookclubs.createClubUpdate(bookclub), update, false, 
         (res) => {
             console.log(res);
             // Refresh;
             refreshFeed();
             const { dialogRef } = overlays.value.updateOverlay;
             dialogRef?.close();
+            createConfetti();
         },
         (err) => {
             console.warn(err);
@@ -189,9 +193,40 @@ function postUpdateForBookClub(update) {
     );
 };
 
+
+// Allow posting and then closing the overlay.
 function postReviewAndFinishReadingCurrentBook(post) {
-    db.post(urls.bookclubs.postClubReviewAndFinishReading(route.params.bookclub), post, false, (res) => {
-        isUserFinishedReadingBook.value = true;
-    });
+    // post.user = {id: }
+
+    if (!post) {
+        db.post(
+            urls.concatQueryParams(
+                urls.bookclubs.postClubReviewAndFinishReading(bookclub),
+                { no_review: true },
+            ), 
+            null, 
+            false, 
+            (res) => {
+                isUserFinishedReadingBook.value = true;
+            }, (err) => {
+                console.error(err);
+            }
+        );
+    } else {   
+        db.post(urls.bookclubs.postClubReviewAndFinishReading(bookclub), 
+            post, 
+            false, 
+            (res) => {
+                isUserFinishedReadingBook.value = true;
+            }, 
+            (err) => {
+                console.error(err);
+            }
+        );
+    };
+
+    const { dialogRef } = overlays.value.finishedReadingOverlay;
+    dialogRef?.close();
+    createConfetti();
 }
 </script>

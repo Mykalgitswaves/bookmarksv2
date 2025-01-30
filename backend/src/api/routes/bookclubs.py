@@ -1697,7 +1697,6 @@ async def create_review_for_user(
     Returns:
         200 response for a successful post
     """
-
     data = await request.json()
     
     user_id = data.get("user",{}).get("id")
