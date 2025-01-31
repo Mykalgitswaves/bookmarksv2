@@ -131,9 +131,11 @@ export const urls = {
         stopCurrentlyReadingBookForClub: 
             (bookclub_id) => (baseUrl + `${BOOK_CLUBS_PREFIX}${bookclub_id}/currently_reading/stop`),
         // Read / GETS
-        getClubsOwnedByUser: (user_id) =>  (baseUrl + `${BOOK_CLUBS_PREFIX}owned/${user_id}/`),
-        getClubsJoinedByCurrentUser: (user_id) =>  (baseUrl + `${BOOK_CLUBS_PREFIX}member/${user_id}/`),
+        getClubsOwnedByUser: (user_id) =>  (baseUrl + `${BOOK_CLUBS_PREFIX}owned/${user_id}`),
+        getClubsJoinedByCurrentUser: (user_id) =>  (baseUrl + `${BOOK_CLUBS_PREFIX}member/${user_id}`),
         getClubFeed: (bookclub_id) => (baseUrl + `${BOOK_CLUBS_PREFIX}${bookclub_id}/feed`),
+        // Gets a finished feed for a club the user has finished reading! 
+        getFinishedClubFeed: (bookclub_id) => (`${baseUrl}${BOOK_CLUBS_PREFIX}${bookclub_id}/feed/finished`),
         getClubPace: (bookclub_id) => (baseUrl + `${BOOK_CLUBS_PREFIX}${bookclub_id}/club_members_pace`),
         getPaceForUserInClub: (bookclub_id) => (baseUrl + `${BOOK_CLUBS_PREFIX}${bookclub_id}/user_pace`),
         getMinimalClub: (bookclub_id, user_id) => (baseUrl + `${BOOK_CLUBS_PREFIX}${bookclub_id}/minimal_preview/${user_id}/user`),
@@ -170,7 +172,7 @@ export const urls = {
         // Is user finished reading
         getCurrentUserFinishedReading: (bookclub_id, user_id) => (`${baseUrl}${BOOK_CLUBS_PREFIX}${bookclub_id}/is_user_finished_reading/${user_id}`),
         // FINISH THAT THANG!
-        postClubReviewAndFinishReading: (bookclub_id) => (`${baseUrl}${BOOK_CLUBS_PREFIX}${bookclub_id}/review/create`),
+        postClubReviewAndFinishReading: (bookclub_id, book_club_book_id) => (`${baseUrl}${BOOK_CLUBS_PREFIX}${bookclub_id}/review/create/${book_club_book_id}`),
     },
     concatQueryParams: (url, newQueryParams, returnUrl) => {
         if (!url) {

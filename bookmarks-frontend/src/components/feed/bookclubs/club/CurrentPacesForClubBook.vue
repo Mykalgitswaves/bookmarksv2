@@ -28,14 +28,15 @@
                                 <div>
                                     <h4 class="text-stone-700">{{ member.username }}</h4>
                                     
-                                    <p class="text-sm text-stone-500">{{ member.pace ? `is reading chapter ${member.pace} of ${props.totalChapters}` : 'hasn\'t started yet' }}</p>
+                                    <p v-if="!member.is_finished_reading" class="text-sm text-stone-500">{{ member.pace ? `is reading chapter ${member.pace} of ${props.totalChapters}` : 'hasn\'t started yet' }}</p>
+                                    <p v-else class="text-sm text-stone-500">Finished reading! 🎉</p>
                                 </div>
 
                                 <div class="pace-line" 
                                     :style="{
                                         width: generateProgressBarWidthForMember(member),
                                         height: '4px',
-                                        backgroundColor: 'var(--indigo-300)',
+                                        backgroundColor: member.is_finished_reading ? 'var(--green-300)' : 'var(--indigo-300)',
                                         borderRadius:  '4px',
                                         position: 'absolute',
                                         bottom: '-8px',
@@ -98,6 +99,11 @@ const toast = ref(null);
 
 const clubPacePromise = db.get(urls.bookclubs.getClubPace(route.params.bookclub), null, false, (res) => {
     memberPaces = res.member_paces
+    memberPaces.forEach((member) => {
+        if (member.pace === 99999) {
+            member.is_finished_reading = true;
+        }
+    })
     svgPaceMap = generateSvgPaceMap(memberPaces)
     
     // Go through and check to see if people have been peer pressured yet by another user in the club, 
@@ -156,6 +162,8 @@ function pressureReader(member) {
 }
 
 function generateProgressBarWidthForMember(member) {
+    if (member.pace === 99999) return '100%';
+
     return `${(member.pace / props.totalChapters) * 100}%`
 }
 </script>

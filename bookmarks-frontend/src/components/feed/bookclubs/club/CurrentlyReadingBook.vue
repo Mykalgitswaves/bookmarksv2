@@ -8,7 +8,7 @@
             <div class="book-metadata">
                 <h3 class="fancy text-xl text-stone-800">{{ book.title }}</h3>
 
-                <p class="text-sm text-stone-600">
+                <p v-if="book?.author_names?.length" class="text-sm text-stone-600">
                     {{ helpersCtrl.commanatoredString(book.author_names) }}
                 </p>
             </div>

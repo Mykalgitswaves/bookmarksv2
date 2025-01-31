@@ -244,7 +244,7 @@ const authPromise = db.authenticate(urls.authUrl, user);
 
 onMounted(async () => {
   try {
-    getCurrentUser(user);
+    await getCurrentUser(user);
   } catch(err) {
     console.log(err);
   }
