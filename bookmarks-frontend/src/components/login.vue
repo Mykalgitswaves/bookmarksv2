@@ -77,32 +77,31 @@ async function submitForm() {
   formData.append('password', toRaw(formBlob.value.password));
   
   try {
-  const response = await fetch(urls.login, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/x-www-form-urlencoded',
-      'Accept': 'application/json'
-    },
-    // convert this from proxy toRaw
-    body: formData,
-  });
+    const response = await fetch(urls.login, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'Accept': 'application/json'
+      },
+      // convert this from proxy toRaw
+      body: formData,
+    });
 
-  if (!response.ok) { // Check if the response status is not OK (not 200-299)
-    errorMessage.value = true;
-    setTimeout(() => {
-    errorMessage.value = false;
-  }, 2000);
-  }
-  else {
-    const data = await response.json();
-    console.log(data);
+      if (!response.ok) { // Check if the response status is not OK (not 200-299)
+        errorMessage.value = true;
+        setTimeout(() => {
+        errorMessage.value = false;
+      }, 2000);
+    }
+    else {
+      const data = await response.json();
+      console.log(data);
 
-    const user_id = data.user_id;
-    const token = `token=${data.access_token}`;
-    document.cookie = token;
-    
-    return router.push(navRoutes.toLoggedInFeed(user_id));
-  }
+      const user_id = data.user_id;
+      const token = `token=${data.access_token}`;
+      document.cookie = token;
+      router.push(navRoutes.toLoggedInFeed(user_id));
+    }
   
 } catch (error) {
   console.error(error);

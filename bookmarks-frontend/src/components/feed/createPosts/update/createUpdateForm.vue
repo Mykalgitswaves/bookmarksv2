@@ -4,9 +4,10 @@
         </h1>
     <!-- Controls for navigating to diff steps. -->
     <div>
-        <div class="toolbar">
+        <div class="toolbar mt-5">
             <button type="button"
-                class="toolbar-btn"
+                class="btn btn-tiny"
+                :class="{'text-indigo-500': step !== 1}"
                 :disabled="step === 1"
                 @click="step -= 1"
             >
@@ -16,7 +17,8 @@
             </button>
 
             <button type="button"
-                class="toolbar-btn"
+                class="btn btn-tiny"
+                :class="{'text-indigo-500': step !== 3}"
                 :disabled="step === 3"
                 @click="step += 1"
             >
@@ -42,8 +44,8 @@
     <div class="spacing-wrap">
         <div class="container">
             <div class="mb-5 ml-auto mr-auto w-90" v-if="step === 1">
-                <div class="flex gap-2 justify-center pb-5">
-                    <label class="block mb-5 mt-10" for="page-chapter">
+                <div class="pb-5" :class="{'flex gap-2 justify-center': !!bookclub}">
+                    <label v-if="!!bookclub" class="block mb-5 mt-10" for="page-chapter">
                         <p class="text-center text-2xl mb-2 mt-5 text-stone-600 fancy">on chapter <span class="italic text-indigo-600">{{ update.chapter }}</span></p>
                         <input
                             class="mx-auto input-number rounded-md"
@@ -53,7 +55,7 @@
                         >
                     </label>
 
-                    <label class="block mb-5 mt-10" for="page-number">
+                    <label v-else class="block mb-5 mt-10" for="page-number">
                         <p class="text-center text-2xl mb-2 mt-5 text-stone-600 fancy">on page <span class="italic text-indigo-600">{{ update.page }}</span></p>
                         <input
                             class="mx-auto input-number rounded-md"
@@ -145,6 +147,7 @@
 </template>
 <script setup>
 import { ref, watch, reactive, computed } from 'vue';
+import { useRoute } from 'vue-router';
 import CreatePostHeadline from '../createPostHeadline.vue';
 import CreateUpdateFormResponses from './CreateUpdateFormResponses.vue';
 import { helpersCtrl } from '../../../../services/helpers';
@@ -163,6 +166,9 @@ const chapter = ref(0)
 const step = ref(1);
 const progressTotal = computed(() => Math.floor((step.value * 100) / 3));
 const remainderTotal = computed(() => 100 - progressTotal.value);
+const route = useRoute();
+// Might sometimes be null or undefined?
+const { bookclub } = route.params;
 
 const update = reactive({
     headline: '',

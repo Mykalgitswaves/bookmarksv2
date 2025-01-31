@@ -94,7 +94,11 @@
         </nav>
 
         <!-- Bookclub specific stuff -->
-        <nav v-if="footerView === FooterViews.bookclub && route.params['bookclub']"
+        <nav v-if="
+                footerView === FooterViews.bookclubs 
+                && route.params['bookclub'] 
+                && !commentingForClubPost
+            "
             :class="{ 'minimized': minimizeFooter }"  
             class="lg:border-solid border-indigo-100 border-[1px]"
             role="navigation" 
@@ -138,10 +142,46 @@
                 </RouterLink>
             </div>
         </nav>
+
+        <nav v-if="footerView === FooterViews.bookclubs 
+                && route.params['bookclub'] 
+                && commentingForClubPost" 
+            class="club-comment-footer"
+        >
+            <p class="text-sm fancy" style="margin-left: 6%">Replying to
+                <span class="text-indigo-500">{{ clubPostCommentMetaData.username }}'s</span>
+            </p>
+
+            <div class="comment-bar-section">
+                <CommentBar
+                    :post-id="clubPostCommentMetaData.post_id"
+                    :comment="clubPostCommentMetaData"
+                    @pre-success-comment="(comment) => PubSub.publish('footer-comment-pre-success-comment', {
+                        commentId: clubPostCommentMetaData.id, 
+                        reply: comment 
+                    })" 
+                    @post-failure-comment="(error) => PubSub.publish('footer-comment-failure-comment', { 
+                        commentId: clubPostCommentMetaData.id,
+                        error: error
+                    })"
+                />
+
+                <button
+                    type="button" 
+                    class="btn btn-tiny btn-red mb-2"
+                    @click="() => {
+                        commentingForClubPost = false;
+                        clubPostCommentMetaData = {};
+                    }"
+                >
+                    <IconExit /> 
+                </button>
+            </div>
+        </nav>
     </footer>
 
     <Transition name="content" tag="div">
-        <div v-if="minimizeFooter"
+        <div v-if="minimizeFooter && !commentingForClubPost"
             @click="minimizeFooter = false"
             @mouseover="minimizeFooter = false"
         >
@@ -164,6 +204,8 @@ import IconBookshelves from '../svg/icon-bookshelves.vue'
 import IconBack from '@/components/svg/icon-back.vue';
 import IconClubFeed from  '@/components/svg/icon-feed-club.vue';
 import IconClubSettings  from '@/components/svg/icon-club-settings.vue';
+import IconExit from '../svg/icon-exit.vue';
+import CommentBar from './bookclubs/club/posts/comments/CommentBar.vue';
 
 import { useRoute, useRouter }  from 'vue-router'
 import { ref, computed } from 'vue'
@@ -176,10 +218,12 @@ import { goToSearchPage,
     goToBookClubsPage,
     FooterViews
 } from './footernavService';
-import { debounce, throttle } from 'lodash';
+import { PubSub } from '../../services/pubsub'; 
 
 const isSearchBarActive = ref(false);
 const minimizeFooter = ref(false);
+const commentingForClubPost = ref(false);
+const clubPostCommentMetaData = ref({});
 
 const route = useRoute();
 const { user } = route.params
@@ -190,7 +234,7 @@ const footerView = computed(() => {
     // Check to see if we want to load the bookclub nav instead 
     let bookclub = route.params.bookclub;
     if (bookclub) {
-        return FooterViews.bookclub;
+        return FooterViews.bookclubs;
     }
 
     return FooterViews.default
@@ -200,7 +244,7 @@ window.addEventListener('toggleSearchBar', () => {
     isSearchBarActive.value = !isSearchBarActive.value
 });
 
-if(window.visualViewport.width <= 768){
+if (window.visualViewport.width <= 768){
     window.addEventListener('scroll', function(event) {
         function footer() {
             var scroll = window.scrollY || document.documentElement.scrollTop;
@@ -214,7 +258,14 @@ if(window.visualViewport.width <= 768){
 
         footer();
     });
-}
+};
+
+// This lets us know when and what to show on the footer 
+// in case you are leaving a comment inside of a book club.
+PubSub.subscribe('start-commenting-club-post', (commentData) => {
+    commentingForClubPost.value = true;
+    clubPostCommentMetaData.value = commentData;
+});
 </script>
 <style scoped>
 .hidden {
@@ -396,5 +447,12 @@ nav .nav-button-group {
     left: 0;
     top: 0;
     height: 100%;
+}
+
+/* The wrapper */
+.club-comment-footer {
+    display: flex;
+    flex-direction: column;
+    row-gap: 8px;
 }
 </style>

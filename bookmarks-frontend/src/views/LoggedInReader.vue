@@ -191,8 +191,8 @@
     </template>
 
     <template #loading>
-      <div>
-        Authenticating....
+      <div class="mt-10 mx-10 loading gradient radius-md text-center py-5">
+        Authenticating...👀
       </div>
     </template>
   </AsyncComponent>
@@ -212,7 +212,6 @@ import AsyncComponent from '@/components/feed/partials/AsyncComponent.vue';
 const route = useRoute();
 const router = useRouter();
 const { user } = route.params;
-
 // Fix for a weird bug we sometimes run into from bad navigation.
 // If user is ever undefined make us logout.
 watch(() => route.params, (newValue) => {
@@ -399,14 +398,16 @@ watch(searchData, (newValue) => {
   .main-layout {
     min-height: 100%;
     width: 100%;
-    padding: 1.25rem;
+    padding: 8px;
     gap: 2ch;
     justify-content: center;
+    overflow-x: hidden;
   }
 
   @media only screen and (min-width: 768px) {
     .main-layout {
       justify-content: start;
+      padding: 1.25rem;
       padding-left: 14vw;
     }
     .sidebar {

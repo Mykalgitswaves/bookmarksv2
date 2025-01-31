@@ -54,6 +54,7 @@
                     <!-- todo add in n more awards stuff here. -->
                 <div class="flex items-center">
                     <button 
+                        type="button"
                         title="like post"
                         class="btn btn-tiny btn-icon mr-auto btn-specter relative b-0 m-r-5" 
                         :class="{'liked': isLikedByCurrentUser}"
@@ -69,8 +70,20 @@
                         </span>
                     </button>
 
-
                     <button 
+                        v-if="!isViewingPost"
+                        type="button"
+                        title="comment"
+                        class="btn btn-tiny btn-icon mr-auto btn-specter b-0" 
+                        @click="router.push(navRoutes.toBookClubCommentPage(user, bookclub, post.id))"
+                    >
+                        <IconComment />
+                    </button>
+                </div>
+                
+                <div :class="{'expanded': false}">
+                    <button 
+                        type="button"
                         title="view awards"
                         class="btn btn-tiny btn-icon mr-auto btn-specter b-0" 
                         @click="dispatchAwardEvent(post)"
@@ -78,41 +91,55 @@
                         <IconAwards />
                     </button>
                 </div>
-                
-                <div class="awards-list" :class="{'expanded': false}" v-if="awards.length">
-                    <div v-for="(award, index) in awards" 
-                        :key="award.id" 
-                    >
-                        <div v-if="award.num_grants > 0" 
-                            class="award"
-                            :class="{'granted-by-user': award.granted_by_current_user}"
-                            :title="award.name"
-                            @click="grantOrUngrantAward(award, index - 1)"
-                        >
-                            <span>
-                                <span class="num-grants">{{ award.num_grants }}</span>
-                                <component v-if="ClubAwardsSvgMap[award.cls]" :is="ClubAwardsSvgMap[award.cls]()"/>
-                            </span>
-                        </div>
-                    </div>
+            </div>
+        </div>
+
+        <div class="awards-list" v-if="awards.length">
+            <div
+                v-for="(award, index) in awards" 
+                :key="award.id" 
+            >
+                <div v-if="award.num_grants > 0" 
+                    class="award"
+                    :class="{'granted-by-user': award.granted_by_current_user}"
+                    :title="award.name"
+                    @click="grantOrUngrantAward(award, index - 1)"
+                >
+                    <span>
+                        <span class="num-grants">{{ award.num_grants }}</span>
+                        <component v-if="ClubAwardsSvgMap[award.cls]" :is="ClubAwardsSvgMap[award.cls]()"/>
+                    </span>
                 </div>
             </div>
         </div>
-    </div>
-    <div v-else-if="post.type === ClubReviewPost.cls"
-        class="post club-review-post"
-    >
-    <!-- TODO: implement -->
+        <!-- 
+            If you are not previewing the post in feed that 
+            means you are on the post page, but if youre on the post
+            page we are calling clubcomments separately
+         -->
+        <div v-if="!isViewingPost && !!post.comments?.length">
+            <ClubComment
+                :is-preview="true" 
+                :comment-data="helpersCtrl.firstOrNone(post.comments)"
+                :url-to-comment-page="navRoutes.toBookClubCommentPage(user, bookclub, post.id)"
+            />
+        </div>
     </div>
 
-    <div v-else 
+    <div v-if="post.type === ClubReviewPost.cls"
+        class="post club-review-post"
+    >
+        <h4 class="fancy">Finish club reviews</h4>
+    </div>
+
+    <!-- <div v-else 
         class="post not-implemented"
     >
-        <!-- Other case exception -->
-        <h3 class="text-2xl text-stone-600 text-center">
+     Other case exception -->
+        <!-- <h3 class="text-2xl text-stone-600 text-center">
             Something went wrong
         </h3>
-    </div>
+    </div> --> 
 
     <Teleport to="body">
         <Transition name="content">
@@ -126,24 +153,35 @@
     </Teleport>
 </template>
 <script setup>
-import { urls } from '../../../../../services/urls';
+import { urls, navRoutes } from '../../../../../services/urls';
+import { helpersCtrl } from '../../../../../services/helpers';
 import { db } from '../../../../../services/db';
 import { ClubUpdatePost, ClubReviewPost } from '../../models/models';
 import { ClubAwardsSvgMap } from '../awards/awards';
 import { computed, ref } from 'vue';
-import { useRoute } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
+import IconComment from '../../../../svg/icon-club-comment.vue';
 import IconAwards from '../awards/icons/Awards.vue';
 import IconClubLike from '../awards/icons/ClubLike.vue';
 import SuccessToast from '../../../../shared/SuccessToast.vue';
 import { Toast } from '../../../../shared/models';
 import { PubSub } from '../../../../../services/pubsub';
+import CommentBar from './comments/CommentBar.vue';
+import ClubComment from './comments/ClubComment.vue';
 
 const props = defineProps({
     post: {
         type: Object,
         required: true,
+    },
+    isViewingPost: {
+        type: Boolean,
+        required: false,
+        default: false,
     }
 });
+
+console.log(props.post.id)
 
 const awardsRef = ref(
     Object.entries(props.post.awards).map(([key, award]) => {
@@ -153,6 +191,8 @@ const awardsRef = ref(
 );
 
 const route = useRoute();
+const router = useRouter();
+const { bookclub, user } = route.params;
 const toast = ref(null); 
 
 /**
@@ -168,12 +208,9 @@ const awards = computed(() => {
 
 
 function dispatchAwardEvent(post) {
-    const event = new CustomEvent('open-award-post-modal', {
-        detail:  {
-            post_id: post.id
-        }
+    PubSub.publish('open-award-post-modal', {
+        post_id: post.id
     });
-    window.dispatchEvent(event);
 };
 
 function successDeleteFunction(award, vForIndex) {
@@ -292,13 +329,18 @@ function likeOrUnlikeClubPost() {
 
 .awards-list {
     margin-bottom: -10px;
-    margin-right: -10px;
+    margin-right: 10px;
+    margin-left: 10px;
     display: flex;
+    flex-direction: row;
     column-gap: 4px;
     row-gap: 4px;
     justify-content: start;
     flex-wrap: wrap;
     background-color: var(--surface-primary);
+    border: 1px solid var(--slate-400);
+    border-radius: var(--radius-sm);
+    padding: 6px 8px;
 
     .award {
         position: relative;

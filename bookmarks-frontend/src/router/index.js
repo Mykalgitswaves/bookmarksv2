@@ -148,7 +148,11 @@ export const router = createRouter({
               children: [
                 {
                   path: 'feed',
-                  name: 'feed'
+                  name: 'feed',
+                },
+                {
+                  path: 'post/:postId',
+                  name: 'clubCommentPage',
                 },
                 {
                   path: 'settings/currently-reading',

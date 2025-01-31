@@ -117,7 +117,7 @@ const overlays = ref({
 
 const route = useRoute();
 const router = useRouter();
-const { bookclub } = route.params;
+const {user, bookclub} = route.params;
 const isUserFinishedReadingBook = ref(false);
 const reviewPost = ref(null);
 
@@ -158,7 +158,7 @@ const clubFeedPromiseFactory = () => db.get(feedUrl, null, false, (res) => {
     console.log(err);
 });
 
-const currentlyReadingPromise = db.get(urls.bookclubs.getCurrentlyReadingForClub(route.params.bookclub), null, false, (res) => {
+const currentlyReadingPromise = db.get(urls.bookclubs.getCurrentlyReadingForClub(bookclub), null, false, (res) => {
     currentlyReadingBook = res.currently_reading_book;
 });
 
@@ -191,7 +191,7 @@ function refreshFeed() {
 function postUpdateForBookClub(update) {
     update = formatUpdateForBookClub(update, route.params.user)
 
-    db.post(urls.bookclubs.createClubUpdate(bookclub, ), update, false, 
+    db.post(urls.bookclubs.createClubUpdate(bookclub), update, false, 
         (res) => {
             console.log(res);
             // Refresh;
