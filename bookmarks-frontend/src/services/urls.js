@@ -56,7 +56,7 @@ export const urls = {
         review: baseUrl + 'api/posts/create_review',
         update: baseUrl + 'api/posts/create_update',
         comparison: baseUrl + 'api/posts/create_comparison',
-        createComment: () => (baseUrl + 'api/posts/comment/create'),
+        createComment: () => (`${baseUrl}api/posts/comment/create`),
         // used in feed
         getReviews: (user_id) => (baseUrl +`api/${user_id}/posts/`),
         getComparisons: (user_id) => (baseUrl + `api/${user_id}/comparisons`),
@@ -138,6 +138,8 @@ export const urls = {
         getPaceForUserInClub: (bookclub_id) => (baseUrl + `${BOOK_CLUBS_PREFIX}${bookclub_id}/user_pace`),
         getMinimalClub: (bookclub_id, user_id) => (baseUrl + `${BOOK_CLUBS_PREFIX}${bookclub_id}/minimal_preview/${user_id}/user`),
         getInvitesForClub: (bookclub_id) => (baseUrl + `${BOOK_CLUBS_PREFIX}${bookclub_id}/club_invites`),
+        // Get club post for an individual post in a feed (comments page)
+        getClubPost: (bookclub_id, post_id) => (`${baseUrl}${BOOK_CLUBS_PREFIX}${bookclub_id}/post/${post_id}`),
         // Sending and loading invitation / member stuff.
         sendInvites: () => (baseUrl + `${BOOK_CLUBS_PREFIX}invite`),
         searchUsersNotInClub: (bookClubId, searchParam) => 
@@ -171,6 +173,8 @@ export const urls = {
         getCurrentUserFinishedReading: (bookclub_id, user_id) => (`${baseUrl}${BOOK_CLUBS_PREFIX}${bookclub_id}/is_user_finished_reading/${user_id}`),
         // FINISH THAT THANG!
         postClubReviewAndFinishReading: (bookclub_id) => (`${baseUrl}${BOOK_CLUBS_PREFIX}${bookclub_id}/review/create`),
+        // Used to have presence for club. Knowing where people are having conversations in an actual club. 
+        establishWebsocketConnectionForClub: (bookclub_id) => `${wsUrl}${BOOK_CLUBS_PREFIX}${bookclub_id}/thread`
     },
     concatQueryParams: (url, newQueryParams, returnUrl) => {
         if (!url) {
@@ -185,6 +189,8 @@ export const urls = {
             }
             
             url = url + '?' + new URLSearchParams(newQueryParams);
+            console.log(url);
+            return url;
         }
 
         if (returnUrl) {
@@ -206,6 +212,7 @@ export const navRoutes = {
     toBookClubsPage: (current_user) => (`/feed/${current_user}/bookclubs/`),
     toCreateClubPage: (current_user) => (`/feed/${current_user}/bookclubs/create/`),
     toBookClubFeed: (current_user, bookclub_id) => (`/feed/${current_user}/bookclubs/${bookclub_id}/`),
+    toBookClubCommentPage: (current_user, bookclub_id, post_id) => (`/feed/${current_user}/bookclubs/${bookclub_id}/post/${post_id}`),
     // Used for component routing inside of bookclubs app.
     toSetCurrentlyReadingPage: (current_user, bookclub_id) => 
         (`/feed/${current_user}/bookclubs/${bookclub_id}/settings/currently-reading/set`),

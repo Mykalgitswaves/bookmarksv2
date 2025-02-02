@@ -1,3 +1,5 @@
+import { generateUUID } from '../../../../services/helpers';
+
 const paceIntervals = {
     DAY: 'days',
     WEEK: 'weeks',
@@ -73,10 +75,10 @@ export const Invitation = {
 // Default for new invitations
 export class BaseInvitation {
     static invitations = []
-
     constructor(invite) {
+        const id = generateUUID();
         if (!invite) {
-            this.id = crypto.randomUUID();
+            this.id = id;
             this.email = '';
             this.user_id = '';
             this.type = Invitation.types.email;
@@ -127,7 +129,8 @@ export class Member {
             this.email = member.user.email;
             this.role = member.role;
         } else {
-            this.id = crypto.randomUUID();
+            const id = generateUUID();;
+            this.id = id;
             this.email = '';
             this.user_id = '';
             this.role = '';

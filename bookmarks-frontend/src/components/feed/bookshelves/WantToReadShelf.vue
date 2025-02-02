@@ -9,7 +9,7 @@
 
             <button
                 type="button"
-                class="btn edit-btn b-light text-stone-200"
+                class="btn btn-tiny edit-btn b-light text-stone-200"
                 @click="goToBookshelfSettingsPage(router, route.params.user, route.params.bookshelf)"
             >
                 <IconEdit/>
@@ -22,7 +22,7 @@
                 <div class="w-80"> 
                     <button
                         type="button"
-                        class="btn add-readers-btn"
+                        class="btn btn-tiny add-readers-btn"
                         :class="{'active': currentView === 'edit-books'}"
                         @click="currentView = 'edit-books'"
                     >
@@ -31,7 +31,7 @@
 
                     <button 
                         type="button"
-                        class="btn add-readers-btn ml-5"
+                        class="btn btn-tiny add-readers-btn ml-5"
                         :class="{'active': currentView === 'add-books'}"
                         @click="currentView = 'add-books'"
                     >
@@ -52,7 +52,7 @@
         </div>
 
         <!-- Add and view books -->
-        <div v-if="loaded && currentView === 'edit-books'" class="mt-5">
+        <div v-if="loaded && currentView === 'edit-books'" class="mt-5 mx-2">
             <BookshelfBooks 
                 v-if="books?.length"
                 :unique="Bookshelves.WANT_TO_READ.prefix"

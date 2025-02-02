@@ -97,7 +97,6 @@ import { useRoute, useRouter } from 'vue-router';
 import LoadingCard from '../../../shared/LoadingCard.vue';
 import { createConfetti } from '../../../../services/helpers';
 
-
 const props = defineProps({
     club: {
         type: Object,
@@ -117,7 +116,9 @@ const overlays = ref({
 
 const route = useRoute();
 const router = useRouter();
-const { bookclub } = route.params;
+
+const {user, bookclub} = route.params;
+
 const isUserFinishedReadingBook = ref(false);
 const reviewPost = ref(null);
 
@@ -138,14 +139,14 @@ function showFinishedReadingForm() {
  * @description – Reruns every time the club loads
  */
 
-const clubFeedPromise = db.get(urls.bookclubs.getClubFeed(route.params.bookclub), null, false, (res) => {
+const clubFeedPromise = db.get(urls.bookclubs.getClubFeed(bookclub), null, false, (res) => {
     data.value.posts = res.posts;
 },
 (err) => {
     console.log(err);
 });
 
-const currentlyReadingPromise = db.get(urls.bookclubs.getCurrentlyReadingForClub(route.params.bookclub), null, false, (res) => {
+const currentlyReadingPromise = db.get(urls.bookclubs.getCurrentlyReadingForClub(bookclub), null, false, (res) => {
     currentlyReadingBook = res.currently_reading_book;
 });
 
