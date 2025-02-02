@@ -560,7 +560,7 @@ class TestBookshelfWS:
 
         bookshelf_id = response.json()["bookshelf_id"]
 
-        response = requests.put(f"{self.endpoint}/api/user/{self.user_id_2}/send_friend_request", headers=headers)
+        response = requests.put(f"{self.endpoint}/api/user/{self.user_id}/send_friend_request/{self.user_id_2}", headers=headers)
         assert response.status_code == 200, "Testing Send Friend Request"
 
         friend_headers = {"Authorization": f"{self.token_type_2} {self.access_token_2}"}

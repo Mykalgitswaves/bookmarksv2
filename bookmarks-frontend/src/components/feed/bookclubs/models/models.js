@@ -13,6 +13,7 @@ const paceNames = {
 }
 
 export const BookClub = {
+    cls: 'bookclub',
     paceIntervals,
     paceNames,
         // num_books: 1,

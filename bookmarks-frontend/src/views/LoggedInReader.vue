@@ -206,12 +206,14 @@ import { useRoute, useRouter } from 'vue-router';
 import { db } from '../services/db'
 import { urls, navRoutes } from '../services/urls'
 import { PubSub } from '../services/pubsub';
+import { getCurrentUser } from '../stores/currentUser';
 import AsyncComponent from '@/components/feed/partials/AsyncComponent.vue';
 import { getCurrentUser } from './../stores/currentUser';
 
 const route = useRoute();
 const router = useRouter();
 const { user } = route.params;
+
 // Fix for a weird bug we sometimes run into from bad navigation.
 // If user is ever undefined make us logout.
 watch(() => route.params, (newValue) => {
@@ -239,7 +241,7 @@ const searchData = ref({
 // This will make ui rerender whenever any dependency changes in length.
 const hasSearchResults = computed(() => Object.values(searchData.value).some((val) => val.length));
 
-const authPromise = db.authenticate(urls.authUrl, route.params.user);
+const authPromise = db.authenticate(urls.authUrl, user);
 
 onMounted(async () => {
   try {

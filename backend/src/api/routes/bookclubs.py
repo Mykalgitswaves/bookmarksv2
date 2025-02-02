@@ -1668,9 +1668,10 @@ async def update_club_notification_to_dismiss(
 
 ## Create review for book club
 
-@router.post("/{book_club_id}/review/create", name='bookclubs:create_review')
+@router.post("/{book_club_id}/review/create/{book_club_book_id}", name='bookclubs:create_review')
 async def create_review_for_user(
     book_club_id: str,
+    book_club_book_id: str,
     current_user: Annotated[User, Depends(get_current_active_user)],
     request: Request,
     background_tasks: BackgroundTasks, 
@@ -1702,7 +1703,6 @@ async def create_review_for_user(
     Returns:
         200 response for a successful post
     """
-
     data = await request.json()
     
     user_id = data.get("user",{}).get("id")
@@ -1720,7 +1720,8 @@ async def create_review_for_user(
                 question_ids=data.get("ids"),
                 responses=data.get("responses"),
                 rating=data.get("rating"),
-                id=book_club_id
+                id=book_club_id,
+                book_club_book_id= book_club_book_id
             )
         except ValueError as e:
             raise HTTPException(status_code=400, detail=str(e))
@@ -1745,7 +1746,8 @@ async def create_review_for_user(
     else:
         try:
             review = BookClubSchemas.CreateReviewPostNoText(
-                rating=data.get("rating")
+                rating=data.get("rating"),
+                book_club_book_id=book_club_book_id
             )
         except ValueError as e:
             raise HTTPException(status_code=400, detail=str(e))
@@ -1753,7 +1755,8 @@ async def create_review_for_user(
         response = book_club_repo.create_finished_reading(
             user_id,
             book_club_id,
-            review.rating
+            review.rating,
+            review.book_club_book_id
         )
 
         if response:
@@ -1951,6 +1954,7 @@ async def get_afterword_friend_thoughts(
             user (dict): the user who the thought belongs to. A dict with:
                 id (str): The id for the user
                 username (str): The username for the user
+                is_current_user (bool): Whether the user is the current user
             review (dict): Review related information. A dict including:
                 headline (str): The headline for the review
                 rating (int): The rating the user gave the book
@@ -1971,6 +1975,7 @@ async def get_afterword_friend_thoughts(
     
     friend_thoughts = book_club_repo.get_afterward_friend_thoughts(
         book_club_id,
+        book_club_book_id,
         user_id
     )
     
@@ -1999,8 +2004,8 @@ async def get_afterword_friend_thoughts(
             }
         )
         raise HTTPException(
-            400,
-            "Unable to grab friend thoughts"
+            status_code=400,
+            detail="Unable to grab friend thoughts"
         )
 
 @router.get(
@@ -2057,6 +2062,7 @@ async def get_afterword_consensus(
     
     consensus = book_club_repo.get_afterward_consensus(
         book_club_id,
+        book_club_book_id,
         user_id
     )
     
@@ -2070,7 +2076,7 @@ async def get_afterword_consensus(
             }
         )
         return JSONResponse(
-            200,
+            status_code=200,
             content={
                 "consensus": consensus
             }
@@ -2107,7 +2113,6 @@ async def get_afterword_highlights(
     Gets the highlights from this book for the user. This includes:
         - Most controversial update
         - Most agreed with update
-        - Most ignored update
 
     Args:
         book_club_id (str): The id for the book club they are getting the afterword for
@@ -2124,15 +2129,14 @@ async def get_afterword_highlights(
                 chapter (int): the chapter for the post
                 response (str | None): the response for the post
                 likes (int): the number of likes on a post
-                awards (array): an array of awards for the post. Each award object
+                awards (dict): an array of awards for the post. Each award object
                 will contain:
-                    id (str): the uuid of the award
+                    id (key, str): the uuid of the award
                     name (str): the name of the award
                     type (str): the type of the award
                     description (str): the description of the award
                     num_grants (int): the number of grants for the award
             agreed_post (dict): A post object
-            ignored_post (dict): A post object
 
     NOTE: Need to think about edge cases here for:
         User made no updates
@@ -2153,6 +2157,7 @@ async def get_afterword_highlights(
     
     highlights = book_club_repo.get_afterward_highlights(
         book_club_id,
+        book_club_book_id,
         user_id
     )
     
@@ -2166,9 +2171,9 @@ async def get_afterword_highlights(
             }
         )
         return JSONResponse(
-            200,
+            status_code=200,
             content={
-                "highlights": highlights
+                "highlights": jsonable_encoder(highlights)
             }
         )
     else:
@@ -2202,15 +2207,52 @@ async def get_afterword_club_stats(
     This is the 5th page.
     Gets stats from the clubs reading. This includes:
         Data for line graph of reading history
-        Data for table of awards received
 
     Args:
         book_club_id (str): The id for the book club they are getting the afterword for
         user_id (str): The id of the user
+        book_club_book_id (str): The id for the BookClubBook node that this
+            afterword is being created for
 
     Returns: 
-        NOTE: We will need to discuss the best way to return this data.
-        Probably best to try a few things
+        reading_history (array): An array of each user's reading progress. 
+            Each object in the array contains a dictionary with:
+                user (dict): the data for the user this object is about,
+                    this contains:
+                        id (str): The user id
+                        username (str): The user username
+                progress_over_time (array): An array of the users progress over time,
+                    Each object in the array contains a dictionary with:
+                        timestamp (datetime): The datetime of the progress
+                        chapter (int): The chapter the progress is associated with
+
+        Here is an example return:
+            {
+                "reading_history": [
+                    {
+                        "user": {
+                            "id":"user123",
+                            "username": "Alice",
+                        },
+                        "progress_over_time": [
+                            {"timestamp": "2025-01-01T10:00:00Z", "chapter": 10},
+                            {"timestamp": "2025-01-02T10:00:00Z", "chapter": 25},
+                            {"timestamp": "2025-01-03T10:00:00Z", "chapter": 50}
+                        ]
+                    },
+                    {
+                        "user": {
+                            "id":"user456",
+                            "username": "Bob",
+                        },
+                        "progress_over_time": [
+                            {"timestamp": "2025-01-01T10:00:00Z", "chapter": 5},
+                            {"timestamp": "2025-01-02T10:00:00Z", "chapter": 20},
+                            {"timestamp": "2025-01-03T10:00:00Z", "chapter": 30}
+                        ]
+                    }
+                ]
+                }
     """
     if current_user.id != user_id:
         logger.warning(
@@ -2226,6 +2268,7 @@ async def get_afterword_club_stats(
     
     club_stats = book_club_repo.get_afterward_club_stats(
         book_club_id,
+        book_club_book_id,
         user_id
     )
     
@@ -2239,9 +2282,9 @@ async def get_afterword_club_stats(
             }
         )
         return JSONResponse(
-            200,
+            status_code=200,
             content={
-                "club_stats": club_stats
+                "club_stats": jsonable_encoder(club_stats)
             }
         )
     else:
@@ -2256,6 +2299,152 @@ async def get_afterword_club_stats(
         raise HTTPException(
             400,
             "Unable to grab club stats"
+        )
+    
+@router.get(
+    "/{book_club_id}/afterword/{user_id}/award_stats/{book_club_book_id}"
+    , name='bookclubs:get_afterword_club_stats'
+    )
+async def get_afterword_award_stats(
+    book_club_id: str,
+    user_id: str,
+    book_club_book_id: str,
+    current_user: Annotated[User,Depends(get_current_active_user)],
+    book_club_repo: BookClubCRUDRepositoryGraph = Depends(
+        get_repository(BookClubCRUDRepositoryGraph)
+    )
+):
+    """
+    This is the 5th page.
+    Gets stats from the clubs reading. This includes:
+        Data for table of awards granted to each user
+
+    Args:
+        book_club_id (str): The id for the book club they are getting the afterword for
+        user_id (str): The id of the user
+        book_club_book_id (str): The id for the BookClubBook node that this
+            afterword is being created for
+
+    Returns: 
+        users_table (array): An array of each user's award stats. 
+            Each object in the array contains a dictionary with:
+                user (dict): the data for the user this object is about,
+                    this contains:
+                        id (str): The user id
+                        username (str): The user username
+                award_counts (array): An array of the users awards received for this book,
+                    Each object in the array contains a dictionary with:
+                        id (str): The id for the award
+                        name (str): The name of the award
+                        type (str): The type of the award
+                        description (str): The description for the award
+                        count (int): The number of times the award was granted
+        awards (dict): All of the awards for this club. This contains
+            id (key, str): The award id
+            name (str): The name of the award
+            description (str): The description for the award
+            type (str): The type of the award
+            cls (str): The class of the award
+
+
+        Here is an example of the return object:
+
+        {
+            "users_table": [
+                {
+                "user": {
+                    "id":"user123",
+                    "username": "Alice",
+                }
+                "award_counts": [
+                    {
+                    "id": "award1",
+                    "count": 10
+                    },
+                    {
+                    "id": "award2",
+                    "count": 3
+                    }
+                ]
+                },
+                {
+                "user": {
+                    "id":"user456",
+                    "username": "Bob",
+                }
+                "award_counts": [
+                    {
+                    "id": "award1",
+                    "count": 1
+                    },
+                    {
+                    "id": "award2",
+                    "count": 4
+                    }
+                ]
+                },
+            ],
+        "awards": {
+            "award1": {
+                "name": "Commendable",
+                "type": "Positive",
+                "description": "Given for outstanding contributions.",
+                "cls": "class"
+            },
+            "award2": {
+                "name": "Questionable",
+                "type": "Negative",
+                "description": "Given for dubious contributions.",
+                "cls": "class"
+            }
+}
+
+    """
+    if current_user.id != user_id:
+        logger.warning(
+            "Unauthorized User",
+            extra={
+                "current_user_id": current_user.id,
+                "user_id": user_id,
+                "book_club_id": book_club_id,
+                "action": "get_afterword_award_stats",
+            },
+        )
+        raise HTTPException(401,"Unauthorized")
+    
+    award_stats = book_club_repo.get_afterward_award_stats(
+        book_club_id,
+        book_club_book_id,
+        user_id
+    )
+    
+    if award_stats:
+        logger.info(
+            "Retrieved afterword award stats",
+            extra={
+                "user_id": user_id,
+                "book_club_id": book_club_id,
+                "action": "get_afterword_award_stats"
+            }
+        )
+        return JSONResponse(
+            status_code=200,
+            content={
+                "award_stats": jsonable_encoder(award_stats)
+            }
+        )
+    else:
+        logger.warning(
+            "Error grabbing award stats",
+            extra={
+                "user_id": user_id,
+                "book_club_id": book_club_id,
+                "action": "get_afterword_award_stats"
+            }
+        )
+        raise HTTPException(
+            400,
+            "Unable to grab award stats"
         )
 # TODO:
 """
