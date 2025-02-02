@@ -26,7 +26,7 @@ class CommentCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
             limit: high index of comments to grab 
         """
         with self.driver.session() as session:
-            result = session.execute_read(self.get_all_comments_for_post_query_v2, post_id, username, skip, limit)  
+            result = session.execute_read(self.get_all_comments_for_post_query, post_id, username, skip, limit)  
         return(result)
 
     @staticmethod
@@ -255,15 +255,74 @@ class CommentCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
             if thread:
                 comment_threads.append(thread)
         return(comment_threads)
+    
+    @staticmethod
+    def get_all_comments_for_post_query_v3(
+        tx, 
+        post_id,
+        user_id, 
+        book_club_id, 
+        skip=0, 
+        limit=20
+        ):
+        query = """
+            MATCH (cu:User {id: $user_id, disabled: false})
+            MATCH (post {id: $post_id, deleted: false})
+            WHERE post:Review OR post:Milestone OR post:Update OR post:Comparison OR post:ClubUpdate
+
+            // Match top-level parent comments
+            MATCH (post)-[:HAS_COMMENT]->(parentComment:Comment {deleted: false, is_reply: false})
+
+            // Grab the user who wrote this parent
+            MATCH (parentAuthor:User)-[:COMMENTED]->(parentComment)
+
+            // Check if the current user has liked the parent
+            OPTIONAL MATCH (cu)-[parentLike:LIKES]->(parentComment)
+
+            // Order and limit as needed
+            WITH cu, parentComment, parentAuthor, (parentLike IS NOT NULL) AS parentLikedByUser
+            ORDER BY parentComment.likes DESC, parentComment.created_date ASC
+            SKIP $skip
+            LIMIT $limit
+
+            // Collect them to handle in one pass
+            WITH cu, COLLECT({
+            parentComment: parentComment,
+            parentAuthor: parentAuthor,
+            parentLikedByUser: parentLikedByUser
+            }) AS parents
+        """
+
+        result = tx.run(
+            query, 
+            user_id=user_id, 
+            post_id=post_id, 
+            skip=skip, 
+            limit=limit
+        )
+
+        comment_threads = []
+        print(result.data())
+        breakpoint()
+        for record in result:
+            pass
+        return(comment_threads)
 
     def get_paginated_comments_for_book_club_post(
-            self, post_id, username, skip, limit, bookclub_id
+            self, post_id, username, skip, limit, book_club_id
     ):
         """
-        A 
+        TODO: ADD DESCRIPTION
         """
         with self.driver.session() as session:
-            result = session.execute_read(self.get_all_comments_for_post_query_v2, post_id=post_id, username=username, bookclub_id=bookclub_id, skip=skip, limit=limit)  
+            result = session.execute_read(
+                self.get_all_comments_for_post_query_v3, 
+                post_id=post_id, 
+                username=username,
+                book_club_id=book_club_id, 
+                skip=skip, 
+                limit=limit
+                )  
         return(result)
 
     @staticmethod
@@ -509,7 +568,8 @@ class CommentCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
             likes:0,
             is_reply:True,
             pinned:false,
-            deleted:false
+            deleted:false,
+            depth:parent.depth + 1
         })
         merge (pp)-[h:HAS_COMMENT]->(c)
         merge (u)-[cc:COMMENTED]->(c)
@@ -527,7 +587,8 @@ class CommentCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
             likes:0,
             is_reply:False,
             pinned:false,
-            deleted:false
+            deleted:false,
+            depth:0
         })
         merge (pp)-[h:HAS_COMMENT]->(c)
         merge (u)-[cc:COMMENTED]->(c)
