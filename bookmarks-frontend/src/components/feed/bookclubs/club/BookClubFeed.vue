@@ -70,6 +70,7 @@
             </Overlay>
 
             <!-- index for now until we can grab the id from the updates -->
+             {{ data.posts.filter((post) => post.type === 'club_review') }}
             <ClubPost
                 v-for="(post, index) in data.posts" 
                 :key="index" 

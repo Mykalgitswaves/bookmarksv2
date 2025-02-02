@@ -126,10 +126,88 @@
         </div>
     </div>
 
-    <div v-if="post.type === ClubReviewPost.cls"
-        class="post club-review-post"
+    <div v-if="post.type === 'club_review'"
+        class="card club club-review-post"
     >
-        <h4 class="fancy">Finish club reviews</h4>
+        <div class="card-header">
+            <p class="text-slate-600 text-center">
+                <span class="text-indigo-600 cursor-pointer">{{ post.user_username }}</span>
+                made a final review: 
+            </p>
+        </div>
+
+        <div class="card-content-main">
+            <!-- Happy case -->
+            <div v-if="props.book" class="c_c_m_inner mb-0">
+                <p class="text-xl font-semibold mb-2 text-indigo-600 cursor-pointer title-hover" 
+                    @click="router.push(navRoutes.toBookPageFromPost(user, book.id))"
+                >{{ props.book?.title }}</p>
+
+                <img class="review-image" :src="props.book?.small_img_url" alt="">
+            </div>
+
+            <!-- What happens if we don't have shit. -->
+            <div v-else class="c_c_m_inner">
+                <h2 class="text-2xl">No content...</h2>
+
+                <p class="text-slate-500 mt-5">Something weird happened</p>
+            </div>
+        </div>
+
+        <div class="card-responses">
+            <div v-if="headline">
+                <div class="divider"></div>            
+                <!-- <p class="fancy text-xl">{{ headline }}</p> -->
+                <div class="divider"></div>
+            </div>
+
+            <!-- <ul class="my-3 content-start">
+                <li v-for="(r, index) in post.responses" 
+                    :key="index"
+                    class="card-commonalities"
+                >
+                
+                    <h3>{{ props.questions[index] }}</h3>
+                    
+                    <p class="mt-2 ml-2 text-slate-500">{{ r }}</p>
+                </li>  
+            </ul> -->
+        </div>
+
+        <div class="card-footer">
+            <div class="flex gap-2">
+                <button
+                    type="button"
+                    class="text-slate-600 flex items-center"
+                    @click="navigateToCommentPage()"
+                >
+                    <IconComment/>
+                    
+                    <span style="visibility: hidden; width: 0;">
+                        {{ num_comments }} comments
+                    </span>
+                </button>
+
+                <button v-if="posted_by_current_user"
+                    type="button"
+                    class="btn-small btn-red-ghost icon-btn"
+                    @click="setDeletePost(props.id)"
+                >
+                    <IconTrash />
+                    <span style="visibility: hidden; width: 0;">Delete post</span>
+                </button>
+            </div>
+        
+            <button type="button" 
+                class="text-slate-600 flex items-center"
+                :class="{'is-liked': isLiked}"
+                @click="AddLikeOrUnlike()"
+            >
+                <IconLike/>
+
+                <span class="ml-2">{{ _likes }} likes</span>
+            </button>
+        </div>
     </div>
 
     <!-- <div v-else 
