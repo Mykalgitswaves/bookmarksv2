@@ -120,10 +120,10 @@
     </div>
 
     <div v-for="reply in commentData.replies" 
-        :key="reply.id" 
+        :key="reply?.id" 
         class="comment-nest-wrapper" 
-        :ref="(reply) => replyDistanceMapping[reply.id] = reply"
-        :style="{ '--nest': 1, '--distance-from-top': generateDistanceFromTopComment(reply.id) }"
+        :ref="(reply) => replyDistanceMapping[reply?.id] = reply"
+        :style="{ '--nest': 1, '--distance-from-top': generateDistanceFromTopComment(reply?.id) }"
     >
         <!-- Real comment thread -->
         <!-- {{ Object.values(comment).find('post_id') }} -->

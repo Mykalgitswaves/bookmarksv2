@@ -2,38 +2,38 @@
     <!-- Load the post first. -->
     <AsyncComponent :promises="[getPostPromise]">
         <template #resolved>
-                <ClubPost :post="data.post" :is-viewing-post="true"/>
+            <ClubPost :post="data.post" :is-viewing-post="true"/>
 
-                <ViewAwards/>
+            <ViewAwards/>
 
-                <div 
-                    style="margin-top: 20px" 
-                    :class="{'scrolled-below-post': isScrollPastCommentBar && clubCommentSelectedForReply}"
-                    ref="commentBarRef"
-                >   
-                    <!-- If you have selected a comment to reply to then do that shit -->
-                     <span v-if="clubCommentSelectedForReply" class="text-sm ml-5 mb-2 block">replying to
-                        <span class="text-indigo-500 fancy">{{ clubCommentSelectedForReply.comment?.username }}'s'</span>
-                        comment
-                    </span>
+            <div 
+                style="margin-top: 20px" 
+                :class="{'scrolled-below-post': isScrollPastCommentBar && clubCommentSelectedForReply}"
+                ref="commentBarRef"
+            >   
+                <!-- If you have selected a comment to reply to then do that shit -->
+                    <span v-if="clubCommentSelectedForReply" class="text-sm ml-5 mb-2 block">replying to
+                    <span class="text-indigo-500 fancy">{{ clubCommentSelectedForReply.comment?.username }}'s'</span>
+                    comment
+                </span>
 
-                    <div :class="{'comment-bar-section': clubCommentSelectedForReply}">
-                        <CommentBar 
-                            :post-id="data.post.id"
-                            :comment="clubCommentSelectedForReply" 
-                            @pre-success-comment="(comment) => addToComments(comment)" 
-                        />
+                <div :class="{'comment-bar-section': clubCommentSelectedForReply}">
+                    <CommentBar 
+                        :post-id="data.post.id"
+                        :comment="clubCommentSelectedForReply" 
+                        @pre-success-comment="(comment) => addToComments(comment)" 
+                    />
 
-                        <button 
-                            v-if="clubCommentSelectedForReply"
-                            type="button" 
-                            class="btn btn-tiny btn-red mb-2"
-                            @click="clubCommentSelectedForReply = null"
-                        >
-                            <IconExit/>
-                        </button>
-                    </div>
+                    <button 
+                        v-if="clubCommentSelectedForReply"
+                        type="button" 
+                        class="btn btn-tiny btn-red mb-2"
+                        @click="clubCommentSelectedForReply = null"
+                    >
+                        <IconExit/>
+                    </button>
                 </div>
+            </div>
         </template>
         <template #loading>
             <div class="fancy loading gradient radius-sm py-5 text-center mb-5">Loading post...</div>
