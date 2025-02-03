@@ -1,6 +1,4 @@
 <template>
-    <!-- <BackBtn v-if="showBackButton"/> -->
-
     <section>
         <RouterView></RouterView>
     </section>

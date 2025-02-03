@@ -138,12 +138,12 @@
 
         <div class="card-content-main">
             <!-- Happy case -->
-            <div v-if="props.book" class="c_c_m_inner mb-0">
+            <div v-if="post.book" class="c_c_m_inner mb-0">
                 <p class="text-xl font-semibold mb-2 text-indigo-600 cursor-pointer title-hover" 
-                    @click="router.push(navRoutes.toBookPageFromPost(user, book.id))"
-                >{{ props.book?.title }}</p>
+                    @click="router.push(navRoutes.toBookPageFromPost(user, post.book.id))"
+                >{{ post.book?.title }}</p>
 
-                <img class="review-image" :src="props.book?.small_img_url" alt="">
+                <img class="review-image" :src="post.book?.small_img_url" alt="">
             </div>
 
             <!-- What happens if we don't have shit. -->
@@ -155,27 +155,44 @@
         </div>
 
         <div class="card-responses">
-            <div v-if="headline">
+            <div v-if="post.headline">
                 <div class="divider"></div>            
-                <!-- <p class="fancy text-xl">{{ headline }}</p> -->
+                <p class="fancy text-xl">{{ post.headline }}</p>
                 <div class="divider"></div>
             </div>
 
-            <!-- <ul class="my-3 content-start">
+            <ul class="my-3 content-start">
                 <li v-for="(r, index) in post.responses" 
                     :key="index"
                     class="card-commonalities"
                 >
                 
-                    <h3>{{ props.questions[index] }}</h3>
+                    <h3>{{ post.questions[index] }}</h3>
                     
                     <p class="mt-2 ml-2 text-slate-500">{{ r }}</p>
                 </li>  
-            </ul> -->
+            </ul>
         </div>
 
         <div class="card-footer">
             <div class="flex gap-2">
+                <button 
+                    type="button"
+                    title="like post"
+                    class="btn btn-tiny btn-icon mr-auto btn-specter relative b-0 m-r-5" 
+                    :class="{'liked': isLikedByCurrentUser}"
+                    style="height: 48px; width: 48px;"
+                    @click="likeOrUnlikeClubPost"
+                >
+                    <IconClubLike />
+
+                    <span v-if="post.likes > 0" 
+                        class="like-count"
+                    >
+                        {{ post.likes }}
+                    </span>
+                </button>
+
                 <button
                     type="button"
                     class="text-slate-600 flex items-center"
@@ -187,37 +204,17 @@
                         {{ num_comments }} comments
                     </span>
                 </button>
-
-                <button v-if="posted_by_current_user"
-                    type="button"
-                    class="btn-small btn-red-ghost icon-btn"
-                    @click="setDeletePost(props.id)"
-                >
-                    <IconTrash />
-                    <span style="visibility: hidden; width: 0;">Delete post</span>
-                </button>
             </div>
-        
-            <button type="button" 
-                class="text-slate-600 flex items-center"
-                :class="{'is-liked': isLiked}"
-                @click="AddLikeOrUnlike()"
+ 
+            <button type="button"
+                title="view awards"
+                class="btn btn-tiny btn-icon ml-auto btn-specter b-0" 
+                @click="dispatchAwardEvent(post)"
             >
-                <IconLike/>
-
-                <span class="ml-2">{{ _likes }} likes</span>
+                <IconAwards />
             </button>
         </div>
     </div>
-
-    <!-- <div v-else 
-        class="post not-implemented"
-    >
-     Other case exception -->
-        <!-- <h3 class="text-2xl text-stone-600 text-center">
-            Something went wrong
-        </h3>
-    </div> --> 
 
     <Teleport to="body">
         <Transition name="content">
@@ -482,5 +479,9 @@ function likeOrUnlikeClubPost() {
     background-color: var(--red-100);
     color: var(--red-500);
     border-radius: 2px;
+}
+
+.club-review-post {
+    background-color: var(--color-amber-50);
 }
 </style>

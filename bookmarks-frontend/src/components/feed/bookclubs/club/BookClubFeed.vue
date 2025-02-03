@@ -19,10 +19,12 @@
 
         <section v-if="loaded" 
             class="club-main-padding"
-            :class="{'is-user-finished-with-current-book': isUserFinishedReadingBook}"
+            :class="{
+                'is-user-finished-with-current-book': club.currently_reading_book.is_user_finished_reading
+            }"
         >
             <CurrentlyReadingBook 
-                :is-finished-reading="isUserFinishedReadingBook"
+                :is-finished-reading="club.currently_reading_book.is_user_finished_reading"
                 :book="currentlyReadingBook" 
                 @currently-reading-settings="router.push(
                     navRoutes.bookClubSettingsCurrentlyReading(
@@ -70,7 +72,6 @@
             </Overlay>
 
             <!-- index for now until we can grab the id from the updates -->
-             {{ data.posts.filter((post) => post.type === 'club_review') }}
             <ClubPost
                 v-for="(post, index) in data.posts" 
                 :key="index" 

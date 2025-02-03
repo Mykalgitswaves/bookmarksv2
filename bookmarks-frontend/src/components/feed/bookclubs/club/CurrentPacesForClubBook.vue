@@ -1,5 +1,5 @@
 <template>
-    <div  v-if="totalChapters" class="paces-container">
+    <div  v-if="totalChapters" class="paces-container" :class="{'min-h-200': startOpen}">
         <AsyncComponent :promises="[clubPacePromise]">
             <template #resolved>
                     <div v-if="memberPaces.length">
@@ -10,6 +10,7 @@
                             </h4>
 
                             <button 
+                                v-if="!startOpen"
                                 class="ml-auto text-sm text-indigo-500 underline fancy nowrap" 
                                 @click="isViewingAllPaces = !isViewingAllPaces"
                             >
@@ -17,7 +18,7 @@
                             </button>
                         </div>
 
-                        <div v-if="isViewingAllPaces" class="member-paces mt-2">
+                        <div v-if="isViewingAllPaces || startOpen" class="member-paces mt-2">
                             <div 
                                 v-for="(member, index) in memberPaces" 
                                 :key="member.id"
@@ -87,6 +88,10 @@ import SuccessToast from '../../../shared/SuccessToast.vue';
 const props = defineProps({
     totalChapters: {
         type: Number,
+    },
+    startOpen: {
+        type: Boolean,
+        default: false,
     }
 })
 
@@ -208,5 +213,9 @@ function generateProgressBarWidthForMember(member) {
         transform: scale(80%);
         height: 40px;
         width: auto;
+    }
+
+    .min-h-200 {
+        min-height: 200px;
     }
 </style>
