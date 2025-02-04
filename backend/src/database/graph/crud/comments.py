@@ -261,37 +261,135 @@ class CommentCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
         tx, 
         post_id,
         user_id, 
-        book_club_id, 
+        book_club_id,
         skip=0, 
         limit=20
         ):
-        query = """
+        depth=10
+        query_start = """
             MATCH (cu:User {id: $user_id, disabled: false})
             MATCH (post {id: $post_id, deleted: false})
-            WHERE post:Review OR post:Milestone OR post:Update OR post:Comparison OR post:ClubUpdate
+            WHERE post:Review OR post:Milestone 
+                OR post:Update OR post:Comparison 
+                OR post:ClubUpdate
 
-            // Match top-level parent comments
-            MATCH (post)-[:HAS_COMMENT]->(parentComment:Comment {deleted: false, is_reply: false})
+            // 1) Match the top-level "parent" comments on the post
+            MATCH (post)-[:HAS_COMMENT]->(c0:Comment {is_reply:false, deleted:false})
 
-            // Grab the user who wrote this parent
-            MATCH (parentAuthor:User)-[:COMMENTED]->(parentComment)
+            // (Optional) Grab the parents author and whether current user liked the parent
+            MATCH (parentAuthor:User)-[:COMMENTED]->(c0)
+            OPTIONAL MATCH (cu)-[parentLike:LIKES]->(c0)
 
-            // Check if the current user has liked the parent
-            OPTIONAL MATCH (cu)-[parentLike:LIKES]->(parentComment)
-
-            // Order and limit as needed
-            WITH cu, parentComment, parentAuthor, (parentLike IS NOT NULL) AS parentLikedByUser
-            ORDER BY parentComment.likes DESC, parentComment.created_date ASC
+            // Order the parents as needed
+            WITH cu, c0, parentAuthor, (parentLike IS NOT NULL) AS parentLikedByUser
+            ORDER BY c0.likes DESC, c0.created_date ASC
             SKIP $skip
             LIMIT $limit
-
-            // Collect them to handle in one pass
-            WITH cu, COLLECT({
-            parentComment: parentComment,
-            parentAuthor: parentAuthor,
-            parentLikedByUser: parentLikedByUser
-            }) AS parents
         """
+
+        depth_query_full = ""
+        return_depth_full = """
+            RETURN
+            c0 AS parentComment,
+            parentAuthor AS parentAuthor,
+            parentLikedByUser,
+
+        """
+
+        chain_nodes_list = []
+        chain_authors_list = []
+        chain_liked_bools_list = []
+        running_with_statement_during_step = "WITH cu, c0, parentAuthor, parentLikedByUser"
+        running_with_statement_after_step = "WITH cu, c0, parentAuthor, parentLikedByUser"
+                    
+        for i in range(1, depth):
+            chain_nodes_list.append(f"c{i}")
+            chain_authors_list.append(f"c{i}Author")
+            chain_liked_bools_list.append(f"c{i}LikedByUser")
+
+            step_before = i - 1
+            depth_query_step_start = f"""
+                OPTIONAL MATCH (c{step_before})-[:REPLIED_TO]->(c{i}:Comment {{deleted:false, is_reply:true}})
+                """
+
+            running_with_statement_during_step += f", c{i}"
+            if i != 1:
+                running_with_statement_during_step += f", c{step_before}Author, c{step_before}LikedByUser"
+
+            depth_query_step_end = f"""
+                ORDER BY c{i}.likes DESC, c{i}.created_date ASC
+                LIMIT 1
+
+                OPTIONAL MATCH (c{i}Author:User)-[:COMMENTED]->(c{i})
+                OPTIONAL MATCH (cu)-[c{i}Like:LIKES]->(c{i})
+            """
+
+            depth_query_step = depth_query_step_start + running_with_statement_during_step + depth_query_step_end
+
+            running_with_statement_after_step += f""",
+            c{i}, c{i}Author, (c{i}Like IS NOT NULL) AS c{i}LikedByUser"""
+
+            running_with_statement_after_step = running_with_statement_after_step.replace(
+                f"(c{step_before}Like IS NOT NULL) AS ", ""
+            )
+
+            depth_query_step += running_with_statement_after_step
+
+            return_depth_step = f"""
+            c{i},
+            c{i}Author,
+            c{i}LikedByUser,"""
+
+            depth_query_full += depth_query_step
+            return_depth_full += return_depth_step
+
+        return_depth_full = return_depth_full[:-1]
+
+        chain_nodes_list = "[ " + ", ".join(chain_nodes_list) + "]"
+        chain_authors_list = "[ " + ", ".join(chain_authors_list) + "]"
+        chain_liked_bools_list = "[ " + ", ".join(chain_liked_bools_list) + "]"
+
+        query_end = f"""
+        WITH c0 as parentComment,
+        parentAuthor,
+        parentLikedByUser,
+
+        {chain_nodes_list} AS chainNodes,
+        {chain_authors_list} AS chainAuthors,
+        {chain_liked_bools_list} AS chainLikedBools
+
+        // We can zip these together if we like, or just do them in parallel:
+        WITH parentComment, parentAuthor, parentLikedByUser,
+            apoc.coll.zip(
+            chainNodes,
+            chainAuthors
+            ) AS chain,
+            chainLikedBools
+
+        WITH parentComment, parentAuthor, parentLikedByUser,
+            apoc.coll.zip(
+            chain,
+            chainLikedBools
+            ) AS chain
+            
+        RETURN {{
+        parentComment: parentComment,
+        parentAuthor: parentAuthor,
+        parentLikedByUser: parentLikedByUser,
+        chainedReplies: [nodeAuthorLike IN chain |
+            {{
+            node: nodeAuthorLike[0],
+            author: nodeAuthorLike[1],
+            likedByUser: nodeAuthorLike[2]
+            }}
+        ]
+        }} AS parentWithChain
+        """
+
+        # query = query_start + depth_query_full + return_depth_full + query_end
+        query = query_start + depth_query_full + query_end
+        
+        print(query)
 
         result = tx.run(
             query, 
@@ -309,7 +407,7 @@ class CommentCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
         return(comment_threads)
 
     def get_paginated_comments_for_book_club_post(
-            self, post_id, username, skip, limit, book_club_id
+            self, post_id, user_id, skip, limit, book_club_id
     ):
         """
         TODO: ADD DESCRIPTION
@@ -318,7 +416,7 @@ class CommentCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
             result = session.execute_read(
                 self.get_all_comments_for_post_query_v3, 
                 post_id=post_id, 
-                username=username,
+                user_id=user_id,
                 book_club_id=book_club_id, 
                 skip=skip, 
                 limit=limit
