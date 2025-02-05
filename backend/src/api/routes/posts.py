@@ -956,13 +956,21 @@ async def get_comments_for_post(
     skip: int = Query(default=0),
     limit: int = Query(default=10),
     book_club_id: Optional[str] = None,
-    comment_id: Optional[str] = None
+    comment_id: Optional[str] = None,
+    depth: int = 10 
 ):
     """
     TODO: ADD DOCUMENTATION HERE
     """
     if not current_user:
         raise HTTPException(401, "Unauthorized")
+    
+    if depth < 1 or depth > 20:
+        raise HTTPException(
+            status_code=400, 
+            detail="Value for depth must be between 1 and 20"
+            )
+    
     if post_id:
         # Check that you are a member of a club before returning any comments. Slightly slower. 
         # TO_CONSIDER: Alternatively you could save a token to authenticate on the client 
@@ -973,7 +981,8 @@ async def get_comments_for_post(
                 user_id=current_user.id, 
                 skip=skip, 
                 limit=limit, 
-                book_club_id=book_club_id
+                book_club_id=book_club_id,
+                depth=depth
             )
 
             return JSONResponse(
@@ -987,7 +996,11 @@ async def get_comments_for_post(
             )
         else:
             comments = comment_repo.get_all_comments_for_post(
-                post_id=post_id, username=current_user.username, skip=skip, limit=limit
+                post_id=post_id, 
+                user_id=current_user.id, 
+                skip=skip, 
+                limit=limit,
+                depth=depth
             )
 
         return JSONResponse(

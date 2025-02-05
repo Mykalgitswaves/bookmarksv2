@@ -7,147 +7,94 @@ from src.models.schemas.comments import (
     PinnedComment, 
     build_comment_thread,
 )
+from src.database.graph.utils.comments import build_get_comments_query, build_comment_object
 
 
 class CommentCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
-    def get_all_comments_for_post(self, post_id, username, skip, limit):
+    def get_all_comments_for_post(
+            self, 
+            post_id, 
+            user_id, 
+            skip, 
+            limit,
+            depth
+        ):
         """
-        Gets all the comments on the post. For comments in a thread, returns the number of comments in the thread
-        as well as the most liked reply.
-
-        Load in batches, so only 5 comments at a time, in order from most recent to least recent
-
-        Also return if the current user has liked each of the comments
+        Gets all the comments on the post. For comments with replies, it returns
+        the top liked reply at each depth, up to the specified depth
 
         Args:
             post_id: PK of the post for which to return comments    
-            username: username of the current user
+            user_id: id of the current user
             skip: Low index of comments to grab
             limit: high index of comments to grab 
+            depth: The maximum depth for threads
         """
         with self.driver.session() as session:
-            result = session.execute_read(self.get_all_comments_for_post_query, post_id, username, skip, limit)  
+            result = session.execute_read(
+                self.get_all_comments_for_post_query, 
+                post_id, 
+                user_id, 
+                skip, 
+                limit,
+                depth
+                )  
         return(result)
 
     @staticmethod
-    def get_all_comments_for_post_query(tx, post_id, username, skip, limit):
-        query = """
-                match (uu:User {username: $username}) 
-                match (rr {id: $post_id, deleted:false}) 
-                match (rr)-[r:HAS_COMMENT]->(c:Comment {is_reply:false, deleted:false})
-                // Find the user who commented the parent comment
-                MATCH (commenter:User)-[:COMMENTED]->(c)
-                OPTIONAL MATCH (rcc:Comment {deleted:false})-[rrr:REPLIED_TO]->(c)
-                with count(rcc) as num_replies, uu, rr, r, c, commenter
-                OPTIONAL MATCH (rc:Comment {deleted:false})-[rrr:REPLIED_TO]->(c)
-                // Find the user who commented the reply
-                OPTIONAL MATCH (replyCommenter:User)-[:COMMENTED]->(rc)
-                // Check if user with <username> has liked the parent comment
-                OPTIONAL MATCH (uu)-[likedParent:LIKES]->(c)
-                // Check if user with <username> has liked the reply
-                OPTIONAL MATCH (uu)-[likedReply:LIKES]->(rc)
-                WITH c, rr, r, rc, rrr, uu, likedParent, likedReply, commenter, replyCommenter, num_replies
-                ORDER BY rc.likes DESC, rc.created_date ASC
-                WITH c, rr, r, COLLECT(rc)[0] AS top_liked_reply, COLLECT(rrr)[0] AS topLikedRel, uu, 
-                    COLLECT(likedParent)[0] AS likedParentRel, COLLECT(likedReply)[0] AS likedReplyRel, 
-                    commenter, COLLECT(replyCommenter)[0] AS top_reply_commenter, num_replies
-                RETURN c, top_liked_reply,
-                    CASE WHEN likedParentRel IS NOT NULL THEN true ELSE false END AS parent_liked_by_user,
-                    CASE WHEN likedReplyRel IS NOT NULL THEN true ELSE false END AS reply_liked_by_user,
-                    commenter.username,
-                    commenter.id,
-                    top_reply_commenter.username,
-                    top_reply_commenter.id,
-                    case when commenter.username = $username then true else false END as parent_posted_by_user,
-                    case when top_reply_commenter.username = $username then true else false END as reply_posted_by_user,
-                    num_replies
-                order by c.created_date desc
-                skip $skip
-                limit $limit
-                """
-        result = tx.run(query, username=username, post_id=post_id, skip=skip, limit=limit)
-        # result = [record for record in result.data()]
+    def get_all_comments_for_post_query(
+        tx, 
+        post_id, 
+        user_id, 
+        skip,
+        limit, 
+        depth
+        ):
+        query = build_get_comments_query(depth, book_club_posts=False)
 
-        comment_response = []
-        pinned_comment_response = []
+        result = tx.run(
+            query, 
+            user_id=user_id, 
+            post_id=post_id, 
+            skip=skip, 
+            limit=limit
+        )
+
+        comments = []
         for response in result:
-            if not response['c']['pinned']:
-                comment = Comment(id=response['c']['id'],
-                                post_id=post_id,
-                                replied_to=None,
-                                text=response['c']['text'],
-                                username=response['commenter.username'],
-                                user_id=response['commenter.id'],
-                                created_date=response['c']['created_date'],
-                                likes=response['c']['likes'],
-                                pinned=response['c']['pinned'],
-                                liked_by_current_user=response['parent_liked_by_user'],
-                                posted_by_current_user=response['parent_posted_by_user'],
-                                num_replies=response["num_replies"])
-                
-                response_entry = {"comment":comment,
-                                "liked_by_current_user":response['parent_liked_by_user'],
-                                "replies":[]}
-                
-                if response['top_liked_reply']:
-                    reply = Comment(id=response['top_liked_reply']['id'],
-                                    post_id=post_id,
-                                    replied_to=response["c"]["id"],
-                                    text=response["top_liked_reply"]['text'],
-                                    username=response['top_reply_commenter.username'],
-                                    user_id=response['top_reply_commenter.id'],
-                                    created_date=response["top_liked_reply"]["created_date"],
-                                    likes=response['top_liked_reply']['likes'],
-                                    pinned=response['top_liked_reply']['pinned'],
-                                    liked_by_current_user=response['reply_liked_by_user'],
-                                    posted_by_current_user=response['reply_posted_by_user'])
-                    response_entry['replies'].append({
-                                                "comment":reply,
-                                                "liked_by_current_user":response["reply_liked_by_user"],
-                                                "replies":[]
-                                            })
+            comment_data = response['parentWithChain']
+            comment_author = comment_data['parentAuthor']
+            parent_comment_data = comment_data['parentComment']
+            comment = build_comment_object(
+                parent_comment_data,
+                comment_author,
+                comment_data['parentLikedByUser'],
+                post_id,
+                user_id
+            )
+            prev_comment_id = comment.id
+            thread = []
+            for thread_comment in comment_data['chainedReplies']:
+                if not thread_comment['node']:
+                    break
 
-                comment_response.append(response_entry)
-            else:
-                comment = Comment(id=response['c']['id'],
-                                post_id=post_id,
-                                replied_to=None,
-                                text=response['c']['text'],
-                                username=response['commenter.username'],
-                                user_id=response['commenter.id'],
-                                created_date=response['c']['created_date'],
-                                likes=response['c']['likes'],
-                                pinned=response['c']['pinned'],
-                                liked_by_current_user=response['parent_liked_by_user'],
-                                posted_by_current_user=response['parent_posted_by_user'],
-                                num_replies=response["num_replies"])
-                
-                response_entry = {"comment":comment,
-                                "liked_by_current_user":response['parent_liked_by_user'],
-                                "replies":[]}
-                
-                if response['top_liked_reply']:
-                    reply = Comment(id=response['top_liked_reply']['id'],
-                        post_id=post_id,
-                        replied_to=response["c"]["id"],
-                        text=response["top_liked_reply"]['text'],
-                        username=response['top_reply_commenter.username'],
-                        user_id=response['top_reply_commenter.id'],
-                        created_date=response["top_liked_reply"]["created_date"],
-                        likes=response['top_liked_reply']['likes'],
-                        pinned=response['top_liked_reply']['pinned'],
-                        liked_by_current_user=response['reply_liked_by_user'],
-                        posted_by_current_user=response['reply_posted_by_user']
-                    )
+                thread_comment_data = thread_comment['node']
+                thread_comment_author = thread_comment['author']
+                thread_comment_object = build_comment_object(
+                    thread_comment_data,
+                    thread_comment_author,
+                    thread_comment['likedByUser'],
+                    post_id,
+                    user_id,
+                    prev_comment_id
+                )
+                thread.append(thread_comment_object)
+                prev_comment_id = thread_comment_object.id
+            
+            comment.thread = thread
+            comments.append(comment)
 
-                    response_entry['replies'].append({
-                        "comment":reply,
-                        "liked_by_current_user":response["reply_liked_by_user"],
-                        "replies":[]
-                    })
-
-                pinned_comment_response.append(response_entry)
-        return({"comments": comment_response, "pinned_comments": pinned_comment_response})
+        return({"comments":comments, "pinned_comments":{}})
 
     @staticmethod
     def get_all_comments_for_post_query_v2(tx, post_id, username, bookclub_id, skip=0, limit=20):
@@ -255,263 +202,87 @@ class CommentCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
             if thread:
                 comment_threads.append(thread)
         return(comment_threads)
+
+    def get_paginated_comments_for_book_club_post(
+            self, 
+            post_id, 
+            user_id, 
+            book_club_id,
+            skip, 
+            limit, 
+            depth
+    ):
+        """
+        """
+        with self.driver.session() as session:
+            result = session.execute_read(
+                self.get_paginated_comments_for_book_club_post_query, 
+                post_id=post_id, 
+                user_id=user_id,
+                book_club_id=book_club_id, 
+                skip=skip, 
+                limit=limit,
+                depth=depth
+                )  
+        return(result)
     
     @staticmethod
-    def get_all_comments_for_post_query_v3(
+    def get_paginated_comments_for_book_club_post_query(
         tx, 
         post_id,
         user_id, 
         book_club_id,
+        depth,
         skip=0, 
         limit=20
         ):
-        depth=10
-        query_start = """
-            MATCH (cu:User {id: $user_id, disabled: false})
-            MATCH (post {id: $post_id, deleted: false})
-            WHERE post:Review OR post:Milestone 
-                OR post:Update OR post:Comparison 
-                OR post:ClubUpdate
-
-            // 1) Match the top-level "parent" comments on the post
-            MATCH (post)-[:HAS_COMMENT]->(c0:Comment {is_reply:false, deleted:false})
-
-            // (Optional) Grab the parents author and whether current user liked the parent
-            MATCH (parentAuthor:User)-[:COMMENTED]->(c0)
-            OPTIONAL MATCH (cu)-[parentLike:LIKES]->(c0)
-
-            // Order the parents as needed
-            WITH cu, c0, parentAuthor, (parentLike IS NOT NULL) AS parentLikedByUser
-            ORDER BY c0.likes DESC, c0.created_date ASC
-            SKIP $skip
-            LIMIT $limit
-        """
-
-        depth_query_full = ""
-        return_depth_full = """
-            RETURN
-            c0 AS parentComment,
-            parentAuthor AS parentAuthor,
-            parentLikedByUser,
-
-        """
-
-        chain_nodes_list = []
-        chain_authors_list = []
-        chain_liked_bools_list = []
-        running_with_statement_during_step = "WITH cu, c0, parentAuthor, parentLikedByUser"
-        running_with_statement_after_step = "WITH cu, c0, parentAuthor, parentLikedByUser"
-                    
-        for i in range(1, depth):
-            chain_nodes_list.append(f"c{i}")
-            chain_authors_list.append(f"c{i}Author")
-            chain_liked_bools_list.append(f"c{i}LikedByUser")
-
-            step_before = i - 1
-            depth_query_step_start = f"""
-                OPTIONAL MATCH (c{step_before})-[:REPLIED_TO]->(c{i}:Comment {{deleted:false, is_reply:true}})
-                """
-
-            running_with_statement_during_step += f", c{i}"
-            if i != 1:
-                running_with_statement_during_step += f", c{step_before}Author, c{step_before}LikedByUser"
-
-            depth_query_step_end = f"""
-                ORDER BY c{i}.likes DESC, c{i}.created_date ASC
-                LIMIT 1
-
-                OPTIONAL MATCH (c{i}Author:User)-[:COMMENTED]->(c{i})
-                OPTIONAL MATCH (cu)-[c{i}Like:LIKES]->(c{i})
-            """
-
-            depth_query_step = depth_query_step_start + running_with_statement_during_step + depth_query_step_end
-
-            running_with_statement_after_step += f""",
-            c{i}, c{i}Author, (c{i}Like IS NOT NULL) AS c{i}LikedByUser"""
-
-            running_with_statement_after_step = running_with_statement_after_step.replace(
-                f"(c{step_before}Like IS NOT NULL) AS ", ""
-            )
-
-            depth_query_step += running_with_statement_after_step
-
-            return_depth_step = f"""
-            c{i},
-            c{i}Author,
-            c{i}LikedByUser,"""
-
-            depth_query_full += depth_query_step
-            return_depth_full += return_depth_step
-
-        return_depth_full = return_depth_full[:-1]
-
-        chain_nodes_list = "[ " + ", ".join(chain_nodes_list) + "]"
-        chain_authors_list = "[ " + ", ".join(chain_authors_list) + "]"
-        chain_liked_bools_list = "[ " + ", ".join(chain_liked_bools_list) + "]"
-
-        query_end = f"""
-        WITH c0 as parentComment,
-        parentAuthor,
-        parentLikedByUser,
-
-        {chain_nodes_list} AS chainNodes,
-        {chain_authors_list} AS chainAuthors,
-        {chain_liked_bools_list} AS chainLikedBools
-
-        // We can zip these together if we like, or just do them in parallel:
-        WITH parentComment, parentAuthor, parentLikedByUser,
-            apoc.coll.zip(
-            chainNodes,
-            chainAuthors
-            ) AS chain,
-            chainLikedBools
-
-        WITH parentComment, parentAuthor, parentLikedByUser,
-            apoc.coll.zip(
-            chain,
-            chainLikedBools
-            ) AS chain
-            
-        RETURN {{
-        parentComment: parentComment,
-        parentAuthor: parentAuthor,
-        parentLikedByUser: parentLikedByUser,
-        chainedReplies: [nodeAuthorLike IN chain |
-            {{
-            node: nodeAuthorLike[0],
-            author: nodeAuthorLike[1],
-            likedByUser: nodeAuthorLike[2]
-            }}
-        ]
-        }} AS parentWithChain
-        """
-
-        # query = query_start + depth_query_full + return_depth_full + query_end
-        query = query_start + depth_query_full + query_end
         
-        print(query)
+        query = build_get_comments_query(depth, book_club_posts=True)
 
         result = tx.run(
             query, 
             user_id=user_id, 
             post_id=post_id, 
+            book_club_id=book_club_id,
             skip=skip, 
             limit=limit
         )
 
-        comment_threads = []
-        print(result.data())
-        breakpoint()
-        for record in result:
-            pass
-        return(comment_threads)
-
-    def get_paginated_comments_for_book_club_post(
-            self, post_id, user_id, skip, limit, book_club_id
-    ):
-        """
-        TODO: ADD DESCRIPTION
-        """
-        with self.driver.session() as session:
-            result = session.execute_read(
-                self.get_all_comments_for_post_query_v3, 
-                post_id=post_id, 
-                user_id=user_id,
-                book_club_id=book_club_id, 
-                skip=skip, 
-                limit=limit
-                )  
-        return(result)
-
-    @staticmethod
-    def get_paginated_comments_for_book_club_post_query(
-        tx,
-        post_id:str,
-        username:str,
-        bookclub_id:str,
-        skip:int,
-        limit:int,
-    ):
-        query = """
-            match (uu:User {username: $username})-[:IS_MEMBER_OF|OWNS_BOOK_CLUB]->(bc:BookClub {id: $bookclub_id})
-            match (rr {id: $post_id, deleted:false}) 
-            match (rr)-[r:HAS_COMMENT]->(c:Comment {is_reply:false, deleted:false})
-            // Find the user who commented the parent comment
-            MATCH (commenter:User)-[:COMMENTED]->(c)
-            OPTIONAL MATCH (rcc:Comment {deleted:false})-[rrr:REPLIED_TO]->(c)
-            with count(rcc) as num_replies, uu, rr, r, c, commenter
-            OPTIONAL MATCH (rc:Comment {deleted:false})-[rrr:REPLIED_TO]->(c)
-            // Find the user who commented the reply
-            OPTIONAL MATCH (replyCommenter:User)-[:COMMENTED]->(rc)
-            // Check if user with <username> has liked the parent comment
-            OPTIONAL MATCH (uu)-[likedParent:LIKES]->(c)
-            // Check if user with <username> has liked the reply
-            OPTIONAL MATCH (uu)-[likedReply:LIKES]->(rc)
-            WITH c, rr, r, rc, rrr, uu, likedParent, likedReply, commenter, replyCommenter, num_replies
-            ORDER BY rc.likes DESC, rc.created_date ASC
-            WITH c, rr, r, COLLECT(rc)[0] AS top_liked_reply, COLLECT(rrr)[0] AS topLikedRel, uu, 
-                COLLECT(likedParent)[0] AS likedParentRel, COLLECT(likedReply)[0] AS likedReplyRel, 
-                commenter, COLLECT(replyCommenter)[0] AS top_reply_commenter, num_replies
-            RETURN c, top_liked_reply,
-                CASE WHEN likedParentRel IS NOT NULL THEN true ELSE false END AS parent_liked_by_user,
-                CASE WHEN likedReplyRel IS NOT NULL THEN true ELSE false END AS reply_liked_by_user,
-                commenter.username,
-                commenter.id,
-                top_reply_commenter.username,
-                top_reply_commenter.id,
-                case when commenter.username = $username then true else false END as parent_posted_by_user,
-                case when top_reply_commenter.username = $username then true else false END as reply_posted_by_user,
-                num_replies
-            order by c.created_date desc
-            skip $skip
-            limit $limit
-        """
-        
-        result = tx.run(query, post_id=post_id, username=username, bookclub_id=bookclub_id, skip=skip, limit=limit)
-
-        comment_response = []
+        comments = []
         for response in result:
-            comment = Comment(
-                    id=response['c']['id'],
-                    post_id=post_id,
-                    replied_to=None,
-                    text=response['c']['text'],
-                    username=response['commenter.username'],
-                    created_date=response['c']['created_date'],
-                    likes=response['c']['likes'],
-                    pinned=response['c']['pinned'],
-                    liked_by_current_user=response['parent_liked_by_user'],
-                    posted_by_current_user=response['parent_posted_by_user'],
-                    num_replies=response['num_replies']
-                )
-            
-            response_entry = {
-                "comment":comment,
-                "liked_by_current_user":response['parent_liked_by_user'],
-                "replies":[]
-            }
-            
-            if response['top_liked_reply']:
-                reply = Comment(
-                    id=response['top_liked_reply']['id'],
-                    post_id=post_id,
-                    replied_to=response["c"]["id"],
-                    text=response["top_liked_reply"]['text'],
-                    username=response['top_reply_commenter.username'],
-                    created_date=response["top_liked_reply"]["created_date"],
-                    likes=response['top_liked_reply']['likes'],
-                    pinned=response['top_liked_reply']['pinned'],
-                    liked_by_current_user=response['reply_liked_by_user'],
-                    posted_by_current_user=response['reply_posted_by_user']
-                )
-                response_entry['replies'].append({
-                    "comment":reply,
-                    "liked_by_current_user":response["reply_liked_by_user"],
-                    "replies":[]
-                })
+            comment_data = response['parentWithChain']
+            comment_author = comment_data['parentAuthor']
+            parent_comment_data = comment_data['parentComment']
+            comment = build_comment_object(
+                parent_comment_data,
+                comment_author,
+                comment_data['parentLikedByUser'],
+                post_id,
+                user_id
+            )
+            prev_comment_id = comment.id
+            thread = []
+            for thread_comment in comment_data['chainedReplies']:
+                if not thread_comment['node']:
+                    break
 
-            comment_response.append(response_entry)
-        return(comment_response)
+                thread_comment_data = thread_comment['node']
+                thread_comment_author = thread_comment['author']
+                thread_comment_object = build_comment_object(
+                    thread_comment_data,
+                    thread_comment_author,
+                    thread_comment['likedByUser'],
+                    post_id,
+                    user_id,
+                    prev_comment_id
+                )
+                thread.append(thread_comment_object)
+                prev_comment_id = thread_comment_object.id
+            
+            comment.thread = thread
+            comments.append(comment)
+
+        return(comments)
 
     def get_all_pinned_comments_for_post(self, post_id, username, skip, limit):
         """
@@ -667,11 +438,13 @@ class CommentCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
             is_reply:True,
             pinned:false,
             deleted:false,
-            depth:parent.depth + 1
+            depth:parent.depth + 1,
+            num_replies:0
         })
         merge (pp)-[h:HAS_COMMENT]->(c)
         merge (u)-[cc:COMMENTED]->(c)
         MERGE (c)-[:REPLIED_TO]->(parent)
+        SET parent.num_replies = parent.num_replies + 1
 
         return c.id, c.created_date
         """
@@ -686,7 +459,8 @@ class CommentCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
             is_reply:False,
             pinned:false,
             deleted:false,
-            depth:0
+            depth:0,
+            num_replies:0
         })
         merge (pp)-[h:HAS_COMMENT]->(c)
         merge (u)-[cc:COMMENTED]->(c)
