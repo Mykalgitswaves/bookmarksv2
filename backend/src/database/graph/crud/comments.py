@@ -7,7 +7,11 @@ from src.models.schemas.comments import (
     PinnedComment, 
     build_comment_thread,
 )
-from src.database.graph.utils.comments import build_get_comments_query, build_comment_object
+from src.database.graph.utils.comments import (
+    build_get_comments_query,
+    build_get_comments_for_comment_query, 
+    build_comment_object
+)
 
 
 class CommentCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
@@ -147,112 +151,99 @@ class CommentCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
 
         return({"comments":comments, "pinned_comments": pinned_comments})
 
-    @staticmethod
-    def get_all_comments_for_post_query_v2(tx, post_id, username, bookclub_id, skip=0, limit=20):
-        query = """
-            MATCH (rr:ClubUpdate {id: $post_id, deleted: false}) 
-            MATCH (rr)-[r:HAS_COMMENT]->(parent_comment:Comment {is_reply: false, deleted: false})
-            WITH parent_comment
-
-            // Get the top-level comment and its details
-            CALL {
-                WITH parent_comment
-                MATCH (commenter:User)-[:COMMENTED]->(parent_comment)
-                OPTIONAL MATCH (username:User {username: $username})-[likedParent:LIKES]->(parent_comment)
-                RETURN commenter, 
-                    CASE WHEN likedParent IS NOT NULL THEN true ELSE false END AS parent_liked_by_user,
-                    CASE WHEN commenter.username = $username THEN true ELSE false END AS posted_by_current_user
-            }
-
-            // First collect ALL comments and their user info into a map
-            WITH parent_comment, commenter, parent_liked_by_user, posted_by_current_user
-            CALL {
-                WITH parent_comment
-                MATCH (reply:Comment)-[:REPLIED_TO*0..4]->(parent_comment)
-                MATCH (reply_commenter:User)-[:COMMENTED]->(reply)
-                OPTIONAL MATCH (username:User {username: $username})-[liked:LIKES]->(reply)
-                RETURN collect({
-                    id: reply.id,
-                    commenter: reply_commenter.username,
-                    commenter_id: reply_commenter.id,
-                    liked: CASE WHEN liked IS NOT NULL THEN true ELSE false END,
-                    posted_by_current_user: CASE WHEN reply_commenter.username = $username THEN true ELSE false END
-                }) as user_info_map
-            }
-
-            // Now get the paths for tree structure
-            MATCH path = (reply:Comment {deleted: false})-[:REPLIED_TO*0..4]->(parent_comment)
-            WITH parent_comment, commenter, parent_liked_by_user, posted_by_current_user,
-                 user_info_map, COLLECT(path) as paths
-
-            // Convert to tree and enrich with user info
-            CALL apoc.convert.toTree(paths) YIELD value as reply_tree
-            WITH {
-                comment: parent_comment,
-                commenter: commenter.username,
-                commenter_id: commenter.id,
-                liked: parent_liked_by_user,
-                created_date: parent_comment.created_date,
-                posted_by_current_user: posted_by_current_user,
-                replies: CASE 
-                    WHEN reply_tree IS NOT NULL AND reply_tree.replied_to IS NOT NULL
-                    THEN reply_tree {
-                        .*,
-                        replied_to: [reply IN reply_tree.replied_to WHERE reply IS NOT NULL | 
-                            reply {
-                                .*,
-                                commenter: ([ u IN user_info_map WHERE u.id = reply.id ][0]).commenter,
-                                commenter_id: ([ u IN user_info_map WHERE u.id = reply.id ][0]).commenter_id,
-                                liked_by_current_user: ([ u IN user_info_map WHERE u.id = reply.id ][0]).liked,
-                                posted_by_current_user: ([ u IN user_info_map WHERE u.id = reply.id ][0]).posted_by_current_user,
-                                replied_to: COALESCE(reply.replied_to, [])
-                            }
-                        ]
-                    }
-                    ELSE null
-                END
-            } AS comment_thread
-            ORDER BY comment_thread.created_date DESC
-            SKIP $skip
-            LIMIT $limit
-            RETURN comment_thread
+    def get_all_comments_for_comment(
+            self, 
+            post_id,
+            comment_id, 
+            user_id, 
+            skip, 
+            limit,
+            depth
+        ):
         """
+        Gets all the comments on the post. For comments with replies, it returns
+        the top liked reply at each depth, up to the specified depth
 
-        result = tx.run(query, username=username, post_id=post_id, skip=skip, limit=limit)
-        # result = [record for record in result.data()]
-        # comment_response = {}
-        comment_threads = []
+        Args:
+            post_id: PK of the post for which to return comments    
+            comment_id: The ID of the comment to grab replies to
+            user_id: id of the current user
+            skip: Low index of comments to grab
+            limit: high index of comments to grab 
+            depth: The maximum depth for threads
+        """
+        with self.driver.session() as session:
+            result = session.execute_read(
+                self.get_all_comments_for_comment_query, 
+                post_id, 
+                comment_id, 
+                user_id,
+                skip, 
+                limit,
+                depth
+                )  
+        return(result)
 
-        for record in result:
-            # top_level_comment = record["comment_thread"].get("comment")
-            # tlc_id = top_level_comment.get('id')
+    @staticmethod
+    def get_all_comments_for_comment_query(
+        tx, 
+        post_id,
+        comment_id, 
+        user_id, 
+        skip,
+        limit, 
+        depth
+        ):
+        query = build_get_comments_for_comment_query(
+            depth, 
+            book_club_posts=False
+            )
 
-            # if tlc_id not in comment_response:
-            #     comment_response[top_level_comment.get('id')] = {}
+        result = tx.run(
+            query, 
+            user_id=user_id, 
+            post_id=post_id,
+            comment_id=comment_id, 
+            skip=skip, 
+            limit=limit
+        )
 
-            # comment_response[tlc_id].comment = Comment(
-            #     id=tlc_id,
-            #     post_id=post_id,
-            #     text=top_level_comment.get('text'),
-            #     username=record['comment_thread'].get('commenter'),
-            #     user_id=top_level_comment.get('id'),
-            #     created_date=top_level_comment.get("created_date"),
-            #     likes=top_level_comment.get('likes'),
-            #     pinned=top_level_comment.get('pinned'),
-            #     liked_by_current_user=record['comment_thread'].get('liked'),
-            #     posted_by_current_user=record['comment_thread'].get('posted_by_current_user'),
-            # )
+        comments = []
+        for response in result:
+            comment_data = response['parentWithChain']
+            comment_author = comment_data['parentAuthor']
+            parent_comment_data = comment_data['parentComment']
+            comment = build_comment_object(
+                parent_comment_data,
+                comment_author,
+                comment_data['parentLikedByUser'],
+                post_id,
+                user_id,
+                comment_id
+            )
+            prev_comment_id = comment.id
+            thread = []
+            for thread_comment in comment_data['chainedReplies']:
+                if not thread_comment['node']:
+                    break
+
+                thread_comment_data = thread_comment['node']
+                thread_comment_author = thread_comment['author']
+                thread_comment_object = build_comment_object(
+                    thread_comment_data,
+                    thread_comment_author,
+                    thread_comment['likedByUser'],
+                    post_id,
+                    user_id,
+                    prev_comment_id
+                )
+                thread.append(thread_comment_object)
+                prev_comment_id = thread_comment_object.id
             
-            # if not comment_response[tlc_id].replies:
-            #     comment_response[top_level_comment.get('id')].replies = {}
-            
-            # if record['comment_thread'].get('replies'):
-            #     # recursively look into list of replies here.
-            #     comment_response[tlc_id]
-            thread = build_comment_thread(record=record, post_id=post_id)
-            if thread:
-                comment_threads.append(thread)
-        return(comment_threads)
+            comment.thread = thread
+            comments.append(comment)
+        
+        return comments
 
     def get_paginated_comments_for_book_club_post(
             self, 
@@ -384,6 +375,106 @@ class CommentCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
             comments.append(comment)
 
         return({"comments":comments, "pinned_comments": pinned_comments})
+    
+    def get_paginated_comments_for_book_club_comment(
+            self, 
+            post_id,
+            comment_id, 
+            user_id, 
+            skip, 
+            limit,
+            book_club_id,
+            depth
+        ):
+        """
+        Gets all the comments on the comment for a bookclub. 
+        For comments with replies, it returns
+        the top liked reply at each depth, up to the specified depth
+
+        Args:
+            post_id: PK of the post for which to return comments    
+            comment_id: The ID of the comment to grab replies to
+            user_id: id of the current user
+            skip: Low index of comments to grab
+            limit: high index of comments to grab 
+            book_club_id: ID of the bookclub
+            depth: The maximum depth for threads
+        """
+        with self.driver.session() as session:
+            result = session.execute_read(
+                self.get_paginated_comments_for_book_club_comment_query, 
+                post_id, 
+                comment_id, 
+                user_id,
+                skip, 
+                limit,
+                book_club_id,
+                depth
+                )  
+        return(result)
+
+    @staticmethod
+    def get_paginated_comments_for_book_club_comment_query(
+        tx, 
+        post_id,
+        comment_id, 
+        user_id, 
+        skip,
+        limit,
+        book_club_id, 
+        depth
+        ):
+        query = build_get_comments_for_comment_query(
+            depth, 
+            book_club_posts=True
+            )
+
+        result = tx.run(
+            query, 
+            user_id=user_id, 
+            post_id=post_id,
+            comment_id=comment_id,
+            book_club_id=book_club_id, 
+            skip=skip, 
+            limit=limit
+        )
+
+        comments = []
+        for response in result:
+            comment_data = response['parentWithChain']
+            comment_author = comment_data['parentAuthor']
+            parent_comment_data = comment_data['parentComment']
+            comment = build_comment_object(
+                parent_comment_data,
+                comment_author,
+                comment_data['parentLikedByUser'],
+                post_id,
+                user_id,
+                comment_id
+            )
+            prev_comment_id = comment.id
+            thread = []
+            for thread_comment in comment_data['chainedReplies']:
+                if not thread_comment['node']:
+                    break
+
+                thread_comment_data = thread_comment['node']
+                thread_comment_author = thread_comment['author']
+                thread_comment_object = build_comment_object(
+                    thread_comment_data,
+                    thread_comment_author,
+                    thread_comment['likedByUser'],
+                    post_id,
+                    user_id,
+                    prev_comment_id
+                )
+                thread.append(thread_comment_object)
+                prev_comment_id = thread_comment_object.id
+            
+            comment.thread = thread
+            comments.append(comment)
+        
+        return comments
 
     def get_all_pinned_comments_for_post(self, post_id, username, skip, limit):
         """
