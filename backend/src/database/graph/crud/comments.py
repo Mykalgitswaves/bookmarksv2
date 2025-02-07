@@ -50,7 +50,10 @@ class CommentCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
         limit, 
         depth
         ):
-        query = build_get_comments_query(depth, book_club_posts=False)
+        query = build_get_comments_query(
+            depth, 
+            book_club_posts=False
+            )
 
         result = tx.run(
             query, 
@@ -94,7 +97,55 @@ class CommentCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
             comment.thread = thread
             comments.append(comment)
 
-        return({"comments":comments, "pinned_comments":{}})
+        pinned_query = build_get_comments_query(
+            depth,
+            pinned=True
+        )
+
+        pinned_result = tx.run(
+            pinned_query, 
+            user_id=user_id, 
+            post_id=post_id, 
+            skip=skip, 
+            limit=limit
+        )
+
+        pinned_comments = []
+        prev_comment_id = None
+        for response in pinned_result:
+            comment_data = response['parentWithChain']
+            comment_author = comment_data['parentAuthor']
+            parent_comment_data = comment_data['parentComment']
+            comment = build_comment_object(
+                parent_comment_data,
+                comment_author,
+                comment_data['parentLikedByUser'],
+                post_id,
+                user_id
+            )
+            prev_comment_id = comment.id
+            thread = []
+            for thread_comment in comment_data['chainedReplies']:
+                if not thread_comment['node']:
+                    break
+
+                thread_comment_data = thread_comment['node']
+                thread_comment_author = thread_comment['author']
+                thread_comment_object = build_comment_object(
+                    thread_comment_data,
+                    thread_comment_author,
+                    thread_comment['likedByUser'],
+                    post_id,
+                    user_id,
+                    prev_comment_id
+                )
+                thread.append(thread_comment_object)
+                prev_comment_id = thread_comment_object.id
+            
+            comment.thread = thread
+            pinned_comments.append(comment)
+
+        return({"comments":comments, "pinned_comments": pinned_comments})
 
     @staticmethod
     def get_all_comments_for_post_query_v2(tx, post_id, username, bookclub_id, skip=0, limit=20):
@@ -282,7 +333,57 @@ class CommentCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
             comment.thread = thread
             comments.append(comment)
 
-        return(comments)
+        pinned_query = build_get_comments_query(
+            depth, 
+            book_club_posts=True,
+            pinned=True
+            )
+        
+        result = tx.run(
+            pinned_query, 
+            user_id=user_id, 
+            post_id=post_id, 
+            book_club_id=book_club_id,
+            skip=skip, 
+            limit=limit
+        )
+
+        pinned_comments = []
+        prev_comment_id = None
+        for response in result:
+            comment_data = response['parentWithChain']
+            comment_author = comment_data['parentAuthor']
+            parent_comment_data = comment_data['parentComment']
+            comment = build_comment_object(
+                parent_comment_data,
+                comment_author,
+                comment_data['parentLikedByUser'],
+                post_id,
+                user_id
+            )
+            prev_comment_id = comment.id
+            thread = []
+            for thread_comment in comment_data['chainedReplies']:
+                if not thread_comment['node']:
+                    break
+
+                thread_comment_data = thread_comment['node']
+                thread_comment_author = thread_comment['author']
+                thread_comment_object = build_comment_object(
+                    thread_comment_data,
+                    thread_comment_author,
+                    thread_comment['likedByUser'],
+                    post_id,
+                    user_id,
+                    prev_comment_id
+                )
+                thread.append(thread_comment_object)
+                prev_comment_id = thread_comment_object.id
+            
+            comment.thread = thread
+            comments.append(comment)
+
+        return({"comments":comments, "pinned_comments": pinned_comments})
 
     def get_all_pinned_comments_for_post(self, post_id, username, skip, limit):
         """
@@ -540,7 +641,7 @@ class CommentCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
     def create_comment_pin_query(tx, pinned_comment):
         query = """
                 match (u:User {username:$username})-[postRel:POSTED]->(pp {id: $post_id}) 
-                match (rr:Comment {id: $comment_id})
+                match (rr:Comment {id: $comment_id, is_reply: False})
                 with pp,rr
                 where not exists ((pp)-[:PINNED]->(rr)) 
                     create (pp)-[ll:PINNED {created_date:datetime()}]->(rr)

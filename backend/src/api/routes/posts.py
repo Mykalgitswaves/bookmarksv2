@@ -956,11 +956,32 @@ async def get_comments_for_post(
     skip: int = Query(default=0),
     limit: int = Query(default=10),
     book_club_id: Optional[str] = None,
-    comment_id: Optional[str] = None,
     depth: int = 10 
 ):
     """
-    TODO: ADD DOCUMENTATION HERE
+    Gets all the comments for a specific post, paginated by a skip and limit
+
+    Args:
+        post_id: The post to grab comments for
+        current_user: The current user data
+        comment_repo: The CRUD repo containing the comment queries
+        skip: The skip value for level 0 comments
+        limit: The limit value for level 0 comments
+        book_club_id: OPTIONAL If post is from a bookclub, this is the bookclub id
+        depth: The maximum depth to go in a thread
+
+    Returns:
+        comments (list): A list of unpinned comments
+        pinned_comments (list): A list of pinned comments
+
+    Here is the example format for one comment:
+        {
+        "id": comment_id,
+        "user_id": comment author user id,
+        ...
+        "thread": list of the top liked replies for each level under level 0
+            Comment data it the same in here as above
+        }
     """
     if not current_user:
         raise HTTPException(401, "Unauthorized")
@@ -989,7 +1010,8 @@ async def get_comments_for_post(
                 content={
                     "data": jsonable_encoder(
                         {
-                            "comments": comments,
+                            "comments": comments["comments"],
+                            "pinned_comments": comments["pinned_comments"],
                         }
                     )
                 }

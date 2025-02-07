@@ -4,60 +4,110 @@ from src.models.schemas.comments import Comment
 
 def build_get_comments_query(
         depth: int,
-        book_club_posts: bool
+        book_club_posts: bool = False,
+        pinned: bool = False
     ) -> str:
     """
     Builds the comments query for threds to a certain depth
 
     Args:
         depth: The maximum depth to make comments until
+        book_club_posts: Whether the post is from a book club
+        pinned: Whether or not to only grab pinned comments
 
     Returns:
         query (str): The query to run with comments
     """
 
     if not book_club_posts:
-        query_start = """
-                MATCH (cu:User {id: $user_id, disabled: false})
-                MATCH (post {id: $post_id, deleted: false})
-                WHERE post:Review OR post:Milestone 
-                    OR post:Update OR post:Comparison
+        if not pinned:
+            # SEE WHERE NOT STATEMENT
+            query_start = """
+                    MATCH (cu:User {id: $user_id, disabled: false})
+                    MATCH (post {id: $post_id, deleted: false})
+                    WHERE post:Review OR post:Milestone 
+                        OR post:Update OR post:Comparison
 
-                // 1) Match the top-level "parent" comments on the post
-                MATCH (post)-[:HAS_COMMENT]->(c0:Comment {is_reply:false, deleted:false})
+                    // 1) Match the top-level "parent" comments on the post
+                    MATCH (post)-[:HAS_COMMENT]->(c0:Comment {is_reply:false, deleted:false})
+                    WHERE NOT (c0)<-[:PINNED]-(post)
 
-                // (Optional) Grab the parents author and whether current user liked the parent
-                MATCH (parentAuthor:User)-[:COMMENTED]->(c0)
-                OPTIONAL MATCH (cu)-[parentLike:LIKES]->(c0)
+                    // (Optional) Grab the parents author and whether current user liked the parent
+                    MATCH (parentAuthor:User)-[:COMMENTED]->(c0)
+                    OPTIONAL MATCH (cu)-[parentLike:LIKES]->(c0)
 
-                // Order the parents as needed
-                WITH cu, c0, parentAuthor, (parentLike IS NOT NULL) AS parentLikedByUser
-                ORDER BY c0.likes DESC, c0.created_date ASC
-                SKIP $skip
-                LIMIT $limit
-            """
+                    // Order the parents as needed
+                    WITH cu, c0, parentAuthor, (parentLike IS NOT NULL) AS parentLikedByUser
+                    ORDER BY c0.likes DESC, c0.created_date ASC
+                    SKIP $skip
+                    LIMIT $limit
+                """
+        else:
+            query_start = """
+                    MATCH (cu:User {id: $user_id, disabled: false})
+                    MATCH (post {id: $post_id, deleted: false})
+                    WHERE post:Review OR post:Milestone 
+                        OR post:Update OR post:Comparison
+
+                    // 1) Match the top-level "parent" comments on the post
+                    MATCH (post)-[:HAS_COMMENT]->(c0:Comment {is_reply:false, deleted:false})
+                    WHERE (c0)<-[:PINNED]-(post)
+
+                    // (Optional) Grab the parents author and whether current user liked the parent
+                    MATCH (parentAuthor:User)-[:COMMENTED]->(c0)
+                    OPTIONAL MATCH (cu)-[parentLike:LIKES]->(c0)
+
+                    // Order the parents as needed
+                    WITH cu, c0, parentAuthor, (parentLike IS NOT NULL) AS parentLikedByUser
+                    ORDER BY c0.likes DESC, c0.created_date ASC
+                    SKIP $skip
+                    LIMIT $limit
+                """
     else:
-        query_start = """
-                MATCH (cu:User {id: $user_id, disabled: false})
-                MATCH (post {id: $post_id, deleted: false})-[:POST_FOR_CLUB_BOOK]-(:BookClubBook)-[]-(club:BookClub {id:$book_club_id})
-                WHERE post:ClubUpdate OR post:ClubUpdateNoText 
-                    OR post:ClubReview OR post:ClubReviewNoText
-                MATCH (cu)-[:IS_MEMBER_OF|OWNS_BOOK_CLUB]->(club)
+        if not pinned:
+            query_start = """
+                    MATCH (cu:User {id: $user_id, disabled: false})
+                    MATCH (post {id: $post_id, deleted: false})-[:POST_FOR_CLUB_BOOK]-(:BookClubBook)-[]-(club:BookClub {id:$book_club_id})
+                    WHERE post:ClubUpdate OR post:ClubUpdateNoText 
+                        OR post:ClubReview OR post:ClubReviewNoText
+                    MATCH (cu)-[:IS_MEMBER_OF|OWNS_BOOK_CLUB]->(club)
 
-                // 1) Match the top-level "parent" comments on the post
-                MATCH (post)-[:HAS_COMMENT]->(c0:Comment {is_reply:false, deleted:false})
+                    // 1) Match the top-level "parent" comments on the post
+                    MATCH (post)-[:HAS_COMMENT]->(c0:Comment {is_reply:false, deleted:false})
+                    WHERE NOT (c0)<-[:PINNED]-(post)
 
-                // (Optional) Grab the parents author and whether current user liked the parent
-                MATCH (parentAuthor:User)-[:COMMENTED]->(c0)
-                OPTIONAL MATCH (cu)-[parentLike:LIKES]->(c0)
+                    // (Optional) Grab the parents author and whether current user liked the parent
+                    MATCH (parentAuthor:User)-[:COMMENTED]->(c0)
+                    OPTIONAL MATCH (cu)-[parentLike:LIKES]->(c0)
 
-                // Order the parents as needed
-                WITH cu, c0, parentAuthor, (parentLike IS NOT NULL) AS parentLikedByUser
-                ORDER BY c0.likes DESC, c0.created_date ASC
-                SKIP $skip
-                LIMIT $limit
-            """
+                    // Order the parents as needed
+                    WITH cu, c0, parentAuthor, (parentLike IS NOT NULL) AS parentLikedByUser
+                    ORDER BY c0.likes DESC, c0.created_date ASC
+                    SKIP $skip
+                    LIMIT $limit
+                """
+        else:
+            query_start = """
+                    MATCH (cu:User {id: $user_id, disabled: false})
+                    MATCH (post {id: $post_id, deleted: false})-[:POST_FOR_CLUB_BOOK]-(:BookClubBook)-[]-(club:BookClub {id:$book_club_id})
+                    WHERE post:ClubUpdate OR post:ClubUpdateNoText 
+                        OR post:ClubReview OR post:ClubReviewNoText
+                    MATCH (cu)-[:IS_MEMBER_OF|OWNS_BOOK_CLUB]->(club)
 
+                    // 1) Match the top-level "parent" comments on the post
+                    MATCH (post)-[:HAS_COMMENT]->(c0:Comment {is_reply:false, deleted:false})
+                    WHERE (c0)<-[:PINNED]-(post)
+
+                    // (Optional) Grab the parents author and whether current user liked the parent
+                    MATCH (parentAuthor:User)-[:COMMENTED]->(c0)
+                    OPTIONAL MATCH (cu)-[parentLike:LIKES]->(c0)
+
+                    // Order the parents as needed
+                    WITH cu, c0, parentAuthor, (parentLike IS NOT NULL) AS parentLikedByUser
+                    ORDER BY c0.likes DESC, c0.created_date ASC
+                    SKIP $skip
+                    LIMIT $limit
+                """
 
     depth_query_full = ""
     chain_nodes_list = []

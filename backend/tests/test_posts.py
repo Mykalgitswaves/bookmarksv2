@@ -606,6 +606,10 @@ class TestPosts:
         assert response.status_code == 200, "Testing getting a pinned comment"
         assert len(response.json()['data']) > 0, "Testing getting a pinned comment"
 
+        response = requests.get(f"{self.endpoint}/api/posts/post/{milestone_id}/comments", headers=headers)
+        assert response.status_code == 200, "Testing getting a pinned comment"
+        assert len(response.json()['data']['pinned_comments']) > 0, "Testing getting a pinned comment"
+
         response = requests.put(f"{self.endpoint}/api/posts/post/{milestone_id}/remove_pin/{comment_id}", headers=headers)
         assert response.status_code == 200, "Testing remove pin"
 
