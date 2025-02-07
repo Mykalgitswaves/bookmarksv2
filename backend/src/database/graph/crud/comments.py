@@ -289,11 +289,7 @@ class CommentCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
             skip=skip, 
             limit=limit
         )
-        print(user_id), 
-        print(post_id), 
-        print(book_club_id),
-        print(skip), 
-        print(limit)
+
         comments = []
         for response in result:
             comment_data = response['parentWithChain']
