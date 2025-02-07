@@ -19,6 +19,12 @@
                     v-else-if="currentView === subComponentRoutes.settings.currentlyReading"
                     :club="club"    
                 />
+
+                <ClubAfterwords
+                    ref="wrappedSection"
+                    v-else-if="currentView === subComponentRoutes.wrappedSection"
+                    :club="club"
+                />
             </div>
 
             <!-- more loading states -->
@@ -43,6 +49,7 @@ import BookClubFeed from './BookClubFeed.vue';
 import ClubMemberSettingsMain from './invite/ClubMemberSettingsMain.vue';
 import CurrentlyReadingSettings from '../currently-reading/CurrentlyReadingSettings.vue';
 import ClubPostCommentsView from './posts/ClubPostCommentsView.vue';
+import ClubAfterwords from './afterwords/ClubAfterwords.vue';
 
 /**
  * ----------------------------------------------------------------------------
@@ -54,6 +61,7 @@ const route = useRoute();
 const router = useRouter();
 const { user, bookclub } = route.params;
 const loaded = ref(false);
+const wrappedSection = ref(null);
 
 let error;
 let club;
@@ -64,7 +72,8 @@ const subComponentRoutes = {
     settings: {
         currentlyReading: 'currently-reading',
         manageMembers: 'manage-members',
-    }
+    },
+    wrappedSection: 'wrapped',
 }
 
 const currentView = computed(() => {
@@ -84,12 +93,20 @@ const currentView = computed(() => {
 });
 
 
+
 /**
  * ----------------------------------------------------------------------------
  * @end_of_constants
  * ----------------------------------------------------------------------------
  */
 
+/**
+ * ----------------------------------------------------------------------------
+ * @events
+ * ----------------------------------------------------------------------------
+ */
+
+document.addEventListener
 
 
 /**

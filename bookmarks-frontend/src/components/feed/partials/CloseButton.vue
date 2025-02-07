@@ -1,7 +1,7 @@
 <template>
     <button 
         type="button" 
-        class="btn btn-icon btn-tiny btn-ghost" 
+        class="btn btn-icon btn-tiny" 
         @click="$emit('close')"
     >
         <IconExit />

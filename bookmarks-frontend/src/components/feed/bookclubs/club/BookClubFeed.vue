@@ -24,7 +24,7 @@
             }"
         >
             <CurrentlyReadingBook 
-                :is-finished-reading="club.currently_reading_book.is_user_finished_reading"
+                :is-finished-reading="currentlyReadingBook.is_user_finished_reading"
                 :book="currentlyReadingBook" 
                 @currently-reading-settings="router.push(
                     navRoutes.bookClubSettingsCurrentlyReading(
@@ -115,6 +115,7 @@ const loaded = ref(false);
 const overlays = ref({
     updateOverlay: null,
     finishedReadingOverlay: null,
+    wrappedOverlay: null,
 });
 
 const route = useRoute();
@@ -167,6 +168,7 @@ const currentlyReadingPromise = db.get(urls.bookclubs.getCurrentlyReadingForClub
 Promise.allSettled([clubFeedPromise, currentlyReadingPromise]).then(() => {
     loaded.value = true;
 });
+
 
 
 // If you are coming from notifications tab, then load the showUpdateForm, then unwatch watcher.

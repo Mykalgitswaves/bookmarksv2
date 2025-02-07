@@ -186,10 +186,10 @@
                 >
                     <IconClubLike />
 
-                    <span v-if="post.likes > 0" 
+                    <span v-if="likes > 0" 
                         class="like-count"
                     >
-                        {{ post.likes }}
+                        {{ likes }}
                     </span>
                 </button>
 

@@ -146,6 +146,7 @@ const { user, bookshelf } = route.params;
 // - View variables and booleans -  // 
 const currentView = ref('view-books');
 const loaded = ref(false);
+const isReordering = ref(false);
 const isEditingModeEnabled = ref({value: false});
 const bookshelfData = ref(null);
 const currentBook = ref(null);
@@ -222,5 +223,15 @@ function removeBookFromShelf(removed_book_id) {
     } catch (error) {
         console.error(error);
     }
+}
+
+function reorder_books(bookData) {
+    isReordering.value = true;
+    bookData.type = 'reorder';
+    // Send data to server
+    ws.sendData(bookData);
+    isReordering.value = false;
+    // Forget what this is used for.
+    unsetKey += 1
 }
 </script>

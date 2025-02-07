@@ -1,6 +1,9 @@
 <template>
     <div class="ml-auto mr-auto">
-        <p class="text-stone-600 italic mb-2" v-if="book">Currently reading</p>
+        <p class="text-stone-600 italic mb-2" v-if="book">
+            <span v-if="!isUserFinishedReading">Currently reading</span>
+            <span v-else>Finished reading</span>
+        </p>
 
         <div v-if="book" class="currently-reading-book">
             <img :src="book.small_img_url" alt="" class="currently-reading-img">
@@ -35,6 +38,10 @@ import { helpersCtrl } from '../../../../services/helpers';
 defineProps({
     book: {
         type: Object,
+    },
+    isUserFinishedReading: {
+        type: Boolean,
+        required: false,
     }
 });
 
