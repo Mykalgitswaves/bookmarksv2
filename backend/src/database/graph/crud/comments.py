@@ -280,7 +280,7 @@ class CommentCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
         ):
         
         query = build_get_comments_query(depth, book_club_posts=True)
-
+        
         result = tx.run(
             query, 
             user_id=user_id, 
@@ -289,7 +289,11 @@ class CommentCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
             skip=skip, 
             limit=limit
         )
-
+        print(user_id), 
+        print(post_id), 
+        print(book_club_id),
+        print(skip), 
+        print(limit)
         comments = []
         for response in result:
             comment_data = response['parentWithChain']

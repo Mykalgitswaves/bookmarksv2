@@ -143,9 +143,9 @@ const getPostPromise = db.get(
 const getPaginatedCommentsForPostPromise = db.get(
     urls.concatQueryParams(
         urls.reviews.getComments(postId), 
-        { 'bookclub_id': bookclub }
+        { 'book_club_id': bookclub , ...pagination.value}
     ),
-    {...pagination.value}, 
+    null, 
     false, 
     (res) => {
         commentData.value.comments = res.data.comments;

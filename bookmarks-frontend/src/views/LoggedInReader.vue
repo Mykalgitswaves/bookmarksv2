@@ -208,7 +208,6 @@ import { urls, navRoutes } from '../services/urls'
 import { PubSub } from '../services/pubsub';
 import { getCurrentUser } from '../stores/currentUser';
 import AsyncComponent from '@/components/feed/partials/AsyncComponent.vue';
-import { getCurrentUser } from './../stores/currentUser';
 
 const route = useRoute();
 const router = useRouter();
