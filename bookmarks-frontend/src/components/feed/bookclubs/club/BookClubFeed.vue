@@ -19,10 +19,12 @@
 
         <section v-if="loaded" 
             class="club-main-padding"
-            :class="{'is-user-finished-with-current-book': isUserFinishedReadingBook}"
+            :class="{
+                'is-user-finished-with-current-book': club.currently_reading_book.is_user_finished_reading
+            }"
         >
             <CurrentlyReadingBook 
-                :is-finished-reading="isUserFinishedReadingBook"
+                :is-finished-reading="currentlyReadingBook.is_user_finished_reading"
                 :book="currentlyReadingBook" 
                 @currently-reading-settings="router.push(
                     navRoutes.bookClubSettingsCurrentlyReading(
@@ -96,6 +98,7 @@ import { formatUpdateForBookClub } from '../bookClubService';
 import { useRoute, useRouter } from 'vue-router';
 import LoadingCard from '../../../shared/LoadingCard.vue';
 import { createConfetti } from '../../../../services/helpers';
+import { currentUser } from '../../../../stores/currentUser';
 
 const props = defineProps({
     club: {
@@ -112,13 +115,12 @@ const loaded = ref(false);
 const overlays = ref({
     updateOverlay: null,
     finishedReadingOverlay: null,
+    wrappedOverlay: null,
 });
 
 const route = useRoute();
 const router = useRouter();
-
 const {user, bookclub} = route.params;
-
 const isUserFinishedReadingBook = ref(false);
 const reviewPost = ref(null);
 
@@ -139,7 +141,20 @@ function showFinishedReadingForm() {
  * @description – Reruns every time the club loads
  */
 
-const clubFeedPromise = db.get(urls.bookclubs.getClubFeed(bookclub), null, false, (res) => {
+// If you are done reading call a different url.
+let feedUrl = urls.bookclubs.getClubFeed(route.params.bookclub);
+if (props.club.currently_reading_book.is_user_finished_reading) {
+    feedUrl = urls.bookclubs.getFinishedClubFeed(route.params.bookclub);
+};
+
+const clubFeedPromise = db.get(feedUrl, null, false, (res) => {
+    data.value.posts = res.posts;
+},
+(err) => {
+    console.log(err);
+});
+
+const clubFeedPromiseFactory = () => db.get(feedUrl, null, false, (res) => {
     data.value.posts = res.posts;
 },
 (err) => {
@@ -150,9 +165,10 @@ const currentlyReadingPromise = db.get(urls.bookclubs.getCurrentlyReadingForClub
     currentlyReadingBook = res.currently_reading_book;
 });
 
-Promise.all([clubFeedPromise, currentlyReadingPromise]).then(() => {
+Promise.allSettled([clubFeedPromise, currentlyReadingPromise]).then(() => {
     loaded.value = true;
 });
+
 
 
 // If you are coming from notifications tab, then load the showUpdateForm, then unwatch watcher.
@@ -167,7 +183,7 @@ watch(() => overlays.value.updateOverlay, () => {
 // So users can scroll up and refresh feed. 
 function refreshFeed() {
     loaded.value = false;
-    Promise.resolve(clubFeedPromise).then(() => {
+    Promise.resolve(clubFeedPromiseFactory()).then(() => {
         loaded.value = true;
     });
 }
@@ -183,10 +199,10 @@ function postUpdateForBookClub(update) {
         (res) => {
             console.log(res);
             // Refresh;
-            refreshFeed();
             const { dialogRef } = overlays.value.updateOverlay;
             dialogRef?.close();
             createConfetti();
+            refreshFeed();
         },
         (err) => {
             console.warn(err);
@@ -197,12 +213,12 @@ function postUpdateForBookClub(update) {
 
 // Allow posting and then closing the overlay.
 function postReviewAndFinishReadingCurrentBook(post) {
-    // post.user = {id: }
+    post.user = {id: currentUser.value.id }
 
     if (!post) {
         db.post(
             urls.concatQueryParams(
-                urls.bookclubs.postClubReviewAndFinishReading(bookclub),
+                urls.bookclubs.postClubReviewAndFinishReading(bookclub, props.club.currently_reading_book.book_club_book_id),
                 { no_review: true },
             ), 
             null, 
@@ -214,7 +230,7 @@ function postReviewAndFinishReadingCurrentBook(post) {
             }
         );
     } else {   
-        db.post(urls.bookclubs.postClubReviewAndFinishReading(bookclub), 
+        db.post(urls.bookclubs.postClubReviewAndFinishReading(bookclub, props.club.currently_reading_book.book_club_book_id), 
             post, 
             false, 
             (res) => {

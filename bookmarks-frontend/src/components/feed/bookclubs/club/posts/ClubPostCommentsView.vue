@@ -2,38 +2,38 @@
     <!-- Load the post first. -->
     <AsyncComponent :promises="[getPostPromise]">
         <template #resolved>
-                <ClubPost :post="data.post" :is-viewing-post="true"/>
+            <ClubPost :post="data.post" :is-viewing-post="true"/>
 
-                <ViewAwards/>
+            <ViewAwards/>
 
-                <div 
-                    style="margin-top: 20px" 
-                    :class="{'scrolled-below-post': isScrollPastCommentBar && clubCommentSelectedForReply}"
-                    ref="commentBarRef"
-                >   
-                    <!-- If you have selected a comment to reply to then do that shit -->
-                     <span v-if="clubCommentSelectedForReply" class="text-sm ml-5 mb-2 block">replying to
-                        <span class="text-indigo-500 fancy">{{ clubCommentSelectedForReply.comment?.username }}'s'</span>
-                        comment
-                    </span>
+            <div 
+                style="margin-top: 20px" 
+                :class="{'scrolled-below-post': isScrollPastCommentBar && clubCommentSelectedForReply}"
+                ref="commentBarRef"
+            >   
+                <!-- If you have selected a comment to reply to then do that shit -->
+                    <span v-if="clubCommentSelectedForReply" class="text-sm ml-5 mb-2 block">replying to
+                    <span class="text-indigo-500 fancy">{{ clubCommentSelectedForReply.comment?.username }}'s'</span>
+                    comment
+                </span>
 
-                    <div :class="{'comment-bar-section': clubCommentSelectedForReply}">
-                        <CommentBar 
-                            :post-id="data.post.id"
-                            :comment="clubCommentSelectedForReply" 
-                            @pre-success-comment="(comment) => addToComments(comment)" 
-                        />
+                <div :class="{'comment-bar-section': clubCommentSelectedForReply}">
+                    <CommentBar 
+                        :post-id="data.post.id"
+                        :comment="clubCommentSelectedForReply" 
+                        @pre-success-comment="(comment) => addToComments(comment)" 
+                    />
 
-                        <button 
-                            v-if="clubCommentSelectedForReply"
-                            type="button" 
-                            class="btn btn-tiny btn-red mb-2"
-                            @click="clubCommentSelectedForReply = null"
-                        >
-                            <IconExit/>
-                        </button>
-                    </div>
+                    <button 
+                        v-if="clubCommentSelectedForReply"
+                        type="button" 
+                        class="btn btn-tiny btn-red mb-2"
+                        @click="clubCommentSelectedForReply = null"
+                    >
+                        <IconExit/>
+                    </button>
                 </div>
+            </div>
         </template>
         <template #loading>
             <div class="fancy loading gradient radius-sm py-5 text-center mb-5">Loading post...</div>
@@ -53,7 +53,7 @@
                     @comment-selected="(comment) => { clubCommentSelectedForReply = comment; console.log(comment)}"
                 />
 
-                <ClubCommentV2 
+                <!-- <ClubCommentV2 
                     v-for="(comment, index) in flatComments" 
                     :key="comment.id"
                     :comment-data="comment"
@@ -61,7 +61,7 @@
                     :max-depth-of-thread="maxDepth"
                     :comment-depth="index"
                     :sub-thread-collapsed="false"
-                />
+                /> -->
             </div>
 
             <div v-else class="mt-5 text-2xl fancy text-stone-600 text-center">
@@ -153,22 +153,6 @@ const getPaginatedCommentsForPostPromise = db.get(
         commentData.errors = [err];
     }
 );
-
-const comments = ref([])
-
-const processedComments = computed(() => {
-    return CommentService.processComments(commentData.value.comments)
-})
-
-// Or if you need a flat list:
-const flatComments = computed(() => {
-    return CommentService.flattenComments(commentData.value.comments)
-})
- 
-// Get max depth for styling purposes:
-const maxDepth = computed(() => {
-    return CommentService.getMaxDepth(commentData.value.comments)
-})
 
 
 function addToComments(message) {

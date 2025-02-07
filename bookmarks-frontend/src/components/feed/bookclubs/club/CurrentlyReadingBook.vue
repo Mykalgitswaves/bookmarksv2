@@ -1,6 +1,9 @@
 <template>
     <div class="ml-auto mr-auto">
-        <p class="text-stone-600 italic mb-2" v-if="book">Currently reading</p>
+        <p class="text-stone-600 italic mb-2" v-if="book">
+            <span v-if="!isUserFinishedReading">Currently reading</span>
+            <span v-else>Finished reading</span>
+        </p>
 
         <div v-if="book" class="currently-reading-book">
             <img :src="book.small_img_url" alt="" class="currently-reading-img">
@@ -8,7 +11,7 @@
             <div class="book-metadata">
                 <h3 class="fancy text-xl text-stone-800">{{ book.title }}</h3>
 
-                <p class="text-sm text-stone-600">
+                <p v-if="book?.author_names?.length" class="text-sm text-stone-600">
                     {{ helpersCtrl.commanatoredString(book.author_names) }}
                 </p>
             </div>
@@ -35,6 +38,10 @@ import { helpersCtrl } from '../../../../services/helpers';
 defineProps({
     book: {
         type: Object,
+    },
+    isUserFinishedReading: {
+        type: Boolean,
+        required: false,
     }
 });
 

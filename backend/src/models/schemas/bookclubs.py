@@ -94,11 +94,12 @@ class MinimalBookClub(BaseBookClub):
 
 class BookClubCurrentlyReading(BaseModel):
     book_id: str
-    book_club_book_id:str
+    book_club_book_id:str | None = None
     title: str
     small_img_url: str
-    author_names: list
+    author_names: list | None = None
     chapters: int | None = None
+    is_user_finished_reading: bool = False
 
 class BookClubInvitePreview(BaseModel):
     invite_id: str
