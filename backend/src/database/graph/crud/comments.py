@@ -280,7 +280,7 @@ class CommentCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
         ):
         
         query = build_get_comments_query(depth, book_club_posts=True)
-
+        
         result = tx.run(
             query, 
             user_id=user_id, 
@@ -673,6 +673,90 @@ class CommentCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
         
         if result:
             response = result.single()
+            comment_result = Comment(
+                post_id = comment.post_id,
+                replied_to = comment.replied_to,
+                text = comment.text,
+                username = comment.username,
+                id = response['c.id'],
+                created_date = response['c.created_date']
+            )
+            return(comment_result)
+        else:
+            return None
+        
+    def create_comment_for_club(self, comment:CommentCreate):
+        """
+        Creates a comment in the database for a book club post
+        Args:
+            comment: Comment object to be pushed to DB
+        Returns:
+            created_date: Exact datetime of creation from Neo4j
+            comment_id: PK of the comment in the db
+        """
+        with self.driver.session() as session:
+            comment_result = session.execute_write(self.create_comment_for_club_query, comment)
+        return(comment_result)
+    
+    @staticmethod
+    def create_comment_for_club_query(tx, comment):
+        print("creating comment for club")
+        query_w_reply = """
+        match (pp {id:$post_id, deleted:false})-[:POST_FOR_CLUB_BOOK]->(:BookClubBook)-[]-(club:BookClub)
+        match (u:User {username:$username})-[:IS_MEMBER_OF|OWNS_BOOK_CLUB]->(club)
+        MATCH (parent:Comment {id: $replied_to, deleted:false})
+        create (c:Comment {
+            id:randomUUID(),
+            created_date:datetime(),
+            text:$text,
+            likes:0,
+            is_reply:True,
+            pinned:false,
+            deleted:false,
+            depth:parent.depth + 1,
+            num_replies:0
+        })
+        merge (pp)-[h:HAS_COMMENT]->(c)
+        merge (u)-[cc:COMMENTED]->(c)
+        MERGE (c)-[:REPLIED_TO]->(parent)
+        SET parent.num_replies = parent.num_replies + 1
+
+        return c.id, c.created_date
+        """
+        query_no_reply = """
+        match (pp {id:$post_id, deleted:false})-[:POST_FOR_CLUB_BOOK]->(:BookClubBook)-[]-(club:BookClub)
+        match (u:User {username:$username})-[:IS_MEMBER_OF|OWNS_BOOK_CLUB]->(club)
+        create (c:Comment {
+            id:randomUUID(),
+            created_date:datetime(),
+            text:$text,
+            likes:0,
+            is_reply:False,
+            pinned:false,
+            deleted:false,
+            depth:0,
+            num_replies:0
+        })
+        merge (pp)-[h:HAS_COMMENT]->(c)
+        merge (u)-[cc:COMMENTED]->(c)
+
+        return c.id, c.created_date
+        """
+        if comment.replied_to:
+            result = tx.run(query_w_reply, 
+                            post_id = comment.post_id,
+                            replied_to = comment.replied_to,
+                            text = comment.text,
+                            username = comment.username)
+        else:
+            result = tx.run(query_no_reply, 
+                            post_id = comment.post_id,
+                            text = comment.text,
+                            username = comment.username)
+        
+        response = result.single()
+        if response:
+            print(response)
             comment_result = Comment(
                 post_id = comment.post_id,
                 replied_to = comment.replied_to,

@@ -94,7 +94,7 @@ class MinimalBookClub(BaseBookClub):
 
 class BookClubCurrentlyReading(BaseModel):
     book_id: str
-    book_club_book_id:str | None = None
+    book_club_book_id: str = None
     title: str
     small_img_url: str
     author_names: list | None = None

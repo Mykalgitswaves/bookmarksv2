@@ -674,8 +674,11 @@ async def create_comment(
         )
     except ValueError as e:
         raise HTTPException(status_code=400, detail=jsonable_encoder(e.json()))
-
-    comment = comment_repo.create_comment(comment)
+    
+    if comment.post_id.startswith("club_"):
+        comment = comment_repo.create_comment_for_club(comment)
+    else:
+        comment = comment_repo.create_comment(comment)
 
     if not comment:
         logger.warning(
