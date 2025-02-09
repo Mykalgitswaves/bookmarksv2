@@ -182,7 +182,37 @@ server {
 
 sudo systemctl restart nginx
 
+# Setup log forwarding to cloudwatch
 
+cd /home/ubuntu
+wget https://amazoncloudwatch-agent.s3.amazonaws.com/ubuntu/amd64/latest/amazon-cloudwatch-agent.deb
+sudo dpkg -i -E ./amazon-cloudwatch-agent.deb
+vim amazon-cloudwatch-agent.json
+{
+  "logs": {
+    "logs_collected": {
+      "files": {
+        "collect_list": [
+          {
+            "file_path": "/home/ubuntu/bookmarksv2/backend/src/utils/logging/logs/info.log.jsonl",
+            "log_group_name": "MyAppLogGroup",
+            "log_stream_name": "info-log",
+            "multi_line_start_pattern": "^\\{"
+          },
+          {
+            "file_path": "/home/ubuntu/bookmarksv2/backend/src/utils/logging/logs/error.log",
+            "log_group_name": "MyAppLogGroup",
+            "log_stream_name": "error-log"
+          },
+          {
+            "file_path": "/home/ubuntu/bookmarksv2/backend/src/utils/logging/logs/warning.log",
+            "log_group_name": "MyAppLogGroup",
+            "log_stream_name": "warning-log"
+          }
+        ]
+      }
+    }
+  }
+}
 
-
-
+sudo /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl   -a fetch-config   -m ec2   -c file:/home/ubuntu/amazon-cloudwatch-agent.json   -s
