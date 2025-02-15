@@ -19,7 +19,7 @@ def initialize_backend_application() -> fastapi.FastAPI:
         allow_headers=settings.ALLOWED_HEADERS,
     )
 
-    # TODO: Add event handlers for startup and shutdown.
+    # TODO: Add event handlers for startup and shutdown
 
     app.include_router(router=api_endpoint_router, prefix=settings.API_PREFIX)
 
