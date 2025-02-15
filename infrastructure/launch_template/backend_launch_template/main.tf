@@ -22,6 +22,10 @@ resource "aws_launch_template" "backend_template" {
   
   instance_initiated_shutdown_behavior = "terminate"
 
+  iam_instance_profile {
+    name = "hardcover_backend_ec2"
+  }
+
   network_interfaces {
     associate_public_ip_address = true
     delete_on_termination = true

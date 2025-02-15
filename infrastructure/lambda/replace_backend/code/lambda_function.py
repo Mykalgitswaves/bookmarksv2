@@ -5,7 +5,7 @@ ec2 = boto3.client('ec2')
 elb = boto3.client('elbv2')
 sns = boto3.client('sns')
 
-target_group_arn = 'arn:aws:elasticloadbalancing:us-east-1:788511695961:targetgroup/backend-target-group/7585c0733209c134'
+target_group_arn = 'arn:aws:elasticloadbalancing:us-east-1:788511695961:targetgroup/backend-target-group/399e506b2d15282d'
 topic_arn = 'arn:aws:sns:us-east-1:788511695961:deployment_notification'
 
 def lambda_handler(event, context):

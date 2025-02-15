@@ -1,6 +1,6 @@
 import boto3
 
-launch_template_id = 'lt-015a761f26cefb08e'
+launch_template_id = 'lt-00b0b3e8a93f577ab'
 event_name = 'TriggerStepFunctionAt5AM_EST'
 
 ec2 = boto3.client('ec2')

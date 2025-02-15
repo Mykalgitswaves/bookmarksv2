@@ -1,0 +1,39 @@
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Principal": {
+                "AWS": [
+                    "arn:aws:iam::788511695961:user/kyle",
+                    "arn:aws:iam::788511695961:root",
+                    "arn:aws:iam::788511695961:role/db-instance-role"
+                ]
+            },
+            "Action": [
+                "s3:Put*"
+            ],
+            "Resource": [
+                "arn:aws:s3:::book-prod-neo-backups/*",
+                "arn:aws:s3:::book-prod-neo-backups"
+            ]
+        },
+        {
+            "Effect": "Allow",
+            "Principal": {
+                "AWS": [
+                    "arn:aws:iam::788511695961:user/kyle",
+                    "arn:aws:iam::788511695961:root"
+                ]
+            },
+            "Action": [
+                "s3:Get*",
+                "s3:List*",
+                "s3:Delete*"
+            ],
+            "Resource": [
+                "arn:aws:s3:::book-prod-neo-backups/*"
+            ]
+        }
+    ]
+}
