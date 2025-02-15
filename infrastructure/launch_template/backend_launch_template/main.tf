@@ -14,13 +14,17 @@ resource "aws_launch_template" "backend_template" {
   name = "backend-launch-template-05-29"
   description = "Launch template for provisioning backend instances created on 5-29-2024"
   
-  image_id = "ami-018767bcdc37544d4"
+  image_id = "ami-00bbf8af14154df72"
   instance_type = "t3.small"
   key_name = "bookmarks-web-server"
 
   update_default_version = true
   
   instance_initiated_shutdown_behavior = "terminate"
+
+  iam_instance_profile {
+    name = "hardcover_backend_ec2"
+  }
 
   network_interfaces {
     associate_public_ip_address = true
