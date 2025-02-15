@@ -47,6 +47,7 @@ const debouncedInputEmit = debounce(inputEmit, 250, false);
 <style scoped>
 .input--2 {
     padding: 2px;
+    padding-left: 8px;
     border-radius: 4px; 
     border: 1px solid var(--indigo-100);
 }

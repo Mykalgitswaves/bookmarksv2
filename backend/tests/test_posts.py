@@ -411,6 +411,20 @@ class TestPosts:
         assert response.status_code == 200, "Testing get comments"
         assert len(response.json()['data']['comments']) > 0, "Testing get comments"
 
+        comment_id = response.json()["data"]["id"]
+
+        response = requests.get(
+            f"{self.endpoint}/api/posts/post/{milestone_id}/comments", 
+            headers=headers,
+            param={
+                "book_club_id": "id"
+                }
+            )
+
+        print(response.json())
+        assert response.status_code == 200, "Testing get comments new"
+        assert len(response.json()['data']['comments']) > 0, "Testing get comments"
+
         data = {
             "post_id": milestone_id,
             "text":"Test Comment",

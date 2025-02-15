@@ -98,7 +98,7 @@
     color: var(--stone-700);
 }
 
-.btn.disabled {
+.btn.disabled, button[disabled] {
     border: 1px solid var(--stone-300);
     color: var(--stone-500);
     transition: var(--transition-short);

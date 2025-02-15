@@ -8,6 +8,8 @@
                 type="text" 
                 v-model="search_params"
                 @keyup="debouncedSearchRequest($event)"
+                @focusin="emit('is-search-focused', true)"
+                @focusout="emit('is-search-focused', false)"
             >
         </label>
 
@@ -26,6 +28,7 @@ import IconSearch from '@/components/svg/icon-search.vue';
 
 const { debounce } = helpersCtrl;
 const search_params = ref('');
+const emit = defineEmits(['is-search-focused']);
 
 function searchRequest() {
     if (search_params.value.length > 1) {
@@ -63,7 +66,7 @@ const debouncedSearchRequest = debounce(searchRequest, 500, false)
     justify-content: center;
     border-radius: var(--radius-sm);
     border: 1px solid var(--indigo-200);
-    width: fit-content;
+    width: auto;
     height: 40px;
     padding-left: 8px;
     padding-right: 8px;

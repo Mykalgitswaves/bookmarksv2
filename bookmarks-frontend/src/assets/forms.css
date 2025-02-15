@@ -345,7 +345,7 @@ ul:has(.comments-wrapper) {
   border-color: rgb(238 242 255);
   transform: scaleX(95%);
   margin-right: -20px;
-  margin-top: 1.25rem;
+  /* margin-top: 1.25rem; */
   margin-bottom: 1.25rem;
 }
 
@@ -540,4 +540,10 @@ dialog::-webkit-scrollbar {
   background-color: var(--stone-100);
   border-radius: 8px;
   margin-bottom: 20px;
+}
+
+.comment-bar-section {
+  display: grid;
+  grid-template-columns: auto min-content;
+  align-items: center;
 }

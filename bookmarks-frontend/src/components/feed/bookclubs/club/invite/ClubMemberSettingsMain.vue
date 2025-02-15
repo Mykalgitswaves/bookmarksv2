@@ -18,7 +18,7 @@
                 type="button"
                 class="btn btn-toolbar"
                 :class="{'active': currentView === views.invitations}"
-                @click="currentView = views.invitations;"
+                @click="currentView = views.invitations"
             >
                 Invitations:
                 
@@ -28,7 +28,7 @@
                 type="button"
                 class="btn btn-toolbar"
                 :class="{'active': currentView === views.manageMembers}"
-                @click="currentView = views.manageMembers; $emit('view-changed', views.manageMembers)"
+                @click="currentView = views.manageMembers"
             >
                 Manage members: <i>{{ memberCount || '0' }}</i>
             </button>
@@ -45,7 +45,6 @@
 import { ref } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { navRoutes } from '../../../../../services/urls';
-import BackBtn from '../../../partials/back-btn.vue';
 import MemberInvitations from './MemberInvitations.vue';
 import ManageMembers from './ManageMembers.vue';
 
@@ -65,8 +64,7 @@ const views = {
     manageMembers: 'manage-members',
 }; 
 
-let data;
-let pendingInvitations;
+
 let memberCount;
 const router = useRouter();
 const route = useRoute();

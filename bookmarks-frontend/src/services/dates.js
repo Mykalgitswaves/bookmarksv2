@@ -23,9 +23,13 @@ export const dates = {
      * relative to know it was. 
      * NOTE: Does not deal with locale.
      * @param {datetime} datetime 
+     * @param {Boolean} overrideForNow - a way to override the datetime return. Outputs 'Just now' 
      * @returns {string}
      */
-    timeAgoFromNow: (datetime) => {
+    timeAgoFromNow: (datetime, overrideForNow) => {
+        if (!datetime && overrideForNow) return 'Just now';
+        
+
         if (!datetime) return null;
         let date;
 

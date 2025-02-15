@@ -1,9 +1,11 @@
 <template>
-    <BackBtn v-if="showBackButton"/>
+    <!-- <BackBtn v-if="showBackButton"/> -->
 
     <section>
         <RouterView></RouterView>
     </section>
+
+    <div class="mobile-menu-spacer sm:hidden"></div>
 </template>
 <script setup>
 import BackBtn from './../partials/back-btn.vue';
