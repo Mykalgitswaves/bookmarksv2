@@ -40,6 +40,7 @@ jobs:
       run: |
         echo "GUNICORN_WORKERS=1" > .env
         echo "ENVIRONMENT=DEV" >> .env
+        chmod 777 backend/src/utils/logging/logs
         docker-compose up --build     
         sleep 60  # Give it a few seconds to start
 
