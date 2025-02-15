@@ -25,11 +25,6 @@ jobs:
       with:
         version: '2.14.2' # the full version of `docker-compose` command
 
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install -r requirements.txt
-
     - name: Configure AWS Credentials
       uses: aws-actions/configure-aws-credentials@v1
       with:
@@ -43,7 +38,8 @@ jobs:
 
     - name: Start docker compose application
       run: |
-        export ENVIRONMENT=dev
+        echo "GUNICORN_WORKERS=1" > .env
+        echo "ENVIRONMENT=DEV" >> .env
         docker-compose up --build     
         sleep 60  # Give it a few seconds to start
 
