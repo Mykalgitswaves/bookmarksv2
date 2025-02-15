@@ -41,7 +41,7 @@ jobs:
         echo "GUNICORN_WORKERS=1" > .env
         echo "ENVIRONMENT=DEV" >> .env
         chmod 777 backend/src/utils/logging/logs
-        docker-compose up --build     
+        docker-compose up --build -d    
         sleep 60  # Give it a few seconds to start
 
     - name: Run tests
@@ -49,6 +49,10 @@ jobs:
         PYTEST_SECRET: ${{ secrets.PYTEST_SECRET }}
       run: |
         cd backend/tests
+        pip install pytest
+        pip install httpx
+        pip install beautifulsoup4
+        pip install websockets
         echo "{\"ADMIN_CREDENTIALS\": \"$PYTEST_SECRET\"}" > config.json
         pytest
 
