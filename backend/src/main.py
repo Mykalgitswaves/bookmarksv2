@@ -27,7 +27,7 @@ def initialize_backend_application() -> fastapi.FastAPI:
 
 
 backend_app: fastapi.FastAPI = initialize_backend_application()
-logger.info("Backend application initialized")
+logger.info("Backend application initialized", extra={"uri": settings.NEO4J_URI})
 
 if __name__ == "__main__":
     uvicorn.run(
