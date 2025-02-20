@@ -3,6 +3,7 @@
 cd /home/ubuntu/bookmarksv2
 
 eval "$(ssh-agent -s)"
+ssh-add /home/ubuntu/.ssh/deploy_key
 
 git pull -r
 

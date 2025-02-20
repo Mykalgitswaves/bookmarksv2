@@ -27,5 +27,5 @@ resource "aws_lambda_function" "replace_backend_lambda_function" {
         role          = data.aws_iam_role.lambda_role.arn
         runtime       = "python3.10"
         handler       = "lambda_function.lambda_handler"
-        timeout       = 100
+        timeout       = 300
 }

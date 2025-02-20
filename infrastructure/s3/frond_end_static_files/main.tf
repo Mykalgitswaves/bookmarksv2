@@ -49,6 +49,17 @@ resource "aws_cloudfront_origin_access_identity" "my_oai" {
   comment = "My OAI for S3 bucket"
 }
 
+data "aws_secretsmanager_secret" "custom_header_secret" {
+  name = "prod/custom_headers"
+}
+
+data "aws_secretsmanager_secret_version" "custom_header_secret_data" {
+  secret_id = data.aws_secretsmanager_secret.custom_header_secret.id
+}
+
+locals {
+  header_data = jsondecode(data.aws_secretsmanager_secret_version.custom_header_secret_data.secret_string)
+}
 
 resource "aws_cloudfront_distribution" "my_distribution" {
   web_acl_id = "arn:aws:wafv2:us-east-1:788511695961:global/webacl/clopudfront-waf/630343c7-c3ed-4027-ad63-653743a7229f"
@@ -72,6 +83,12 @@ resource "aws_cloudfront_distribution" "my_distribution" {
       origin_protocol_policy = "https-only"
       origin_ssl_protocols   = ["TLSv1.2"]
     }
+
+    # To add the secrets this way if not manually
+    # custom_header {
+    #   name = local.header_data["HEADER_NAME"]
+    #   value = local.header_data["HEADER_VALUE"]
+    # }
   }
 
   ordered_cache_behavior {

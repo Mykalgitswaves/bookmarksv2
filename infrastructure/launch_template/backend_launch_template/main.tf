@@ -14,7 +14,7 @@ resource "aws_launch_template" "backend_template" {
   name = "backend-launch-template-05-29"
   description = "Launch template for provisioning backend instances created on 5-29-2024"
   
-  image_id = "ami-00bbf8af14154df72"
+  image_id = "ami-0e515446c09d4e37b"
   instance_type = "t3.small"
   key_name = "bookmarks-web-server"
 
@@ -30,7 +30,7 @@ resource "aws_launch_template" "backend_template" {
     associate_public_ip_address = true
     delete_on_termination = true
     subnet_id = "subnet-00dc7be2febbff5e2"
-    security_groups = ["sg-0940d2c175af8cad2", "sg-09d22bff8997e1e47"]
+    security_groups = ["sg-09d22bff8997e1e47"]
   }
 
   user_data = filebase64("${path.module}/setup.sh")
