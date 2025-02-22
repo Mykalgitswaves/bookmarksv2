@@ -36,6 +36,8 @@ import { XLARGE_TEXT_LENGTH } from '../../../../../../services/forms';
 import { helpersCtrl } from '../../../../../../services/helpers';
 import SuccessToast from '../../../../../shared/SuccessToast.vue';
 import { Toast } from '../../../../../shared/models';
+import {  generateUUID } from '../../../../../../services/helpers';
+import { currentUser } from '@/stores/currentUser.TS';
 
 const props = defineProps({
     postId: {
@@ -61,7 +63,8 @@ async function postComment() {
     submitting.value = true;
     let data;
     // If you are commenting on a post, not replying 
-    if (!props.comment) {
+    const { comment } = props; 
+    if (!comment) {
         data = {
             post_id: props.postId,
             text: modelComment.value,
@@ -73,12 +76,22 @@ async function postComment() {
             post_id: props.postId,
             text: modelComment.value,
             pinned: false,
-            replied_to: props.comment.replyingTo || props.comment.id // see if you are replying to a reply, if not see if you are replying to a comment
+            replied_to: comment.id,
         }
     }
 
     // Used for snappier feeling comments, in case you want dont want to wait for the post.
-    emit('pre-success-comment', modelComment.value);
+    const emitPayload = {
+        ...data,
+        id: generateUUID(),
+        index: comment?.index || 0,
+        depth: comment?.depth + 1 || 0,
+        username: currentUser.value.username,
+    }
+
+    emit('pre-success-comment', emitPayload);
+
+    console.log(emitPayload, 'emit payload')
 
     db.post(urls.reviews.createComment(), 
         data, 

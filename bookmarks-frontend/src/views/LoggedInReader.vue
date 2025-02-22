@@ -206,7 +206,7 @@ import { useRoute, useRouter } from 'vue-router';
 import { db } from '../services/db'
 import { urls, navRoutes } from '../services/urls'
 import { PubSub } from '../services/pubsub';
-import { getCurrentUser } from '../stores/currentUser';
+import { getCurrentUser } from '../stores/currentUser.ts';
 import AsyncComponent from '@/components/feed/partials/AsyncComponent.vue';
 
 const route = useRoute();

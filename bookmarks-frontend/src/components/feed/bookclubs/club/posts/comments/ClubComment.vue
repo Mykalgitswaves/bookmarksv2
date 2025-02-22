@@ -79,7 +79,7 @@
                         class="btn btn-tiny btn-icon desktop-only"
                         :class="{'active': isShowingCommentBar}"
                         @click="
-                            emit('comment-selected', {comment, index}) 
+                            emit('comment-selected', {comment: commentData, index: index}) 
                         "
                     >
                         <IconClubComment/>

@@ -371,7 +371,7 @@ class CommentCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
                 thread.append(thread_comment_object)
                 prev_comment_id = thread_comment_object.id
             
-            comment.thread = thread
+            comment.thread = thread or []
             comments.append(comment)
 
         return({"comments":comments, "pinned_comments": pinned_comments})

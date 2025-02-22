@@ -74,6 +74,7 @@ export const urls = {
         getComments: (post_id) =>(baseUrl + `api/posts/post/${post_id}/comments`),
         // calling more comments (duh)
         getMoreComments: (comment_id) => (baseUrl + `api/review/comments/${comment_id}/replies`),
+        getCommentForComments: (post_id, comment_id) => (`${baseUrl}api/posts/post/${post_id}/comments/${comment_id}`),
         getFeed: () => (baseUrl + `api/posts/`),
     },
     books: {
@@ -220,4 +221,5 @@ export const navRoutes = {
         (`/feed/${current_user}/bookclubs/${bookclub_id}/settings/currently-reading`),
     bookClubSettingsManageMembersIndex: (current_user, bookclub_id) => 
         (`/feed/${current_user}/bookclubs/${bookclub_id}/settings/manage-members`),
+    toSubThreadPage: (current_user,bookclub_id,post_id, comment_id) => (`/feed/${current_user}/bookclubs/${bookclub_id}/post/${post_id}/comments/${comment_id}`)
 }

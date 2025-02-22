@@ -98,7 +98,7 @@ import { formatUpdateForBookClub } from '../bookClubService';
 import { useRoute, useRouter } from 'vue-router';
 import LoadingCard from '../../../shared/LoadingCard.vue';
 import { createConfetti } from '../../../../services/helpers';
-import { currentUser } from '../../../../stores/currentUser';
+import { currentUser } from '../../../../stores/currentUser.ts';
 
 const props = defineProps({
     club: {

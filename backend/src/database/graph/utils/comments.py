@@ -38,7 +38,7 @@ def build_get_comments_query(
 
                     // Order the parents as needed
                     WITH cu, c0, parentAuthor, (parentLike IS NOT NULL) AS parentLikedByUser
-                    ORDER BY c0.likes DESC, c0.created_date ASC
+                    ORDER BY c0.likes DESC, c0.created_date DESC
                     SKIP $skip
                     LIMIT $limit
                 """
@@ -59,7 +59,7 @@ def build_get_comments_query(
 
                     // Order the parents as needed
                     WITH cu, c0, parentAuthor, (parentLike IS NOT NULL) AS parentLikedByUser
-                    ORDER BY c0.likes DESC, c0.created_date ASC
+                    ORDER BY c0.likes DESC, c0.created_date DESC
                     SKIP $skip
                     LIMIT $limit
                 """
@@ -82,7 +82,7 @@ def build_get_comments_query(
 
                     // Order the parents as needed
                     WITH cu, c0, parentAuthor, (parentLike IS NOT NULL) AS parentLikedByUser
-                    ORDER BY c0.likes DESC, c0.created_date ASC
+                    ORDER BY c0.likes DESC, c0.created_date DESC
                     SKIP $skip
                     LIMIT $limit
                 """
@@ -104,7 +104,7 @@ def build_get_comments_query(
 
                     // Order the parents as needed
                     WITH cu, c0, parentAuthor, (parentLike IS NOT NULL) AS parentLikedByUser
-                    ORDER BY c0.likes DESC, c0.created_date ASC
+                    ORDER BY c0.likes DESC, c0.created_date DESC
                     SKIP $skip
                     LIMIT $limit
                 """
@@ -127,7 +127,7 @@ def build_get_comments_query(
             WITH c{step_before}
             OPTIONAL MATCH (c{step_before})<-[:REPLIED_TO]-(c{i}:Comment {{deleted:false, is_reply:true}})
             WITH c{i}
-            ORDER BY c{i}.likes DESC, c{i}.created_date ASC
+            ORDER BY c{i}.likes DESC, c{i}.created_date DESC
             LIMIT 1
             RETURN c{i}
         }}
@@ -234,7 +234,7 @@ def build_get_comments_for_comment_query(
 
                 // Order the parents as needed
                 WITH cu, c0, parentAuthor, (parentLike IS NOT NULL) AS parentLikedByUser
-                ORDER BY c0.likes DESC, c0.created_date ASC
+                ORDER BY c0.likes DESC, c0.created_date DESC
                 SKIP $skip
                 LIMIT $limit
             """
@@ -256,7 +256,7 @@ def build_get_comments_for_comment_query(
 
                 // Order the parents as needed
                 WITH cu, c0, parentAuthor, (parentLike IS NOT NULL) AS parentLikedByUser
-                ORDER BY c0.likes DESC, c0.created_date ASC
+                ORDER BY c0.likes DESC, c0.created_date DESC
                 SKIP $skip
                 LIMIT $limit
             """
@@ -279,7 +279,7 @@ def build_get_comments_for_comment_query(
             WITH c{step_before}
             OPTIONAL MATCH (c{step_before})<-[:REPLIED_TO]-(c{i}:Comment {{deleted:false, is_reply:true}})
             WITH c{i}
-            ORDER BY c{i}.likes DESC, c{i}.created_date ASC
+            ORDER BY c{i}.likes DESC, c{i}.created_date DESC
             LIMIT 1
             RETURN c{i}
         }}

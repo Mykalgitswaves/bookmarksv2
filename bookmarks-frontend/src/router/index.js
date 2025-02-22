@@ -153,6 +153,10 @@ export const router = createRouter({
                 {
                   path: 'post/:postId',
                   name: 'clubCommentPage',
+                  children: [{
+                    path: 'comments/:subThreadId',
+                    name: 'clubCommentsSubThreadPage',
+                  }]
                 },
                 {
                   path: 'settings/currently-reading',
