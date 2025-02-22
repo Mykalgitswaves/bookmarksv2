@@ -2,9 +2,10 @@
     <BackBtn />
 
     <!-- Post -->
-    <AsyncComponent :promises=[loadPost]>
+    <AsyncComponent :promises=[loadPostPromise]>
         <template #resolved>
             {{ console.log(postData, 'post Data') }}
+            <ClubPost :post="postData"/>
         </template>
         <template #loading></template>
     </AsyncComponent>
@@ -25,11 +26,12 @@ import { useRoute, useRouter } from 'vue-router';
 // Services
 import { db } from '@/services/db';
 import { urls } from '@/services/urls';
-import { Thread } from '@/components/feed/bookclubs/club/posts/comments/threads';
+import { Thread, PostResponse } from '@/components/feed/bookclubs/club/posts/comments/threads';
 import { currentUser } from '@/stores/currentUser';
 // Components
 import BackBtn from '@/components/feed/partials/back-btn.vue';
 import AsyncComponent from '@/components/feed/partials/AsyncComponent.vue';
+import ClubPost from '../ClubPost.vue';
 
 // Params
 const route = useRoute();
@@ -52,14 +54,22 @@ async function getCommentsFactory() {
     }, (err: any) => console.warn(err));
 };
 
-async function loadPost() {
-    if (bookclub) {
-        db.get(urls.reviews.getPost(postId), null, false, (res: any) => {
-            postData.value = res.data.post;
-        });
-    }
-    // #TODO: Fill out this other case (non club) next. 
-}
+const loadPostPromise = db.get(
+            urls.concatQueryParams(
+                urls.bookclubs.getClubFeed(bookclub), 
+                { 'post_id': postId }
+            ), 
+            null, 
+            false, 
+            (res: PostResponse) => {
+                console.log(res, 'loading the post data bruh');
+                postData.value = res.posts;
+            }, 
+            (err: Error) => {
+                console.error(err);
+            }
+        );
+// #TODO: Fill out this other case (non club) next. 
  
 
 /** @endLoad */

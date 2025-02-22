@@ -84,7 +84,7 @@ import ErrorToast from './../../../../../components/shared/ErrorToast.vue';
 import ViewAwards from '../awards/ViewAwards.vue';
 import IconExit from '../../../../svg/icon-exit.vue';
 import Thread from './comments/Thread.vue';
-import { setDepthOnThreads, flattenThreads } from './comments/threads';
+import { setDepthOnThreads, flattenThreads } from '@/components/feed/bookclubs/club/posts/comments/threads';
 
 const route = useRoute();
 const { user, bookclub, postId, commentId } = route.params;
@@ -108,13 +108,6 @@ const pagination = ref({
 });
 
 const errorToastMessage = ref(null);
-
-type PostResponse = {
-    posts: {
-        id: string;
-        [key: string]: any;
-    }
-}
 
 const getPostPromise = db.get(
     urls.concatQueryParams(
@@ -143,7 +136,7 @@ let getPaginatedCommentsForPostPromise = db.get(
     (res) => {
         commentData.value.comments = res.data.comments;
     }, (err) => {
-        commentData.errors = [err];
+        commentData.value.errors = [err];
     }
 );
 

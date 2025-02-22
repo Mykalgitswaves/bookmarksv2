@@ -39,3 +39,10 @@ export function flattenThreads(threads: Array<Thread>): Array<Thread> {
         ...(thread.thread?.length ? flattenThreads(thread.thread) : [])
     ], []);
 }
+
+export type PostResponse = {
+    posts: {
+        id: string;
+        [key: string]: any;
+    }
+}
