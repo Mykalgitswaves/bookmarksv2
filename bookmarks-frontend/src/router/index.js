@@ -154,7 +154,7 @@ export const router = createRouter({
                   path: 'post/:postId',
                   name: 'clubCommentPage',
                   children: [{
-                    path: 'comments/:subThreadId',
+                    path: 'comments/:threadId',
                     name: 'clubCommentsSubThreadPage',
                   }]
                 },

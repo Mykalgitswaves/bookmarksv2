@@ -376,6 +376,68 @@ class CommentCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
 
         return({"comments":comments, "pinned_comments": pinned_comments})
     
+    def get_parent_comment_for_book_club(
+            self,
+            comment_id: str,
+            user_id: str,
+            book_club_id: str,
+            post_id: str,
+    ):
+        with self.driver.session() as session:
+            result = session.execute_read(
+                self.get_parent_comment_for_book_club_query,  
+                comment_id, 
+                user_id,
+                book_club_id,
+                post_id,
+            )  
+        return(result)
+
+    @staticmethod
+    def get_parent_comment_for_book_club_query(
+            tx,
+            comment_id,
+            user_id,
+            book_club_id,
+            post_id,
+    ):
+        """
+        
+        """
+        query = """
+            match (user:User {id: $user_id})-[:IS_MEMBER_OF|OWNS_BOOK_CLUB]->(b:BookClub {id: $book_club_id})
+            match (postingUser:User)-[:COMMENTED]->(comment:Comment {id: $comment_id})
+            optional match (user)-[likedByCurrentUser:LIKES]->(comment)
+            optional match (comment)-[:REPLIED_TO]->(repliedToComment:Comment)
+            return comment, 
+                postingUser, 
+                repliedToComment.id as repliedToCommentId,
+                CASE WHEN likedByCurrentUser IS NOT NULL THEN true ELSE false END AS islikedByCurrentUser
+        """
+
+        result = tx.run(query, user_id=user_id, book_club_id=book_club_id, comment_id=comment_id)
+        
+        data = result.single()
+        
+        comment_data = data.get('comment')
+        comment_author = data.get('postingUser')
+
+        comment = Comment(
+            id=comment_id,
+            created_date=comment_data['created_date'],
+            liked_by_current_user=data.get('islikedByCurrentUser'),
+            post_id=post_id,
+            user_id=comment_author['id'],
+            username=comment_author['username'],
+            text=comment_data.get("text",""),
+            replied_to=data.get('repliedToCommentId'),
+            posted_by_current_user=comment_author['id'] == user_id,
+            likes=comment_data.get('likes',0),
+            num_replies=comment_data.get('num_replies',0)
+        )
+
+        return comment
+
     def get_paginated_comments_for_book_club_comment(
             self, 
             post_id,

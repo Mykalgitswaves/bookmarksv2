@@ -10,7 +10,9 @@
                     v-else-if="currentView === subComponentRoutes.feedCommentsPage"
                 />
 
-                <SubThreadView v-else-if="currentView === subComponentRoutes.feedCommentSubThreadPage"/>
+                <SubThreadView 
+                    v-else-if="currentView === subComponentRoutes.feedCommentSubThreadPage"
+                />
 
                 <ClubMemberSettingsMain 
                     v-else-if="currentView === subComponentRoutes.settings.manageMembers"
@@ -62,7 +64,7 @@ import ClubAfterwords from './afterwords/ClubAfterwords.vue';
 
 const route = useRoute();
 const router = useRouter();
-const { user, bookclub, postId, subThreadId } = route.params;
+const { user, bookclub, postId, threadId } = route.params;
 const loaded = ref(false);
 const wrappedSection = ref(null);
 
@@ -93,7 +95,8 @@ const currentView = computed(() => {
         return subComponentRoutes.settings.manageMembers;
     } else if (route.path === navRoutes.toBookClubCommentPage(user, bookclub, route.params?.postId)) {
         return subComponentRoutes.feedCommentsPage;
-    } else if (route.path === navRoutes.toSubThreadPage(user, bookclub, postId, subThreadId)) {
+    } else if (route.path === navRoutes.toSubThreadPage(user, bookclub, postId, threadId)) {
+        console.log('sub thread baby')
         return subComponentRoutes.feedCommentSubThreadPage;
     }
 });

@@ -1091,6 +1091,13 @@ async def get_comments_for_comment(
         # TO_CONSIDER: Alternatively you could save a token to authenticate on the client 
         # what their permissions are to view comments. Would be way faster but would require a little bit of setup. 
         if book_club_id:
+            parent_comment = comment_repo.get_parent_comment_for_book_club(
+                comment_id=comment_id,
+                user_id=current_user.id, 
+                book_club_id=book_club_id,
+                post_id=post_id,
+            )
+
             comments = comment_repo.get_paginated_comments_for_book_club_comment(
                 post_id=post_id,
                 comment_id=comment_id,
@@ -1105,6 +1112,7 @@ async def get_comments_for_comment(
                 content={
                     "data": jsonable_encoder(
                         {
+                            "parent_comment": parent_comment,
                             "comments": comments,
                         }
                     )

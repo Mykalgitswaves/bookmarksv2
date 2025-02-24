@@ -73,6 +73,7 @@ export const urls = {
         unpinComment: (comment_id, post_id) => (baseUrl + `api/review/post/${post_id}/comment/${comment_id}/remove_pin`),
         getComments: (post_id) =>(baseUrl + `api/posts/post/${post_id}/comments`),
         // calling more comments (duh)
+        getCommentById: (comment_id) => (`${baseUrl}api/review/comments/${comment_id}/comment`),
         getMoreComments: (comment_id) => (baseUrl + `api/review/comments/${comment_id}/replies`),
         getCommentForComments: (post_id, comment_id) => (`${baseUrl}api/posts/post/${post_id}/comments/${comment_id}`),
         getFeed: () => (baseUrl + `api/posts/`),
@@ -185,9 +186,9 @@ export const urls = {
 
         if (newQueryParams) {
             // Make sure we aren't fucking up this part of the request.
-            if (!url.endsWith('/')) {
-                url = url + '/';
-            }
+            // if (!url.endsWith('/')) {
+            //     url = url + '/';
+            // }
             
             url = url + '?' + new URLSearchParams(newQueryParams);
             console.log(url);

@@ -11,7 +11,7 @@
 // Async component for a generic loading state so you don't 
 // have to keep on adding loaded logic all over the place;
 // --------------------------------------------------------
-import { ref } from 'vue';
+import { ref, onUnmounted } from 'vue';
 import { PubSub } from '../../../services/pubsub';
 
 const props = defineProps({
@@ -46,7 +46,7 @@ function load() {
         });
     // Needed for when you want to manually trigger calling new data via pub sub pattern.
     // You can't recall a raw promise. passing in the factory gives us a way to recreate 
-    // as many as we need where we need to get fresh data.
+    // as many as we need where/when ever we need to get fresh data.
     } else if (props.promiseFactory) {
         Promise.resolve(props.promiseFactory()).then(() => {
             console.log('inside load promise factory')
@@ -67,5 +67,13 @@ if (props.subscribedTo && props.promiseFactory) {
     }
 
     PubSub.subscribe(props.subscribedTo, refreshEvent);
+
+    onUnmounted(() => {
+        PubSub.unsubscribe(props.subscribedTo, refreshEvent);
+    });
+
+    window.addEventListener('reload', () => {
+        PubSub.unsubscribe(props.subscribedTo, refreshEvent);
+    })
 }
 </script>
