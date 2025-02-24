@@ -28,7 +28,7 @@
                         :index="index"
                         :bookclub-id="bookclub"
                         :replying-to-id="clubCommentSelectedForReply?.id"
-                        :is-sub-thread="false"
+                        :is-sub-thread="thread.depth && thread.depth > 0"
                         @thread-selected="(thread) => { clubCommentSelectedForReply = thread; console.log(thread, 'selected') }"
                     />
                 </div>

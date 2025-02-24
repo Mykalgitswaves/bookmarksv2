@@ -48,7 +48,7 @@
           @click="replyToThread(thread)"
         >
           <IconClubComment />
-
+            
           <span v-if="thread.num_replies > 0" class="fancy text-sm">{{ thread.num_replies }}</span>
         </button>
 
@@ -65,7 +65,7 @@
 </template>
 <script setup lang="ts">
 import { useRouter } from 'vue-router'
-import { Thread as threadProps } from './threads'
+import { Thread as threadProps, likeThread } from './threads'
 import { dates } from '@/services/dates'
 import { navRoutes } from '@/services/urls'
 import { currentUser } from '@/stores/currentUser'
