@@ -1,12 +1,7 @@
 <template>  
-    <button 
-        class="btn btn-tiny w-30 btn-submit self-center nowrap"
-        type="button" 
-        role="navigation"
-        @click="openOverlay()"
-    >
-        Search for an existing user
-    </button>
+    <Button variant="outline" @click="openOverlay()">
+        <span class="fancy" style="font-weight: 300">Search user</span>
+    </Button>
 
     <Overlay ref="overlay">
         <template #overlay-header>        
@@ -41,6 +36,7 @@
 import { ref } from 'vue';
 import SearchForExistingUser from './SearchForExistingUser.vue';
 import Overlay from '@/components/feed/partials/overlay/Overlay.vue';
+import { Button } from '@/lib/registry/default/ui/button';
 
 defineProps({
     bookClubId: {

@@ -56,6 +56,10 @@ def setup_class(request):
     response = requests.post(f"{request.cls.endpoint}/api/auth/signup", headers=headers, data=data)
     assert response.status_code == 200, "Creating Test User"
 
+    request.cls.access_token_2 = response.json()["access_token"]
+    request.cls.token_type_2 = response.json()["token_type"]
+    request.cls.user_id_2 = response.json()["user_id"]
+
     yield
 
     response = requests.post(f"{request.cls.endpoint}/api/admin/delete_user_by_username", 
@@ -411,23 +415,18 @@ class TestPosts:
         assert response.status_code == 200, "Testing get comments"
         assert len(response.json()['data']['comments']) > 0, "Testing get comments"
 
-        comment_id = response.json()["data"]["id"]
-
         response = requests.get(
             f"{self.endpoint}/api/posts/post/{milestone_id}/comments", 
-            headers=headers,
-            param={
-                "book_club_id": "id"
-                }
+            headers=headers
             )
 
-        print(response.json())
-        assert response.status_code == 200, "Testing get comments new"
-        assert len(response.json()['data']['comments']) > 0, "Testing get comments"
+        # print(response.json())
+        # assert response.status_code == 200, "Testing get comments new"
+        # assert len(response.json()['data']['comments']) > 0, "Testing get comments"
 
         data = {
             "post_id": milestone_id,
-            "text":"Test Comment",
+            "text":"Test Comment Level 1",
             "replied_to":comment_id
         }
 
@@ -435,6 +434,78 @@ class TestPosts:
 
         print(response.json())
         assert response.status_code == 200, "Testing create comment with reply"
+
+        comment_1_id = response.json()["data"]["id"]
+
+        data = {
+            "post_id": milestone_id,
+            "text":"Test Comment Level 2",
+            "replied_to":comment_1_id
+        }
+
+        response = requests.post(f"{self.endpoint}/api/posts/comment/create", headers=headers, json=data)
+
+        print(response.json())
+        assert response.status_code == 200, "Testing create comment with reply"
+
+        comment_2_id = response.json()["data"]["id"]
+
+        response = requests.get(
+            f"{self.endpoint}/api/posts/post/{milestone_id}/comments", 
+            headers=headers
+            )
+
+        print(response.json())
+        # assert response.status_code == 200, "Testing get comments new"
+        # assert len(response.json()['data']['comments']) > 0, "Testing get comments"
+
+        headers_2 = {"Authorization": f"{self.token_type_2} {self.access_token_2}"}
+
+        data = {
+            "post_id": milestone_id,
+            "text":"Test Comment Level 0",
+            "replied_to":None
+        }
+
+        response = requests.post(f"{self.endpoint}/api/posts/comment/create", headers=headers_2, json=data)
+
+        print(response.json())
+        assert response.status_code == 200, "Testing create comment"
+
+        comment_0_id = response.json()["data"]["id"]
+
+        data = {
+            "post_id": milestone_id,
+            "text":"Test Comment Level 1",
+            "replied_to":comment_0_id
+        }
+
+        response = requests.post(f"{self.endpoint}/api/posts/comment/create", headers=headers, json=data)
+
+        print(response.json())
+        assert response.status_code == 200, "Testing create comment with reply"
+
+        comment_1_id = response.json()["data"]["id"]
+
+        data = {
+            "post_id": milestone_id,
+            "text":"Test Comment Level 2",
+            "replied_to":comment_1_id
+        }
+
+        response = requests.post(f"{self.endpoint}/api/posts/comment/create", headers=headers_2, json=data)
+
+        print(response.json())
+        assert response.status_code == 200, "Testing create comment with reply"
+
+        response = requests.get(
+            f"{self.endpoint}/api/posts/post/{milestone_id}/comments", 
+            headers=headers
+            )
+
+        print(response.json())
+        assert response.status_code == 200, "Testing get comments new"
+        assert len(response.json()['data']['comments']) > 0, "Testing get comments"
 
         response = requests.get(f"{self.endpoint}/api/posts/comment/{comment_id}/replies", headers=headers)
         assert response.status_code == 200, "Testing get replies"
@@ -534,6 +605,10 @@ class TestPosts:
         response = requests.get(f"{self.endpoint}/api/posts/post/{milestone_id}/pinned_comments", headers=headers)
         assert response.status_code == 200, "Testing getting a pinned comment"
         assert len(response.json()['data']) > 0, "Testing getting a pinned comment"
+
+        response = requests.get(f"{self.endpoint}/api/posts/post/{milestone_id}/comments", headers=headers)
+        assert response.status_code == 200, "Testing getting a pinned comment"
+        assert len(response.json()['data']['pinned_comments']) > 0, "Testing getting a pinned comment"
 
         response = requests.put(f"{self.endpoint}/api/posts/post/{milestone_id}/remove_pin/{comment_id}", headers=headers)
         assert response.status_code == 200, "Testing remove pin"

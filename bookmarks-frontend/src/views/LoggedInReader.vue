@@ -206,13 +206,12 @@ import { useRoute, useRouter } from 'vue-router';
 import { db } from '../services/db'
 import { urls, navRoutes } from '../services/urls'
 import { PubSub } from '../services/pubsub';
-import { getCurrentUser } from '../stores/currentUser';
+import { getCurrentUser } from '../stores/currentUser.ts';
 import AsyncComponent from '@/components/feed/partials/AsyncComponent.vue';
 
 const route = useRoute();
 const router = useRouter();
 const { user } = route.params;
-
 // Fix for a weird bug we sometimes run into from bad navigation.
 // If user is ever undefined make us logout.
 watch(() => route.params, (newValue) => {
@@ -244,7 +243,7 @@ const authPromise = db.authenticate(urls.authUrl, user);
 
 onMounted(async () => {
   try {
-    getCurrentUser(user);
+    await getCurrentUser(user);
   } catch(err) {
     console.log(err);
   }

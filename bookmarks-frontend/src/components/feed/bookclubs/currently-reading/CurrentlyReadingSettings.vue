@@ -6,7 +6,12 @@
             </h1>
             
             <p class="text-stone-500 mt-5">
-                Set what book you're members are currently reading
+                <span v-if="!data.currentlyReadingBook">
+                    Set what book you're members are currently reading
+                </span>
+                <span v-else>
+                    What your club is currently reading
+                </span>
             </p>
         </div>
     </div>
@@ -14,10 +19,64 @@
     <AsyncComponent :promises="[currentlyReadingPromise]">
         <template #resolved>
             <section class="transition">
-                <div v-if="!!data.currentlyReadingBook">
+                <div v-if="!!data.currentlyReadingBook" class="mb-10">
                     <SelectedBook :book="data.currentlyReadingBook" :set-book="true"/>
 
-                    <ReadersPace :pace="{}"/>
+                    <CurrentPacesForClubBook :start-open="true" :total-chapters="data.currentlyReadingBook.chapters" />
+
+
+                    <div class="divider pb-5"></div>
+                    <!-- TODO: Add in permission check for club -->
+
+                    <div class="flex justify-around">
+                        <Dialog>
+                            <DialogTrigger>
+                                <span class="block fancy">We've finished reading</span>
+                            </DialogTrigger>
+
+                            <DialogContent>
+                                <DialogHeader>
+                                    <DialogTitle>We've finished reading this book</DialogTitle>
+                                    <DialogDescription>
+                                    Your club members have all finished reading and are ready for their awards ceremony
+                                    </DialogDescription>
+                                </DialogHeader>
+
+                                <Button variant="outline" :disabled="submitting" @click="finishCurrentlyReadingBookForClub()">
+                                        Set current book as completed ✅
+                                </Button>
+
+                                <DialogFooter>
+                                    <span class="text-xs text-stone-400">Note, This will set the currently read book as finished for all readers. No more updates can be posted</span>
+                                </DialogFooter>
+                            </DialogContent>
+                        </Dialog>
+
+                        <Dialog>
+                            <DialogTrigger>
+                                <span class="block fancy text-red-500">Stop reading this book</span>
+                            </DialogTrigger>
+
+                            <DialogContent>
+                                <DialogHeader>
+                                    <DialogTitle>Stop reading this book</DialogTitle>
+                                    <DialogDescription>
+                                        Might be the weather, might be the words, we aren't feeling it.
+                                    </DialogDescription>
+                                </DialogHeader>
+
+                                <Button variant="destructive" :disabled="submitting" @click="stopReadingBook()">
+                                        Stop reading {{ data.currentlyReadingBook.title }}
+                                </Button>
+
+                                <DialogFooter>
+                                    <span class="text-xs text-stone-400">
+                                        this will remove the current book, No more updates or reviews can be posted. Doing this bypasses your awards ceremony
+                                    </span>
+                                </DialogFooter>
+                            </DialogContent>
+                        </Dialog>
+                    </div>
                 </div>
 
                 <div v-else class="mt-10">
@@ -30,6 +89,8 @@
                         }"
                     />
                 </div>
+
+                <Toaster />
             </section>
         </template>
         <template #loading>
@@ -38,24 +99,43 @@
             </div>
         </template>
     </AsyncComponent>
+
     <div class="mobile-menu-spacer sm:hidden"></div>
 </template>
 <script setup>
 import { db } from '../../../../services/db';
 import { urls, navRoutes } from '../../../../services/urls';
-import { ref } from 'vue';
+import { ref, h } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import SetCurrentlyReadingForm from './SetCurrentlyReadingForm.vue';
 import SelectedBook from './SelectedBook.vue';
-import ReadersPace from './ReadersPace.vue';
+import CurrentPacesForClubBook from '../club/CurrentPacesForClubBook.vue';
 import AsyncComponent from '../../partials/AsyncComponent.vue';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger,
+} from '@/lib/registry/default/ui/dialog';
+import { Button } from '@/lib/registry/default/ui/button';
+import { Toaster, ToastAction } from '@/lib/registry/default/ui/toast'
+import { useToast } from '@/lib/registry/default/ui/toast/use-toast'
+
+const { toast } = useToast()
 
 const route = useRoute();
 const router = useRouter(); 
+const { bookclub } = route.params;
+const submitting = ref(false);
+
 const data = ref({
     currentlyReadingBook: null,
     isShowingSetCurrentBookForm: true,
 });
+
 
 const currentlyReadingPromise = db.get(urls.bookclubs.getCurrentlyReadingForClub(route.params.bookclub), 
     null, true, 
@@ -66,6 +146,56 @@ const currentlyReadingPromise = db.get(urls.bookclubs.getCurrentlyReadingForClub
         console.log(err);
     }
 );
+
+
+async function finishCurrentlyReadingBookForClub() {
+    submitting.value = true;
+    db.post(urls.bookclubs.finishCurrentlyReadingBookForClub(bookclub), null, false, () => {
+        submitting.value = false;
+        data.value.book.isFinishedReading = true;
+        toast({
+            title: 'Finshed reading 🎉',
+            description: `${data.value.currentlyReadingBook.title} on ${Date().toString()}`,
+        });     
+    }, () => {
+        submitting.value = false;
+        toast({
+            title: 'Failed to set finshed reading ❌',
+            description: 'Your request failed 🧐',
+            action: h(ToastAction, {
+                altText: 'Try again',
+                }, {
+                // lil recursive ness hopefull wont fuck everything up?
+                default: async () => await finishCurrentlyReadingBookForClub()
+            }),
+        }); 
+    })
+}
+
+async function stopReadingBook() {
+    submitting.value = true;
+    db.post(urls.bookclubs.stopCurrentlyReadingBookForClub(bookclub), null, false, () => {
+        submitting.value = false;
+        data.value.currentlyReadingBook = null;
+        toast({
+            title: 'Stopped reading',
+            description: `You are no longer reading ${data.value.currentlyReadingBook.title}`,
+        });
+    }, () => {
+        submitting.value = false;
+        toast({
+            title: 'Failed to stop reading ❌',
+            description: 'Your request failed 🧐',
+            action: h(ToastAction, {
+                altText: 'Try again',
+                }, {
+                // lil recursive ness hopefull wont fuck everything up?
+                default: async () => await stopReadingBook()
+            }),
+        }); 
+    })
+}
+
 </script>
 <style scoped>
     @starting-style {

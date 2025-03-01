@@ -673,6 +673,7 @@ async def get_book_club_minimal_preview(
                     book_id (str): The id of the book
                     title (str): The title of the book
                     small_img_url (str): The img url for the book
+                    is_user_finished_currently_reading: (bool) has a user finished reading the current_reading_book
             pace (int | None): The pace offset between the expected chapter of the reader 
                 based on the clubs expected finish date. If negative, the reader is n chapters
                 behind the clubs expected pace. If positive, the reader is n chapters ahead

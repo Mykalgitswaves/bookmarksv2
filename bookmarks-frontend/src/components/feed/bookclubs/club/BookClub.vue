@@ -7,7 +7,11 @@
                 />
 
                 <ClubPostCommentsView 
-                    v-else-if="currentView == subComponentRoutes.feedCommentsPage"
+                    v-else-if="currentView === subComponentRoutes.feedCommentsPage"
+                />
+
+                <SubThreadView 
+                    v-else-if="currentView === subComponentRoutes.feedCommentSubThreadPage"
                 />
 
                 <ClubMemberSettingsMain 
@@ -18,6 +22,12 @@
                 <CurrentlyReadingSettings 
                     v-else-if="currentView === subComponentRoutes.settings.currentlyReading"
                     :club="club"    
+                />
+
+                <ClubAfterwords
+                    ref="wrappedSection"
+                    v-else-if="currentView === subComponentRoutes.wrappedSection"
+                    :club="club"
                 />
             </div>
 
@@ -43,6 +53,8 @@ import BookClubFeed from './BookClubFeed.vue';
 import ClubMemberSettingsMain from './invite/ClubMemberSettingsMain.vue';
 import CurrentlyReadingSettings from '../currently-reading/CurrentlyReadingSettings.vue';
 import ClubPostCommentsView from './posts/ClubPostCommentsView.vue';
+import SubThreadView from './posts/comments/SubThreadView.vue';
+import ClubAfterwords from './afterwords/ClubAfterwords.vue';
 
 /**
  * ----------------------------------------------------------------------------
@@ -52,8 +64,9 @@ import ClubPostCommentsView from './posts/ClubPostCommentsView.vue';
 
 const route = useRoute();
 const router = useRouter();
-const { user, bookclub } = route.params;
+const { user, bookclub, postId, threadId } = route.params;
 const loaded = ref(false);
+const wrappedSection = ref(null);
 
 let error;
 let club;
@@ -61,10 +74,12 @@ let club;
 const subComponentRoutes = {
     feed: 'feed',
     feedCommentsPage: 'feed-comments-page',
+    feedCommentSubThreadPage: 'feed-comments-sub-thread-page',
     settings: {
         currentlyReading: 'currently-reading',
         manageMembers: 'manage-members',
-    }
+    },
+    wrappedSection: 'wrapped',
 }
 
 const currentView = computed(() => {
@@ -79,9 +94,14 @@ const currentView = computed(() => {
         console.log('manage-members')
         return subComponentRoutes.settings.manageMembers;
     } else if (route.path === navRoutes.toBookClubCommentPage(user, bookclub, route.params?.postId)) {
+        console.log('comments page')
         return subComponentRoutes.feedCommentsPage;
+    } else if (route.path === navRoutes.toSubThreadPage(user, bookclub, postId, threadId)) {
+        console.log('sub thread baby')
+        return subComponentRoutes.feedCommentSubThreadPage;
     }
 });
+
 
 
 /**
@@ -90,6 +110,13 @@ const currentView = computed(() => {
  * ----------------------------------------------------------------------------
  */
 
+/**
+ * ----------------------------------------------------------------------------
+ * @events
+ * ----------------------------------------------------------------------------
+ */
+
+document.addEventListener
 
 
 /**

@@ -44,7 +44,7 @@
     padding: var(--padding-md);
     padding-top: var(--padding-sm);
     z-index: 1000;
-    background: linear-gradient(90deg, var(--surface-primary), transparent);
+    background-color: var(--surface-primary);
     padding-bottom: 50px;
     border-bottom: 1px solid var(--indigo-200);
 }

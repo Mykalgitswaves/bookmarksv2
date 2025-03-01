@@ -39,11 +39,11 @@
         <!-- {{ Object.values(comment).find('post_id') }} -->
         <div v-if="!isDeletingView" 
             class="comment"
-            :class="{'replying-to': props.isReplyingToKey === comment.id}"
+            :class="{'replying-to': props.isReplyingToKey ? props.isReplyingToKey === comment?.id : false}"
         >
             <div class="comment-header">
                 <h5 class="mr-2 text-stone-600 bold text-base">
-                    {{ comment?.username }}
+                    {{ comment?.username || 'test'}}
                 </h5>
 
                 <p class="text-stone-500 text-xs">
@@ -53,7 +53,7 @@
 
             <div class="comment-body">
                 <p class="text-sm text-stone-600 fancy">
-                    {{ comment?.text }}
+                    {{ comment?.text || 'sample comment' }}
                 </p>
             </div>
 
@@ -79,7 +79,7 @@
                         class="btn btn-tiny btn-icon desktop-only"
                         :class="{'active': isShowingCommentBar}"
                         @click="
-                            emit('comment-selected', {comment, index}) 
+                            emit('comment-selected', {comment: commentData, index: index}) 
                         "
                     >
                         <IconClubComment/>
@@ -120,23 +120,23 @@
     </div>
 
     <div v-for="reply in commentData.replies" 
-        :key="reply.id" 
+        :key="reply?.id" 
         class="comment-nest-wrapper" 
-        :ref="(reply) => replyDistanceMapping[reply.id] = reply"
-        :style="{ '--nest': 1, '--distance-from-top': generateDistanceFromTopComment(reply.id) }"
+        :ref="(reply) => replyDistanceMapping[reply?.id] = reply"
+        :style="{ '--nest': 1, '--distance-from-top': generateDistanceFromTopComment(reply?.id) }"
     >
         <!-- Real comment thread -->
         <!-- {{ Object.values(comment).find('post_id') }} -->
-        <div class="comment reply" :class="{'replying-to': props.isReplyingToKey === reply.comment?.id}">
+        <div class="comment reply" :class="{'replying-to': reply.comment?.id ? props.isReplyingToKey === reply.comment?.id : false}">
             <div class="comment-header">
-                <h5 class="mr-2 text-stone-600 bold text-base">{{ reply.comment.username }}</h5>
+                <h5 class="mr-2 text-stone-600 bold text-base">{{ reply.comment?.username || 'test replier' }}</h5>
 
-                <p class="text-stone-500 text-xs">{{ dates.timeAgoFromNow(reply.comment.created_date, true) }}</p>
+                <p class="text-stone-500 text-xs">{{ dates.timeAgoFromNow(reply.comment?.created_date, true) }}</p>
             </div>
 
             <div class="comment-body">
                 <p class="text-sm text-stone-600 fancy">
-                    {{ reply.comment.text }}
+                    {{ reply.comment?.text || 'sample reply' }}
                 </p>
             </div>
 
@@ -175,7 +175,7 @@
 
     <!-- If you have more than two replies to preview you need to make your users click into get the next ten -->
     <!-- hasExpandedComments gets reset to false on every call to pagination endpoint -->
-    <div v-if="commentData.comment.num_replies > 2 && !hasExpandedComments" 
+    <div v-if="commentData.comment?.num_replies > 2 && !hasExpandedComments" 
         class="comment-nest-wrapper" 
         :style="{
             '--nest': 1,

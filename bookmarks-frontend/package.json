@@ -4,13 +4,13 @@
   "private": true,
   "proxy": [
     "http://127.0.0.1:8000",
-    "http://backend-load-balancer-1064516976.us-east-1.elb.amazonaws.com", 
+    "http://backend-load-balancer-1064516976.us-east-1.elb.amazonaws.com",
     "http://192.168.4.40:8000",
     "http://0.0.0.0:8000"
   ],
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "vue-tsc --noEmit && vite build",
     "build:css": "tailwindcss build -i src/assets/tailwind_imports.css -o dist/assets/tailwind.css",
     "build:css-production": "tailwindcss build src/assets/tailwind_imports.css -o assets/tailwind.css",
     "preview": "vite preview",
@@ -19,18 +19,25 @@
     "test:unit": "cypress run --component",
     "test:unit:dev": "cypress open --component",
     "lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs --fix --ignore-path .gitignore",
-    "format": "prettier --write src/"
+    "format": "prettier --write \"src/**/*.{js,ts,vue,json}\"",
+    "serve": "vite preview"
   },
   "dependencies": {
     "@uploadcare/blocks": "0.25.0",
     "@uploadcare/upload-client": "^6.10.0",
+    "@vueuse/core": "^12.5.0",
     "@webcomponents/webcomponentsjs": "^2.8.0",
-    "autoprefixer": "^10.4.19",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
     "js-confetti": "^0.12.0",
     "lit": "^3.1.2",
+    "lucide-vue-next": "^0.474.0",
     "pinia": "^2.0.36",
     "postcss": "^8.4.38",
+    "radix-vue": "^1.9.13",
     "sass": "^1.71.1",
+    "tailwind-merge": "^3.0.1",
+    "tailwindcss-animate": "^1.0.7",
     "vue": "^3.3.2",
     "vue-cookies": "^1.8.3",
     "vue-router": "^4.2.0",
@@ -38,8 +45,12 @@
   },
   "devDependencies": {
     "@rushstack/eslint-patch": "^1.2.0",
+    "@types/node": "^22.13.1",
     "@vitejs/plugin-vue": "^4.2.3",
+    "@vue/compiler-sfc": "^3.5.13",
     "@vue/eslint-config-prettier": "^7.1.0",
+    "@vue/tsconfig": "^0.7.0",
+    "autoprefixer": "^10.4.20",
     "cypress": "^12.12.0",
     "eslint": "^8.39.0",
     "eslint-plugin-cypress": "^2.13.3",
@@ -47,6 +58,7 @@
     "prettier": "^2.8.8",
     "start-server-and-test": "^2.0.0",
     "tailwindcss": "^3.4.4",
+    "typescript": "^5.7.3",
     "vite": "^4.3.5"
   }
 }
