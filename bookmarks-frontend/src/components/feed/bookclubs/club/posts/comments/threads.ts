@@ -1,5 +1,5 @@
-import { db } from '@/services/db'
-import { urls } from '@/services/urls'
+import { db } from '@/services/db';
+import { urls } from '@/services/urls';
 
 export interface Thread {
   created_date: string
