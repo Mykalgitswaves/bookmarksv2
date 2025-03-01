@@ -22,7 +22,7 @@ export interface Thread {
 export function setDepthOnThreads(threads: Array<Thread>, initialDepth: number): Array<Thread> {
   threads.forEach((thread) => {
     if (!thread) {
-      console.log(thread)
+      console.log(thread, 'no thread!')
     }
     thread.depth = initialDepth // Assign current depth
 
@@ -31,7 +31,7 @@ export function setDepthOnThreads(threads: Array<Thread>, initialDepth: number):
       setDepthOnThreads(thread.thread, initialDepth + 1) // Pass incremented depth for subthreads
     }
   })
-  console.log(threads)
+
   return threads // Return modified threads after processing
 }
 
