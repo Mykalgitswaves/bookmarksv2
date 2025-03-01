@@ -94,6 +94,7 @@ const currentView = computed(() => {
         console.log('manage-members')
         return subComponentRoutes.settings.manageMembers;
     } else if (route.path === navRoutes.toBookClubCommentPage(user, bookclub, route.params?.postId)) {
+        console.log('comments page')
         return subComponentRoutes.feedCommentsPage;
     } else if (route.path === navRoutes.toSubThreadPage(user, bookclub, postId, threadId)) {
         console.log('sub thread baby')

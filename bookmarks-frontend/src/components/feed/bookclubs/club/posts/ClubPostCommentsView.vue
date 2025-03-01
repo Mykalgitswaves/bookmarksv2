@@ -21,7 +21,7 @@
         <AsyncComponent :promises="[getPaginatedCommentsForPostPromise]">
             <template #resolved>
                 <div v-if="commentThreads?.length" class="mt-5">
-                    <Thread
+                    <Thread 
                         v-for="(thread, index) in commentThreads" 
                         :key="thread.id"
                         :thread="thread"
@@ -29,6 +29,7 @@
                         :bookclub-id="bookclub"
                         :replying-to-id="clubCommentSelectedForReply?.id"
                         :is-sub-thread="thread.depth && thread.depth > 0"
+                        view="main"
                         @thread-selected="(thread) => { clubCommentSelectedForReply = thread; console.log(thread, 'selected') }"
                     />
                 </div>

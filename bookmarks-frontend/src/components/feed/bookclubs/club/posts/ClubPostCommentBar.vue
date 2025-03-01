@@ -100,7 +100,7 @@ onMounted(() => {
 .scrolled-below-post {
     position: fixed;
     bottom: 20px;
-    width: 90vw;
+    width: 80vw;
     max-width: 768px;
     z-index: 99999;
     background-color: var(--surface-primary);

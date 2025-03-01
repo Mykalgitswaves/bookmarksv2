@@ -30,11 +30,7 @@
           navigatable: !threadDisabled,
         }"
         :disabled="threadDisabled"
-        @click="
-          () => {
-            isSubThread ? $emit('navigating-threads', thread.id) : router.push(toSubThreadRoute)
-          }
-        "
+        @click="() => navigateToThread()"
       >
         <p class="text-sm text-stone-600 fancy">
           {{ thread?.text || 'sample comment' }}
@@ -99,6 +95,12 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  // If the view is 'main' we want to ignore what the depth is for subthread stuff. 
+  // Ik this is convoluted but the easiest way to shine a turd.
+  view: {
+    type: String,
+    required: false,
+  }
 })
 
 const router = useRouter()
@@ -120,6 +122,16 @@ const toSubThreadRoute = props.bookclubId
   : ''
 
 console.log(toSubThreadRoute, ': subthread route')
+
+function navigateToThread() {
+    if (props.isSubThread && props.view !== 'main') {
+        console.log('is sub thread emit')
+        emit('navigating-threads', props.thread.id)
+    } else {
+        console.log('to sub thread router push'); 
+        router.push(toSubThreadRoute)
+    }
+}
 </script>
 <style scoped>
 .thread {

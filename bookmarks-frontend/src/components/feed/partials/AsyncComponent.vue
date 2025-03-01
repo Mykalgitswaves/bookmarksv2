@@ -40,7 +40,7 @@ const loaded = ref(false);
 
 function load() {
     if (props.promises) {
-        Promise.all(props.promises).then(() => {
+        Promise.allSettled(props.promises).then(() => {
             console.log('calling this stuff again')
             loaded.value = true;
         });
@@ -67,13 +67,5 @@ if (props.subscribedTo && props.promiseFactory) {
     }
 
     PubSub.subscribe(props.subscribedTo, refreshEvent);
-
-    onUnmounted(() => {
-        PubSub.unsubscribe(props.subscribedTo, refreshEvent);
-    });
-
-    window.addEventListener('reload', () => {
-        PubSub.unsubscribe(props.subscribedTo, refreshEvent);
-    })
 }
 </script>

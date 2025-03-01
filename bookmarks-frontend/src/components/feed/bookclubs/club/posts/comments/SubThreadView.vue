@@ -2,13 +2,13 @@
   <div class="subthread">
     <BackBtn :back-fn="goUpThread" />
     <!-- Post -->
-    <AsyncComponent :promises="[loadPostPromise]">
+  <AsyncComponent :promises="[loadPostPromise]">
       <template #resolved>
         <div class="subthread-wrap">
           <ClubPost v-if="postData" :post="postData" />
         </div>
 
-        <!-- Comment bar goes here -->
+        <ViewAwards />
       </template>
       <template #loading></template>
     </AsyncComponent>
@@ -63,7 +63,7 @@
 </template>
 <script setup lang="ts">
 // Vue
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 // Services
 import { db } from '@/services/db'
@@ -80,6 +80,7 @@ import AsyncComponent from '@/components/feed/partials/AsyncComponent.vue'
 import ClubPost from '../ClubPost.vue'
 import ClubPostCommentBar from '../ClubPostCommentBar.vue'
 import ThreadComponent from './Thread.vue'
+import ViewAwards from '../../awards/ViewAwards.vue';
 
 // Params
 const route = useRoute()
@@ -134,7 +135,7 @@ const loadPostPromise = db.get(
   (err: Error) => {
     console.error(err)
   }
-)
+);
 // #TODO: Fill out this other case (non club) next.
 /** @endLoad */
 
@@ -157,6 +158,9 @@ function descendThread(threadId: string) {
   navigationThread.value = threadId;
   PubSub.publish(GET_COMMENTS_KEY);
 }
+
+// Weird bug happening on navigation
+// onMounted(() => PubSub.publish(GET_COMMENTS_KEY));
 </script>
 <style scoped>
 .subthread {
