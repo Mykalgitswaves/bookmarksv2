@@ -37,7 +37,7 @@ import { helpersCtrl } from '../../../../../../services/helpers';
 import SuccessToast from '../../../../../shared/SuccessToast.vue';
 import { Toast } from '../../../../../shared/models';
 import {  generateUUID } from '../../../../../../services/helpers';
-import { currentUser } from '@/stores/currentUser.TS';
+import { currentUser } from '@/stores/currentUser.ts';
 
 const props = defineProps({
     postId: {
