@@ -1,6 +1,6 @@
 import { ref } from "vue";
-import { urls } from "../services/urls";
-import { db } from "../services/db";
+import { urls } from "@/services/urls";
+import { db } from "@/services/db";
 
 interface CurrentUserProps {
     id: String;
@@ -16,7 +16,7 @@ export const currentUser = ref<CurrentUserProps | {}>({});
 
 // The function used to actually get the current user.
 export async function getCurrentUser(userId: String) {
-    db.get(urls.user.getUser(userId), null, false, (res:any) => {
+    db.get(urls.user.getUser(userId as string), null, false, (res:any) => {
         currentUser.value = res.data;
     }, (res: any) => {
         console.log(res);

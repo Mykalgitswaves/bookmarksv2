@@ -54,7 +54,7 @@ export type PostResponse = {
 }
 
 export async function likeThread(thread: Thread) {
-  await db.post(urls.reviews.likeComment(thread.id), false, null, (res:any) => {
+  await db.post(urls.reviews.likeComment(thread.id), null, false, (res:any) => {
     thread.num_replies += 1;
   }, (err:any) => {
     console.warn(err, 'something weird happened');
