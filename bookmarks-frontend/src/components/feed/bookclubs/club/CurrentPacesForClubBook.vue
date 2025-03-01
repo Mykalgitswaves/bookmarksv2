@@ -1,5 +1,5 @@
 <template>
-    <div  v-if="totalChapters" class="paces-container">
+    <div  v-if="totalChapters" class="paces-container" :class="{'min-h-200': startOpen}">
         <AsyncComponent :promises="[clubPacePromise]">
             <template #resolved>
                     <div v-if="memberPaces.length">
@@ -10,6 +10,7 @@
                             </h4>
 
                             <button 
+                                v-if="!startOpen"
                                 class="ml-auto text-sm text-indigo-500 underline fancy nowrap" 
                                 @click="isViewingAllPaces = !isViewingAllPaces"
                             >
@@ -17,7 +18,7 @@
                             </button>
                         </div>
 
-                        <div v-if="isViewingAllPaces" class="member-paces mt-2">
+                        <div v-if="isViewingAllPaces || startOpen" class="member-paces mt-2">
                             <div 
                                 v-for="(member, index) in memberPaces" 
                                 :key="member.id"
@@ -28,14 +29,15 @@
                                 <div>
                                     <h4 class="text-stone-700">{{ member.username }}</h4>
                                     
-                                    <p class="text-sm text-stone-500">{{ member.pace ? `is reading chapter ${member.pace} of ${props.totalChapters}` : 'hasn\'t started yet' }}</p>
+                                    <p v-if="!member.is_finished_reading" class="text-sm text-stone-500">{{ member.pace ? `is reading chapter ${member.pace} of ${props.totalChapters}` : 'hasn\'t started yet' }}</p>
+                                    <p v-else class="text-sm text-stone-500">Finished reading! 🎉</p>
                                 </div>
 
                                 <div class="pace-line" 
                                     :style="{
                                         width: generateProgressBarWidthForMember(member),
                                         height: '4px',
-                                        backgroundColor: 'var(--indigo-300)',
+                                        backgroundColor: member.is_finished_reading ? 'var(--green-300)' : 'var(--indigo-300)',
                                         borderRadius:  '4px',
                                         position: 'absolute',
                                         bottom: '-8px',
@@ -86,6 +88,10 @@ import SuccessToast from '../../../shared/SuccessToast.vue';
 const props = defineProps({
     totalChapters: {
         type: Number,
+    },
+    startOpen: {
+        type: Boolean,
+        default: false,
     }
 })
 
@@ -98,6 +104,11 @@ const toast = ref(null);
 
 const clubPacePromise = db.get(urls.bookclubs.getClubPace(route.params.bookclub), null, false, (res) => {
     memberPaces = res.member_paces
+    memberPaces.forEach((member) => {
+        if (member.pace === 99999) {
+            member.is_finished_reading = true;
+        }
+    })
     svgPaceMap = generateSvgPaceMap(memberPaces)
     
     // Go through and check to see if people have been peer pressured yet by another user in the club, 
@@ -156,6 +167,8 @@ function pressureReader(member) {
 }
 
 function generateProgressBarWidthForMember(member) {
+    if (member.pace === 99999) return '100%';
+
     return `${(member.pace / props.totalChapters) * 100}%`
 }
 </script>
@@ -200,5 +213,9 @@ function generateProgressBarWidthForMember(member) {
         transform: scale(80%);
         height: 40px;
         width: auto;
+    }
+
+    .min-h-200 {
+        min-height: 200px;
     }
 </style>

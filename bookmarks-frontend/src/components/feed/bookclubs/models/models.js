@@ -51,7 +51,7 @@ export const ClubUpdatePost = {
 }
 
 export const ClubReviewPost = {
-    cls: 'club_review_post'
+    cls: '"club_review"'
 }
 
 export const Invitation = {

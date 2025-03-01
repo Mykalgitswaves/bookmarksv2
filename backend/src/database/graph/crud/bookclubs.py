@@ -927,6 +927,7 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
             OPTIONAL MATCH (b)-[reading:IS_READING]-(book:BookClubBook)
             OPTIONAL MATCH (u)-[user_progress:IS_READING_FOR_CLUB]->(book)
             OPTIONAL MATCH (book)-[:IS_EQUIVALENT_TO]-(actual_book:Book)
+            OPTIONAL MATCH (u)-[finished_reading:FINISHED_READING_FOR_CLUB]->(book)
             return b.id as book_club_id,
                    b.name as book_club_name,
                    b.description as book_club_description,
@@ -937,11 +938,12 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
                    actual_book.small_img_url as currently_reading_book_small_img_url,
                    actual_book.id as currently_reading_book_id,
                    book.chapters as total_chapters,
-                   book.id as book_club_book_id
+                   book.id as book_club_book_id,
+                   CASE WHEN finished_reading IS NOT NULL THEN true ELSE false END AS is_user_finished_reading 
         """
         result = tx.run(query, book_club_id=book_club_id, user_id=user_id)
         record = result.single()
-
+       
         if record.get("currently_reading_book_id"):
             current_book = BookClubSchemas.BookClubCurrentlyReading(
                 book_id=record.get("currently_reading_book_id"),
@@ -949,7 +951,8 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
                 title=record.get("currently_reading_book_title"),
                 small_img_url=record.get(
                     "currently_reading_book_small_img_url"),
-                author_names=[]
+                author_names=[],
+                is_user_finished_reading=record.get('is_user_finished_reading')
             )
         else:
             current_book = {}
@@ -1039,7 +1042,7 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
             """
             MATCH (u:User {id: $user_id})-[:OWNS_BOOK_CLUB]->(b:BookClub)
             OPTIONAL MATCH (b)-[reading:IS_READING]-(book:BookClubBook)
-            OPTIONAL MATCH (u)-[user_progress:IS_READING_FOR_CLUB]->(book)
+            OPTIONAL MATCH (u)-[user_progress:IS_READING_FOR_CLUB|FINISHED_READING_FOR_CLUB]->(book)
             OPTIONAL MATCH (book)-[:IS_EQUIVALENT_TO]-(actual_book:Book)
             return b.id as book_club_id,
                    b.name as book_club_name,
@@ -1049,7 +1052,8 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
                    actual_book.title as currently_reading_book_title,
                    actual_book.small_img_url as currently_reading_book_small_img_url,
                    actual_book.id as currently_reading_book_id,
-                   book.chapters as total_chapters
+                   book.chapters as total_chapters,
+                   type(user_progress) as user_finished_check
             """
         )
 
@@ -1057,7 +1061,7 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
             """
             MATCH (u:User {id: $user_id})-[:OWNS_BOOK_CLUB]->(b:BookClub)
             OPTIONAL MATCH (b)-[reading:IS_READING]-(book:BookClubBook)
-            OPTIONAL MATCH (u)-[user_progress:IS_READING_FOR_CLUB]->(book)
+            OPTIONAL MATCH (u)-[user_progress:IS_READING_FOR_CLUB|FINISHED_READING_FOR_CLUB]->(book)
             OPTIONAL MATCH (book)-[:IS_EQUIVALENT_TO]-(actual_book:Book)
             return b.id as book_club_id,
                    b.name as book_club_name,
@@ -1069,7 +1073,8 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
                    actual_book.id as currently_reading_book_id,
                    actual_book.author_names as currently_reading_book_author_names,
                    book.chapters as total_chapters,
-                   book.id as book_club_book_id
+                   book.id as book_club_book_id,
+                   type(user_progress) as user_finished_check
             LIMIT $limit
             """
         )
@@ -1099,6 +1104,10 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
                         "currently_reading_book_small_img_url"),
                     author_names=author_names if author_names else [],
                 )
+
+                print(record.get('user_finished_check'))
+                if record.get('user_finished_check') == 'FINISHED_READING_FOR_CLUB':
+                    current_book.is_user_finished_reading = True
             else:
                 current_book = None
             
@@ -1154,6 +1163,7 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
             OPTIONAL MATCH (b)-[reading:IS_READING]-(book:BookClubBook)
             OPTIONAL MATCH (u)-[user_progress:IS_READING_FOR_CLUB]->(book)
             OPTIONAL MATCH (book)-[:IS_EQUIVALENT_TO]-(actual_book:Book)
+            OPTIONAL MATCH (u)-[finished_reading:FINISHED_READING_FOR_CLUB]->(book)
             return b.id as book_club_id,
                    b.name as book_club_name,
                    reading.started_date as started_date,
@@ -1162,7 +1172,8 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
                    actual_book.title as currently_reading_book_title,
                    actual_book.small_img_url as currently_reading_book_small_img_url,
                    actual_book.id as currently_reading_book_id,
-                   book.chapters as total_chapters
+                   book.chapters as total_chapters,
+                   CASE WHEN finished_reading IS NOT NULL THEN true ELSE false END AS is_user_finished_reading
             """
         )
 
@@ -1172,6 +1183,7 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
             OPTIONAL MATCH (b)-[reading:IS_READING]-(book:BookClubBook)
             OPTIONAL MATCH (u)-[user_progress:IS_READING_FOR_CLUB]->(book)
             OPTIONAL MATCH (book)-[:IS_EQUIVALENT_TO]-(actual_book:Book)
+            OPTIONAL MATCH (u)-[finished_reading:FINISHED_READING_FOR_CLUB]->(book)
             return b.id as book_club_id,
                    b.name as book_club_name,
                    reading.started_date as started_date,
@@ -1182,7 +1194,8 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
                    actual_book.id as currently_reading_book_id,
                    actual_book.author_names as currently_reading_book_author_names,
                    book.chapters as total_chapters,
-                   book.id as book_club_book_id
+                   book.id as book_club_book_id,
+                   CASE WHEN finished_reading IS NOT NULL THEN true ELSE false END AS is_user_finished_reading
             LIMIT $limit
             """
         )
@@ -1198,7 +1211,7 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
                 query,
                 user_id=book_club_param.user_id
             )
-
+        
         book_clubs = []
         for record in result:
             # Get the currently reading book if it exists
@@ -1212,6 +1225,7 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
                     small_img_url=record.get(
                         "currently_reading_book_small_img_url"),
                     author_names=author_names if author_names else [],
+                    is_user_finished_reading=record.get('is_user_finished_reading'),
                 )
             else:
                 current_book = None
@@ -1478,8 +1492,8 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
             """
             MATCH (u:User {id:$user_id})-[:IS_MEMBER_OF|OWNS_BOOK_CLUB]->(b:BookClub {id:$book_club_id})
             MATCH (b)-[club_reading:IS_READING]->(book:BookClubBook)
-            MATCH (u)-[user_reading:IS_READING_FOR_CLUB]->(book)
-            MATCH (members:User)-[members_reading:IS_READING_FOR_CLUB]->(book)
+            MATCH (u)-[is_current_user_reading:IS_READING_FOR_CLUB|FINISHED_READING_FOR_CLUB]->(book)
+            MATCH (members:User)-[members_reading:IS_READING_FOR_CLUB|FINISHED_READING_FOR_CLUB]->(book)
             return  u.id as user_id,
                     members,
                     members_reading
@@ -1494,12 +1508,16 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
         )
         member_paces = []
         for response in result:
-            member_pace = {
-                "id": response.get("members", {}).get('id'),
-                "username":response.get("members", {}).get("username"),
-                "pace":response.get("members_reading", {}).get("current_chapter"),
-                "is_current_user": response.get("members", {}).get("id") == user_id
-            }
+            if response.get("members"):
+                member_pace = {
+                    "id": response.get("members", {}).get('id'),
+                    "username":response.get("members", {}).get("username"),
+                    "pace":response.get("members_reading", {}).get("current_chapter", float(99999)),
+                    "is_current_user": response.get("members", {}).get("id") == user_id,
+                }
+
+                if response.get("members", {}).get("id") == user_id:
+                    member_pace["is_finished_reading"] = response.get('is_current_user_finished_reading')
 
             member_paces.append(member_pace)
         

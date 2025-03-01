@@ -73,7 +73,9 @@ export const urls = {
         unpinComment: (comment_id, post_id) => (baseUrl + `api/review/post/${post_id}/comment/${comment_id}/remove_pin`),
         getComments: (post_id) =>(baseUrl + `api/posts/post/${post_id}/comments`),
         // calling more comments (duh)
+        getCommentById: (comment_id) => (`${baseUrl}api/review/comments/${comment_id}/comment`),
         getMoreComments: (comment_id) => (baseUrl + `api/review/comments/${comment_id}/replies`),
+        getCommentForComments: (post_id, comment_id) => (`${baseUrl}api/posts/post/${post_id}/comments/${comment_id}`),
         getFeed: () => (baseUrl + `api/posts/`),
     },
     books: {
@@ -131,9 +133,11 @@ export const urls = {
         stopCurrentlyReadingBookForClub: 
             (bookclub_id) => (baseUrl + `${BOOK_CLUBS_PREFIX}${bookclub_id}/currently_reading/stop`),
         // Read / GETS
-        getClubsOwnedByUser: (user_id) =>  (baseUrl + `${BOOK_CLUBS_PREFIX}owned/${user_id}/`),
-        getClubsJoinedByCurrentUser: (user_id) =>  (baseUrl + `${BOOK_CLUBS_PREFIX}member/${user_id}/`),
+        getClubsOwnedByUser: (user_id) =>  (baseUrl + `${BOOK_CLUBS_PREFIX}owned/${user_id}`),
+        getClubsJoinedByCurrentUser: (user_id) =>  (baseUrl + `${BOOK_CLUBS_PREFIX}member/${user_id}`),
         getClubFeed: (bookclub_id) => (baseUrl + `${BOOK_CLUBS_PREFIX}${bookclub_id}/feed`),
+        // Gets a finished feed for a club the user has finished reading! 
+        getFinishedClubFeed: (bookclub_id) => (`${baseUrl}${BOOK_CLUBS_PREFIX}${bookclub_id}/feed/finished`),
         getClubPace: (bookclub_id) => (baseUrl + `${BOOK_CLUBS_PREFIX}${bookclub_id}/club_members_pace`),
         getPaceForUserInClub: (bookclub_id) => (baseUrl + `${BOOK_CLUBS_PREFIX}${bookclub_id}/user_pace`),
         getMinimalClub: (bookclub_id, user_id) => (baseUrl + `${BOOK_CLUBS_PREFIX}${bookclub_id}/minimal_preview/${user_id}/user`),
@@ -172,9 +176,7 @@ export const urls = {
         // Is user finished reading
         getCurrentUserFinishedReading: (bookclub_id, user_id) => (`${baseUrl}${BOOK_CLUBS_PREFIX}${bookclub_id}/is_user_finished_reading/${user_id}`),
         // FINISH THAT THANG!
-        postClubReviewAndFinishReading: (bookclub_id) => (`${baseUrl}${BOOK_CLUBS_PREFIX}${bookclub_id}/review/create`),
-        // Used to have presence for club. Knowing where people are having conversations in an actual club. 
-        establishWebsocketConnectionForClub: (bookclub_id) => `${wsUrl}${BOOK_CLUBS_PREFIX}${bookclub_id}/thread`
+        postClubReviewAndFinishReading: (bookclub_id, book_club_book_id) => (`${baseUrl}${BOOK_CLUBS_PREFIX}${bookclub_id}/review/create/${book_club_book_id}`),
     },
     concatQueryParams: (url, newQueryParams, returnUrl) => {
         if (!url) {
@@ -184,9 +186,9 @@ export const urls = {
 
         if (newQueryParams) {
             // Make sure we aren't fucking up this part of the request.
-            if (!url.endsWith('/')) {
-                url = url + '/';
-            }
+            // if (!url.endsWith('/')) {
+            //     url = url + '/';
+            // }
             
             url = url + '?' + new URLSearchParams(newQueryParams);
             console.log(url);
@@ -220,4 +222,5 @@ export const navRoutes = {
         (`/feed/${current_user}/bookclubs/${bookclub_id}/settings/currently-reading`),
     bookClubSettingsManageMembersIndex: (current_user, bookclub_id) => 
         (`/feed/${current_user}/bookclubs/${bookclub_id}/settings/manage-members`),
+    toSubThreadPage: (current_user,bookclub_id,post_id, comment_id) => (`/feed/${current_user}/bookclubs/${bookclub_id}/post/${post_id}/comments/${comment_id}`)
 }

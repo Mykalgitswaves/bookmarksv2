@@ -17,7 +17,7 @@
             <template #resolved>
                 <div class="award-grid">
                     <div v-for="(category, key) in awards" 
-                        :key="index"
+                        :key="key"
                     >
                         <h3 class="text-xl text-stone-700 fancy text-start mb-5">
                             {{ key }}

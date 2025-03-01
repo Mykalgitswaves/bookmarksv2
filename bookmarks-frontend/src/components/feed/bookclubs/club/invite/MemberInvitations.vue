@@ -19,21 +19,18 @@
                     'created-invite': invite.user_id
                 }"
             >
-                <div v-if="!invite.user_id" class="flex items-center gap-2 flex-wrap">
+                <div v-if="!invite.user_id" class="display-flex items-center gap-2 flex-wrap">
                     <!-- Add placeholder for searched existing user here. -->
                     <SearchUserOverlay 
                         :book-club-id="route.params.bookclub" 
                         @user-selected="(userId) => selectedExistingUser(userId)"
                     />
 
-                    <input 
-                        class="input border-2 fancy input--invitation w-100 pl-5 py-2"
+                    <Input 
                         type="email"
-                        id="email"
-                        :name="invite.id"
-                        placeholder="or enter an email"
-                        v-model="invitations[index].email" 
-                    >
+                        placeholder="email"
+                        @updated:model-value="(email) => invitations[index].email = email"
+                    />
                 </div>
                 <!-- This means you made an invite but haven't sent it yet. -->
                 <h3 v-else class="fancy text-stone-600 text-lg">
@@ -42,15 +39,15 @@
 
                 <div class="flex gap-2">
                     <!-- Only show this if you aren't searching for a user -->
-                    <button v-if="(invite.status === Invitation.statuses.uninvited)"
-                        type="button"
-                        :disabled="submitting"
-                        class="btn btn-ghost text-indigo-500"
+                    <Button v-if="(invite.status === Invitation.statuses.uninvited)"
+                        type="button" 
+                        class="btn btn-ghost"
                         :class="{submitting: 'btn-ghost'}"
+                        :disabled="submitting"
                         @click="sendInvites([invite, index])"
                     >
                         <IconSend />
-                    </button>
+                    </Button>
 
                     <button
                         v-if="index !== 0 && index + 1 === invitations.length"
@@ -143,6 +140,8 @@ import IconSend from '@/components/svg/icon-send.vue';
 import IconTrash from '@/components/svg/icon-trash.vue';
 import Overlay from '@/components/feed/partials/overlay/Overlay.vue';
 import AsyncComponent from '../../../partials/AsyncComponent.vue';
+import { Input } from '@/lib/registry/default/ui/input';
+import { Button } from '@/lib/registry/default/ui/button';
 
 const props = defineProps({
     memberData: {

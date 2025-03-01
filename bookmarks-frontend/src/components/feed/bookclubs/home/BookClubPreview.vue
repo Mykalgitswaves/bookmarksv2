@@ -3,7 +3,8 @@
         :class="{
             'behind': bookclub.pace < 0,
             'on-target': bookclub.pace === 0,
-            'ahead': bookclub.pace > 0
+            'ahead': bookclub.pace > 0,
+            'finished': bookclub.currently_reading_book.is_user_finished_reading
         }"
         @click="router.push(navRoutes.toBookClubFeed(user, bookclub.book_club_id))"
     >
@@ -22,7 +23,11 @@
                     Currently Reading: <i class="text-indigo-500 block">{{ bookclub.currently_reading_book.title }}</i>
                     <br/>
                     <span v-if="bookclub.currently_reading_book" 
-                        class="text-xs text-stone-500 block italic mt-2"
+                        class="mt-2 block"
+                        :class="{
+                            'text-md fancy text-center text-stone-700': bookclub.currently_reading_book.is_user_finished_reading,
+                            'text-xs text-stone-500 italic': !bookclub.currently_reading_book.is_user_finished_reading
+                        }"
                     >{{ paceOfCurrentUserForClub }}</span>
                 </p>
 
@@ -57,6 +62,10 @@ const props = defineProps({
 });
 
 const paceOfCurrentUserForClub = computed(() => {
+    if (props.bookclub.currently_reading_book.is_user_finished_reading) {
+        return '🎉 You finished this book! 🎉'
+    }
+
     let pace = props.bookclub.pace
     if (pace < 0) {
         return `You are ${Math.abs(pace)} chapters behind the club pace`
@@ -112,6 +121,11 @@ const paceOfCurrentUserForClub = computed(() => {
 
     &.behind {
         border: 1px dotted var(--red-300)
+    }
+
+    &.finished {
+        border: 1px solid var(--indigo-500);
+        background-color: var(--indigo-50);
     }
 }
 

@@ -2,7 +2,7 @@
   <button
     type="button"
     class="flex my-2 text-indigo-600 items-center md:ml-10 back-hover"
-    @click="backFn || router.back()"
+    @click="() => backFn() || router.back()"
   >
     <IconBack/>
     <slot name="button-text"></slot>
@@ -26,7 +26,6 @@ const props = defineProps({
 })
 
 const slots = useSlots();
-console.log(slots)
 </script>
 <style scoped>
 .back-hover {

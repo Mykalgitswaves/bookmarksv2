@@ -28,7 +28,7 @@ class Comment(CommentCreate):
     pinned: bool = False
     likes: int = 0
     num_replies: int = 0
-    replies: Optional[List['Comment']] = []
+    thread: Optional[List['Comment']] = None
 
     @validator('created_date', pre=True, allow_reuse=True)
     def parse_neo4j_datetime(cls, v):

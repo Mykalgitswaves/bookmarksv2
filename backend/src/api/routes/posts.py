@@ -674,8 +674,11 @@ async def create_comment(
         )
     except ValueError as e:
         raise HTTPException(status_code=400, detail=jsonable_encoder(e.json()))
-
-    comment = comment_repo.create_comment(comment)
+    
+    if comment.post_id.startswith("club_"):
+        comment = comment_repo.create_comment_for_club(comment)
+    else:
+        comment = comment_repo.create_comment(comment)
 
     if not comment:
         logger.warning(
@@ -956,13 +959,42 @@ async def get_comments_for_post(
     skip: int = Query(default=0),
     limit: int = Query(default=10),
     book_club_id: Optional[str] = None,
-    comment_id: Optional[str] = None
+    depth: int = 10 
 ):
     """
-    TODO: ADD DOCUMENTATION HERE
+    Gets all the comments for a specific post, paginated by a skip and limit
+
+    Args:
+        post_id: The post to grab comments for
+        current_user: The current user data
+        comment_repo: The CRUD repo containing the comment queries
+        skip: The skip value for level 0 comments
+        limit: The limit value for level 0 comments
+        book_club_id: OPTIONAL If post is from a bookclub, this is the bookclub id
+        depth: The maximum depth to go in a thread
+
+    Returns:
+        comments (list): A list of unpinned comments
+        pinned_comments (list): A list of pinned comments
+
+    Here is the example format for one comment:
+        {
+        "id": comment_id,
+        "user_id": comment author user id,
+        ...
+        "thread": list of the top liked replies for each level under level 0
+            Comment data it the same in here as above
+        }
     """
     if not current_user:
         raise HTTPException(401, "Unauthorized")
+    
+    if depth < 1 or depth > 20:
+        raise HTTPException(
+            status_code=400, 
+            detail="Value for depth must be between 1 and 20"
+            )
+    
     if post_id:
         # Check that you are a member of a club before returning any comments. Slightly slower. 
         # TO_CONSIDER: Alternatively you could save a token to authenticate on the client 
@@ -973,21 +1005,27 @@ async def get_comments_for_post(
                 user_id=current_user.id, 
                 skip=skip, 
                 limit=limit, 
-                book_club_id=book_club_id
+                book_club_id=book_club_id,
+                depth=depth
             )
 
             return JSONResponse(
                 content={
                     "data": jsonable_encoder(
                         {
-                            "comments": comments,
+                            "comments": comments["comments"],
+                            "pinned_comments": comments["pinned_comments"],
                         }
                     )
                 }
             )
         else:
             comments = comment_repo.get_all_comments_for_post(
-                post_id=post_id, username=current_user.username, skip=skip, limit=limit
+                post_id=post_id, 
+                user_id=current_user.id, 
+                skip=skip, 
+                limit=limit,
+                depth=depth
             )
 
         return JSONResponse(
@@ -1001,6 +1039,104 @@ async def get_comments_for_post(
             }
         )
 
+@router.get("/post/{post_id}/comments/{comment_id}")
+async def get_comments_for_comment(
+    post_id: str,
+    comment_id:str,
+    current_user: Annotated[User, Depends(get_current_active_user)],
+    comment_repo: CommentCRUDRepositoryGraph = Depends(
+        get_repository(repo_type=CommentCRUDRepositoryGraph)
+    ),
+    skip: int = Query(default=0),
+    limit: int = Query(default=10),
+    book_club_id: Optional[str] = None,
+    depth: int = 10 
+):
+    """
+    Gets all the comments for a specific post, paginated by a skip and limit
+
+    Args:
+        post_id: The post to grab comments for
+        current_user: The current user data
+        comment_repo: The CRUD repo containing the comment queries
+        skip: The skip value for level 0 comments
+        limit: The limit value for level 0 comments
+        book_club_id: OPTIONAL If post is from a bookclub, this is the bookclub id
+        depth: The maximum depth to go in a thread
+
+    Returns:
+        comments (list): A list of unpinned comments
+        pinned_comments (list): A list of pinned comments
+
+    Here is the example format for one comment:
+        {
+        "id": comment_id,
+        "user_id": comment author user id,
+        ...
+        "thread": list of the top liked replies for each level under level 0
+            Comment data it the same in here as above
+        }
+    """
+    if not current_user:
+        raise HTTPException(401, "Unauthorized")
+    
+    if depth < 1 or depth > 20:
+        raise HTTPException(
+            status_code=400, 
+            detail="Value for depth must be between 1 and 20"
+            )
+    
+    if post_id:
+        # Check that you are a member of a club before returning any comments. Slightly slower. 
+        # TO_CONSIDER: Alternatively you could save a token to authenticate on the client 
+        # what their permissions are to view comments. Would be way faster but would require a little bit of setup. 
+        if book_club_id:
+            parent_comment = comment_repo.get_parent_comment_for_book_club(
+                comment_id=comment_id,
+                user_id=current_user.id, 
+                book_club_id=book_club_id,
+                post_id=post_id,
+            )
+
+            comments = comment_repo.get_paginated_comments_for_book_club_comment(
+                post_id=post_id,
+                comment_id=comment_id,
+                user_id=current_user.id, 
+                skip=skip, 
+                limit=limit, 
+                book_club_id=book_club_id,
+                depth=depth
+            )
+
+            return JSONResponse(
+                content={
+                    "data": jsonable_encoder(
+                        {
+                            "parent_comment": parent_comment,
+                            "comments": comments,
+                        }
+                    )
+                }
+            )
+        else:
+            comments = comment_repo.get_all_comments_for_comment(
+                post_id=post_id,
+                comment_id=comment_id,
+                user_id=current_user.id, 
+                skip=skip, 
+                limit=limit,
+                depth=depth
+            )
+
+        return JSONResponse(
+            content={
+                "data": jsonable_encoder(
+                    {
+                        "comments": comments
+                    }
+                )
+            }
+        )  
 
 @router.get(
     "/comment/{comment_id}/replies", name="comment:get_replies"
