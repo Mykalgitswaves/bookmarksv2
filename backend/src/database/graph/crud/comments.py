@@ -376,6 +376,65 @@ class CommentCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
 
         return({"comments":comments, "pinned_comments": pinned_comments})
     
+    def get_parent_comment(
+            self,
+            comment_id: str,
+            user_id: str,
+            post_id: str,
+    ):
+        with self.driver.session() as session:
+            result = session.execute_read(
+                self.get_parent_comment_query,  
+                comment_id, 
+                user_id,
+                post_id,
+            )  
+        return(result)
+
+    @staticmethod
+    def get_parent_comment_query(
+            tx,
+            comment_id,
+            user_id,
+            post_id,
+    ):
+        query = """
+            match (user:User {id: $user_id})
+            match (postingUser:User)-[:COMMENTED]->(comment:Comment {id: $comment_id})
+            optional match (user)-[likedByCurrentUser:LIKES]->(comment)
+            optional match (comment)-[:REPLIED_TO]->(repliedToComment:Comment)
+            return comment, 
+                postingUser, 
+                repliedToComment.id as repliedToCommentId,
+                CASE WHEN likedByCurrentUser IS NOT NULL THEN true ELSE false END AS islikedByCurrentUser
+        """
+
+        result = tx.run(
+            query, 
+            user_id=user_id,  
+            comment_id=comment_id)
+        
+        data = result.single()
+        
+        comment_data = data.get('comment')
+        comment_author = data.get('postingUser')
+
+        comment = Comment(
+            id=comment_id,
+            created_date=comment_data['created_date'],
+            liked_by_current_user=data.get('islikedByCurrentUser'),
+            post_id=post_id,
+            user_id=comment_author['id'],
+            username=comment_author['username'],
+            text=comment_data.get("text",""),
+            replied_to=data.get('repliedToCommentId'),
+            posted_by_current_user=comment_author['id'] == user_id,
+            likes=comment_data.get('likes',0),
+            num_replies=comment_data.get('num_replies',0)
+        )
+
+        return comment
+    
     def get_parent_comment_for_book_club(
             self,
             comment_id: str,
@@ -534,6 +593,167 @@ class CommentCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
                 prev_comment_id = thread_comment_object.id
             
             comment.thread = thread
+            comments.append(comment)
+        
+        return comments
+    
+    def get_all_parent_comments_for_comment(
+            self, 
+            post_id,
+            comment_id, 
+            user_id
+        ):
+        """
+        Gets all the parent comments for a comment in a bookclub
+
+        Args:
+            post_id: PK of the post for which to return comments    
+            comment_id: The ID of the comment to grab replies to
+            user_id: id of the current user
+        """
+        with self.driver.session() as session:
+            result = session.execute_read(
+                self. get_all_parent_comments_for_comment_query, 
+                post_id, 
+                comment_id, 
+                user_id
+                )  
+        return(result)
+
+    @staticmethod
+    def  get_all_parent_comments_for_comment_query(
+        tx, 
+        post_id,
+        comment_id, 
+        user_id
+        ):
+
+        query = """
+            Match (user:User {id: $user_id})
+            MATCH (lowestComment:Comment {id: $comment_id})
+            // Traverse zero or more REPLIED_TO steps from this comment up the chain
+            // until you get to a top-level comment (one with is_reply = false):
+            OPTIONAL MATCH path = (lowestComment)-[:REPLIED_TO*0..]->(topComment:Comment)
+            WHERE topComment.is_reply = false
+            OR NOT (topComment)-[:REPLIED_TO]->(:Comment)
+
+            // path now includes every comment along the chain from lowestComment up to the top-level comment
+            // UNWIND the path to retrieve each comment node in that chain:
+            UNWIND nodes(path)[1..] AS commentInChain
+
+            // (Optional) You can now match users, likes, etc. for each commentInChain:
+            OPTIONAL MATCH (commentInChain)<-[likeRel:LIKES]-(user)
+            OPTIONAL MATCH (commentInChain)<-[:COMMENTED]-(postingUser:User)
+
+            // Return the comment node and any other info you need:
+            RETURN DISTINCT 
+                commentInChain AS comment, 
+                postingUser,
+                CASE WHEN likeRel IS NOT NULL THEN true ELSE false END AS isLikedByCurrentUser
+            ORDER BY commentInChain.depth ASC
+        """
+
+        result = tx.run(
+            query, 
+            user_id=user_id,
+            comment_id=comment_id
+        )
+
+        comments = []
+        for response in result:
+            comment_data = response['comment']
+            comment_author = response['postingUser']
+            comment = build_comment_object(
+                comment_data,
+                comment_author,
+                response['isLikedByCurrentUser'],
+                post_id,
+                user_id
+            )
+        
+            comments.append(comment)
+        
+        return comments
+    
+    def get_all_parent_comments_for_book_club_comment(
+            self, 
+            post_id,
+            comment_id, 
+            user_id,
+            book_club_id
+        ):
+        """
+        Gets all the parent comments for a comment in a bookclub
+
+        Args:
+            post_id: PK of the post for which to return comments    
+            comment_id: The ID of the comment to grab replies to
+            user_id: id of the current user
+            book_club_id: ID of the bookclub
+        """
+        with self.driver.session() as session:
+            result = session.execute_read(
+                self. get_all_parent_comments_for_book_club_comment_query, 
+                post_id, 
+                comment_id, 
+                user_id,
+                book_club_id
+                )  
+        return(result)
+
+    @staticmethod
+    def  get_all_parent_comments_for_book_club_comment_query(
+        tx, 
+        post_id,
+        comment_id, 
+        user_id,
+        book_club_id,
+        ):
+
+        query = """
+            Match (user:User {id: $user_id})-[:IS_MEMBER_OF|OWNS_BOOK_CLUB]->(b:BookClub {id: $book_club_id})
+            MATCH (lowestComment:Comment {id: $comment_id})
+            // Traverse zero or more REPLIED_TO steps from this comment up the chain
+            // until you get to a top-level comment (one with is_reply = false):
+            OPTIONAL MATCH path = (lowestComment)-[:REPLIED_TO*0..]->(topComment:Comment)
+            WHERE topComment.is_reply = false
+            OR NOT (topComment)-[:REPLIED_TO]->(:Comment)
+
+            // path now includes every comment along the chain from lowestComment up to the top-level comment
+            // UNWIND the path to retrieve each comment node in that chain:
+            UNWIND nodes(path)[1..] AS commentInChain
+
+            // (Optional) You can now match users, likes, etc. for each commentInChain:
+            OPTIONAL MATCH (commentInChain)<-[likeRel:LIKES]-(user)
+            OPTIONAL MATCH (commentInChain)<-[:COMMENTED]-(postingUser:User)
+
+            // Return the comment node and any other info you need:
+            RETURN DISTINCT 
+                commentInChain AS comment, 
+                postingUser,
+                CASE WHEN likeRel IS NOT NULL THEN true ELSE false END AS isLikedByCurrentUser
+            ORDER BY commentInChain.depth ASC
+        """
+
+        result = tx.run(
+            query, 
+            user_id=user_id,
+            book_club_id=book_club_id,
+            comment_id=comment_id
+        )
+
+        comments = []
+        for response in result:
+            comment_data = response['comment']
+            comment_author = response['postingUser']
+            comment = build_comment_object(
+                comment_data,
+                comment_author,
+                response['isLikedByCurrentUser'],
+                post_id,
+                user_id
+            )
+        
             comments.append(comment)
         
         return comments
