@@ -204,6 +204,9 @@ export const urls = {
 // Methods for navigating to and from places.
 export const navRoutes = { 
     toLoggedInFeed: (current_user) => (`/feed/${current_user}/all`), 
+    // Create a post
+    toCreatePost: (current_user, postType, bookId) => (bookId ? `/feed/${current_user}/create/${postType}/${bookId}` : `/feed/${current_user}/create/${postType}`),
+
     toUserPage: (current_user, user) => (`/feed/${current_user}/user/${user}`),
     toBookPageFromPost: (current_user, book_id) => (`/feed/${current_user}/works/${book_id}`),
     toPostPageFromFeed: (current_user, post_id) => (`/feed/${current_user}/post/${post_id}`),

@@ -16,6 +16,9 @@
     <!-- Sub Thread -->
     <AsyncComponent :promise-factory="getCommentsFactory" :subscribed-to="GET_COMMENTS_KEY">
       <template #resolved>
+        <!-- New parent of parent thread -->
+
+        <!-- reply comment -->
         <ThreadComponent
           :thread="parentThread"
           :thread-disabled="true"
@@ -30,7 +33,6 @@
         <ClubPostCommentBar
           v-if="clubCommentSelectedForReply"
           :post-id="postData.id"
-        
           :comment="clubCommentSelectedForReply"
           @stop-commenting="clubCommentSelectedForReply = null"
         />

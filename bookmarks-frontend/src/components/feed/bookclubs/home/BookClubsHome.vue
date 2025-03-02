@@ -1,6 +1,11 @@
 <template>
     <div class="">
-        <h1 class="text-4xl fancy text-stone-700 mb-10 mt-10 ml_20_px">Bookclubs</h1>
+        <div class="explore-header">
+            <h1 class="text-3xl text-stone-700 fancy mb-2">Bookclubs</h1>
+            <p class="text-xs text-stone-600 italic">
+                Pick a book, add members, and share the joy of reading. 
+            </p>
+        </div>
         <div class="bookclubs">
             <h2 class="text-2xl fancy text-stone-600">Clubs you've joined</h2>
 
