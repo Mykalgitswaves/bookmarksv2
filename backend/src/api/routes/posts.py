@@ -1166,21 +1166,18 @@ async def get_comments_for_comment(
         book_club_id: OPTIONAL If post is from a bookclub, this is the bookclub id
 
     Returns:
-        comments (list): A list of parent comments in order of depth
+        comments (list): A list of parent comments in order of depth ascending
 
     
     """
-    if not current_user:
-        raise HTTPException(401, "Unauthorized")
     
     if post_id:
-        # Check that you are a member of a club before returning any comments. Slightly slower. 
-        # TO_CONSIDER: Alternatively you could save a token to authenticate on the client 
-        # what their permissions are to view comments. Would be way faster but would require a little bit of setup. 
+
         if book_club_id:
             comments = comment_repo.get_all_parent_comments_for_book_club_comment(
                 post_id=post_id,
-                comment_id=comment_id, 
+                comment_id=comment_id,
+                user_id=current_user.id,
                 book_club_id=book_club_id
             )
 
