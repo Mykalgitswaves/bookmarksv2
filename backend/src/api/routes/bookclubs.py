@@ -2447,6 +2447,68 @@ async def get_afterword_award_stats(
             400,
             "Unable to grab award stats"
         )
+    
+@router.get(
+    "/{book_club_id}/check_status"
+    , name='bookclubs:get_afterword_club_stats'
+    )
+async def get_afterword_award_stats(
+    book_club_id: str,
+    current_user: Annotated[User,Depends(get_current_active_user)],
+    book_club_repo: BookClubCRUDRepositoryGraph = Depends(
+        get_repository(BookClubCRUDRepositoryGraph)
+    )
+):
+    """
+    Checks for multiple flags that determine UX for bookclubs
+
+    Args:
+        book_club_id: The id of the book club
+        current_user: The current user
+        book_club_repo: The repo for the book club CRUD operations
+
+    Returns:
+        is_member (bool): 
+        is_owner
+        is_user_finished_with_current_book
+        is_club_finished_with_current_book
+        has_viewed_afterword
+    """
+    pass
+    # is_member, is_owner = book_club_repo.get_member_status_book_club(
+    #     book_club_id,
+    #     current_user.id
+    # )
+
+    # if is_member:
+    #     is_user_finished_with_current_book, is_club_finished_with_current_book = book_club_repo.get_reading_status_book_club(
+    #         book_club_id,
+    #         current_user.id
+    #     )
+
+    #     has_viewed_afterword = book_club_repo.get_viewed_afterword_status(
+    #         book_club_id,
+    #         current_user.id
+    #     )
+    # else:
+    #     is_user_finished_with_current_book = None
+    #     is_club_finished_with_current_book = None
+    #     has_viewed_afterword = None
+
+    # return JSONResponse(
+    #         status_code=200,
+    #         content={
+    #             "data": {
+    #                 "is_member":is_member,  
+    #                 "is_owner":is_owner,
+    #                 "is_user_finished_with_current_book":is_user_finished_with_current_book,
+    #                 "is_club_finished_with_current_book":is_club_finished_with_current_book,
+    #                 "has_viewed_afterword":has_viewed_afterword
+    #             }
+    #         }
+    # )
+
+
 # TODO:
 """
 - Update minimal preview to include the users status.
