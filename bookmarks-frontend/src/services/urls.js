@@ -124,7 +124,7 @@ export const urls = {
     },
     bookclubs: {
         // Create / POST
-        create: () => (baseUrl + `${BOOK_CLUBS_PREFIX}create/`),
+        create: () => (baseUrl + `${BOOK_CLUBS_PREFIX}create`),
         createClubUpdate: (bookclub_id) => (`${baseUrl}${BOOK_CLUBS_PREFIX}${bookclub_id}/update/create`),
         startCurrentlyReadingBookForClub: 
             (bookclub_id) => (baseUrl + `${BOOK_CLUBS_PREFIX}${bookclub_id}/currently_reading/start`),
