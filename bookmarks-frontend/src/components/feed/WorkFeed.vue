@@ -170,15 +170,15 @@ const bookclubs = ref({
   joinedByUser: []
 });
 
-const clubsOwnedByUserFactory = () =>db.get(urls.bookclubs.getClubsOwnedByUser(user), null, false, (res) => {
+const clubsOwnedByUserFactory = db.get(urls.bookclubs.getClubsOwnedByUser(user), null, false, (res) => {
   bookclubs.value.ownedByUser = res.bookclubs;
 });
 
-const clubsJoinedByUserFactory = () => db.get(urls.bookclubs.getClubsJoinedByCurrentUser(user), null, false, (res) => {
+const clubsJoinedByUserFactory = db.get(urls.bookclubs.getClubsJoinedByCurrentUser(user), null, false, (res) => {
   bookclubs.value.joinedByUser = res.bookclubs;
 });
 
-const clubsPromise = Promise.allSettled([clubsOwnedByUserFactory(), clubsJoinedByUserFactory()]);
+const clubsPromise = Promise.all([clubsOwnedByUserFactory, clubsJoinedByUserFactory]);
 
 /**
  * @end_bookclubs_promises

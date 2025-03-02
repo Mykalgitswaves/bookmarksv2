@@ -4,7 +4,7 @@
             'behind': bookclub.pace < 0,
             'on-target': bookclub.pace === 0,
             'ahead': bookclub.pace > 0,
-            'finished': bookclub.currently_reading_book.is_user_finished_reading
+            'finished': bookclub.currently_reading_book?.is_user_finished_reading
         }"
         @click="router.push(navRoutes.toBookClubFeed(user, bookclub.book_club_id))"
     >
