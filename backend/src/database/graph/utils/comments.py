@@ -382,5 +382,6 @@ def build_comment_object(
                 replied_to=parent_comment_id,
                 posted_by_current_user=comment_author['id'] == current_user_id,
                 likes=comment_data.get('likes',0),
-                num_replies=comment_data.get('num_replies',0)
+                num_replies=comment_data.get('num_replies',0),
+                depth=comment_data.get("depth")
             )

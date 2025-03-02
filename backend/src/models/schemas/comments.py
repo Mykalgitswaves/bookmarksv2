@@ -28,6 +28,7 @@ class Comment(CommentCreate):
     pinned: bool = False
     likes: int = 0
     num_replies: int = 0
+    depth: Optional[int] = None
     thread: Optional[List['Comment']] = None
 
     @validator('created_date', pre=True, allow_reuse=True)
