@@ -25,11 +25,6 @@
             </span>
           </BreadcrumbItem>
           <BreadcrumbSeparator/>
-          <BreadcrumbItem>
-            <span class="text-xs">
-              {{ thread?.username }}
-            </span>
-          </BreadcrumbItem>
         </BreadcrumbList>
       </Breadcrumb>
 
