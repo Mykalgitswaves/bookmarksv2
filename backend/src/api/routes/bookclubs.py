@@ -2448,6 +2448,60 @@ async def get_afterword_award_stats(
             "Unable to grab award stats"
         )
     
+@router.put(
+"/{book_club_id}/afterword/{user_id}/mark_as_viewed/{book_club_book_id}"
+, name='bookclubs:set_afterword_as_viewed'
+)
+async def set_afterword_as_viewed(
+    book_club_id: str,
+    user_id: str,
+    book_club_book_id: str,
+    current_user: Annotated[User, Depends(get_current_active_user)],
+    book_club_repo: BookClubCRUDRepositoryGraph = Depends(
+        get_repository(BookClubCRUDRepositoryGraph)
+    )
+):
+    """
+    Marked the afterword as viewed for a specific reader
+
+    Args:
+        book_club_id (str): The id for the book club they are getting the afterword for
+        user_id (str): The id of the user
+        book_club_book_id (str): The id for the BookClubBook node that this
+            afterword is being created for
+
+    Returns: 
+        200: If status is successfully updated
+    """
+    if current_user.id != user_id:
+        logger.warning(
+            "Unauthorized User",
+            extra={
+                "current_user_id": current_user.id,
+                "user_id": user_id,
+                "book_club_id": book_club_id,
+                "action": "set_afterword_as_viewed",
+            },
+        )
+        raise HTTPException(401,"Unauthorized")
+    
+    status = book_club_repo.updated_afterword_to_viewed(
+        book_club_id,
+        book_club_book_id,
+        user_id
+    )
+
+    if status:
+        return JSONResponse(
+            status_code=200,
+            content={"content": "Status updated"}
+        )
+    else:
+        raise HTTPException(
+            status_code=403,
+            detail="Unknown error updating status"
+        )
+    
 @router.get(
     "/{book_club_id}/check_status"
     , name='bookclubs:get_afterword_club_stats'
@@ -2474,39 +2528,37 @@ async def get_afterword_award_stats(
         is_club_finished_with_current_book
         has_viewed_afterword
     """
-    pass
-    # is_member, is_owner = book_club_repo.get_member_status_book_club(
-    #     book_club_id,
-    #     current_user.id
-    # )
+    is_member, is_owner = book_club_repo.get_member_status_book_club(
+        book_club_id,
+        current_user.id
+    )
 
-    # if is_member:
-    #     is_user_finished_with_current_book, is_club_finished_with_current_book = book_club_repo.get_reading_status_book_club(
-    #         book_club_id,
-    #         current_user.id
-    #     )
+    if is_member:
+        response = book_club_repo.get_reading_status_book_club(
+            book_club_id,
+            current_user.id
+        )
 
-    #     has_viewed_afterword = book_club_repo.get_viewed_afterword_status(
-    #         book_club_id,
-    #         current_user.id
-    #     )
-    # else:
-    #     is_user_finished_with_current_book = None
-    #     is_club_finished_with_current_book = None
-    #     has_viewed_afterword = None
+        is_user_finished_with_current_book = response[0]
+        is_club_finished_with_current_book = response[1]
+        has_viewed_afterword = response[2]
+    else:
+        is_user_finished_with_current_book = None
+        is_club_finished_with_current_book = None
+        has_viewed_afterword = None
 
-    # return JSONResponse(
-    #         status_code=200,
-    #         content={
-    #             "data": {
-    #                 "is_member":is_member,  
-    #                 "is_owner":is_owner,
-    #                 "is_user_finished_with_current_book":is_user_finished_with_current_book,
-    #                 "is_club_finished_with_current_book":is_club_finished_with_current_book,
-    #                 "has_viewed_afterword":has_viewed_afterword
-    #             }
-    #         }
-    # )
+    return JSONResponse(
+            status_code=200,
+            content={
+                "data": {
+                    "is_member":is_member,  
+                    "is_owner":is_owner,
+                    "is_user_finished_with_current_book":is_user_finished_with_current_book,
+                    "is_club_finished_with_current_book":is_club_finished_with_current_book,
+                    "has_viewed_afterword":has_viewed_afterword
+                }
+            }
+    )
 
 
 # TODO:

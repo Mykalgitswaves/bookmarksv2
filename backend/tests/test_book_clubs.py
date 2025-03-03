@@ -160,6 +160,14 @@ class TestBookClubs:
         ## Save book_club_id for future tests
         self.__class__.book_club_id = response.json()["book_club_id"]
 
+        endpoint = (
+            f"{self.endpoint}/api/bookclubs/{self.book_club_id}/"
+            "check_status")
+        
+        response = requests.get(endpoint, headers=headers)
+        assert response.status_code == 200, "Checking Bookclub Status After Creation"
+        assert response.json()['data']['is_user_finished_with_current_book'] == None, "Checking Bookclub Status After Creation"
+
     def test_search_users_not_in_club(self):
         """
         Test case to check the search users not in club endpoint
@@ -566,7 +574,18 @@ class TestBookClubs:
         print(response.json())
         
         headers = {"Authorization": f"{self.token_type} {self.access_token}"}
+
+        endpoint = (
+            f"{self.endpoint}/api/bookclubs/{self.book_club_id}/"
+            "check_status")
         
+        response = requests.get(endpoint, headers=headers)
+        # BOTH NOT FINISHED
+        print(response.json())
+        assert response.status_code == 200, "Checking Owner Status"
+        assert response.json()['data']['is_user_finished_with_current_book'] == False, "Checking user finished status"
+        assert response.json()['data']['is_club_finished_with_current_book'] == False, "Checking club finished status"
+
         endpoint = (
             f"{self.endpoint}/api/bookclubs/{self.book_club_id}/"
             "feed/finished")
@@ -575,6 +594,7 @@ class TestBookClubs:
         
         assert response.status_code == 200, "Shouldn't be able to get finished reading"
         assert len(response.json()['posts']) == 0, "Shouldn't see any posts in finished reading"
+
 
     def test_get_awards(self):
         headers = {"Authorization": f"{self.token_type} {self.access_token}"}
@@ -770,6 +790,18 @@ class TestBookClubs:
 
         endpoint = (
             f"{self.endpoint}/api/bookclubs/{self.book_club_id}/"
+            "check_status")
+        
+        response = requests.get(endpoint, headers=headers)
+        print(response.json())
+        #BOTH SHOULD BE NOT FINISHED
+        assert response.status_code == 200, "Checking Owner Status"
+        assert response.json()['data']['is_user_finished_with_current_book'] == False, "Checking user finished status"
+        assert response.json()['data']['is_club_finished_with_current_book'] == False, "Checking club finished status"
+
+
+        endpoint = (
+            f"{self.endpoint}/api/bookclubs/{self.book_club_id}/"
             f"review/create/{self.book_club_book_id}")
         
         data = {
@@ -797,7 +829,57 @@ class TestBookClubs:
 
         assert response.status_code == 200, "Creating Review"
 
+        headers = {"Authorization": f"{self.token_type} {self.access_token}"}
+
+        endpoint = (
+            f"{self.endpoint}/api/bookclubs/{self.book_club_id}/"
+            "check_status")
+        
+        response = requests.get(endpoint, headers=headers)
+        print(response.json())
+        # USER SHOULD BE FINISHED AND NOT CLUB
+        assert response.status_code == 200, "Checking Owner Status"
+        assert response.json()['data']['is_user_finished_with_current_book'] == True, "Checking user finished status"
+        assert response.json()['data']['is_club_finished_with_current_book'] == False, "Checking club finished status"
+
+        
+    def test_get_afterword(self):
+        headers = {"Authorization": f"{self.token_type} {self.access_token}"}
+
+        endpoint = (
+            f"{self.endpoint}/api/bookclubs/{self.book_club_id}/"
+            "currently_reading/finish")
+
+        response = requests.post(endpoint, headers=headers)
+        assert response.status_code == 200, "Finishing a currently reading book"
+
+        headers = {"Authorization": f"{self.token_type} {self.access_token}"}
+
+        endpoint = (
+            f"{self.endpoint}/api/bookclubs/{self.book_club_id}/"
+            "check_status")
+        
+        response = requests.get(endpoint, headers=headers)
+        # BOTH CLUB AND USER SHOULD BE FINISHED
+        print(response.json())
+        assert response.status_code == 200, "Checking Owner Status"
+        assert response.json()['data']['is_user_finished_with_current_book'] == True, "Checking user finished status"
+        assert response.json()['data']['is_club_finished_with_current_book'] == True, "Checking club finished status"
+
+
         headers = {"Authorization": f"{self.token_type_2} {self.access_token_2}"}
+
+        endpoint = (
+            f"{self.endpoint}/api/bookclubs/{self.book_club_id}/"
+            "check_status")
+        
+        response = requests.get(endpoint, headers=headers)
+        print(response.json())
+        # CLUB SHOULD BE FINISHED AND NOT USER
+        assert response.status_code == 200, "Checking Owner Status"
+        assert response.json()['data']['is_user_finished_with_current_book'] == False, "Checking user finished status"
+        assert response.json()['data']['is_club_finished_with_current_book'] == True, "Checking club finished status"
+
 
         endpoint = (
             f"{self.endpoint}/api/bookclubs/{self.book_club_id}/"
@@ -832,16 +914,6 @@ class TestBookClubs:
         assert any([post['type'] == "club_review" for post in response.json()["posts"]]), "Review post exists"
         assert any([post['type'] == "club_review_no_text" for post in response.json()["posts"]]), "Review post no text exists"
         print(response.json())
-        
-    def test_get_afterword(self):
-        headers = {"Authorization": f"{self.token_type} {self.access_token}"}
-
-        endpoint = (
-            f"{self.endpoint}/api/bookclubs/{self.book_club_id}/"
-            "currently_reading/finish")
-
-        response = requests.post(endpoint, headers=headers)
-        assert response.status_code == 200, "Finishing a currently reading book"
 
         endpoint = (
             f"{self.endpoint}/api/bookclubs/{self.book_club_id}/"
@@ -929,6 +1001,47 @@ class TestBookClubs:
         )
         print(response.json())
         assert response.status_code == 200, "Getting award stats"
+
+        endpoint = (
+            f"{self.endpoint}/api/bookclubs/{self.book_club_id}/"
+            f"afterword/{self.user_id}/"
+            f"mark_as_viewed/{self.book_club_book_id}"
+            )
+        
+        response = requests.put(
+            endpoint,
+            headers=headers
+        )
+        print(response.json())
+        assert response.status_code == 200, "Setting afterword as viewed"
+
+    def test_check_status(self):
+        headers = {"Authorization": f"{self.token_type} {self.access_token}"}
+
+        endpoint = (
+            f"{self.endpoint}/api/bookclubs/{self.book_club_id}/"
+            "check_status")
+        
+        response = requests.get(endpoint, headers=headers)
+        print(response.json)
+        assert response.status_code == 200, "Checking Owner Status"
+        assert response.json()['data']['is_user_finished_with_current_book'] == True, "Checking user finished status"
+        assert response.json()['data']['is_club_finished_with_current_book'] == True, "Checking club finished status"
+        assert response.json()['data']['has_viewed_afterword'] == True, "Checking afterword viewed status"
+
+
+        headers = {"Authorization": f"{self.token_type_2} {self.access_token_2}"}
+
+        endpoint = (
+            f"{self.endpoint}/api/bookclubs/{self.book_club_id}/"
+            "check_status")
+        
+        response = requests.get(endpoint, headers=headers)
+        print(response.json())
+        assert response.status_code == 200, "Checking Member Status"
+        assert response.json()['data']['is_user_finished_with_current_book'] == True, "Checking user finished status"
+        assert response.json()['data']['is_club_finished_with_current_book'] == True, "Checking club finished status"
+        assert response.json()['data']['has_viewed_afterword'] == False, "Checking afterword viewed status"
         
     def test_deleting_member(self):
         headers = {"Authorization": f"{self.token_type} {self.access_token}"}
