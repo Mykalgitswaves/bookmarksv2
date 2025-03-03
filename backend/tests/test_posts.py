@@ -459,6 +459,24 @@ class TestPosts:
         # assert response.status_code == 200, "Testing get comments new"
         # assert len(response.json()['data']['comments']) > 0, "Testing get comments"
 
+        response = requests.get(
+            f"{self.endpoint}/api/posts/post/{milestone_id}/comments/{comment_id}/parent_comments", 
+            headers=headers
+            )
+        
+        print(response.json())
+        assert response.status_code == 200, "Testing getting parent comments"
+        assert len(response.json()['data']['comments']) == 0, "Testing getting parent comments"
+
+        response = requests.get(
+            f"{self.endpoint}/api/posts/post/{milestone_id}/comments/{comment_2_id}/parent_comments", 
+            headers=headers
+            )
+        
+        print(response.json())
+        assert response.status_code == 200, "Testing getting parent comments"
+        assert len(response.json()['data']['comments']) == 2, "Testing getting parent comments"
+
         headers_2 = {"Authorization": f"{self.token_type_2} {self.access_token_2}"}
 
         data = {

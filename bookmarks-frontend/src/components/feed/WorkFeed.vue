@@ -6,7 +6,7 @@
             <div style="margin-left: 16px;">
               <h2 class="text-stone-600 text-2xl fancy">Bookclubs you own</h2>
 
-              <p class="text-stone-500 text-sm italic pl-5">Your most recently active bookclubs</p>
+              <p class="text-stone-500 text-sm">Your most recently active bookclubs</p>
             </div>
             <div v-if="bookclubs?.ownedByUser?.length" 
                 class="mb-5 mt-5 bookclubs-gallery"
@@ -33,7 +33,7 @@
           <div style="margin-left: 16px;">
               <h2 class="text-stone-600 text-2xl fancy">Bookclubs you own</h2>
 
-              <p class="text-stone-500 text-sm italic pl-5">Your most recently active bookclubs</p>
+              <p class="text-stone-500 text-sm fancy">Your most recently active bookclubs</p>
             </div>
 
           <div class="currently-reading">
@@ -55,7 +55,6 @@
           </div>
         </template>  
       </AsyncComponent>
-
     </div>
     
     <!-- Your currently reading shown at the top -->
@@ -63,24 +62,23 @@
       <CurrentlyReading />
     </div>
 
-
     <!-- Create posts for feed! -->
-    <component 
+    <!-- <component 
       v-if="toggleCreateReviewType" 
       :is="mapping[postTypeMapping]" 
       :key="postTypeMapping" 
       @is-postable-data="handlePost"
-    />
+    /> -->
+
+    <CreateMenu class="mobile-only create-menu-fixed"/>
 
     <!-- Your actual posts feed -->
-    <div v-if="!toggleCreateReviewType" class="reviews">  
+    <div class="reviews">  
       <div style="margin-left: 16px;">
         <h2 class="text-stone-600 text-2xl fancy">Community library</h2>
 
-        <p class="text-stone-500 text-sm italic pl-5">A collection of posts from you and your friends</p>
+        <p class="text-stone-500 text-sm fancy">A collection of posts from you and your friends</p>
       </div>
-
-      <WorkFeedControls :user="user" />
 
       <TransitionGroup name="content" tag="div">
         <div v-if="feedData?.length" class="cards-outer-wrapper">
@@ -126,25 +124,22 @@
   <div class="mobile-menu-spacer sm:hidden"></div>
 </template>
 <script setup>
-import { ref, onMounted, reactive } from 'vue';
-import { useRoute, useRouter } from 'vue-router';
+import { ref } from 'vue';
+import { useRoute } from 'vue-router';
 import { db } from '@/services/db.js';
 import { urls, navRoutes } from '@/services/urls.js';
-import { filterOptions } from './filters.js';
-import { navigate } from './createPostService';
 import { feedComponentMapping } from './feedPostsService';
 import AsyncComponent from '@/components/feed/partials/AsyncComponent.vue';
 import BookClubPreview from '@/components/feed/bookclubs/home/BookClubPreview.vue';
-
+import CreateMenu from './footernav/CreateMenu.vue'
 import CurrentlyReading from './CurrentlyReading.vue';
-import WorkFeedControls from './WorkFeedControls.vue';
 
 
 const toggleCreateReviewType = ref(false);
 
 const feedData = ref([]);
 const privateFeed = ref([]);
-const postOptions = ['review', 'update', 'comparison'];
+// const postOptions = ['review', 'update', 'comparison'];
 const route = useRoute();
 const { user } = route.params; 
 
@@ -186,6 +181,16 @@ const clubsPromise = Promise.all([clubsOwnedByUserFactory, clubsJoinedByUserFact
 loadWorks();
 </script>
 <style scoped>
+  .create-menu-fixed.create-menu {
+    position: fixed;
+    bottom: 100px;
+    right: 20px;
+    background-color: var(--surface-primary);
+    z-index: 9999;
+    border-radius: var(--radius-sm);
+    box-shadow: var(--shadow-lg);
+    overflow: clip;
+  }
 
   .reviews {
     position: relative;

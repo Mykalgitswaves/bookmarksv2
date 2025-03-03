@@ -17,6 +17,7 @@ export interface Thread {
   user_id: string
   username: string
   depth?: number
+  replies?: Array<Thread>
 }
 
 export function setDepthOnThreads(threads: Array<Thread>, initialDepth: number): Array<Thread> {
@@ -46,11 +47,16 @@ export function flattenThreads(threads: Array<Thread>): Array<Thread> {
   )
 }
 
-export type PostResponse = {
+export interface PostResponse {
   posts: {
-    id: string
-    [key: string]: any
+    id: string;
+    [key: string]: any;
   }
+}
+
+export interface CommentPayload {
+  commentId: string;
+  reply: string;
 }
 
 export async function likeThread(thread: Thread) {

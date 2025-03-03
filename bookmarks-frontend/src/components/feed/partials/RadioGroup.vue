@@ -10,6 +10,7 @@
             :key="index" 
             :for="id"
             class="radio"
+            @click="emit('updated:modelValue', option.value)"
         >
             <input 
                 :name="id"

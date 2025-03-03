@@ -1119,6 +1119,12 @@ async def get_comments_for_comment(
                 }
             )
         else:
+            parent_comment = comment_repo.get_parent_comment(
+                comment_id=comment_id,
+                user_id=current_user.id,
+                post_id=post_id,
+            )
+
             comments = comment_repo.get_all_comments_for_comment(
                 post_id=post_id,
                 comment_id=comment_id,
@@ -1132,11 +1138,74 @@ async def get_comments_for_comment(
             content={
                 "data": jsonable_encoder(
                     {
+                        "parent_comment": parent_comment,
                         "comments": comments
                     }
                 )
             }
-        )  
+        ) 
+
+@router.get("/post/{post_id}/comments/{comment_id}/parent_comments")
+async def get_comments_for_comment(
+    post_id: str,
+    comment_id:str,
+    current_user: Annotated[User, Depends(get_current_active_user)],
+    comment_repo: CommentCRUDRepositoryGraph = Depends(
+        get_repository(repo_type=CommentCRUDRepositoryGraph)
+    ),
+    book_club_id: Optional[str] = None
+):
+    """
+    Gets all the parent comments for a specific comment
+
+    Args:
+        post_id: The post the comment is attached to
+        comment_id: The id of the comments for which to grab parents
+        current_user: The current user data
+        comment_repo: The CRUD repo containing the comment queries
+        book_club_id: OPTIONAL If post is from a bookclub, this is the bookclub id
+
+    Returns:
+        comments (list): A list of parent comments in order of depth ascending
+
+    
+    """
+    
+    if post_id:
+
+        if book_club_id:
+            comments = comment_repo.get_all_parent_comments_for_book_club_comment(
+                post_id=post_id,
+                comment_id=comment_id,
+                user_id=current_user.id,
+                book_club_id=book_club_id
+            )
+
+            return JSONResponse(
+                content={
+                    "data": jsonable_encoder(
+                        {
+                            "comments": comments,
+                        }
+                    )
+                }
+            )
+        else:
+            comments = comment_repo.get_all_parent_comments_for_comment(
+                post_id=post_id,
+                comment_id=comment_id,
+                user_id=current_user.id
+            )
+
+        return JSONResponse(
+            content={
+                "data": jsonable_encoder(
+                    {
+                        "comments": comments
+                    }
+                )
+            }
+        ) 
 
 @router.get(
     "/comment/{comment_id}/replies", name="comment:get_replies"

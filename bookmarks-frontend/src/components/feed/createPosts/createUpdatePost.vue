@@ -1,10 +1,10 @@
 <template>
     <div v-if="!book">
-        <p class="text-2xl mb-2 mt-5 font-semibold">The content monster is hungry for your thoughts 🍪. <br/>
+        <p class="text-2xl mb-2 mt-5 font-semibold text-center">The content monster is hungry for your thoughts 🍪. <br/>
             <span class="text-indigo-500">Start by picking a book </span>
         </p>
 
-        <SearchBooks @book-to-parent="bookHandler"/>
+        <SearchBooks @book-to-parent="bookHandler" :centered="true"/>
     </div>
     <div v-if="book">
         <CreateUpdateFormVue  :book="book" @update-complete="updateEmitHandler"/>

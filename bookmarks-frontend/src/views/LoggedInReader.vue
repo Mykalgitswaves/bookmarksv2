@@ -196,6 +196,8 @@
       </div>
     </template>
   </AsyncComponent>
+  
+  <Toaster/>
 </template>
 <script setup>
 import TopNav from '@/components/feed/topnav.vue';
@@ -208,7 +210,7 @@ import { urls, navRoutes } from '../services/urls'
 import { PubSub } from '../services/pubsub';
 import { getCurrentUser } from '../stores/currentUser.ts';
 import AsyncComponent from '@/components/feed/partials/AsyncComponent.vue';
-
+import { Toaster } from '@/lib/registry/default/ui/toast';
 const route = useRoute();
 const router = useRouter();
 const { user } = route.params;
