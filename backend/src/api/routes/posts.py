@@ -1172,7 +1172,6 @@ async def get_comments_for_comment(
     """
     
     if post_id:
-
         if book_club_id:
             comments = comment_repo.get_all_parent_comments_for_book_club_comment(
                 post_id=post_id,

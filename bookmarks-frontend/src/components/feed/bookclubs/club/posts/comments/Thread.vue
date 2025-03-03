@@ -14,6 +14,25 @@
     </div>
 
     <div class="thread-body">
+      <!-- Helps us see things as replies -->
+      <Breadcrumb v-if="parentToSubthread">
+        <BreadcrumbList>
+          <BreadcrumbEllipsis v-if="parentToSubthread.depth > 1"/>
+          <BreadcrumbSeparator v-if="parentToSubthread.depth > 1"/>
+          <BreadcrumbItem>
+            <span class="text-xs">
+              {{ parentToSubthread?.username }}
+            </span>
+          </BreadcrumbItem>
+          <BreadcrumbSeparator/>
+          <BreadcrumbItem>
+            <span class="text-xs">
+              {{ thread?.username }}
+            </span>
+          </BreadcrumbItem>
+        </BreadcrumbList>
+      </Breadcrumb>
+
       <div class="thread-header">
         <h5 class="mr-2 text-stone-600 bold text-base">
           {{ thread?.username }}
@@ -40,7 +59,7 @@
       <div class="thread-footer">
         <button
           type="button"
-          class="btn btn-tiny btn-icon desktop-only"
+          class="btn btn-tiny btn-icon"
           @click="replyToThread(thread)"
         >
           <IconClubComment />
@@ -60,11 +79,22 @@
   </div>
 </template>
 <script setup lang="ts">
+// vue
 import { useRouter } from 'vue-router'
+// services
 import { Thread as threadProps, likeThread } from './threads'
 import { dates } from '@/services/dates'
 import { navRoutes } from '@/services/urls'
+// Stores
 import { currentUser } from '@/stores/currentUser'
+// Components
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbSeparator,
+  BreadcrumbList,
+  BreadcrumbEllipsis
+} from '@/lib/registry/default/ui/breadcrumb'
 import IconClubLike from '../../awards/icons/ClubLike.vue'
 import IconClubComment from '../../../../../svg/icon-club-comment.vue'
 import ThreadTie from './ThreadTie.vue'
@@ -90,6 +120,11 @@ const props = defineProps({
     type: Boolean,
     required: true,
     default: () => false,
+  },
+  // If this is a subthread we want to render information about who replied to who.
+  parentToSubthread: {
+    type: Object,
+    required: false,
   },
   threadDisabled: {
     type: Boolean,
@@ -138,8 +173,6 @@ function navigateToThread() {
   display: flex;
   flex-direction: row;
   align-items: center;
-  margin-top: 4px;
-  margin-bottom: 4px;
 }
 
 .thread.with-border-bottom {

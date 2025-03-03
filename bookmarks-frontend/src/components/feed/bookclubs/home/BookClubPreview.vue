@@ -19,6 +19,7 @@
                 <h3 class="title">
                     {{ bookclub.book_club_name}}
                 </h3>
+                
                 <p v-if="bookclub.currently_reading_book" class="currently-reading">
                     Currently Reading: <i class="text-indigo-500 block">{{ bookclub.currently_reading_book.title }}</i>
                     <br/>

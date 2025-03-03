@@ -75,6 +75,8 @@ export const urls = {
         // calling more comments (duh)
         getCommentById: (comment_id) => (`${baseUrl}api/review/comments/${comment_id}/comment`),
         getMoreComments: (comment_id) => (baseUrl + `api/review/comments/${comment_id}/replies`),
+        // Threads!
+        getParentCommentsForComment: (post_id, comment_id) => (`${baseUrl}api/post/${post_id}/comments/${comment_id}/parent_comments`),
         getCommentForComments: (post_id, comment_id) => (`${baseUrl}api/posts/post/${post_id}/comments/${comment_id}`),
         getFeed: () => (baseUrl + `api/posts/`),
     },

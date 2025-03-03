@@ -1,28 +1,39 @@
 <template>
   <div class="subthread">
-    <BackBtn :back-fn="goUpThread" />
+    <BackBtn :back-fn="() => goUpThread()" />
     <!-- Post -->
-  <AsyncComponent :promises="[loadPostPromise]">
-      <template #resolved>
-        <div class="subthread-wrap">
-          <ClubPost v-if="postData" :post="postData" />
-        </div>
+     <KeepAlive>
+      <AsyncComponent :promises="[loadPostPromise]">
+        <template #resolved>
+          <div class="subthread-wrap">
+            <ClubPost v-if="postData" :post="postData" />
+          </div>
 
-        <ViewAwards />
-      </template>
-      <template #loading></template>
-    </AsyncComponent>
+          <ViewAwards />
+        </template>
+        <template #loading></template>
+      </AsyncComponent>
+    </KeepAlive>
 
     <!-- Sub Thread -->
     <AsyncComponent :promise-factory="getCommentsFactory" :subscribed-to="GET_COMMENTS_KEY">
       <template #resolved>
         <!-- New parent of parent thread -->
+         <div v-if="ancestorThreads.length" class="ancestor-threads">
+          <ThreadComponent 
+            v-for="thread in ancestorThreads"
+            :thread="thread"
+            :thread-disabled="true"
+            :is-sub-thread="false"
+          />
+        </div>
 
-        <!-- reply comment -->
+        <!-- reply comment-->
         <ThreadComponent
           :thread="parentThread"
           :thread-disabled="true"
           :is-sub-thread="false"
+          :parent-to-subthread="ancestorThreads.find((thread) => thread.id === parentThread?.replied_to) || null"
           @thread-selected="
             (thread) => {
               clubCommentSelectedForReply = thread
@@ -46,14 +57,10 @@
             :replying-to-id="clubCommentSelectedForReply?.id || threadId"
             :bookclub-id="bookclub"
             :is-sub-thread="true"
-            @thread-selected="
-              (thread) => {
-                clubCommentSelectedForReply = thread
-                console.log(thread, 'selected')
-              }
-            "
+            :parent-to-subthread="parentThread"
+            @thread-selected="(thread) => (clubCommentSelectedForReply = thread)"
             @navigating-threads="(threadId) => descendThread(threadId)"
-            />
+          />
         </div>
       </template>
 
@@ -82,7 +89,7 @@ import AsyncComponent from '@/components/feed/partials/AsyncComponent.vue'
 import ClubPost from '../ClubPost.vue'
 import ClubPostCommentBar from '../ClubPostCommentBar.vue'
 import ThreadComponent from './Thread.vue'
-import ViewAwards from '../../awards/ViewAwards.vue';
+import ViewAwards from '../../awards/ViewAwards.vue'
 
 // Params
 const route = useRoute()
@@ -90,29 +97,43 @@ const router = useRouter()
 const { bookclub, postId, threadId } = route.params
 
 // Data refs
-const commentData = ref<Array<Thread> | []>([])
-const postData = ref({})
+const commentData = ref<Array<Thread> | []>([]);
+const postData = ref({});
+const parentThread = ref<Thread | null>(null);
+// Whats before a parent thread, an ancestor thread is all the context from above a subthread.
+const ancestorThreads = ref<Thread[]>([]);
 
 /**
  * @load_comments
  */
-
-const GET_COMMENTS_KEY = 'sub-thread-get-comments'
-const parentThread = ref<Thread | null>(null)
+const GET_COMMENTS_KEY = 'sub-thread-get-comments';
 // for comment bar.
-const clubCommentSelectedForReply = ref<Thread | null>(null)
+const clubCommentSelectedForReply = ref<Thread | null>(null);
+
 // Needed for descending navigationThread gets updated in descendThread.
 const navigationThread = ref<String | null>(null);
+
 const computedUrl = computed(() => {
   if (navigationThread.value) {
     return urls.reviews.getCommentForComments(postId, navigationThread.value)
   } else {
     return urls.reviews.getCommentForComments(postId, threadId)
-  } 
+  }
 });
 
 async function getCommentsFactory() {
-  return db.get(
+  const ancestorThreadPromiseFactory = () =>  db.get(
+    urls.concatQueryParams(
+      `${computedUrl.value}/parent_comments`, { book_club_id: bookclub }
+    ),
+    null, false, (res: any) => {
+      ancestorThreads.value = res.data.comments;
+    }, (err: any) => {
+      console.warn(err);
+    }
+  );
+  
+  const threadPromiseFactory = () => db.get(
     urls.concatQueryParams(computedUrl.value, {
       book_club_id: bookclub,
     }),
@@ -123,7 +144,9 @@ async function getCommentsFactory() {
       parentThread.value = res.data.parent_comment
     },
     (err: any) => console.warn(err)
-  )
+  );
+
+  return Promise.allSettled([ancestorThreadPromiseFactory(), threadPromiseFactory()])
 }
 
 const loadPostPromise = db.get(
@@ -137,7 +160,7 @@ const loadPostPromise = db.get(
   (err: Error) => {
     console.error(err)
   }
-);
+)
 // #TODO: Fill out this other case (non club) next.
 /** @endLoad */
 
@@ -157,14 +180,18 @@ function goUpThread() {
 }
 
 function descendThread(threadId: string) {
-  navigationThread.value = threadId;
-  PubSub.publish(GET_COMMENTS_KEY);
+  navigationThread.value = threadId
+  PubSub.publish(GET_COMMENTS_KEY)
 }
 
 // Weird bug happening on navigation
 // onMounted(() => PubSub.publish(GET_COMMENTS_KEY));
 </script>
 <style scoped>
+.ancestor-threads {
+  border-bottom: 1px solid var(--stone-300);
+}
+
 .subthread {
   border: 1px solid var(--stone-300);
 }

@@ -84,21 +84,23 @@ const subComponentRoutes = {
 
 const currentView = computed(() => {
     console.log(user, route.params)
-    if (route.path === navRoutes.toBookClubFeed(user, bookclub)) {
+    if (route.name === 'clubFeed') {
         console.log('feed')
         return subComponentRoutes.feed;
-    } else if (route.path === navRoutes.bookClubSettingsCurrentlyReading(user, bookclub)) {
+    } else if (route.name === 'currentlyReading') {
         console.log('currently-reading')
         return subComponentRoutes.settings.currentlyReading;
-    } else if (route.path === navRoutes.bookClubSettingsManageMembersIndex(user, bookclub)) {
+    } else if (route.name === 'manageMembers') {
         console.log('manage-members')
         return subComponentRoutes.settings.manageMembers;
-    } else if (route.path === navRoutes.toBookClubCommentPage(user, bookclub, route.params?.postId)) {
+    } else if (route.name === 'clubCommentPage') {
         console.log('comments page')
         return subComponentRoutes.feedCommentsPage;
-    } else if (route.path === navRoutes.toSubThreadPage(user, bookclub, postId, threadId)) {
+    } else if (route.name === 'clubCommentsSubThreadPage') {
         console.log('sub thread baby')
         return subComponentRoutes.feedCommentSubThreadPage;
+    } else {
+        return subComponentRoutes.feed;
     }
 });
 

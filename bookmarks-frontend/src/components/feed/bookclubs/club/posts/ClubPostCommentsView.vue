@@ -26,11 +26,12 @@
                         :key="thread.id"
                         :thread="thread"
                         :index="index"
+                        view="main"
                         :bookclub-id="bookclub"
                         :replying-to-id="clubCommentSelectedForReply?.id"
                         :is-sub-thread="thread.depth && thread.depth > 0"
-                        view="main"
-                        @thread-selected="(thread) => { clubCommentSelectedForReply = thread; console.log(thread, 'selected') }"
+                        :parent-to-subthread="thread.replied_to && parentToSubthreadMap[thread.replied_to]"
+                        @thread-selected="(thread) => clubCommentSelectedForReply = thread"
                     />
                 </div>
 
@@ -122,24 +123,24 @@ let getPaginatedCommentsForPostPromise = db.get(
     }
 );
 
-
-function addPreSuccessThreadToThreads(thread: any, index: number) {
-    if (!index) {
-        index = thread?.index;
-    };
-
-    commentData.value.comments = [
-        ...commentData.value.comments.slice(0, index),
-        thread,
-        ...commentData.value.comments.slice(index)
-    ];
-}
-
 const commentThreads = computed(() => {
     let startingDepth = 0;
     const threads = setDepthOnThreads(commentData.value.comments, startingDepth);
     const flattenendThreads = flattenThreads(threads);
+    
     return flattenendThreads;
+});
+
+const parentToSubthreadMap = computed(() => {
+    const hashMap = <Object[Thread]>{};
+    if (commentThreads.value.length) {
+        commentThreads.value.forEach((thread) => {
+            hashMap[thread.id] = thread;
+        });
+        return hashMap;
+    }
+
+    return {};
 });
 
 // ON pre success of posting a reply, 

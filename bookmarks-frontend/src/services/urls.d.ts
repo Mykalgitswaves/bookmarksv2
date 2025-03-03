@@ -3,6 +3,7 @@ declare module '@/services/urls' {
       reviews: {
         getComments: (postId: string) => string;
         getCommentForComments: (postId: string, commentId: string) => string;
+        getParentCommentsForComment: (postId: string, commentId: string) => string;
         likeComment: (commentId: string) => string;
       };
       bookclubs: {

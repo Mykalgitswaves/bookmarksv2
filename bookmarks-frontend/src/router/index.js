@@ -150,15 +150,15 @@ export const router = createRouter({
               children: [
                 {
                   path: 'feed',
-                  name: 'feed',
+                  name: 'clubFeed',
                 },
                 {
                   path: 'post/:postId',
                   name: 'clubCommentPage',
-                  children: [{
-                    path: 'comments/:threadId',
-                    name: 'clubCommentsSubThreadPage',
-                  }]
+                },
+                {
+                  path: 'post/:postId/comments/:threadId',
+                  name: 'clubCommentsSubThreadPage',
                 },
                 {
                   path: 'settings/currently-reading',
