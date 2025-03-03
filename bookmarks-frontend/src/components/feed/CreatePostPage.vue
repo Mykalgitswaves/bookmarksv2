@@ -1,9 +1,7 @@
 <template> 
 <section class="post-section-wrapper">
-    <BackBtn />  
-
     <createReviewPost 
-      v-if="reviewType === 'review'"
+      v-if="$route.path.includes('review')"
       :headline-error="headlineError"
       :is-postable-data="isPostableData"
       :book-id="bookId"
@@ -12,7 +10,7 @@
     />
 
     <createComparisonPost 
-      v-if="reviewType === 'comparison'"
+      v-if="$route.path.includes('comparison')"
       :is-postable-data="isPostableData"
       :book-id="bookId"
       @is-postable-data="setPostData"
@@ -21,7 +19,7 @@
     />
 
     <createUpdatePost 
-      v-if="reviewType === 'update'"
+      v-if="$route.path.includes('update')"
       :is-postable-data="isPostableData"
       :book-id="bookId"
       @is-postable-data="setPostData"
@@ -31,26 +29,31 @@
 </section>
 </template>
 <script setup>
-
+// Vue
+import { ref, watch, toRaw } from 'vue'; 
+import { useRoute, useRouter } from 'vue-router';
+// Services
+import { urlsMapping } from './createPostService';
+import { createQuestionStore } from '../../stores/createPostStore'
+import { db } from '@/services/db';
+import { navRoutes } from '@/services/urls';
+// Components
 import createReviewPost from './createPosts/createReviewPost.vue';
 import createUpdatePost from './createPosts/createUpdatePost.vue';
 import createComparisonPost from './createPosts/createComparisonPost.vue';
-import { ref, watch, toRaw } from 'vue'; 
-import { urlsMapping } from './createPostService';
-import { createQuestionStore } from '../../stores/createPostStore'
-import { useRoute, useRouter } from 'vue-router';
-import { db } from '../../services/db';
-import IconAddPost from '../svg/icon-add-post.vue';
-import BackBtn from './partials/back-btn.vue';
+import { useToast } from '@/lib/registry/default/ui/toast'
 
+// route macros
+const router = useRouter();
+const route = useRoute();
 
+const { bookId } = route.params;
+const { reviewType } = route.params;
+// Refs
 const isPostableData = ref(false);
 const postTypeMapping = ref('');
 const emittedPostData = ref(null);
-const router = useRouter();
-const route = useRoute();
-const { bookId } = route.params
-const { reviewType } = route.params
+const { toast } = useToast()
 
 function setHeadlines(e){
   if (emittedPostData.value) {
@@ -100,7 +103,19 @@ async function onSuccess(){
 }
 
 async function postToEndpoint() {
-    await db.post(urlsMapping[reviewType], emittedPostData, true, onSuccess, catchErrors)
+    const cleanedData = JSON.parse(JSON.stringify(toRaw(emittedPostData.value)));
+    const response = await db.post(urlsMapping[reviewType], cleanedData, true, onSuccess, catchErrors)
+
+    // If response 200's then we're good. Otherwise something funky is a-foot.
+    if (response.ok) {
+      router.push(navRoutes.toLoggedInFeed(user));  
+    } else {
+      // Raise error toast here!
+      toast({
+        title: 'Something weird happened',
+        description: 'We are looking into it on our end. \n please report to @michael or @kyle',
+      })
+    }
 }
 
 watch(emittedPostData, () => {

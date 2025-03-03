@@ -1,86 +1,29 @@
 <template>
     <!-- Top nav bar that is absolute positioned, for making posts and filtering posts -->
     <div class="feed-menu-nav" role="menubar">
-      <div class="btn-relative">
-        <button 
-          ref="show-modal-btn"
-          class="flex items-center gap-2 justify-center px-2 py-2 rounded-md text-white bg-indigo-600"
-          type="button"
-          @click="modals.selectDropdown = !modals.selectDropdown"
-        >
-          <IconPlus />
-          
-          <span>Make a Post</span>
-        </button>
-
-        <div v-close-modal="{
-          exclude: ['show-modal-btn'],
-          handler: closeModal,
-          args: ['selectDropdown']
-        }">
-          <div v-if="modals.selectDropdown"
-            class="popout-flyout shadow-lg"
-          >
-            <button type="button" 
-              v-for="(option, index) in postOptions"
+      <Popover>
+        <PopoverTrigger class="btn btn-small fancy flex gap-2 items-center">
+          <IconAdd style="width: 20px; height: 20px;"/> Create post
+        </PopoverTrigger>
+        <PopoverContent class="max-w-[250px] grid row-gap-2">
+          <button  
+            v-for="(option, index) in postOptions"
               :key="index"
+              type="button"
+              class="btn btn-tiny fancy btn-specter"
               @click="navigate(createPostBaseRoute, option)"  
             >
               {{ option }}
             </button>
-          </div>
-        </div>
-      </div>
-
-
-      <!-- <div class="btn-relative">
-        <button
-          v-if="!toggleCreateReviewType"
-          ref="create-review-btn"
-          type="button"
-          class="flex items-center justify-center gap-2 px-2 py-2 bg-indigo-100 text-indigo-600 rounded-md"
-          @click="modals.filterPopout = !modals.filterPopout"
-        >
-            <IconFilter />
-            Filter
-        </button>
-
-        <div v-close-modal="{
-          exclude: ['create-review-btn'],
-          handler: closeModal,
-          args: ['filterPopout']
-        }">
-          <div
-            v-if="modals.filterPopout"
-            class="popout-right shadow-lg px-2 py-2"
-          >
-            <div 
-              v-for="(option, index) in filterOptions" 
-              :key="index"
-              class="is_ai my-2"
-            >
-              <label :for="index + '-option'">
-                <input 
-                  type="checkbox"
-                  :id="option.pk + '-option'"
-                  v-model="option.is_active"
-                  :value="false"
-                />
-                {{ option.filter }}
-              </label>
-            </div>
-          </div>
-        </div>
-      </div> -->
+        </PopoverContent>
+      </Popover>
     </div>
 </template>
 <script setup>
 import { reactive } from 'vue';
 import { navigate } from './createPostService';
-import { filterOptions } from './filters.js';
-import IconPlus from '../svg/icon-plus.vue'
-import IconExit from '../svg/icon-exit.vue';
-import IconFilter from '../svg/icon-filter.vue';
+import IconAdd from '../svg/icon-lucide-add.vue';
+import { Popover, PopoverContent, PopoverTrigger } from '@/lib/registry/default/ui/popover';
 
 const props = defineProps({
     user: {

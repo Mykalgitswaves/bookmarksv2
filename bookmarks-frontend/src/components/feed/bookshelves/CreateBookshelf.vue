@@ -1,6 +1,6 @@
 <template>
     <section class="section-wrapper">
-        <h1 class="t-3xl font-medium text-slate-800">Create a bookshelf</h1>
+        <h1 class="t-3xl font-medium text-stone-600 fancy">Create a bookshelf</h1>
         
         <div>
             <label for="bookshelf_title" class="title-input">

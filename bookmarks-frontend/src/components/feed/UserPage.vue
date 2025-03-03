@@ -1,21 +1,6 @@
 <template>
-    <BackBtn/>
-    
     <section class="section-wrapper">
         <div class="user-profile-header">
-            <!-- <div class="edit-profile-picture">
-                <img v-if="userData?.cdnUrl" :src="userData?.cdnUrl" class="image" alt="">
-
-                <svgPlaceholder v-else class="image" />
-                <button
-                    v-if="route.params.user === route.params.user_profile"
-                    type="button"
-                    class="e-p-p-btn"
-                    @click="router.push(pathToSettings + '?set_image=yes')"
-                >
-                    <IconEdit />
-                </button>
-            </div> -->
             <div class="u-p-h-text-info">
                 <h2 class="font-medium text-stone-600 text-xl fancy">
                     {{ userData?.username }}

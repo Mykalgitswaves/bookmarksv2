@@ -8,9 +8,9 @@
         }"
         @click="router.push(navRoutes.toBookClubFeed(user, bookclub.book_club_id))"
     >
-        <img v-if="bookclub?.currently_reading_book?.small_img_url"
+        <img
             class="currently-reading-img" 
-            :src="bookclub.currently_reading_book.small_img_url" 
+            :src="bookclub.currently_reading_book?.small_img_url || 'https://placehold.co/400x600?text=Nothing'" 
             alt="" 
         />
 

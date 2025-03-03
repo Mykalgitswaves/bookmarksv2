@@ -27,6 +27,19 @@
    margin-right: auto;
 }
 
+.form-wrap {
+    margin-top: var(--margin-md);
+    padding-top: 24px;
+    padding-bottom: 24px;
+    padding-left: var(--padding-md);
+    padding-right: var(--padding-md);
+    border: 1px var(--slate-200) solid;
+    border-radius: var(--radius-md);
+    display: grid;
+    row-gap: 40px;
+    max-width: 880px;
+}
+
 .user-profile-header {
     display: flex;
     justify-content: center;

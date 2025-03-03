@@ -1,10 +1,10 @@
 <template>
-    <form @submit.prevent="createAndNavigateToBookClub(form)" class="mt-10">
-        <h1 class="t-3xl font-medium text-slate-800 mb-5 fancy">Create a book club</h1>
+    <form @submit.prevent="createAndNavigateToBookClub(form)" class="mt-10 form-wrap m-auto">
+        <h1 class="t-3xl font-medium text-slate-800 fancy">Create a book club</h1>
         
         <div>
             <label for="bookclub_title" class="title-input">
-                <p class="font-medium">Add a title for your bookclub
+                <p>Add a title for your bookclub
                     <span class="text-red-500">*</span>
                 </p>
 
@@ -19,7 +19,7 @@
             <label for="bookclub_description" 
                 class="summary-update bookclub display-block mt-10"
             >
-                <p class="pb-5 font-medium">Add a description for your bookclub</p>
+                <p class="pb-5">Add a description for your bookclub</p>
 
                 <textarea id="bookclub_description" 
                     v-model="form.description"

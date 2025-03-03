@@ -122,6 +122,7 @@ export const router = createRouter({
             },
             {
               path: 'all',
+              name: 'bookshelves-home',
               component: BookshelvesMain,
             },
             {
@@ -136,6 +137,7 @@ export const router = createRouter({
           children: [
             {
               path: '',
+              name: 'bookclubs-home',
               component: BookClubsHome
             },
             {
