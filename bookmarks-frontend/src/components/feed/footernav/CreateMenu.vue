@@ -35,7 +35,7 @@
                 alt="create a post"
                 @click="$router.push(navRoutes.toCreatePost($route.params.user, 'comparison'))"
             >
-                Comparision
+                Comparison
             </button>
 
             <button

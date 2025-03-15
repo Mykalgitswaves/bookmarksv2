@@ -6,7 +6,7 @@
             <div style="margin-left: 16px;">
               <h2 class="text-stone-600 text-2xl fancy">Bookclubs you own</h2>
 
-              <p class="text-stone-500 text-sm">Your most recently active bookclubs</p>
+              <p class="text-stone-500 text-sm fancy">Your most recently active bookclubs</p>
             </div>
             <div v-if="bookclubs?.ownedByUser?.length" 
                 class="mb-5 mt-5 bookclubs-gallery"

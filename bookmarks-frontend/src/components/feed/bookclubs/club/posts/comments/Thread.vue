@@ -8,25 +8,14 @@
     }"
   >
     <div class="thread-columns">
+      <span :class="{'selected': selectedComment}"></span>
       <!-- <div class="thread-spine-top"></div>  -->
-      <ThreadTie />
+      <!-- <ThreadTie /> -->
       <!-- <div class="thread-spine-bottom"></div>  -->
     </div>
 
     <div class="thread-body">
       <!-- Helps us see things as replies -->
-      <Breadcrumb v-if="parentToSubthread">
-        <BreadcrumbList>
-          <BreadcrumbEllipsis v-if="parentToSubthread.depth > 1"/>
-          <BreadcrumbSeparator v-if="parentToSubthread.depth > 1"/>
-          <BreadcrumbItem>
-            <span class="text-xs">
-              {{ parentToSubthread?.username }}
-            </span>
-          </BreadcrumbItem>
-          <BreadcrumbSeparator/>
-        </BreadcrumbList>
-      </Breadcrumb>
 
       <div class="thread-header">
         <h5 class="mr-2 text-stone-600 bold text-base">
@@ -130,6 +119,11 @@ const props = defineProps({
   view: {
     type: String,
     required: false,
+  },
+  selectedComment: {
+    type: Boolean,
+    required: false,
+    default: false,
   }
 })
 
@@ -183,6 +177,10 @@ function navigateToThread() {
   grid-template-columns: repeat(var(--depth-num), 15px);
   align-self: start;
   position: relative;
+}
+
+.thread-columns.selected {
+ padding-left: 15px;
 }
 
 .thread-columns svg {

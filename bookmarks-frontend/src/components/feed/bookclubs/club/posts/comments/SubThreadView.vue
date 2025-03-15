@@ -27,19 +27,21 @@
             :is-sub-thread="false"
           />
         </div>
-
-        <!-- reply comment-->
+        <div class="thread-seperator"></div>
+        <!-- current comment-->
         <ThreadComponent
           :thread="parentThread"
           :thread-disabled="true"
           :is-sub-thread="false"
           :parent-to-subthread="ancestorThreads.find((thread) => thread.id === parentThread?.replied_to) || null"
+          :selected-comment="true"
           @thread-selected="
             (thread) => {
               clubCommentSelectedForReply = thread
             }
           "
         />
+        
 
         <ClubPostCommentBar
           v-if="clubCommentSelectedForReply"
@@ -47,6 +49,8 @@
           :comment="clubCommentSelectedForReply"
           @stop-commenting="clubCommentSelectedForReply = null"
         />
+        
+        <div class="thread-seperator"></div>
 
         <div v-if="commentData.length" class="subthread-comment-wrap">
           <ThreadComponent
@@ -62,7 +66,9 @@
             @navigating-threads="(threadId) => descendThread(threadId)"
           />
         </div>
+        <div class="thread-seperator"></div>
       </template>
+      
 
       <template #loading>
         <div class="loading gradient p-5 text-center fancy">Loading comments</div>
@@ -201,5 +207,13 @@ function descendThread(threadId: string) {
   border: 1px solid var(--stone-300);
   border-left-width: 0;
   border-right-width: 0;
+}
+
+.thread-seperator {
+  width: 100%;
+  padding-top: 20px;
+  padding-bottom: 20px;
+  border-top: 1px solid var(--stone-300);
+  border-bottom: 1px solid var(--stone-300)
 }
 </style>
