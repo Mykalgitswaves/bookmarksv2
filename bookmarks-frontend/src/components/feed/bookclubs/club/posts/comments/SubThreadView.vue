@@ -66,7 +66,7 @@
           @stop-commenting="clubCommentSelectedForReply = null"
         />
 
-        <div class="thread-seperator">
+        <div class="thread-seperator mb-2 mt-2">
           <button
             v-if="commentData.length"
             class="ml-7 text-stone-500 text-sm fancy flex items-center gap-2"
@@ -97,6 +97,7 @@
             :replying-to-id="clubCommentSelectedForReply?.id || threadId"
             @thread-selected="(thread) => (clubCommentSelectedForReply = thread)"
             @navigating-threads="(threadId) => descendThread(threadId)"
+            @deleted-thread="(threadId) => removeThreadFromReplies(threadId)"
           />
         </div>
       </template>
@@ -109,7 +110,7 @@
 </template>
 <script setup lang="ts">
 // Vue
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 // Services
 import { db } from '@/services/db'
@@ -158,7 +159,7 @@ const computedUrl = computed(() => {
   } else {
     return urls.reviews.getCommentForComments(postId, threadId)
   }
-})
+});
 
 async function getCommentsFactory() {
   const ancestorThreadPromiseFactory = () =>
@@ -188,7 +189,12 @@ async function getCommentsFactory() {
       (err: any) => console.warn(err)
     )
 
-  return Promise.allSettled([ancestorThreadPromiseFactory(), threadPromiseFactory()])
+  return Promise.allSettled([ancestorThreadPromiseFactory(), threadPromiseFactory()]);
+}
+
+// Remove the thread from the ui.
+function removeThreadFromReplies(threadId: string) {
+  commentData.value = commentData.value.filter((thread) => thread.id !== threadId);
 }
 
 const loadPostPromise = db.get(

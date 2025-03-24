@@ -5,6 +5,8 @@ declare module '@/services/urls' {
         getCommentForComments: (postId: string, commentId: string) => string;
         getParentCommentsForComment: (postId: string, commentId: string) => string;
         likeComment: (commentId: string) => string;
+        unlikeComment: (commentId: string) => string;
+        deleteComment: (commentId: string) => string;
       };
       bookclubs: {
         getClubFeed: (clubId: string) => string;

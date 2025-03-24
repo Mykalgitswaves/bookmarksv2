@@ -23,6 +23,7 @@
                 <div v-if="commentThreads?.length" class="mt-5">
                     <Thread 
                         v-for="(thread, index) in commentThreads" 
+                        class="mb-3"
                         :key="thread.id"
                         :thread="thread"
                         :index="index"

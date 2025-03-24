@@ -5,6 +5,7 @@
       'replying-to': replyingToId === thread.id,
       'with-border-bottom': thread.depth === 1 && index !== 1,
       'subthread-comment-wrap': isSubThread,
+      'deleted': thread.deleted
     }"
   >
     <div class="thread-columns">
@@ -14,7 +15,11 @@
       <!-- <div class="thread-spine-bottom"></div>  -->
     </div>
 
-    <div class="thread-body" :class="{'selected': selectedComment}">
+    <div class="thread-body" 
+      :class="{
+        'selected': selectedComment,
+      }"
+    >
       <!-- Helps us see things as replies -->
 
       <div class="thread-header">
@@ -43,21 +48,34 @@
       <div class="thread-footer">
         <button
           type="button"
-          class="btn btn-tiny btn-icon"
+          class="btn btn-tiny btn-icon text-stone-500 relative"
           @click="replyToThread(thread)"
         >
           <IconClubComment />
             
-          <span v-if="thread.num_replies > 0" class="fancy text-sm">{{ thread.num_replies }}</span>
+          <span v-if="thread.num_replies > 0" class="fancy text-sm comment-count">{{ thread.num_replies }}</span>
         </button>
 
-        <button
-          type="button"
-          class="btn btn-tiny text-green-400 btn-specter ml-auto mr-2"
-          @click="likeThread(thread)"
-        >
-          <IconClubLike />
-        </button>
+        <div class="flex gap-1">
+          <button
+            type="button"
+            class="btn btn-tiny text-green-400 btn-specter ml-auto mr-2 relative"
+            :class="{'bg-indigo-100': thread.liked_by_current_user}"
+            @click="thread.liked_by_current_user ? unlikeThread(thread) : likeThread(thread)"
+          >
+            <IconClubLike :class="{'one-80-deg': thread.liked_by_current_user}"/>
+
+            <span class="fancy text-sm comment-count fancy">{{ thread.likes }}</span>
+          </button>
+          <button
+            v-if="thread.posted_by_current_user" 
+            type="button"
+            class="btn btn-tiny btn-specter"
+            @click="deleteThread(thread)"
+          >
+            <IconTrash />
+          </button>
+        </div>
       </div>
     </div>
   </div>
@@ -66,7 +84,7 @@
 // vue
 import { useRouter } from 'vue-router'
 // services
-import { Thread as threadProps, likeThread } from './threads'
+import { Thread as threadProps, likeThread, unlikeThread, deleteThread } from './threads'
 import { dates } from '@/services/dates'
 import { navRoutes } from '@/services/urls'
 // Stores
@@ -74,6 +92,7 @@ import { currentUser } from '@/stores/currentUser'
 // Components
 import IconClubLike from '../../awards/icons/ClubLike.vue'
 import IconClubComment from '../../../../../svg/icon-club-comment.vue'
+import IconTrash from '@/components/svg/icon-trash.vue'
 
 const props = defineProps({
   thread: {
@@ -232,7 +251,39 @@ function navigateToThread() {
 }
 
 .subthread-comment-wrap {
-  padding-left: 20px;
-  background-color: var(--stone-50);
+  margin-bottom: 10px;
+  margin-left: 30px;
+  margin-right: 15px;
+  border-radius: 4px;
+  border: 1px solid var(--stone-300);
+  overflow: clip;
+}
+
+.comment-count {
+  position: absolute;
+  top: 0;
+  right: -3px;
+  line-height: 1;
+  padding-top: 1px;
+  padding-bottom: 1px;
+  padding-left: 3px;
+  padding-right: 3px;
+  background-color: var(--stone-700);
+  color: var(--stone-100);
+  border-radius: 2px;
+  font-size: var(--font-xs)
+}
+
+@starting-style {
+  .deleted {
+    opacity: 0;
+  }
+}
+
+.deleted {
+  opacity: 0;
+  height: 0;
+  visibility: hidden;
+  transition: all 250ms ease-in-out; 
 }
 </style>
