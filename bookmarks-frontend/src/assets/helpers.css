@@ -316,3 +316,7 @@
     height: 0;
   }
 }
+
+.border-b-light {
+  border-bottom: 1px solid var(--stone-300);
+}

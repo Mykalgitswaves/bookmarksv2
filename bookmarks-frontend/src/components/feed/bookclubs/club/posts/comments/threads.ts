@@ -16,35 +16,39 @@ export interface Thread {
   thread?: Array<Thread>
   user_id: string
   username: string
-  depth?: number
+  depth: number
   replies?: Array<Thread>
 }
 
-export function setDepthOnThreads(threads: Array<Thread>, initialDepth: number): Array<Thread> {
-  threads.forEach((thread) => {
-    if (!thread) {
-      console.log(thread, 'no thread!')
+
+// Flatten, if there is a max depth then reduce until that depth is hit. 
+export function flattenThreads(threads: Array<Thread>, maxDepth: number): Array<Thread> {
+  // otherwise flatten them recursively. 
+  const flattened: Set<Thread> = new Set();
+  
+  function walkThreads(threads: Array<Thread>) {
+    for (const thread of threads) {
+      if (thread.depth > maxDepth) {
+        break;
+      };
+      
+      // Add depth property to the thread
+      flattened.add(thread);
+
+      // If we haven't reached max depth and there are child threads, process them
+      if (thread.depth < maxDepth && thread.thread && thread.thread.length > 0) {
+        walkThreads(thread.thread);
+      }
     }
-    thread.depth = initialDepth // Assign current depth
+  }
+  
+  // Start the recursive walk
+  walkThreads(threads);
 
-    if (thread.thread && thread.thread.length) {
-      // Check if there are subthreads
-      setDepthOnThreads(thread.thread, initialDepth + 1) // Pass incremented depth for subthreads
-    }
-  })
+  console.log(flattened);
 
-  return threads // Return modified threads after processing
-}
-
-export function flattenThreads(threads: Array<Thread>): Array<Thread> {
-  return threads.reduce(
-    (flattened: Thread[], thread) => [
-      ...flattened,
-      thread,
-      ...(thread.thread?.length ? flattenThreads(thread.thread) : []),
-    ],
-    []
-  )
+  // Convert Set back to Array before returning
+  return Array.from(flattened);
 }
 
 export interface PostResponse {

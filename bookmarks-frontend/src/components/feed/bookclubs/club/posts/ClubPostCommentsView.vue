@@ -60,7 +60,7 @@ import { PubSub } from '../../../../../services/pubsub';
 // Stores
 import { currentUser } from '../../../../../stores/currentUser';
 // Component services
-import { setDepthOnThreads, flattenThreads } from '@/components/feed/bookclubs/club/posts/comments/threads';
+import { flattenThreads } from '@/components/feed/bookclubs/club/posts/comments/threads';
 // Components
 import ClubPost from './ClubPost.vue';
 import AsyncComponent from '../../../partials/AsyncComponent.vue';
@@ -124,11 +124,9 @@ let getPaginatedCommentsForPostPromise = db.get(
 );
 
 const commentThreads = computed(() => {
-    let startingDepth = 0;
-    const threads = setDepthOnThreads(commentData.value.comments, startingDepth);
-    const flattenendThreads = flattenThreads(threads);
-    
-    return flattenendThreads;
+    // We don't want to see replies to replies to replies on the main page.
+    const MAX_DEPTH = 1;
+    return flattenThreads(commentData.value.comments, MAX_DEPTH);    
 });
 
 const parentToSubthreadMap = computed(() => {

@@ -1,7 +1,8 @@
 <template>
   <button
     type="button"
-    class="flex my-2 text-indigo-600 items-center md:ml-10 back-hover"
+    class="flex my-2 text-indigo-600 items-center back-hover"
+    :class="defaultInlineMargin"
     @click="() => backFn() || router.back()"
   >
     <IconBack/>
@@ -23,9 +24,15 @@ const props = defineProps({
     type: Function,
     required: false,
   },
+  marginLeft: {
+    type: String,
+    required: false,
+  }
 })
 
 const slots = useSlots();
+
+const defaultInlineMargin = props.marginLeft ? props.marginLeft : 'md:ml-10';
 </script>
 <style scoped>
 .back-hover {

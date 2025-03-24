@@ -1,8 +1,7 @@
 <template>
   <div class="subthread">
-    <BackBtn :back-fn="() => goUpThread()" />
     <!-- Post -->
-     <KeepAlive>
+    <KeepAlive>
       <AsyncComponent :promises="[loadPostPromise]">
         <template #resolved>
           <div class="subthread-wrap">
@@ -18,30 +17,47 @@
     <!-- Sub Thread -->
     <AsyncComponent :promise-factory="getCommentsFactory" :subscribed-to="GET_COMMENTS_KEY">
       <template #resolved>
-        <!-- New parent of parent thread -->
-         <div v-if="ancestorThreads.length" class="ancestor-threads">
-          <ThreadComponent 
+        <div class="pb-1 pt-1 border-b-light">
+          <!-- New parent of parent thread -->
+          <BackBtn :back-fn="() => goUpThread()" margin-left="md:ml-5">
+            <template #button-text>
+              <span class="fancy text-sm">
+                Back to post
+              </span>
+            </template>
+          </BackBtn>
+        </div>
+
+
+        <div v-if="ancestorThreads.length" class="ancestor-threads">
+          <ThreadComponent
             v-for="thread in ancestorThreads"
             :thread="thread"
             :thread-disabled="true"
             :is-sub-thread="false"
+            @thread-selected="(thread) => clubCommentSelectedForReply = thread"
           />
         </div>
-        <div class="thread-seperator"></div>
+
+        <div class="parent-thread-seperator"></div>
+
         <!-- current comment-->
-        <ThreadComponent
-          :thread="parentThread"
-          :thread-disabled="true"
-          :is-sub-thread="false"
-          :parent-to-subthread="ancestorThreads.find((thread) => thread.id === parentThread?.replied_to) || null"
-          :selected-comment="true"
-          @thread-selected="
-            (thread) => {
-              clubCommentSelectedForReply = thread
-            }
-          "
-        />
-        
+         <div class="current-comment">
+          <ThreadComponent
+            :thread="parentThread"
+            :thread-disabled="true"
+            :is-sub-thread="false"
+            :parent-to-subthread="
+              ancestorThreads.find((thread) => thread.id === parentThread?.replied_to) || null
+            "
+            :selected-comment="true"
+            @thread-selected="
+              (thread) => {
+                clubCommentSelectedForReply = thread
+              }
+            "
+          />
+        </div>
 
         <ClubPostCommentBar
           v-if="clubCommentSelectedForReply"
@@ -49,26 +65,41 @@
           :comment="clubCommentSelectedForReply"
           @stop-commenting="clubCommentSelectedForReply = null"
         />
-        
-        <div class="thread-seperator"></div>
 
-        <div v-if="commentData.length" class="subthread-comment-wrap">
+        <div class="thread-seperator">
+          <button
+            v-if="commentData.length"
+            class="ml-7 text-stone-500 text-sm fancy flex items-center gap-2"
+            type="button"
+            @click="showingReplies = !showingReplies"
+          >
+            <span v-if="!showingReplies">Hiding</span>
+
+            <span v-if="showingReplies">Viewing</span>
+
+            {{ commentData.length }} Replies
+
+            <IconChevron />
+          </button>
+
+          <h5 v-else class="ml-5 text-stone-500 text-sm fancy">No replies</h5>
+        </div>
+
+        <div v-if="commentData.length && showingReplies" class="subthread-comment-wrap">
           <ThreadComponent
             v-for="(thread, index) in commentData"
             :key="thread.id"
             :index="index"
-            :thread="thread"
-            :replying-to-id="clubCommentSelectedForReply?.id || threadId"
             :bookclub-id="bookclub"
+            :thread="thread"
             :is-sub-thread="true"
             :parent-to-subthread="parentThread"
+            :replying-to-id="clubCommentSelectedForReply?.id || threadId"
             @thread-selected="(thread) => (clubCommentSelectedForReply = thread)"
             @navigating-threads="(threadId) => descendThread(threadId)"
           />
         </div>
-        <div class="thread-seperator"></div>
       </template>
-      
 
       <template #loading>
         <div class="loading gradient p-5 text-center fancy">Loading comments</div>
@@ -96,6 +127,7 @@ import ClubPost from '../ClubPost.vue'
 import ClubPostCommentBar from '../ClubPostCommentBar.vue'
 import ThreadComponent from './Thread.vue'
 import ViewAwards from '../../awards/ViewAwards.vue'
+import IconChevron from '@/components/svg/icon-chevron.vue'
 
 // Params
 const route = useRoute()
@@ -103,21 +135,22 @@ const router = useRouter()
 const { bookclub, postId, threadId } = route.params
 
 // Data refs
-const commentData = ref<Array<Thread> | []>([]);
-const postData = ref({});
-const parentThread = ref<Thread | null>(null);
+const commentData = ref<Array<Thread> | []>([])
+const postData = ref({})
+const parentThread = ref<Thread | null>(null)
 // Whats before a parent thread, an ancestor thread is all the context from above a subthread.
-const ancestorThreads = ref<Thread[]>([]);
+const ancestorThreads = ref<Thread[]>([])
+const showingReplies = ref(true)
 
 /**
  * @load_comments
  */
-const GET_COMMENTS_KEY = 'sub-thread-get-comments';
+const GET_COMMENTS_KEY = 'sub-thread-get-comments'
 // for comment bar.
-const clubCommentSelectedForReply = ref<Thread | null>(null);
+const clubCommentSelectedForReply = ref<Thread | null>(null)
 
 // Needed for descending navigationThread gets updated in descendThread.
-const navigationThread = ref<String | null>(null);
+const navigationThread = ref<String | null>(null)
 
 const computedUrl = computed(() => {
   if (navigationThread.value) {
@@ -125,32 +158,35 @@ const computedUrl = computed(() => {
   } else {
     return urls.reviews.getCommentForComments(postId, threadId)
   }
-});
+})
 
 async function getCommentsFactory() {
-  const ancestorThreadPromiseFactory = () =>  db.get(
-    urls.concatQueryParams(
-      `${computedUrl.value}/parent_comments`, { book_club_id: bookclub }
-    ),
-    null, false, (res: any) => {
-      ancestorThreads.value = res.data.comments;
-    }, (err: any) => {
-      console.warn(err);
-    }
-  );
-  
-  const threadPromiseFactory = () => db.get(
-    urls.concatQueryParams(computedUrl.value, {
-      book_club_id: bookclub,
-    }),
-    null,
-    false,
-    (res: any) => {
-      commentData.value = res.data.comments
-      parentThread.value = res.data.parent_comment
-    },
-    (err: any) => console.warn(err)
-  );
+  const ancestorThreadPromiseFactory = () =>
+    db.get(
+      urls.concatQueryParams(`${computedUrl.value}/parent_comments`, { book_club_id: bookclub }),
+      null,
+      false,
+      (res: any) => {
+        ancestorThreads.value = res.data.comments
+      },
+      (err: any) => {
+        console.warn(err)
+      }
+    )
+
+  const threadPromiseFactory = () =>
+    db.get(
+      urls.concatQueryParams(computedUrl.value, {
+        book_club_id: bookclub,
+      }),
+      null,
+      false,
+      (res: any) => {
+        commentData.value = res.data.comments
+        parentThread.value = res.data.parent_comment
+      },
+      (err: any) => console.warn(err)
+    )
 
   return Promise.allSettled([ancestorThreadPromiseFactory(), threadPromiseFactory()])
 }
@@ -198,6 +234,21 @@ function descendThread(threadId: string) {
   border-bottom: 1px solid var(--stone-300);
 }
 
+.ancestor-threads .thread-body {
+  padding-left: 12px;
+  padding-right: 12px;
+}
+
+.current-comment {
+  padding-left: 14px;
+  padding-right: 14px;
+}
+
+.current-comment ::v-deep.thread .thread-body {
+  border: 1px solid var(--stone-300) !important;
+  border-radius: 6px;
+}
+
 .subthread {
   border: 1px solid var(--stone-300);
 }
@@ -209,11 +260,23 @@ function descendThread(threadId: string) {
   border-right-width: 0;
 }
 
+.subthread-comment-wrap .thread-body {
+  padding-left: 12px;
+  padding-right: 12px;
+}
+
 .thread-seperator {
   width: 100%;
-  padding-top: 20px;
-  padding-bottom: 20px;
-  border-top: 1px solid var(--stone-300);
-  border-bottom: 1px solid var(--stone-300)
+  padding-top: 10px;
+  padding-bottom: 10px;
+}
+
+.parent-thread-seperator {
+  width: 100%;
+  padding-bottom: 10px;
+  padding-left: 20px;
+  min-height: 30px; 
+  border-left: 1px solid var(--stone-300);
+  margin-left: 5%;
 }
 </style>

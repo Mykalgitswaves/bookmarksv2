@@ -14,7 +14,7 @@
       <!-- <div class="thread-spine-bottom"></div>  -->
     </div>
 
-    <div class="thread-body">
+    <div class="thread-body" :class="{'selected': selectedComment}">
       <!-- Helps us see things as replies -->
 
       <div class="thread-header">
@@ -72,16 +72,8 @@ import { navRoutes } from '@/services/urls'
 // Stores
 import { currentUser } from '@/stores/currentUser'
 // Components
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbSeparator,
-  BreadcrumbList,
-  BreadcrumbEllipsis
-} from '@/lib/registry/default/ui/breadcrumb'
 import IconClubLike from '../../awards/icons/ClubLike.vue'
 import IconClubComment from '../../../../../svg/icon-club-comment.vue'
-import ThreadTie from './ThreadTie.vue'
 
 const props = defineProps({
   thread: {
@@ -204,8 +196,13 @@ function navigateToThread() {
 }
 
 .thread .thread-body {
-  padding: 4px 8px;
+  padding: 6px 12px;
   width: 100%;
+}
+
+.thread-body.selected {
+  border: 1px solid var(--stone-300);
+  border-radius: 6px;
 }
 
 .thread-header {
