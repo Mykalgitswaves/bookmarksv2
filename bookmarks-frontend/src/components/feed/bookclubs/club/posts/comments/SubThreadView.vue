@@ -67,8 +67,7 @@
         />
 
         <div class="thread-seperator mb-2 mt-2">
-          <button
-            v-if="commentData.length"
+          <button v-if="commentData.length"
             class="ml-7 text-stone-500 text-sm fancy flex items-center gap-2"
             type="button"
             @click="showingReplies = !showingReplies"
@@ -195,7 +194,7 @@ async function getCommentsFactory() {
 // Remove the thread from the ui.
 function removeThreadFromReplies(threadId: string) {
   commentData.value = commentData.value.filter((thread) => thread.id !== threadId);
-}
+};
 
 const loadPostPromise = db.get(
   urls.concatQueryParams(urls.bookclubs.getClubFeed(bookclub), { post_id: postId }),
@@ -231,9 +230,6 @@ function descendThread(threadId: string) {
   navigationThread.value = threadId
   PubSub.publish(GET_COMMENTS_KEY)
 }
-
-// Weird bug happening on navigation
-// onMounted(() => PubSub.publish(GET_COMMENTS_KEY));
 </script>
 <style scoped>
 .ancestor-threads {
