@@ -1,5 +1,6 @@
 <template>
   <div class="subthread">
+    <BackBtn :back-fn="() => $router.push(navRoutes.toBookClubFeed(currentUser.id, bookclub))"/>
     <!-- Post -->
     <KeepAlive>
       <AsyncComponent :promises="[loadPostPromise]">
