@@ -8,6 +8,7 @@ from src.models.schemas import bookclubs as BookClubSchemas
 from src.models.schemas.books import BookPreview
 from src.models.schemas.users import Member 
 from src.utils.helpers.help import AWARD_CONSTANTS
+from src.utils.logging.logger import logger
 
 class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
     def create_bookclub(
@@ -453,7 +454,12 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
             // If an existing IS_READING_FOR_CLUB relationship is found, delete it and create FINISHED_READING_FOR_CLUB
             FOREACH (_ IN CASE WHEN oldRel IS NOT NULL THEN [1] ELSE [] END |
                 DELETE oldRel
-                MERGE (member)-[:FINISHED_READING_FOR_CLUB {last_updated: datetime(), finished_by_user: false}]->(old_book)
+                MERGE (member)-[fr:FINISHED_READING_FOR_CLUB]->(old_book)
+                ON CREATE SET
+                    fr.last_updated = datetime(),
+                    fr.finished_by_user = False,
+                    fr.viewed_afterword = False
+
             )
             MERGE (member)-[:IS_READING_FOR_CLUB {
                 last_updated: datetime(),
@@ -535,7 +541,11 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
             // If an existing IS_READING_FOR_CLUB relationship is found, delete it and create FINISHED_READING_FOR_CLUB
             FOREACH (_ IN CASE WHEN oldRel IS NOT NULL THEN [1] ELSE [] END |
                 DELETE oldRel
-                MERGE (old_member)-[:FINISHED_READING_FOR_CLUB {last_updated: datetime(), finished_by_user: false}]->(old_book)
+                MERGE (old_member)-[fr:FINISHED_READING_FOR_CLUB]->(old_book)
+                ON CREATE SET
+                    fr.last_updated = datetime(),
+                    fr.finished_by_user = False,
+                    fr.viewed_afterword = False
             )
             WITH b, bc_book
             MATCH (member:User)-[:IS_MEMBER_OF|OWNS_BOOK_CLUB]->(b)
@@ -844,7 +854,8 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
             MERGE (u)-[fr:FINISHED_READING_FOR_CLUB]->(book)
             ON CREATE SET
                 fr.last_updated = datetime(),
-                fr.finished_by_user = True
+                fr.finished_by_user = True,
+                fr.viewed_afterword = False
             WITH u, book
             MATCH (u)-[rr:IS_READING_FOR_CLUB]->(book)
             DELETE rr
@@ -906,7 +917,8 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
             MERGE (u)-[fr:FINISHED_READING_FOR_CLUB]->(book)
             ON CREATE SET
                 fr.last_updated = datetime(),
-                fr.finished_by_user = True
+                fr.finished_by_user = True,
+                fr.viewed_afterword = False
                 CREATE (r:ClubReviewNoText {
                     id: "club_review_no_text_" + randomUUID(),
                     user_id: $user_id,
@@ -1797,7 +1809,23 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
         query = (
             """
             MATCH (cu:User {id: $user_id})-[:IS_MEMBER_OF|OWNS_BOOK_CLUB]->(b:BookClub {id: $book_club_id})
-            MATCH (b)-[:IS_READING]->(book:BookClubBook)
+            OPTIONAL MATCH (b)-[:IS_READING]->(crBook:BookClubBook)
+
+            // 2) Gather all finished books along with their finish dates, so we can pick the most recent
+            OPTIONAL MATCH (b)-[frRel:FINISHED_READING]->(frBook:BookClubBook)
+            WITH cu, b, crBook, frBook, frRel
+            ORDER BY frRel.actual_finish_date DESC
+
+            // Keep only the most recent finished book
+            WITH cu, b, crBook, collect(frBook)[0] AS lastFinishedBook
+
+            // Pick crBook if it exists, otherwise lastFinishedBook
+            WITH cu, b, crBook, lastFinishedBook, 
+                CASE 
+                WHEN crBook IS NOT NULL THEN crBook 
+                ELSE lastFinishedBook
+            END AS book
+
             MATCH (cu)-[:FINISHED_READING_FOR_CLUB]->(book)
             MATCH (post {deleted:false})-[:POST_FOR_CLUB_BOOK]->(book)
             WHERE post:ClubUpdate OR post:ClubUpdateNoText or post:ClubReview or post:ClubReviewNoText
@@ -2982,7 +3010,158 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
             "users_table": users_table,
             "awards": awards
         }
+    
+    def get_member_status_book_club(
+            self,
+            book_club_id: str,
+            user_id: str
+    ):
+        with self.driver.session() as session:
+            result = session.read_transaction(
+                self.get_member_status_book_club_query,
+                book_club_id,
+                user_id
+            )
+        return result
 
+    @staticmethod
+    def get_member_status_book_club_query(
+        tx,
+        book_club_id: str,
+        user_id: str
+    ):
+        query = """
+        MATCH (u:User { id: $user_id })
+        MATCH (bc:BookClub { id: $book_club_id })
+        OPTIONAL MATCH (u)-[ownerRel:OWNS_BOOK_CLUB]->(bc)
+        OPTIONAL MATCH (u)-[memberRel:IS_MEMBER_OF]->(bc)
+        RETURN CASE
+            WHEN ownerRel IS NOT NULL THEN 'owner'
+            WHEN memberRel IS NOT NULL THEN 'member'
+            ELSE 'neither'
+        END AS role
+        """
+
+        result = tx.run(
+            query,
+            user_id=user_id,
+            book_club_id=book_club_id
+        )
+
+        response = result.single()
+
+        role = response.get("role")
+
+        if role == 'owner':
+            return True, True
+        
+        elif role == 'member':
+            return True, False
+        
+        else:
+            return False, False
+        
+    def get_reading_status_book_club(
+            self,
+            book_club_id: str,
+            user_id: str
+    ):
+        with self.driver.session() as session:
+            result = session.read_transaction(
+                self.get_reading_status_book_club_query,
+                book_club_id,
+                user_id
+            )
+        return result
+
+    @staticmethod
+    def get_reading_status_book_club_query(
+        tx,
+        book_club_id: str,
+        user_id: str
+    ):
+        query = """
+        MATCH (u:User {id: $user_id})-[:IS_MEMBER_OF|OWNS_BOOK_CLUB]->(bc:BookClub {id: $book_club_id})
+        // 1) Check which book the club is currently reading (if any)
+        OPTIONAL MATCH (bc)-[:IS_READING]->(crBook:BookClubBook)
+
+        // 2) Gather all finished books along with their finish dates, so we can pick the most recent
+        OPTIONAL MATCH (bc)-[frRel:FINISHED_READING]->(frBook:BookClubBook)
+        WITH u, bc, crBook, frBook, frRel
+        ORDER BY frRel.actual_finish_date DESC
+
+        // Keep only the most recent finished book
+        WITH u, bc, crBook, collect(frBook)[0] AS lastFinishedBook
+
+        // 3) Decide which book is relevant for the club:
+        WITH u, bc, crBook, lastFinishedBook,
+            CASE 
+            WHEN crBook IS NOT NULL THEN 'CURRENTLY_READING'
+            WHEN lastFinishedBook IS NOT NULL THEN 'FINISHED_READING'
+            ELSE 'NO_BOOK'
+            END AS clubReadingStatus
+
+        // Pick crBook if it exists, otherwise lastFinishedBook
+        WITH u, bc, crBook, lastFinishedBook, clubReadingStatus,
+            CASE 
+            WHEN crBook IS NOT NULL THEN crBook 
+            ELSE lastFinishedBook
+        END AS relevantBook
+
+        // 4) Check if this user is also currently reading / finished reading that same book for this club
+        OPTIONAL MATCH (u)-[relCR:IS_READING_FOR_CLUB]->(relevantBook)
+        OPTIONAL MATCH (u)-[relFR:FINISHED_READING_FOR_CLUB]->(relevantBook)
+
+        RETURN 
+            relevantBook.id AS clubBookId,
+            clubReadingStatus,
+            CASE
+                WHEN relCR IS NOT NULL THEN 'CURRENTLY_READING_FOR_CLUB'
+                WHEN relFR IS NOT NULL THEN 'FINISHED_READING_FOR_CLUB'
+                ELSE 'NONE'
+            END AS userReadingStatus,
+            relFR.viewed_afterword as userViewedAfterwordStatus
+        """
+
+        result = tx.run(
+            query,
+            user_id=user_id,
+            book_club_id=book_club_id
+        )
+
+        response = result.single()
+
+        user_reading_status = response.get("userReadingStatus")
+        club_reading_status = response.get("clubReadingStatus")
+
+        if club_reading_status == "NO_BOOK":
+            return None, None, None
+        elif club_reading_status == "FINISHED_READING":
+            is_club_finished_reading = True
+        else:
+            is_club_finished_reading = False
+
+        if user_reading_status == "CURRENTLY_READING_FOR_CLUB":
+            is_user_finished_reading = False
+            has_viewed_afterword = None
+        elif user_reading_status == "FINISHED_READING_FOR_CLUB":
+            is_user_finished_reading = True
+            if response.get("userViewedAfterwordStatus"):
+                has_viewed_afterword = True
+            else:
+                has_viewed_afterword = False
+        else:
+            logger.warning(
+                "Unintended reading behavior",
+                extra={
+                    "book_club_id": book_club_id,
+                    "current_user_id": user_id,
+                    "action": "get_user_reading_status",
+                }
+            )
+            return None, None, None
+
+        return is_user_finished_reading, is_club_finished_reading, has_viewed_afterword
         
     def search_users_not_in_club(
             self, 
@@ -3227,6 +3406,50 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
         response=result.single()
         return response.get("book_id") is not None
     
+    def updated_afterword_to_viewed(
+            self,
+            book_club_id: str,
+            book_club_book_id: str,
+            user_id: str,
+    ):
+        with self.driver.session() as session:
+            result = session.write_transaction(
+                self.updated_afterword_to_viewed_query, 
+                book_club_id,
+                book_club_book_id,
+                user_id)
+        return result
+    
+    @staticmethod
+    def updated_afterword_to_viewed_query(
+        tx,
+        book_club_id: str,
+        book_club_book_id: str,
+        user_id: str,
+    ):
+        query = (
+            """
+            MATCH (u:User {id:$user_id})-[:IS_MEMBER_OF|OWNS_BOOK_CLUB]->(b:BookClub {id:$book_club_id})
+            MATCH (u)-[fr:FINISHED_READING_FOR_CLUB]->(book:BookClubBook {id:$book_club_book_id})
+            SET fr.viewed_afterword = True
+            return book.id as book_id
+            """
+        )
+
+        result = tx.run(
+            query,
+            book_club_id=book_club_id,
+            book_club_book_id=book_club_book_id,
+            user_id=user_id
+        )
+
+        response = result.single()
+
+        if response.get("book_id"):
+            return True
+        else:
+            return False
+        
     def delete_book_club_data(
         self,
         user_id: str
