@@ -100,6 +100,48 @@ async def create_bookclub(
         return JSONResponse(status_code=200, content={"book_club_id": response})
 
 
+@router.put("/{book_club_id}/update_metadata", name="bookclub:update_metadata")
+async def update_club_metadata(
+    request: Request,
+    book_club_id: str,
+    current_user: Annotated[User, Depends(get_current_active_user)],
+    book_club_repo: BookClubCRUDRepositoryGraph = Depends(
+        get_repository(repo_type=BookClubCRUDRepositoryGraph)
+    ),
+) -> None:
+    """
+    Update the description of a book club that you own.
+
+    Args: book_club_id (str): The id of the bookclub
+
+    Returns:
+        None
+    """
+
+    try:
+        data = await request.json()
+        
+        # Validate required fields
+        if "title" not in data or "description" not in data:
+            raise ValueError("Missing required fields: title and description")
+            
+        # Create a clean data dictionary with only the fields we need
+        clean_data = {
+            "title": data.get("title"),
+            "description": data.get("description")
+        }
+
+        updated_club_metadata = book_club_repo.update_club_metadata(
+            book_club_id=book_club_id, 
+            user_id=current_user.id,
+            updated_data=clean_data
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+    return JSONResponse(content={"club": updated_club_metadata})
+
+
 ### Invite Members Page ################################################################################################
 
 

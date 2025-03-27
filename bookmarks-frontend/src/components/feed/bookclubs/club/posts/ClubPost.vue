@@ -93,19 +93,22 @@
       </div>
     </div>
 
-    <div class="awards-list" v-if="awards.length">
-      <div v-for="(award, index) in awards" :key="award.id">
-        <div
-          v-if="award.num_grants > 0"
-          class="award"
-          :class="{ 'granted-by-user': award.granted_by_current_user }"
-          :title="award.name"
-          @click="grantOrUngrantAward(award, index - 1)"
-        >
-          <span>
-            <span class="num-grants">{{ award.num_grants }}</span>
-            <component v-if="ClubAwardsSvgMap[award.cls]" :is="ClubAwardsSvgMap[award.cls]()" />
-          </span>
+    <div v-if="awards.length">
+      <span class="block ml-5 mb-1 text-stone-600 text-sm fancy">{{  awards.length }} Awards</span>
+        <div class="awards-list">
+          <div v-for="(award, index) in awards" :key="award.id">
+            <div
+            v-if="award.num_grants > 0"
+            class="award"
+            :class="{ 'granted-by-user': award.granted_by_current_user }"
+            :title="award.name"
+            @click="grantOrUngrantAward(award, index - 1)"
+            >
+            <span>
+              <span class="num-grants">{{ award.num_grants }}</span>
+              <component v-if="ClubAwardsSvgMap[award.cls]" :is="ClubAwardsSvgMap[award.cls]()" />
+            </span>
+          </div>
         </div>
       </div>
     </div>
@@ -408,6 +411,7 @@ function likeOrUnlikeClubPost() {
   column-gap: 4px;
   row-gap: 4px;
   justify-content: start;
+  align-items: center;
   flex-wrap: wrap;
   background-color: var(--surface-primary);
   border: 1px solid var(--slate-400);

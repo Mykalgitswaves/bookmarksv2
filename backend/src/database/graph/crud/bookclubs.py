@@ -85,6 +85,41 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
             return False
         else:
             return response["book_club_id"]
+    
+    def update_club_metadata(self, book_club_id:str, user_id:str, updated_data:dict):
+        with self.driver.session() as session:
+            result = session.write_transaction(self.update_club_metadata_query, book_club_id, user_id, updated_data)
+        return result
+
+    @staticmethod
+    def update_club_metadata_query(
+        tx,
+        book_club_id,
+        user_id,
+        updated_data: dict["title": str, "description": str]
+    ) -> dict[str]:
+        query = """
+            match (user:User {id: $user_id})-[:OWNS_BOOK_CLUB]->(bookclub:BookClub {id: $book_club_id})
+            set bookclub.book_club_name = $title
+            set bookclub.description = $description
+            return bookclub.book_club_name as name, bookclub.description as description
+        """
+
+        result = tx.run(query, 
+            user_id=user_id, 
+            book_club_id=book_club_id, 
+            title=updated_data['title'], 
+            description=updated_data['description']
+        )
+        
+        record  = result.single()
+        
+        response = {
+            "title": record.get('name'),
+            "description": record.get('description'),
+        }
+
+        return response 
         
     def create_bookclub_invites(
             self,

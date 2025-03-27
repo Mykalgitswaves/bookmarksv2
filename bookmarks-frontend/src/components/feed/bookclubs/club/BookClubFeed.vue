@@ -2,29 +2,29 @@
         <div class="bookclub-header flex justify-between items-start">
             <div>
                 <h1 class="text-3xl fancy text-stone-700">
-                    {{ club?.book_club_name }}
+                    {{ clubHeading.title }}
                 </h1>
                 
                 <p class="text-stone-500 mt-5">
-                    {{ club?.description || 'Add a description for your book club' }}    
+                    {{ clubHeading.description || 'Add a description for your book club' }}    
                 </p>
             </div>
 
-            <button type="button" class="pt-5 text-stone-500">
+            <button type="button" class="pt-5 text-stone-500" @click="openClubSettingsOverlay">
                 <span class="visually-hidden">Settings</span>
                 
-                <IconSettings />
+                <IconNote />
             </button>
         </div>
 
         <section v-if="loaded" 
             class="club-main-padding"
             :class="{
-                'is-user-finished-with-current-book': club.currently_reading_book.is_user_finished_reading
+                'is-user-finished-with-current-book': club.currently_reading_book?.is_user_finished_reading
             }"
         >
             <CurrentlyReadingBook 
-                :is-finished-reading="currentlyReadingBook.is_user_finished_reading"
+                :is-finished-reading="currentlyReadingBook?.is_user_finished_reading"
                 :book="currentlyReadingBook" 
                 @currently-reading-settings="router.push(
                     navRoutes.bookClubSettingsCurrentlyReading(
@@ -61,14 +61,71 @@
 
                 </template>
                 <template #overlay-main>
-                        <CreateReviewPost 
-                            :book="currentlyReadingBook"
-                            unique="bookclub"
-                            @is-postable-data="(post) => reviewPost = post" 
-                            @post-data="postReviewAndFinishReadingCurrentBook(reviewPost)"
-                            @user-skipped-review="postReviewAndFinishReadingCurrentBook(null)"
-                        />
+                    <CreateReviewPost 
+                        :book="currentlyReadingBook"
+                        unique="bookclub"
+                        @is-postable-data="(post) => reviewPost = post" 
+                        @post-data="postReviewAndFinishReadingCurrentBook(reviewPost)"
+                        @user-skipped-review="postReviewAndFinishReadingCurrentBook(null)"
+                    />
                 </template>
+            </Overlay>
+
+            <Overlay :ref="(el) => overlays.clubSettingsOverlay = el?.dialogRef">
+                <template #overlay-main>
+                    <form 
+                        :validation-schema="formSchema" 
+                        class="grid gap-y-5 w-[80vw] md:w-[60vw] max-w-[800px]"
+                        @submit="onSubmit"
+                    > 
+                        <FormField v-slot="{ componentField }" name="title" :validate-on-blur="!isFieldDirty">
+                            <FormItem>
+                                <FormLabel class="fancy text-base text-stone-600">Title</FormLabel>
+                                
+                                <FormControl>
+                                    <Input name="title" v-bind="componentField" />
+                                </FormControl>
+
+                                <FormDescription>
+                                    Change the title of your bookclub
+                                </FormDescription>
+
+                                <FormMessage />
+                            </FormItem>
+                        </FormField>
+                        <FormField v-slot="{ componentField }" name="description" :validate-on-blur="!isFieldDirty">
+                            <FormItem>
+                                <FormLabel class="fancy text-base text-stone-600">Description</FormLabel>
+                                
+                                <FormControl>
+                                    <Textarea name="description" v-bind="componentField" />
+                                </FormControl>
+
+                                <FormDescription>
+                                    Change the description of your bookclub
+                                </FormDescription>
+                            </FormItem>
+                        </FormField>
+
+                        <div class="flex items-center ml-auto mr-auto gap-5">
+                            <Button 
+                                type="submit" 
+                                class="btn btn-submit fancy" 
+                                :disabled="!metaValuesHaveChanged">Save
+                            </Button>
+
+                            <Button 
+                                type="button" 
+                                class="btn btn-red fancy w-fit" 
+                                @click="overlays.clubSettingsOverlay.close()"
+                            >Cancel
+                            </Button>
+                        </div>
+                    </form>
+                    
+                
+                </template>
+
             </Overlay>
 
             <!-- index for now until we can grab the id from the updates -->
@@ -84,21 +141,58 @@
         <div class="mobile-menu-spacer sm:hidden"></div>
 </template>
 <script setup>
-import CurrentlyReadingBook from './CurrentlyReadingBook.vue';
-import BookClubFeedActions from './BookClubFeedActions.vue';
-import ClubPost from './posts/ClubPost.vue';
-import Overlay from '@/components/feed/partials/overlay/Overlay.vue';
-import CreateUpdateForm from '@/components/feed/createPosts/update/createUpdateForm.vue';
-import CreateReviewPost  from '@/components/feed/createPosts/createReviewPost.vue';
-import CurrentPacesForClubBook from './CurrentPacesForClubBook.vue';
-import { ref, watch } from 'vue';
-import { db } from '../../../../services/db';
-import { navRoutes, urls } from '../../../../services/urls';
-import { formatUpdateForBookClub } from '../bookClubService';
+// ----------------------------------
+// Vue
+import { ref, watch, defineAsyncComponent } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import LoadingCard from '../../../shared/LoadingCard.vue';
+// ----------------------------------
+// Services
+import { navRoutes, urls } from '../../../../services/urls';
+import { db } from '../../../../services/db';
 import { createConfetti } from '../../../../services/helpers';
+import { formatUpdateForBookClub } from '../bookClubService';
+// ----------------------------------
+// Stores
+
 import { currentUser } from '../../../../stores/currentUser.ts';
+
+// ----------------------------------
+// Form stuff
+// ----------------------------------
+import { useForm } from 'vee-validate';
+import { toTypedSchema } from '@vee-validate/zod';
+import * as z from 'zod';
+
+// ----------------------------------
+// Components
+// ----------------------------------
+
+// -- shadcdn vue port
+import {
+    FormControl,
+    FormDescription,
+    FormField,
+    FormItem,
+    FormLabel,
+    FormMessage
+} from '@/lib/registry/default/ui/form';
+import { Input } from '@/lib/registry/default/ui/input';
+import { Textarea } from '@/lib/registry/default/ui/textarea/index.ts';
+import { Button } from '@/lib/registry/default/ui/button';
+
+import LoadingCard from '../../../shared/LoadingCard.vue';
+
+// -- hardcover
+const CurrentlyReadingBook = defineAsyncComponent(() => import('./CurrentlyReadingBook.vue'));
+const BookClubFeedActions = defineAsyncComponent(() => import('./BookClubFeedActions.vue'));
+const ClubPost = defineAsyncComponent(() => import('./posts/ClubPost.vue'));
+const Overlay = defineAsyncComponent(() => import('@/components/feed/partials/overlay/Overlay.vue'));
+const CreateUpdateForm = defineAsyncComponent(() => import('@/components/feed/createPosts/update/createUpdateForm.vue'));
+const CreateReviewPost = defineAsyncComponent(() => import('@/components/feed/createPosts/createReviewPost.vue'));
+const CurrentPacesForClubBook = defineAsyncComponent(() => import('./CurrentPacesForClubBook.vue'));
+// SVG
+import IconNote from '@/components/svg/icon-note.vue';
+// ----------------------------------
 
 const props = defineProps({
     club: {
@@ -107,15 +201,22 @@ const props = defineProps({
     }
 });
 
+const clubHeading = ref({
+    title: props.club.book_club_name || '',
+    description: props.club.book_club_description || ''
+});
+
 const data = ref({
     posts: [],
 });
+
 const loaded = ref(false);
 
 const overlays = ref({
     updateOverlay: null,
     finishedReadingOverlay: null,
     wrappedOverlay: null,
+    clubSettingsOverlay: null,
 });
 
 const route = useRoute();
@@ -135,6 +236,65 @@ function showFinishedReadingForm() {
     const dialogRef = overlays.value.finishedReadingOverlay;
     dialogRef?.showModal(); 
 }
+
+function openClubSettingsOverlay() {
+    const dialogRef = overlays.value.clubSettingsOverlay;
+    dialogRef?.showModal();
+};
+
+/**
+ * @form_metadata 
+ * @description – Update the description of the form.
+ */
+
+ const formSchema = toTypedSchema(
+  z.object({
+    title: z.string().min(1, "Title is required"),
+    description: z.string().optional(),
+  })
+);
+
+const form = ref({
+  title: props.club?.book_club_name || '',
+  description: props.club?.book_club_description || '',
+});
+
+const { handleSubmit } = useForm({
+  validationSchema: formSchema,
+  initialValues: {
+    title: form.value.title,
+    description: form.value.description
+  }
+});
+
+// Used to make the button clickable.
+const metaValuesHaveChanged = (values) => {
+    return clubHeading.value.title !== values.title || 
+           clubHeading.value.description !== values.description;
+};
+
+const onSubmit = handleSubmit((values) => {
+    if (!metaValuesHaveChanged(values)) {
+        return;
+    }
+
+    db.put(urls.bookclubs.updateClubSettings(bookclub), values, false,
+        (res) => {
+            const { club } = res;
+            clubHeading.value.title = club.title;
+            clubHeading.value.description = club.description;
+            // Close the overlay and refresh data
+            const { dialogRef } = overlays.value.clubSettingsOverlay;
+            dialogRef?.close();
+            // You might want to refresh the club data here
+            // or emit an event to the parent component
+        },
+        (err) => {
+        console.error(err);
+        }
+    );
+});
+
 
 /**
  * @load

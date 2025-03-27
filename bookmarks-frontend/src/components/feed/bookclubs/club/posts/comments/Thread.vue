@@ -18,7 +18,9 @@
     <div class="thread-body" 
       :class="{
         'selected': selectedComment,
+        'navigatable': !threadDisabled && thread.num_replies > 0,
       }"
+      @click.stop="() => threadDisabled ? undefined : navigateToThread()"
     >
       <!-- Helps us see things as replies -->
 
@@ -34,11 +36,6 @@
 
       <div
         class="thread-copy"
-        :class="{
-          navigatable: !threadDisabled,
-        }"
-        :disabled="threadDisabled"
-        @click="() => navigateToThread()"
       >
         <p class="text-sm text-stone-600 fancy">
           {{ thread?.text || 'sample comment' }}
@@ -61,7 +58,7 @@
             type="button"
             class="btn btn-tiny text-green-400 btn-specter ml-auto mr-2 relative"
             :class="{'bg-indigo-100': thread.liked_by_current_user}"
-            @click="thread.liked_by_current_user ? unlikeThread(thread) : likeThread(thread)"
+            @click.stop="thread.liked_by_current_user ? unlikeThread(thread) : likeThread(thread)"
           >
             <IconClubLike :class="{'one-80-deg': thread.liked_by_current_user}"/>
 
@@ -71,7 +68,7 @@
             v-if="thread.posted_by_current_user" 
             type="button"
             class="btn btn-tiny btn-specter"
-            @click="deleteThread(thread)"
+            @click.stop="deleteThread(thread)"
           >
             <IconTrash />
           </button>
@@ -229,7 +226,7 @@ function navigateToThread() {
   align-items: center;
 }
 
-.thread-copy.navigatable:hover {
+.thread-body.navigatable:hover {
   background-color: var(--indigo-100);
   cursor: pointer;
 }

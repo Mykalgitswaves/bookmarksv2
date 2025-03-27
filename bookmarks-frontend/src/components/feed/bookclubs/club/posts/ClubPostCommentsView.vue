@@ -24,6 +24,7 @@
                     <Thread 
                         v-for="(thread, index) in commentThreads" 
                         class="mb-3"
+                        :class="{'border-t-light': thread.depth === 0}"
                         :key="thread.id"
                         :thread="thread"
                         :index="index"

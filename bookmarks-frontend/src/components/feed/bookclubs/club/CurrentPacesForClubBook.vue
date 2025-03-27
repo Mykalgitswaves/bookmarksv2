@@ -29,7 +29,7 @@
                                 <div>
                                     <h4 class="text-stone-700">{{ member.username }}</h4>
                                     
-                                    <p v-if="!member.is_finished_reading" class="text-sm text-stone-500">{{ member.pace ? `is reading chapter ${member.pace} of ${props.totalChapters}` : 'hasn\'t started yet' }}</p>
+                                    <p v-if="!member?.is_finished_reading" class="text-sm text-stone-500">{{ member.pace ? `is reading chapter ${member.pace} of ${props.totalChapters}` : 'hasn\'t started yet' }}</p>
                                     <p v-else class="text-sm text-stone-500">Finished reading! 🎉</p>
                                 </div>
 
@@ -37,7 +37,7 @@
                                     :style="{
                                         width: generateProgressBarWidthForMember(member),
                                         height: '4px',
-                                        backgroundColor: member.is_finished_reading ? 'var(--green-300)' : 'var(--indigo-300)',
+                                        backgroundColor: member?.is_finished_reading ? 'var(--green-300)' : 'var(--indigo-300)',
                                         borderRadius:  '4px',
                                         position: 'absolute',
                                         bottom: '-8px',

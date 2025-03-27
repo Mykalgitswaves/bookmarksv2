@@ -320,3 +320,7 @@
 .border-b-light {
   border-bottom: 1px solid var(--stone-300);
 }
+
+.border-t-light {
+  border-top: 1px solid var(--stone-300);
+}

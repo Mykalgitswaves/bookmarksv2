@@ -179,6 +179,7 @@ export const urls = {
         getCurrentUserFinishedReading: (bookclub_id, user_id) => (`${baseUrl}${BOOK_CLUBS_PREFIX}${bookclub_id}/is_user_finished_reading/${user_id}`),
         // FINISH THAT THANG!
         postClubReviewAndFinishReading: (bookclub_id, book_club_book_id) => (`${baseUrl}${BOOK_CLUBS_PREFIX}${bookclub_id}/review/create/${book_club_book_id}`),
+        updateClubSettings: (bookclub_id) => (`${baseUrl}${BOOK_CLUBS_PREFIX}${bookclub_id}/update_metadata`),
     },
     concatQueryParams: (url, newQueryParams, returnUrl) => {
         if (!url) {
