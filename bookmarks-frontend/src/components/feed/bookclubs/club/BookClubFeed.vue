@@ -39,6 +39,7 @@
             <!-- Sticky toolbar containing buttons for creating and filtering posts -->
             <BookClubFeedActions 
                 v-if="currentlyReadingBook"
+                :club="club"
                 @start-club-update-post-flow="showUpdateForm()"
                 @finished-reading="showFinishedReadingForm()"
             />
@@ -129,11 +130,18 @@
             </Overlay>
 
             <!-- index for now until we can grab the id from the updates -->
-            <ClubPost
-                v-for="(post, index) in data.posts" 
-                :key="index" 
-                :post="post"
-            />
+            <div v-if="data.posts?.length">
+                 <ClubPost
+                 v-for="(post, index) in data.posts" 
+                 :key="index" 
+                 :post="post"
+                 />
+            </div>
+            <div v-else class="mt-10">
+                <h4 class="fancy text-xl text-stone-600 text-center">
+                    Pretty quiet here... 🦗🦗
+                </h4>
+            </div>
         </section>
 
         <LoadingCard v-else />
@@ -303,6 +311,7 @@ const onSubmit = handleSubmit((values) => {
 
 // If you are done reading call a different url.
 let feedUrl = urls.bookclubs.getClubFeed(route.params.bookclub);
+
 if (props.club.currently_reading_book.is_user_finished_reading) {
     feedUrl = urls.bookclubs.getFinishedClubFeed(route.params.bookclub);
 };
@@ -334,9 +343,10 @@ Promise.allSettled([clubFeedPromise, currentlyReadingPromise]).then(() => {
 // If you are coming from notifications tab, then load the showUpdateForm, then unwatch watcher.
 watch(() => overlays.value.updateOverlay, () => {
     if (route.query['make-update']) {
-        showUpdateForm()
+        showUpdateForm();
     }  
-    watch()
+
+    watch();
 }, {immediate: false});
 
 
@@ -346,7 +356,7 @@ function refreshFeed() {
     Promise.resolve(clubFeedPromiseFactory()).then(() => {
         loaded.value = true;
     });
-}
+};
 
 
 /**

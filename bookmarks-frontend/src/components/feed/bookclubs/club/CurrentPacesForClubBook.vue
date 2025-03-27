@@ -1,8 +1,8 @@
 <template>
-    <div  v-if="totalChapters" class="paces-container" :class="{'min-h-200': startOpen}">
+    <div  v-if="totalChapters" class="paces-container" :class="{'min-h-200': startOpen && memberPaces?.length > 1}">
         <AsyncComponent :promises="[clubPacePromise]">
             <template #resolved>
-                    <div v-if="memberPaces.length">
+                    <div v-if="memberPaces.length && memberPaces.length > 1">
                         <div class="flex text-sm">
                             <h4 class="text-stone-700">
                                 <span class="text-indigo-500">{{memberPaces[0].username }}</span>
@@ -62,8 +62,26 @@
                             </div>
                         </div>
                     </div>
+                    
+                    <div v-else-if="memberPaces.length === 1" class="grid place-center gap-y-4">
+                        <h5 class="text-stone-600 fancy text-center">
+                            Its just you, add some friends and start yapping!
+                        </h5>
 
-                    <div v-else-if="!memberPaces.length" class="fancy text-stone-500 text-base">No ones started reading! (or made an update)</div>
+                        <button 
+                            type="button"
+                            class="btn text-sm btn-tiny btn-nav fancy ml-auto mr-auto" 
+                            @click="$router.push(
+                                navRoutes.bookClubSettingsManageMembersIndex(currentUser.id, $route.params.bookclub)
+                            )"
+                        >
+                            Add members
+                        </button>
+                    </div>
+
+                    <div v-else-if="!memberPaces.length" 
+                        class="fancy text-stone-500 text-base"
+                    >No ones started reading! (or made an update)</div>
             </template>
             <template #loading>
                 <h4 class="text-center fancy text-stone-600">loading paces</h4>
@@ -74,16 +92,24 @@
     <SuccessToast v-if="toast" :toast="toast" :toast-type="Toast.TYPES.MESSAGE_TYPE" @dismiss="() => toast = null"/>
 </template>
 <script setup>
-import { ref } from 'vue';
+// Vue
+import { defineAsyncComponent, ref } from 'vue';
 import { useRoute } from 'vue-router';
+// stores
+import { currentUser } from '@/stores/currentUser';
+// services
 import { db } from '../../../../services/db';
 import { urls } from '../../../../services/urls';
-import IconRabbit from '@/components/svg/icon-rabbit.vue';
-import IconTurtle from '@/components/svg/icon-turtle.vue';
-import AsyncComponent from '../../partials/AsyncComponent.vue';
 import { ClubNotification } from './notifications/models';
 import { Toast } from '../../../shared/models';
-import SuccessToast from '../../../shared/SuccessToast.vue';
+import { navRoutes } from '@/services/urls';
+// Components
+import AsyncComponent from '../../partials/AsyncComponent.vue';
+// lazy loaded components
+const IconRabbit = defineAsyncComponent(() => import('@/components/svg/icon-rabbit.vue'));
+const IconTurtle = defineAsyncComponent(() => import('@/components/svg/icon-turtle.vue'));
+const SuccessToast  = defineAsyncComponent(() => import('../../../shared/SuccessToast.vue'));
+// --------------------------------------------
 
 const props = defineProps({
     totalChapters: {

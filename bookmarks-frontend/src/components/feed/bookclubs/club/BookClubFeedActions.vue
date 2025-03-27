@@ -11,8 +11,8 @@
             </button>
             
             <button
-                class="ml-5 text-sm fancy underline text-indigo-500 hover: text-indigo-600"
-                type="button" 
+                class="ml-5 text-sm fancy underline text-stone-500 hover:text-indigo-600"
+                type="button"
                 @click="emit('finished-reading')"
             >
                 I finished reading this book
@@ -24,26 +24,17 @@
 </template>
 <script setup>
 import IconPlus from '@/components/svg/icon-plus.vue';
-import { watch, reactive } from 'vue';
 import ViewAwards from './awards/ViewAwards.vue'
 // Used to show and hide modals.
-const filterOptions = ['date(newest first)', 'date(oldest first)', 'byUser'];
 
-const modals = reactive({
-  selectDropdown: false,
-  filterPopout: false,
+const props = defineProps({
+    club: {
+        type: Object,
+        required: true,
+    },
 });
 
-const currentFilterOptions = reactive({})
 const emit = defineEmits(['start-club-update-post-flow']);
-
-function closeModal(reactiveKey) {
-  modals[reactiveKey] = false;
-}
-
-// watch(currentFilterOptions.byUser, () => {
-   
-// }, { immediate: true });
 </script>
 <style scoped>
 .sticky-top {
