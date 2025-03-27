@@ -20,6 +20,22 @@
         <!-- Then load the comments as separate components -->
         <AsyncComponent :promises="[getPaginatedCommentsForPostPromise]">
             <template #resolved>
+                <div>
+                    <Thread 
+                        class="mb-3 pinned"
+                        v-for="(thread, index) in pinnedCommentThreads"
+                        :key="thread.id"
+                        :index="index"
+                        view="main"
+                        :bookclub-id="bookclub"
+                        :replying-to-id="clubCommentSelectedForReply?.id"
+                        :is-sub-thread="thread.depth && thread.depth > 0"
+                        :parent-to-subthread="thread.replied_to && parentToSubthreadMap[thread.replied_to]"
+                        @thread-selected="(thread) => clubCommentSelectedForReply = thread"
+                        @unpinned="([index, thread]) => moveThreadToUnpinned(index, thread)"
+                    />
+                </div>
+                
                 <div v-if="commentThreads?.length" class="mt-5">
                     <Thread 
                         v-for="(thread, index) in commentThreads" 
@@ -34,6 +50,7 @@
                         :is-sub-thread="thread.depth && thread.depth > 0"
                         :parent-to-subthread="thread.replied_to && parentToSubthreadMap[thread.replied_to]"
                         @thread-selected="(thread) => clubCommentSelectedForReply = thread"
+                        @thread-pinned="(([index, thread]) => moveThreadToPinned(index, thread))"
                     />
                 </div>
 
@@ -53,8 +70,8 @@
 </template>
 <script setup lang="ts">
 // Vue
+import { ref, computed, defineAsyncComponent } from 'vue';
 import {useRoute} from 'vue-router';
-import { ref, computed } from 'vue';
 // Services
 import { urls, navRoutes } from '../../../../../services/urls';
 import { db } from '../../../../../services/db';
@@ -67,10 +84,11 @@ import { flattenThreads } from '@/components/feed/bookclubs/club/posts/comments/
 import ClubPost from './ClubPost.vue';
 import AsyncComponent from '../../../partials/AsyncComponent.vue';
 import ErrorToast from './../../../../../components/shared/ErrorToast.vue';
-import ViewAwards from '../awards/ViewAwards.vue';
-import Thread from './comments/Thread.vue';
 import ClubPostCommentBar from './ClubPostCommentBar.vue';
 import BackBtn from '@/components/feed/partials/back-btn.vue'
+// Asyncs
+const ViewAwards = defineAsyncComponent(() => import('../awards/ViewAwards.vue'));
+const Thread = defineAsyncComponent(() => import('./comments/Thread.vue'));
 
 const route = useRoute();
 const { user, bookclub, postId, commentId } = route.params;
@@ -84,6 +102,7 @@ const clubCommentSelectedForReply = ref(null);
 
 const commentData = ref({
     comments: [],
+    pinnedComments: [],
     errors: []
 });
 
@@ -120,15 +139,21 @@ let getPaginatedCommentsForPostPromise = db.get(
     false, 
     (res) => {
         commentData.value.comments = res.data.comments;
+        commentData.value.pinnedComments = res.data.pinned_comments;
     }, (err) => {
         commentData.value.errors = [err];
     }
 );
 
+// We don't want to see replies to replies to replies on the main page.
+const MAX_THREAD_DEPTH = 1;
+// Computed functions that render on load, maybe these don't need to be computed - #TODO: think about not computed. 
 const commentThreads = computed(() => {
-    // We don't want to see replies to replies to replies on the main page.
-    const MAX_DEPTH = 1;
-    return flattenThreads(commentData.value.comments, MAX_DEPTH);    
+    return flattenThreads(commentData.value.comments, MAX_THREAD_DEPTH);    
+});
+
+const pinnedCommentThreads = computed(() => {
+    return flattenThreads(commentData.value.pinnedComments, MAX_THREAD_DEPTH);
 });
 
 const parentToSubthreadMap = computed(() => {
@@ -165,6 +190,11 @@ PubSub.subscribe('footer-comment-pre-success-comment', (payload) => {
         }, 1500);
     }
 });
+
+// UI functions for moving threads to pinned
+function moveThreadToPinned(index:Number, thread:Thread) {
+    
+}
 </script>
 <style scoped>
 .border { border: 1px solid var(--stone-300); } 

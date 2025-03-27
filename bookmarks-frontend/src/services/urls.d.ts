@@ -10,6 +10,7 @@ declare module '@/services/urls' {
       };
       bookclubs: {
         getClubFeed: (clubId: string) => string;
+        getCurrentlyReadingStatusForClub: (clubId: string) => string;
       };
       user: {
         getUser: (userId: string) => string;

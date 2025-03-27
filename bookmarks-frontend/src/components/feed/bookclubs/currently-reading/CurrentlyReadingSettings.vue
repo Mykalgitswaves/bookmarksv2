@@ -16,7 +16,7 @@
         </div>
     </div>
 
-    <AsyncComponent :promises="[currentlyReadingPromise]">
+    <AsyncComponent :promises="[currentlyReadingPromises]">
         <template #resolved>
             <section class="transition">
                 <div v-if="!!data.currentlyReadingBook" class="mb-10">
@@ -28,7 +28,9 @@
                     <div class="divider pb-5"></div>
                     <!-- TODO: Add in permission check for club -->
 
-                    <div class="flex justify-around">
+                    <!-- TODO: check to see if you are the moderator and haven't already finished
+                      -->
+                    <div class="flex justify-around" v-if="!data.isClubFinishedReading">
                         <Dialog>
                             <DialogTrigger>
                                 <span class="block fancy">We've finished reading</span>
@@ -133,11 +135,12 @@ const submitting = ref(false);
 
 const data = ref({
     currentlyReadingBook: null,
+    isClubFinishedReading: false, // default to falsey value for starters.
     isShowingSetCurrentBookForm: true,
 });
 
 
-const currentlyReadingPromise = db.get(urls.bookclubs.getCurrentlyReadingForClub(route.params.bookclub), 
+const currentlyReadingPromiseFactory = () => db.get(urls.bookclubs.getCurrentlyReadingForClub(bookclub), 
     null, true, 
     (res) => {
         data.value.currentlyReadingBook = res.currently_reading_book;   
@@ -147,12 +150,24 @@ const currentlyReadingPromise = db.get(urls.bookclubs.getCurrentlyReadingForClub
     }
 );
 
+const currentlyReadingStatusPromiseFactory = () => db.get(
+    urls.bookclubs.getCurrentlyReadingStatusForClub(bookclub), 
+    null, 
+    false, 
+    (res) => { 
+        console.log(res);
+    }, (err) => {
+        console.log(err);
+    }
+);
+
+const currentlyReadingPromises = Promise.allSettled([currentlyReadingPromiseFactory(), currentlyReadingStatusPromiseFactory()]); 
 
 async function finishCurrentlyReadingBookForClub() {
     submitting.value = true;
     db.post(urls.bookclubs.finishCurrentlyReadingBookForClub(bookclub), null, false, () => {
         submitting.value = false;
-        data.value.book.isFinishedReading = true;
+        data.value.currentlyReadingBook.isFinishedReading = true;
         toast({
             title: 'Finshed reading 🎉',
             description: `${data.value.currentlyReadingBook.title} on ${Date().toString()}`,

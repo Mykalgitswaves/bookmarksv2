@@ -3159,7 +3159,7 @@ class BookClubCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
     ):
         query = (
             """
-            MATCH (u:User {id:$user_id})-[:OWNS_BOOK_CLUB]->(b:BookClub {id:$book_club_id})
+            MATCH (u:User {id: $user_id})-[:OWNS_BOOK_CLUB]->(b:BookClub {id: $book_club_id})
             MATCH (b)-[reading:IS_READING]->(bc_book:BookClubBook)
             CREATE (b)-[finished:FINISHED_READING {
                 started_date: reading.started_date,

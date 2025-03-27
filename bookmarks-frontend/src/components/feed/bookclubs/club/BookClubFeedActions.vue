@@ -1,6 +1,6 @@
 <template>
     <div class="flex justify-between pt-5 pb-5 sticky-top">
-        <div class="flex">
+        <div class="flex items-center">
             <button 
                 class="btn btn-ghost btn-icon btn-tiny text-sm fancy"
                 type="button" 
@@ -9,14 +9,19 @@
                 <IconPlus/> 
                 Update
             </button>
-            
-            <button
+
+            <button 
+                v-if="!club.currently_reading_book?.is_user_finished_reading"
                 class="ml-5 text-sm fancy underline text-stone-500 hover:text-indigo-600"
                 type="button"
                 @click="emit('finished-reading')"
             >
                 I finished reading this book
             </button>
+
+            <h5 v-else class="ml-5 text-sm fancy text-indigo-500">
+                ✨🎉 Finished reading 🎉✨
+            </h5>
         </div>
 
         <ViewAwards/>

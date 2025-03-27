@@ -383,15 +383,15 @@ function postUpdateForBookClub(update) {
 
 // Allow posting and then closing the overlay.
 function postReviewAndFinishReadingCurrentBook(post) {
-    post.user = {id: currentUser.value.id }
-
     if (!post) {
         db.post(
             urls.concatQueryParams(
                 urls.bookclubs.postClubReviewAndFinishReading(bookclub, props.club.currently_reading_book.book_club_book_id),
                 { no_review: true },
             ), 
-            null, 
+            { 
+                user: { id: currentUser.value.id }, 
+            }, 
             false, 
             (res) => {
                 isUserFinishedReadingBook.value = true;
@@ -400,6 +400,7 @@ function postReviewAndFinishReadingCurrentBook(post) {
             }
         );
     } else {   
+        post.user = {id: currentUser.value.id }
         db.post(urls.bookclubs.postClubReviewAndFinishReading(bookclub, props.club.currently_reading_book.book_club_book_id), 
             post, 
             false, 
@@ -412,7 +413,7 @@ function postReviewAndFinishReadingCurrentBook(post) {
         );
     };
 
-    const { dialogRef } = overlays.value.finishedReadingOverlay;
+    const { dialogRef } = overlays.value?.finishedReadingOverlay;
     dialogRef?.close();
     createConfetti();
 }

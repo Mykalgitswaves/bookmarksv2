@@ -1,6 +1,7 @@
 <template>
     <section :class="quickReview ? 'p-20' : ''">
         <BackBtn/>
+        
         <div v-if="!book && !book_id">
             <p class="text-2xl mb-2 mt-5 font-semibold text-center">The content monster is hungry for your thoughts 🍪. <br/>
                 <span class="text-indigo-500">Start by picking a book </span>
@@ -113,7 +114,7 @@
                 </div>
                 
                 <button  
-                    v-if="unique === BookClub.cls"
+                    v-if="unique === BookClub.cls && entries.length > 1"
                     type="button"
                     class="post-btn fancy"
                     :disabled="step !== 3"
@@ -123,7 +124,7 @@
                 </button>
 
                 <button 
-                    v-else
+                    v-else-if="unique !== BookClub.cls"
                     type="button"
                     class="post-btn"
                     :disabled="step !== 3 || !isPostableData"
@@ -133,7 +134,8 @@
                 </button>
             </div>
         </div>
-        <div v-if="unique === BookClub.cls" class="ml-auto mr-auto text-center">
+
+        <div v-if="unique === BookClub.cls" class="ml-auto mr-auto text-center mt-5">
             <p class="text-xs text-stone-400">
                 (Optional) skip reviewing
             </p>
@@ -148,19 +150,36 @@
     </section>
 </template>
 <script setup>
-import { ref, defineEmits, watch, computed, reactive, onMounted } from 'vue'
-import { postData } from '../../../../postsData.js';
-import { createQuestionStore } from '../../../stores/createPostStore';
+
+// Vue stuff
+// ----------------------------------------
+
+import { ref, defineEmits, watch, computed, reactive, defineAsyncComponent } from 'vue'
+
+// Services
+// ----------------------------------------
+
 import { helpersCtrl } from '../../../services/helpers';
-import SearchBooks from './searchBooks.vue';
-import CreatePostHeadline from './createPostHeadline.vue';
-import CreateReviewQuestions from './createReviewQuestions.vue';
-import YourReviewQuestions from './yourReviewQuestions.vue';
-import ReviewRating from './ReviewRating.vue';
-import { Bookshelves } from '../../../models/bookshelves';
 import { db } from '../../../services/db';
 import { urls } from '../../../services/urls';
+import { Bookshelves } from '../../../models/bookshelves';
 import { BookClub } from '../bookclubs/models/models.js';
+// Stores
+// ----------------------------------------
+
+import { createQuestionStore } from '../../../stores/createPostStore';
+import { postData } from '../../../../postsData.js';
+
+// Hardcover components
+// ----------------------------------------
+
+const SearchBooks = defineAsyncComponent(() => import('./searchBooks.vue'));
+const CreatePostHeadline = defineAsyncComponent(() => import('./createPostHeadline.vue'));
+const CreateReviewQuestions = defineAsyncComponent(() => import('./createReviewQuestions.vue'));
+const YourReviewQuestions = defineAsyncComponent(() => import('./yourReviewQuestions.vue'));
+const ReviewRating = defineAsyncComponent(() => import('./ReviewRating.vue'));
+// ----------------------------------------
+// ----------------------------------------
 
 const props = defineProps({
     headlineError: {

@@ -126,49 +126,50 @@ export const urls = {
     },
     bookclubs: {
         // Create / POST
-        create: () => (baseUrl + `${BOOK_CLUBS_PREFIX}create`),
+        create: () => (`${baseUrl}${BOOK_CLUBS_PREFIX}create`),
         createClubUpdate: (bookclub_id) => (`${baseUrl}${BOOK_CLUBS_PREFIX}${bookclub_id}/update/create`),
         startCurrentlyReadingBookForClub: 
-            (bookclub_id) => (baseUrl + `${BOOK_CLUBS_PREFIX}${bookclub_id}/currently_reading/start`),
+            (bookclub_id) => (`${baseUrl}${BOOK_CLUBS_PREFIX}${bookclub_id}/currently_reading/start`),
         finishCurrentlyReadingBookForClub: 
-            (bookclub_id) => (baseUrl + `${BOOK_CLUBS_PREFIX}${bookclub_id}/currently_reading/finish`),
+            (bookclub_id) => (`${baseUrl}${BOOK_CLUBS_PREFIX}${bookclub_id}/currently_reading/finish`),
         stopCurrentlyReadingBookForClub: 
-            (bookclub_id) => (baseUrl + `${BOOK_CLUBS_PREFIX}${bookclub_id}/currently_reading/stop`),
+            (bookclub_id) => (`${baseUrl}${BOOK_CLUBS_PREFIX}${bookclub_id}/currently_reading/stop`),
         // Read / GETS
-        getClubsOwnedByUser: (user_id) =>  (baseUrl + `${BOOK_CLUBS_PREFIX}owned/${user_id}`),
-        getClubsJoinedByCurrentUser: (user_id) =>  (baseUrl + `${BOOK_CLUBS_PREFIX}member/${user_id}`),
-        getClubFeed: (bookclub_id) => (baseUrl + `${BOOK_CLUBS_PREFIX}${bookclub_id}/feed`),
+        getClubsOwnedByUser: (user_id) =>  (`${baseUrl}${BOOK_CLUBS_PREFIX}owned/${user_id}`),
+        getClubsJoinedByCurrentUser: (user_id) =>  (`${baseUrl}${BOOK_CLUBS_PREFIX}member/${user_id}`),
+        getClubFeed: (bookclub_id) => (`${baseUrl}${BOOK_CLUBS_PREFIX}${bookclub_id}/feed`),
         // Gets a finished feed for a club the user has finished reading! 
         getFinishedClubFeed: (bookclub_id) => (`${baseUrl}${BOOK_CLUBS_PREFIX}${bookclub_id}/feed/finished`),
-        getClubPace: (bookclub_id) => (baseUrl + `${BOOK_CLUBS_PREFIX}${bookclub_id}/club_members_pace`),
-        getPaceForUserInClub: (bookclub_id) => (baseUrl + `${BOOK_CLUBS_PREFIX}${bookclub_id}/user_pace`),
-        getMinimalClub: (bookclub_id, user_id) => (baseUrl + `${BOOK_CLUBS_PREFIX}${bookclub_id}/minimal_preview/${user_id}/user`),
-        getInvitesForClub: (bookclub_id) => (baseUrl + `${BOOK_CLUBS_PREFIX}${bookclub_id}/club_invites`),
+        getClubPace: (bookclub_id) => (`${baseUrl}${BOOK_CLUBS_PREFIX}${bookclub_id}/club_members_pace`),
+        getPaceForUserInClub: (bookclub_id) => (`${baseUrl}${BOOK_CLUBS_PREFIX}${bookclub_id}/user_pace`),
+        getMinimalClub: (bookclub_id, user_id) => (`${baseUrl}${BOOK_CLUBS_PREFIX}${bookclub_id}/minimal_preview/${user_id}/user`),
+        getInvitesForClub: (bookclub_id) => (`${baseUrl}${BOOK_CLUBS_PREFIX}${bookclub_id}/club_invites`),
         // Get club post for an individual post in a feed (comments page)
         getClubPost: (bookclub_id, post_id) => (`${baseUrl}${BOOK_CLUBS_PREFIX}${bookclub_id}/post/${post_id}`),
         // Sending and loading invitation / member stuff.
-        sendInvites: () => (baseUrl + `${BOOK_CLUBS_PREFIX}invite`),
+        sendInvites: () => (`${baseUrl}${BOOK_CLUBS_PREFIX}invite`),
         searchUsersNotInClub: (bookClubId, searchParam) => 
-            (baseUrl + `${BOOK_CLUBS_PREFIX}${bookClubId}/search/users/${searchParam}`),
+            (`${baseUrl}${BOOK_CLUBS_PREFIX}${bookClubId}/search/users/${searchParam}`),
         getMembersForBookClub: (bookclub_id, user_id) => 
-            (baseUrl + `${BOOK_CLUBS_PREFIX}${bookclub_id}/members/${user_id}`),
-        getCurrentlyReadingForClub: (bookclub_id) => (baseUrl + `${BOOK_CLUBS_PREFIX}${bookclub_id}/currently_reading`),
-        setCurrentlyReadingBook: (bookclub_id) => (baseUrl + `${BOOK_CLUBS_PREFIX}${bookclub_id}/currently_reading/start`),
-        getPaceForReadersInClub: (bookclub_id) => (baseUrl + `${BOOK_CLUBS_PREFIX}${bookclub_id}/user_pace`),
-        previewEmailInvitesForClub: (bookclub_id, type) => (baseUrl + `${BOOK_CLUBS_PREFIX}${bookclub_id}/preview_emails/${type}`),
+            (`${baseUrl}${BOOK_CLUBS_PREFIX}${bookclub_id}/members/${user_id}`),
+        getCurrentlyReadingForClub: (bookclub_id) => (`${baseUrl}${BOOK_CLUBS_PREFIX}${bookclub_id}/currently_reading`),
+        setCurrentlyReadingBook: (bookclub_id) => (`${baseUrl}${BOOK_CLUBS_PREFIX}${bookclub_id}/currently_reading/start`),
+        getPaceForReadersInClub: (bookclub_id) => (`${baseUrl}${BOOK_CLUBS_PREFIX}${bookclub_id}/user_pace`),
+        previewEmailInvitesForClub: (bookclub_id, type) => (`${baseUrl}${BOOK_CLUBS_PREFIX}${bookclub_id}/preview_emails/${type}`),
+        getCurrentlyReadingStatusForClub: (bookclub_id) => (`${baseUrl}${BOOK_CLUBS_PREFIX}${bookclub_id}/check_status`),
         // DANGER DUDE
-        removeMemberFromBookClub: (bookclub_id) => (baseUrl + `${BOOK_CLUBS_PREFIX}${bookclub_id}/remove_member`),
+        removeMemberFromBookClub: (bookclub_id) => (`${baseUrl}${BOOK_CLUBS_PREFIX}${bookclub_id}/remove_member`),
         // INVITE STUFF
-        loadClubDataForInvite: (bookclub_id) => (baseUrl + `${BOOK_CLUBS_PREFIX}${bookclub_id}/club_for_invite`),
-        getInvitesForUser: (user_id) =>  (baseUrl + `${BOOK_CLUBS_PREFIX}invites/${user_id}`),
-        acceptInviteToBookClub: (invite_id) => (baseUrl + `${BOOK_CLUBS_PREFIX}invites/accept/${invite_id}`),
-        declineInviteToBookClub: (invite_id) => (baseUrl + `${BOOK_CLUBS_PREFIX}invites/decline/${invite_id}`),
+        loadClubDataForInvite: (bookclub_id) => (`${baseUrl}${BOOK_CLUBS_PREFIX}${bookclub_id}/club_for_invite`),
+        getInvitesForUser: (user_id) =>  (`${baseUrl}${BOOK_CLUBS_PREFIX}invites/${user_id}`),
+        acceptInviteToBookClub: (invite_id) => (`${baseUrl}${BOOK_CLUBS_PREFIX}invites/accept/${invite_id}`),
+        declineInviteToBookClub: (invite_id) => (`${baseUrl}${BOOK_CLUBS_PREFIX}invites/decline/${invite_id}`),
         // AWARDS
         // optional endpoint object
         // post_id:str
         // current_uses:bool
         // 
-        getAwards: (bookclub_id) => (baseUrl + `${BOOK_CLUBS_PREFIX}${bookclub_id}/awards`),
+        getAwards: (bookclub_id) => (`${baseUrl}${BOOK_CLUBS_PREFIX}${bookclub_id}/awards`),
         grantAwardToPost: (bookclub_id, post_id, award_id) => (`${baseUrl}${BOOK_CLUBS_PREFIX}${bookclub_id}/post/${post_id}/award/${award_id}`),
         ungrantAwardToPost: (bookclub_id, post_id, award_id) => (`${baseUrl}${BOOK_CLUBS_PREFIX}${bookclub_id}/post/${post_id}/award/${award_id}`),
         // Bug notifications

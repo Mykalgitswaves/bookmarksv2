@@ -2491,9 +2491,9 @@ async def get_afterword_award_stats(
         )
     
 @router.get(
-    "/{book_club_id}/check_status"
-    , name='bookclubs:get_afterword_club_stats'
-    )
+    "/{book_club_id}/check_status",
+    name='bookclubs:get_afterword_club_stats'
+)
 async def get_afterword_award_stats(
     book_club_id: str,
     current_user: Annotated[User,Depends(get_current_active_user)],
