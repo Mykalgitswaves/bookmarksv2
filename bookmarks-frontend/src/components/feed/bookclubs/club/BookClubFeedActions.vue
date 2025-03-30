@@ -24,7 +24,7 @@
             </h5>
         </div>
 
-        <ViewAwards/>
+        <ViewAwards />
     </div>
 </template>
 <script setup>

@@ -1080,7 +1080,7 @@ class CommentCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
         response = result.single()
         return response is not None
     
-    def create_comment_pin(self, pinned_comment: PinnedComment):
+    def create_comment_pin(self, user_id: str, pinned_comment: PinnedComment):
         """
         Adds a pinned comment for a post
         
@@ -1091,14 +1091,14 @@ class CommentCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
             None
         """
         with self.driver.session() as session:
-            result = session.execute_write(self.create_comment_pin_query, pinned_comment)
+            result = session.execute_write(self.create_comment_pin_query, user_id, pinned_comment)
         return result
         
     @staticmethod
-    def create_comment_pin_query(tx, pinned_comment):
+    def create_comment_pin_query(tx, user_id, pinned_comment):
         query = """
-                match (u:User {username:$username})-[postRel:POSTED]->(pp {id: $post_id}) 
-                match (rr:Comment {id: $comment_id, is_reply: False})
+                match (u:User {id: $user_id})-[postRel:POSTED]->(pp: Post {id: $post_id}) 
+                match (rr:Comment {id: $comment_id, is_reply: False})-[hc:HAS_COMMENT]->(pp)
                 with pp,rr
                 where not exists ((pp)-[:PINNED]->(rr)) 
                     create (pp)-[ll:PINNED {created_date:datetime()}]->(rr)
@@ -1108,7 +1108,8 @@ class CommentCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
         result = tx.run(query, 
                         comment_id=pinned_comment.comment_id, 
                         post_id=pinned_comment.post_id,
-                        username=pinned_comment.username)
+                        user_id=user_id,
+                    )
         
         response = result.single()
         return response is not None

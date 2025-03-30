@@ -95,9 +95,7 @@ export async function unlikeThread(thread: Thread) {
   )
 }
 
-const emit = defineEmits();
-
-export async function deleteThread(thread: Thread) {
+export async function deleteThread(emit: Function, thread: Thread) {
   await db.put(urls.reviews.deleteComment(thread.id),
   null, 
   false,
@@ -109,4 +107,18 @@ export async function deleteThread(thread: Thread) {
     console.warn(ERROR_lOG, err)
   }
   )
+}
+
+
+export async function pinThread(emit:Function, index: Number, thread: Thread) {
+  emit('pre-success-thread-pinned', [index, thread]);
+
+  await db.put(urls.reviews.pinComment(thread.post_id, thread.id), null, false, 
+    (res:any) => {
+      thread.pinned = true;
+      emit('post-success-thread-prinned', [index, thread]);
+    }, (err) => {
+      console.log(err)
+      emit('error-pinning-thread', [index, thread]);
+    });
 }

@@ -18,7 +18,9 @@
 
             <!-- If either the club or the user is finished reading then load this. -->
             <span class="finished-reading-blurb" v-if="currentStatusForClub.clubFinishedWithCurrentBook || currentStatusForClub.userFinishedWithCurrentBook">
-                {{ currentStatusForClub.clubFinishedWithCurrentBook ? 'The club has finished reading' : 'You\'ve finished reading' }}
+                {{ currentStatusForClub.clubFinishedWithCurrentBook ? 
+                    'The club has finished reading' : 'You\'ve finished reading' 
+                }}
 
                 <IconCrown />
             </span>

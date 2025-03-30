@@ -12,6 +12,7 @@
         :post-id="postId"
         :comment="comment"
         @pre-success-comment="(payload) => $emit('pre-success-comment', payload)"
+        @comment-created="(payload) => $emit('comment-created', payload)"
       />
 
       <button

@@ -18,7 +18,8 @@
 .btn-specter {
     color: var(--stone-500);
     fill: var(--stone-500);
-    
+    box-shadow: none !important;
+
     &:hover {
         background-color: var(--stone-100);
     }

@@ -5,28 +5,38 @@
         <AsyncComponent :promises="[getPostPromise]">
             <template #resolved>
                 <div class="post-wrap">
-                    <ClubPost :post="data.post" :is-viewing-post="true"/>
+                    <ClubPost :post="postData.post" :is-viewing-post="true"/>
                     
                     <ViewAwards/>
                 </div>
 
-                <ClubPostCommentBar :post-id="data.post.id" :comment="clubCommentSelectedForReply" @stop-commenting="clubCommentSelectedForReply = null"/>
+                <ClubPostCommentBar 
+                    :post-id="postData.post?.id" 
+                    :comment="clubCommentSelectedForReply" 
+                    @stop-commenting="clubCommentSelectedForReply = null"
+                    @comment-created="(thread) => addThreadToComments(thread)"    
+                />
             </template>
             <template #loading>
                 <div class="fancy loading gradient radius-sm py-5 text-center mb-5">Loading post...</div>
             </template>
         </AsyncComponent>
         
-        <!-- Then load the comments as separate components -->
-        <AsyncComponent :promises="[getPaginatedCommentsForPostPromise]">
+
+        <!-- Pinned, allows us to rerender on pin of a comment. -->
+        <AsyncComponent 
+            :promise-factory="getPaginatedCommentsForPostPromiseFactory" 
+            :subscription-key="PINNED_COMMENTS_SUBSCRIPTION_KEY"
+        >
             <template #resolved>
                 <div>
                     <Thread 
                         class="mb-3 pinned"
                         v-for="(thread, index) in pinnedCommentThreads"
-                        :key="thread.id"
+                        :key="index"
                         :index="index"
                         view="main"
+                        :post="postData?.post"
                         :bookclub-id="bookclub"
                         :replying-to-id="clubCommentSelectedForReply?.id"
                         :is-sub-thread="thread.depth && thread.depth > 0"
@@ -35,7 +45,13 @@
                         @unpinned="([index, thread]) => moveThreadToUnpinned(index, thread)"
                     />
                 </div>
-                
+            </template>
+        </AsyncComponent>
+
+
+        <!-- Then load the comments as separate components -->
+        <AsyncComponent :promises="[getPaginatedCommentsForPostPromiseFactory()]">
+            <template #resolved>
                 <div v-if="commentThreads?.length" class="mt-5">
                     <Thread 
                         v-for="(thread, index) in commentThreads" 
@@ -45,22 +61,23 @@
                         :thread="thread"
                         :index="index"
                         view="main"
+                        :post="postData?.post"
                         :bookclub-id="bookclub"
                         :replying-to-id="clubCommentSelectedForReply?.id"
                         :is-sub-thread="thread.depth && thread.depth > 0"
                         :parent-to-subthread="thread.replied_to && parentToSubthreadMap[thread.replied_to]"
                         @thread-selected="(thread) => clubCommentSelectedForReply = thread"
-                        @thread-pinned="(([index, thread]) => moveThreadToPinned(index, thread))"
+                        @post-success-thread-pinned="(([index, thread]) => moveThreadToPinned(index, thread))"
                     />
                 </div>
 
-                <div v-else class="mt-5 text-2xl fancy text-stone-600 text-center">
+                <div v-else class="mt-5 text-2xl fancy text-stone-600 text-center pb-5">
                     <!-- if there are no comments -->
-                    🎉No comments yet🎉
+                    No comments yet
                 </div>
             </template>
             <template #loading>
-                <div class="fancy loading gradient radius-sm py-5 text-center mb-5">Loading comments...</div>
+                <div class="fancy loading gradient radius-sm py-5 text-center mb-5 pb-5">Loading comments...</div>
             </template>
         </AsyncComponent>
     </div>
@@ -71,7 +88,7 @@
 <script setup lang="ts">
 // Vue
 import { ref, computed, defineAsyncComponent } from 'vue';
-import {useRoute} from 'vue-router';
+import { useRoute } from 'vue-router';
 // Services
 import { urls, navRoutes } from '../../../../../services/urls';
 import { db } from '../../../../../services/db';
@@ -79,13 +96,15 @@ import { PubSub } from '../../../../../services/pubsub';
 // Stores
 import { currentUser } from '../../../../../stores/currentUser';
 // Component services
-import { flattenThreads } from '@/components/feed/bookclubs/club/posts/comments/threads';
+import { flattenThreads, Thread as ThreadInterface } from '@/components/feed/bookclubs/club/posts/comments/threads';
+
 // Components
-import ClubPost from './ClubPost.vue';
+import BackBtn from '@/components/feed/partials/back-btn.vue';
 import AsyncComponent from '../../../partials/AsyncComponent.vue';
-import ErrorToast from './../../../../../components/shared/ErrorToast.vue';
+import ClubPost from './ClubPost.vue';
 import ClubPostCommentBar from './ClubPostCommentBar.vue';
-import BackBtn from '@/components/feed/partials/back-btn.vue'
+import ErrorToast from './../../../../../components/shared/ErrorToast.vue';
+
 // Asyncs
 const ViewAwards = defineAsyncComponent(() => import('../awards/ViewAwards.vue'));
 const Thread = defineAsyncComponent(() => import('./comments/Thread.vue'));
@@ -93,16 +112,16 @@ const Thread = defineAsyncComponent(() => import('./comments/Thread.vue'));
 const route = useRoute();
 const { user, bookclub, postId, commentId } = route.params;
 
-let data = {
+const postData = ref({
     post: {},
     error: {},
-};
+});
 
 const clubCommentSelectedForReply = ref(null);
 
 const commentData = ref({
-    comments: [],
-    pinnedComments: [],
+    comments: [] as ThreadInterface[],
+    pinnedComments: [] as ThreadInterface[],
     errors: []
 });
 
@@ -121,16 +140,19 @@ const getPostPromise = db.get(
     null, 
     false, 
     (res: PostResponse) => {
-        data.post = res.posts;
+        postData.value.post = res.posts;
     }, 
     (err: Error) => {
-        data.error = err;
+        postData.value.error = err;
         console.error(err);
     }
 );
 
+/**
+ * @THREADS
+ */
 
-let getPaginatedCommentsForPostPromise = db.get(
+const getPaginatedCommentsForPostPromiseFactory = () => db.get(
     urls.concatQueryParams(
         urls.reviews.getComments(postId), 
         { 'book_club_id': bookclub , ...pagination.value}
@@ -145,13 +167,43 @@ let getPaginatedCommentsForPostPromise = db.get(
     }
 );
 
+// Some js trickery, we want to recomputed commentThreads whenever we add a new reply to a thread.
+// Computed reruns when a reactive dept is changed, so this little hack helps us make sure the 
+// comments are appearing after they are posted. 
+// ( Something about how vue doesn't know when deeply nested state has changed inside computed. Probably being shallow watched )
+let triggerCommentRerender = Symbol('huh?');
+
+function addThreadToComments(thread:any) {
+    if (clubCommentSelectedForReply) {
+        // find the thread to add to the replies of
+        const { id } = clubCommentSelectedForReply.value;
+        const commentToAddThreadTo = commentData.value.comments.find((comment) => comment.id === id);
+        // Question - will this actually rerender?
+        if (commentToAddThreadTo) {
+            thread.depth = 1;
+            commentToAddThreadTo.thread.unshift(thread);
+            triggerCommentRerender = Symbol('Dude');
+            // do something to trigger the computed comment again to flatten everything based on whats in memory
+            return;
+        };
+    }
+
+    commentData.value.comments.unshift(thread);
+};
+
 // We don't want to see replies to replies to replies on the main page.
 const MAX_THREAD_DEPTH = 1;
+
 // Computed functions that render on load, maybe these don't need to be computed - #TODO: think about not computed. 
+// Thought about it, they still do. 
 const commentThreads = computed(() => {
+    // Force refresh for computed func.
+    triggerCommentRerender;
     return flattenThreads(commentData.value.comments, MAX_THREAD_DEPTH);    
 });
 
+// Used to trigger refreshes after you pin a comment.
+const PINNED_COMMENTS_SUBSCRIPTION_KEY = `load-pinned-comments-bookclub-${bookclub}`;
 const pinnedCommentThreads = computed(() => {
     return flattenThreads(commentData.value.pinnedComments, MAX_THREAD_DEPTH);
 });
@@ -168,33 +220,14 @@ const parentToSubthreadMap = computed(() => {
     return {};
 });
 
-// ON pre success of posting a reply, 
-// find the correct parent comment thread and add your comment to the end of the list.
-// Different than commenting to a post which goes to the start of the list. 
-PubSub.subscribe('footer-comment-pre-success-comment', (payload) => {
-    const refComment = commentData.value.comments.find((comment) => comment.id === payload.commentId);
-
-    if (refComment) {
-        const reply = {
-            text: payload.reply,
-            username: currentUser.value.username,
-            created_date: null, 
-            num_replies: 0,
-            liked_by_current_user: false,
-            post_id: postId,
-        };   
-        refComment.replies.push(reply);
-    } else {
-        setTimeout(() => {
-            errorToastMessage.value = 'Something weird happened 🤔';
-        }, 1500);
-    }
-});
-
 // UI functions for moving threads to pinned
-function moveThreadToPinned(index:Number, thread:Thread) {
-    
-}
+function moveThreadToPinned(index: Number, emittedThread: any) {
+    debugger;
+    commentData.value.comments = commentData.value.comments.filter(
+        (thread: any, i:Number) => i !== index);
+
+    PubSub.publish(PINNED_COMMENTS_SUBSCRIPTION_KEY)
+};
 </script>
 <style scoped>
 .border { border: 1px solid var(--stone-300); } 

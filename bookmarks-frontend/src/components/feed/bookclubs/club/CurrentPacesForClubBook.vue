@@ -18,7 +18,7 @@
                             </button>
                         </div>
 
-                        {{ statusForClub }}
+                        
                         <div v-if="isViewingAllPaces || startOpen || statusForClub.clubFinishedWithCurrentBook" 
                             class="member-paces mt-2"
                         >

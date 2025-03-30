@@ -823,6 +823,7 @@ async def get_pinned_comments_for_post(
     Gets the pinned comments on a post
     Uses skip and limit for pagination
     """
+  
     if not current_user:
         raise HTTPException("401", "Unauthorized")
 
@@ -844,8 +845,8 @@ async def get_pinned_comments_for_post(
 
 @router.put("/post/{post_id}/pin/{comment_id}", name="comment:pin")
 async def pin_comment(
-    comment_id: str,
     post_id: str,
+    comment_id: str,
     current_user: Annotated[User, Depends(get_current_active_user)],
     comment_repo: CommentCRUDRepositoryGraph = Depends(
         get_repository(repo_type=CommentCRUDRepositoryGraph)
@@ -869,7 +870,7 @@ async def pin_comment(
         raise HTTPException(status_code=400, detail=str(e))
 
     if pinned_comment:
-        response = comment_repo.create_comment_pin(pinned_comment)
+        response = comment_repo.create_comment_pin(current_user.id, pinned_comment)
 
         if response:
             logger.info(

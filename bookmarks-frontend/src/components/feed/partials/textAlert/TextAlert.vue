@@ -60,6 +60,7 @@ const isCollapsed = ref(true);
     column-gap: 14px;
     margin-left: auto;
     margin-right: auto;
+    grid-template-columns: 30px 1fr;
     
     svg {
         max-width: 40px;

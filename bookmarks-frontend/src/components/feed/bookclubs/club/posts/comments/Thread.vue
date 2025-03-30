@@ -46,7 +46,7 @@
         <button
           type="button"
           class="btn btn-tiny btn-icon text-stone-500 relative"
-          @click="replyToThread(thread)"
+          @click.stop="replyToThread(thread)"
         >
           <IconClubComment />
             
@@ -64,14 +64,45 @@
 
             <span class="fancy text-sm comment-count fancy">{{ thread.likes }}</span>
           </button>
-          <button
-            v-if="thread.posted_by_current_user" 
-            type="button"
-            class="btn btn-tiny btn-specter"
-            @click.stop="deleteThread(thread)"
+
+          <!-- Controls for pinning and fun nerdage -->
+          <div v-if="thread.depth === 0 && (thread.posted_by_current_user || post?.posted_by_current_user)" 
+            class="absolute top-2 right-5"
           >
-            <IconTrash />
-          </button>
+            <Popover>
+              <PopoverTrigger as-child @click.stop>
+                <Button @click.stop variant="ghost">
+                  ...
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent class="w-fit">
+                <div class="flex gap-2">
+                  <Button
+                    v-if="thread.posted_by_current_user" 
+                    type="button"
+                    variant="ghost"
+                    class="btn btn-tiny btn-specter"
+                    @click.stop="deleteThread(emit, thread)"
+                    >
+                    <IconTrash />
+                  </Button>
+
+                  <Button
+                    v-if="post?.posted_by_current_user" 
+                    type="button"
+                    variant="ghost"
+                    class="btn btn-tiny btn-specter"
+                    @click.stop="pinThread(emit, index, thread)"
+                  >
+                    <IconPin />
+                  </Button>
+                  
+              </div>
+            </PopoverContent>
+          </Popover>
+        </div>
+
+          
         </div>
       </div>
     </div>
@@ -79,17 +110,25 @@
 </template>
 <script setup lang="ts">
 // vue
-import { useRouter } from 'vue-router'
+import { useRouter } from 'vue-router';
 // services
-import { Thread as threadProps, likeThread, unlikeThread, deleteThread } from './threads'
-import { dates } from '@/services/dates'
-import { navRoutes } from '@/services/urls'
+import { Thread as threadProps, likeThread, unlikeThread, deleteThread, pinThread } from './threads';
+import { dates } from '@/services/dates';
+import { navRoutes } from '@/services/urls';
 // Stores
-import { currentUser } from '@/stores/currentUser'
+import { useCurrentUserStore } from '@/stores/currentUser';
 // Components
-import IconClubLike from '../../awards/icons/ClubLike.vue'
-import IconClubComment from '../../../../../svg/icon-club-comment.vue'
-import IconTrash from '@/components/svg/icon-trash.vue'
+import IconClubLike from '../../awards/icons/ClubLike.vue';
+import IconClubComment from '../../../../../svg/icon-club-comment.vue';
+import IconTrash from '@/components/svg/icon-trash.vue';
+import IconPin from '@/components/svg/icon-pin.vue';
+
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/lib/registry/default/ui/popover';
+import { Button } from '@/lib/registry/default/ui/button';
 
 const props = defineProps({
   thread: {
@@ -102,7 +141,7 @@ const props = defineProps({
   },
   index: {
     type: Number,
-    required: false,
+    required: true,
   },
   bookclubId: {
     type: String || null,
@@ -132,28 +171,41 @@ const props = defineProps({
     type: Boolean,
     required: false,
     default: false,
-  }
-})
+  },
+  post: {
+    type: Object,
+    required: false,
+  },
+});
 
-const router = useRouter()
-const emit = defineEmits(['thread-selected', 'comment-id-selected', 'navigating-threads'])
-// used to assign a darker color based on the depth of reply
+const router = useRouter();
+
+const store = useCurrentUserStore();
+const { user } = store;
+
+const emit = defineEmits([
+  'thread-deleted',
+  'thread-selected', 
+  'comment-id-selected', 
+  'navigating-threads', 
+  'pre-success-thread-pinned', 
+  'post-success-thread-prinned', 
+  'error-pinning-thread',
+]);
 
 function replyToThread(thread: threadProps): void {
   const payload = { ...thread, index: props.index }
   emit('thread-selected', payload)
-}
+};
 
 const toSubThreadRoute = props.bookclubId
   ? navRoutes.toSubThreadPage(
-      currentUser.value.id,
+      user.id,
       props.bookclubId,
-      props.thread.post_id,
+      props.thread?.post_id,
       props.thread.id
     )
-  : ''
-
-console.log(toSubThreadRoute, ': subthread route')
+  : '';
 
 function navigateToThread() {
     if (props.isSubThread && props.view !== 'main') {
@@ -163,7 +215,7 @@ function navigateToThread() {
         console.log('to sub thread router push'); 
         router.push(toSubThreadRoute)
     }
-}
+};
 </script>
 <style scoped>
 .thread {
@@ -212,8 +264,13 @@ function navigateToThread() {
 }
 
 .thread .thread-body {
+  position: relative;
   padding: 6px 12px;
   width: 100%;
+}
+
+.absolute {
+  position: absolute;
 }
 
 .thread-body.selected {
