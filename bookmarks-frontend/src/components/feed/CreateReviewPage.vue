@@ -22,15 +22,18 @@
     <div class="mobile-menu-spacer sm:hidden"></div>
 </template>
 <script setup>
+    import { ref, defineAsyncComponent } from 'vue';
+    
     import BackBtn from './partials/back-btn.vue';
     import IconAddPost from '../svg/icon-add-post.vue';
-    import createReviewPost from './createPosts/createReviewPost.vue';
-    import createUpdatePost from './createPosts/createUpdatePost.vue';
-    import createComparisonPost from './createPosts/createComparisonPost.vue';
-    import { ref } from 'vue';
+    
     import { useRoute } from 'vue-router';
     import { urls } from '../../services/urls';
     import { db } from '../../services/db';
+
+    const createReviewPost = defineAsyncComponent(() => import('./createPosts/createReviewPost.vue'));
+    const createUpdatePost = defineAsyncComponent(() => import('./createPosts/createUpdatePost.vue'));
+    const createComparisonPost = defineAsyncComponent(() => import('./createPosts/createComparisonPost.vue'));
 
     const route = useRoute();
     const { work1, reviewType } = route.params;

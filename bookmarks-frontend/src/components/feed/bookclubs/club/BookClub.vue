@@ -42,19 +42,26 @@
     <!-- </teleport>     -->
 </template>
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, defineAsyncComponent } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
+
+// Services
 import { db } from '../../../../services/db';
 import { navRoutes, urls } from '../../../../services/urls';
+
+// Stores
+import {  useCurrentUserStore } from '@/stores/currentUser';
+
 // svg
 // import IconSettings from '../../../svg/icon-settings.vue';
 // subcomponent views!
-import BookClubFeed from './BookClubFeed.vue';
-import ClubMemberSettingsMain from './invite/ClubMemberSettingsMain.vue';
-import CurrentlyReadingSettings from '../currently-reading/CurrentlyReadingSettings.vue';
-import ClubPostCommentsView from './posts/ClubPostCommentsView.vue';
-import SubThreadView from './posts/comments/SubThreadView.vue';
-import ClubAfterwords from './afterwords/ClubAfterwords.vue';
+const BookClubFeed = defineAsyncComponent(() => import('./BookClubFeed.vue'));
+const ClubMemberSettingsMain = defineAsyncComponent(() => import('./invite/ClubMemberSettingsMain.vue'));
+const CurrentlyReadingSettings = defineAsyncComponent(() => import('../currently-reading/CurrentlyReadingSettings.vue'));
+const ClubPostCommentsView = defineAsyncComponent(() => import('./posts/ClubPostCommentsView.vue'));
+const SubThreadView = defineAsyncComponent(() => import('./posts/comments/SubThreadView.vue'));
+const ClubAfterwords = defineAsyncComponent(() => import('./afterwords/ClubAfterwords.vue'));
+
 
 /**
  * ----------------------------------------------------------------------------
@@ -70,6 +77,14 @@ const wrappedSection = ref(null);
 
 let error;
 let club;
+
+/**
+ * @update_store
+ * @description - Update your js shared state for current user to have the current book clubs relationships reflected on the object.
+ */
+
+const store = useCurrentUserStore();
+store.getCurrentClubRelationshipsOnUser(user, bookclub);
 
 const subComponentRoutes = {
     feed: 'feed',
@@ -117,8 +132,6 @@ const currentView = computed(() => {
  * @events
  * ----------------------------------------------------------------------------
  */
-
-document.addEventListener
 
 
 /**

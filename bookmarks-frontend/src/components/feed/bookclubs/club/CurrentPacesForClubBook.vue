@@ -2,7 +2,7 @@
     <div  v-if="totalChapters" class="paces-container" :class="{'min-h-200': startOpen && memberPaces?.length > 1}">
         <AsyncComponent :promises="[clubPacePromise]">
             <template #resolved>
-                    <div v-if="memberPaces.length && memberPaces.length > 1">
+                    <div v-if="memberPaces.length">
                         <div class="flex text-sm">
                             <h4 class="text-stone-700">
                                 <span class="text-indigo-500">{{memberPaces[0].username }}</span>
@@ -18,7 +18,10 @@
                             </button>
                         </div>
 
-                        <div v-if="isViewingAllPaces || startOpen" class="member-paces mt-2">
+                        {{ statusForClub }}
+                        <div v-if="isViewingAllPaces || startOpen || statusForClub.clubFinishedWithCurrentBook" 
+                            class="member-paces mt-2"
+                        >
                             <div 
                                 v-for="(member, index) in memberPaces" 
                                 :key="member.id"
@@ -35,7 +38,7 @@
 
                                 <div class="pace-line" 
                                     :style="{
-                                        width: generateProgressBarWidthForMember(member),
+                                        width: statusForClub.clubFinishedWithCurrentBook  ? '100%' : generateProgressBarWidthForMember(member),
                                         height: '4px',
                                         backgroundColor: member?.is_finished_reading ? 'var(--green-300)' : 'var(--indigo-300)',
                                         borderRadius:  '4px',
@@ -72,7 +75,7 @@
                             type="button"
                             class="btn text-sm btn-tiny btn-nav fancy ml-auto mr-auto" 
                             @click="$router.push(
-                                navRoutes.bookClubSettingsManageMembersIndex(currentUser.id, $route.params.bookclub)
+                                navRoutes.bookClubSettingsManageMembersIndex(user.id, $route.params.bookclub)
                             )"
                         >
                             Add members
@@ -81,7 +84,15 @@
 
                     <div v-else-if="!memberPaces.length" 
                         class="fancy text-stone-500 text-base"
-                    >No ones started reading! (or made an update)</div>
+                    >   
+                        <span v-if="!statusForClub.clubFinishedWithCurrentBook">
+                            No ones started reading! (or made an update)
+                        </span>
+                        
+                        <span class="block text-sm" v-if="statusForClub.clubFinishedWithCurrentBook">
+                            No one posted but the clubs done reading 🧐?
+                        </span>
+                    </div>
             </template>
             <template #loading>
                 <h4 class="text-center fancy text-stone-600">loading paces</h4>
@@ -93,10 +104,10 @@
 </template>
 <script setup>
 // Vue
-import { defineAsyncComponent, ref } from 'vue';
+import { defineAsyncComponent, ref, computed } from 'vue';
 import { useRoute } from 'vue-router';
 // stores
-import { currentUser } from '@/stores/currentUser';
+import { useCurrentUserStore } from '@/stores/currentUser';
 // services
 import { db } from '../../../../services/db';
 import { urls } from '../../../../services/urls';
@@ -124,12 +135,28 @@ const props = defineProps({
 let memberPaces; 
 let svgPaceMap = {};
 const route = useRoute();
+const { bookclub } = route.params;
 const isViewingAllPaces = ref(false);
 const hasMemberBeenPeerPressured = ref({})
 const toast = ref(null);
 
+const store = useCurrentUserStore();
+const { user } = store;
+
+const statusForClub = computed(() => {
+    const clubRel = user.clubs[bookclub];
+
+    if(!clubRel) {
+        console.warn('badbadnotgood status for club');
+        return false
+    }
+
+    return clubRel;
+});
+
 const clubPacePromise = db.get(urls.bookclubs.getClubPace(route.params.bookclub), null, false, (res) => {
-    memberPaces = res.member_paces
+    memberPaces = res.member_paces;
+
     memberPaces.forEach((member) => {
         if (member.pace === 99999) {
             member.is_finished_reading = true;

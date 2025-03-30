@@ -20,17 +20,21 @@
         <template #resolved>
             <section class="transition">
                 <div v-if="!!data.currentlyReadingBook" class="mb-10">
-                    <SelectedBook :book="data.currentlyReadingBook" :set-book="true"/>
+                    <SelectedBook 
+                        :book="data.currentlyReadingBook" 
+                        :set-book="true"
+                        :finished="data.finished" 
+                    />
 
-                    <CurrentPacesForClubBook :start-open="true" :total-chapters="data.currentlyReadingBook.chapters" />
-
+                    <CurrentPacesForClubBook 
+                        :start-open="true" 
+                        :total-chapters="data.currentlyReadingBook.chapters" 
+                    />
 
                     <div class="divider pb-5"></div>
-                    <!-- TODO: Add in permission check for club -->
-
-                    <!-- TODO: check to see if you are the moderator and haven't already finished
-                      -->
-                    <div class="flex justify-around" v-if="!data.isClubFinishedReading">
+                    
+                    <!-- TODO: check to see if you are the owner and your club hasn't already finished reading -->
+                    <div class="flex justify-around" v-if="!data.finished.club && data.user.isOwner">
                         <Dialog>
                             <DialogTrigger>
                                 <span class="block fancy">We've finished reading</span>
@@ -136,7 +140,14 @@ const submitting = ref(false);
 const data = ref({
     currentlyReadingBook: null,
     isClubFinishedReading: false, // default to falsey value for starters.
-    isShowingSetCurrentBookForm: true,
+    finished: {
+        user: false,
+        club: false,
+    },
+    user: {
+        isOwner: false,
+        isMember: false,
+    }
 });
 
 
@@ -155,7 +166,14 @@ const currentlyReadingStatusPromiseFactory = () => db.get(
     null, 
     false, 
     (res) => { 
-        console.log(res);
+        data.value.finished = {
+            user: res.data.is_user_finished_with_current_book,
+            club: res.data.is_club_finished_with_current_book,
+        };
+        data.value.user = {
+            isOwner: res.data.is_owner,
+            isMember: res.data.is_member,
+        };
     }, (err) => {
         console.log(err);
     }

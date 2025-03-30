@@ -2235,9 +2235,9 @@ async def get_afterword_highlights(
 
 @router.get(
     "/{book_club_id}/afterword/{user_id}/club_stats/{book_club_book_id}"
-    , name='bookclubs:get_afterword_club_stats'
+    , name='bookclubs:get_club_reading_status'
     )
-async def get_afterword_club_stats(
+async def get_club_reading_status(
     book_club_id: str,
     user_id: str,
     book_club_book_id: str,

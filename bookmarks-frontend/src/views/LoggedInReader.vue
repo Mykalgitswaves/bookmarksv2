@@ -200,20 +200,23 @@
   <Toaster/>
 </template>
 <script setup>
-import TopNav from '@/components/feed/topnav.vue';
-import FooterNav from '@/components/feed/footernav.vue'
-import CloseButton from '../components/feed/partials/CloseButton.vue';
 import { ref, computed, watch, nextTick, onMounted } from "vue";
 import { useRoute, useRouter } from 'vue-router';
 import { db } from '../services/db'
 import { urls, navRoutes } from '../services/urls'
 import { PubSub } from '../services/pubsub';
 import { getCurrentUser } from '../stores/currentUser.ts';
-import AsyncComponent from '@/components/feed/partials/AsyncComponent.vue';
 import { Toaster } from '@/lib/registry/default/ui/toast';
+
+import TopNav from '@/components/feed/topnav.vue';
+import FooterNav from '@/components/feed/footernav.vue'
+import CloseButton from '../components/feed/partials/CloseButton.vue';
+import AsyncComponent from '@/components/feed/partials/AsyncComponent.vue';
+
 const route = useRoute();
 const router = useRouter();
 const { user } = route.params;
+
 // Fix for a weird bug we sometimes run into from bad navigation.
 // If user is ever undefined make us logout.
 watch(() => route.params, (newValue) => {
@@ -242,6 +245,9 @@ const searchData = ref({
 const hasSearchResults = computed(() => Object.values(searchData.value).some((val) => val.length));
 
 const authPromise = db.authenticate(urls.authUrl, user);
+
+// Figure out what route i want to go.
+// const userStore = useCurrentUserStore();
 
 onMounted(async () => {
   try {

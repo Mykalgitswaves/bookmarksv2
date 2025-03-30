@@ -172,6 +172,7 @@ import { postData } from '../../../../postsData.js';
 
 // Hardcover components
 // ----------------------------------------
+import BackBtn from '../partials/back-btn.vue';
 
 const SearchBooks = defineAsyncComponent(() => import('./searchBooks.vue'));
 const CreatePostHeadline = defineAsyncComponent(() => import('./createPostHeadline.vue'));

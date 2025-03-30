@@ -10,7 +10,8 @@
                 </p>
             </div>
 
-            <button type="button" class="pt-5 text-stone-500" @click="openClubSettingsOverlay">
+            <!-- IF you are owner you have access to render this. -->
+            <button v-if="currentUser.clubs?.[$route.params.club]?.isOwner" type="button" class="pt-5 text-stone-500" @click="openClubSettingsOverlay">
                 <span class="visually-hidden">Settings</span>
                 
                 <IconNote />
@@ -65,6 +66,7 @@
                     <CreateReviewPost 
                         :book="currentlyReadingBook"
                         unique="bookclub"
+                        :is-postable-data="isPostableData"
                         @is-postable-data="(post) => reviewPost = post" 
                         @post-data="postReviewAndFinishReadingCurrentBook(reviewPost)"
                         @user-skipped-review="postReviewAndFinishReadingCurrentBook(null)"
@@ -79,7 +81,7 @@
                         class="grid gap-y-5 w-[80vw] md:w-[60vw] max-w-[800px]"
                         @submit="onSubmit"
                     > 
-                        <FormField v-slot="{ componentField }" name="title" :validate-on-blur="!isFieldDirty">
+                        <FormField v-slot="{ componentField }" name="title" :validate-on-blur="!isFormDirty">
                             <FormItem>
                                 <FormLabel class="fancy text-base text-stone-600">Title</FormLabel>
                                 
@@ -94,7 +96,7 @@
                                 <FormMessage />
                             </FormItem>
                         </FormField>
-                        <FormField v-slot="{ componentField }" name="description" :validate-on-blur="!isFieldDirty">
+                        <FormField v-slot="{ componentField }" name="description" :validate-on-blur="!isFormDirty">
                             <FormItem>
                                 <FormLabel class="fancy text-base text-stone-600">Description</FormLabel>
                                 
@@ -151,7 +153,7 @@
 <script setup>
 // ----------------------------------
 // Vue
-import { ref, watch, defineAsyncComponent } from 'vue';
+import { ref, watch, defineAsyncComponent, computed } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 // ----------------------------------
 // Services
@@ -167,7 +169,7 @@ import { currentUser } from '../../../../stores/currentUser.ts';
 // ----------------------------------
 // Form stuff
 // ----------------------------------
-import { useForm } from 'vee-validate';
+import { useForm, useIsFormDirty } from 'vee-validate';
 import { toTypedSchema } from '@vee-validate/zod';
 import * as z from 'zod';
 
@@ -267,13 +269,15 @@ const form = ref({
   description: props.club?.book_club_description || '',
 });
 
-const { handleSubmit } = useForm({
+const { handleSubmit, meta, values } = useForm({
   validationSchema: formSchema,
   initialValues: {
     title: form.value.title,
     description: form.value.description
   }
 });
+
+const isFormDirty = useIsFormDirty(meta);
 
 // Used to make the button clickable.
 const metaValuesHaveChanged = (values) => {
@@ -349,6 +353,15 @@ watch(() => overlays.value.updateOverlay, () => {
     watch();
 }, {immediate: false});
 
+// relevant for create review form;
+// might merit a refactor though - this seems unnecessary.
+const isPostableData = computed(() => {
+    if (reviewPost) {
+        return true;
+    }
+    return false;
+})
+
 
 // So users can scroll up and refresh feed. 
 function refreshFeed() {
@@ -382,7 +395,7 @@ function postUpdateForBookClub(update) {
 
 
 // Allow posting and then closing the overlay.
-function postReviewAndFinishReadingCurrentBook(post) {
+async function postReviewAndFinishReadingCurrentBook(post) {
     if (!post) {
         db.post(
             urls.concatQueryParams(
@@ -413,7 +426,7 @@ function postReviewAndFinishReadingCurrentBook(post) {
         );
     };
 
-    const { dialogRef } = overlays.value?.finishedReadingOverlay;
+    const dialogRef = overlays.value?.finishedReadingOverlay;
     dialogRef?.close();
     createConfetti();
 }

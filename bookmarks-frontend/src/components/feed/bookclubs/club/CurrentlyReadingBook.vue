@@ -15,6 +15,13 @@
                     {{ helpersCtrl.commanatoredString(book.author_names) }}
                 </p>
             </div>
+
+            <!-- If either the club or the user is finished reading then load this. -->
+            <span class="finished-reading-blurb" v-if="currentStatusForClub.clubFinishedWithCurrentBook || currentStatusForClub.userFinishedWithCurrentBook">
+                {{ currentStatusForClub.clubFinishedWithCurrentBook ? 'The club has finished reading' : 'You\'ve finished reading' }}
+
+                <IconCrown />
+            </span>
         </div>
         
         <div v-else class="currently-reading-book none">
@@ -33,7 +40,12 @@
     </div>
 </template>
 <script setup>
+import { computed, defineAsyncComponent } from 'vue';
+import {useRoute} from 'vue-router';
 import { helpersCtrl } from '../../../../services/helpers';
+import { useCurrentUserStore } from '@/stores/currentUser';
+
+const IconCrown = defineAsyncComponent(() => import('@/components/svg/icon-crown.vue'));
 
 defineProps({
     book: {
@@ -45,6 +57,23 @@ defineProps({
     }
 });
 
+const store = useCurrentUserStore();
+const { user } = store;
+
+const route = useRoute();
+const { bookclub } = route.params;
+// Computed function for when this changes.
+const currentStatusForClub = computed(() => {
+    const statusForClub = user.clubs[bookclub];
+
+    if (!statusForClub) {
+        console.warn('weird state mismanaged here');
+        return false;
+    }
+
+    return statusForClub;
+});
+
 </script>
 <style scoped>
 .currently-reading-book {
@@ -54,6 +83,7 @@ defineProps({
     border: 1px solid var(--stone-200);
     border-radius: 4px;
     padding: 8px;
+    position: relative;
 
     & .currently-reading-img {
         height: 80px;
@@ -63,5 +93,17 @@ defineProps({
     &.none {
         display: block;
     }
+}
+
+.finished-reading-blurb {
+    position: absolute;
+    bottom: 5px;
+    right: 10px;
+    display: flex;
+    align-items: end;
+    gap: 4px;
+    font-size: var(--font-sm);
+    color: var(--stone-400);
+    font-family: var(--fancy-script);
 }
 </style>   
