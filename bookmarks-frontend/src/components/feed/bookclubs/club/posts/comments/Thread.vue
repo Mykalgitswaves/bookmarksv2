@@ -249,7 +249,7 @@ function navigateToThread() {
         emit('navigating-threads', props.thread.id)
     } else {
         console.log('to sub thread router push'); 
-        router.push(toSubThreadRoute)
+        router.push(toSubThreadRoute.value)
     }
 };
 </script>

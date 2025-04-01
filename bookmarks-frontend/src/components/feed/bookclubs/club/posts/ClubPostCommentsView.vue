@@ -55,7 +55,7 @@
         <!-- Then load the comments as separate components -->
         <AsyncComponent :promises="[getPaginatedCommentsForPostPromiseFactory()]">
             <template #resolved>
-                <div v-if="pinnedCommentThreads">
+                <div v-if="pinnedCommentThreads" class="mt-5">
                     <Thread 
                         class="mb-3 pinned"
                         v-for="(thread, index) in pinnedCommentThreads"
@@ -93,6 +93,7 @@
                         @thread-selected="(thread) => clubCommentSelectedForReply = thread"
                         @pre-success-thread-pinned="(([index, thread]) => moveThreadToPinned(index, thread))"
                         @post-success-thread-pinned="() => console.log('yo dude')"
+                        @error-pinning-thread="() => console.log('we should probably use test')"
                     />
                 </div>
 
