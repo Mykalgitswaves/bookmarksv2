@@ -122,3 +122,15 @@ export async function pinThread(emit:Function, index: Number, thread: Thread) {
       emit('error-pinning-thread', [index, thread]);
     });
 }
+
+export async function unpinThread(emit:Function, index: Number, thread:Thread) {
+  emit('pre-success-thread-unpinned', [index, thread]);
+
+  await db.put(urls.reviews.unpinComment(thread.post_id, thread.id), null, false, (res:any) => {
+    thread.pinned = false;
+    emit('post-success-thread-unpinned', [index, thread]);
+  }, (err) => {
+    console.log(err);
+    emit('error-unpinning-thread');
+  });
+}

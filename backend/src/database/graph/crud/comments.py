@@ -265,7 +265,7 @@ class CommentCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
                 skip=skip, 
                 limit=limit,
                 depth=depth
-                )  
+            )  
         return(result)
     
     @staticmethod
@@ -328,7 +328,7 @@ class CommentCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
             depth, 
             book_club_posts=True,
             pinned=True
-            )
+        )
         
         result = tx.run(
             pinned_query, 
@@ -338,7 +338,7 @@ class CommentCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
             skip=skip, 
             limit=limit
         )
-
+        
         pinned_comments = []
         prev_comment_id = None
         for response in result:
@@ -350,7 +350,7 @@ class CommentCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
                 comment_author,
                 comment_data['parentLikedByUser'],
                 post_id,
-                user_id
+                user_id,
             )
             prev_comment_id = comment.id
             thread = []
@@ -372,7 +372,7 @@ class CommentCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
                 prev_comment_id = thread_comment_object.id
             
             comment.thread = thread or []
-            comments.append(comment)
+            pinned_comments.append(comment)
 
         return({"comments":comments, "pinned_comments": pinned_comments})
     
@@ -1097,19 +1097,20 @@ class CommentCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
     @staticmethod
     def create_comment_pin_query(tx, user_id, pinned_comment):
         query = """
-                match (u:User {id: $user_id})-[postRel:POSTED]->(pp: Post {id: $post_id}) 
-                match (rr:Comment {id: $comment_id, is_reply: False})-[hc:HAS_COMMENT]->(pp)
+                match (u:User {id: $user_id})-[postRel:POSTED]->(pp {id: $post_id}) 
+                match (pp)-[hc:HAS_COMMENT]->(rr:Comment {id: $comment_id, is_reply: False})
                 with pp,rr
-                where not exists ((pp)-[:PINNED]->(rr)) 
-                    create (pp)-[ll:PINNED {created_date:datetime()}]->(rr)
-                    set rr.pinned = True
-                    return rr
+                merge (pp)-[pinned:PINNED]->(rr)
+                on create set
+                    pinned.created_date = datetime(),
+                    rr.pinned = True
+                return rr
                 """
         result = tx.run(query, 
-                        comment_id=pinned_comment.comment_id, 
-                        post_id=pinned_comment.post_id,
-                        user_id=user_id,
-                    )
+                    comment_id=pinned_comment.comment_id, 
+                    post_id=pinned_comment.post_id,
+                    user_id=user_id,
+                )
         
         response = result.single()
         return response is not None

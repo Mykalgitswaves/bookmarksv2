@@ -24,7 +24,7 @@
         
 
         <!-- Pinned, allows us to rerender on pin of a comment. -->
-        <AsyncComponent 
+        <!-- <AsyncComponent 
             :promise-factory="getPaginatedCommentsForPostPromiseFactory" 
             :subscription-key="PINNED_COMMENTS_SUBSCRIPTION_KEY"
         >
@@ -46,13 +46,37 @@
                     />
                 </div>
             </template>
-        </AsyncComponent>
+            <template #loading>
+
+            </template>
+        </AsyncComponent> -->
 
 
         <!-- Then load the comments as separate components -->
         <AsyncComponent :promises="[getPaginatedCommentsForPostPromiseFactory()]">
             <template #resolved>
-                <div v-if="commentThreads?.length" class="mt-5">
+                <div v-if="pinnedCommentThreads">
+                    <Thread 
+                        class="mb-3 pinned"
+                        v-for="(thread, index) in pinnedCommentThreads"
+                        :key="thread.id"
+                        :thread="thread"
+                        :index="index"
+                        view="main"
+                        :pinned="true"
+                        :post="postData?.post"
+                        :bookclub-id="bookclub"
+                        :replying-to-id="clubCommentSelectedForReply?.id"
+                        :is-sub-thread="thread.depth && thread.depth > 0"
+                        :parent-to-subthread="thread.replied_to && parentToSubthreadMap[thread.replied_to]"
+                        @thread-selected="(thread) => clubCommentSelectedForReply = thread"
+                        @pre-success-thread-unpinned="([index, thread]) => moveThreadToUnpinned(index, thread)"
+                        @post-success-thread-unpinned="() => console.log('dude you did it')"
+                        @error-unpinning-thread="() => console.log('we should probably use test')"
+                    />
+                </div>
+
+                <div v-if="commentThreads" class="mt-5">
                     <Thread 
                         v-for="(thread, index) in commentThreads" 
                         class="mb-3"
@@ -67,7 +91,8 @@
                         :is-sub-thread="thread.depth && thread.depth > 0"
                         :parent-to-subthread="thread.replied_to && parentToSubthreadMap[thread.replied_to]"
                         @thread-selected="(thread) => clubCommentSelectedForReply = thread"
-                        @post-success-thread-pinned="(([index, thread]) => moveThreadToPinned(index, thread))"
+                        @pre-success-thread-pinned="(([index, thread]) => moveThreadToPinned(index, thread))"
+                        @post-success-thread-pinned="() => console.log('yo dude')"
                     />
                 </div>
 
@@ -93,8 +118,6 @@ import { useRoute } from 'vue-router';
 import { urls, navRoutes } from '../../../../../services/urls';
 import { db } from '../../../../../services/db';
 import { PubSub } from '../../../../../services/pubsub';
-// Stores
-import { currentUser } from '../../../../../stores/currentUser';
 // Component services
 import { flattenThreads, Thread as ThreadInterface } from '@/components/feed/bookclubs/club/posts/comments/threads';
 
@@ -152,7 +175,7 @@ const getPostPromise = db.get(
  * @THREADS
  */
 
-const getPaginatedCommentsForPostPromiseFactory = () => db.get(
+const getPaginatedCommentsForPostPromiseFactory = () => (db.get(
     urls.concatQueryParams(
         urls.reviews.getComments(postId), 
         { 'book_club_id': bookclub , ...pagination.value}
@@ -164,8 +187,8 @@ const getPaginatedCommentsForPostPromiseFactory = () => db.get(
         commentData.value.pinnedComments = res.data.pinned_comments;
     }, (err) => {
         commentData.value.errors = [err];
-    }
-);
+    },
+));
 
 // Some js trickery, we want to recomputed commentThreads whenever we add a new reply to a thread.
 // Computed reruns when a reactive dept is changed, so this little hack helps us make sure the 
@@ -199,12 +222,21 @@ const MAX_THREAD_DEPTH = 1;
 const commentThreads = computed(() => {
     // Force refresh for computed func.
     triggerCommentRerender;
+    if (!commentData.value.comments.length) {
+        return []
+    }
     return flattenThreads(commentData.value.comments, MAX_THREAD_DEPTH);    
 });
 
 // Used to trigger refreshes after you pin a comment.
 const PINNED_COMMENTS_SUBSCRIPTION_KEY = `load-pinned-comments-bookclub-${bookclub}`;
+
 const pinnedCommentThreads = computed(() => {
+    triggerCommentRerender;
+    if (!commentData.value.pinnedComments.length) {
+        return [];
+    }
+
     return flattenThreads(commentData.value.pinnedComments, MAX_THREAD_DEPTH);
 });
 
@@ -222,12 +254,21 @@ const parentToSubthreadMap = computed(() => {
 
 // UI functions for moving threads to pinned
 function moveThreadToPinned(index: Number, emittedThread: any) {
-    debugger;
     commentData.value.comments = commentData.value.comments.filter(
         (thread: any, i:Number) => i !== index);
 
-    PubSub.publish(PINNED_COMMENTS_SUBSCRIPTION_KEY)
+    commentData.value.pinnedComments.push(emittedThread);
+    // triggerCommentRerender = Symbol('pinned');
 };
+
+function moveThreadToUnpinned(index: Number, emittedThread: any) {
+    // Start by removing emitted thread from pinned.
+    commentData.value.pinnedComments = commentData.value.pinnedComments.filter(
+        (thread: any, i: Number) => i !== index);
+
+    commentData.value.comments.push(emittedThread);
+    // triggerCommentRerender = Symbol('unpinned');
+}
 </script>
 <style scoped>
 .border { border: 1px solid var(--stone-300); } 

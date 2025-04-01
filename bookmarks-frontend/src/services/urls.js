@@ -69,8 +69,8 @@ export const urls = {
         deleteComment: (comment_id) => (baseUrl + `api/posts/comment/${comment_id}/delete`),
         likeComment: (comment_id) => (baseUrl + `api/posts/comment/${comment_id}/like`),
         unlikeComment: (comment_id) => (baseUrl + `api/posts/comment/${comment_id}/remove_like`),
-        pinComment: (post_id, comment_id,) => (baseUrl + `api/posts/post/${post_id}/pin/${comment_id}`),
-        unpinComment: (comment_id, post_id) => (baseUrl + `api/review/post/${post_id}/comment/${comment_id}/remove_pin`),
+        pinComment: (post_id, comment_id,) => (`${baseUrl}api/posts/post/${post_id}/pin/${comment_id}`),
+        unpinComment: (post_id, comment_id) => (`${baseUrl}api/posts/post/${post_id}/remove_pin/${comment_id}`),
         getComments: (post_id) =>(baseUrl + `api/posts/post/${post_id}/comments`),
         // calling more comments (duh)
         getCommentById: (comment_id) => (`${baseUrl}api/review/comments/${comment_id}/comment`),

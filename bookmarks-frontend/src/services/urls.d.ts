@@ -7,7 +7,8 @@ declare module '@/services/urls' {
         likeComment: (commentId: string) => string;
         unlikeComment: (commentId: string) => string;
         deleteComment: (commentId: string) => string;
-        pinComment: (commentId: string, postId: string) => string;
+        pinComment: (postId: string, commentId: string) => string;
+        unpinComment: (postId: string, commentId: string) => string;
       };
       bookclubs: {
         getClubFeed: (clubId: string) => string;

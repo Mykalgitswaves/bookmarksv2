@@ -10,9 +10,6 @@
   >
     <div class="thread-columns">
       <span :class="{'selected': selectedComment}"></span>
-      <!-- <div class="thread-spine-top"></div>  -->
-      <!-- <ThreadTie /> -->
-      <!-- <div class="thread-spine-bottom"></div>  -->
     </div>
 
     <div class="thread-body" 
@@ -21,9 +18,8 @@
         'navigatable': !threadDisabled && thread.num_replies > 0,
       }"
       @click.stop="() => threadDisabled ? undefined : navigateToThread()"
-    >
+    > 
       <!-- Helps us see things as replies -->
-
       <div class="thread-header">
         <h5 class="mr-2 text-stone-600 bold text-base">
           {{ thread?.username }}
@@ -34,9 +30,7 @@
         </p>
       </div>
 
-      <div
-        class="thread-copy"
-      >
+      <div class="thread-copy">
         <p class="text-sm text-stone-600 fancy">
           {{ thread?.text || 'sample comment' }}
         </p>
@@ -65,10 +59,22 @@
             <span class="fancy text-sm comment-count fancy">{{ thread.likes }}</span>
           </button>
 
+
+        <div class="absolute top-2 right-5 flex gap-2 items-center">
+
+          <div v-if="(thread.pinned || pinned) && thread.depth === 0" class="thread-pinned-icon"> 
+            <!-- If its not posted by current user, then you want to show a button instead -->
+            <IconPin v-if="!post?.posted_by_current_user"/>
+            
+            <Button v-else type="button" variant="ghost" @click.stop="unpinThread()">
+              <!-- Only the current user who posted the post can unpin a comment -->
+              <IconPin />
+            </Button>
+          </div>
+
           <!-- Controls for pinning and fun nerdage -->
-          <div v-if="thread.depth === 0 && (thread.posted_by_current_user || post?.posted_by_current_user)" 
-            class="absolute top-2 right-5"
-          >
+          <div v-if="thread.depth === 0 && (thread.posted_by_current_user || post?.posted_by_current_user)">
+            <!-- We should check if thread pinned as well, haven't figured out how to get that working yet -->
             <Popover>
               <PopoverTrigger as-child @click.stop>
                 <Button @click.stop variant="ghost">
@@ -88,18 +94,27 @@
                   </Button>
 
                   <Button
-                    v-if="post?.posted_by_current_user" 
+                    v-if="post?.posted_by_current_user && !(thread.pinned || pinned)" 
                     type="button"
                     variant="ghost"
-                    class="btn btn-tiny btn-specter"
                     @click.stop="pinThread(emit, index, thread)"
                   >
                     <IconPin />
                   </Button>
+
+                  <Button
+                    v-if="post?.posted_by_current_user && (thread.pinned || pinned)" 
+                    type="button"
+                    variant="ghost"
+                    @click.stop="unpinThread(emit, index, thread)"
+                  >
+                    <IconUnpin />
+                  </Button>
                   
-              </div>
-            </PopoverContent>
-          </Popover>
+                </div>
+              </PopoverContent>
+            </Popover>
+          </div>
         </div>
 
           
@@ -110,9 +125,10 @@
 </template>
 <script setup lang="ts">
 // vue
-import { useRouter } from 'vue-router';
+import { computed } from 'vue';
+import { useRouter, useRoute } from 'vue-router';
 // services
-import { Thread as threadProps, likeThread, unlikeThread, deleteThread, pinThread } from './threads';
+import { Thread as threadProps, likeThread, unlikeThread, deleteThread, pinThread, unpinThread } from './threads';
 import { dates } from '@/services/dates';
 import { navRoutes } from '@/services/urls';
 // Stores
@@ -122,6 +138,7 @@ import IconClubLike from '../../awards/icons/ClubLike.vue';
 import IconClubComment from '../../../../../svg/icon-club-comment.vue';
 import IconTrash from '@/components/svg/icon-trash.vue';
 import IconPin from '@/components/svg/icon-pin.vue';
+import IconUnpin from '@/components/svg/icon-unpin.vue';
 
 import {
   Popover,
@@ -176,6 +193,13 @@ const props = defineProps({
     type: Object,
     required: false,
   },
+  // we should be getting this from our server but we aren't for some weird reason
+  // #TODO: @michael - fix server returning this in the build_comment_object 
+  pinned: {
+    type: Boolean,
+    required: false,
+    default: false,
+  }
 });
 
 const router = useRouter();
@@ -191,6 +215,9 @@ const emit = defineEmits([
   'pre-success-thread-pinned', 
   'post-success-thread-prinned', 
   'error-pinning-thread',
+  'pre-success-thread-unpinned',
+  'post-success-thread-unpinned',
+  'error-unpinning-thread',
 ]);
 
 function replyToThread(thread: threadProps): void {
@@ -198,14 +225,23 @@ function replyToThread(thread: threadProps): void {
   emit('thread-selected', payload)
 };
 
-const toSubThreadRoute = props.bookclubId
+const route = useRoute();
+
+const toSubThreadRoute = computed(() => {
+  let userId = user.id
+  if (!userId) {
+    userId = route.params.user;
+  }
+
+  return props.bookclubId
   ? navRoutes.toSubThreadPage(
-      user.id,
+      userId,
       props.bookclubId,
       props.thread?.post_id,
       props.thread.id
     )
-  : '';
+  : ''
+});
 
 function navigateToThread() {
     if (props.isSubThread && props.view !== 'main') {
@@ -326,6 +362,10 @@ function navigateToThread() {
   color: var(--stone-100);
   border-radius: 2px;
   font-size: var(--font-xs)
+}
+
+.thread-pinned-icon {
+  color: var(--indigo-400);
 }
 
 @starting-style {
