@@ -49,9 +49,9 @@ def get_book_by_id(
     Endpoint for book page. If a google id is used, the canonical version of the book is returned
     """
     book_id = BookId(id=book_id)
-    if book_id.id[0] == "g":
+    if book_id.id.startswith("o"):
         # Checks if the book is already in our database
-        book = book_repo.get_book_by_google_id_flexible(book_id.id)
+        book = book_repo.get_book_by_open_lib_id_flexible(book_id.id)
         if not book:
             # Pulls the book down otherwise
             book = google_books_pull.pull_google_book(book_id.id, book_repo)

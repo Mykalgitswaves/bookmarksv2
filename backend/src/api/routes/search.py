@@ -10,6 +10,7 @@ from src.models.schemas.search import SearchSchema
 from src.models.schemas.users import User
 from src.securities.authorizations.verify import get_current_active_user
 from src.book_apis.google_books.search import google_books_search
+from src.book_apis.open_library.search import open_library_search
 from src.utils.logging.logger import logger
 
 router = fastapi.APIRouter(prefix="/search", tags=["search"])
@@ -28,7 +29,8 @@ async def search_for_param(
     Endpoint used for searching for users, todo add in credentials for searching
     """
 
-    books_result = google_books_search.search(param, skip, limit)
+    # books_result = google_books_search.search(param, skip, limit)
+    books_result = open_library_search.search(param, skip, limit)
     search_result = search_repo.search_for_param(param=param, skip=skip, limit=limit)
     search_result["books"] = books_result
     logger.info(
@@ -48,7 +50,8 @@ async def search_for_param_book(param: str, skip: int = 0, limit: int = 5):
     Endpoint used for searching for users, todo add in credentials for searching
     """
 
-    books_result = google_books_search.search(param, skip, limit)
+    # books_result = google_books_search.search(param, skip, limit)
+    books_result = open_library_search.search(param, skip, limit)
     logger.info(
         "Search for param in google books",
         extra={

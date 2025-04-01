@@ -44,6 +44,7 @@ class Book(BaseModel):
     genre_names: list[str] = []
     author_names: list[str] = [] 
     google_id: str | None = None
+    open_lib_id: str | None = None
 
 class BookSimilar(BaseModel):
     id: str

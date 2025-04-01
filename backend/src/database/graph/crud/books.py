@@ -147,6 +147,65 @@ class BookCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
             return(book)
         else:
             return(None)
+        
+    def get_book_by_open_lib_id(self,open_lib_id):
+        """
+        Finds a book by open library id if in db
+
+        Args:
+            open_lib_id: open library id of the book to pull
+        Returns:
+            Book: book object containing all the metadata
+        """
+        with self.driver.session() as session:
+            book = session.execute_read(self.get_book_by_open_lib_id_query, open_lib_id)
+        return(book)
+    
+    @staticmethod
+    def get_book_by_open_lib_id_query(tx,open_lib_id):
+        query = """
+                match (b:Book {open_lib_id:$open_lib_id}) 
+                match (b)-[r]-(g)
+                return b.gr_id,
+                b.id, 
+                b.img_url, 
+                b.isbn13,
+                b.isbn10,
+                b.lang, 
+                b.publication_year, 
+                b.pages, 
+                b.small_img_url, 
+                b.description, 
+                b.title,
+                TYPE(r),
+                g.id
+                """
+        result = tx.run(query, open_lib_id=open_lib_id)
+        response = result.single()
+        if response:
+            book = Book(id=response["b.id"],
+                        img_url=response["b.img_url"],
+                        small_img_url=response["b.small_img_url"],
+                        pages=response["b.pages"],
+                        publication_year=response["b.publication_year"],
+                        lang=response["b.lang"],
+                        title=response["b.title"],
+                        description=response["b.description"],
+                        isbn13 = response["b.isbn13"],
+                        isbn10 = response["b.isbn10"],
+                        open_lib_id=open_lib_id)
+            for response in result:
+                if response['TYPE(r)'] == 'HAS_TAG':
+                    book.tags.append(response["g.id"])
+                elif response['TYPE(r)'] == 'HAS_GENRE':
+                    book.genres.append(response["g.id"])
+                elif response['TYPE(r)'] == 'IS_REVIEW_OF':
+                    book.reviews.append(response["g.id"])
+                elif response['TYPE(r)'] == 'WROTE':
+                    book.authors.append(response["g.id"])
+            return(book)
+        else:
+            return(None)
     
     def get_book_by_google_id_flexible(self,google_id):
         """
@@ -201,6 +260,72 @@ class BookCRUDRepositoryGraph(BaseCRUDRepositoryGraph):
                         isbn10 = response["b.isbn10"],
                         author_names=response.get("b.author_names") or [],
                         google_id=google_id)
+            for response in result:
+                if response['TYPE(r)'] == 'HAS_TAG':
+                    book.tags.append(response["g.id"])
+                elif response['TYPE(r)'] == 'HAS_GENRE':
+                    book.genres.append(response["g.id"])
+                elif response['TYPE(r)'] == 'IS_REVIEW_OF':
+                    book.reviews.append(response["g.id"])
+                elif response['TYPE(r)'] == 'WROTE':
+                    book.authors.append(response["g.id"])
+            return(book)
+        else:
+            return(None)
+        
+    def get_book_by_open_lib_id_flexible(self,open_lib_id):
+        """
+        Finds a book by google id if in db.
+
+        This is the more flexible version, search for the google id in both the ID and open_lib_id fields
+
+        Args:
+            open_lib_id: Open library id of the book to pull
+        Returns:
+            Book: book object containing all the metadata
+        """
+        with self.driver.session() as session:
+            book = session.execute_read(self.get_book_by_open_lib_id_flexible_query, open_lib_id)
+        return(book)
+    
+    @staticmethod
+    def get_book_by_open_lib_id_flexible_query(tx,open_lib_id):
+        query = """
+                match (book:Book)
+                WHERE book.id = $open_lib_id OR book.open_lib_id = $open_lib_id
+                OPTIONAL MATCH (canonical:Book)-[:HAS_VERSION]->(book)
+                WITH COALESCE(canonical, book) AS b
+                match (b)-[r]-(g)
+                return 
+                b.id, 
+                b.img_url, 
+                b.isbn13,
+                b.isbn10,
+                b.lang, 
+                b.publication_year, 
+                b.pages, 
+                b.small_img_url, 
+                b.description, 
+                b.title,
+                b.author_names,
+                TYPE(r),
+                g.id
+                """
+        result = tx.run(query, open_lib_id=open_lib_id)
+        response = result.single()
+        if response:
+            book = Book(id=response["b.id"],
+                        img_url=response["b.img_url"],
+                        small_img_url=response["b.small_img_url"],
+                        pages=response["b.pages"],
+                        publication_year=response["b.publication_year"],
+                        lang=response["b.lang"],
+                        title=response["b.title"],
+                        description=response["b.description"],
+                        isbn13 = response["b.isbn13"],
+                        isbn10 = response["b.isbn10"],
+                        author_names=response.get("b.author_names") or [],
+                        open_lib_id=open_lib_id)
             for response in result:
                 if response['TYPE(r)'] == 'HAS_TAG':
                     book.tags.append(response["g.id"])
